@@ -18,8 +18,6 @@ package org.rstudio.studio.client.workbench.views.source;
 public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Messages{
     /**
      * Translated "(No documents)".
-     *
-     * @return translated "(No documents)"
      */
     @DefaultMessage("(No documents)")
     @Key("noDocumentsParentheses")
@@ -27,8 +25,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "No outline available".
-     *
-     * @return translated "No outline available"
      */
     @DefaultMessage("No outline available")
     @Key("noOutlineAvailable")
@@ -36,8 +32,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Title".
-     *
-     * @return translated "Title"
      */
     @DefaultMessage("Title")
     @Key("title")
@@ -45,8 +39,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Invalid API Name".
-     *
-     * @return translated "Invalid API Name"
      */
     @DefaultMessage("Invalid API Name")
     @Key("invalidApiName")
@@ -54,8 +46,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Invalid application name".
-     *
-     * @return translated "Invalid application name"
      */
     @DefaultMessage("Invalid application name")
     @Key("invalidApplicationName")
@@ -63,8 +53,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The API name must not be empty".
-     *
-     * @return translated "The API name must not be empty"
      */
     @DefaultMessage("The API name must not be empty")
     @Key("apiNameMustNotBeEmpty")
@@ -72,8 +60,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Plumber APIs".
-     *
-     * @return translated "Plumber APIs"
      */
     @DefaultMessage("Plumber APIs")
     @Key("plumberAPIs")
@@ -81,8 +67,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create within directory:".
-     *
-     * @return translated "Create within directory:"
      */
     @DefaultMessage("Create within directory:")
     @Key("createWithinDirectoryColon")
@@ -90,8 +74,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "API name:".
-     *
-     * @return translated "API name:"
      */
     @DefaultMessage("API name:")
     @Key("apiNameColon")
@@ -99,8 +81,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create".
-     *
-     * @return translated "Create"
      */
     @DefaultMessage("Create")
     @Key("create")
@@ -108,8 +88,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Application name:".
-     *
-     * @return translated "Application name:"
      */
     @DefaultMessage("Application name:")
     @Key("applicationNameColon")
@@ -117,8 +95,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Application type:".
-     *
-     * @return translated "Application type:"
      */
     @DefaultMessage("Application type:")
     @Key("applicationTypeColon")
@@ -126,8 +102,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Single File (app.R)".
-     *
-     * @return translated "Single File (app.R)"
      */
     @DefaultMessage("Single File (app.R)")
     @Key("singleFileAppR")
@@ -135,8 +109,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Multiple File (ui.R/server.R)".
-     *
-     * @return translated "Multiple File (ui.R/server.R)"
      */
     @DefaultMessage("Multiple File (ui.R/server.R)")
     @Key("multipleFileUiServerR")
@@ -144,8 +116,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Shiny Web Applications".
-     *
-     * @return translated "Shiny Web Applications"
      */
     @DefaultMessage("Shiny Web Applications")
     @Key("shinyWebApplications")
@@ -153,8 +123,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The application name must not be empty".
-     *
-     * @return translated "The application name must not be empty"
      */
     @DefaultMessage("The application name must not be empty")
     @Key("applicationNameMustNotBeEmpty")
@@ -162,8 +130,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Invalid Application Name".
-     *
-     * @return translated "Invalid Application Name"
      */
     @DefaultMessage("Invalid Application Name")
     @Key("invalidApplicationNameCapitalized")
@@ -171,8 +137,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New Quarto {0}...".
-     *
-     * @return translated "New Quarto {0}..."
      */
     @DefaultMessage("New Quarto {0}...")
     @Key("newQuatroProgressIndicator")
@@ -180,8 +144,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Presentation".
-     *
-     * @return translated "Presentation"
      */
     @DefaultMessage("Presentation")
     @Key("presentationCapitalized")
@@ -189,8 +151,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Document".
-     *
-     * @return translated "Document"
      */
     @DefaultMessage("Document")
     @Key("documentCapitalized")
@@ -198,8 +158,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error".
-     *
-     * @return translated "Error"
      */
     @DefaultMessage("Error")
     @Key("errorCapitalized")
@@ -207,8 +165,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Always save files before build".
-     *
-     * @return translated "Always save files before build"
      */
     @DefaultMessage("Always save files before build")
     @Key("alwaysSaveFilesBeforeBuild")
@@ -216,8 +172,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show".
-     *
-     * @return translated "Show"
      */
     @DefaultMessage("Show")
     @Key("show")
@@ -225,8 +179,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Source Document Error".
-     *
-     * @return translated "Source Document Error"
      */
     @DefaultMessage("Source Document Error")
     @Key("sourceDocumentError")
@@ -234,8 +186,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show Profiler".
-     *
-     * @return translated "Show Profiler"
      */
     @DefaultMessage("Show Profiler")
     @Key("showProfiler")
@@ -243,8 +193,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "R Notebook".
-     *
-     * @return translated "R Notebook"
      */
     @DefaultMessage("R Notebook")
     @Key("rNotebook")
@@ -252,8 +200,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Notebook Creation Failed".
-     *
-     * @return translated "Notebook Creation Failed"
      */
     @DefaultMessage("Notebook Creation Failed")
     @Key("notebookCreationFailed")
@@ -261,8 +207,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "One or more packages required for R Notebook creation were not installed.".
-     *
-     * @return translated "One or more packages required for R Notebook creation were not installed."
      */
     @DefaultMessage("One or more packages required for R Notebook creation were not installed.")
     @Key("rNotebookCreationFailedPackagesNotInstalled")
@@ -270,8 +214,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating Stan script".
-     *
-     * @return translated "Creating Stan script"
      */
     @DefaultMessage("Creating Stan script")
     @Key("creatingStanScript")
@@ -279,8 +221,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating Stan scripts".
-     *
-     * @return translated "Creating Stan scripts"
      */
     @DefaultMessage("Creating Stan scripts")
     @Key("creatingStanScriptPlural")
@@ -288,8 +228,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating new document...".
-     *
-     * @return translated "Creating new document..."
      */
     @DefaultMessage("Creating new document...")
     @Key("creatingNewDocument")
@@ -297,8 +235,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Creating Shiny Application".
-     *
-     * @return translated "Error Creating Shiny Application"
      */
     @DefaultMessage("Error Creating Shiny Application")
     @Key("errorCreatingShinyApplication")
@@ -306,8 +242,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Creating Plumber API".
-     *
-     * @return translated "Error Creating Plumber API"
      */
     @DefaultMessage("Error Creating Plumber API")
     @Key("errorCreatingPlumberApi")
@@ -315,8 +249,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New Shiny Web Application".
-     *
-     * @return translated "New Shiny Web Application"
      */
     @DefaultMessage("New Shiny Web Application")
     @Key("newShinyWebApplication")
@@ -324,8 +256,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New R Presentation".
-     *
-     * @return translated "New R Presentation"
      */
     @DefaultMessage("New R Presentation")
     @Key("newRPresentation")
@@ -333,8 +263,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating Presentation...".
-     *
-     * @return translated "Creating Presentation..."
      */
     @DefaultMessage("Creating Presentation...")
     @Key("creatingPresentation")
@@ -342,8 +270,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Document Tab Move Failed".
-     *
-     * @return translated "Document Tab Move Failed"
      */
     @DefaultMessage("Document Tab Move Failed")
     @Key("documentTabMoveFailed")
@@ -351,8 +277,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Couldn''t move the tab to this window: \n{0}".
-     *
-     * @return translated "Couldn''t move the tab to this window: \n{0}"
      */
     @DefaultMessage("Couldn''t move the tab to this window: \n{0}")
     @Key("couldntMoveTabToWindowError")
@@ -360,8 +284,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close All".
-     *
-     * @return translated "Close All"
      */
     @DefaultMessage("Close All")
     @Key("closeAll")
@@ -369,8 +291,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close Other".
-     *
-     * @return translated "Close Other"
      */
     @DefaultMessage("Close Other")
     @Key("closeOther")
@@ -378,8 +298,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Open File".
-     *
-     * @return translated "Open File"
      */
     @DefaultMessage("Open File")
     @Key("openFile")
@@ -387,8 +305,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New Plumber API".
-     *
-     * @return translated "New Plumber API"
      */
     @DefaultMessage("New Plumber API")
     @Key("newPlumberApi")
@@ -396,8 +312,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close All Others".
-     *
-     * @return translated "Close All Others"
      */
     @DefaultMessage("Close All Others")
     @Key("closeAllOthers")
@@ -405,8 +319,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Creating New Document".
-     *
-     * @return translated "Error Creating New Document"
      */
     @DefaultMessage("Error Creating New Document")
     @Key("errorCreatingNewDocument")
@@ -414,8 +326,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Publish Document...".
-     *
-     * @return translated "Publish Document..."
      */
     @DefaultMessage("Publish Document...")
     @Key("publishDocument")
@@ -423,8 +333,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Publish Plumber API...".
-     *
-     * @return translated "Publish Plumber API..."
      */
     @DefaultMessage("Publish Plumber API...")
     @Key("publishPlumberApi")
@@ -432,8 +340,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Publish Application...".
-     *
-     * @return translated "Publish Application..."
      */
     @DefaultMessage("Publish Application...")
     @Key("publishApplication")
@@ -442,8 +348,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     // TODO IF THESE ARE SHORTCUTS NEED TO DOUBLE CHECK THESE
     /**
      * Translated "_Blame \"{0}\" on GitHub".
-     *
-     * @return translated "_Blame \"{0}\" on GitHub"
      */
     @DefaultMessage("_Blame \"{0}\" on GitHub")
     @Key("blameOnGithub")
@@ -451,8 +355,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "_View \"{0}\" on GitHub".
-     *
-     * @return translated "_View \"{0}\" on GitHub"
      */
     @DefaultMessage("_View \"{0}\" on GitHub")
     @Key("viewNameOnGithub")
@@ -460,8 +362,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "_Revert \"{0}\"...".
-     *
-     * @return translated "_Revert \"{0}\"..."
      */
     @DefaultMessage("_Revert \"{0}\"...")
     @Key("revertName")
@@ -469,8 +369,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "_Log of \"{0}\"".
-     *
-     * @return translated "_Log of \"{0}\""
      */
     @DefaultMessage("_Log of \"{0}\"")
     @Key("logOfName")
@@ -478,8 +376,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "_Diff \"{0}\"".
-     *
-     * @return translated "_Diff \"{0}\""
      */
     @DefaultMessage("_Diff \"{0}\"")
     @Key("diffName")
@@ -487,8 +383,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "No document tabs open".
-     *
-     * @return translated "No document tabs open"
      */
     @DefaultMessage("No document tabs open")
     @Key("noDocumentTabsOpen")
@@ -496,8 +390,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show Object Explorer".
-     *
-     * @return translated "Show Object Explorer"
      */
     @DefaultMessage("Show Object Explorer")
     @Key("showObjectExplorer")
@@ -505,8 +397,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show Data Frame".
-     *
-     * @return translated "Show Data Frame"
      */
     @DefaultMessage("Show Data Frame")
     @Key("showDataFrame")
@@ -514,8 +404,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Template Content Missing".
-     *
-     * @return translated "Template Content Missing"
      */
     @DefaultMessage("Template Content Missing")
     @Key("templateContentMissing")
@@ -523,8 +411,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The template at {0} is missing.".
-     *
-     * @return translated "The template at {0} is missing."
      */
     @DefaultMessage("The template at {0} is missing.")
     @Key("templateAtPathMissing")
@@ -532,8 +418,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error while opening file".
-     *
-     * @return translated "Error while opening file"
      */
     @DefaultMessage("Error while opening file")
     @Key("errorWhileOpeningFile")
@@ -541,8 +425,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "This notebook has the same name as an R Markdown file, but doesn''t match it".
-     *
-     * @return translated "This notebook has the same name as an R Markdown file, but doesn''t match it"
      */
     @DefaultMessage("This notebook has the same name as an R Markdown file, but doesn''t match it")
     @Key("openNotebookWarningMessage")
@@ -550,8 +432,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Notebook Open Failed".
-     *
-     * @return translated "Notebook Open Failed"
      */
     @DefaultMessage("Notebook Open Failed")
     @Key("notebookOpenFailed")
@@ -559,8 +439,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "This notebook could not be opened. If the error persists, try removing the accompanying R Markdown file. \n\n{0}".
-     *
-     * @return translated "This notebook could not be opened. If the error persists, try removing the accompanying R Markdown file. \n\n{0}"
      */
     @DefaultMessage("This notebook could not be opened. If the error persists, try removing the accompanying R Markdown file. \\n\\n{0}")
     @Key("notebookOpenFailedMessage")
@@ -568,8 +446,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "This notebook could not be opened. \n\n{0}".
-     *
-     * @return translated "This notebook could not be opened. \n\n{0}"
      */
     @DefaultMessage("This notebook could not be opened. \n\n{0}")
     @Key("notebookCouldNotBeOpenedMessage")
@@ -577,8 +453,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Opening file...".
-     *
-     * @return translated "Opening file..."
      */
     @DefaultMessage("Opening file...")
     @Key("openingFile")
@@ -586,8 +460,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The file ''{0}'' is too large to open in the source editor (the file is {1} and the maximum file size is {2})".
-     *
-     * @return translated "The file ''{0}'' is too large to open in the source editor (the file is {1} and the maximum file size is {2})"
      */
     @DefaultMessage("The file ''{0}'' is too large to open in the source editor (the file is {1} and the maximum file size is {2})")
     @Key("showFileTooLargeWarningMsg")
@@ -595,8 +467,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Selected File Too Large".
-     *
-     * @return translated "Selected File Too Large"
      */
     @DefaultMessage("Selected File Too Large")
     @Key("selectedFileTooLarge")
@@ -604,8 +474,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The source file ''{0}'' is large ({1}) and may take some time to open. Are you sure you want to continue opening it?".
-     *
-     * @return translated "The source file ''{0}'' is large ({1}) and may take some time to open. Are you sure you want to continue opening it?"
      */
     @DefaultMessage("The source file ''{0}'' is large ({1}) and may take some time to open. Are you sure you want to continue opening it?")
     @Key("confirmOpenLargeFileMsg")
@@ -613,8 +481,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Confirm Open".
-     *
-     * @return translated "Confirm Open"
      */
     @DefaultMessage("Confirm Open")
     @Key("confirmOpen")
@@ -622,8 +488,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Source Column {0}".
-     *
-     * @return translated "Source Column {0}"
      */
     @DefaultMessage("Source Column {0}")
     @Key("sourceColumn")
@@ -631,8 +495,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Source".
-     *
-     * @return translated "Source"
      */
     @DefaultMessage("Source")
     @Key("source")
@@ -640,8 +502,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Switch to tab".
-     *
-     * @return translated "Switch to tab"
      */
     @DefaultMessage("Switch to tab")
     @Key("switchToTab")
@@ -649,8 +509,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "RStudio Source Editor".
-     *
-     * @return translated "RStudio Source Editor"
      */
     @DefaultMessage("RStudio Source Editor")
     @Key("rstudioSourceEditor")
@@ -658,8 +516,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close Source Window".
-     *
-     * @return translated "Close Source Window"
      */
     @DefaultMessage("Close Source Window")
     @Key("closeSourceWindow")
@@ -667,8 +523,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Cancel".
-     *
-     * @return translated "Cancel"
      */
     @DefaultMessage("Cancel")
     @Key("cancel")
@@ -676,8 +530,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close and Discard Changes".
-     *
-     * @return translated "Close and Discard Changes"
      */
     @DefaultMessage("Close and Discard Changes")
     @Key("closeAndDiscardChanges")
@@ -685,8 +537,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unsaved Changes".
-     *
-     * @return translated "Unsaved Changes"
      */
     @DefaultMessage("Unsaved Changes")
     @Key("unsavedChanges")
@@ -694,8 +544,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "There are unsaved documents in this window. Are you sure you want to close it?".
-     *
-     * @return translated "There are unsaved documents in this window. Are you sure you want to close it?"
      */
     @DefaultMessage("There are unsaved documents in this window. Are you sure you want to close it?")
     @Key("confirmCloseUnsavedDocuments")
@@ -703,8 +551,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Your edits to the file {0} have not been saved".
-     *
-     * @return translated "Your edits to the file {0} have not been saved"
      */
     @DefaultMessage("Your edits to the file {0} have not been saved")
     @Key("yourEditsToFileHasNotBeenSaved")
@@ -712,8 +558,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Your edits to the files {0} have not been saved".
-     *
-     * @return translated "Your edits to the files {0} have not been saved"
      */
     @DefaultMessage("Your edits to the files {0} have not been saved")
     @Key("yourEditsToFilePluralHasNotBeenSaved")
@@ -721,8 +565,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated ", ".
-     *
-     * @return translated ", "
      */
     @DefaultMessage(", ")
     @Key("commaListSeparator")
@@ -730,8 +572,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated " and ".
-     *
-     * @return translated " and "
      */
     @DefaultMessage(" and ")
     @Key("andForList")
@@ -739,8 +579,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Can''t Move Doc".
-     *
-     * @return translated "Can''t Move Doc"
      */
     @DefaultMessage("Can''t Move Doc")
     @Key("cantMoveDoc")
@@ -748,8 +586,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The document could not be moved to a different window: \n{0}".
-     *
-     * @return translated "The document could not be moved to a different window: \n{0}"
      */
     @DefaultMessage("The document could not be moved to a different window: \n{0}")
     @Key("cantMoveDocMessage")
@@ -757,8 +593,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Search tabs".
-     *
-     * @return translated "Search tabs"
      */
     @DefaultMessage("Search tabs")
     @Key("searchTabs")
@@ -766,8 +600,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Code Editor Tab".
-     *
-     * @return translated "Code Editor Tab"
      */
     @DefaultMessage("Code Editor Tab")
     @Key("codeEditorTab")
@@ -775,8 +607,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Function:".
-     *
-     * @return translated "Function:"
      */
     @DefaultMessage("Function:")
     @Key("functionColon")
@@ -784,8 +614,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Method:".
-     *
-     * @return translated "Method:"
      */
     @DefaultMessage("Method:")
     @Key("methodColon")
@@ -793,8 +621,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Reading Function Definition".
-     *
-     * @return translated "Error Reading Function Definition"
      */
     @DefaultMessage("Error Reading Function Definition")
     @Key("errorReadingFunctionDefinition")
@@ -802,8 +628,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Code Browser displayed".
-     *
-     * @return translated "Code Browser displayed"
      */
     @DefaultMessage("Code Browser displayed")
     @Key("codeBrowserDisplayed")
@@ -811,8 +635,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Debug location is approximate because the source is not available.".
-     *
-     * @return translated "Debug location is approximate because the source is not available."
      */
     @DefaultMessage("Debug location is approximate because the source is not available.")
     @Key("debugLocationIsApproximate")
@@ -820,8 +642,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "R Source Viewer".
-     *
-     * @return translated "R Source Viewer"
      */
     @DefaultMessage("R Source Viewer")
     @Key("rSourceViewer")
@@ -829,8 +649,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "(Read-only)".
-     *
-     * @return translated "(Read-only)"
      */
     @DefaultMessage("(Read-only)")
     @Key("readOnlyParentheses")
@@ -838,8 +656,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Code Browser Second".
-     *
-     * @return translated "Code Browser Second"
      */
     @DefaultMessage("Code Browser Second")
     @Key("codeBrowserSecond")
@@ -847,8 +663,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Code Tools".
-     *
-     * @return translated "Code Tools"
      */
     @DefaultMessage("Code Tools")
     @Key("codeTools")
@@ -856,8 +670,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Searching for Function".
-     *
-     * @return translated "Error Searching for Function"
      */
     @DefaultMessage("Error Searching for Function")
     @Key("errorSearchingForFunction")
@@ -865,8 +677,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Searching for function definition...".
-     *
-     * @return translated "Searching for function definition..."
      */
     @DefaultMessage("Searching for function definition...")
     @Key("searchingForFunctionDefinition")
@@ -874,8 +684,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} Source Viewer".
-     *
-     * @return translated "{0} Source Viewer"
      */
     @DefaultMessage("{0} Source Viewer")
     @Key("nameSourceViewer")
@@ -883,8 +691,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Untitled Source Viewer".
-     *
-     * @return translated "Untitled Source Viewer"
      */
     @DefaultMessage("Untitled Source Viewer")
     @Key("untitledSourceViewer")
@@ -892,8 +698,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Help".
-     *
-     * @return translated "Help"
      */
     @DefaultMessage("Help")
     @Key("help")
@@ -901,8 +705,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Data Browser displayed".
-     *
-     * @return translated "Data Browser displayed"
      */
     @DefaultMessage("Data Browser displayed")
     @Key("dataBrowserDisplayed")
@@ -910,8 +712,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Data Browser".
-     *
-     * @return translated "Data Browser"
      */
     @DefaultMessage("Data Browser")
     @Key("dataBrowser")
@@ -919,8 +719,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} Data Browser".
-     *
-     * @return translated "{0} Data Browser"
      */
     @DefaultMessage("{0} Data Browser")
     @Key("accessibleNameDataBrowser")
@@ -928,8 +726,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Untitled Data Browser".
-     *
-     * @return translated "Untitled Data Browser"
      */
     @DefaultMessage("Untitled Data Browser")
     @Key("untitledDataBrowser")
@@ -937,8 +733,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Displayed {0} rows of {1}".
-     *
-     * @return translated "Displayed {0} rows of {1}"
      */
     @DefaultMessage("Displayed {0} rows of {1}")
     @Key("dataEditingTargetWidgetLabel1")
@@ -946,8 +740,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "({0} omitted)".
-     *
-     * @return translated "({0} omitted)"
      */
     @DefaultMessage("({0} omitted)")
     @Key("dataEditingTargetWidgetLabel2")
@@ -955,8 +747,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} Object Explorer".
-     *
-     * @return translated "{0} Object Explorer"
      */
     @DefaultMessage("{0} Object Explorer")
     @Key("accessibleNameObjectExplorer")
@@ -964,8 +754,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Untitled Object Explorer".
-     *
-     * @return translated "Untitled Object Explorer"
      */
     @DefaultMessage("Untitled Object Explorer")
     @Key("untitledObjectExplorer")
@@ -973,8 +761,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Object Explorer displayed".
-     *
-     * @return translated "Object Explorer displayed"
      */
     @DefaultMessage("Object Explorer displayed")
     @Key("objectExplorerDisplayed")
@@ -982,8 +768,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "URL Viewer displayed".
-     *
-     * @return translated "URL Viewer displayed"
      */
     @DefaultMessage("URL Viewer displayed")
     @Key("urlViewerDisplayed")
@@ -991,8 +775,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "URL Browser".
-     *
-     * @return translated "URL Browser"
      */
     @DefaultMessage("URL Browser")
     @Key("urlBrowser")
@@ -1000,8 +782,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} URL Browser".
-     *
-     * @return translated "{0} URL Browser"
      */
     @DefaultMessage("{0} URL Browser")
     @Key("accessibleNameBrowser")
@@ -1009,8 +789,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Untitled URL Browser".
-     *
-     * @return translated "Untitled URL Browser"
      */
     @DefaultMessage("Untitled URL Browser")
     @Key("untitledUrlBrowser")
@@ -1018,8 +796,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Source Viewer".
-     *
-     * @return translated "Source Viewer"
      */
     @DefaultMessage("Source Viewer")
     @Key("sourceViewer")
@@ -1027,8 +803,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Name".
-     *
-     * @return translated "Name"
      */
     @DefaultMessage("Name")
     @Key("name")
@@ -1036,8 +810,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Type".
-     *
-     * @return translated "Type"
      */
     @DefaultMessage("Type")
     @Key("type")
@@ -1045,8 +817,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Value".
-     *
-     * @return translated "Value"
      */
     @DefaultMessage("Value")
     @Key("value")
@@ -1054,8 +824,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "View({0})".
-     *
-     * @return translated "View({0})"
      */
     @DefaultMessage("View({0})")
     @Key("viewCode")
@@ -1063,8 +831,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "(No selection)".
-     *
-     * @return translated "(No selection)"
      */
     @DefaultMessage("(No selection)")
     @Key("noSelectionParentheses")
@@ -1072,8 +838,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show Attributes".
-     *
-     * @return translated "Show Attributes"
      */
     @DefaultMessage("Show Attributes")
     @Key("showAttributes")
@@ -1081,8 +845,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Search objects".
-     *
-     * @return translated "Search objects"
      */
     @DefaultMessage("Search objects")
     @Key("searchObjects")
@@ -1090,8 +852,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Refresh".
-     *
-     * @return translated "Refresh"
      */
     @DefaultMessage("Refresh")
     @Key("refresh")
@@ -1099,8 +859,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The source file {0} does not exist.".
-     *
-     * @return translated "The source file {0} does not exist."
      */
     @DefaultMessage("The source file {0} does not exist.")
     @Key("sourceFileAtPathDoesNotExist")
@@ -1108,8 +866,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error while opening profiler source".
-     *
-     * @return translated "Error while opening profiler source"
      */
     @DefaultMessage("Error while opening profiler source")
     @Key("errorOpeningProfilerSource")
@@ -1117,8 +873,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Failed to Save Profile".
-     *
-     * @return translated "Failed to Save Profile"
      */
     @DefaultMessage("Failed to Save Profile")
     @Key("failedToSaveProfile")
@@ -1126,8 +880,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Save File - {0}".
-     *
-     * @return translated "Save File - {0}"
      */
     @DefaultMessage("Save File - {0}")
     @Key("saveFileName")
@@ -1135,8 +887,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Failed to Save Profile Properties".
-     *
-     * @return translated "Failed to Save Profile Properties"
      */
     @DefaultMessage("Failed to Save Profile Properties")
     @Key("failedToSaveProfileProperties")
@@ -1144,8 +894,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Code Profile results displayed".
-     *
-     * @return translated "Code Profile results displayed"
      */
     @DefaultMessage("Code Profile results displayed")
     @Key("codeProfileResultsDisplayed")
@@ -1153,8 +901,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Profile".
-     *
-     * @return translated "Profile"
      */
     @DefaultMessage("Profile")
     @Key("profileCapitalized")
@@ -1162,8 +908,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Profiler".
-     *
-     * @return translated "Profiler"
      */
     @DefaultMessage("Profiler")
     @Key("profilerCapitalized")
@@ -1171,8 +915,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "R Profiler".
-     *
-     * @return translated "R Profiler"
      */
     @DefaultMessage("R Profiler")
     @Key("rProfiler")
@@ -1180,8 +922,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} Profile View".
-     *
-     * @return translated "{0} Profile View"
      */
     @DefaultMessage("{0} Profile View")
     @Key("titleProfileView")
@@ -1189,8 +929,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Failed to Open Profile".
-     *
-     * @return translated "Failed to Open Profile"
      */
     @DefaultMessage("Failed to Open Profile")
     @Key("failedToOpenProfile")
@@ -1198,8 +936,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Profiler Error".
-     *
-     * @return translated "Profiler Error"
      */
     @DefaultMessage("Profiler Error")
     @Key("profilerError")
@@ -1207,8 +943,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Failed to Stop Profiler".
-     *
-     * @return translated "Failed to Stop Profiler"
      */
     @DefaultMessage("Failed to Stop Profiler")
     @Key("failedToStopProfiler")
@@ -1216,8 +950,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error navigating to file".
-     *
-     * @return translated "Error navigating to file"
      */
     @DefaultMessage("Error navigating to file")
     @Key("errorNavigatingToFile")
@@ -1225,8 +957,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "No file at path ''{0}''.".
-     *
-     * @return translated "No file at path ''{0}''."
      */
     @DefaultMessage("No file at path ''{0}''.")
     @Key("noFileAtPath")
@@ -1234,8 +964,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Open Link (Command+Click)".
-     *
-     * @return translated "Open Link (Command+Click)"
      */
     @DefaultMessage("Open Link (Command+Click)")
     @Key("openLinkMacCommand")
@@ -1243,8 +971,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Open Link (Ctrl+Click)".
-     *
-     * @return translated "Open Link (Ctrl+Click)"
      */
     @DefaultMessage("Open Link (Ctrl+Click)")
     @Key("openLinkNotMacCommand")
@@ -1252,8 +978,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Finding definition...".
-     *
-     * @return translated "Finding definition..."
      */
     @DefaultMessage("Finding definition...")
     @Key("findingDefinition")
@@ -1261,8 +985,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "ignored".
-     *
-     * @return translated "ignored"
      */
     @DefaultMessage("ignored")
     @Key("ignored")
@@ -1270,8 +992,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "note".
-     *
-     * @return translated "note"
      */
     @DefaultMessage("note")
     @Key("note")
@@ -1279,8 +999,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "warning".
-     *
-     * @return translated "warning"
      */
     @DefaultMessage("warning")
     @Key("warningLowercase")
@@ -1288,8 +1006,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "error".
-     *
-     * @return translated "error"
      */
     @DefaultMessage("error")
     @Key("error")
@@ -1297,8 +1013,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "fatal".
-     *
-     * @return translated "fatal"
      */
     @DefaultMessage("fatal")
     @Key("fatal")
@@ -1306,8 +1020,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "(No matches)".
-     *
-     * @return translated "(No matches)"
      */
     @DefaultMessage("(No matches)")
     @Key("noMatchesParentheses")
@@ -1315,8 +1027,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} of {1}".
-     *
-     * @return translated "{0} of {1}"
      */
     @DefaultMessage("{0} of {1}")
     @Key("pagingLabelTextOf")
@@ -1324,8 +1034,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} occurrences replaced.".
-     *
-     * @return translated "{0} occurrences replaced."
      */
     @DefaultMessage("{0} occurrences replaced.")
     @Key("numberOfOccurrencesReplaced")
@@ -1333,8 +1041,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Invalid search term.".
-     *
-     * @return translated "Invalid search term."
      */
     @DefaultMessage("Invalid search term.")
     @Key("invalidSearchTerm")
@@ -1342,8 +1048,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "No more occurrences.".
-     *
-     * @return translated "No more occurrences."
      */
     @DefaultMessage("No more occurrences.")
     @Key("noMoreOccurrences")
@@ -1351,8 +1055,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Find".
-     *
-     * @return translated "Find"
      */
     @DefaultMessage("Find")
     @Key("findCapitalized")
@@ -1360,8 +1062,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Find/Replace".
-     *
-     * @return translated "Find/Replace"
      */
     @DefaultMessage("Find/Replace")
     @Key("findOrReplace")
@@ -1369,8 +1069,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Replace".
-     *
-     * @return translated "Replace"
      */
     @DefaultMessage("Replace")
     @Key("replaceCapitalized")
@@ -1378,8 +1076,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "All".
-     *
-     * @return translated "All"
      */
     @DefaultMessage("All")
     @Key("allCapitalized")
@@ -1387,8 +1083,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Replace all occurrences".
-     *
-     * @return translated "Replace all occurrences"
      */
     @DefaultMessage("Replace all occurrences")
     @Key("replaceAllOccurrences")
@@ -1396,8 +1090,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "In selection".
-     *
-     * @return translated "In selection"
      */
     @DefaultMessage("In selection")
     @Key("inSelection")
@@ -1405,8 +1097,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Match case".
-     *
-     * @return translated "Match case"
      */
     @DefaultMessage("Match case")
     @Key("matchCase")
@@ -1414,8 +1104,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Whole word".
-     *
-     * @return translated "Whole word"
      */
     @DefaultMessage("Whole word")
     @Key("wholeWord")
@@ -1423,8 +1111,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Regex".
-     *
-     * @return translated "Regex"
      */
     @DefaultMessage("Regex")
     @Key("regexCapitalized")
@@ -1432,8 +1118,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Wrap".
-     *
-     * @return translated "Wrap"
      */
     @DefaultMessage("Wrap")
     @Key("wrapCapitalized")
@@ -1441,8 +1125,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Close find and replace".
-     *
-     * @return translated "Close find and replace"
      */
     @DefaultMessage("Close find and replace")
     @Key("closeFindAndReplace")
@@ -1450,8 +1132,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunk Pending Execution".
-     *
-     * @return translated "Chunk Pending Execution"
      */
     @DefaultMessage("Chunk Pending Execution")
     @Key("chunkPendingExecution")
@@ -1459,8 +1139,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The code in this chunk is scheduled to run later, when other chunks have finished executing.".
-     *
-     * @return translated "The code in this chunk is scheduled to run later, when other chunks have finished executing."
      */
     @DefaultMessage("The code in this chunk is scheduled to run later, when other chunks have finished executing.")
     @Key("chunkPendingExecutionMessage")
@@ -1468,8 +1146,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "OK".
-     *
-     * @return translated "OK"
      */
     @DefaultMessage("OK")
     @Key("okFullyCapitalized")
@@ -1477,8 +1153,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Don''t Run".
-     *
-     * @return translated "Don''t Run"
      */
     @DefaultMessage("Don''t Run")
     @Key("dontRun")
@@ -1486,8 +1160,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The rmarkdown package is not installed; notebook HTML file will not be generated.".
-     *
-     * @return translated "The rmarkdown package is not installed; notebook HTML file will not be generated."
      */
     @DefaultMessage("The rmarkdown package is not installed; notebook HTML file will not be generated.")
     @Key("rMarkdownNotInstalledHTMLNoGenerate")
@@ -1495,8 +1167,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "An updated version of the rmarkdown package is required to generate notebook HTML files.".
-     *
-     * @return translated "An updated version of the rmarkdown package is required to generate notebook HTML files."
      */
     @DefaultMessage("An updated version of the rmarkdown package is required to generate notebook HTML files.")
     @Key("rMarkdownUpgradeRequired")
@@ -1504,8 +1174,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error creating notebook: ".
-     *
-     * @return translated "Error creating notebook: "
      */
     @DefaultMessage("Error creating notebook: ")
     @Key("errorCreatingNotebookPrefix")
@@ -1513,8 +1181,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating R Notebooks".
-     *
-     * @return translated "Creating R Notebooks"
      */
     @DefaultMessage("Creating R Notebooks")
     @Key("creatingRNotebooks")
@@ -1522,8 +1188,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Can''t execute {0}".
-     *
-     * @return translated "Can''t execute {0}"
      */
     @DefaultMessage("Can''t execute {0}")
     @Key("cantExecuteJobDesc")
@@ -1531,8 +1195,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Executing Python chunks".
-     *
-     * @return translated "Executing Python chunks"
      */
     @DefaultMessage("Executing Python chunks")
     @Key("executingPythonChunks")
@@ -1540,8 +1202,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Executing chunks".
-     *
-     * @return translated "Executing chunks"
      */
     @DefaultMessage("Executing chunks")
     @Key("executingChunks")
@@ -1549,8 +1209,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Run Chunk".
-     *
-     * @return translated "Run Chunk"
      */
     @DefaultMessage("Run Chunk")
     @Key("runChunk")
@@ -1558,8 +1216,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0}: Chunks Currently Executing".
-     *
-     * @return translated "{0}: Chunks Currently Executing"
      */
     @DefaultMessage("{0}: Chunks Currently Executing")
     @Key("jobChunkCurrentlyExecuting")
@@ -1567,8 +1223,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "RStudio cannot execute ''{0}'' because this notebook is already executing code. Interrupt R, or wait for execution to complete.".
-     *
-     * @return translated "RStudio cannot execute ''{0}'' because this notebook is already executing code. Interrupt R, or wait for execution to complete."
      */
     @DefaultMessage("RStudio cannot execute ''{0}'' because this notebook is already executing code. Interrupt R, or wait for execution to complete.")
     @Key("rStudioCannotExecuteJob")
@@ -1576,8 +1230,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Run Chunks".
-     *
-     * @return translated "Run Chunks"
      */
     @DefaultMessage("Run Chunks")
     @Key("runChunks")
@@ -1585,8 +1237,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunks Currently Running".
-     *
-     * @return translated "Chunks Currently Running"
      */
     @DefaultMessage("Chunks Currently Running")
     @Key("chunksCurrentlyRunning")
@@ -1594,8 +1244,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Output can''t be cleared because there are still chunks running. Do you want to interrupt them?".
-     *
-     * @return translated "Output can''t be cleared because there are still chunks running. Do you want to interrupt them?"
      */
     @DefaultMessage("Output can''t be cleared because there are still chunks running. Do you want to interrupt them?")
     @Key("outputCantBeClearedBecauseChunks")
@@ -1603,8 +1251,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Interrupt and Clear Output".
-     *
-     * @return translated "Interrupt and Clear Output"
      */
     @DefaultMessage("Interrupt and Clear Output")
     @Key("interruptAndClearOutput")
@@ -1612,8 +1258,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Remove Inline Chunk Output".
-     *
-     * @return translated "Remove Inline Chunk Output"
      */
     @DefaultMessage("Remove Inline Chunk Output")
     @Key("removeInlineChunkOutput")
@@ -1621,8 +1265,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Do you want to clear all the existing chunk output from your notebook?".
-     *
-     * @return translated "Do you want to clear all the existing chunk output from your notebook?"
      */
     @DefaultMessage("Do you want to clear all the existing chunk output from your notebook?")
     @Key("clearExistingChunkOutputMessage")
@@ -1630,8 +1272,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Remove Output".
-     *
-     * @return translated "Remove Output"
      */
     @DefaultMessage("Remove Output")
     @Key("removeOutput")
@@ -1639,8 +1279,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Keep Output".
-     *
-     * @return translated "Keep Output"
      */
     @DefaultMessage("Keep Output")
     @Key("keepOutput")
@@ -1648,8 +1286,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unnamed chunk".
-     *
-     * @return translated "Unnamed chunk"
      */
     @DefaultMessage("Unnamed chunk")
     @Key("unnamedChunk")
@@ -1657,8 +1293,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunk Name:".
-     *
-     * @return translated "Chunk Name:"
      */
     @DefaultMessage("Chunk Name:")
     @Key("chunkNameColon")
@@ -1666,8 +1300,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Output:".
-     *
-     * @return translated "Output:"
      */
     @DefaultMessage("Output:")
     @Key("outputColon")
@@ -1675,8 +1307,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show warnings".
-     *
-     * @return translated "Show warnings"
      */
     @DefaultMessage("Show warnings")
     @Key("showWarnings")
@@ -1684,8 +1314,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show messages".
-     *
-     * @return translated "Show messages"
      */
     @DefaultMessage("Show messages")
     @Key("showMessages")
@@ -1693,8 +1321,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Cache chunk".
-     *
-     * @return translated "Cache chunk"
      */
     @DefaultMessage("Cache chunk")
     @Key("cacheChunk")
@@ -1702,8 +1328,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Use paged tables".
-     *
-     * @return translated "Use paged tables"
      */
     @DefaultMessage("Use paged tables")
     @Key("usePagedTables")
@@ -1711,8 +1335,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Use custom figure size".
-     *
-     * @return translated "Use custom figure size"
      */
     @DefaultMessage("Use custom figure size")
     @Key("useCustomFigureSize")
@@ -1720,8 +1342,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Width (inches):".
-     *
-     * @return translated "Width (inches):"
      */
     @DefaultMessage("Width (inches):")
     @Key("widthInchesColon")
@@ -1729,8 +1349,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Height (inches):".
-     *
-     * @return translated "Height (inches):"
      */
     @DefaultMessage("Height (inches):")
     @Key("heightInchesColon")
@@ -1738,8 +1356,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Engine path:".
-     *
-     * @return translated "Engine path:"
      */
     @DefaultMessage("Engine path:")
     @Key("enginePathColon")
@@ -1747,8 +1363,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Select Engine".
-     *
-     * @return translated "Select Engine"
      */
     @DefaultMessage("Select Engine")
     @Key("selectEngine")
@@ -1756,8 +1370,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Engine options:".
-     *
-     * @return translated "Engine options:"
      */
     @DefaultMessage("Engine options:")
     @Key("engineOptionsColon")
@@ -1765,8 +1377,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunk options".
-     *
-     * @return translated "Chunk options"
      */
     @DefaultMessage("Chunk options")
     @Key("chunkOptions")
@@ -1774,8 +1384,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Revert".
-     *
-     * @return translated "Revert"
      */
     @DefaultMessage("Revert")
     @Key("revertCapitalized")
@@ -1783,8 +1391,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Apply".
-     *
-     * @return translated "Apply"
      */
     @DefaultMessage("Apply")
     @Key("applyCapitalized")
@@ -1792,8 +1398,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show nothing (don''t run code)".
-     *
-     * @return translated "Show nothing (don''t run code)"
      */
     @DefaultMessage("Show nothing (don''t run code)")
     @Key("showNothingDontRunCode")
@@ -1801,8 +1405,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show nothing (run code)".
-     *
-     * @return translated "Show nothing (run code)"
      */
     @DefaultMessage("Show nothing (run code)")
     @Key("showNothingRunCode")
@@ -1810,8 +1412,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show code and output".
-     *
-     * @return translated "Show code and output"
      */
     @DefaultMessage("Show code and output")
     @Key("showCodeAndOutput")
@@ -1819,8 +1419,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show output only".
-     *
-     * @return translated "Show output only"
      */
     @DefaultMessage("Show output only")
     @Key("showOutputOnly")
@@ -1828,8 +1426,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "(Use document default)".
-     *
-     * @return translated "(Use document default)"
      */
     @DefaultMessage("(Use document default)")
     @Key("useDocumentDefaultParentheses")
@@ -1837,8 +1433,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Default Chunk Options".
-     *
-     * @return translated "Default Chunk Options"
      */
     @DefaultMessage("Default Chunk Options")
     @Key("defaultChunkOptions")
@@ -1846,8 +1440,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Check Spelling".
-     *
-     * @return translated "Check Spelling"
      */
     @DefaultMessage("Check Spelling")
     @Key("checkSpelling")
@@ -1855,8 +1447,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "An error has occurred:\n\n{0}".
-     *
-     * @return translated "An error has occurred:\n\n{0}"
      */
     @DefaultMessage("An error has occurred:\n\n{0}")
     @Key("anErrorHasOccurredMessage")
@@ -1864,8 +1454,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Spell check is complete.".
-     *
-     * @return translated "Spell check is complete."
      */
     @DefaultMessage("Spell check is complete.")
     @Key("spellCheckIsComplete")
@@ -1873,8 +1461,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Spell check in progress...".
-     *
-     * @return translated "Spell check in progress..."
      */
     @DefaultMessage("Spell check in progress...")
     @Key("spellCheckInProgress")
@@ -1882,8 +1468,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Add".
-     *
-     * @return translated "Add"
      */
     @DefaultMessage("Add")
     @Key("addCapitalized")
@@ -1891,8 +1475,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Add word to user dictionary".
-     *
-     * @return translated "Add word to user dictionary"
      */
     @DefaultMessage("Add word to user dictionary")
     @Key("addWordToUserDictionary")
@@ -1900,8 +1482,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Skip".
-     *
-     * @return translated "Skip"
      */
     @DefaultMessage("Skip")
     @Key("skip")
@@ -1909,8 +1489,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Ignore All".
-     *
-     * @return translated "Ignore All"
      */
     @DefaultMessage("Ignore All")
     @Key("ignoreAll")
@@ -1918,8 +1496,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Change".
-     *
-     * @return translated "Change"
      */
     @DefaultMessage("Change")
     @Key("changeCapitalized")
@@ -1927,8 +1503,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Change All".
-     *
-     * @return translated "Change All"
      */
     @DefaultMessage("Change All")
     @Key("changeAll")
@@ -1936,8 +1510,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Suggestions".
-     *
-     * @return translated "Suggestions"
      */
     @DefaultMessage("Suggestions")
     @Key("suggestionsCapitalized")
@@ -1945,8 +1517,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Checking...".
-     *
-     * @return translated "Checking..."
      */
     @DefaultMessage("Checking...")
     @Key("checkingEllipses")
@@ -1954,8 +1524,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Class".
-     *
-     * @return translated "Class"
      */
     @DefaultMessage("Class")
     @Key("classCapitalized")
@@ -1963,8 +1531,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Namespace".
-     *
-     * @return translated "Namespace"
      */
     @DefaultMessage("Namespace")
     @Key("namespaceCapitalized")
@@ -1972,8 +1538,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Lambda".
-     *
-     * @return translated "Lambda"
      */
     @DefaultMessage("Lambda")
     @Key("lambdaCapitalized")
@@ -1981,8 +1545,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Anonymous".
-     *
-     * @return translated "Anonymous"
      */
     @DefaultMessage("Anonymous")
     @Key("anonymousCapitalized")
@@ -1990,8 +1552,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Function".
-     *
-     * @return translated "Function"
      */
     @DefaultMessage("Function")
     @Key("functionCapitalized")
@@ -1999,8 +1559,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Test".
-     *
-     * @return translated "Test"
      */
     @DefaultMessage("Test")
     @Key("testCapitalized")
@@ -2008,8 +1566,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunk".
-     *
-     * @return translated "Chunk"
      */
     @DefaultMessage("Chunk")
     @Key("chunkCapitalized")
@@ -2017,8 +1573,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Section".
-     *
-     * @return translated "Section"
      */
     @DefaultMessage("Section")
     @Key("sectionCapitalized")
@@ -2026,8 +1580,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Slide".
-     *
-     * @return translated "Slide"
      */
     @DefaultMessage("Slide")
     @Key("slideCapitalized")
@@ -2035,8 +1587,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Tomorrow Night".
-     *
-     * @return translated "Tomorrow Night"
      */
     @DefaultMessage("Tomorrow Night")
     @Key("tomorrowNight")
@@ -2044,8 +1594,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Textmate (default)".
-     *
-     * @return translated "Textmate (default)"
      */
     @DefaultMessage("Textmate (default)")
     @Key("textmateDefaultParentheses")
@@ -2053,8 +1601,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The specified theme does not exist".
-     *
-     * @return translated "The specified theme does not exist"
      */
     @DefaultMessage("The specified theme does not exist")
     @Key("specifiedThemeDoesNotExist")
@@ -2062,8 +1608,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The specified theme is a default RStudio theme and cannot be removed.".
-     *
-     * @return translated "The specified theme is a default RStudio theme and cannot be removed."
      */
     @DefaultMessage("The specified theme is a default RStudio theme and cannot be removed.")
     @Key("specifiedDefaultThemeCannotBeRemoved")
@@ -2071,8 +1615,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Choose Encoding".
-     *
-     * @return translated "Choose Encoding"
      */
     @DefaultMessage("Choose Encoding")
     @Key("chooseEncoding")
@@ -2080,8 +1622,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Encodings".
-     *
-     * @return translated "Encodings"
      */
     @DefaultMessage("Encodings")
     @Key("encodingsCapitalized")
@@ -2089,8 +1629,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Show all encodings".
-     *
-     * @return translated "Show all encodings"
      */
     @DefaultMessage("Show all encodings")
     @Key("showAllEncodings")
@@ -2098,8 +1636,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Set as default encoding for source files".
-     *
-     * @return translated "Set as default encoding for source files"
      */
     @DefaultMessage("Set as default encoding for source files")
     @Key("setAsDefaultEncodingSourceFiles")
@@ -2107,8 +1643,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} (System default)".
-     *
-     * @return translated "{0} (System default)"
      */
     @DefaultMessage("{0} (System default)")
     @Key("sysEncNameDefault")
@@ -2116,8 +1650,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "[Ask]".
-     *
-     * @return translated "[Ask]"
      */
     @DefaultMessage("[Ask]")
     @Key("askSquareBrackets")
@@ -2125,8 +1657,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New R Documentation File".
-     *
-     * @return translated "New R Documentation File"
      */
     @DefaultMessage("New R Documentation File")
     @Key("newRDocumentationFile")
@@ -2134,8 +1664,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Name Not Specified".
-     *
-     * @return translated "Name Not Specified"
      */
     @DefaultMessage("Name Not Specified")
     @Key("nameNotSpecified")
@@ -2143,8 +1671,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "You must specify a topic name for the new Rd file.".
-     *
-     * @return translated "You must specify a topic name for the new Rd file."
      */
     @DefaultMessage("You must specify a topic name for the new Rd file.")
     @Key("mustSpecifyTopicNameForRdFile")
@@ -2152,8 +1678,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "New R Markdown".
-     *
-     * @return translated "New R Markdown"
      */
     @DefaultMessage("New R Markdown")
     @Key("newRMarkdown")
@@ -2161,8 +1685,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Templates".
-     *
-     * @return translated "Templates"
      */
     @DefaultMessage("Templates")
     @Key("templatesCapitalized")
@@ -2170,8 +1692,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create Empty Document".
-     *
-     * @return translated "Create Empty Document"
      */
     @DefaultMessage("Create Empty Document")
     @Key("createEmptyDocument")
@@ -2179,8 +1699,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Using Shiny with R Markdown".
-     *
-     * @return translated "Using Shiny with R Markdown"
      */
     @DefaultMessage("Using Shiny with R Markdown")
     @Key("usingShinyWithRMarkdown")
@@ -2188,8 +1706,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create an HTML document with interactive Shiny components.".
-     *
-     * @return translated "Create an HTML document with interactive Shiny components."
      */
     @DefaultMessage("Create an HTML document with interactive Shiny components.")
     @Key("shinyDocNameDescription")
@@ -2197,8 +1713,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create an IOSlides presentation with interactive Shiny components.".
-     *
-     * @return translated "Create an IOSlides presentation with interactive Shiny components."
      */
     @DefaultMessage("Create an IOSlides presentation with interactive Shiny components.")
     @Key("shinyPresentationNameDescription")
@@ -2206,8 +1720,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "From Template".
-     *
-     * @return translated "From Template"
      */
     @DefaultMessage("From Template")
     @Key("fromTemplate")
@@ -2215,8 +1727,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Shiny".
-     *
-     * @return translated "Shiny"
      */
     @DefaultMessage("Shiny")
     @Key("shinyCapitalized")
@@ -2224,8 +1734,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Shiny Document".
-     *
-     * @return translated "Shiny Document"
      */
     @DefaultMessage("Shiny Document")
     @Key("shinyDocument")
@@ -2233,8 +1741,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Shiny Presentation".
-     *
-     * @return translated "Shiny Presentation"
      */
     @DefaultMessage("Shiny Presentation")
     @Key("shinyPresentation")
@@ -2242,8 +1748,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "No Parameters Defined".
-     *
-     * @return translated "No Parameters Defined"
      */
     @DefaultMessage("No Parameters Defined")
     @Key("noParametersDefined")
@@ -2251,8 +1755,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "There are no parameters defined for the current R Markdown document.".
-     *
-     * @return translated "There are no parameters defined for the current R Markdown document."
      */
     @DefaultMessage("There are no parameters defined for the current R Markdown document.")
     @Key("noParametersDefinedForCurrentRMarkdown")
@@ -2260,8 +1762,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Using R Markdown Parameters".
-     *
-     * @return translated "Using R Markdown Parameters"
      */
     @DefaultMessage("Using R Markdown Parameters")
     @Key("usingRMarkdownParameters")
@@ -2269,8 +1769,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unable to activate visual mode (unsupported front matter format or non top-level YAML block)".
-     *
-     * @return translated "Unable to activate visual mode (unsupported front matter format or non top-level YAML block)"
      */
     @DefaultMessage("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)")
     @Key("unableToActivateVisualModeYAML")
@@ -2278,8 +1776,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unable to activate visual mode (error parsing code chunks out of document)".
-     *
-     * @return translated "Unable to activate visual mode (error parsing code chunks out of document)"
      */
     @DefaultMessage("Unable to activate visual mode (error parsing code chunks out of document)")
     @Key("unableToActivateVisualModeParsingCode")
@@ -2287,8 +1783,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unable to activate visual mode (document contains example lists which are not currently supported)".
-     *
-     * @return translated "Unable to activate visual mode (document contains example lists which are not currently supported)"
      */
     @DefaultMessage("Unable to activate visual mode (document contains example lists which are not currently supported)")
     @Key("unableToActivateVisualModeDocumentContains")
@@ -2296,8 +1790,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unrecognized Pandoc token(s); {0}".
-     *
-     * @return translated "Unrecognized Pandoc token(s); {0}"
      */
     @DefaultMessage("Unrecognized Pandoc token(s); {0}")
     @Key("unrecognizedPandocTokens")
@@ -2305,8 +1797,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Invalid Pandoc format: {0}".
-     *
-     * @return translated "Invalid Pandoc format: {0}"
      */
     @DefaultMessage("Invalid Pandoc format: {0}")
     @Key("invalidPandocFormat")
@@ -2314,8 +1804,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unsupported extensions for markdown mode: {0}".
-     *
-     * @return translated "Unsupported extensions for markdown mode: {0}"
      */
     @DefaultMessage("Unsupported extensions for markdown mode: {0}")
     @Key("unsupportedExtensionsForMarkdown")
@@ -2323,8 +1811,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)".
-     *
-     * @return translated "Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)"
      */
     @DefaultMessage("Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)")
     @Key("unableToParseMarkdownPleaseReport")
@@ -2332,8 +1818,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Chunk {0}".
-     *
-     * @return translated "Chunk {0}"
      */
     @DefaultMessage("Chunk {0}")
     @Key("chunkSequence")
@@ -2341,8 +1825,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "(Top Level)".
-     *
-     * @return translated "(Top Level)"
      */
     @DefaultMessage("(Top Level)")
     @Key("topLevelParentheses")
@@ -2350,8 +1832,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "You cannot enter visual mode while using realtime collaboration.".
-     *
-     * @return translated "You cannot enter visual mode while using realtime collaboration."
      */
     @DefaultMessage("You cannot enter visual mode while using realtime collaboration.")
     @Key("cantEnterVisualModeUsingRealtime")
@@ -2359,8 +1839,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0}, {1} line".
-     *
-     * @return translated "{0}, {1} line"
      */
     @DefaultMessage("{0}, {1} line")
     @Key("visualModeChunkSummary")
@@ -2368,8 +1846,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0}, {1} lines".
-     *
-     * @return translated "{0}, {1} lines"
      */
     @DefaultMessage("{0}, {1} lines")
     @Key("visualModeChunkSummaryPlural")
@@ -2377,8 +1853,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "images".
-     *
-     * @return translated "images"
      */
     @DefaultMessage("images")
     @Key("images")
@@ -2386,8 +1860,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Xaringan presentations cannot be edited in visual mode.".
-     * Do not localize Xaringan
-     * @return translated "Xaringan presentations cannot be edited in visual mode."
      */
     @DefaultMessage("Xaringan presentations cannot be edited in visual mode.")
     @Key("xaringanPresentationsVisualMode")
@@ -2395,8 +1867,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Version control conflict markers detected. Please resolve them before editing in visual mode.".
-     *
-     * @return translated "Version control conflict markers detected. Please resolve them before editing in visual mode."
      */
     @DefaultMessage("Version control conflict markers detected. Please resolve them before editing in visual mode.")
     @Key("versionControlConflict")
@@ -2404,8 +1874,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Switch to Visual Mode".
-     *
-     * @return translated "Switch to Visual Mode"
      */
     @DefaultMessage("Switch to Visual Mode")
     @Key("switchToVisualMode")
@@ -2413,8 +1881,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Use Visual Mode".
-     *
-     * @return translated "Use Visual Mode"
      */
     @DefaultMessage("Use Visual Mode")
     @Key("useVisualMode")
@@ -2422,8 +1888,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Don''t show this message again".
-     *
-     * @return translated "Don''t show this message again"
      */
     @DefaultMessage("Don''t show this message again")
     @Key("dontShowMessageAgain")
@@ -2431,8 +1895,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Line Wrapping".
-     *
-     * @return translated "Line Wrapping"
      */
     @DefaultMessage("Line Wrapping")
     @Key("lineWrapping")
@@ -2440,8 +1902,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "project default".
-     *
-     * @return translated "project default"
      */
     @DefaultMessage("project default")
     @Key("projectDefault")
@@ -2449,8 +1909,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "global default".
-     *
-     * @return translated "global default"
      */
     @DefaultMessage("global default")
     @Key("globalDefault")
@@ -2458,8 +1916,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Line wrapping in this document differs from the {0}:".
-     *
-     * @return translated "Line wrapping in this document differs from the {0}:"
      */
     @DefaultMessage("Line wrapping in this document differs from the {0}:")
     @Key("lineWrappingDiffersFromCurrent")
@@ -2467,8 +1923,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Select how you''d like to handle line wrapping below:".
-     *
-     * @return translated "Select how you''d like to handle line wrapping below:"
      */
     @DefaultMessage("Select how you''d like to handle line wrapping below:")
     @Key("selectHandleLineWrapping")
@@ -2476,8 +1930,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Use {0}-based line wrapping for this document".
-     *
-     * @return translated "Use {0}-based line wrapping for this document"
      */
     @DefaultMessage("Use {0}-based line wrapping for this document")
     @Key("useBasedLineWrappingForDocument")
@@ -2485,8 +1937,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     
     /**
      * Translated "Use {0}-based line wrapping for this project".
-     *
-     * @return translated "Use {0}-based line wrapping for this project"
      */
     @DefaultMessage("Use {0}-based line wrapping for this project")
     @Key("useBasedLineWrappingForProject")
@@ -2494,8 +1944,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Use the current {0} default line wrapping for this document".
-     *
-     * @return translated "Use the current {0} default line wrapping for this document"
      */
     @DefaultMessage("Use the current {0} default line wrapping for this document")
     @Key("useDefaultLinewrapping")
@@ -2503,8 +1951,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "project".
-     *
-     * @return translated "project"
      */
     @DefaultMessage("project")
     @Key("project")
@@ -2512,8 +1958,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "global".
-     *
-     * @return translated "global"
      */
     @DefaultMessage("global")
     @Key("global")
@@ -2521,8 +1965,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Learn more about visual mode line wrapping options".
-     *
-     * @return translated "Learn more about visual mode line wrapping options"
      */
     @DefaultMessage("Learn more about visual mode line wrapping options")
     @Key("learnAboutVisualModeLineWrapping")
@@ -2530,8 +1972,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Wrap at column:".
-     *
-     * @return translated "Wrap at column:"
      */
     @DefaultMessage("Wrap at column:")
     @Key("wrapAtColumnColon")
@@ -2539,8 +1979,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Collapse".
-     *
-     * @return translated "Collapse"
      */
     @DefaultMessage("Collapse")
     @Key("collapseCapitalized")
@@ -2548,8 +1986,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Expand".
-     *
-     * @return translated "Expand"
      */
     @DefaultMessage("Expand")
     @Key("expandCapitalized")
@@ -2557,8 +1993,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} code chunk".
-     *
-     * @return translated "{0} code chunk"
      */
     @DefaultMessage("{0} code chunk")
     @Key("collapseOrExpandCodeChunk")
@@ -2566,8 +2000,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Some of your source edits are still being backed up. If you continue, your latest changes may be lost. Do you want to continue?".
-     *
-     * @return translated "Some of your source edits are still being backed up. If you continue, your latest changes may be lost. Do you want to continue?"
      */
     @DefaultMessage("Some of your source edits are still being backed up. If you continue, your latest changes may be lost. Do you want to continue?")
     @Key("editsStillBeingBackedUp")
@@ -2575,8 +2007,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The process cannot access the file because it is being used by another process".
-     * Must match what is in rstudio\src\gwt\src\org\rstudio\studio\client\workbench\views\source\editors\text\EditorsTextConstants.java
-     * @return translated "The process cannot access the file because it is being used by another process"
      */
     @DefaultMessage("The process cannot access the file because it is being used by another process")
     @Key("processStillBeingUsedTextEditingTarget")
@@ -2584,8 +2014,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error Autosaving File".
-     *
-     * @return translated "Error Autosaving File"
      */
     @DefaultMessage("Error Autosaving File")
     @Key("errorAutosavingFile")
@@ -2593,8 +2021,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "RStudio was unable to autosave this file. You may need to restart RStudio.".
-     *
-     * @return translated "RStudio was unable to autosave this file. You may need to restart RStudio."
      */
     @DefaultMessage("RStudio was unable to autosave this file. You may need to restart RStudio.")
     @Key("rStudioUnableToAutosave")
@@ -2602,8 +2028,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Could not save {0}: {1}".
-     *
-     * @return translated "Could not save {0}: {1}"
      */
     @DefaultMessage("Could not save {0}: {1}")
     @Key("couldNotSavePathPlusMessage")
@@ -2611,16 +2035,12 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Error saving {0}: {1}".
-     *
-     * @return translated "Error saving {0}: {1}"
      */
     @DefaultMessage("Error saving {0}: {1}")
     @Key("errorSavingPathPlusMessage")
     String errorSavingPathPlusMessage(String path, String message);
 
     /**
-     * Translated "Document Outline".
-     * @return translated "Document Outline"
      */
     @DefaultMessage("Document Outline")
     @Key("documentOutline")
@@ -2628,8 +2048,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "<td><input type=''button'' value=''More...'' data-action=''open''></input></td>".
-     *
-     * @return translated "<td><input type=''button'' value=''More...'' data-action=''open''></input></td>"
      */
     @DefaultMessage("<td><input type=''button'' value=''More...'' data-action=''open''></input></td>")
     @Key("moreButtonCell")
@@ -2637,8 +2055,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "{0} <...truncated...> )".
-     *
-     * @return translated "{0} <...truncated...> )"
      */
     @DefaultMessage("{0} <...truncated...> )")
     @Key("truncatedEllipses")
@@ -2646,8 +2062,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The document uses {0}-based line wrapping".
-     *
-     * @return translated "The document uses {0}-based line wrapping"
      */
     @DefaultMessage("The document uses {0}-based line wrapping")
     @Key("documentUsesBasedLineWrapping")
@@ -2655,8 +2069,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The {0} is no line wrapping".
-     *
-     * @return translated "The {0} is no line wrapping"
      */
     @DefaultMessage("The {0} is no line wrapping")
     @Key("defaultNoLineWrapping")
@@ -2664,8 +2076,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The {0} is {1}-based line wrapping".
-     *
-     * @return translated "The {0} is {1}-based line wrapping"
      */
     @DefaultMessage("The {0} is {1}-based line wrapping")
     @Key("defaultConfiguredBasedLineWrapping")
@@ -2673,7 +2083,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Create R Notebook".
-     * @return translated "Create R Notebook"
      */
     @DefaultMessage("Create R Notebook")
     @Key("createRNotebookText")
@@ -2682,7 +2091,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Creating Shiny applications".
-     * @return translated "Creating Shiny applications"
      */
     @DefaultMessage("Creating Shiny applications")
     @Key("creatingShinyApplicationsText")
@@ -2690,15 +2098,13 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Authoring R Presentations".
-     * @return translated "Authoring R Presentations"
      */
     @DefaultMessage("Authoring R Presentations")
     @Key("authoringRPresentationsText")
     String authoringRPresentationsText();
 
     /**
-     * Translated "Creating R Plumber API".
-     * @return translated "Creating R Plumber API"
+     * Translated "Creating R Plumber APIs".
      */
     @DefaultMessage("Creating R Plumber API")
     @Key("creatingRPlumberAPIText")
@@ -2706,7 +2112,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Using R Notebooks".
-     * @return translated "Using R Notebooks"
      */
     @DefaultMessage("Using R Notebooks")
     @Key("usingRNotebooksText")
@@ -2714,7 +2119,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The profiler".
-     * @return translated "The profiler"
      */
     @DefaultMessage("The profiler")
     @Key("theProfilerText")
@@ -2722,8 +2126,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Could not resolve {0}. Please make sure this is an R package project with a BugReports field set.".
-     *
-     * @return translated "Could not resolve {0}. Please make sure this is an R package project with a BugReports field set."
      */
     @DefaultMessage("Could not resolve {0}. Please make sure this is an R package project with a BugReports field set.")
     @Key("couldNotResolveIssue")
@@ -2731,7 +2133,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "Unable to Edit".
-     * @return translated "Unable to Edit".
      */
     @DefaultMessage("Unable to Edit")
     @Key("unableToEditTitle")
@@ -2739,7 +2140,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
 
     /**
      * Translated "The options use syntax that is not currently supported by the editing UI. Please edit manually.".
-     * @return translated "The options use syntax that is not currently supported by the editing UI. Please edit manually.".
      */
     @DefaultMessage("The options use syntax that is not currently supported by the editing UI. Please edit manually.")
     @Key("unableToEditMessage")

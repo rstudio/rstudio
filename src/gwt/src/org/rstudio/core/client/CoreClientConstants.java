@@ -962,9 +962,9 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String rpcOverrideErrorMessage(String desktop, String method);
 
     /**
-     * Translated "Unable to establish connection with the session on {0}. Please try logging in again in a new tab, then return to resume your session."
+     * Translated "Unable to establish connection with session on {0}. Please try logging in again in a new tab, then return to resume your session."
      */
-    @DefaultMessage("Unable to establish connection with the session on {0}. Please try logging in again in a new tab, then return to resume your session.")
+    @DefaultMessage("Unable to establish connection with session on {0}. Please try logging in again in a new tab, then return to resume your session.")
     @Key("rpcOverrideErrorMessageServer")
     String rpcOverrideErrorMessageServer(String platform);
 

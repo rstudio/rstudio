@@ -1,5 +1,5 @@
 /*
- * DataViewerConstants.java
+ * RenvConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -21,8 +21,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "Library".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Library")
     @Key("libraryCaption")
@@ -30,8 +28,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "Package".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Package")
     @Key("packageColumnText")
@@ -39,8 +35,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "Library Version".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Library Version")
     @Key("libraryVersionColumnText")
@@ -48,8 +42,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "Lockfile Version".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Lockfile Version")
     @Key("lockfileVersionColumnText")
@@ -57,8 +49,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "Action".
-     *
-     * @return the translated value
      */
     @DefaultMessage("Action")
     @Key("actionVersionColumnText")
@@ -66,8 +56,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "The following packages will be updated in the lockfile.".
-     *
-     * @return the translated value
      */
     @DefaultMessage("The following packages will be updated in the lockfile.")
     @Key("snapshotHeaderLabel")
@@ -75,8 +63,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "The following changes will be made to the project library.".
-     *
-     * @return the translated value
      */
     @DefaultMessage("The following changes will be made to the project library.")
     @Key("restoreHeaderLabel")
@@ -84,8 +70,6 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "[Not installed]".
-     *
-     * @return the translated value
      */
     @DefaultMessage("[Not installed]")
     @Key("libraryVersionNotInstalled")
@@ -93,55 +77,43 @@ public interface RenvConstants extends Messages {
 
     /**
      * Translate "[Not recorded]".
-     *
-     * @return the translated value
      */
     @DefaultMessage("[Not recorded]")
     @Key("lockfileVersionNotRecorded")
     String lockfileVersionNotRecorded();
 
     /**
-     * Translate "Add ''{0}'' [{1}] to the lockfile".
-     *
-     * @return the translated value
+     * Translate "Add {0} {1} to the lockfile".
      */
-    @DefaultMessage("Add ''{0}'' [{1}] to the lockfile")
+    @DefaultMessage("Add {0} {1} to the lockfile")
     @Key("installAction")
     String installAction(String packageName, String libraryVersion);
 
     /**
-     * Translate "Remove ''{0}'' [{1}] from the lockfile".
-     *
-     * @return the translated value
+     * Translate "Remove {0} {1} from the lockfile".
      */
-    @DefaultMessage("Remove ''{0}'' [{1}] from the lockfile")
+    @DefaultMessage("Remove {0} {1} from the lockfile")
     @Key("removeAction")
     String removeAction(String packageName, String lockfileVersion);
 
     /**
-     * Translate "Update ''{0}'' [{1} -> {2}] in the lockfile".
-     *
-     * @return the translated value
+     * Translate "Update {0} [{1} -> {2}] in the lockfile".
      */
-    @DefaultMessage("Update ''{0}'' [{1} -> {2}] in the lockfile")
+    @DefaultMessage("Update {0} [{1} -> {2}] in the lockfile")
     @Key("updateAction")
     String updateAction(String packageName, String lockfileVersion, String libraryVersion);
 
     /**
-     * Translate "Install ''{0}'' [{1}]".
-     *
-     * @return the translated value
+     * Translate "Install {0} {1}".
      */
-    @DefaultMessage("Install ''{0}'' [{1}]")
+    @DefaultMessage("Install {0} {1}")
     @Key("restoreInstallAction")
     String restoreInstallAction(String packageName, String lockfileVersion);
 
     /**
-     * Translate "Remove ''{0}'' [{1}]".
-     *
-     * @return the translated value
+     * Translate "Remove {0} {1}".
      */
-    @DefaultMessage("Remove ''{0}'' [{1}]")
+    @DefaultMessage("Remove {0} {1}")
     @Key("restoreRemoveAction")
     String restoreRemoveAction(String packageName, String libraryfileVersion);
 }
