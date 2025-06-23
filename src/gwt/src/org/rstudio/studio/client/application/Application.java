@@ -69,9 +69,6 @@ import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.common.filetypes.FileType;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -121,11 +118,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
-import elemental2.core.JsArray;
-import elemental2.dom.DataTransfer;
-import elemental2.dom.File;
-import elemental2.dom.FileList;
-import jsinterop.base.Js;
 
 @Singleton
 public class Application implements ApplicationEventHandlers

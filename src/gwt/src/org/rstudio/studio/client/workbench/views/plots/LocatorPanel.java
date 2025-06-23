@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -42,7 +41,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import java.util.ArrayList;
 
 public class LocatorPanel extends LayoutPanel
-   implements Locator.Display, HasSelectionHandlers<Point>
+   implements Locator.Display
 {
    public LocatorPanel()
    {

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.model;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
@@ -27,40 +26,29 @@ import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
-import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.addins.AddinsServerOperations;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.views.PythonServerOperations;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
-import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
-import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
-import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation2.model.Presentation2ServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
@@ -70,29 +58,20 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
-                                                   FilesServerOperations,
                                                    PackagesServerOperations,
-                                                   HelpServerOperations,
                                                    PlotsServerOperations,
                                                    EditServerOperations,
-                                                   SourceServerOperations,
                                                    ChooseFileServerOperations,
-                                                   HistoryServerOperations,
                                                    MirrorsServerOperations,
                                                    GitServerOperations,
                                                    SVNServerOperations,
-                                                   PrefsServerOperations,
                                                    ProjectsServerOperations,
                                                    ProjectTemplateServerOperations,
-                                                   CodeSearchServerOperations,
-                                                   CryptoServerOperations,
                                                    WorkbenchListsServerOperations,
                                                    SpellingServerOperations,
                                                    CompilePdfServerOperations,
                                                    FindInFilesServerOperations,
                                                    SynctexServerOperations,
-                                                   BuildServerOperations,
-                                                   PresentationServerOperations,
                                                    EnvironmentServerOperations,
                                                    DebuggingServerOperations,
                                                    MetaServerOperations,
@@ -101,11 +80,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    RMarkdownServerOperations,
                                                    PanmirrorServerOperations,
                                                    DependencyServerOperations,
-                                                   PackratServerOperations,
                                                    RenvServerOperations,
-                                                   QuartoServerOperations,
                                                    MarkersServerOperations,
-                                                   LintServerOperations,
                                                    RoxygenServerOperations,
                                                    SnippetServerOperations,
                                                    AddinsServerOperations,

@@ -17,8 +17,6 @@ package org.rstudio.core.client.cellview;
 import java.util.List;
 
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.ValueUpdater;

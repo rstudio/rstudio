@@ -24,10 +24,12 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/collection/Position.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Header.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -308,7 +310,37 @@ std::queue<std::string> s_pendingResponses;
 // Track documents Copilot knows about via textDocument/didOpen. Remove them when
 // textDocument/didClose is sent (or the agent is stopped).
 //
-std::unordered_set<std::string> s_knownDocuments;
+// Also tracks an incrementing version number for each document.
+//
+std::unordered_map<std::string, int> s_knownDocuments;
+
+// Set/update the version for a given URI. IMPORTANT: will increment the version number each time
+// it is called.
+int updateVersionForDocument(const std::string& uri)
+{
+   // If the document is already known, increment its version.
+   auto it = s_knownDocuments.find(uri);
+   if (it != s_knownDocuments.end())
+   {
+      it->second++;
+      return it->second;
+   }
+   
+   // Otherwise, add it with initial version
+   s_knownDocuments[uri] = kCopilotDefaultDocumentVersion;
+   return s_knownDocuments[uri];
+}
+
+int currentVersionForDocument(const std::string& uri)
+{
+   // If the document is known, return its version.
+   auto it = s_knownDocuments.find(uri);
+   if (it != s_knownDocuments.end())
+      return it->second;
+
+   // Otherwise, return the default version.
+   return kCopilotDefaultDocumentVersion;
+}
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
@@ -939,11 +971,6 @@ void onExit(int status)
 
 } // end namespace agent
 
-// foward declaration
-void didChangeNonIncremental(const std::string& uri,
-                             const std::string& languageId,
-                             int version,
-                             const std::string& contents);
 
 void stopAgent()
 {
@@ -1183,26 +1210,23 @@ std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocume
 
 void docOpened(const std::string& uri,
                const std::string& languageId,
-               int version,
                const std::string& contents)
 {
    if (s_knownDocuments.count(uri) > 0)
    {
-      // already told Copilot about this document, so just update it
-      didChangeNonIncremental(uri, languageId, version, contents);
+      // already told Copilot about this document, so skip this
       return;
    }
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
+   textDocumentJson["version"] = updateVersionForDocument(uri);
    textDocumentJson["text"] = contents;
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
 
-   s_knownDocuments.insert(uri);
    sendNotification("textDocument/didOpen", paramsJson);
 }
 
@@ -1234,35 +1258,47 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    
    docOpened(uriFromDocument(pDoc),
              languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
              contentsFromDocument(pDoc));
 }
 
-// Send a textDocument/didChange notification with entire document contents (vs. deltas).
-void didChangeNonIncremental(const std::string& uri,
-                             const std::string& languageId,
-                             int version,
-                             const std::string& contents)
+// Send a textDocument/didChange notification with diff
+void didChangeIncremental(const std::string& uri,
+                          const std::string& languageId,
+                          collection::Range range,
+                          const std::string& text)
 {
    if (s_knownDocuments.count(uri) == 0)
    {
-      // unknown document, open it instead
-      docOpened(uri, languageId, version, contents);
+      DLOG("Ignoring diff for unknown document '{}'.", uri);
+      return;
    }
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
    textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = version;
-
-   json::Object contentChangeJson;
-   contentChangeJson["text"] = contents;
-
-   json::Array contentChangesJsonArray;
-   contentChangesJsonArray.push_back(contentChangeJson);
+   textDocumentJson["version"] = updateVersionForDocument(uri);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
+
+   json::Object startJson;
+   startJson["line"] = static_cast<uint64_t>(range.begin().row);
+   startJson["character"] = static_cast<uint64_t>(range.begin().column);
+
+   json::Object endJson;
+   endJson["line"] = static_cast<uint64_t>(range.end().row);
+   endJson["character"] = static_cast<uint64_t>(range.end().column);
+
+   json::Object rangeJson;
+   rangeJson["start"] = startJson;
+   rangeJson["end"] = endJson;
+
+   json::Object contentChangeJson;
+   contentChangeJson["range"] = rangeJson;
+   contentChangeJson["text"] = text;
+
+   json::Array contentChangesJsonArray;
+   contentChangesJsonArray.push_back(contentChangeJson);
    paramsJson["contentChanges"] = contentChangesJsonArray;
 
    sendNotification("textDocument/didChange", paramsJson);
@@ -1297,7 +1333,6 @@ void indexFile(const core::FileInfo& info)
    
    docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
              languageId,
-             kCopilotDefaultDocumentVersion,
              contents);
 }
 
@@ -1330,11 +1365,12 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    if (!isIndexableDocument(pDoc))
       return;
-   
-   // Synchronize document contents with Copilot
+
+   // We generally handle changes to the document via onSourceFileDiff(), but in the case 
+   // where a new document is created but not yet saved, we get this onDocUpdated() call
+   // and use it to tell Copilot about the new document.
    docOpened(uriFromDocument(pDoc),
              languageIdFromDocument(pDoc),
-             kCopilotDefaultDocumentVersion,
              contentsFromDocument(pDoc));
 }
 
@@ -1621,6 +1657,32 @@ void onShutdown(bool)
    s_agentPid = -1;
 }
 
+void onSourceFileDiff(module_context::DocumentDiff diff)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   Error error = source_database::get(diff.docId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // Convert from absolute location in the file to a line/column range.
+   collection::Range range(
+         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset), 
+         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset + diff.length));
+
+   // Notify Copilot of the change
+   didChangeIncremental(uriFromDocument(pDoc),
+                        languageIdFromDocument(pDoc),
+                        range,
+                        diff.replacement);
+}
+
 // Primarily intended for debugging / exploration.
 SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
 {
@@ -1783,8 +1845,9 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   docJson["uri"] = uriFromDocument(pDoc);
-   docJson["version"] = kCopilotDefaultDocumentVersion;
+   auto uri = uriFromDocument(pDoc);
+   docJson["uri"] = uri;
+   docJson["version"] = currentVersionForDocument(uri);
 
    json::Object contextJson;
    contextJson["triggerKind"] = autoInvoked ? 
@@ -2036,6 +2099,7 @@ Error initialize()
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
+   events().onSourceFileDiff.connect(onSourceFileDiff);
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while

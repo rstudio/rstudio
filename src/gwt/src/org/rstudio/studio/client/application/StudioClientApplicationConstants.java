@@ -1485,6 +1485,33 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String updateDisabledForVersionText(String version);
 
     /**
+     * Translated "Stop Ignoring Updates".
+     *
+     * @return translated "Stop Ignoring Updates"
+     */
+    @DefaultMessage("Stop Ignoring Updates")
+    @Key("stopIgnoringUpdatesButtonLabel")
+    String stopIgnoringUpdatesButtonLabel();
+
+    /**
+     * Translated "RStudio will automatically check for updates the next time it starts.".
+     *
+     * @return translated "RStudio will automatically check for updates the next time it starts."
+     */
+    @DefaultMessage("RStudio will automatically check for updates the next time it starts.")
+    @Key("autoUpdateReenabledMessage")
+    String autoUpdateReenabledMessage();
+
+    /**
+     * Translated "Update No Longer Ignored".
+     *
+     * @return translated "Update No Longer Ignored"
+     */
+    @DefaultMessage("Update No Longer Ignored")
+    @Key("autoUpdateReenabledCaption")
+    String autoUpdateReenabledCaption();
+
+    /**
      * Translated "Danger!".
      *
      * @return translated "Danger!"

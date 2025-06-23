@@ -77,7 +77,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasContextMenuHandlers;
-import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -93,7 +92,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasLineWidgetsChangedHandlers,
                                     IsWidget,
                                     HasContextMenuHandlers,
-                                    HasFocusHandlers,
                                     HasKeyDownHandlers,
                                     HasRenderFinishedHandlers,
                                     HasDocumentChangedHandlers,

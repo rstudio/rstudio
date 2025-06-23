@@ -153,18 +153,18 @@
       return(installedPackages)
    
    # rename columns for conformity of Packrat stuff
-   names(lockfilePackages) <- c("Package", "packrat.version", "packrat.source")
+   names(lockfilePackages) <- c("name", "packrat.version", "packrat.source")
 
    # note which packages are in project library
    projectLibrary <- renv:::renv_paths_library(project = project)
    installedPackages[["in.project.library"]] <-
-      installedPackages$LibraryAbsolute == projectLibrary
+      installedPackages[["library_absolute"]] == projectLibrary
 
    # merge together
    merge.data.frame(
       x = installedPackages,
       y = lockfilePackages,
-      by = "Package",
+      by = "name",
       all.x = TRUE,
       all.y = TRUE
    )

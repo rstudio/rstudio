@@ -41,7 +41,7 @@ public class ToolbarButton extends FocusWidget
    // button with no tooltip/accessibility text
    public static String NoTitle = null;
    
-   private class SimpleHasHandlers extends HandlerManager implements HasHandlers
+   private class SimpleHasHandlers extends HandlerManager
    {
       private SimpleHasHandlers()
       {

@@ -21,7 +21,6 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequestContext;
@@ -32,7 +31,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import jsinterop.base.Js;
 
 public class YamlCompletionManager extends CompletionManagerBase
-                                       implements CompletionManager
                                        
 {
    // Use a funstructor to create an instance in order to ensure toggleHandlers()

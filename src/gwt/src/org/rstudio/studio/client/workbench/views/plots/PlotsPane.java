@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.plots;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -44,8 +43,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
 
 import java.util.Iterator;
 
-public class PlotsPane extends WorkbenchPane implements Plots.Display,
-      HasResizeHandlers
+public class PlotsPane extends WorkbenchPane implements Plots.Display
 {
    @Inject
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,

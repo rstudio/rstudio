@@ -46,7 +46,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -54,8 +53,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
-                                  implements RequiresResize,
-                                             ChunkSatelliteView,
+                                  implements ChunkSatelliteView,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
                                              ChunkSatelliteCacheEditorStyleEvent.Handler,
                                              ChunkPlotRefreshedEvent.Handler,

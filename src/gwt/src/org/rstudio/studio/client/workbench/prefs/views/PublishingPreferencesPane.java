@@ -78,7 +78,7 @@ public class PublishingPreferencesPane extends PreferencesPane
 
       String accountListLabel = constants_.accountListLabel();
       // The preferences pane does not filter connected accounts
-      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, true, true, accountListLabel);
+      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, true, accountListLabel);
       accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
@@ -199,9 +199,6 @@ public class PublishingPreferencesPane extends PreferencesPane
          new HelpButton("rstudio_connect", constants_.checkBoxWithHelpTitle()));
       lessSpaced(rsconnectPanel);
 
-      final CheckBox chkEnablePositCloud = checkboxPref(constants_.chkEnableCloudLabel(),
-         userPrefs_.enableCloudPublishUi());
-
       add(headerLabel(constants_.settingsHeaderLabel()));
       CheckBox chkEnablePublishing = checkboxPref(constants_.chkEnablePublishingLabel(),
             userState_.showPublishUi());
@@ -212,16 +209,12 @@ public class PublishingPreferencesPane extends PreferencesPane
             reloadRequired_ = true;
             rsconnectPanel.setVisible(
                   RSConnect.showRSConnectUI() && event.getValue());
-            chkEnablePositCloud.setVisible(event.getValue());
-
          }
       });
       add(chkEnablePublishing);
 
       if (RSConnect.showRSConnectUI())
          add(rsconnectPanel);
-
-      add(chkEnablePositCloud);
 
       add(checkboxPref(constants_.showPublishDiagnosticsLabel(),
             userPrefs_.showPublishDiagnostics()));
@@ -406,8 +399,7 @@ public class PublishingPreferencesPane extends PreferencesPane
 
       reconnectButton_.setEnabled(
             accountList_.getSelectedAccount() != null &&
-            !accountList_.getSelectedAccount().isShinyAppsAccount() &&
-            !accountList_.getSelectedAccount().isCloudAccount());
+            !accountList_.getSelectedAccount().isShinyAppsAccount());
    }
 
    private final GlobalDisplay display_;

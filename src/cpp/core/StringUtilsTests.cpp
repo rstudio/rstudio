@@ -175,6 +175,182 @@ test_context("String formatting")
    }
 }
 
+test_context("Position conversion")
+{
+   test_that("Position in an empty string is always 0,0")
+   {
+      std::string text("");
+      collection::Position pos = offsetToPosition(text, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(text, 100);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+   }
+
+   test_that("Position can be computed for a single-line string")
+   {
+      std::string text("012345");
+      collection::Position pos = offsetToPosition(text, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(text, 4);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(text, 100);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 6);
+   }
+
+   test_that("Position can be computed for a two-line string")
+   {
+      std::string textPosix("0123456\n89");
+      collection::Position pos = offsetToPosition(textPosix, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textPosix, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      pos = offsetToPosition(textPosix, 8);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      std::string textWindows("0123456\r\n90");
+      pos = offsetToPosition(textWindows, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textWindows, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      pos = offsetToPosition(textWindows, 9);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textWindows, 10);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 1);
+
+      std::string textOldMac("0123456\r89");
+      pos = offsetToPosition(textOldMac, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textOldMac, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      pos = offsetToPosition(textOldMac, 8);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textOldMac, 9);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 1);
+   }
+
+   test_that("Position can be computed for a multi-line string")
+   {
+      std::string textPosix("01234\n67\n9012345\n");
+      collection::Position pos = offsetToPosition(textPosix, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textPosix, 4);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(textPosix, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      pos = offsetToPosition(textPosix, 6);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textPosix, 7);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 1);
+
+      pos = offsetToPosition(textPosix, 13);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(textPosix, 16);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 7);
+
+      std::string textWindows("01234\r\n78\r\n1234567\r\n");
+      pos = offsetToPosition(textWindows, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textWindows, 4);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(textWindows, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      // ensure we can point at the \n in a \r\n sequence
+      pos = offsetToPosition(textWindows, 6);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 6);
+
+      pos = offsetToPosition(textWindows, 7);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textWindows, 13);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 2);
+
+      pos = offsetToPosition(textWindows, 18);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 7);
+
+      pos = offsetToPosition(textWindows, 19);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 8);
+
+      std::string textOldMac("01234\r67\r9012345\r");
+      pos = offsetToPosition(textOldMac, 0);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textOldMac, 4);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(textOldMac, 5);
+      expect_equal(pos.row, 0);
+      expect_equal(pos.column, 5);
+
+      pos = offsetToPosition(textOldMac, 6);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 0);
+
+      pos = offsetToPosition(textOldMac, 7);
+      expect_equal(pos.row, 1);
+      expect_equal(pos.column, 1);
+
+      pos = offsetToPosition(textOldMac, 13);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 4);
+
+      pos = offsetToPosition(textOldMac, 16);
+      expect_equal(pos.row, 2);
+      expect_equal(pos.column, 7);
+   }
+}
+
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio

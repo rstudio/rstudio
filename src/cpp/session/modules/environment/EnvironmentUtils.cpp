@@ -67,14 +67,6 @@ bool isUnevaluatedPromise (SEXP var)
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
 }
 
-bool hasAltrepCapability()
-{
-   // Get the current version. If working with R < 3.5.0, then we aren't working with an ALTREP
-   // object (as they were introduced in 3.5.0)
-   r_util::RVersionNumber version = r::version_info::currentRVersion();
-   return !(version < r_util::RVersionNumber(3, 5, 0));
-}
-
 bool isAltrepImpl(SEXP var)
 {
    // Reject nulls
@@ -90,9 +82,6 @@ bool isAltrepImpl(SEXP var)
 
 bool isAltrep(SEXP var)
 {
-   if (!hasAltrepCapability())
-      return false;
-   
    return isAltrepImpl(var);
 }
 
@@ -131,10 +120,6 @@ bool hasAltrepImpl(SEXP var, std::set<SEXP>& visited, unsigned maxDepth)
 
 bool hasAltrep(SEXP var)
 {
-   // ensure this version of R supports ALTREP
-   if (!hasAltrepCapability())
-      return false;
-
    // recursively scan for ALTREP objects
    std::set<SEXP> visited;
    return hasAltrepImpl(var, visited, MAX_ALTREP_DEPTH);
@@ -216,11 +201,14 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       SEXP description;
       json::Value val;
       r::sexp::Protect protect;
-      Error error = r::exec::RFunction(".rs.describeObject",
-                  env, var.first, !hasAltrep(varSEXP))
-                  .call(&description, &protect);
+      Error error = r::exec::RFunction(".rs.describeObject")
+         .addParam(env)
+         .addParam(var.first)
+         .call(&description, &protect);
       if (error)
+      {
          LOG_ERROR(error);
+      }
       else
       {
          error = r::json::jsonValueFromObject(description, &val);
@@ -230,6 +218,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
             return val;
       }
    }
+
    return std::move(varJson);
 }
 

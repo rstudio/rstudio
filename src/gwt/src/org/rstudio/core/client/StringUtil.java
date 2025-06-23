@@ -186,11 +186,16 @@ public class StringUtil
    // than that.
    public static String formatFileSize(int size)
    {
+      return formatFileSize(size, 1024);
+   }
+
+   public static String formatFileSize(int size, int bytesPerKilo)
+   {
       int i = 0, divisor = 1;
 
-      for (; nativeDivide(size, divisor) > 1024 && i < LABELS.length; i++)
+      for (; nativeDivide(size, divisor) > bytesPerKilo && i < LABELS.length; i++)
       {
-         divisor *= 1024;
+         divisor *= bytesPerKilo;
       }
 
       return FORMAT.format((double)size / divisor) + " " + LABELS[i];

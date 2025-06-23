@@ -14,13 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -45,6 +44,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -100,8 +100,7 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
-         pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -185,13 +184,6 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
       pUserState_.get().writeState();
    }
 
-   @Override
-   public void onEnablePositCloudUI(EnableRStudioConnectUIEvent event)
-   {
-      pUserPrefs_.get().enableCloudPublishUi().setGlobalValue(event.getCloudEnable());
-      pUserPrefs_.get().writeUserPrefs();
-   }
-
    // Private methods --------------------------------------------------------
 
    private void showShinyAppsDialog(
@@ -234,7 +226,6 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             withCloudOption &&
                SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
             pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
-            pUserPrefs_.get().enableCloudPublishUi().getGlobalValue(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override

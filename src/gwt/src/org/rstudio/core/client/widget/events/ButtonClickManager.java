@@ -22,14 +22,13 @@ import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Helper for extending UI elements that activate via click to also
  * activate via spacebar.
  */
-public class ButtonClickManager extends HandlerManager implements HasHandlers
+public class ButtonClickManager extends HandlerManager
 {
    public ButtonClickManager(Widget widget, ClickHandler clickHandler)
    {

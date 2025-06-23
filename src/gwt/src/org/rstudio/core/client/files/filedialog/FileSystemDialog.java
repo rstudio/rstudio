@@ -40,14 +40,11 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class FileSystemDialog extends ModalDialogBase
-      implements SelectionCommitEvent.Handler<FileSystemItem>,
-                 SelectionHandler<FileSystemItem>,
-                 ProgressIndicator,
+      implements ProgressIndicator,
                  FileSystemContext.Callbacks,
                  FileBrowserWidget.Host
 {

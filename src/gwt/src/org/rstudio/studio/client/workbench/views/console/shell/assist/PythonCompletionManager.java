@@ -36,7 +36,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 
 public class PythonCompletionManager extends CompletionManagerBase
-                                     implements CompletionManager
 {
    // Use a funstructor to create an instance in order to ensure toggleHandlers()
    // is invoked after the object is fully instantiated
