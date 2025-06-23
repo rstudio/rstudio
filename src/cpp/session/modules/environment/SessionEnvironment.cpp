@@ -1873,14 +1873,12 @@ double obj_size_tree(SEXP x,
    double size = 0;
 
    // Handle ALTREP objects
-   if (ALTREP(x))
+   if (r::sexp::isAltrep(x))
    {
-      SEXP klass = ALTREP_CLASS(x);
-
       size += 3 * sizeof(SEXP);
-      size += obj_size_tree(klass, base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(R_altrep_data1(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(R_altrep_data2(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       return size;
    }
 
@@ -2030,9 +2028,9 @@ double obj_size_tree(SEXP x,
    case EXTPTRSXP:
       size += sizeof_node;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += sizeof(void*); // the actual pointer
-      size += obj_size_tree(EXTPTR_PROT(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(EXTPTR_TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += sizeof(void*); // the actual pointer; lives in the CAR of the node
+      size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    case S4SXP:
