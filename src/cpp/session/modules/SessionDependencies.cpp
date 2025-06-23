@@ -626,10 +626,10 @@ Error installDependencies(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
 
    std::string jobId;
-   error = jobs::startScriptJob(installJob, [&]()
+   error = jobs::startScriptJob(installJob, []()
    {
       // Call R script job callback
-      error = r::exec::RFunction(".rs.onInstallScriptJobFinished").call();
+      Error error = r::exec::RFunction(".rs.onInstallScriptJobFinished").call();
       if (error)
          LOG_ERROR(error);
 
