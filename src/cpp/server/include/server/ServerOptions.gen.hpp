@@ -297,7 +297,6 @@ public:
    int authTimeoutMinutes() const { return authTimeoutMinutes_; }
    bool authEncryptPassword() const { return authEncryptPassword_; }
    std::string authLoginPageHtml() const { return authLoginPageHtml_; }
-   std::string authRdpLoginPageHtml() const { return authRdpLoginPageHtml_; }
    std::string authRequiredUserGroup() const { return authRequiredUserGroup_; }
    unsigned int authMinimumUserId() const { return authMinimumUserId_; }
    std::string authPamHelperPath() const { return authPamHelperPath_; }
@@ -356,7 +355,7 @@ protected:
    int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
-   std::string authRdpLoginPageHtml_;
+   std::string deprecatedAuthRdpLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;

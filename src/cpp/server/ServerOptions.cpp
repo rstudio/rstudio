@@ -356,15 +356,6 @@ ProgramStatus Options::read(int argc,
          LOG_ERROR(error);
    }
 
-   // read rdp auth login html
-   FilePath rdpLoginPageHtmlPath(authRdpLoginPageHtml);
-   if (rdpLoginPageHtmlPath.exists())
-   {
-      Error error = core::readStringFromFile(rdpLoginPageHtmlPath, &authRdpLoginPageHtml_);
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // trim any whitespace in allowed origins
    for (std::string& origin : wwwAllowedOrigins)
    {
