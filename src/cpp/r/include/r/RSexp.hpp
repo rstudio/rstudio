@@ -115,6 +115,7 @@ bool isEnvironment(SEXP object);
 bool isPrimitiveEnvironment(SEXP object);
 bool isNumeric(SEXP object);
 bool isUserDefinedDatabase(SEXP object);
+bool isAltrep(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);

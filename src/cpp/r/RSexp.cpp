@@ -742,6 +742,12 @@ bool isUserDefinedDatabase(SEXP object)
    return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
 }
 
+bool isAltrep(SEXP object)
+{
+   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(object);
+   return info.alt;
+}
+
 bool isNumeric(SEXP object)
 {
    return Rf_isNumeric(object);
