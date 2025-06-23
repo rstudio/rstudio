@@ -16,12 +16,7 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_HPP
 #define SERVER_CORE_SERVER_DATABASE_HPP
 
-#include <boost/optional.hpp>
-
-#include <core/Database.hpp>
-
-#include <shared_core/Error.hpp>
-#include <shared_core/system/User.hpp>
+#include <server_core/ServerDatabaseOverlay.hpp>
 
 namespace rstudio {
 namespace server_core {
@@ -46,11 +41,6 @@ boost::optional<core::database::ConnectionOptions> getConnectionOptions();
 core::Error initialize(const std::string& databaseConfigFile = std::string(),
                        bool updateSchema = false,
                        const boost::optional<core::system::User>& databaseFileUser = boost::none);
-
-// Execute the database command using the underlying configuration
-core::Error execute(const std::string& databaseConfigFile,
-                    const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command);
 
 boost::shared_ptr<core::database::IConnection> getConnection();
 bool getConnection(const boost::posix_time::time_duration& waitTime,
