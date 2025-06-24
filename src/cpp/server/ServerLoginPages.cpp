@@ -32,7 +32,6 @@
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
 const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
-const char * const kIsRStudioProDesktop = "isRdp";
 const char * const kLogoHtml = "logoHtml";
 
 namespace rstudio {
@@ -81,7 +80,6 @@ void fillLoginFields(const core::http::Request& request,
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
    // include custom login page html
-   bool isRdp = request.queryParamValue(kIsRStudioProDesktop) == "1";
    boost::format logoImgHtmlFormat(R"DELIM(
 <picture>
    <source
@@ -89,23 +87,11 @@ void fillLoginFields(const core::http::Request& request,
       media="(prefers-color-scheme: dark)"/>
    <img src="images/Posit-ProductLogo_rst-server-full-color.svg" height="27" alt="%1%"/>
 </picture>)DELIM");
-   if (!isRdp)
-   {
-      variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+   variables[kLoginPageHtml] = server::options().authLoginPageHtml();
 
-      // render logo with links
-      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "Posit Software PBC (goes to external site)");
-      variables[kLogoHtml] = R"DELIM(<a href="https://posit.co/">)DELIM" + logoImgHtml + "</a>";
-   }
-   else
-   {
-      variables[kLoginPageHtml] = server::options().authRdpLoginPageHtml();
-
-      // render logo without links - user should not be able
-      // to freely navigate in RDP
-      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo");
-      variables[kLogoHtml] = logoImgHtml;
-   }
+   // render logo with links
+   std::string logoImgHtml = boost::str(logoImgHtmlFormat % "Posit Software PBC (goes to external site)");
+   variables[kLogoHtml] = R"DELIM(<a href="https://posit.co/">)DELIM" + logoImgHtml + "</a>";
 }
 
 void loadLoginPage(const core::http::Request& request,
