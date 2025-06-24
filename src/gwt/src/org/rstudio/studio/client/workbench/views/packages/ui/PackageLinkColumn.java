@@ -164,7 +164,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
    interface IconTemplate extends SafeHtmlTemplates
    {
-      @Template("<img class=\"{0}\" title=\"{1}\" src=\"{2}\"></img>")
+      @Template("<img class=\"rstudio_vulnerability_icon {0}\" title=\"{1}\" src=\"{2}\"></img>")
       SafeHtml render(String className, String hoverInfo, SafeUri imgUri);
    }
 
