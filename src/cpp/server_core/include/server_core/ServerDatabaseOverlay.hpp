@@ -32,7 +32,7 @@ namespace overlay {
 // Execute the database command using the underlying configuration
 core::Error execute(const std::string& databaseConfigFile,
                     const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command);
+                    std::string_view command);
 
 } // namespace overlay
 } // namespace database

@@ -102,32 +102,32 @@ struct ConnectionPoolSizeVisitor : boost::static_visitor<int>
 
 } // anonymous namespace
 
-void determineConnectionPoolSize(ConnectionOptions& options, size_t& poolSize, std::string& source)
+void determineConnectionPoolSize(const ConnectionOptions& options, size_t& rOutPoolSize, std::string& rOutSource)
 {
    ConnectionPoolSizeVisitor visitor;
-   poolSize = boost::apply_visitor(visitor, options);
+   rOutPoolSize = boost::apply_visitor(visitor, options);
 
-   if (poolSize == 0)
+   if (rOutPoolSize == 0)
    {
       // If no size specified in config file, start with a connection pool with one connection per
       // logical CPU.
-      poolSize = boost::thread::hardware_concurrency();
-      source = "logical CPU count";
+      rOutPoolSize = boost::thread::hardware_concurrency();
+      rOutSource = "logical CPU count";
 
-      if (poolSize == 0)
+      if (rOutPoolSize == 0)
       {
          // Not able to determine number of CPUs; use the default pool minimum size.
-         poolSize = kDefaultMinPoolSize;
-         source = "default minimum";
+         rOutPoolSize = kDefaultMinPoolSize;
+         rOutSource = "default minimum";
       }
 
-      if (poolSize > kDefaultMaxPoolSize)
+      if (rOutPoolSize > kDefaultMaxPoolSize)
       {
          // Some machines have a very large number of logical CPUs (128 or more). A pool that large can
          // exhaust the connection limit on the database, so cap the pool size to be gentler on the
          // database.
-         poolSize = kDefaultMaxPoolSize;
-         source = "default maximum with " + safe_convert::numberToString(poolSize) + " CPUs";
+         rOutPoolSize = kDefaultMaxPoolSize;
+         rOutSource = "default maximum with " + safe_convert::numberToString(rOutPoolSize) + " CPUs";
       }
    }
 }
@@ -186,7 +186,7 @@ void validateMinimumPostgreSqlVersion(boost::shared_ptr<IConnection> pConnection
 Error readOptions(const FilePath& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
                   ConnectionOptions* pOptions,
-                  const std::string forceDatabaseProvider = "")
+                  std::string_view forceDatabaseProvider)
 {
    if (databaseConfigFile.isEmpty())
    {
@@ -372,7 +372,7 @@ Error readOptions(const FilePath& databaseConfigFile,
    return Success();
 }
 
-core::database::Driver getConfiguredDriver(ConnectionOptions options) {
+core::database::Driver getConfiguredDriver(const ConnectionOptions& options) {
    ConfiguredDriverVisitor visitor;
    return boost::apply_visitor(visitor, options);
 }

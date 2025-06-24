@@ -87,14 +87,14 @@ FilePath getDatabaseFilePath(const std::string& databaseConfigFile)
 
 } // anonymous namespace
 
-core::database::Driver getConfiguredDriver(ConnectionOptions options) {
+core::database::Driver getConfiguredDriver(const ConnectionOptions& options) {
    return utils::getConfiguredDriver(options);
 }
 
 core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
 {
    FilePath optionsFile = getDatabaseFilePath(databaseConfigFile);
-   return utils::getConfiguredDriver(databaseConfigFile);
+   return utils::getConfiguredDriver(optionsFile);
 }
 
 boost::optional<core::database::ConnectionOptions> getConnectionOptions()
@@ -105,7 +105,7 @@ boost::optional<core::database::ConnectionOptions> getConnectionOptions()
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
                   ConnectionOptions* pOptions,
-                  const std::string forceDatabaseProvider)
+                  std::string_view forceDatabaseProvider)
 {
    FilePath optionsFile = getDatabaseFilePath(databaseConfigFile);
    return utils::readOptions(optionsFile, databaseFileUser, pOptions, forceDatabaseProvider);
@@ -166,7 +166,7 @@ Error initialize(const std::string& databaseConfigFile,
 // Execute the database command using the underlying configuration
 core::Error execute(const std::string& databaseConfigFile,
                     const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command)
+                    std::string_view command)
 {
    return overlay::execute(databaseConfigFile, databaseFileUser, command);
 }

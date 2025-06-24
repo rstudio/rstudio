@@ -16,6 +16,7 @@
 #ifndef SERVER_CORE_DATABASE_UTILS_HPP
 #define SERVER_CORE_DATABASE_UTILS_HPP
 
+#include <string_view>
 #include <boost/optional.hpp>
 
 #include <core/Database.hpp>
@@ -34,11 +35,18 @@ namespace utils {
 core::Error readOptions(const core::FilePath& databaseConfigFile,
                         const boost::optional<core::system::User>& databaseFileUser,
                         core::database::ConnectionOptions* pOptions,
-                        const std::string forceDatabaseProvider);
-                        
-void determineConnectionPoolSize(core::database::ConnectionOptions& options, size_t& poolSize, std::string& source);
+                        std::string_view forceDatabaseProvider = "");
+
+/**
+ * Use the provided ConnectionOptions object to determine the connection pool size. 
+ * 
+ * @param options The connection options to use.
+ * @param rOutPoolSize The output variable to store the determined pool size.
+ * @param rOutSource The output variable to store the source used to determine the pool size (for logging).
+ */
+void determineConnectionPoolSize(const core::database::ConnectionOptions& options, size_t& rOutPoolSize, std::string& rOutSource);
 void validateMinimumPostgreSqlVersion(boost::shared_ptr<core::database::IConnection> pConnection);
-core::database::Driver getConfiguredDriver(core::database::ConnectionOptions options);
+core::database::Driver getConfiguredDriver(const core::database::ConnectionOptions& options);
 core::database::Driver getConfiguredDriver(const core::FilePath& databaseConfigFile);
 
 } // namespace utils
