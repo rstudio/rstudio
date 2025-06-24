@@ -30,7 +30,7 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Package not found."
      */
-    @DefaultMessage("Package not found")
+    @DefaultMessage("Package not found.")
     @Key("noPackage")
     String noPackage();
 
