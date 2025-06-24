@@ -392,7 +392,10 @@
             "name": "auth-rdp-login-page-html",
             "tempName": "pAuthRdpLoginPageHtml",
             "tempType": "string",
-            "memberName": "authRdpLoginPageHtml_",
+            "memberName": "deprecatedAuthRdpLoginPageHtml_",
+            "isDeprecated":true,
+            "isHidden": true,
+            "skipAccessorGeneration": true,
             "type": "string",
             "defaultValue": "/etc/rstudio/rdplogin.html",
             "description": "The path to a file containing additional HTML customization for the login page, as seen by RDP users."
