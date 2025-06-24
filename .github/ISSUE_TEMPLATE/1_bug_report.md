@@ -8,7 +8,8 @@ assignees: ''
 ---
 
 <!--
-IMPORTANT: Please fill out this template fully! Failure to do so will result in the issue being closed automatically.
+
+IMPORTANT: Please provide a reproducible example! This can be a snippet of code, or set of actions, that we can use to reproduce the issue you are encountering. We are typically unable to fix issues that we cannot reproduce locally -- if we can reproduce the issue you are encountering on our own machines, then we are much more likely to be able to fix the issue.
 
 This issue tracker is for bugs and feature requests in the RStudio IDE. If you're having trouble with R itself or an R package, see https://www.r-project.org/help.html, and if you want to ask a question rather than report a bug, go to https://forum.posit.co/. Finally, if you use RStudio Server Pro, get in touch with Posit Support at support@posit.co.
 
@@ -27,9 +28,6 @@ This issue tracker is for bugs and feature requests in the RStudio IDE. If you'r
 
 ### Describe the behavior you expected
 
-### QA Notes
-
-> Once you have opened a PR, add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the original description.
 
 <!-- 
 Please keep the below portion in your issue, and check `[x]` the applicable boxes.
