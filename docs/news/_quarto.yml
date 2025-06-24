@@ -34,16 +34,14 @@ website:
 
   page-footer:
     left: |
-      Copyright © 2011-2025 Posit Software, PBC, formerly RStudio, PBC. All Rights Reserved.
+      Copyright © 2011-2025 Posit Software, PBC. All Rights Reserved.
     center: |
        RStudio & Posit Workbench Release Notes
     right:
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
-      - icon: lightbulb-fill
       - text: '<a href="#" id="open_preferences_center" title="Manage your cookie preferences"><i class="bi bi-cookie"></i></i></a>'
         aria-label: 'Cookie Prefs'
-        href: https://solutions.posit.co
       - text: "<img src='/images/posit-icon-fullcolor.svg' id='footer-right-posit-logo'>"
         href: "https://posit.co"
         
