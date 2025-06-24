@@ -40,7 +40,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Please quit any unused running sessions and try again, or contact your administrator to update your license."
      */
-    @DefaultMessage("{0}\\n\\n Please quit any unused running sessions and try again, or contact your administrator to update your license.")
+    @DefaultMessage("{0}\n\nPlease quit any unused running sessions and try again, or contact your administrator to update your license.")
     @Key("quitRunningSessionsMessage")
     String quitRunningSessionsMessage(String userMsg);
 
@@ -229,7 +229,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R is not responding to your request to interrupt processing so to stop the current operation you may need to terminate R entirely.\n\n{0}\n\n Do you want to terminate R now?"
      */
-    @DefaultMessage("R is not responding to your request to interrupt processing so to stop the current operation you may need to terminate R entirely.\\n\\n{0}\\n\\n Do you want to terminate R now?")
+    @DefaultMessage("R is not responding to your request to interrupt processing so to stop the current operation you may need to terminate R entirely.\n\n{0}\n\n Do you want to terminate R now?")
     @Key("terminationDialog")
     String terminationDialog(String terminationMsg);
 
@@ -355,7 +355,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Restarting R.."
      */
-    @DefaultMessage("Restarting R..")
+    @DefaultMessage("Restarting R...")
     @Key("restartingRMessage")
     String restartingRMessage();
 
@@ -724,7 +724,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
+    @DefaultMessage("Ok")
     @Key("okBtn")
     String okBtn();
 
@@ -733,7 +733,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Manage License..."
      */
-    @DefaultMessage("Manage License...")
+    @DefaultMessage("Manage License")
     @Key("manageLicenseBtn")
     String manageLicenseBtn();
 
@@ -922,7 +922,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The previous R session was abnormally terminated due to an unexpected crash.\n\nYou may have lost workspace data as a result of this crash."
      */
-    @DefaultMessage("The previous R session was abnormally terminated due to an unexpected crash.\\n\\nYou may have lost workspace data as a result of this crash.")
+    @DefaultMessage("The previous R session was abnormally terminated due to an unexpected crash.\n\nYou may have lost workspace data as a result of this crash.\n\nRStudio may not have restored the previously active project as a precaution. You may switch back to it using the Projects menu.")
     @Key("previousRSessionsMessage")
     String previousRSessionsMessage();
 
@@ -1472,7 +1472,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      * @return translated "Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available."
      */
     @DefaultMessage("Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.")
-    @Key("visitWebsiteForNewVersion")
+    @Key("visitWebsiteForNewVersionText")
     String visitWebsiteForNewVersionText();
 
     /**
