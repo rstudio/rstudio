@@ -30,7 +30,7 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "visual editor {0}"
      */
-    @DefaultMessage("visual editor {0} ")
+    @DefaultMessage("visual editor {0}")
     @Key("visualEditorLabel")
     String visualEditorLabel(String menuText);
 
@@ -1219,7 +1219,7 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Default"
      */
-    @DefaultMessage("default")
+    @DefaultMessage("Default")
     @Key("defaultAlignLabel")
     String defaultAlignLabel();
     

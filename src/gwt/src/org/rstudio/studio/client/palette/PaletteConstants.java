@@ -1,5 +1,5 @@
 /*
- * DataViewerConstants.java
+ * PaletteConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -69,7 +69,7 @@ public interface PaletteConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("The command ''{0}'' could not be executed.\\n\\n {1}")
+    @DefaultMessage("The command ''{0}'' could not be executed.\n\n {1}")
     @Key("commandExecutionFailedMessage")
     String commandExecutionFailedMessage(String commandLabel, String errMsg);
 

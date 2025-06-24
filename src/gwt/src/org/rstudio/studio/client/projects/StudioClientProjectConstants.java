@@ -1275,7 +1275,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Tab width"
      */
-    @DefaultMessage("Tab width")
+    @DefaultMessage("Tab width:")
     @Key("tabWidthLabel")
     String tabWidthLabel();
 
@@ -1347,7 +1347,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Restore .RData into workspace at startup"
      */
-    @DefaultMessage("Restore .RData into workspace at startup")
+    @DefaultMessage("Restore .RData into workspace at startup:")
     @Key("restoreWorkspaceText")
     String restoreWorkspaceText();
 
@@ -1356,7 +1356,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Save workspace to .RData on exit"
      */
-    @DefaultMessage("Save workspace to .RData on exit")
+    @DefaultMessage("Save workspace to .RData on exit:")
     @Key("saveWorkspaceText")
     String saveWorkspaceText();
 
@@ -1365,7 +1365,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Always save history (even if not saving .RData)"
      */
-    @DefaultMessage("Always save history (even if not saving .RData)")
+    @DefaultMessage("Always save history (even if not saving .RData):")
     @Key("alwaysSaveHistoryText")
     String alwaysSaveHistoryText();
 
@@ -1581,7 +1581,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Automatic text wrapping (line breaks)"
      */
-    @DefaultMessage("Automatic text wrapping (line breaks)")
+    @DefaultMessage("Automatic text wrapping (line breaks):")
     @Key("wrapPanelText")
     String wrapPanelText();
 
@@ -1599,7 +1599,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Write references at end of current"
      */
-    @DefaultMessage("Write references at end of current")
+    @DefaultMessage("Write references at end of current:")
     @Key("referencesFormLabel")
     String referencesFormLabel();
 
@@ -1635,7 +1635,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Write canonical visual mode markdown in source mode"
      */
-    @DefaultMessage("Write canonical visual mode markdown in source mode")
+    @DefaultMessage("Write canonical visual mode markdown in source mode:")
     @Key("canonicalFormLabel")
     String canonicalFormLabel();
 
@@ -1896,7 +1896,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Install Package &mdash; R CMD INSTALL additional options:"
      */
-    @DefaultMessage("Install Package &mdash; R CMD INSTALL additional options:")
+    @DefaultMessage("Install package &mdash; R CMD INSTALL additional options:")
     @Key("installMdashArgument")
     String installMdashArgument();
 
@@ -1905,7 +1905,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Check Package &mdash; R CMD check additional options:"
      */
-    @DefaultMessage("Check Package &mdash; R CMD check additional options:")
+    @DefaultMessage("Check package &mdash; R CMD check additional options:")
     @Key("checkPackageMdashArgument")
     String checkPackageMdashArgument();
 
@@ -1914,7 +1914,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Check Package &mdash; R CMD check additional options:"
      */
-    @DefaultMessage("Build Source Package &mdash; R CMD build additional options:")
+    @DefaultMessage("Build source package &mdash; R CMD build additional options:")
     @Key("buildSourceMdashArgument")
     String buildSourceMdashArgument();
 
@@ -1923,7 +1923,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Build Binary Package &mdash; R CMD INSTALL additional options:"
      */
-    @DefaultMessage("Build Binary Package &mdash; R CMD INSTALL additional options:")
+    @DefaultMessage("Build binary package &mdash; R CMD INSTALL additional options:")
     @Key("buildBinaryMdashArgument")
     String buildBinaryMdashArgument();
 

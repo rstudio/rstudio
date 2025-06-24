@@ -1,5 +1,5 @@
 /*
- * DataViewerConstants.java
+ * RenvConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -105,7 +105,7 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Add ''{0}'' [{1}] to the lockfile")
+    @DefaultMessage("Add {0} {1} to the lockfile")
     @Key("installAction")
     String installAction(String packageName, String libraryVersion);
 
@@ -114,7 +114,7 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Remove ''{0}'' [{1}] from the lockfile")
+    @DefaultMessage("Remove {0} {1} from the lockfile")
     @Key("removeAction")
     String removeAction(String packageName, String lockfileVersion);
 
@@ -123,7 +123,7 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Update ''{0}'' [{1} -> {2}] in the lockfile")
+    @DefaultMessage("Update {0} [{1} -> {2}] in the lockfile")
     @Key("updateAction")
     String updateAction(String packageName, String lockfileVersion, String libraryVersion);
 
@@ -132,7 +132,7 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Install ''{0}'' [{1}]")
+    @DefaultMessage("Install {0} {1}")
     @Key("restoreInstallAction")
     String restoreInstallAction(String packageName, String lockfileVersion);
 
@@ -141,7 +141,7 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Remove ''{0}'' [{1}]")
+    @DefaultMessage("Remove {0} {1}")
     @Key("restoreRemoveAction")
     String restoreRemoveAction(String packageName, String libraryfileVersion);
 }

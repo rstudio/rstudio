@@ -192,7 +192,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RStudio is deploying {0}. Check the Deploy console tab in the main window for status updates. "
      */
-    @DefaultMessage("RStudio is deploying {0}. Check the Deploy console tab in the main window for status updates. ")
+    @DefaultMessage("RStudio is deploying {0}. Check the Deploy console tab in the main window for status updates.")
     @Key("rstudioDeployingApp")
     String rstudioDeployingApp(String appName);
 
@@ -327,7 +327,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error code: "
      */
-    @DefaultMessage("Error code: ")
+    @DefaultMessage("Error code:")
     @Key("onRSConnectDeploymentFailedHtmlP4")
     String onRSConnectDeploymentFailedHtmlP4();
 
@@ -705,7 +705,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RPubs is a free service from RStudio for sharing documents on the web."
      */
-    @DefaultMessage("RPubs is a free service from RStudio for sharing documents on the web.")
+    @DefaultMessage("RPubs is a free service from Posit for sharing documents on the web.")
     @Key("rPubsSubtitle")
     String rPubsSubtitle();
 
@@ -885,7 +885,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Your account was authenticated successfully, but could not be connected to RStudio. Make sure your installation of the ''rsconnect'' package is correct for the server you''re connecting to.\n\n{0}\n{1}"
      */
-    @DefaultMessage("Your account was authenticated successfully, but could not be connected to RStudio. Make sure your installation of the ''rsconnect'' package is correct for the server you''re connecting to.\\n\\n{0}\\n{1}")
+    @DefaultMessage("Your account was authenticated successfully, but could not be connected to RStudio. Make sure your installation of the ''rsconnect'' package is correct for the server you''re connecting to.\n\n{0}\n{1}")
     @Key("accountConnectFailedMessage")
     String accountConnectFailedMessage(String serverInfo, String errorMessage);
 
@@ -1191,7 +1191,7 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
+    @DefaultMessage("To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     @Key("finishedDocumentNotFoundMessage")
     String finishedDocumentNotFoundMessage();
 

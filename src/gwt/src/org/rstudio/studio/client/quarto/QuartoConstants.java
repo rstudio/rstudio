@@ -1,5 +1,5 @@
 /*
- * DataViewerConstants.java
+ * QuartoConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -276,7 +276,7 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Shiny components")
+    @DefaultMessage("Create an interactive HTML document with Shiny components.")
     @Key("shinyFormatDesc")
     String shinyFormatDesc();
 

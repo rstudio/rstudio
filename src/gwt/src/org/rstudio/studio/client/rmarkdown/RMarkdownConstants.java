@@ -1,5 +1,5 @@
 /*
- * DataViewerConstants.java
+ * RMarkdownConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
