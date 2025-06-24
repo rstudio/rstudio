@@ -580,7 +580,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Don''t Show Again"
      */
-    @DefaultMessage("Don''t Show Again")
+    @DefaultMessage("Don't Show Again")
     @Key("donnotShowAgain")
     String donnotShowAgain();
 
@@ -635,7 +635,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Add"
      */
-    @DefaultMessage("Add")
+    @DefaultMessage("Add...")
     @Key("buttonAddCaption")
     String buttonAddCaption();
 
@@ -1213,7 +1213,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Status code {0} returned by {1} when executing ''{2}''"
      */
-    @DefaultMessage("Status code {0} returned by {1} when executing ''{2}''")
+    @DefaultMessage("Status code {0} returned by {1} when executing '{2}'")
     @Key("rpcErrorMessage")
     String rpcErrorMessage(String statusCode, String desktop, String method);
 
@@ -1231,7 +1231,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Unable to establish connection with {0} when executing ''{1}''"
      */
-    @DefaultMessage("Unable to establish connection with {0} when executing ''{1}''")
+    @DefaultMessage("Unable to establish connection with {0} when executing '{1}'")
     @Key("rpcOverrideErrorMessage")
     String rpcOverrideErrorMessage(String desktop, String method);
 
@@ -1240,7 +1240,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Unable to establish connection with {0} when executing ''{1}''"
      */
-    @DefaultMessage("Unable to establish connection with the session on {0}. Please try logging in again in a new tab, then return to resume your session.")
+    @DefaultMessage("Unable to establish connection with session on {0}. Please try logging in again in a new tab, then return to resume your session.")
     @Key("rpcOverrideErrorMessageServer")
     String rpcOverrideErrorMessageServer(String platform);
 
@@ -1348,7 +1348,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Package {0} and {1} required but are not installed."
      */
-    @DefaultMessage("Package {0} and {1} required but are not installed.")
+    @DefaultMessage("Packages {0} and {1} required but are not installed.")
     @Key("packages2Message")
     String packages2Message(String package0, String package1);
 
