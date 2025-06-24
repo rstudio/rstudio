@@ -328,7 +328,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Unable to show file because file downloads are restricted on this server.\n"
      */
-    @DefaultMessage("Unable to show file because file downloads are restricted on this server.\\n")
+    @DefaultMessage("Unable to show file because file downloads are restricted on this server.\n")
     @Key("fileDownloadErrorMessage")
     String fileDownloadErrorMessage();
 
@@ -446,7 +446,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\n\nAre you sure you want to change this option?"
      */
-    @DefaultMessage("The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\\n\\nAre you sure you want to change this option?")
+    @DefaultMessage("The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\n\nAre you sure you want to change this option?")
     @Key("packageRequiredMessage")
     String packageRequiredMessage(String packageName, String name);
 
@@ -500,7 +500,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "This document has already been published on RPubs. You can "
      */
-    @DefaultMessage("This document has already been published on RPubs. You can ")
+    @DefaultMessage("This document has already been published on RPubs. You can choose to either update the existing RPubs document, or create a new one.")
     @Key("alreadyPublishedRPubs")
     String alreadyPublishedRPubs();
 
@@ -592,7 +592,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. "
      */
-    @DefaultMessage("Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. ")
+    @DefaultMessage("Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets.")
     @Key("keyringDesc")
     String keyringDesc();
 
@@ -646,7 +646,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error: {0}\n"
      */
-    @DefaultMessage("Error: {0}\\n")
+    @DefaultMessage("Error: {0}\n")
     @Key("consoleWriteError")
     String consoleWriteError(String error);
 
@@ -1034,7 +1034,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "{0}"
      */
-    @DefaultMessage("{0}")
+    @DefaultMessage("The {0} will be downloaded to your computer. Please specify a name for the downloaded file:")
     @Key("showFileExportLabel")
     String showFileExportLabel(String description);
 
@@ -1557,7 +1557,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Database Connectivity"
      */
-    @DefaultMessage("Database Connectivity")
+    @DefaultMessage("Database connectivity")
     @Key("withConnectionPackageContext")
     String withConnectionPackageContext();
 
@@ -1656,7 +1656,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Required package versions could not be found:\n\n{0}\nCheck that getOption(\"repos\") refers to a CRAN repository that contains the needed package versions."
      */
-    @DefaultMessage("Required package versions could not be found:\n\n{0}\nCheck that getOption(\\\"repos\\\") refers to a CRAN repository that contains the needed package versions.")
+    @DefaultMessage("Required package versions could not be found:\n\n{0}\nCheck that getOption(\"repos\") refers to a CRAN repository that contains the needed package versions.")
     @Key("packageNotFoundMessage")
     String packageNotFoundMessage(String unsatisfiedVersions);
 
@@ -1693,7 +1693,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "requires updated versions of the following packages: {0}.\n\nDo you want to install these packages now?"
      */
-    @DefaultMessage("requires updated versions of the following packages: {0}. \n\nDo you want to install these packages now?")
+    @DefaultMessage("requires updated versions of the following packages: {0}.\n\nDo you want to install these packages now?")
     @Key("updatedVersionMessage")
     String updatedVersionMessage(String dependency);
 
@@ -1767,7 +1767,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error attempting to read key ''{0}'' ({1})''"
      */
-    @DefaultMessage("Error attempting to read key ''{0}'' ({1})''")
+    @DefaultMessage("Error attempting to read key ''{0}'' ({1})")
     @Key("onSSHErrorMessage")
     String onSSHErrorMessage(String keyPath, String errorMessage);
 
@@ -1813,7 +1813,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      * @return translated "Non-Matching Passphrases"
      */
     @DefaultMessage("Non-Matching Passphrases")
-    @Key("showErrorCaption")
+    @Key("showValidateErrorCaption")
     String showValidateErrorCaption();
 
     /**
@@ -1822,7 +1822,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      * @return translated "The passphrase and passphrase confirmation do not match."
      */
     @DefaultMessage("The passphrase and passphrase confirmation do not match.")
-    @Key("showErrorMessage")
+    @Key("showValidateErrorMessage")
     String showValidateErrorMessage();
 
     /**
@@ -2069,11 +2069,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String progressRemoveIndicator();
 
     /**
-     * Translated "[Detected output overflow; buffering the next {0} lines of output]".
+     * Translated "\n\n[Detected output overflow; buffering the next {0} lines of output]\n\n".
      *
-     * @return translated "[Detected output overflow; buffering the next {0} lines of output]"
+     * @return translated "\n\n[Detected output overflow; buffering the next {0} lines of output]\n\n"
      */
-    @DefaultMessage("[Detected output overflow; buffering the next {0} lines of output]")
+    @DefaultMessage("\n\n[Detected output overflow; buffering the next {0} lines of output]\n\n")
     @Key("consoleBufferedMessage")
     String consoleBufferedMessage(int bufferSize);
 
