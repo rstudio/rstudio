@@ -580,7 +580,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Don''t Show Again"
      */
-    @DefaultMessage("Don't Show Again")
+    @DefaultMessage("Don''t Show Again")
     @Key("donnotShowAgain")
     String donnotShowAgain();
 
@@ -1213,7 +1213,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Status code {0} returned by {1} when executing ''{2}''"
      */
-    @DefaultMessage("Status code {0} returned by {1} when executing '{2}'")
+    @DefaultMessage("Status code {0} returned by {1} when executing ''{2}''")
     @Key("rpcErrorMessage")
     String rpcErrorMessage(String statusCode, String desktop, String method);
 
@@ -1231,7 +1231,7 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Unable to establish connection with {0} when executing ''{1}''"
      */
-    @DefaultMessage("Unable to establish connection with {0} when executing '{1}'")
+    @DefaultMessage("Unable to establish connection with {0} when executing ''{1}''")
     @Key("rpcOverrideErrorMessage")
     String rpcOverrideErrorMessage(String desktop, String method);
 
