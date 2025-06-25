@@ -20,21 +20,21 @@
 
 #include <core/Database.hpp>
 
-#include <server_core/DatabaseConstants.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server_core {
 namespace database {
-namespace overlay {
+
+constexpr const char* kDatabaseProviderSqlite = "sqlite";
+constexpr const char* kDatabaseProviderPostgresql = "postgresql";
 
 // Execute the database command using the underlying configuration
 core::Error execute(const std::string& databaseConfigFile,
                     const boost::optional<core::system::User>& databaseFileUser,
-                    std::string_view command);
+                    std::string command);
 
-} // namespace overlay
 } // namespace database
 } // namespace server_core
 } // namespace rstudio

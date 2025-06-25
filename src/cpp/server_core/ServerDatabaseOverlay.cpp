@@ -18,17 +18,19 @@
 namespace rstudio {
 namespace server_core {
 namespace database {
+namespace overlay {
 
 using namespace core;
 using namespace core::database;
 
 core::Error execute(const std::string& databaseConfigFile,
                     const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command)
+                    std::string_view command)
 {
    return Success();
 }
 
+} // namespace overlay
 } // namespace database
 } // namespace server_core
 } // namespace rstudio

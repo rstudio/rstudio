@@ -16,14 +16,22 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_HPP
 #define SERVER_CORE_SERVER_DATABASE_HPP
 
-#include <server_core/ServerDatabaseOverlay.hpp>
+#include <string_view>
+#include <boost/optional.hpp>
+
+#include <core/Database.hpp>
+
+#include <server_core/DatabaseConstants.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server_core {
 namespace database {
 
 // get the configured driver
-core::database::Driver getConfiguredDriver(core::database::ConnectionOptions options);
+core::database::Driver getConfiguredDriver(const core::database::ConnectionOptions& options);
 
 // get the configured driver
 // this method can be called before initialization to peak to see
@@ -36,11 +44,21 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
 // returns boost::none if accessed before initialization
 boost::optional<core::database::ConnectionOptions> getConnectionOptions();
 
+core::Error readOptions(const std::string& databaseConfigFile,
+                  const boost::optional<core::system::User>& databaseFileUser,
+                  core::database::ConnectionOptions* pOptions,
+                  std::string_view forceDatabaseProvider = "");
+
 // initialize server database, optionally performing migration
 // to the latest database schema version
 core::Error initialize(const std::string& databaseConfigFile = std::string(),
                        bool updateSchema = false,
                        const boost::optional<core::system::User>& databaseFileUser = boost::none);
+
+// Execute the database command using the underlying configuration
+core::Error execute(const std::string& databaseConfigFile,
+                    const boost::optional<core::system::User>& databaseFileUser,
+                    std::string_view command);
 
 boost::shared_ptr<core::database::IConnection> getConnection();
 bool getConnection(const boost::posix_time::time_duration& waitTime,

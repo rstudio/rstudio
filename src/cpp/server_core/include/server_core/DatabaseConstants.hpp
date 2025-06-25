@@ -1,5 +1,5 @@
-/*
- * ServerDatabaseOverlay.hpp
+/* 
+ * DatabaseConstants.hpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -13,30 +13,18 @@
  *
  */
 
-#ifndef SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
-#define SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
-
-#include <boost/optional.hpp>
-
-#include <core/Database.hpp>
-
-#include <server_core/DatabaseConstants.hpp>
-#include <shared_core/Error.hpp>
-#include <shared_core/system/User.hpp>
+#ifndef SERVER_CORE_DATABASE_CONSTANTS_HPP
+#define SERVER_CORE_DATABASE_CONSTANTS_HPP
 
 namespace rstudio {
 namespace server_core {
 namespace database {
-namespace overlay {
 
-// Execute the database command using the underlying configuration
-core::Error execute(const std::string& databaseConfigFile,
-                    const boost::optional<core::system::User>& databaseFileUser,
-                    std::string_view command);
+constexpr const char* kDatabaseProviderSqlite = "sqlite";
+constexpr const char* kDatabaseProviderPostgresql = "postgresql";
 
-} // namespace overlay
 } // namespace database
 } // namespace server_core
 } // namespace rstudio
 
-#endif // SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
+#endif // SERVER_CORE_DATABASE_CONSTANTS_HPP
