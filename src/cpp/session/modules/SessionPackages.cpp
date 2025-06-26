@@ -241,12 +241,6 @@ Error getPackageStateJson(json::Object* pJson)
    (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
    (*pJson)["renv_context"] = renvContext;
 
-   std::string activeRepository;
-   error = r::exec::RFunction(".rs.ppm.getActiveRepository").call(&activeRepository);
-   if (error)
-      LOG_ERROR(error);
-   (*pJson)["active_repository"] = activeRepository;
-
    // collect vulnerability information as well
    SEXP vulnsSEXP = R_NilValue;
    error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")

@@ -939,26 +939,6 @@
    
 })
 
-.rs.addJsonRpcHandler("get_repositories", function()
-{
-   # Figure out the PPM repository URL, if any
-   repos <- getOption("repos")
-   parts <- .rs.ppm.parseRepositoryUrl(repos[[1L]])
-   root <- parts[["root"]]
-   if (is.null(root))
-      return(list())
-   
-   # Ask it for the set of available repositories
-   endpoint <- file.path(root, "__api__/repos")
-   destfile <- tempfile("rstudio-ppm-repos", fileext = ".json")
-   status <- download.file(endpoint, destfile = destfile, quiet = TRUE)
-   contents <- readLines(destfile, warn = FALSE)
-   result <- .rs.fromJSON(contents)
-   
-   .rs.scalarListFromList(result)
-   
-})
-
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom)
 {
    .rs.getSecondaryRepos(cran, custom)
