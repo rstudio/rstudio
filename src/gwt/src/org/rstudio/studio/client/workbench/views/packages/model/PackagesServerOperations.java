@@ -65,5 +65,10 @@ public interface PackagesServerOperations extends PackratServerOperations
                         String libraryPath,
                         ServerRequestCallback<String> requestCallback);
    
-   void getPackageCitations(String packageName, ServerRequestCallback<JavaScriptObject> requestCallback);
+   void getPackageCitations(
+      String packageName,
+      ServerRequestCallback<JavaScriptObject> requestCallback);
+
+   void getRepositories(
+      ServerRequestCallback<JsArray<PackageManagerRepository>> requestCallback);
 }

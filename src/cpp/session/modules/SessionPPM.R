@@ -71,6 +71,14 @@
    as.list(matches)
 })
 
+# Get the active PPM repository, if any.
+.rs.addFunction("ppm.getActiveRepository", function()
+{
+   repos <- getOption("repos")[[1L]]
+   parts <- .rs.ppm.parseRepositoryUrl(repos)
+   .rs.scalar(parts[[1L]])
+})
+
 .rs.addFunction("markScalars", function(object)
 {
    if (is.recursive(object))
