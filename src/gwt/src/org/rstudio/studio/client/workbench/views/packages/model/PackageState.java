@@ -40,4 +40,8 @@ public class PackageState extends JavaScriptObject
    public final native RepositoryPackageVulnerabilityListMap getVulnerabilityInfo() /*-{
       return this.vulns;
    }-*/;
+
+   public final native String getActiveRepository() /*-{
+      return this.active_repository;
+   }-*/;
 }
