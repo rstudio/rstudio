@@ -64,7 +64,7 @@ struct RClientMetrics
 struct ROptions
 {
    ROptions() :
-         rCompatibleGraphicsEngineVersion(16),
+         rCompatibleGraphicsEngineVersion(17),
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),

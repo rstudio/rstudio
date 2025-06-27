@@ -902,6 +902,7 @@ struct DevDescVersion16
 
     char reserved[64];
 };
+
 } // extern "C"
 
 #endif // R_SESSION_GRAPHICS_DEV_DESC_VERSIONS_HPP
