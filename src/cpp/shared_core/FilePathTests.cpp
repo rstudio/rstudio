@@ -84,6 +84,14 @@ TEST_CASE("Empty File Path tests")
       CHECK(filePath.getAbsolutePath().empty());
    }
 
+   SECTION("Empty string literal constructor")
+   {
+      FilePath filePath("");
+
+      CHECK(filePath.isEmpty());
+      CHECK(filePath.getAbsolutePath().empty());
+   }
+
    SECTION("relative path construction")
    {
       FilePath rootPath = createPath();
