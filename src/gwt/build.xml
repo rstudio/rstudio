@@ -232,6 +232,7 @@
          <arg value="2"/>
          <arg value="-XdisableClassMetadata"/>
          <arg value="-XdisableCastChecking"/>
+         <arg line="-sourceLevel ${javac.version}"/>
          <arg line="-strict"/>
          <arg line="-gen gen"/>
          <!--<arg line="-style PRETTY"/>-->
@@ -298,6 +299,8 @@
             <path refid="project.class.path"/>
          </classpath>
          <jvmarg value="-Xmx2048M"/>
+         <arg value="-sourceLevel"/>
+         <arg value="${javac.version}"/>
          <arg value="-style"/>
          <arg value="PRETTY"/>
          <arg value="-XmethodNameDisplayMode"/>

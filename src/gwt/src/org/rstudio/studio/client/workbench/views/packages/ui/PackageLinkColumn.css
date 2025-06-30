@@ -9,6 +9,18 @@
    vertical-align: middle;
    margin-top: 0 !important;
    margin-left: 4px;
+   cursor: pointer;
+   user-select: none;
+}
+
+.iconPlaceholder {
+   display: inline-block;
+   width: 16px;
+   height: 16px;
+   margin-right: 4px;
+   vertical-align: middle;
+   margin-top: 0 !important;
+   margin-left: 4px;
    user-select: none;
 }
 
