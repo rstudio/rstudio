@@ -70,6 +70,7 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider);
 // Returns 0 if there's no limit. cgroups memory limits if enabled, or ulimit -m
 Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider);
 
+// Returns the RSS + swap for the current process.
 // The goal here is to choose values that are specific to a given process,
 // that are using real resources on the system. Including swap so that processes
 // that overflow main memory continue are measured based on their complete size.
