@@ -71,7 +71,25 @@ TEST_CASE("Empty File Path tests")
    SECTION("Construction")
    {
       FilePath f;
+      CHECK(f.isEmpty());
       CHECK(f.getAbsolutePath().empty());
+   }
+
+   SECTION("Empty string constructor")
+   {
+      std::string empty;
+      FilePath filePath(empty);
+
+      CHECK(filePath.isEmpty());
+      CHECK(filePath.getAbsolutePath().empty());
+   }
+
+   SECTION("Empty string literal constructor")
+   {
+      FilePath filePath("");
+
+      CHECK(filePath.isEmpty());
+      CHECK(filePath.getAbsolutePath().empty());
    }
 
    SECTION("relative path construction")
