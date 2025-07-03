@@ -956,7 +956,12 @@
    result <- .rs.fromJSON(contents)
    
    .rs.scalarListFromList(result)
-   
+})
+
+.rs.addJsonRpcHandler("select_repository", function(repository)
+{
+   currentRepo <- getOption("repos")[[1L]]
+   print(repository)
 })
 
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom)

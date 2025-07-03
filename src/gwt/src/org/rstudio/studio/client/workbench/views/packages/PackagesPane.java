@@ -38,6 +38,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.server.Nothing;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -253,7 +254,20 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void selectRepository(PackageManagerRepository ppmRepo)
    {
-      // TODO
+      Debug.logObject(ppmRepo);
+      server_.selectRepository(ppmRepo.getName(), new ServerRequestCallback<Nothing>()
+      {
+         @Override
+         public void onResponseReceived(Nothing response)
+         {
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
 
    private void showRepositoryMenu()

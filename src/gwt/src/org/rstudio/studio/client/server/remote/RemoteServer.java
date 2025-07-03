@@ -147,6 +147,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
+import org.rstudio.studio.client.server.Nothing;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1562,6 +1563,12 @@ public class RemoteServer implements Server
    public void getRepositories(ServerRequestCallback<JsArray<PackageManagerRepository>> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_REPOSITORIES, requestCallback);
+   }
+
+   @Override
+   public void selectRepository(String repository, ServerRequestCallback<Nothing> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SELECT_REPOSITORY, requestCallback);
    }
 
    public void setCRANMirror(CRANMirror mirror,
@@ -7048,6 +7055,7 @@ public class RemoteServer implements Server
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
    private static final String GET_PACKAGE_CITATIONS = "get_package_citations";
    private static final String GET_REPOSITORIES = "get_repositories";
+   private static final String SELECT_REPOSITORY = "select_repository";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic";

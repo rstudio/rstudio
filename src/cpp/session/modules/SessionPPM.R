@@ -76,6 +76,9 @@
 {
    repos <- getOption("repos")[[1L]]
    parts <- .rs.ppm.parseRepositoryUrl(repos)
+   if (length(parts) == 0L)
+      return(NULL)
+   
    .rs.scalar(parts[[1L]])
 })
 
