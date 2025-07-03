@@ -943,7 +943,7 @@
 {
    # Figure out the PPM repository URL, if any
    repos <- getOption("repos")
-   parts <- .rs.ppm.parseRepositoryUrl(repos[[1L]])
+   parts <- .rs.ppm.fromRepositoryUrl(repos[[1L]])
    root <- parts[["root"]]
    if (is.null(root))
       return(list())
@@ -958,10 +958,22 @@
    .rs.scalarListFromList(result)
 })
 
-.rs.addJsonRpcHandler("select_repository", function(repository)
+.rs.addJsonRpcHandler("select_repository", function(repoName)
 {
-   currentRepo <- getOption("repos")[[1L]]
-   print(repository)
+   repos <- getOption("repos")
+   
+   oldRepoUrl <- repos[[1L]]
+   parts <- .rs.ppm.fromRepositoryUrl(oldRepoUrl)
+   if (length(parts) == 0L)
+      return(NULL)
+   
+   parts[["repos"]] <- repoName
+   newRepoUrl <- .rs.ppm.toRepositoryUrl(parts)
+   
+   list(
+      name  = .rs.scalar(names(repos)[[1L]]),
+      value = .rs.scalar(newRepoUrl)
+   )
 })
 
 .rs.addJsonRpcHandler("get_secondary_repos", function(cran, custom)

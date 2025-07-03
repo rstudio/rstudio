@@ -51,6 +51,9 @@ namespace packages {
 
 namespace {
 
+// store the last user input
+std::string s_lastInput;
+
 class AvailablePackagesCache : public boost::noncopyable
 {
 public:
@@ -317,16 +320,54 @@ void detectLibPathsChanges()
    }
 }
 
-// if the last input had an install_github then fire event
-std::string s_lastInput;
 void onConsoleInput(const std::string& input)
 {
-   s_lastInput = input;
+   s_lastInput += input;
 }
+
 void onConsolePrompt(const std::string&)
 {
-   if (boost::algorithm::contains(s_lastInput, "install_github("))
-      rs_packageLibraryMutated();
+   // skip if we're being invoked within a readline call
+   bool isReadingUserInput = false;
+   Error error = r::exec::RFunction(".rs.isReadingUserInput").call(&isReadingUserInput);
+   if (error)
+      LOG_ERROR(error);
+
+   if (isReadingUserInput)
+      return;
+
+   // if the user ran a command that is likely to have installed
+   // or updated packages, then notify the client. note that this
+   // is intentionally non-specific, to help detect a variety of
+   // different package tools which might perform package install
+   static auto installCommands = {
+
+      // common terms used in package installation functions
+      "install",
+      "update",
+      "rebuild",
+      "restore",
+      "remove",
+
+      // also capture devtools::load_all()
+      "load_all",
+   };
+
+   // consume last input
+   std::string lastInput = s_lastInput;
+   s_lastInput.clear();
+
+   // if it looks like the user ran a command that could mutate
+   // the package library, then respond
+   for (auto&& installCommand : installCommands)
+   {
+      if (boost::algorithm::contains(lastInput, installCommand))
+      {
+         rs_packageLibraryMutated();
+         return;
+      }
+   }
+
 }
 
 void onDetectChanges(module_context::ChangeSource source)

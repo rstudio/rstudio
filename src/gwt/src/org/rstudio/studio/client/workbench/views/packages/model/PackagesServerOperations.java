@@ -16,8 +16,8 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import java.util.List;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
-import org.rstudio.studio.client.server.Nothing;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -75,5 +75,5 @@ public interface PackagesServerOperations extends PackratServerOperations
 
    void selectRepository(
       String repository,
-      ServerRequestCallback<Nothing> requestCallback);
+      ServerRequestCallback<JsObject> requestCallback);
 }

@@ -36,7 +36,7 @@
       return(get(repoUrl, envir = .rs.ppm.vulns))
    
    # Request vulnerabilities
-   ppmUrl <- .rs.ppm.parseRepositoryUrl(repoUrl)
+   ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
    if (length(ppmUrl) == 0L)
       return(list())
    
@@ -54,13 +54,16 @@
    vulns
 })
 
-.rs.addFunction("ppm.parseRepositoryUrl", function(url)
+.rs.addFunction("ppm.fromRepositoryUrl", function(url)
 {
    pattern <- paste0(
       "^",                                  # start of url
       "(?<root>.*?)/",                      # leading URL components
       "(?<repos>[^/]+)/",                   # repository name
-      "(?:__linux__/(?<binary>[^/]+)/)?",   # binary url (optional)
+      "(?:",                                # begin optional binary parts
+         "(?<binary>__[^_]+__)/",           # binary prefix
+         "(?<platform>[^/]+)/",             # platform for binaries
+      ")?",                                 # end optional binary parts
       "(?<snapshot>[^/]+)",                 # snapshot
       "$"
    )
@@ -71,11 +74,26 @@
    as.list(matches)
 })
 
+.rs.addFunction("ppm.toRepositoryUrl", function(parts)
+{
+   components <- c(
+      parts[["root"]],
+      parts[["repos"]],
+      if (nzchar(parts[["binary"]])) c(
+         parts[["binary"]],
+         parts[["platform"]]
+      ),
+      parts[["snapshot"]]
+   )
+   
+   paste(components, collapse = "/")
+})
+
 # Get the active PPM repository, if any.
 .rs.addFunction("ppm.getActiveRepository", function()
 {
    repos <- getOption("repos")[[1L]]
-   parts <- .rs.ppm.parseRepositoryUrl(repos)
+   parts <- .rs.ppm.fromRepositoryUrl(repos)
    if (length(parts) == 0L)
       return(NULL)
    

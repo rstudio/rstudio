@@ -23,6 +23,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -38,7 +39,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
-import org.rstudio.studio.client.server.Nothing;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
@@ -254,12 +255,28 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void selectRepository(PackageManagerRepository ppmRepo)
    {
-      Debug.logObject(ppmRepo);
-      server_.selectRepository(ppmRepo.getName(), new ServerRequestCallback<Nothing>()
+      server_.selectRepository(ppmRepo.getName(), new ServerRequestCallback<JsObject>()
       {
          @Override
-         public void onResponseReceived(Nothing response)
+         public void onResponseReceived(JsObject response)
          {
+            if (Js.isFalsy(response))
+               return;
+
+            Debug.logObject(response);
+            String name  = response.getString("name");
+            String value = response.getString("value");
+
+            if (StringUtil.isNullOrEmpty(name))
+            {
+               String code = "options(repos = \"" + value + "\")";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+            else
+            {
+               String code = "options(repos = c(" + name + " = \"" + value + "\"))";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
          }
 
          @Override
