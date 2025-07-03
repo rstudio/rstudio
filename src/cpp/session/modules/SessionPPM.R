@@ -43,7 +43,14 @@
    fmt <- "%s/__api__/repos/%s/vulns"
    endpoint <- sprintf(fmt, ppmUrl$root, ppmUrl$repos)
    destfile <- tempfile("ppm-vuln-")
-   download.file(endpoint, destfile = destfile, quiet = TRUE)
+   
+   status <- tryCatch(
+      download.file(endpoint, destfile = destfile, quiet = TRUE),
+      condition = identity
+   )
+   
+   if (inherits(status, "condition"))
+      return(list())
    
    contents <- readLines(destfile, warn = FALSE)
    json <- .rs.fromJSON(contents)

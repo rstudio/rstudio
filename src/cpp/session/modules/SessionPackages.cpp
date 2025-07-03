@@ -26,12 +26,13 @@
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
-#include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
-#include <r/RRoutines.hpp>
-#include <r/RJson.hpp>
 #include <r/RInterface.hpp>
+#include <r/RJson.hpp>
+#include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -53,6 +54,9 @@ namespace {
 
 // store the last user input
 std::string s_lastInput;
+
+// the current value of the 'repos' R option
+r::sexp::PreservedSEXP s_reposSEXP;
 
 class AvailablePackagesCache : public boost::noncopyable
 {
@@ -301,28 +305,32 @@ void detectLibPathsChanges()
    static std::vector<std::string> s_lastLibPaths;
    std::vector<std::string> libPaths;
    Error error = r::exec::RFunction("base:::.libPaths").call(&libPaths);
-   if (!error)
-   {
-      if (s_lastLibPaths.empty())
-      {
-         s_lastLibPaths = libPaths;
-      }
-      else if (libPaths != s_lastLibPaths)
-      {
-         module_context::events().onLibPathsChanged(libPaths);
-         enquePackageStateChanged();
-         s_lastLibPaths = libPaths;
-      }
-   }
-   else
+   if (error)
    {
       LOG_ERROR(error);
+      return;
+   }
+
+   if (s_lastLibPaths.empty())
+   {
+      s_lastLibPaths = libPaths;
+   }
+   else if (libPaths != s_lastLibPaths)
+   {
+      module_context::events().onLibPathsChanged(libPaths);
+      enquePackageStateChanged();
+      s_lastLibPaths = libPaths;
    }
 }
 
 void onConsoleInput(const std::string& input)
 {
+   // record last console input
    s_lastInput += input;
+   
+   // record prior repository
+   SEXP reposSEXP = r::options::getOption("repos");
+   s_reposSEXP.set(reposSEXP);
 }
 
 void onConsolePrompt(const std::string&)
@@ -368,6 +376,13 @@ void onConsolePrompt(const std::string&)
       }
    }
 
+   // check and see if the 'repos' option has been mutated
+   SEXP reposSEXP = r::options::getOption("repos");
+   if (reposSEXP != s_reposSEXP.get())
+   {
+      enquePackageStateChanged();
+      return;
+   }
 }
 
 void onDetectChanges(module_context::ChangeSource source)

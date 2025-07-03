@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabi
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumn;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackageManagerSelectRepositoryModalDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
@@ -89,7 +90,6 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -263,7 +263,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             if (Js.isFalsy(response))
                return;
 
-            Debug.logObject(response);
             String name  = response.getString("name");
             String value = response.getString("value");
 
@@ -294,22 +293,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public void onResponseReceived(JsArray<PackageManagerRepository> response)
          {
-            ToolbarPopupMenu menu = new ToolbarPopupMenu();
-            for (int i = 0, n = response.length(); i < n; i++)
-            {
-               PackageManagerRepository ppmRepo = response.get(i);
-               MenuItem menuItem = new MenuItem(ppmRepo.getName(), () ->
-               {
-                  selectRepository(ppmRepo);
-               });
-
-               String ppmDesc = ppmRepo.getDescription();
-               if (!StringUtil.isNullOrEmpty(ppmDesc))
-                  menuItem.getElement().setTitle(ppmDesc);
-
-               menu.addItem(menuItem);
-            }
-            menu.showRelativeTo(repositoryButton_);
+            PackageManagerSelectRepositoryModalDialog dialog =
+               new PackageManagerSelectRepositoryModalDialog(response, null);
+            
+            dialog.showModal();
          }
 
          @Override
