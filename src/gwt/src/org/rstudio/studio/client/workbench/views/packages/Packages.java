@@ -106,7 +106,8 @@ public class Packages
    {
       void setPackageState(ProjectContext projectContext,
                            List<PackageInfo> packages,
-                           RepositoryPackageVulnerabilityListMap vulns);
+                           RepositoryPackageVulnerabilityListMap vulns,
+                           String activeRepository);
 
       void installPackage(PackageInstallContext installContext,
                           PackageInstallOptions defaultInstallOptions,
@@ -871,7 +872,7 @@ public class Packages
          packages = allPackages_;
       }
 
-      view_.setPackageState(projectContext_, packages, vulns_);
+      view_.setPackageState(projectContext_, packages, vulns_, activeRepository_);
    }
 
    private void checkPackageStatusOnNextConsolePrompt(
@@ -1208,6 +1209,7 @@ public class Packages
    {
       // sort the packages
       allPackages_ = new ArrayList<>();
+      activeRepository_ = newState.getActiveRepository();
       vulns_ = newState.getVulnerabilityInfo();
 
       JsArray<PackageInfo> serverPackages = newState.getPackageList();
@@ -1265,6 +1267,7 @@ public class Packages
    private final RenvServerOperations renvServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<>();
    private RepositoryPackageVulnerabilityListMap vulns_;
+   private String activeRepository_;
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;

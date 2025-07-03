@@ -2004,3 +2004,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       saveRDS(metaPackageInfo, file = metaPackagePath)
    }
 })
+
+.rs.addFunction("isReadingUserInput", function()
+{
+   for (i in seq_len(sys.nframe()))
+   {
+      fn <- sys.function(i)
+      if (identical(fn, base::readline))
+         return(TRUE)
+   }
+   
+   FALSE
+})

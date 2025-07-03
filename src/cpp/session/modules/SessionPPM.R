@@ -36,14 +36,21 @@
       return(get(repoUrl, envir = .rs.ppm.vulns))
    
    # Request vulnerabilities
-   ppmUrl <- .rs.ppm.parseRepositoryUrl(repoUrl)
+   ppmUrl <- .rs.ppm.fromRepositoryUrl(repoUrl)
    if (length(ppmUrl) == 0L)
       return(list())
    
    fmt <- "%s/__api__/repos/%s/vulns"
    endpoint <- sprintf(fmt, ppmUrl$root, ppmUrl$repos)
    destfile <- tempfile("ppm-vuln-")
-   download.file(endpoint, destfile = destfile, quiet = TRUE)
+   
+   status <- tryCatch(
+      download.file(endpoint, destfile = destfile, quiet = TRUE),
+      condition = identity
+   )
+   
+   if (inherits(status, "condition"))
+      return(list())
    
    contents <- readLines(destfile, warn = FALSE)
    json <- .rs.fromJSON(contents)
@@ -54,13 +61,16 @@
    vulns
 })
 
-.rs.addFunction("ppm.parseRepositoryUrl", function(url)
+.rs.addFunction("ppm.fromRepositoryUrl", function(url)
 {
    pattern <- paste0(
       "^",                                  # start of url
       "(?<root>.*?)/",                      # leading URL components
       "(?<repos>[^/]+)/",                   # repository name
-      "(?:__linux__/(?<binary>[^/]+)/)?",   # binary url (optional)
+      "(?:",                                # begin optional binary parts
+         "(?<binary>__[^_]+__)/",           # binary prefix
+         "(?<platform>[^/]+)/",             # platform for binaries
+      ")?",                                 # end optional binary parts
       "(?<snapshot>[^/]+)",                 # snapshot
       "$"
    )
@@ -69,6 +79,32 @@
    matches <- regmatches(url, m)[[1L]]
    
    as.list(matches)
+})
+
+.rs.addFunction("ppm.toRepositoryUrl", function(parts)
+{
+   components <- c(
+      parts[["root"]],
+      parts[["repos"]],
+      if (nzchar(parts[["binary"]])) c(
+         parts[["binary"]],
+         parts[["platform"]]
+      ),
+      parts[["snapshot"]]
+   )
+   
+   paste(components, collapse = "/")
+})
+
+# Get the active PPM repository, if any.
+.rs.addFunction("ppm.getActiveRepository", function()
+{
+   repos <- getOption("repos")[[1L]]
+   parts <- .rs.ppm.fromRepositoryUrl(repos)
+   if (length(parts) == 0L)
+      return(NULL)
+   
+   .rs.scalar(parts[[1L]])
 })
 
 .rs.addFunction("markScalars", function(object)
