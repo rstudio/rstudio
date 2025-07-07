@@ -718,6 +718,11 @@ Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
    return Success();
 }
 
+long getProcessSize()
+{
+   return getProcessSize(::getpid());
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

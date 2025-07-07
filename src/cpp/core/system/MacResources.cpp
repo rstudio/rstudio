@@ -100,6 +100,19 @@ Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
    return Success();
 }
 
+long getProcessSize()
+{
+    long processMemoryUsedKb = 0;
+    MemoryProvider memoryProvider = MemoryProvider::MemoryProviderUnknown;
+    Error error = getProcessMemoryUsed(&processMemoryUsedKb, &memoryProvider);
+    if (error)
+    {
+       return 0;
+    }
+
+    return processMemoryUsedKb;
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio
