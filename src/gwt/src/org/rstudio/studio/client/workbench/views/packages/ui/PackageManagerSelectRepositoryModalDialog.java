@@ -1,7 +1,7 @@
 /*
  * PackageManagerSelectRepositoryModalDialog.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2025 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -27,9 +27,9 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontStyle;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -137,7 +137,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       }
       table_.draw(tableData);
 
-      table_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      table_.getElement().getStyle().setBorderWidth(1, Unit.PX);
       table_.getElement().getStyle().setBackgroundColor("white");
       tableContainer_.add(table_);
 
