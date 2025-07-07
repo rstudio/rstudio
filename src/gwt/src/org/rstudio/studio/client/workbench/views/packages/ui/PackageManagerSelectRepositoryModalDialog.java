@@ -74,6 +74,9 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             TableCellElement cellEl;
 
             cellEl = Document.get().createTDElement();
+            rowEl.appendChild(cellEl);
+
+            cellEl = Document.get().createTDElement();
             cellEl.setInnerText("Repository: " + object.getName());
             rowEl.appendChild(cellEl);
 
@@ -109,7 +112,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 100, 200, 200 };
+            return new int[] { 10, 100, 220, 160 };
          }
 
          @Override
@@ -135,6 +138,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       table_.draw(tableData);
 
       table_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      table_.getElement().getStyle().setBackgroundColor("white");
       tableContainer_.add(table_);
 
       useSnapshotCheckbox_ = new CheckBox("Use repository snapshot from specific date");
