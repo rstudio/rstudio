@@ -429,14 +429,15 @@
    </target>
 
    <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
-     <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
-        <classpath>
+      <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
+         <classpath>
             <pathelement location="${test.dir}"/>
             <pathelement location="${src.dir}"/>
-        </classpath>
-        <classpath refid="project.class.path"/>
-        <classpath refid="unittest.class.path"/>
-        <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+         </classpath>
+         <classpath refid="project.class.path"/>
+         <classpath refid="unittest.class.path"/>
+         <jvmarg value="-Dgwt.args=-sourceLevel ${javac.version}"/>
+         <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
      </java>
    </target>
 
