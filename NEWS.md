@@ -49,7 +49,7 @@
 ### Dependencies
 
 - Copilot Language Server 1.338.0 (#15935)
-- Electron 36.6.0 (#15933)
+- Electron 37.2.0 (#15933)
 - GWT 2.12.2 (#16062)
 - Quarto 1.7.31 (#15934)
 
