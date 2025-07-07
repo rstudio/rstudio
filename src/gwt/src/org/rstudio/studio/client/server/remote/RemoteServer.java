@@ -1566,10 +1566,12 @@ public class RemoteServer implements Server
 
    @Override
    public void selectRepository(String repository,
+                                String snapshot,
                                 ServerRequestCallback<JsObject> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
          .add(repository)
+         .add(snapshot)
          .get();
 
       sendRequest(RPC_SCOPE, SELECT_REPOSITORY, params, requestCallback);

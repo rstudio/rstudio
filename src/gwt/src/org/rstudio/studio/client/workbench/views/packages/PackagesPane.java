@@ -255,7 +255,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void selectRepository(PackageManagerRepository ppmRepo)
    {
-      server_.selectRepository(ppmRepo.getName(), new ServerRequestCallback<JsObject>()
+      server_.selectRepository(ppmRepo.getName(), ppmRepo.getSnapshot(), new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject response)
@@ -293,8 +293,45 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          @Override
          public void onResponseReceived(JsArray<PackageManagerRepository> response)
          {
+            OperationWithInput<PackageManagerRepository> onSelected = new OperationWithInput<>()
+            {
+               @Override
+               public void execute(PackageManagerRepository input)
+               {
+                  server_.selectRepository(input.getName(), input.getSnapshot(), new ServerRequestCallback<JsObject>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsObject response)
+                     {
+                        if (Js.isFalsy(response))
+                           return;
+
+                        String name = response.getString("name");
+                        String value = response.getString("value");
+
+                        if (StringUtil.isNullOrEmpty(name))
+                        {
+                           String code = "options(repos = \"" + value + "\")";
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                        else
+                        {
+                           String code = "options(repos = c(" + name + " = \"" + value + "\"))";
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+               }
+            };
+
             PackageManagerSelectRepositoryModalDialog dialog =
-               new PackageManagerSelectRepositoryModalDialog(response, null);
+               new PackageManagerSelectRepositoryModalDialog(response, onSelected);
             
             dialog.showModal();
          }

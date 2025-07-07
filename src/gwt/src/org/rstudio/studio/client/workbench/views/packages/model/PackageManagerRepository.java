@@ -31,4 +31,7 @@ public class PackageManagerRepository extends JavaScriptObject
     public final native String getDescription() /*-{ return this.description || ""; }-*/;
     public final native String getType()        /*-{ return this.type || ""; }-*/;
     public final native boolean isHidden()      /*-{ return this.hidden || false; }-*/;
+
+    public final native String setSnapshot(String snapshot) /*-{ this.snapshot = snapshot; }-*/;
+    public final native String getSnapshot()                /*-{ return this.snapshot || ""; }-*/;
 }

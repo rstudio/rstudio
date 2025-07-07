@@ -75,5 +75,6 @@ public interface PackagesServerOperations extends PackratServerOperations
 
    void selectRepository(
       String repository,
+      String snapshot,
       ServerRequestCallback<JsObject> requestCallback);
 }

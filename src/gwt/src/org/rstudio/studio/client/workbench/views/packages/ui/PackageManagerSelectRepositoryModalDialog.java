@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.packages.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RowTable;
@@ -25,26 +26,47 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageManagerRe
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import jsinterop.base.Js;
 
 public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<PackageManagerRepository>
 {
+   private static class Header extends Composite
+   {
+      public Header(String label)
+      {
+         FlowPanel panel = new FlowPanel("h2");
+         panel.getElement().setInnerText(label);
+         initWidget(panel);
+      }
+   }
+
    public PackageManagerSelectRepositoryModalDialog(
       JsArray<PackageManagerRepository> ppmRepos,
       OperationWithInput<PackageManagerRepository> onSelected)
    {
       super("Select Repository", Roles.getDialogRole(), onSelected);
 
-      ppmRepos_ = ppmRepos;
-      setSize("500px", "400px");
+      panel_ = new FlowPanel();
+      panel_.setSize("500px", "400px");
 
-      panel_ = new VerticalPanel();
+      tableContainer_ = new ScrollPanel();
+      tableContainer_.setHeight("200px");
 
-      table_ = new RowTable<PackageManagerRepository>("Goober")
+      table_ = new RowTable<PackageManagerRepository>("Repositories")
       {
          @Override
          public void drawRowImpl(PackageManagerRepository object, TableRowElement rowEl)
@@ -52,16 +74,26 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             TableCellElement cellEl;
 
             cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(Integer.toString(object.getId()));
+            cellEl.setInnerText("Repository: " + object.getName());
             rowEl.appendChild(cellEl);
 
-            cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(object.getName());
-            rowEl.appendChild(cellEl);
+            String description = object.getDescription();
+            if (Js.isTruthy(description))
+            {
+               cellEl = Document.get().createTDElement();
+               cellEl.setInnerText(description);
+               rowEl.appendChild(cellEl);
+            }
+            else
+            {
+               Element cellContentsEl = Document.get().createElement("span");
+               cellContentsEl.getStyle().setFontStyle(FontStyle.ITALIC);
+               cellContentsEl.setInnerText("(No description available)");
 
-            cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(object.getDescription());
-            rowEl.appendChild(cellEl);
+               cellEl = Document.get().createTDElement();
+               cellEl.appendChild(cellContentsEl);
+               rowEl.appendChild(cellEl);
+            }
 
             cellEl = Document.get().createTDElement();
             cellEl.setInnerText(object.getCreated());
@@ -77,7 +109,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 30, 70, 300, 80 };
+            return new int[] { 100, 200, 200 };
          }
 
          @Override
@@ -102,17 +134,52 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       }
       table_.draw(tableData);
 
+      table_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      tableContainer_.add(table_);
+
+      useSnapshotCheckbox_ = new CheckBox("Use repository snapshot from specific date");
+
       dateInputPanel_ = new FlowPanel("input");
       dateInputPanel_.getElement().setAttribute("type", "date");
+      dateInputPanel_.setVisible(false);
 
-      panel_.add(table_);
+      useSnapshotCheckbox_.getElement().getStyle().setDisplay(Display.BLOCK);
+      useSnapshotCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            dateInputPanel_.setVisible(event.getValue());
+         }
+      });
+
+      panel_.add(new Header("Repository"));
+      panel_.add(tableContainer_);
+
+      panel_.add(new Header("Snapshot"));
+      panel_.add(useSnapshotCheckbox_);
       panel_.add(dateInputPanel_);
    }
 
    @Override
    protected PackageManagerRepository collectInput()
    {
-      throw new UnsupportedOperationException("Unimplemented method 'collectInput'");
+      PackageManagerRepository repository = table_.getSelectedItem();
+      if (repository == null)
+         return null;
+
+      if (useSnapshotCheckbox_.getValue())
+      {
+         String date = (String) dateInputPanel_.getElement().getPropertyObject("value");
+         if (!StringUtil.isNullOrEmpty(date))
+            repository.setSnapshot(date);
+      }
+      else
+      {
+         repository.setSnapshot("latest");
+      }
+
+      return repository;
    }
 
    @Override
@@ -121,9 +188,9 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       return panel_;
    }
 
-   private final VerticalPanel panel_;
+   private final FlowPanel panel_;
+   private final ScrollPanel tableContainer_;
    private final RowTable<PackageManagerRepository> table_;
+   private final CheckBox useSnapshotCheckbox_;
    private final FlowPanel dateInputPanel_;
-   
-   private final JsArray<PackageManagerRepository> ppmRepos_;
 }

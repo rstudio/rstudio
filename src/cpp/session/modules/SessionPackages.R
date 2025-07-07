@@ -958,7 +958,7 @@
    .rs.scalarListFromList(result)
 })
 
-.rs.addJsonRpcHandler("select_repository", function(repoName)
+.rs.addJsonRpcHandler("select_repository", function(repoName, repoSnapshot)
 {
    repos <- getOption("repos")
    
@@ -968,6 +968,9 @@
       return(NULL)
    
    parts[["repos"]] <- repoName
+   if (!is.null(repoSnapshot) && nzchar(repoSnapshot))
+      parts[["snapshot"]] <- repoSnapshot
+   
    newRepoUrl <- .rs.ppm.toRepositoryUrl(parts)
    
    list(
