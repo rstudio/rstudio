@@ -40,13 +40,13 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.AuthorizedEvent;
 import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
 import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
 import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
-import org.rstudio.studio.client.application.events.AuthorizedEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
@@ -210,6 +210,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageManagerRepository;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackratActions;
@@ -1557,6 +1558,24 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PACKAGE_CITATIONS, params, requestCallback);
    }
    
+   @Override
+   public void getRepositories(ServerRequestCallback<JsArray<PackageManagerRepository>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_REPOSITORIES, requestCallback);
+   }
+
+   @Override
+   public void selectRepository(String repository,
+                                String snapshot,
+                                ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+         .add(repository)
+         .add(snapshot)
+         .get();
+
+      sendRequest(RPC_SCOPE, SELECT_REPOSITORY, params, requestCallback);
+   }
 
    public void setCRANMirror(CRANMirror mirror,
                              ServerRequestCallback<Void> requestCallback)
@@ -7041,6 +7060,8 @@ public class RemoteServer implements Server
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
    private static final String GET_PACKAGE_CITATIONS = "get_package_citations";
+   private static final String GET_REPOSITORIES = "get_repositories";
+   private static final String SELECT_REPOSITORY = "select_repository";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic";

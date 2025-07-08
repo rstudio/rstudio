@@ -26,12 +26,13 @@
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
-#include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RFunctionHook.hpp>
-#include <r/RRoutines.hpp>
-#include <r/RJson.hpp>
 #include <r/RInterface.hpp>
+#include <r/RJson.hpp>
+#include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -50,6 +51,12 @@ namespace modules {
 namespace packages {
 
 namespace {
+
+// store the last user input
+std::string s_lastInput;
+
+// the current value of the 'repos' R option
+r::sexp::PreservedSEXP s_reposSEXP;
 
 class AvailablePackagesCache : public boost::noncopyable
 {
@@ -241,6 +248,12 @@ Error getPackageStateJson(json::Object* pJson)
    (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
    (*pJson)["renv_context"] = renvContext;
 
+   std::string activeRepository;
+   error = r::exec::RFunction(".rs.ppm.getActiveRepository").call(&activeRepository);
+   if (error)
+      LOG_ERROR(error);
+   (*pJson)["active_repository"] = activeRepository;
+
    // collect vulnerability information as well
    SEXP vulnsSEXP = R_NilValue;
    error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
@@ -292,35 +305,84 @@ void detectLibPathsChanges()
    static std::vector<std::string> s_lastLibPaths;
    std::vector<std::string> libPaths;
    Error error = r::exec::RFunction("base:::.libPaths").call(&libPaths);
-   if (!error)
-   {
-      if (s_lastLibPaths.empty())
-      {
-         s_lastLibPaths = libPaths;
-      }
-      else if (libPaths != s_lastLibPaths)
-      {
-         module_context::events().onLibPathsChanged(libPaths);
-         enquePackageStateChanged();
-         s_lastLibPaths = libPaths;
-      }
-   }
-   else
+   if (error)
    {
       LOG_ERROR(error);
+      return;
+   }
+
+   if (s_lastLibPaths.empty())
+   {
+      s_lastLibPaths = libPaths;
+   }
+   else if (libPaths != s_lastLibPaths)
+   {
+      module_context::events().onLibPathsChanged(libPaths);
+      enquePackageStateChanged();
+      s_lastLibPaths = libPaths;
    }
 }
 
-// if the last input had an install_github then fire event
-std::string s_lastInput;
 void onConsoleInput(const std::string& input)
 {
-   s_lastInput = input;
+   // record last console input
+   s_lastInput += input;
+   
+   // record prior repository
+   SEXP reposSEXP = r::options::getOption("repos");
+   s_reposSEXP.set(reposSEXP);
 }
+
 void onConsolePrompt(const std::string&)
 {
-   if (boost::algorithm::contains(s_lastInput, "install_github("))
-      rs_packageLibraryMutated();
+   // skip if we're being invoked within a readline call
+   bool isReadingUserInput = false;
+   Error error = r::exec::RFunction(".rs.isReadingUserInput").call(&isReadingUserInput);
+   if (error)
+      LOG_ERROR(error);
+
+   if (isReadingUserInput)
+      return;
+
+   // if the user ran a command that is likely to have installed
+   // or updated packages, then notify the client. note that this
+   // is intentionally non-specific, to help detect a variety of
+   // different package tools which might perform package install
+   static auto installCommands = {
+
+      // common terms used in package installation functions
+      "install",
+      "update",
+      "rebuild",
+      "restore",
+      "remove",
+
+      // also capture devtools::load_all()
+      "load_all",
+   };
+
+   // consume last input
+   std::string lastInput = s_lastInput;
+   s_lastInput.clear();
+
+   // if it looks like the user ran a command that could mutate
+   // the package library, then respond
+   for (auto&& installCommand : installCommands)
+   {
+      if (boost::algorithm::contains(lastInput, installCommand))
+      {
+         rs_packageLibraryMutated();
+         return;
+      }
+   }
+
+   // check and see if the 'repos' option has been mutated
+   SEXP reposSEXP = r::options::getOption("repos");
+   if (reposSEXP != s_reposSEXP.get())
+   {
+      enquePackageStateChanged();
+      return;
+   }
 }
 
 void onDetectChanges(module_context::ChangeSource source)

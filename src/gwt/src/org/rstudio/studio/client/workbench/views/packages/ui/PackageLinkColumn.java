@@ -75,7 +75,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
          sb.appendHtmlConstant("<div class=\"" + style_.packageColumn() + "\">");
          addVulnerabilityInfo(context, value, sb);
-         sb.append(NAME_TEMPLATE.render(classNames, value.getName()));
+         sb.append(TEMPLATES.renderPackageName(classNames, value.getName()));
          sb.appendHtmlConstant("</div>");
       }
 
@@ -92,24 +92,30 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
             if (pvlMap == null || !pvlMap.has(name))
                return;
 
-            PackageVulnerabilityList pvList = pvlMap.get(name);
-            for (int i = 0, n = pvList.getLength(); i < n; i++)
+            String vulnText = "";
+            List<PackageVulnerability> pvList = pvlMap.get(name).asList();
+            for (PackageVulnerability pvItem : pvList)
             {
-               PackageVulnerability pvItem = pvList.getAt(i);
                if (pvItem.versions.has(version))
                {
-                  SafeUri uri = RESOURCES.iconWarning().getSafeUri();
-                  String title = pvItem.id + ": " + pvItem.summary + "\n\n" + pvItem.details;
-                  sb.append(ICON_TEMPLATE.render(RESOURCES.styles().icon(), title, uri));
-                  didFindVulnerability.set(true);
-                  return;
+                  vulnText += "\n- " + pvItem.id + ": " + pvItem.summary;
                }
             }
+            if (vulnText.isEmpty())
+               return;
+
+            String title =
+               name + " " + version + " has the following known vulnerabilities:\n" + vulnText;
+
+            SafeUri uri = RESOURCES.iconWarning().getSafeUri();
+            sb.append(TEMPLATES.renderIcon(RESOURCES.styles().icon(), title, uri));
+            didFindVulnerability.set(true);
+            return;
          });
 
          if (!didFindVulnerability.get())
          {
-            sb.append(NONE_TEMPLATE.render(RESOURCES.styles().icon()));
+            sb.append(TEMPLATES.renderIconPlaceholder(RESOURCES.styles().iconPlaceholder()));
          }
       }
 
@@ -128,15 +134,48 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
                return;
 
             Element targetEl = Element.as(target);
-            if (!targetEl.hasClassName(RESOURCES.styles().link()))
-               return;
-
-            int idx = context.getIndex();
-            List<PackageInfo> data = dataProvider_.getList();
-            if (idx >= 0 && idx < dataProvider_.getList().size())
+            if (targetEl.hasClassName(RESOURCES.styles().link()))
             {
-               onClicked_.execute(data.get(idx));
+               onPackageNameClicked(context);
+               return;
             }
+
+            if (targetEl.hasClassName(RESOURCES.styles().icon()))
+            {
+               onIconClicked(context);
+               return;
+            }
+         }
+      }
+
+      private void onPackageNameClicked(Context context)
+      {
+         int idx = context.getIndex();
+         List<PackageInfo> data = dataProvider_.getList();
+         if (idx >= 0 && idx < dataProvider_.getList().size())
+         {
+            onClicked_.execute(data.get(idx));
+         }
+      }
+
+      private void onIconClicked(Context context)
+      {
+         int idx = context.getIndex();
+         List<PackageInfo> data = dataProvider_.getList();
+         if (idx >= 0 && idx < dataProvider_.getList().size())
+         {
+            PackageInfo info = data.get(idx);
+            String name = info.getName();
+            vulns_.forEach((String key) ->
+            {
+               PackageVulnerabilityListMap pvlMap = vulns_.get(key);
+               if (pvlMap == null || !pvlMap.has(name))
+                  return;
+
+               PackageVulnerabilityList pvList = pvlMap.get(name);
+               PackageVulnerabilityModalDialog dialog = new PackageVulnerabilityModalDialog(info, pvList);
+               dialog.showModal();
+            });
          }
       }
 
@@ -156,27 +195,22 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       super(new PackageLinkCell(dataProvider, styles, vulns, onClicked, alwaysUnderline));
    }
 
-   interface NameTemplate extends SafeHtmlTemplates
+   interface Templates extends SafeHtmlTemplates
    {
       @Template("<span class=\"{0}\" title=\"{1}\">{1}</span>")
-      SafeHtml render(String className, String title);
-   }
+      SafeHtml renderPackageName(String className, String title);
 
-   interface IconTemplate extends SafeHtmlTemplates
-   {
       @Template("<img class=\"rstudio_vulnerability_icon {0}\" title=\"{1}\" src=\"{2}\"></img>")
-      SafeHtml render(String className, String hoverInfo, SafeUri imgUri);
-   }
+      SafeHtml renderIcon(String className, String hoverInfo, SafeUri imgUri);
 
-   interface NoneTemplate extends SafeHtmlTemplates
-   {
       @Template("<div class=\"{0}\"></div>")
-      SafeHtml render(String className);
+      SafeHtml renderIconPlaceholder(String className);
    }
 
    interface Styles extends CssResource
    {
       String icon();
+      String iconPlaceholder();
       String link();
       String linkUnderlined();
    }
@@ -202,7 +236,5 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
       RESOURCES.styles().ensureInjected();
    }
 
-   static NameTemplate NAME_TEMPLATE = GWT.create(NameTemplate.class);
-   static IconTemplate ICON_TEMPLATE = GWT.create(IconTemplate.class);
-   static NoneTemplate NONE_TEMPLATE = GWT.create(NoneTemplate.class);
+   static Templates TEMPLATES = GWT.create(Templates.class);
 }

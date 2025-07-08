@@ -19,9 +19,11 @@ import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.cellview.ImageButtonColumn.TitleProvider;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -37,26 +39,32 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageLibraryUtils;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageManagerRepository;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.ui.InstallPackageDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackageLinkColumn;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackageManagerSelectRepositoryModalDialog;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableResources;
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -66,8 +74,11 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -109,12 +120,15 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    public PackagesPane(Commands commands, 
                        Session session,
                        GlobalDisplay display,
-                       EventBus events)
+                       EventBus events,
+                       PackagesServerOperations server)
    {
       super(constants_.packagesTitle(), events);
+
       commands_ = commands;
       session_ = session;
       display_ = display;
+      server_ = server;
       
       dataGridRes_ = GWT.create(PackagesDataGridResources.class);
       ensureWidget();
@@ -129,13 +143,19 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setPackageState(ProjectContext projectContext, 
                                List<PackageInfo> packages,
-                               RepositoryPackageVulnerabilityListMap vulns)
+                               RepositoryPackageVulnerabilityListMap vulns,
+                               String activeRepository)
    {
       projectContext_ = projectContext;
+      activeRepository_ = activeRepository;
       vulns_ = vulns;
 
       packagesDataProvider_.setList(packages);
       createPackagesTable();
+
+      // manage visibility of repository button
+      repositoryButton_.setText(StringUtil.notNull(activeRepository_));
+      repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(activeRepository_));
 
       // manage visibility of Packrat / renv menu buttons
       PackratContext packratContext = projectContext_.getPackratContext();
@@ -232,6 +252,97 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
       return row;
    }
+
+   private void selectRepository(PackageManagerRepository ppmRepo)
+   {
+      server_.selectRepository(ppmRepo.getName(), ppmRepo.getSnapshot(), new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            if (Js.isFalsy(response))
+               return;
+
+            String name  = response.getString("name");
+            String value = response.getString("value");
+
+            if (StringUtil.isNullOrEmpty(name))
+            {
+               String code = "options(repos = \"" + value + "\")";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+            else
+            {
+               String code = "options(repos = c(" + name + " = \"" + value + "\"))";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+
+   private void showRepositoryMenu()
+   {
+      server_.getRepositories(new ServerRequestCallback<JsArray<PackageManagerRepository>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<PackageManagerRepository> response)
+         {
+            OperationWithInput<PackageManagerRepository> onSelected = new OperationWithInput<>()
+            {
+               @Override
+               public void execute(PackageManagerRepository input)
+               {
+                  server_.selectRepository(input.getName(), input.getSnapshot(), new ServerRequestCallback<JsObject>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsObject response)
+                     {
+                        if (Js.isFalsy(response))
+                           return;
+
+                        String name = response.getString("name");
+                        String value = response.getString("value");
+
+                        if (StringUtil.isNullOrEmpty(name))
+                        {
+                           String code = "options(repos = \"" + value + "\")";
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                        else
+                        {
+                           String code = "options(repos = c(" + name + " = \"" + value + "\"))";
+                           events_.fireEvent(new SendToConsoleEvent(code, true));
+                        }
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+               }
+            };
+
+            PackageManagerSelectRepositoryModalDialog dialog =
+               new PackageManagerSelectRepositoryModalDialog(response, onSelected);
+            
+            dialog.showModal();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
    
    @Override
    protected Toolbar createMainToolbar()
@@ -300,6 +411,23 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       helpButton_.setVisible(false);
       helpSeparator_ = toolbar.addRightSeparator();
       helpSeparator_.setVisible(false);
+
+      repositoryButton_ = new ToolbarButton(
+         "",
+         "",
+         (ImageResource) null,
+         new ClickHandler()
+         {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               showRepositoryMenu();
+            }
+         });
+
+      repositoryButton_.setVisible(false);
+      toolbar.addRightWidget(repositoryButton_);
+      toolbar.addRightSeparator();
 
       ElementIds.assignElementId(searchWidget_, ElementIds.SW_PACKAGES);
       toolbar.addRightWidget(searchWidget_);
@@ -833,6 +961,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
+   private ToolbarButton repositoryButton_;
    private SearchWidget searchWidget_;
    private PackagesDisplayObserver observer_;
 
@@ -860,11 +989,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private ProjectContext projectContext_;
+   private String activeRepository_;
    private RepositoryPackageVulnerabilityListMap vulns_;
 
    private final Commands commands_;
    private final Session session_;
    private final GlobalDisplay display_;
+   private final PackagesServerOperations server_;
+
    private final PackagesDataGridResources dataGridRes_;
 
    private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);

@@ -228,6 +228,14 @@ public class JsUtil
      return s;
   }-*/;
    
+   public static <T extends JavaScriptObject> List<T> toList(JsArray<T> array)
+   {
+      List<T> list = new ArrayList<>();
+      for (int i = 0, n = array.length(); i < n; i++)
+         list.add(array.get(i));
+      return list;
+   }
+
    public static List<String> toList(JsArrayString array)
    {
       List<String> list = new ArrayList<>();
