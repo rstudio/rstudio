@@ -17,6 +17,7 @@
 #### Posit Workbench
 
 - Allow for custom certificate bundles for GitHub Copilot (#14083)
+- Allow strict enforcement of the user limit specified by the Posit Workbench product license (rstudio-pro#5357)
 
 ### Fixed
 
