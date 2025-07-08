@@ -229,7 +229,12 @@ export class SessionLauncher {
 
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
-      this.mainWindow.window.once('ready-to-show', async () => {
+      // Originally used 'ready-to-show' here, but we've been getting reports of the
+      // splash screen never closing and the main window never showing, and issues such
+      // as https://github.com/electron/electron/issues/40273 indicate that `ready-to-show`
+      // may not be reliable, especially if the user switches focus between different
+      // windows/apps while starting up.
+      this.mainWindow.window.webContents.once('did-finish-load', async () => {
         if (appState().startupDelayMs > 0) {
           await setTimeoutPromise(appState().startupDelayMs);
         }
