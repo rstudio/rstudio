@@ -1639,6 +1639,7 @@ public class VisualMode implements VisualModeEditorSync,
                @Override
                public void onPanmirrorFocus(PanmirrorFocusEvent event)
                {
+                  target_.onVisualEditorFocus();
                   target_.checkForExternalEdit(100);
                   
                   // Disable code-related commands, on the presumption that we

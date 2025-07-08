@@ -960,7 +960,7 @@ public class TextEditingTarget implements
    @Handler
    void onSwitchFocusSourceConsole()
    {
-      if (docDisplay_.isFocused())
+      if (sourceHasFocus())
          commands_.activateConsole().execute();
       else
          commands_.activateSource().execute();
@@ -1080,7 +1080,13 @@ public class TextEditingTarget implements
 
    public void onVisualEditorBlur()
    {
+      visualEditorHasFocus_ = false;
       maybeAutoSaveOnBlur();
+   }
+   
+   public void onVisualEditorFocus()
+   {
+      visualEditorHasFocus_ = true;
    }
 
    public void navigateToXRef(String xref)
@@ -9493,6 +9499,7 @@ public class TextEditingTarget implements
    private TextEditingTargetThemeHelper themeHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
+   private boolean visualEditorHasFocus_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private final TextEditingTargetCopilotHelper copilotHelper_;
    private TextEditingTargetPackageDependencyHelper packageDependencyHelper_;
@@ -9577,6 +9584,15 @@ public class TextEditingTarget implements
    private boolean isAutoSaving()
    {
       return autoSaveInitiatedTime_ != 0;
+   }
+
+   private boolean sourceHasFocus()
+   {
+      // Check if either the regular source editor (docDisplay) has focus
+      // or if the visual editor has focus (either ProseMirror or a code chunk)
+      return docDisplay_.isFocused() || 
+               visualEditorHasFocus_ || 
+               (visualMode_.isActivated() && visualMode_.getActiveEditor() != null);
    }
 
    private HandlerRegistration documentDirtyHandler_ = null;
