@@ -380,4 +380,8 @@ test_that("object size computations are correct", {
    expect_equal_size(list("a", "a", "a"))
    expect_equal_size(list("a", "b", "c"))
    
+   # https://github.com/rstudio/rstudio/issues/16202
+   x <- as.character(42)
+   expect_true(.rs.objectSize(x) > 0)
+   
 })
