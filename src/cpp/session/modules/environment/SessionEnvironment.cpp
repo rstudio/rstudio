@@ -1980,7 +1980,12 @@ double obj_size_tree(SEXP x,
    case LISTSXP:
    case LANGSXP:
    case DOTSXP:
-      for (; x != R_NilValue; x = CDR(x))
+      // NOTE: Certain R objects (seemingly, ALTREP objects?) may also place non-node
+      // R objects within the CDR of a node here, so we need to validate we do indeed
+      // still have a node while looping here.
+      //
+      // https://github.com/rstudio/rstudio/issues/16202
+      for (; is_linked_list(x); x = CDR(x))
       {
          size += sizeof_node;
          size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
