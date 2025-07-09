@@ -61,6 +61,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       OperationWithInput<PackageManagerRepository> onSelected)
    {
       super("Select Repository", Roles.getDialogRole(), onSelected);
+      ppmRepos_ = ppmRepos;
 
       panel_ = new FlowPanel();
       panel_.setSize("500px", "400px");
@@ -83,9 +84,10 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             rowEl.appendChild(cellEl);
 
             String description = object.getDescription();
-            rowEl.setTitle(description);
             if (Js.isTruthy(description))
             {
+               rowEl.setTitle(description);
+
                Element cellContentsEl = Document.get().createElement("span");
                cellContentsEl.getStyle().setDisplay(Display.BLOCK);
                cellContentsEl.setInnerText(description);
@@ -96,18 +98,17 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             }
             else
             {
+               description = "(No description available)";
+               rowEl.setTitle(description);
+
                Element cellContentsEl = Document.get().createElement("span");
                cellContentsEl.getStyle().setFontStyle(FontStyle.ITALIC);
-               cellContentsEl.setInnerText("(No description available)");
+               cellContentsEl.setInnerText(description);
 
                cellEl = Document.get().createTDElement();
                cellEl.appendChild(cellContentsEl);
                rowEl.appendChild(cellEl);
             }
-
-            cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(object.getCreated());
-            rowEl.appendChild(cellEl);
          }
 
          @Override
@@ -119,7 +120,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 10, 100, 220, 160 };
+            return new int[] { 10, 80, 400 };
          }
 
          @Override
@@ -207,34 +208,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
    protected void validateAsync(PackageManagerRepository input,
                                 OperationWithInput<Boolean> onValidated)
    {
-      if (!useSnapshotCb_.getValue())
-      {
-         onValidated.execute(true);
-         return;
-      }
-
-      String snapshot = dateInputPanel_.getElement().getPropertyString("value");
-      if (StringUtil.isNullOrEmpty(snapshot))
-      {
-         onValidated.execute(true);
-         return;
-      }
-
-      server_.validateSnapshot(input.getName(), snapshot, new ServerRequestCallback<JsObject>()
-      {
-         @Override
-         public void onResponseReceived(JsObject response)
-         {
-            Debug.logObject(response);
-            onValidated.execute(false);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-      });
+      onValidated.execute(input != null);
    }
 
    @Override
@@ -248,7 +222,6 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       List<PackageManagerRepository> tableData = new ArrayList<>();
       for (int i = 0, n = ppmRepos_.length(); i < n; i++)
       {
-         // TODO: Re-enable after internal demos.
          PackageManagerRepository ppmRepo = ppmRepos_.get(i);
          if (!includeHidden && ppmRepo.isHidden())
             continue;
@@ -269,6 +242,4 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
    private final CheckBox showHiddenReposCb_;
    private final CheckBox useSnapshotCb_;
    private final FlowPanel dateInputPanel_;
-
-   private final PackagesServerOperations server_;
 }
