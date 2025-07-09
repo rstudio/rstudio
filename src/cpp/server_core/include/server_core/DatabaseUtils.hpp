@@ -28,14 +28,42 @@
 #include <shared_core/FilePath.hpp>
 
 namespace rstudio {
+namespace core {
+   class Settings;
+}
 namespace server_core {
 namespace database {
 namespace utils {
 
-core::Error readOptions(const core::FilePath& databaseConfigFile,
-                        const boost::optional<core::system::User>& databaseFileUser,
-                        core::database::ConnectionOptions* pOptions,
-                        std::string_view forceDatabaseProvider = "");
+/**
+ * Step 1 for reading database configuration files.
+ * 
+ * Applies the Settings object into the ConnectionOptions object with a Postgresql, Sqlite, or ProviderNotSpecified connection options visitor.
+ */
+core::Error applyOptionsFromSettings(const core::Settings& databaseSettings,
+                  core::database::ConnectionOptions* pOptions,
+                  const std::string& defaultDatabaseName,
+                  const std::string& defaultDatabaseProvider);
+
+/** Step 2 (sqlite option) for reading database configuration files.
+ * 
+ * Note: called from the ConnectionOptionsVisitor for SqliteConnectionOptions.
+ * 
+ * Performs any necessary processing on options like ensuring the SQLite database file exists and is writable.
+ */
+core::Error processSqliteOptions(const core::database::SqliteConnectionOptions& options,
+                           const boost::optional<core::system::User>& databaseFileUser);
+
+/** 
+ * Step 2 (postgresql option) for reading database configuration files
+ * 
+ * Note: called from the ConnectionOptionsVisitor for PostgresqlConnectionOptions.
+ * 
+ * Performs any necessary processing on options like validating connection and authentication options.
+ */                           
+core::Error processPostgresqlOptions(const core::database::PostgresqlConnectionOptions& options,
+                               const core::FilePath& databaseConfigFile,
+                               const std::string& defaultDatabaseName);
 
 /**
  * Use the provided ConnectionOptions object to determine the connection pool size. 
@@ -47,7 +75,29 @@ core::Error readOptions(const core::FilePath& databaseConfigFile,
 void determineConnectionPoolSize(const core::database::ConnectionOptions& options, size_t& rOutPoolSize, std::string& rOutSource);
 void validateMinimumPostgreSqlVersion(boost::shared_ptr<core::database::IConnection> pConnection);
 core::database::Driver getConfiguredDriver(const core::database::ConnectionOptions& options);
-core::database::Driver getConfiguredDriver(const core::FilePath& databaseConfigFile);
+
+struct ConnectionOptionsVisitor : boost::static_visitor<core::Error>
+{
+   // Constructor for SqliteConnectionOptions
+   ConnectionOptionsVisitor(const boost::optional<core::system::User>& databaseFileUser);
+
+   // Constructor for PostgresqlConnectionOptions
+   ConnectionOptionsVisitor(const core::FilePath& databaseConfigFile,
+                            const std::string& defaultDatabaseName);
+      
+   // Generic constructor
+   ConnectionOptionsVisitor(const boost::optional<core::system::User>& databaseFileUser,
+                            const core::FilePath& databaseConfigFile,
+                            const std::string& defaultDatabaseName);
+
+   core::Error operator()(const core::database::SqliteConnectionOptions& options) const;
+   core::Error operator()(const core::database::PostgresqlConnectionOptions& options) const;
+   core::Error operator()(const core::database::ProviderNotSpecifiedConnectionOptions& options) const;
+
+   const boost::optional<core::system::User> databaseFileUser_;
+   const core::FilePath& databaseConfigFile_;
+   const std::string& defaultDatabaseName_;
+};
 
 } // namespace utils
 } // namespace database

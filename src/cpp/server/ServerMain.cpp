@@ -101,7 +101,7 @@ namespace rstudio {
 namespace server {
 namespace overlay {
 
-Error initialize();
+Error initialize(const boost::optional<system::User>& serverUser);
 Error startup();
 bool reloadConfiguration();
 void startShutdown();
@@ -946,7 +946,7 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // call overlay initialize
-      error = overlay::initialize();
+      error = overlay::initialize(serverUser);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

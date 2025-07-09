@@ -15,11 +15,22 @@
 
 #include <server_core/ServerDatabaseOverlay.hpp>
 
+#include <core/Database.hpp>
+#include <shared_core/Error.hpp>
+
 namespace rstudio {
 namespace server_core {
 namespace database {
 namespace utils {
 namespace overlay {
+
+using namespace core;
+using namespace core::database;
+
+Error readPostgresqlOptions(PostgresqlConnectionOptions& options)
+{
+   return Success();
+}
 
 } // namespace overlay
 } // namespace utils

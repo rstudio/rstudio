@@ -34,6 +34,8 @@ core::Error execute(const std::string& databaseConfigFile,
                     const boost::optional<core::system::User>& databaseFileUser,
                     std::string_view command);
 
+std::string getDefaultDatabaseName();
+
 } // namespace overlay
 } // namespace database
 } // namespace server_core

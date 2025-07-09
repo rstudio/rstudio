@@ -94,12 +94,44 @@ core::database::Driver getConfiguredDriver(const ConnectionOptions& options) {
 core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
 {
    FilePath optionsFile = getDatabaseFilePath(databaseConfigFile);
-   return utils::getConfiguredDriver(optionsFile);
+   std::string defaultDatabaseName = overlay::getDefaultDatabaseName();
+
+   ConnectionOptions options;
+
+   // Read options from the config file into a Settings object
+   Settings settings;
+   Error error = settings.initialize(optionsFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::database::Driver::Unknown;
+   }
+
+   // If the database provider is not specified, use the default provider
+   std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+
+   // Translate the Settings object to a database::ConnectionOptions object
+   error = utils::applyOptionsFromSettings(settings, &options, defaultDatabaseName, kDatabaseProviderSqlite);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return core::database::Driver::Unknown;
+   }
+
+   return utils::getConfiguredDriver(options);
 }
 
 boost::optional<core::database::ConnectionOptions> getConnectionOptions()
 {
    return s_connectionOptions;
+}
+
+Error processOptions(const std::string& defaultDatabaseName,
+                  const boost::optional<system::User>& databaseFileUser,
+                  const FilePath& databaseConfigFile,
+                  ConnectionOptions* pOptions)
+{
+   return boost::apply_visitor(utils::ConnectionOptionsVisitor(databaseFileUser, databaseConfigFile, defaultDatabaseName), *pOptions);
 }
 
 Error readOptions(const std::string& databaseConfigFile,
@@ -108,7 +140,45 @@ Error readOptions(const std::string& databaseConfigFile,
                   std::string_view forceDatabaseProvider)
 {
    FilePath optionsFile = getDatabaseFilePath(databaseConfigFile);
-   return utils::readOptions(optionsFile, databaseFileUser, pOptions, forceDatabaseProvider);
+   std::string defaultDatabaseName = overlay::getDefaultDatabaseName();
+
+   // Read options from the config file into a Settings object
+   Settings settings;
+   Error error = settings.initialize(optionsFile);
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Failed to read database options from " + optionsFile.getAbsolutePath() + ": " + error.getMessage());
+      return error;
+   }
+
+   // If the database provider is not specified, use the default provider
+   std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+   if (!forceDatabaseProvider.empty())
+      databaseProvider = forceDatabaseProvider;
+
+   // Translate the Settings object to a database::ConnectionOptions object
+   error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, kDatabaseProviderSqlite);
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Failed to apply database options from " + optionsFile.getAbsolutePath() + ": " + error.getMessage());
+      return error;
+   }
+
+   LOG_DEBUG_MESSAGE("Applied database configuration from " + optionsFile.getAbsolutePath() +
+                     " with provider: " + databaseProvider);
+
+   if (getConfiguredDriver(*pOptions) == Driver::Unknown)
+   {
+      LOG_ERROR_MESSAGE("No database provider specified in " + optionsFile.getAbsolutePath() +
+                        ". Please specify a provider using the 'provider' option.");
+      return systemError(boost::system::errc::protocol_error,
+                         "No database provider specified in " + optionsFile.getAbsolutePath() +
+                         ". Please specify a provider using the 'provider' option.",
+                         ERROR_LOCATION);
+   }
+
+   // Process and validate the options based on the configured driver
+   return processOptions(defaultDatabaseName, databaseFileUser, optionsFile, pOptions);
 }
 
 Error initialize(const std::string& databaseConfigFile,

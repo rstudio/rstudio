@@ -286,6 +286,14 @@ public:
 #endif
    }
 
+   Error operator()(const ProviderNotSpecifiedConnectionOptions&) const
+   {
+      // No provider specified, so we cannot connect
+      return systemError(boost::system::errc::invalid_argument,
+                         "No database connection options specified",
+                         ERROR_LOCATION);
+   }
+
    Error parseConnectionUri(const std::string& uri,
                             std::string& password,
                             std::string* pConnectionStr) const

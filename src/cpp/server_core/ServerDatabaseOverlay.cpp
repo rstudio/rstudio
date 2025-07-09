@@ -30,6 +30,11 @@ core::Error execute(const std::string& databaseConfigFile,
    return Success();
 }
 
+std::string getDefaultDatabaseName()
+{
+   return kDefaultOpenSourceDatabaseName;
+}
+
 } // namespace overlay
 } // namespace database
 } // namespace server_core

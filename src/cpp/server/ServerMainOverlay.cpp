@@ -22,7 +22,7 @@ namespace rstudio {
 namespace server {
 namespace overlay {
 
-Error initialize()
+Error initialize(const boost::optional<system::User>& serverUser)
 {
    return Success();
 }
