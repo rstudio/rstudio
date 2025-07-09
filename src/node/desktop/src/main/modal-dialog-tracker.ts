@@ -76,6 +76,15 @@ export class ModalDialogTracker {
   }
 
   /**
+   * Resets the GWT modal count to 0. This should be called when the GWT
+   * application is reloaded (e.g., during session restart) to ensure the
+   * modal state is synchronized between GWT and Electron.
+   */
+  public resetGwtModals() {
+    this.gwtModalsShowing = 0;
+  }
+
+  /**
    * Tracks a modal dialog that is shown by Electron.dialog (async) to ensure that the
    * main menu is disabled while the dialog is open and re-enabled when the
    * dialog is closed.

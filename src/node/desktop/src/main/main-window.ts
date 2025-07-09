@@ -171,6 +171,12 @@ export class MainWindow extends GwtWindow {
     // (will get set again once the new session has initialized the workbench)
     this.workbenchInitialized = false;
 
+    // Reset GWT modal state when reloading the session to ensure modal dialog
+    // state is synchronized between GWT and Electron after session restart
+    if (reload) {
+      appState().modalTracker.resetGwtModals();
+    }
+
     const error = this.sessionLauncher?.launchNextSession(reload);
     if (error) {
       logger().logError(error);
@@ -269,18 +275,13 @@ export class MainWindow extends GwtWindow {
   }
 
   closeEvent(event: Electron.Event): void {
-
     if (!this.geometrySaved) {
       const bounds = this.window.getNormalBounds();
       ElectronDesktopOptions().saveWindowBounds({ ...bounds, maximized: this.window.isMaximized() });
       this.geometrySaved = true;
     }
 
-    if (
-      this.quitConfirmed ||
-      !this.sessionProcess ||
-      this.sessionProcess.exitCode !== null
-    ) {
+    if (this.quitConfirmed || !this.sessionProcess || this.sessionProcess.exitCode !== null) {
       closeAllSatellites(this.window);
       return;
     }
