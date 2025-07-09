@@ -43,7 +43,7 @@ import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
-import { findRInstallationsWin32 } from './detect-r';
+import { findDefault32Bit, findDefault64Bit, findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
@@ -452,7 +452,23 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_r_version', () => {
-      const rBinDir = ElectronDesktopOptions().rBinDir();
+      const options = ElectronDesktopOptions();
+
+      if (options.useDefault32BitR()) {
+        const rHomeDir = findDefault32Bit();
+        if (rHomeDir) {
+          return `[32-bit] ${rHomeDir} [Default]`;
+        }
+      }
+
+      if (options.useDefault64BitR()) {
+        const rHomeDir = findDefault64Bit();
+        if (rHomeDir) {
+          return `[64-bit] ${rHomeDir} [Default]`;
+        }
+      }
+
+      const rBinDir = options.rBinDir();
       return formatSelectedVersionForUi(rBinDir);
     });
 

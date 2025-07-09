@@ -112,9 +112,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          rVersion_.setWidth("100%");
          rVersion_.setText(constants_.rVersionLoadingText());
          rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
-         Desktop.getFrame().getRVersion(version -> {
-            rVersion_.setText(version);
-         });
+         Desktop.getFrame().getRVersion(version -> rVersion_.setText(version));
          spaced(rVersion_);
          basic.add(rVersion_);
       }
