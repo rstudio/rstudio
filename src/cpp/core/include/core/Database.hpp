@@ -38,6 +38,7 @@ struct SqliteConnectionOptions
    std::string file;
    int poolSize;
    bool readonly;
+   core::FilePath databaseDirectory;
 };
 
 struct PostgresqlConnectionOptions
@@ -55,6 +56,12 @@ struct PostgresqlConnectionOptions
    std::string secureKeyHash; // hash of secureKey (pre-obfuscation)
 };
 
+// Default options for an empty or an unread configuration
+struct ProviderNotSpecifiedConnectionOptions
+{
+   bool enabled = false;
+};
+
 enum class Driver
 {
    Sqlite,
@@ -65,7 +72,7 @@ enum class Driver
 static constexpr const char* SQLITE_DRIVER = "sqlite3";
 static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
 
-typedef boost::variant<SqliteConnectionOptions, PostgresqlConnectionOptions> ConnectionOptions;
+typedef boost::variant<SqliteConnectionOptions, PostgresqlConnectionOptions, ProviderNotSpecifiedConnectionOptions> ConnectionOptions;
 using InputParameter = soci::details::use_type_ptr;
 using OutputParameter = soci::details::into_type_ptr;
 

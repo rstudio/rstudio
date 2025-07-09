@@ -16,25 +16,23 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
 #define SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
 
-#include <boost/optional.hpp>
-
-#include <core/Database.hpp>
-
-#include <shared_core/Error.hpp>
-#include <shared_core/system/User.hpp>
-
 namespace rstudio {
+namespace core {
+   class Error;
+
+namespace database {
+   struct PostgresqlConnectionOptions;
+} // namespace database
+} // namespace core
 namespace server_core {
 namespace database {
+namespace utils {
+namespace overlay {
 
-constexpr const char* kDatabaseProviderSqlite = "sqlite";
-constexpr const char* kDatabaseProviderPostgresql = "postgresql";
+core::Error readPostgresqlOptions(core::database::PostgresqlConnectionOptions& options);
 
-// Execute the database command using the underlying configuration
-core::Error execute(const std::string& databaseConfigFile,
-                    const boost::optional<core::system::User>& databaseFileUser,
-                    std::string command);
-
+} // namespace overlay
+} // namespace utils
 } // namespace database
 } // namespace server_core
 } // namespace rstudio

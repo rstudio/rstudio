@@ -23,6 +23,35 @@ namespace database {
 constexpr const char* kDatabaseProviderSqlite = "sqlite";
 constexpr const char* kDatabaseProviderPostgresql = "postgresql";
 
+constexpr const char* kDefaultWorkbenchDatabaseName = "rstudio";
+constexpr const char* kDefaultOpenSourceDatabaseName = "rstudio-os";
+
+// settings constants
+constexpr const char* kDatabaseProvider = "provider";
+constexpr const char* kSqliteDatabaseDirectory = "directory";
+constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
+constexpr const char* kDatabaseHost = "host";
+constexpr const char* kDefaultDatabaseHost = "localhost";
+constexpr const char* kDatabaseName = "database";
+constexpr const char* kDatabasePort = "port";
+constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
+constexpr const char* kDatabaseUsername = "username";
+constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
+constexpr const char* kDatabasePassword = "password";
+constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connection-timeout-seconds";
+constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
+constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
+constexpr const char* kConnectionPoolSize = "pool-size";
+
+// environment variables
+constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
+
+// Choosing a modest pool size as the db usage of rserver is not high enough to
+// justify anything larger and with 20 a cluster of 5 nodes hits the postgres default limit of 100.
+constexpr const size_t kDefaultMinPoolSize = 4;
+constexpr const size_t kDefaultMaxPoolSize = 6;
+constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
+
 } // namespace database
 } // namespace server_core
 } // namespace rstudio

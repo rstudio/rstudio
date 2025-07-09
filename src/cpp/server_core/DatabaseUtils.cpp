@@ -14,6 +14,7 @@
  */
 
 #include <server_core/DatabaseUtils.hpp>
+#include <server_core/DatabaseUtilsOverlay.hpp>
 
 #include <server_core/ServerLicense.hpp>
 #include <server_core/ServerKeyObfuscation.hpp>
@@ -46,34 +47,6 @@ using namespace core::database;
 
 namespace {
 
-// settings constants
-constexpr const char* kDatabaseProvider = "provider";
-constexpr const char* kSqliteDatabaseDirectory = "directory";
-constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
-constexpr const char* kDatabaseHost = "host";
-constexpr const char* kDefaultDatabaseHost = "localhost";
-constexpr const char* kDatabaseName = "database";
-constexpr const char* kDefaultWorkbenchDatabaseName = "rstudio";
-constexpr const char* kDefaultOpenSourceDatabaseName = "rstudio-os";
-constexpr const char* kDatabasePort = "port";
-constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
-constexpr const char* kDatabaseUsername = "username";
-constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
-constexpr const char* kDatabasePassword = "password";
-constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connection-timeout-seconds";
-constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
-constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
-constexpr const char* kConnectionPoolSize = "pool-size";
-
-// environment variables
-constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
-
-// Choosing a modest pool size as the db usage of rserver is not high enough to
-// justify anything larger and with 20 a cluster of 5 nodes hits the postgres default limit of 100.
-constexpr const size_t kDefaultMinPoolSize = 4;
-constexpr const size_t kDefaultMaxPoolSize = 6;
-constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
-
 struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
 {
    Driver operator()(const SqliteConnectionOptions& options)
@@ -84,6 +57,11 @@ struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
    Driver operator()(const PostgresqlConnectionOptions& options)
    {
       return Driver::Postgresql;
+   }
+
+   Driver operator()(const ProviderNotSpecifiedConnectionOptions& options)
+   {
+      return Driver::Unknown;
    }
 };
 
@@ -97,10 +75,57 @@ struct ConnectionPoolSizeVisitor : boost::static_visitor<int>
    int operator()(const PostgresqlConnectionOptions& options)
    {
       return options.poolSize;
+   }   
+   
+   int operator()(const ProviderNotSpecifiedConnectionOptions& options)
+   {
+      return 0; // No pool size specified
    }
 };
 
 } // anonymous namespace
+
+// Constructor for SqliteConnectionOptions
+ConnectionOptionsVisitor::ConnectionOptionsVisitor(const boost::optional<core::system::User>& databaseFileUser)
+   : databaseFileUser_(databaseFileUser),
+      databaseConfigFile_(core::FilePath()),
+      defaultDatabaseName_("")
+{}
+
+// Constructor for PostgresqlConnectionOptions
+ConnectionOptionsVisitor::ConnectionOptionsVisitor(const core::FilePath& databaseConfigFile,
+                                                   const std::string& defaultDatabaseName)
+   : databaseFileUser_(boost::none),
+      databaseConfigFile_(databaseConfigFile),
+      defaultDatabaseName_(defaultDatabaseName)
+{}
+   
+// Generic constructor
+ConnectionOptionsVisitor::ConnectionOptionsVisitor(const boost::optional<core::system::User>& databaseFileUser,
+                           const core::FilePath& databaseConfigFile,
+                           const std::string& defaultDatabaseName)
+   : databaseFileUser_(databaseFileUser),
+      databaseConfigFile_(databaseConfigFile),
+      defaultDatabaseName_(defaultDatabaseName)
+{}
+
+core::Error ConnectionOptionsVisitor::operator()(const core::database::SqliteConnectionOptions& options) const
+{
+   return processSqliteOptions(options, databaseFileUser_);
+}
+
+core::Error ConnectionOptionsVisitor::operator()(const core::database::PostgresqlConnectionOptions& options) const
+{
+   return processPostgresqlOptions(options, databaseConfigFile_, defaultDatabaseName_);
+}
+
+core::Error ConnectionOptionsVisitor::operator()(const core::database::ProviderNotSpecifiedConnectionOptions& options) const
+{
+   // Handle default case
+   return core::Error(boost::system::errc::not_supported,
+                     "No database provider specified",
+                     ERROR_LOCATION);
+}
 
 void determineConnectionPoolSize(const ConnectionOptions& options, size_t& rOutPoolSize, std::string& rOutSource)
 {
@@ -183,143 +208,81 @@ void validateMinimumPostgreSqlVersion(boost::shared_ptr<IConnection> pConnection
    }
 }
 
-Error readOptions(const FilePath& databaseConfigFile,
-                  const boost::optional<system::User>& databaseFileUser,
-                  ConnectionOptions* pOptions,
-                  std::string_view forceDatabaseProvider)
+Error processSqliteOptions(const SqliteConnectionOptions& options,
+                           const boost::optional<system::User>& databaseFileUser)
 {
-   if (databaseConfigFile.isEmpty())
-   {
-      return systemError(boost::system::errc::invalid_argument, "Database configuration file path is empty", ERROR_LOCATION);
-   }
-   
-   Settings settings;
-   Error error = settings.initialize(databaseConfigFile);
+   Error error = options.databaseDirectory.ensureDirectory();
    if (error)
       return error;
 
-   std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
-   if (!forceDatabaseProvider.empty())
-      databaseProvider = forceDatabaseProvider;
+   FilePath databaseFile = FilePath(options.file);
+   error = databaseFile.ensureFile();
+   if (error)
+      return error;
 
-   bool checkConfFilePermissions = false;
+   // want to ensure users other than the server can't read the database
+   error = databaseFile.changeFileMode(FileMode::USER_READ_WRITE);
+   if (error)
+      return error;
 
-   std::string defaultDatabaseName;
-   if (license::isProfessionalEdition()) 
+   if (databaseFileUser.has_value())
    {
-      defaultDatabaseName = kDefaultWorkbenchDatabaseName;
-   }
-   else 
-   {
-      defaultDatabaseName = kDefaultOpenSourceDatabaseName;
-   }
-
-   if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
-   {
-      SqliteConnectionOptions options;
-
-      // get the database directory - if not specified, we fallback to a hardcoded default path
-      FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
-      FilePath databaseFile = databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
-      options.file = databaseFile.getAbsolutePath();
-      options.poolSize = settings.getInt(kConnectionPoolSize, 0);
-
-      error = databaseDirectory.ensureDirectory();
+      // always ensure the database file user is correct, if specified
+      error = databaseFile.changeOwnership(databaseFileUser.get());
       if (error)
-         return error;
-
-      error = databaseFile.ensureFile();
-      if (error)
-         return error;
-
-      // want to ensure users other than the server can't read the database
-      error = databaseFile.changeFileMode(FileMode::USER_READ_WRITE);
-      if (error)
-         return error;
-
-      if (databaseFileUser.has_value())
       {
-         // always ensure the database file user is correct, if specified
-         error = databaseFile.changeOwnership(databaseFileUser.get());
-         if (error)
-         {
-            error.addProperty("server-user", databaseFileUser.get().getUsername());
-            error.addProperty("description", "Unable to change ownership of database file");
-            return error;
-         }
+         error.addProperty("server-user", databaseFileUser.get().getUsername());
+         error.addProperty("description", "Unable to change ownership of database file");
+         return error;
+      }
 
 #ifndef _WIN32
-         error = databaseDirectory.changeOwnership(databaseFileUser.get());
-         if (error)
+      error = options.databaseDirectory.changeOwnership(databaseFileUser.get());
+      if (error)
+      {
+         bool writable = false;
+         Error writableError = options.databaseDirectory.isWriteable(writable);
+         if (writableError || !writable)
          {
-            bool writable = false;
-            Error writableError = databaseDirectory.isWriteable(writable);
-            if (writableError || !writable)
-            {
-                LOG_ERROR_MESSAGE("SQLite database directory: " + databaseDirectory.getAbsolutePath() + " must be writable by: " + databaseFileUser.get().getUsername());
-            }
+               LOG_ERROR_MESSAGE("SQLite database directory: " + options.databaseDirectory.getAbsolutePath() + " must be writable by: " + databaseFileUser.get().getUsername());
          }
+      }
 #endif
-      }
-
-      LOG_INFO_MESSAGE("Connecting to sqlite3 database at " + options.file);
-      *pOptions = options;
    }
-   else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
+
+   return Success();
+}
+
+Error processPostgresqlOptions(const PostgresqlConnectionOptions& options,
+                               const FilePath& databaseConfigFile,
+                               const std::string& defaultDatabaseName)
+{
+   if (!options.connectionUri.empty() &&
+      (options.database != defaultDatabaseName ||
+      options.host != kDefaultDatabaseHost ||
+      options.username != kDefaultPostgresqlDatabaseUsername ||
+      options.port != kDefaultPostgresqlDatabasePort ||
+      options.connectionTimeoutSeconds != kDefaultPostgresqlDatabaseConnectionTimeoutSeconds))
    {
-      PostgresqlConnectionOptions options;
-
-      options.database = settings.get(kDatabaseName, defaultDatabaseName);
-      options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
-      options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
-      options.password = settings.get(kDatabasePassword, std::string());
-      options.port = settings.get(kDatabasePort, kDefaultPostgresqlDatabasePort);
-      options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
-                                                         kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
-      options.connectionUri = settings.get(kPostgresqlDatabaseConnectionUri, std::string());
-      std::string secureKey = core::http::secure_cookie::getKey();
-      OBFUSCATE_KEY(secureKey);
-      options.secureKey = secureKey;
-      options.secureKeyFileUsed = core::http::secure_cookie::getKeyFileUsed();
-      options.secureKeyHash = core::http::secure_cookie::getKeyHash();
-      options.poolSize = settings.getInt(kConnectionPoolSize, 0);
-      *pOptions = options;
-
-      if (!options.connectionUri.empty() &&
-          (options.database != defaultDatabaseName ||
-           options.host != kDefaultDatabaseHost ||
-           options.username != kDefaultPostgresqlDatabaseUsername ||
-           options.port != kDefaultPostgresqlDatabasePort ||
-           options.connectionTimeoutSeconds != kDefaultPostgresqlDatabaseConnectionTimeoutSeconds))
-      {
-         LOG_WARNING_MESSAGE("A " + std::string(kPostgresqlDatabaseConnectionUri) +
-                                " was specified for Postgres database connection"
-                                " in addition to other connection parameters. Only the " +
-                                std::string(kPostgresqlDatabaseConnectionUri) +
-                                " and password settings will be used.");
-      }
-
-      if (options.connectionUri.empty())
-         LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
-      else
-      {
-         // matches up to the password, the password itself, and rest of it
-         // replaces the password with a mask (***) leaving the rest untouched
-         // no replacements if not a match (no password in the URI)
-         boost::regex matchPassword(R"((.*:\/\/[^:]*:)([^@]*)(@.*$))");
-         LOG_INFO_MESSAGE("Connecting to Postgres database: " + boost::regex_replace(options.connectionUri, matchPassword, "$1***$3"));
-      }
-      checkConfFilePermissions = true;
+      LOG_WARNING_MESSAGE("A " + std::string(kPostgresqlDatabaseConnectionUri) +
+                              " was specified for Postgres database connection"
+                              " in addition to other connection parameters. Only the " +
+                              std::string(kPostgresqlDatabaseConnectionUri) +
+                              " and password settings will be used.");
    }
+
+   if (options.connectionUri.empty())
+      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
    else
    {
-      return systemError(boost::system::errc::protocol_error,
-                         "Invalid database provider specified in " + databaseConfigFile.getAbsolutePath() +
-                            ": " + databaseProvider,
-                         ERROR_LOCATION);
+      // matches up to the password, the password itself, and rest of it
+      // replaces the password with a mask (***) leaving the rest untouched
+      // no replacements if not a match (no password in the URI)
+      boost::regex matchPassword(R"((.*:\/\/[^:]*:)([^@]*)(@.*$))");
+      LOG_INFO_MESSAGE("Connecting to Postgres database: " + boost::regex_replace(options.connectionUri, matchPassword, "$1***$3"));
    }
-
-   if (databaseConfigFile.exists() && checkConfFilePermissions)
+   
+   if (databaseConfigFile.exists())
    {
       // the database configuration file can potentially contain sensitive information
       // attempt to update the permissions and log a warning if permissions are too lax
@@ -372,22 +335,95 @@ Error readOptions(const FilePath& databaseConfigFile,
    return Success();
 }
 
-core::database::Driver getConfiguredDriver(const ConnectionOptions& options) {
-   ConfiguredDriverVisitor visitor;
-   return boost::apply_visitor(visitor, options);
+void applySqliteOptions(const Settings& settings,
+                        const std::string& defaultDatabaseName,
+                        SqliteConnectionOptions& options)
+{
+   // get the database directory - if not specified, we fallback to a hardcoded default path
+   options.databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
+   FilePath databaseFile = options.databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
+   options.file = databaseFile.getAbsolutePath();
+   options.poolSize = settings.getInt(kConnectionPoolSize, 0);
 }
 
-core::database::Driver getConfiguredDriver(const FilePath& databaseConfigFile)
+Error applyPostgresqlOptions(const Settings& settings,
+                            const std::string& defaultDatabaseName,
+                            PostgresqlConnectionOptions& options)
 {
-   ConnectionOptions options;
-   Error error = readOptions(databaseConfigFile, boost::optional<system::User>(), &options);
+   options.database = settings.get(kDatabaseName, defaultDatabaseName);
+   options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
+   options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
+   options.password = settings.get(kDatabasePassword, std::string());
+   options.port = settings.get(kDatabasePort, kDefaultPostgresqlDatabasePort);
+   options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
+                                                      kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
+   options.connectionUri = settings.get(kPostgresqlDatabaseConnectionUri, std::string());
+   std::string secureKey = core::http::secure_cookie::getKey();
+   OBFUSCATE_KEY(secureKey);
+   options.secureKey = secureKey;
+   options.secureKeyFileUsed = core::http::secure_cookie::getKeyFileUsed();
+   options.secureKeyHash = core::http::secure_cookie::getKeyHash();
+   options.poolSize = settings.getInt(kConnectionPoolSize, 0);
+
+   Error error = utils::overlay::readPostgresqlOptions(options);
    if (error)
    {
-      LOG_ERROR(error);
-      return core::database::Driver::Unknown;
+      return error;
    }
 
-   return getConfiguredDriver(options);
+   return Success();
+} 
+
+Error applyOptionsFromSettings(const Settings& databaseSettings,
+                  ConnectionOptions* pOptions,
+                  const std::string& defaultDatabaseName,
+                  const std::string& defaultDatabaseProvider)
+{
+   std::string databaseProvider = databaseSettings.get(kDatabaseProvider, defaultDatabaseProvider);
+   Error result = Success();
+
+   if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
+   {
+      SqliteConnectionOptions options;
+
+      applySqliteOptions(databaseSettings, defaultDatabaseName, options);
+
+      LOG_INFO_MESSAGE("Finished reading configuration for sqlite database at " + options.file);
+      *pOptions = options;
+   }
+   else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
+   {
+      PostgresqlConnectionOptions options;
+
+      result = applyPostgresqlOptions(databaseSettings, defaultDatabaseName, options);
+      if (result != Success())
+      {
+         return result;
+      }
+
+      LOG_INFO_MESSAGE("Finished reading configuration for Postgres database " + options.username + "@" + options.host + ":" + options.port + "/" + options.database);
+
+      *pOptions = options;
+   }
+   else if (databaseProvider.empty())
+   {
+      ProviderNotSpecifiedConnectionOptions options;
+      *pOptions = options;
+   }
+   else
+   {
+      return systemError(boost::system::errc::protocol_error,
+                         "Invalid database provider specified: " + databaseProvider,
+                         ERROR_LOCATION);
+   }
+
+   return result;
+}
+
+core::database::Driver getConfiguredDriver(const ConnectionOptions& options) 
+{
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
 }
 
 } // namespace utils
