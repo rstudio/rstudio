@@ -32,6 +32,8 @@ import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -59,6 +61,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       OperationWithInput<PackageManagerRepository> onSelected)
    {
       super("Select Repository", Roles.getDialogRole(), onSelected);
+      ppmRepos_ = ppmRepos;
 
       panel_ = new FlowPanel();
       panel_.setSize("500px", "400px");
@@ -77,30 +80,35 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             rowEl.appendChild(cellEl);
 
             cellEl = Document.get().createTDElement();
-            cellEl.setInnerText("Repository: " + object.getName());
+            cellEl.setInnerText(object.getName());
             rowEl.appendChild(cellEl);
 
             String description = object.getDescription();
             if (Js.isTruthy(description))
             {
-               cellEl = Document.get().createTDElement();
-               cellEl.setInnerText(description);
-               rowEl.appendChild(cellEl);
-            }
-            else
-            {
+               rowEl.setTitle(description);
+
                Element cellContentsEl = Document.get().createElement("span");
-               cellContentsEl.getStyle().setFontStyle(FontStyle.ITALIC);
-               cellContentsEl.setInnerText("(No description available)");
+               cellContentsEl.getStyle().setDisplay(Display.BLOCK);
+               cellContentsEl.setInnerText(description);
 
                cellEl = Document.get().createTDElement();
                cellEl.appendChild(cellContentsEl);
                rowEl.appendChild(cellEl);
             }
+            else
+            {
+               description = "(No description available)";
+               rowEl.setTitle(description);
 
-            cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(object.getCreated());
-            rowEl.appendChild(cellEl);
+               Element cellContentsEl = Document.get().createElement("span");
+               cellContentsEl.getStyle().setFontStyle(FontStyle.ITALIC);
+               cellContentsEl.setInnerText(description);
+
+               cellEl = Document.get().createTDElement();
+               cellEl.appendChild(cellContentsEl);
+               rowEl.appendChild(cellEl);
+            }
          }
 
          @Override
@@ -112,7 +120,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 10, 100, 220, 160 };
+            return new int[] { 10, 80, 400 };
          }
 
          @Override
@@ -122,33 +130,42 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          }
       };
 
-      List<PackageManagerRepository> tableData = new ArrayList<>();
-      for (int i = 0, n = ppmRepos.length(); i < n; i++)
+      table_.addSelectionHandler(new SelectionHandler<PackageManagerRepository>()
       {
-         PackageManagerRepository ppmRepo = ppmRepos.get(i);
-         if (ppmRepo.isHidden())
-            continue;
-         
-         String type = ppmRepo.getType();
-         if (!type.equals(PackageManagerRepository.TYPE_R))
-            continue;
+         @Override
+         public void onSelection(SelectionEvent<PackageManagerRepository> event)
+         {
+            enableOkButton(event.getSelectedItem() != null);
+         }
+      });
 
-         tableData.add(ppmRepo);
-      }
-      table_.draw(tableData);
+      drawTable(false);
+
+      table_.selectRow(0);
 
       table_.getElement().getStyle().setBorderWidth(1, Unit.PX);
       table_.getElement().getStyle().setBackgroundColor("white");
       tableContainer_.add(table_);
 
-      useSnapshotCheckbox_ = new CheckBox("Use repository snapshot from specific date");
+      showHiddenReposCb_ = new CheckBox("Show hidden repositories");
+      showHiddenReposCb_.getElement().getStyle().setDisplay(Display.BLOCK);
+      showHiddenReposCb_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            drawTable(event.getValue());
+         }
+      });
+
+      useSnapshotCb_ = new CheckBox("Use repository snapshot from specific date");
 
       dateInputPanel_ = new FlowPanel("input");
       dateInputPanel_.getElement().setAttribute("type", "date");
       dateInputPanel_.setVisible(false);
 
-      useSnapshotCheckbox_.getElement().getStyle().setDisplay(Display.BLOCK);
-      useSnapshotCheckbox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      useSnapshotCb_.getElement().getStyle().setDisplay(Display.BLOCK);
+      useSnapshotCb_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -159,9 +176,10 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
 
       panel_.add(new Header("Repository"));
       panel_.add(tableContainer_);
+      panel_.add(showHiddenReposCb_);
 
       panel_.add(new Header("Snapshot"));
-      panel_.add(useSnapshotCheckbox_);
+      panel_.add(useSnapshotCb_);
       panel_.add(dateInputPanel_);
    }
 
@@ -172,9 +190,9 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       if (repository == null)
          return null;
 
-      if (useSnapshotCheckbox_.getValue())
+      if (useSnapshotCb_.getValue())
       {
-         String date = (String) dateInputPanel_.getElement().getPropertyObject("value");
+         String date = dateInputPanel_.getElement().getPropertyString("value");
          if (!StringUtil.isNullOrEmpty(date))
             repository.setSnapshot(date);
       }
@@ -187,14 +205,41 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
    }
 
    @Override
+   protected void validateAsync(PackageManagerRepository input,
+                                OperationWithInput<Boolean> onValidated)
+   {
+      onValidated.execute(input != null);
+   }
+
+   @Override
    protected Widget createMainWidget()
    {
       return panel_;
    }
 
+   private void drawTable(boolean includeHidden)
+   {
+      List<PackageManagerRepository> tableData = new ArrayList<>();
+      for (int i = 0, n = ppmRepos_.length(); i < n; i++)
+      {
+         PackageManagerRepository ppmRepo = ppmRepos_.get(i);
+         if (!includeHidden && ppmRepo.isHidden())
+            continue;
+         
+         String type = ppmRepo.getType();
+         if (!type.equals(PackageManagerRepository.TYPE_R))
+            continue;
+
+         tableData.add(ppmRepo);
+      }
+      table_.draw(tableData, true);
+   }
+
+   private final JsArray<PackageManagerRepository> ppmRepos_;
    private final FlowPanel panel_;
    private final ScrollPanel tableContainer_;
    private final RowTable<PackageManagerRepository> table_;
-   private final CheckBox useSnapshotCheckbox_;
+   private final CheckBox showHiddenReposCb_;
+   private final CheckBox useSnapshotCb_;
    private final FlowPanel dateInputPanel_;
 }

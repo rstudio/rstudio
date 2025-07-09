@@ -14,10 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.HelpLink;
 
+import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;

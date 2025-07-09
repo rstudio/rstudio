@@ -293,10 +293,19 @@ public abstract class RowTable<T> extends ScrollPanel
          selectRow(row, ScrollType.NONE);
       }
    }
-   
+
    public void draw(List<T> data)
    {
+      draw(data, false);
+   }
+   
+   public void draw(List<T> data, boolean clearExisting)
+   {
+      if (clearExisting)
+         clear();
+
       data_ = data;
+
       buffer_.setLength(0);
       bufferTimer_.cancel();
       
@@ -324,10 +333,21 @@ public abstract class RowTable<T> extends ScrollPanel
    private void drawRow(int index, TableRowElement rowEl)
    {
       T object = data_.get(index);
+
+      // set internal attributes used for tracking a row's index in the DOM
       rowEl.setAttribute("__row", String.valueOf(index));
-      rowEl.setAttribute("title", getKey(object));
       rowEl.setId(id_ + "_row_" + index);
+
+      // call back to implementing subclass to draw the row
       drawRowImpl(object, rowEl);
+
+      // set a default title for the element if none was set during draw
+      String title = rowEl.getTitle();
+      if (StringUtil.isNullOrEmpty(title))
+      {
+         title = getKey(object);
+         rowEl.setTitle(title);
+      }
    }
    
    private void drawColumnGroups()
@@ -406,6 +426,7 @@ public abstract class RowTable<T> extends ScrollPanel
    {
       data_.clear();
       table_.removeAllChildren();
+      SelectionEvent.fire(this, null);
       
       selectedRow_ = -1;
       selectedRowElement_ = null;
