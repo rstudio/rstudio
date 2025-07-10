@@ -13,11 +13,13 @@
 - ([#16111](https://github.com/rstudio/rstudio/issues/16111)): Increases the default console buffer size to 10000 lines
 - ([#11661](https://github.com/rstudio/rstudio/issues/11661)): The Zoom button in the RStudio Desktop plots pane now brings an existing zoomed plot window to the foreground 
 - ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), an option to stop ignoring updates prompts
+- ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 
 #### Posit Workbench
 
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
 - (rstudio-pro#5357): Allows strict enforcement of the user limit specified by the Posit Workbench product license
+- (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 
 ### Fixed
 
