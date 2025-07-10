@@ -51,10 +51,10 @@
 
 ### Dependencies
 
-- Copilot Language Server 1.340.0 (#15935)
+- Copilot Language Server 1.342.0 (#15935)
 - Electron 37.2.0 (#15933)
 - GWT 2.12.2 (#16062)
-- Quarto 1.7.31 (#15934)
+- Quarto 1.7.32 (#15934)
 
 ### Deprecated / Removed
 
