@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  *
  * electron-desktop-options.ts
@@ -15,13 +16,24 @@
  */
 
 import { BrowserWindow } from 'electron';
-import Store from 'electron-store';
+import ElectronStore from 'electron-store';
 import { statSync } from 'fs';
 import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../ui/utils';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
+
+// Workaround for TypeScript not recognizing ElectronStore methods in CommonJS project
+// See: https://github.com/sindresorhus/electron-store/issues/276
+interface ElectronStoreInterface<T extends Record<string, any>> {
+  get(key: string, defaultValue?: any): any;
+  set(key: string, value: any): void;
+  has(key: string): boolean;
+  delete(key: string): void;
+  clear(): void;
+  store: T;
+}
 
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
@@ -91,13 +103,20 @@ export function clearOptionsSingleton(): void {
  * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl implements DesktopOptions {
-  private config = new Store<RStudioUserState>({ schema: userStateSchema });
+   
+  private config = new ElectronStore<RStudioUserState>({
+    schema: userStateSchema,
+  }) as unknown as ElectronStoreInterface<RStudioUserState>;
   private legacyOptions = legacyPreferenceManager;
 
   // unit testing constructor to expose directory and DesktopOptions mock
   constructor(directory = '', legacyOptions?: DesktopOptions) {
     if (directory.length != 0) {
-      this.config = new Store<RStudioUserState>({ cwd: directory, schema: userStateSchema });
+       
+      this.config = new ElectronStore<RStudioUserState>({
+        cwd: directory,
+        schema: userStateSchema,
+      }) as unknown as ElectronStoreInterface<RStudioUserState>;
     }
     if (legacyOptions) {
       this.legacyOptions = legacyOptions;

@@ -72,7 +72,7 @@
     "@electron/fuses": "1.8.0",
     "@vueuse/core": "13.1.0",
     "crc": "4.3.2",
-    "electron-store": "8.2.0",
+    "electron-store": "10.1.0",
     "i18next": "25.0.2",
     "line-reader": "0.4.0",
     "lodash.debounce": "4.0.8",
