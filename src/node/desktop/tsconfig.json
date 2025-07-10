@@ -9,8 +9,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
     "strict": true,
     "paths": {
       "*": ["node_modules/*"],
