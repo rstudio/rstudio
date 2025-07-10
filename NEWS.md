@@ -7,7 +7,7 @@
 - RStudio now highlights all keywords from the SQL 2023 standard in SQL documents (#15841)
 - RStudio now uses lobstr when computing object sizes (#15919)
 - RStudio now supports version 17 of the R graphics engine (#16138)
-- Improved legibility of highlighted code when RStudio debugger is active
+- Improved legibility of highlighted code when RStudio debugger is active (#16213)
 - Added a user preference to disable showing the splash screen at startup (#15945)
 - The splash screen now closes when clicked with the mouse (#15614)
 - The default console buffer size has been increased to 10000 lines (#16111)
