@@ -36,7 +36,7 @@
 - ([#15923](https://github.com/rstudio/rstudio/issues/15923)): Show an error message when the GitHub Copilot language server is missing
 - ([#15895](https://github.com/rstudio/rstudio/issues/15895)): Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts
 - ([#16133](https://github.com/rstudio/rstudio/issues/16133)): Fixed an issue where RStudio's Update Packages dialog could report packages were out-of-date for packages installed into multiple library paths
-- Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
+- (rstudio-pro#8159): Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
 - ([#16119](https://github.com/rstudio/rstudio/issues/16119)): Fixed an issue where GitHub Copilot's status was incorrectly reported as an error in the Preferences dialog
 - ([#16128](https://github.com/rstudio/rstudio/issues/16128)): Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open
 - ([#15901](https://github.com/rstudio/rstudio/issues/15901)): Fixed an issue where the entire document was sent to GitHub Copilot after each edit instead of just the changes
