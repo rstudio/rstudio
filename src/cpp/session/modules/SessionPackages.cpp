@@ -248,7 +248,7 @@ Error getPackageStateJson(json::Object* pJson)
    (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);
    (*pJson)["renv_context"] = renvContext;
 
-   std::string activeRepository;
+   json::Object activeRepository;
    error = r::exec::RFunction(".rs.ppm.getActiveRepository").call(&activeRepository);
    if (error)
       LOG_ERROR(error);
