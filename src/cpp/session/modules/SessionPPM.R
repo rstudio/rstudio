@@ -77,7 +77,10 @@
    
    m <- regexec(pattern, url, perl = TRUE)
    matches <- regmatches(url, m)[[1L]]
+   if (length(matches) == 0L)
+      return(NULL)
    
+   names(matches)[[1L]] <- "url"
    as.list(matches)
 })
 
@@ -101,10 +104,7 @@
 {
    repos <- getOption("repos")[[1L]]
    parts <- .rs.ppm.fromRepositoryUrl(repos)
-   if (length(parts) == 0L)
-      return(NULL)
-   
-   .rs.scalar(parts[[1L]])
+   .rs.scalarListFromList(parts)
 })
 
 .rs.addFunction("markScalars", function(object)

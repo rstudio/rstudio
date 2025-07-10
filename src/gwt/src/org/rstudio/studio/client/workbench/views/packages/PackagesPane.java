@@ -144,7 +144,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    public void setPackageState(ProjectContext projectContext, 
                                List<PackageInfo> packages,
                                RepositoryPackageVulnerabilityListMap vulns,
-                               String activeRepository)
+                               JsObject activeRepository)
    {
       projectContext_ = projectContext;
       activeRepository_ = activeRepository;
@@ -154,8 +154,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       createPackagesTable();
 
       // manage visibility of repository button
-      repositoryButton_.setText(StringUtil.notNull(activeRepository_));
-      repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(activeRepository_));
+      String reposLabel = getRepositoryButtonLabel();
+      String reposTitle = getRepositoryButtonTitle();
+      repositoryButton_.setText(StringUtil.notNull(reposLabel));
+      repositoryButton_.setTitle(reposTitle);
+      repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
 
       // manage visibility of Packrat / renv menu buttons
       PackratContext packratContext = projectContext_.getPackratContext();
@@ -938,6 +941,25 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    }
 
+   private String getRepositoryButtonLabel()
+   {
+      if (activeRepository_ == null)
+         return null;
+      
+      String repos = activeRepository_.getString("repos");
+      String snapshot = activeRepository_.getString("snapshot");
+      return repos + "/" + snapshot;
+   }
+
+   private String getRepositoryButtonTitle()
+   {
+      if (activeRepository_ == null)
+         return null;
+
+      String url = activeRepository_.getString("url");
+      return url;
+   }
+
    private final SafeHtml renderText(String text)
    {
       String className = dataGridRes_.dataGridStyle().packageColumn();
@@ -989,7 +1011,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private ProjectContext projectContext_;
-   private String activeRepository_;
+   private JsObject activeRepository_;
    private RepositoryPackageVulnerabilityListMap vulns_;
 
    private final Commands commands_;

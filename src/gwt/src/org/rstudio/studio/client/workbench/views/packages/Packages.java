@@ -107,7 +107,7 @@ public class Packages
       void setPackageState(ProjectContext projectContext,
                            List<PackageInfo> packages,
                            RepositoryPackageVulnerabilityListMap vulns,
-                           String activeRepository);
+                           JsObject activeRepository);
 
       void installPackage(PackageInstallContext installContext,
                           PackageInstallOptions defaultInstallOptions,
@@ -1267,7 +1267,7 @@ public class Packages
    private final RenvServerOperations renvServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<>();
    private RepositoryPackageVulnerabilityListMap vulns_;
-   private String activeRepository_;
+   private JsObject activeRepository_;
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;
