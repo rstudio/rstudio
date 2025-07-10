@@ -16,7 +16,6 @@
 - ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduces a new structure for release note entries
 
-
 #### Posit Workbench
 
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
