@@ -41,7 +41,7 @@
 - ([#16128](https://github.com/rstudio/rstudio/issues/16128)): Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open
 - ([#15901](https://github.com/rstudio/rstudio/issues/15901)): Fixed an issue where the entire document was sent to GitHub Copilot after each edit instead of just the changes
 - ([#16129](https://github.com/rstudio/rstudio/issues/16129)): Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file
-- Fixed issue where new R package projects did not inherit "Generate documentation with Roxygen" preference
+- ([#2900](https://github.com/rstudio/rstudio/issues/2900)): Fixed issue where new R package projects did not inherit "Generate documentation with Roxygen" preference
 - ([#15919](https://github.com/rstudio/rstudio/issues/15919)): Fixed an issue where large character vectors were shown with an NaN size in the environment pane
 - ([#15444](https://github.com/rstudio/rstudio/issues/15444)): Fixed an issue where hitting the Escape key to close the "Update Available" dialog would exit RStudio
 - ([#16191](https://github.com/rstudio/rstudio/issues/16191)): Fixed an issue where the splash screen would not close and the RStudio main window would not show when starting RStudio Desktop
