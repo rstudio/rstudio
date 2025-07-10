@@ -29,6 +29,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.FontStyle;
+import com.google.gwt.dom.client.Style.TextOverflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -79,8 +80,13 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             cellEl = Document.get().createTDElement();
             rowEl.appendChild(cellEl);
 
+            Element cellContentsEl = Document.get().createElement("span");
+            cellContentsEl.getStyle().setDisplay(Display.BLOCK);
+            cellContentsEl.getStyle().setTextOverflow(TextOverflow.ELLIPSIS);
+            cellContentsEl.setInnerText(object.getName());
+
             cellEl = Document.get().createTDElement();
-            cellEl.setInnerText(object.getName());
+            cellEl.appendChild(cellContentsEl);
             rowEl.appendChild(cellEl);
 
             String description = object.getDescription();
@@ -88,8 +94,9 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
             {
                rowEl.setTitle(description);
 
-               Element cellContentsEl = Document.get().createElement("span");
+               cellContentsEl = Document.get().createElement("span");
                cellContentsEl.getStyle().setDisplay(Display.BLOCK);
+               cellContentsEl.getStyle().setTextOverflow(TextOverflow.ELLIPSIS);
                cellContentsEl.setInnerText(description);
 
                cellEl = Document.get().createTDElement();
@@ -101,7 +108,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
                description = "(No description available)";
                rowEl.setTitle(description);
 
-               Element cellContentsEl = Document.get().createElement("span");
+               cellContentsEl = Document.get().createElement("span");
                cellContentsEl.getStyle().setFontStyle(FontStyle.ITALIC);
                cellContentsEl.setInnerText(description);
 
@@ -120,7 +127,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
          @Override
          public int[] getColumnWidths()
          {
-            return new int[] { 10, 80, 400 };
+            return new int[] { 10, 100, 370 };
          }
 
          @Override

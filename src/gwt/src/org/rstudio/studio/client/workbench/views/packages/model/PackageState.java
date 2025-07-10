@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 
@@ -41,7 +42,7 @@ public class PackageState extends JavaScriptObject
       return this.vulns;
    }-*/;
 
-   public final native String getActiveRepository() /*-{
+   public final native JsObject getActiveRepository() /*-{
       return this.active_repository;
    }-*/;
 }

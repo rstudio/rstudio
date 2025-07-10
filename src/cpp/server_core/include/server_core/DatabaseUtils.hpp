@@ -94,9 +94,9 @@ struct ConnectionOptionsVisitor : boost::static_visitor<core::Error>
    core::Error operator()(const core::database::PostgresqlConnectionOptions& options) const;
    core::Error operator()(const core::database::ProviderNotSpecifiedConnectionOptions& options) const;
 
-   const boost::optional<core::system::User> databaseFileUser_;
-   const core::FilePath& databaseConfigFile_;
-   const std::string& defaultDatabaseName_;
+   boost::optional<core::system::User> databaseFileUser_;
+   core::FilePath databaseConfigFile_;
+   std::string defaultDatabaseName_;
 };
 
 } // namespace utils
