@@ -208,7 +208,7 @@ Error getPackageStateJson(json::Object* pJson)
 
    json::Value packageListJson;
    r::sexp::Protect protect;
-   SEXP packageList;
+   SEXP packageListSEXP;
 
    bool renvActive = renvContext.getObject()["active"].getBool();
 
@@ -220,19 +220,19 @@ Error getPackageStateJson(json::Object* pJson)
       error = r::exec::RFunction(".rs.listPackagesPackrat",
                                  string_utils::utf8ToSystem(
                                     projectDir.getAbsolutePath()))
-              .call(&packageList, &protect);
+              .call(&packageListSEXP, &protect);
    }
    else if (renvActive)
    {
       FilePath projectDir = projects::projectContext().directory();
       error = r::exec::RFunction(".rs.renv.listPackages")
             .addParam(string_utils::utf8ToSystem(projectDir.getAbsolutePath()))
-            .call(&packageList, &protect);
+            .call(&packageListSEXP, &protect);
    }
    else
    {
       error = r::exec::RFunction(".rs.listInstalledPackages")
-              .call(&packageList, &protect);
+              .call(&packageListSEXP, &protect);
    }
 
    if (error)
@@ -242,7 +242,7 @@ Error getPackageStateJson(json::Object* pJson)
    }
 
    // return the generated package list and the Packrat context
-   r::json::jsonValueFromObject(packageList, &packageListJson);
+   r::json::jsonValueFromObject(packageListSEXP, &packageListJson);
 
    (*pJson)["package_list"] = packageListJson;
    (*pJson)["packrat_context"] = packrat::contextAsJson(packratContext);

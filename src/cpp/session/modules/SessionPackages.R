@@ -1397,6 +1397,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
+   # TODO: This key should be passed in via some other means.
+   ppmMeta <- .rs.ppm.getMetadata("risk-level")
+   
    # Look for packages in the library paths.
    pkgPaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
    
@@ -1459,6 +1462,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          error = function(cnd) ""
       )
       
+      ppmMetaKey <- paste(pkgInfo[["name"]], pkgInfo[["version"]], sep = "==")
+      pkgInfo[["metadata"]] <- ppmMeta[[ppmMetaKey]]
+      
       # Return the resulting object.
       .rs.scalarListFromList(pkgInfo)
       
@@ -1470,6 +1476,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # And we're done.
    pkgInfos
+})
+
+.rs.addFunction("addPackageManagerMetadata", function(pkgInfos)
+{
+   print(pkgInfos)
+   str(pkgInfos)
 })
 
 .rs.addFunction("readPackageImports", function(pkg)
