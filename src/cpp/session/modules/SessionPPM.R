@@ -144,14 +144,17 @@
       new.env(parent = emptyenv())
    )
    
-   # TODO: can we avoid the curl requirement?
-   if (!requireNamespace("curl", quietly = TRUE))
-      return(cache)
-   
    # update only packages which haven't yet been cached
    keys <- ls(envir = cache, all.names = TRUE)
    packages <- setdiff(packages, keys)
    if (length(packages) == 0L)
+      return(cache)
+   
+   # one or more packages have not yet been cached; try to update them
+   # make a request to the active PPM instance for available metadata
+   
+   # TODO: can we avoid the curl requirement?
+   if (!requireNamespace("curl", quietly = TRUE))
       return(cache)
    
    # begin building a curl handle
