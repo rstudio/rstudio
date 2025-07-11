@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesCellTableRe
 import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridResources;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
@@ -483,12 +482,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       }
    }
 
-   private class MetaDataCell extends AbstractCell<PackageInfo>
+   private class MetadataCell extends AbstractCell<PackageInfo>
    {
       @Override
-      public void render(Context context, PackageInfo value, SafeHtmlBuilder sb)
+      public void render(Context context, PackageInfo object, SafeHtmlBuilder sb)
       {
-         sb.appendHtmlConstant("<span>Metadata</span>");
+         sb.appendHtmlConstant("<div style=\"font-style: oblique;\">");
+         sb.appendEscaped(object.getMetadata());
+         sb.appendHtmlConstant("</div>");
       }
    }
    
@@ -632,16 +633,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          }
       };
 
-      metadataColumn_ = new Column<PackageInfo, PackageInfo>(new MetaDataCell())
+      metadataColumn_ = new Column<PackageInfo, PackageInfo>(new MetadataCell())
       {
-         @Override
-         public void render(Context context, PackageInfo object, SafeHtmlBuilder sb)
-         {
-            sb.appendHtmlConstant("<div style=\"font-style: oblique;\">");
-            sb.appendEscaped("(metadata)");
-            sb.appendHtmlConstant("</div>");
-
-         }
          @Override
          public PackageInfo getValue(PackageInfo object)
          {
@@ -745,17 +738,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
+      packagesTable_.addColumn(metadataColumn_, new TextHeader("Risk Level"));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
-      // packagesTable_.addColumn(metadataColumn_, new TextHeader("Metadata"));
 
       // set initial column widths
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 130, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
+      packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
-      // packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
 
       // add columns when using project-local library
       if (projectContext_.isActive())

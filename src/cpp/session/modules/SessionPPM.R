@@ -14,6 +14,7 @@
 #
 
 .rs.setVar("ppm.vulns", new.env(parent = emptyenv()))
+.rs.setVar("ppm.metadataCache", new.env(parent = emptyenv()))
 
 .rs.addFunction("ppm.getVulnerabilityInformation", function(repos = NULL)
 {
@@ -65,7 +66,10 @@
 {
    pattern <- paste0(
       "^",                                  # start of url
-      "(?<root>.*?)/",                      # leading URL components
+      "(?<root>",                           # start of root of url
+         "(?<scheme>[^:]+)://",             # scheme
+         "(?<authority>[^/]+)",             # authority
+      ")/",                                 # end of root of url
       "(?<repos>[^/]+)/",                   # repository name
       "(?:",                                # begin optional binary parts
          "(?<binary>__[^_]+__)/",           # binary prefix
@@ -99,12 +103,134 @@
    paste(components, collapse = "/")
 })
 
-# Get the active PPM repository, if any.
 .rs.addFunction("ppm.getActiveRepository", function()
 {
    repos <- getOption("repos")[[1L]]
-   parts <- .rs.ppm.fromRepositoryUrl(repos)
-   .rs.scalarListFromList(parts)
+   .rs.ppm.fromRepositoryUrl(repos)
+})
+
+.rs.addFunction("ppm.getAuthorizationHeader", function(parts)
+{
+   # check for known authority
+   authority <- parts[["authority"]]
+   if (is.null(authority))
+      return(NULL)
+   
+   # check for netrc credentials
+   allcreds <- .rs.readNetrc()
+   if (is.null(allcreds))
+      return(NULL)
+   
+   # retrieve credentials for this authority
+   creds <- allcreds[[authority]]
+   
+   # form authorization header
+   username <- creds[["login"]]
+   password <- creds[["password"]]
+   contents <- paste(username, password, sep = ":")
+   encoded <- .rs.base64encode(contents)
+   paste("Basic", encoded)
+})
+
+.rs.addFunction("ppm.updateMetadataCache", function(packages)
+{
+   # get the active ppm repository
+   parts <- .rs.ppm.getActiveRepository()
+   
+   # check and see if we've already cached results for these packages
+   url <- parts[["url"]]
+   cache <- .rs.ppm.metadataCache[[url]] <- .rs.nullCoalesce(
+      .rs.ppm.metadataCache[[url]],
+      new.env(parent = emptyenv())
+   )
+   
+   # TODO: can we avoid the curl requirement?
+   if (!requireNamespace("curl", quietly = TRUE))
+      return(cache)
+   
+   # update only packages which haven't yet been cached
+   keys <- ls(envir = cache, all.names = TRUE)
+   packages <- setdiff(packages, keys)
+   if (length(packages) == 0L)
+      return(cache)
+   
+   # begin building a curl handle
+   handle <- curl::new_handle(verbose = TRUE)
+   
+   # set headers for request
+   curl::handle_setheaders(handle, .list = list(
+      "Content-Type"  = "application/json",
+      "Authorization" = .rs.ppm.getAuthorizationHeader(parts)
+   ))
+   
+   # start building POST options
+   data <- list(
+      names    = as.list(packages),
+      repo     = parts[["repos"]],
+      snapshot = parts[["snapshot"]]
+   )
+   
+   json <- .rs.toJSON(data, unbox = TRUE)
+   
+   curl::handle_setopt(
+      handle     = handle,
+      post       = TRUE,
+      postfields = json
+   )
+   
+   # make the request, collect the response
+   endpoint <- file.path(parts[["root"]], "__api__/filter/packages")
+   response <- curl::curl_fetch_memory(endpoint, handle = handle)
+   contents <- enc2utf8(rawToChar(response$content))
+   splat <- strsplit(contents, "\n", fixed = TRUE)[[1L]]
+   data <- lapply(splat, .rs.fromJSON)
+   
+   # pull out the metadata from each response
+   metadata <- lapply(data, `[[`, "metadata")
+   names(metadata) <- vapply(data, function(datum) {
+      paste(datum[["name"]], datum[["version"]], sep = "==")
+   }, FUN.VALUE = character(1))
+   
+   # add these results to the cache
+   list2env(metadata, envir = cache)
+   
+   # use NA for any requests which had no metadata available
+   for (package in setdiff(packages, names(metadata)))
+      if (is.null(cache[[package]]))
+         cache[[package]] <- NA_character_
+   
+   # we're done
+   cache
+   
+})
+
+#' @param key The name of the metadata key which should be pulled.
+.rs.addFunction("ppm.getMetadata", function(key)
+{
+   # figure out the packages for which we need to request metadata
+   db <- as.data.frame(
+      installed.packages(priority = "NA"),
+      stringsAsFactors = FALSE
+   )
+   
+   packages <- paste(db[["Package"]], db[["Version"]], sep = "==")
+   
+   # update the metadata cache
+   cache <- .rs.ppm.updateMetadataCache(packages)
+   metadata <- as.list.environment(cache, all.names = TRUE)
+   
+   # filter to requested metadata key
+   result <- lapply(metadata, function(data) {
+      for (datum in data)
+         if (identical(datum[[1L]], key))
+            return(datum[[2L]])
+      ""
+   })
+   names(result) <- names(metadata)
+   
+   # return sorted metadata
+   result[order(names(result))]
+   
 })
 
 .rs.addFunction("markScalars", function(object)
