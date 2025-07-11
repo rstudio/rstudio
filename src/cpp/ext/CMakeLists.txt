@@ -45,13 +45,14 @@ set(CMAKE_WARN_DEPRECATED FALSE)
 function(dependency)
 
    set(_NAME "${ARGV0}")
-   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION" "PLATFORMS")
+   cmake_parse_arguments(PARSE_ARGV 1 "" "" "COMMENT;CUSTOM;VERSION;REPOSITORY;REVISION;CXXFLAGS" "PLATFORMS")
 
    set(${_NAME}_VERSION    "${_VERSION}"    CACHE INTERNAL "")
    set(${_NAME}_REPOSITORY "${_REPOSITORY}" CACHE INTERNAL "")
    set(${_NAME}_REVISION   "${_REVISION}"   CACHE INTERNAL "")
    set(${_NAME}_CUSTOM     "${_CUSTOM}"     CACHE INTERNAL "")
    set(${_NAME}_PLATFORMS  "${_PLATFORMS}"  CACHE INTERNAL "")
+   set(${_NAME}_CXXFLAGS   "${_CXXFLAGS}"   CACHE INTERNAL "")
 
    if(_PLATFORMS)
       foreach(_PLATFORM IN LISTS _PLATFORMS)
@@ -144,11 +145,16 @@ dependency(WEBSOCKETPP
 
 
 # yaml-cpp
+
+# help yaml-cpp 0.8.0 find <cstdint> during compilation
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
+
 dependency(YAML_CPP
    COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
    VERSION    "0.8.0"
    REPOSITORY "https://github.com/jbeder/yaml-cpp"
    REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
+   CXXFLAGS   "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h"
 )
 
 
@@ -160,7 +166,6 @@ dependency(ZLIB
    REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
    PLATFORMS  WIN32
 )
-
 
 function(fetch)
 
@@ -213,7 +218,10 @@ function(fetch)
 
       if(${_PREFIX}_FETCHED)
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
+         set(_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+         set(CMAKE_CXX_FLAGS "${${_PREFIX}_CXXFLAGS} ${CMAKE_CXX_FLAGS}")
          FetchContent_MakeAvailable("${_NAME}")
+         set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
