@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
-#define SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
+#ifndef SERVER_CORE_DATABASE_UTILS_OVERLAY_HPP
+#define SERVER_CORE_DATABASE_UTILS_OVERLAY_HPP
 
 namespace rstudio {
 namespace core {
@@ -37,4 +37,4 @@ core::Error readPostgresqlOptions(core::database::PostgresqlConnectionOptions& o
 } // namespace server_core
 } // namespace rstudio
 
-#endif // SERVER_CORE_SERVER_DATABASE_OVERLAY_HPP
+#endif // SERVER_CORE_DATABASE_UTILS_OVERLAY_HPP
