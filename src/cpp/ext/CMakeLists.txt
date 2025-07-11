@@ -145,17 +145,18 @@ dependency(WEBSOCKETPP
 
 
 # yaml-cpp
-
-# help yaml-cpp 0.8.0 find <cstdint> during compilation
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
-
 dependency(YAML_CPP
    COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
    VERSION    "0.8.0"
    REPOSITORY "https://github.com/jbeder/yaml-cpp"
    REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
-   CXXFLAGS   "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h"
 )
+
+# help yaml-cpp 0.8.0 find <cstdint> during compilation
+if(NOT MSVC)
+   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
+   set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
+endif()
 
 
 # zlib
