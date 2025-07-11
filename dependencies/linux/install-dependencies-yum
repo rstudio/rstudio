@@ -17,48 +17,40 @@
 
 set -e
 
-# build/development tools
-sudo yum install -y make
-sudo yum install -y gcc
-sudo yum install -y gcc-c++
-sudo yum install -y rpmdevtools
-sudo yum install -y wget
-sudo yum install -y jq
-sudo yum install -y whois
+PACKAGES=(
+	ant
+	boost-devel
+	bzip2-devel
+	cmake
+	fakeroot
+	gcc
+	gcc-c++
+	java
+	java-devel
+	jq
+	libffi
+	libuser-devel
+	libuuid-devel
+	libXScrnSaver-devel
+	libxslt-devel
+	make
+	mesa-libGL-devel
+	openssl-devel
+	pam-devel
+	pango-devel
+	postgresql-devel
+	rpmdevtools
+	sqlite-devel
+	wget
+	whois
+	xml-commons-apis
+	zlib-devel
+)
 
-# core system libraries
-sudo yum install -y libuuid-devel
-sudo yum install -y openssl-devel
-sudo yum install -y bzip2-devel
-sudo yum install -y zlib-devel
-sudo yum install -y pam-devel
-sudo yum install -y libuser-devel
-
-# pandoc dependencies
-sudo yum install -y libffi
-
-# boost
-sudo yum install -y boost-devel
-
-# pango cairo
-sudo yum install -y pango-devel
-
-# gwt prereqs
-sudo yum install -y java
-sudo yum install -y java-devel
-sudo yum install -y ant
-sudo yum install -y xml-commons-apis
-
-# required for Qt
-sudo yum install -y libxslt-devel
-sudo yum install -y mesa-libGL-devel
-sudo yum install -y libXScrnSaver-devel
-sudo yum install -y fakeroot
-sudo yum install -y postgresql-devel
+sudo yum install -y "${PACKAGES[@]}"
 
 # overlay
-if [ -e install-overlay-yum ]
-then
+if [ -e install-overlay-yum ]; then
   ./install-overlay-yum
 fi
 

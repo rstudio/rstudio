@@ -25,8 +25,14 @@ section "Installing GWT ${GWT_VERSION}"
 
 mkdir -p gwtproject
 cd gwtproject
+if [ -e "gwt-${GWT_VERSION}" ]; then
+	echo "GWT ${GWT_VERSION} is already installed."
+	exit 0
+fi
+
 download "https://rstudio-buildtools.s3.us-east-1.amazonaws.com/gwt/gwt-${GWT_VERSION}.tar.gz"
 extract "gwt-${GWT_VERSION}.tar.gz"
 rm "gwt-${GWT_VERSION}.tar.gz"
+touch "gwt-${GWT_VERSION}"
 yay "GWT ${GWT_VERSION} installed to $(pwd)"
 cd ..
