@@ -948,6 +948,20 @@ export class GwtCallback extends EventEmitter {
       process.crash();
     });
 
+    // Handle Alt+mouse down notification for Windows multi-cursor fix
+    ipcMain.on('desktop_alt_mouse_down', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        // Find the GwtWindow that owns this BrowserWindow
+        for (const owner of this.owners) {
+          if (owner.window === window && 'notifyAltMouseDown' in owner) {
+            (owner as any).notifyAltMouseDown();
+            break;
+          }
+        }
+      }
+    });
+
     ipcMain.handle('desktop_get_session_server', () => {
       GwtCallback.unimpl('desktop_get_session_server');
       return {};
