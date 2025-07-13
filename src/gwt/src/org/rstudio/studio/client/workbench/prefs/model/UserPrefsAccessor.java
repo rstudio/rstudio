@@ -1353,7 +1353,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out.
+    * Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.
     */
    public PrefValue<Boolean> enableMousewheelZoom()
    {

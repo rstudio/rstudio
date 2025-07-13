@@ -852,7 +852,7 @@
 
 # Zoom with mouse wheel when holding Ctrl (Cmd on macOS)
 #
-# Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and
+# Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and
 # out.
 .rs.uiPrefs$enableMousewheelZoom <- list(
    get = function() { .rs.getUserPref("enable_mousewheel_zoom") },
