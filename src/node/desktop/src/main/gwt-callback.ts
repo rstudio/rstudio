@@ -948,6 +948,12 @@ export class GwtCallback extends EventEmitter {
       process.crash();
     });
 
+    // Define an interface for owners that have notifyAltMouseDown
+    interface AltMouseDownNotifiable {
+      notifyAltMouseDown: () => void;
+      window: BrowserWindow;
+    }
+
     // Handle Alt+mouse down notification for Windows multi-cursor fix
     ipcMain.on('desktop_alt_mouse_down', (event) => {
       const window = BrowserWindow.fromWebContents(event.sender);
@@ -955,7 +961,7 @@ export class GwtCallback extends EventEmitter {
         // Find the GwtWindow that owns this BrowserWindow
         for (const owner of this.owners) {
           if (owner.window === window && 'notifyAltMouseDown' in owner) {
-            (owner as any).notifyAltMouseDown();
+            (owner as AltMouseDownNotifiable).notifyAltMouseDown();
             break;
           }
         }

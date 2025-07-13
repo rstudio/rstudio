@@ -103,7 +103,6 @@ export function clearOptionsSingleton(): void {
  * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl implements DesktopOptions {
-   
   private config = new ElectronStore<RStudioUserState>({
     schema: userStateSchema,
   }) as unknown as ElectronStoreInterface<RStudioUserState>;
@@ -112,7 +111,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
   // unit testing constructor to expose directory and DesktopOptions mock
   constructor(directory = '', legacyOptions?: DesktopOptions) {
     if (directory.length != 0) {
-       
       this.config = new ElectronStore<RStudioUserState>({
         cwd: directory,
         schema: userStateSchema,
@@ -323,7 +321,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   // Windows-only options
-  public useDefault32BitR() {
+  public useDefault32BitR(): boolean {
     return this.config.get(kUseDefault32BitR, false);
   }
 
@@ -332,7 +330,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   // Windows-only option
-  public useDefault64BitR() {
+  public useDefault64BitR(): boolean {
     return this.config.get(kUseDefault64BitR, false);
   }
 
