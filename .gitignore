@@ -52,3 +52,6 @@ rstudio-automation-results.xml
 
 venv/
 .venv/
+
+CLAUDE.md
+.claude/

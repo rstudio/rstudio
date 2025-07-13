@@ -56,7 +56,7 @@
 ### Dependencies
 
 - ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.342.0
-- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.0
+- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.1
 - ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
 - ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
 
