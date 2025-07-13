@@ -524,6 +524,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_disable_renderer_accessibility', disable);
     },
 
+    notifyAltMouseDown: () => {
+      ipcRenderer.send('desktop_alt_mouse_down');
+    },
+
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_ignore_gpu_exclusion_list')

@@ -119,6 +119,10 @@ export class DesktopBrowserWindow extends EventEmitter {
   // handler so we can unregister it when the window is closed
   private removeMenuBound?: () => void;
 
+  // Track Alt key state to prevent menu bar activation during editor operations
+  private altKeyDownTime = 0;
+  private mouseDownDuringAlt = false;
+
   constructor(protected options: WindowConstructorOptions) {
     super();
 
@@ -172,6 +176,22 @@ export class DesktopBrowserWindow extends EventEmitter {
         .catch((error) => {
           logger().logError(error);
         });
+
+      // Inject script to track Alt+mousedown on Windows
+      if (process.platform === 'win32') {
+        this.window.webContents.on('dom-ready', () => {
+          const script = `
+            window.addEventListener('mousedown', function(e) {
+              if (e.altKey && window.desktop && window.desktop.notifyAltMouseDown) {
+                window.desktop.notifyAltMouseDown();
+              }
+            }, true);
+          `;
+          this.window.webContents.executeJavaScript(script).catch((error) => {
+            logger().logError('Failed to inject Alt+mousedown tracker: ' + error);
+          });
+        });
+      }
 
       // Uncomment to have all windows show dev tools by default
       // this.window.webContents.openDevTools();
@@ -504,6 +524,22 @@ export class DesktopBrowserWindow extends EventEmitter {
         // on macOS, intercept Cmd+W and emit the window close signal
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
       }
+    } else if (process.platform === 'win32') {
+      // Handle Alt key on Windows to prevent menubar focus
+      // We need to prevent the Alt key from activating the menu bar when
+      // it's being used for multi-cursor selection in the editor
+      if (input.key === 'Alt') {
+        if (input.type === 'keyDown') {
+          this.altKeyDownTime = Date.now();
+        } else if (input.type === 'keyUp') {
+          // Check if we should suppress this Alt keyup
+          if (this.shouldSuppressAltKeyUp()) {
+            event.preventDefault();
+            return;
+          }
+          this.altKeyDownTime = 0;
+        }
+      }
     }
   }
 
@@ -512,6 +548,24 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.executeJavaScript(command).catch((error) => {
       logger().logError(error);
     });
+  }
+
+  private shouldSuppressAltKeyUp(): boolean {
+    // Suppress Alt keyUp only if mouse was clicked while Alt was held
+    // (likely multi-cursor operation)
+    const suppressDueToMouse = this.mouseDownDuringAlt;
+    
+    // Reset the flag
+    this.mouseDownDuringAlt = false;
+    
+    return suppressDueToMouse;
+  }
+  
+  notifyAltMouseDown(): void {
+    // Called when mouse is clicked while Alt is held
+    if (process.platform === 'win32' && this.altKeyDownTime > 0) {
+      this.mouseDownDuringAlt = true;
+    }
   }
 
   private removeMenu(): void {
