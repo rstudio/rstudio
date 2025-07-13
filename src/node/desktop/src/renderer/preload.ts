@@ -63,13 +63,17 @@ for (const apiKey of apiKeys) {
 // Set up Ctrl/Cmd+Mousewheel zoom support
 if (desktopApiConnected) {
   let lastZoomTime = 0;
-  const ZOOM_THROTTLE_MS = 100; // Throttle zoom events to prevent excessive changes
   let mousewheelZoomEnabled = false; // Default to disabled
+  let zoomThrottleMs = 100; // Default debounce time
 
   // Listen for preference updates from the main process
   ipcRenderer.on('desktop_set_mousewheel_zoom_enabled', (_event, enabled: boolean) => {
     mousewheelZoomEnabled = enabled;
     logString('debug', `[preload] mousewheel zoom ${enabled ? 'enabled' : 'disabled'}`);
+  });
+  ipcRenderer.on('desktop_set_mousewheel_zoom_debounce', (_event, zoomDebounceMs: number) => {
+    zoomThrottleMs = zoomDebounceMs;
+    logString('debug', `[preload] mousewheel zoom debounce ${zoomThrottleMs} ms`);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -92,7 +96,7 @@ if (desktopApiConnected) {
 
           // Throttle zoom events
           const currentTime = Date.now();
-          if (currentTime - lastZoomTime < ZOOM_THROTTLE_MS) {
+          if (currentTime - lastZoomTime < zoomThrottleMs) {
             return;
           }
           lastZoomTime = currentTime;

@@ -1207,6 +1207,19 @@ core::Error UserPrefValues::setEnableMousewheelZoom(bool val)
 }
 
 /**
+ * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+ */
+double UserPrefValues::mousewheelZoomDebounceMs()
+{
+   return readPref<double>("mousewheel_zoom_debounce_ms");
+}
+
+core::Error UserPrefValues::setMousewheelZoomDebounceMs(double val)
+{
+   return writePref("mousewheel_zoom_debounce_ms", val);
+}
+
+/**
  * The name of the color theme to apply to the text editor in RStudio.
  */
 std::string UserPrefValues::editorTheme()
@@ -3575,6 +3588,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEditorLineHeight,
       kHelpFontSizePoints,
       kEnableMousewheelZoom,
+      kMousewheelZoomDebounceMs,
       kEditorTheme,
       kServerEditorFontEnabled,
       kServerEditorFont,

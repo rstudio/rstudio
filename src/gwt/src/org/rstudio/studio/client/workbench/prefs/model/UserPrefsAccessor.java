@@ -1365,6 +1365,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+    */
+   public PrefValue<Double> mousewheelZoomDebounceMs()
+   {
+      return dbl(
+         "mousewheel_zoom_debounce_ms",
+         _constants.mousewheelZoomDebounceMsTitle(), 
+         _constants.mousewheelZoomDebounceMsDescription(), 
+         100.0);
+   }
+
+   /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
    public PrefValue<String> editorTheme()
@@ -4010,6 +4022,8 @@ public class UserPrefsAccessor extends Prefs
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("enable_mousewheel_zoom"))
          enableMousewheelZoom().setValue(layer, source.getBool("enable_mousewheel_zoom"));
+      if (source.hasKey("mousewheel_zoom_debounce_ms"))
+         mousewheelZoomDebounceMs().setValue(layer, source.getDbl("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
       if (source.hasKey("server_editor_font_enabled"))
@@ -4455,6 +4469,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(editorLineHeight());
       prefs.add(helpFontSizePoints());
       prefs.add(enableMousewheelZoom());
+      prefs.add(mousewheelZoomDebounceMs());
       prefs.add(editorTheme());
       prefs.add(serverEditorFontEnabled());
       prefs.add(serverEditorFont());

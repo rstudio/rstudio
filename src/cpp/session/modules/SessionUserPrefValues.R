@@ -860,6 +860,16 @@
    clear = function() { .rs.clearUserPref("enable_mousewheel_zoom") }
 )
 
+# Mouse wheel zoom debounce delay (ms)
+#
+# A delay in milliseconds to wait before applying the zoom level after a mouse
+# wheel event.
+.rs.uiPrefs$mousewheelZoomDebounceMs <- list(
+   get = function() { .rs.getUserPref("mousewheel_zoom_debounce_ms") },
+   set = function(value) { .rs.setUserPref("mousewheel_zoom_debounce_ms", value) },
+   clear = function() { .rs.clearUserPref("mousewheel_zoom_debounce_ms") }
+)
+
 # Theme
 #
 # The name of the color theme to apply to the text editor in RStudio.

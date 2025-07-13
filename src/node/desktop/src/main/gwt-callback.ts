@@ -792,6 +792,13 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
+    ipcMain.on('desktop_set_mousewheel_zoom_debounce', (_event, zoomDebounceMs: number) => {
+      // Broadcast to all windows
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('desktop_set_mousewheel_zoom_debounce', zoomDebounceMs);
+      }
+    });
+
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
     });
