@@ -236,10 +236,11 @@ public class UserPrefs extends UserPrefsComputed
       announceScreenReaderState();
       syncToggleTabKeyMovesFocusState();
       
-      // Send initial mousewheel zoom preference to desktop
+      // Send initial mousewheel zoom preferences to desktop
       if (BrowseCap.isElectron())
       {
          Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
+         Desktop.getFrame().setMousewheelZoomDebounce(mousewheelZoomDebounceMs().getValue());
       }
    }
 
