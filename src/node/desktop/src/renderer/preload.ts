@@ -64,7 +64,7 @@ for (const apiKey of apiKeys) {
 if (desktopApiConnected) {
   let lastZoomTime = 0;
   let mousewheelZoomEnabled = false; // Default to disabled
-  let zoomThrottleMs = 100; // Default debounce time
+  let zoomDebounceDurationMs = 100; // Default debounce time
 
   // Listen for preference updates from the main process
   ipcRenderer.on('desktop_set_mousewheel_zoom_enabled', (_event, enabled: boolean) => {
@@ -72,8 +72,8 @@ if (desktopApiConnected) {
     logString('debug', `[preload] mousewheel zoom ${enabled ? 'enabled' : 'disabled'}`);
   });
   ipcRenderer.on('desktop_set_mousewheel_zoom_debounce', (_event, zoomDebounceMs: number) => {
-    zoomThrottleMs = zoomDebounceMs;
-    logString('debug', `[preload] mousewheel zoom debounce ${zoomThrottleMs} ms`);
+    zoomDebounceDurationMs = zoomDebounceMs;
+    logString('debug', `[preload] mousewheel zoom debounce ${zoomDebounceDurationMs} ms`);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -96,7 +96,7 @@ if (desktopApiConnected) {
 
           // Throttle zoom events
           const currentTime = Date.now();
-          if (currentTime - lastZoomTime < zoomThrottleMs) {
+          if (currentTime - lastZoomTime < zoomDebounceDurationMs) {
             return;
           }
           lastZoomTime = currentTime;
