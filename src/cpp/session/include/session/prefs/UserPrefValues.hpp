@@ -1001,7 +1001,7 @@ public:
    core::Error setHelpFontSizePoints(double val);
 
    /**
-    * Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+    * Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out.
     */
    bool enableMousewheelZoom();
    core::Error setEnableMousewheelZoom(bool val);

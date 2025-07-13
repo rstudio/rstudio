@@ -647,8 +647,8 @@
         "enable_mousewheel_zoom": {
             "type": "boolean",
             "default": false,
-            "title": "Enable mousewheel zoom",
-            "description": "Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out."
+            "title": "Zoom with mouse wheel when holding Ctrl (Cmd on macOS)",
+            "description": "Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out."
         },
         "editor_theme": {
             "type": "string",

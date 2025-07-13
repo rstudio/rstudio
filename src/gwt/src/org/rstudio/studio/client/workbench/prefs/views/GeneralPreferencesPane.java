@@ -221,9 +221,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       CheckBox enableSplashScreen = checkboxPref(prefs_.enableSplashScreen());
+      CheckBox enableMouseWheelZoom = checkboxPref(prefs_.enableMousewheelZoom());
       if (BrowseCap.isElectron())
       {
          basic.add(enableSplashScreen);
+         basic.add(enableMouseWheelZoom);
       }
 
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);

@@ -790,11 +790,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String helpFontSizePointsDescription();
 
    /**
-    * Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+    * Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out.
     */
-   @DefaultStringValue("Enable mousewheel zoom")
+   @DefaultStringValue("Zoom with mouse wheel when holding Ctrl (Cmd on macOS)")
    String enableMousewheelZoomTitle();
-   @DefaultStringValue("Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.")
+   @DefaultStringValue("Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out.")
    String enableMousewheelZoomDescription();
 
    /**

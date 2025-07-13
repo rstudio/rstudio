@@ -1194,7 +1194,7 @@ core::Error UserPrefValues::setHelpFontSizePoints(double val)
 }
 
 /**
- * Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+ * Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and out.
  */
 bool UserPrefValues::enableMousewheelZoom()
 {

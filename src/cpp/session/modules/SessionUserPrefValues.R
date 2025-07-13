@@ -850,9 +850,10 @@
    clear = function() { .rs.clearUserPref("help_font_size_points") }
 )
 
-# Enable mousewheel zoom
+# Zoom with mouse wheel when holding Ctrl (Cmd on macOS)
 #
-# Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+# Use Ctrl+Mouse Wheel (Cmd+mMusew hWel on macOS) to zoom the interface in and
+# out.
 .rs.uiPrefs$enableMousewheelZoom <- list(
    get = function() { .rs.getUserPref("enable_mousewheel_zoom") },
    set = function(value) { .rs.setUserPref("enable_mousewheel_zoom", value) },
