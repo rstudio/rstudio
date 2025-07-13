@@ -651,7 +651,7 @@
             "description": "Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out."
         },
         "mousewheel_zoom_debounce_ms": {
-            "type": "number",
+            "type": "integer",
             "default": 100,
             "title": "Mouse wheel zoom debounce delay (ms)",
             "description": "A delay in milliseconds to wait before applying the zoom level after a mouse wheel event."

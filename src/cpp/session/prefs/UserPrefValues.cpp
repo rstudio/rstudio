@@ -1209,12 +1209,12 @@ core::Error UserPrefValues::setEnableMousewheelZoom(bool val)
 /**
  * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
  */
-double UserPrefValues::mousewheelZoomDebounceMs()
+int UserPrefValues::mousewheelZoomDebounceMs()
 {
-   return readPref<double>("mousewheel_zoom_debounce_ms");
+   return readPref<int>("mousewheel_zoom_debounce_ms");
 }
 
-core::Error UserPrefValues::setMousewheelZoomDebounceMs(double val)
+core::Error UserPrefValues::setMousewheelZoomDebounceMs(int val)
 {
    return writePref("mousewheel_zoom_debounce_ms", val);
 }

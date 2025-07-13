@@ -1010,8 +1010,8 @@ public:
    /**
     * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
     */
-   double mousewheelZoomDebounceMs();
-   core::Error setMousewheelZoomDebounceMs(double val);
+   int mousewheelZoomDebounceMs();
+   core::Error setMousewheelZoomDebounceMs(int val);
 
    /**
     * The name of the color theme to apply to the text editor in RStudio.

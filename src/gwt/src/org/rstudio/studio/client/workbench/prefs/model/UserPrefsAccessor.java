@@ -1367,13 +1367,13 @@ public class UserPrefsAccessor extends Prefs
    /**
     * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
     */
-   public PrefValue<Double> mousewheelZoomDebounceMs()
+   public PrefValue<Integer> mousewheelZoomDebounceMs()
    {
-      return dbl(
+      return integer(
          "mousewheel_zoom_debounce_ms",
          _constants.mousewheelZoomDebounceMsTitle(), 
          _constants.mousewheelZoomDebounceMsDescription(), 
-         100.0);
+         100);
    }
 
    /**
@@ -4023,7 +4023,7 @@ public class UserPrefsAccessor extends Prefs
       if (source.hasKey("enable_mousewheel_zoom"))
          enableMousewheelZoom().setValue(layer, source.getBool("enable_mousewheel_zoom"));
       if (source.hasKey("mousewheel_zoom_debounce_ms"))
-         mousewheelZoomDebounceMs().setValue(layer, source.getDbl("mousewheel_zoom_debounce_ms"));
+         mousewheelZoomDebounceMs().setValue(layer, source.getInteger("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
       if (source.hasKey("server_editor_font_enabled"))
