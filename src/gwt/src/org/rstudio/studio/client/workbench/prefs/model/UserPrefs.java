@@ -97,6 +97,7 @@ public class UserPrefs extends UserPrefsComputed
          autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
          enableSplashScreen().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableSplashScreen(enabled.getValue()));
          enableScreenReader().addValueChangeHandler(enabled -> Desktop.getFrame().setEnableAccessibility(enabled.getValue()));
+         enableMousewheelZoom().addValueChangeHandler(enabled -> Desktop.getFrame().setMousewheelZoomEnabled(enabled.getValue()));
       }
    }
 
@@ -233,6 +234,12 @@ public class UserPrefs extends UserPrefsComputed
       origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
       announceScreenReaderState();
       syncToggleTabKeyMovesFocusState();
+      
+      // Send initial mousewheel zoom preference to desktop
+      if (BrowseCap.isElectron())
+      {
+         Desktop.getFrame().setMousewheelZoomEnabled(enableMousewheelZoom().getValue());
+      }
    }
 
    @Override

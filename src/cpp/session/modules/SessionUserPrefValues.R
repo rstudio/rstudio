@@ -850,6 +850,15 @@
    clear = function() { .rs.clearUserPref("help_font_size_points") }
 )
 
+# Enable mousewheel zoom
+#
+# Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+.rs.uiPrefs$enableMousewheelZoom <- list(
+   get = function() { .rs.getUserPref("enable_mousewheel_zoom") },
+   set = function(value) { .rs.setUserPref("enable_mousewheel_zoom", value) },
+   clear = function() { .rs.clearUserPref("enable_mousewheel_zoom") }
+)
+
 # Theme
 #
 # The name of the color theme to apply to the text editor in RStudio.

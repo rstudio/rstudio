@@ -1194,6 +1194,19 @@ core::Error UserPrefValues::setHelpFontSizePoints(double val)
 }
 
 /**
+ * Use Ctrl+mousewheel (Cmd+mousewheel on macOS) to zoom the interface in and out.
+ */
+bool UserPrefValues::enableMousewheelZoom()
+{
+   return readPref<bool>("enable_mousewheel_zoom");
+}
+
+core::Error UserPrefValues::setEnableMousewheelZoom(bool val)
+{
+   return writePref("enable_mousewheel_zoom", val);
+}
+
+/**
  * The name of the color theme to apply to the text editor in RStudio.
  */
 std::string UserPrefValues::editorTheme()
@@ -3561,6 +3574,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kEditorLineHeight,
       kHelpFontSizePoints,
+      kEnableMousewheelZoom,
       kEditorTheme,
       kServerEditorFontEnabled,
       kServerEditorFont,

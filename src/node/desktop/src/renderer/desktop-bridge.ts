@@ -494,6 +494,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_sync_to_editor_theme', isDark);
     },
 
+    setMousewheelZoomEnabled: (enabled: boolean) => {
+      ipcRenderer.send('desktop_set_mousewheel_zoom_enabled', enabled);
+    },
+
     getEnableAccessibility: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_enable_accessibility')

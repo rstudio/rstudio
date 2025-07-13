@@ -785,6 +785,13 @@ export class GwtCallback extends EventEmitter {
       nativeTheme.themeSource = isDark ? 'dark' : 'light';
     });
 
+    ipcMain.on('desktop_set_mousewheel_zoom_enabled', (_event, enabled: boolean) => {
+      // Broadcast to all windows
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('desktop_set_mousewheel_zoom_enabled', enabled);
+      }
+    });
+
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
     });

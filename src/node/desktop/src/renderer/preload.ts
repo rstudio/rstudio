@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
 import { removeDups } from '../core/string-utils';
 
@@ -39,11 +39,13 @@ import { getDesktopLoggerBridge, logString } from './logger-bridge';
 contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
 
 const apiKeys = removeDups(firstStartingWith(process.argv, '--api-keys=').split('|'));
+let desktopApiConnected = false;
 for (const apiKey of apiKeys) {
   switch (apiKey) {
     case 'desktop':
       logString('debug', '[preload] connecting desktop hooks');
       contextBridge.exposeInMainWorld(apiKey, getDesktopBridge());
+      desktopApiConnected = true;
       break;
     case 'desktopInfo':
       logString('debug', '[preload] connecting desktopInfo hooks');
@@ -56,4 +58,55 @@ for (const apiKey of apiKeys) {
     default:
       logString('debug', `[preload] ignoring unsupported apiKey: '${apiKey}'`);
   }
+}
+
+// Set up Ctrl/Cmd+Mousewheel zoom support
+if (desktopApiConnected) {
+  let lastZoomTime = 0;
+  const ZOOM_THROTTLE_MS = 100; // Throttle zoom events to prevent excessive changes
+  let mousewheelZoomEnabled = false; // Default to disabled
+
+  // Listen for preference updates from the main process
+  ipcRenderer.on('desktop_set_mousewheel_zoom_enabled', (_event, enabled: boolean) => {
+    mousewheelZoomEnabled = enabled;
+    logString('debug', `[preload] mousewheel zoom ${enabled ? 'enabled' : 'disabled'}`);
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    logString('debug', '[preload] setting up mousewheel zoom handler');
+
+    window.addEventListener(
+      'wheel',
+      (event) => {
+        // Only process if the feature is enabled
+        if (!mousewheelZoomEnabled) {
+          return;
+        }
+
+        // Check if Ctrl (Windows/Linux) or Cmd (macOS) is pressed
+        const isModifierPressed = process.platform === 'darwin' ? event.metaKey : event.ctrlKey;
+
+        if (isModifierPressed) {
+          // Prevent default scrolling behavior
+          event.preventDefault();
+
+          // Throttle zoom events
+          const currentTime = Date.now();
+          if (currentTime - lastZoomTime < ZOOM_THROTTLE_MS) {
+            return;
+          }
+          lastZoomTime = currentTime;
+
+          // Determine zoom direction based on wheel delta
+          // Negative deltaY means scrolling up (zoom in), positive means scrolling down (zoom out)
+          if (event.deltaY < 0) {
+            ipcRenderer.send('desktop_zoom_in');
+          } else if (event.deltaY > 0) {
+            ipcRenderer.send('desktop_zoom_out');
+          }
+        }
+      },
+      { passive: false },
+    ); // passive: false allows us to call preventDefault
+  });
 }
