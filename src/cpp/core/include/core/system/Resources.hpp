@@ -71,14 +71,18 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider);
 // Returns 0 if there's no limit. cgroups memory limits if enabled, or ulimit -m
 Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider);
 
-// Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
-Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);
-
 // Returns 0.0 if the cpu is unlimited, otherwise, the number of cpus with fractional allocation (e.g. 0.5)
 Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider);
 
+#ifdef __linux__
+
+// Sets the memory limit. Must have privileges and provide the uid of the ultimate process owner
+Error setProcessMemoryLimit(long memHighKb, long memMaxKb, uid_t uid, MemoryProvider *pProvider);
+
 // Sets the cpu limit. Must have privileges and provide the uid of the ultimate process owner
 Error setProcessCpuLimit(double numCpus, uid_t uid, MemoryProvider *pProvider);
+
+#endif
 
 // Returns the RSS + swap for the current process.
 // The goal here is to choose values that are specific to a given process,
