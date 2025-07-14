@@ -178,24 +178,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
     String onErrorReadKey(String keyPath, String userMessage);
 
     /**
-     * Translated "May we upload crash reports to RStudio automatically?\n\nCrash reports don't include any personal information, except for IP addresses which are used to determine how many users are affected by each crash.\n\nCrash reporting can be disabled at any time under the Global Options.".
-     *
-     * @return translated "May we upload crash reports to RStudio automatically?\n\nCrash reports don't include any personal information, except for IP addresses which are used to determine how many users are affected by each crash.\n\nCrash reporting can be disabled at any time under the Global Options."
-     */
-    @DefaultMessage("May we upload crash reports to RStudio automatically?\\n\\nCrash reports don''t include any personal information, except for IP addresses which are used to determine how many users are affected by each crash.\\n\\nCrash reporting can be disabled at any time under the Global Options.")
-    @Key("checkForCrashHandlerPermissionMessage")
-    String checkForCrashHandlerPermissionMessage();
-
-    /**
-     * Translated "Enable Automated Crash Reporting".
-     *
-     * @return translated "Enable Automated Crash Reporting"
-     */
-    @DefaultMessage("Enable Automated Crash Reporting")
-    @Key("enableCrashReportingCaption")
-    String enableCrashReportingCaption();
-
-    /**
      * Translated "No".
      *
      * @return translated "No"

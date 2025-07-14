@@ -66,3 +66,4 @@
 - ([#15940](https://github.com/rstudio/rstudio/issues/15940)): RStudio Server and Posit Workbench are no longer supported on Ubuntu Focal
 - ([#16104](https://github.com/rstudio/rstudio/issues/16104)): Removed the "Limit visible console output" feature
 - (rstudio-pro#8257): Removed publishing to Posit Cloud
+- ([#16233](https://github.com/rstudio/rstudio/issues/16233)): Removed the "Send automated crash reports" feature from RStudio Desktop
