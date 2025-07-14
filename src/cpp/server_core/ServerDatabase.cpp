@@ -157,7 +157,7 @@ Error readOptions(const std::string& databaseConfigFile,
       databaseProvider = forceDatabaseProvider;
 
    // Translate the Settings object to a database::ConnectionOptions object
-   error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, kDatabaseProviderSqlite);
+   error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, databaseProvider);
    if (error)
    {
       LOG_ERROR_MESSAGE("Failed to apply database options from " + optionsFile.getAbsolutePath() + ": " + error.getMessage());
