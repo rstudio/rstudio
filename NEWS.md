@@ -21,8 +21,8 @@
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
 - (rstudio-pro#5357): Allows strict enforcement of the user limit specified by the Posit Workbench product license
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
-- (rstudio-pro#8186): Enable Positron Pro sessions by default
-- (rstudio-pro#7599): Backup existing Positron configuration files and install defaults during upgrade
+- (rstudio-pro#8186): Enables Positron Pro sessions by default
+- (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
 
 ### Fixed
 
@@ -59,7 +59,7 @@
 
 #### Posit Workbench
 
-With this release, Positron Sessions are moving from preview to General Availability (GA). As part of the upgrade process, any existing Positron configuration files will be automatically backed up to ensure production-ready defaults are properly installed.
+With this release, Positron Pro sessions are moving from preview to General Availability (GA). The upgrade process will automatically back up any existing Positron Pro configuration files to ensure production-ready defaults are properly installed.
 
 During package upgrade, the following files will be backed up if they exist:
 - `/etc/rstudio/positron.conf` as `/etc/rstudio/positron.conf.bak`
