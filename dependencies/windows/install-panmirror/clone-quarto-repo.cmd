@@ -12,8 +12,8 @@ pushd ..\..\..\src\gwt\lib
 ::            "panmirror check for changes" command to use the equivalent.
 
 if not exist quarto (
-  git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
-  REM git clone --branch release/rstudio-cucumberleaf-sunflower https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  REM git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  git clone --branch release/rstudio-cucumberleaf-sunflower https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
   pushd ..\..\..\src\gwt\lib\quarto
   git rev-parse HEAD
   popd
@@ -22,8 +22,8 @@ if not exist quarto (
   git fetch
   git reset --hard
   git clean -dfx
-  git checkout main
-  REM git checkout release/rstudio-cucumberleaf-sunflower
+  REM git checkout main
+  git checkout release/rstudio-cucumberleaf-sunflower
   git pull
   git rev-parse HEAD
   popd
