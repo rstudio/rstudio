@@ -26,6 +26,8 @@
 #include <core/system/Resources.hpp>
 #include <core/system/PosixSystem.hpp>
 
+#include <boost/regex.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <dirent.h>
@@ -285,6 +287,25 @@ public:
 
       return Success();
    }
+
+   virtual Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
+   {
+      *pNumCpus = 0.0;
+      *pProvider = MemoryProviderUnknown;
+      return Success();
+   }
+
+   virtual Error setProcessMemoryLimit(long memHighKb, long memMaxKb, MemoryProvider *pProvider)
+   {
+      *pProvider = MemoryProviderLinuxUlimit;
+      return setResourceLimit(MemoryLimit, memHighKb * 1024);
+   }
+
+   virtual Error setProcessCpuLimit(double numCpus, MemoryProvider *pProvider)
+   {
+      // No way to set cpu limits in this config. Requires cgroups v2 and a non-shared cgroup
+      return Success();
+   }
 };
 
 /**
@@ -356,19 +377,27 @@ class CGroupsMemoryProvider : public MemInfoMemoryProvider
 public:
    CGroupsMemoryProvider(const std::string& path) : isV2_(false)
    {
-      // In some environments, scoped memory stats are available in e.g.,
+      // In some cgroup v1 environments with pam_systemd, user scoped memory stats are available in e.g.,
       //
       // /sys/fs/cgroup/memory/user.slice/user-1000.slice/user@1000.service/memory/memory.usage_in_bytes
-      // 
-      // In others, we will need to read the memory stats at a system level,
-      // e.g.,
+      //
+      // In others, it will be a shared group that we can't use:
+      //
+      // either:
+
+      // /sys/fs/cgroup/memory/system.slice/launcher.service
+      //
+      // or:
       //
       // /sys/fs/cgroup/memory/memory.usage_in_bytes
       //
-      // For those using cgroups v2, all stats are under the same unified
-      // heirarchy, e.g.
+      // For those using cgroups v2 using pam_systemd, stats are under the same unified
+      // hierarchy, e.g.
       //
       // /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/memory.max
+      //
+      // With local launcher cgroups, the path is:
+      // /sys/fs/cgroup/system.slice/rstudio-launcher.service/jobs/MlxEEgj0TeFsfIwX9ojxWg==
       //
       // Check to see whether the path we read from the process's cgroup file
       // exists. If it does, we can read scoped memory stats.
@@ -497,6 +526,61 @@ public:
       return error;
    }
 
+   virtual Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
+   {
+      if (!isV2_)
+      {
+         *pNumCpus = 0.0;
+         *pProvider = MemoryProviderUnknown;
+      }
+      else
+      {
+         Error error = getCgroupV2NumCpus(pNumCpus, pProvider);
+         if (error)
+         {
+            *pNumCpus = 0.0;
+            *pProvider = MemoryProviderUnknown;
+         }
+         else
+         {
+            *pProvider = MemoryProviderLinuxCgroups;
+         }
+      }
+      return Success();
+   }
+
+   virtual Error setProcessMemoryLimit(long highMemKb, long maxMemKb, MemoryProvider *pProvider)
+   {
+      Error error;
+      *pProvider = MemoryProviderLinuxCgroups;
+      if (!isV2_)
+         error = setCgroupMemoryStat("memory.limit_in_bytes", maxMemKb * 1024);
+      else
+      {
+         error = setCgroupMemoryStat("memory.high", highMemKb * 1024);
+         if (!error)
+            error = setCgroupMemoryStat("memory.max", maxMemKb * 1024);
+      }
+      return error;
+   }
+
+   virtual Error setProcessCpuLimit(double numCpus, MemoryProvider *pProvider)
+   {
+      *pProvider = MemoryProviderLinuxCgroups;
+
+      if (isV2_)
+      {
+         int period = getCgroupV2CpuPeriod(); // 100ms
+         // cpu.max = 'quota period'
+         Error error = setCgroupCpuStat("cpu.max", std::to_string(static_cast<int>(numCpus * period)) + " " + std::to_string(period));
+         if (error)
+            LOG_DEBUG_MESSAGE("Error setting cpu.max: " + error.asString());
+      }
+      // else pam_systemd does not provision cpu cgroups on v1 so can't set them here
+
+      return Success();
+   }
+
 private:
    // Gets a memory statistic from cgroup virtual file
    Error getCgroupMemoryStat(const std::string& key, long *pValue)
@@ -541,12 +625,133 @@ private:
       return Success();
    }
 
+   Error setCgroupMemoryStat(const std::string& key, long val)
+   {
+      FilePath statPath = path_.completePath(key);
+      Error error = writeStringToFile(statPath, std::to_string(val));
+      if (error)
+         return error;
+      return Success();
+   }
+
+   // Gets the cpu.max value - returning 0.0 if no limit.
+   Error getCgroupV2NumCpus(double *pNumCpus, MemoryProvider *pProvider)
+   {
+      // Attempt to read the statistic from the file.
+      FilePath statPath = path_.completePath("cpu.max");
+      std::string cpuMaxValue;
+      Error error = readStringFromFile(statPath, &cpuMaxValue);
+      if (error)
+      {
+         return error;
+      }
+
+      // Remove whitespace; these virtual files usually end with a newline
+      std::istringstream iss(cpuMaxValue);
+      std::string limitStr, periodStr;
+      if (!(iss >> limitStr >> periodStr))
+      {
+         return systemError(boost::system::errc::invalid_argument, "Failed to parse cpu.max: " + cpuMaxValue, ERROR_LOCATION);
+      }
+      if (limitStr == "max")
+      {
+         *pNumCpus = 0.0;
+      }
+      else
+      {
+         int limitInt = safe_convert::stringTo<int>(limitStr, 0);
+         int periodInt = safe_convert::stringTo<int>(periodStr, 0);
+         if (limitInt == 0 || periodInt == 0)
+         {
+            LOG_DEBUG_MESSAGE("Failed to convert cpu.max: " + limitStr + " " + periodStr);
+            *pNumCpus = 0.0;
+            *pProvider = MemoryProviderUnknown;
+            return Success();
+         }
+         *pNumCpus = static_cast<double>(limitInt) / periodInt;
+      }
+
+      *pProvider = MemoryProviderLinuxCgroups;
+
+      return Success();
+   }
+
+   Error setCgroupCpuStat(const std::string& key, std::string val)
+   {
+      FilePath statPath = path_.completePath(key);
+      Error error = writeStringToFile(statPath, val);
+      if (error)
+      {
+         error.addProperty("description", "Failed to set cgroup cpu stat: " + key + " to: " +
+                           val + " path: " + statPath.getAbsolutePath());
+         return error;
+      }
+      return Success();
+   }
+
+   // The system is configured with a specific time period so use that when computing cpu limits.
+   int getCgroupV2CpuPeriod()
+   {
+      std::string cpuMaxValue;
+      int defaultPeriod = 100000;
+      FilePath cpuMaxFile = path_.completePath("cpu.max");
+
+      core::Error error = core::readStringFromFile(cpuMaxFile, &cpuMaxValue);
+      if (error)
+      {
+         LOG_DEBUG_MESSAGE("Failed to read cpu.max: " + error.asString());
+         return defaultPeriod;
+      }
+
+      std::istringstream iss(cpuMaxValue);
+      std::string limit, period;
+      if (!(iss >> limit >> period))
+      {
+         LOG_DEBUG_MESSAGE("Failed to parse cpu.max: " + cpuMaxValue);
+         return defaultPeriod;
+      }
+      return safe_convert::stringTo<int>(period, defaultPeriod);
+   }
+
    FilePath path_;
    bool isV2_;
 };
 
+bool isSharedCgroup(const std::string& path, uid_t uid)
+{
+   boost::regex systemRegex(R"(^/system\.slice/[^/]+\.service$)");
+   boost::regex userRegex(R"(^/user\.slice/user-(\d+)\.slice/.*$)");
+   boost::regex launcherPattern(R"(^/system\.slice/rstudio-launcher\.service/jobs/.*$)");
+
+   // don't use cgroups for: /system.slice/launcher.service (shared by all users)
+   if (boost::regex_match(path, systemRegex))
+   {
+      return true;
+   }
+
+   boost::smatch match;
+   // use cgroups for: /user.slice/user-<uid>.slice if uid is the current user
+   // Did pam_systemd step that creates this run for the session user or the system user?
+   if (boost::regex_match(path, match, userRegex))
+   {
+      uid_t cgroupUid = static_cast<uid_t>(std::stoul(match[1]));
+      return cgroupUid != uid;
+   }
+
+   // Use it if it's created from the job launcher
+   if (boost::regex_match(path, launcherPattern))
+   {
+      return false;
+   }
+
+   LOG_DEBUG_MESSAGE("Unrecognized cgroup pattern, assuming a shared group and using /proc/meminfo for memory usage: " + path);
+
+   // By default, assume it's a shared cgroup and don't use it
+   return true;
+}
+
 // Returns the memory cgroup path.
-std::string getMemoryCgroup()
+std::string getMemoryCgroup(uid_t uid)
 {
    FilePath cgroup("/proc/self/cgroup");
    if (!cgroup.exists())
@@ -573,6 +778,9 @@ std::string getMemoryCgroup()
    // 0::/user.slice/user-1000.slice/user@1000.service
    try
    {
+      std::string pattern = R"(^/system\.slice/[^/]+\.service$)";
+      boost::regex systemRegex(pattern);
+
       while (!pCgroupStream->eof())
       {
          std::string line;
@@ -588,15 +796,20 @@ std::string getMemoryCgroup()
             continue;
          }
 
-         // cgroups v2; everything is under one heirarchy.
+         // cgroups v2; everything is under one hierarchy.
          if (entries[0] == "0")
          {
+            if (isSharedCgroup(entries[2], uid))
+               return std::string();
             return entries[2];
          }
 
          // We are only interested in the "memory" entry.
          if (entries[1] == "memory")
          {
+            if (isSharedCgroup(entries[2], uid))
+               return std::string();
+
             // Return the memory entry.
             return entries[2];
          }
@@ -614,21 +827,26 @@ std::string getMemoryCgroup()
 }
 
 // Factory for memory provider instantiation
-boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
+boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider(bool writeLimit, uid_t uid)
 {
    static boost::mutex s_mutex;
-   static boost::shared_ptr<LinuxMemoryProvider> s_provider;
+   static boost::shared_ptr<LinuxMemoryProvider> s_readLimitProvider;
+   static boost::shared_ptr<LinuxMemoryProvider> s_writeLimitProvider;
 
    // Return memory provider if we have one
-   if (s_provider)
+   if (writeLimit && s_writeLimitProvider)
    {
-      return s_provider;
+      return s_writeLimitProvider;
+   }
+   else if (!writeLimit && s_readLimitProvider)
+   {
+      return s_readLimitProvider;
    }
 
    // Otherwise, try to create one
    LOCK_MUTEX(s_mutex)
    {
-      std::string cgroup = getMemoryCgroup();
+      std::string cgroup = getMemoryCgroup(uid);
 
       if (!cgroup.empty())
       {
@@ -647,19 +865,24 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
          }
          else if (totalKb != LONG_MAX) // i.e. no limitation via cgroups
          {
-            s_provider = provider;
+            s_readLimitProvider = provider;
          }
+         s_writeLimitProvider = provider;
       }
 
       // Fall back on the default if we don't have a provider at this point.
-      if (!s_provider)
+      if (!s_readLimitProvider)
       {
-         s_provider.reset(new MemInfoMemoryProvider());
+         s_readLimitProvider.reset(new MemInfoMemoryProvider());
+      }
+      if (!s_writeLimitProvider)
+      {
+         s_writeLimitProvider.reset(new MemInfoMemoryProvider());
       }
    }
    END_LOCK_MUTEX;
 
-   return s_provider;
+   return writeLimit ? s_writeLimitProvider : s_readLimitProvider;
 }
 
 } // anonymous namespace
@@ -668,7 +891,7 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
 
 Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
-   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(false, ::geteuid());
    if (provider)
    {
       return provider->getTotalMemoryUsed(pUsedKb, pProvider);
@@ -681,7 +904,7 @@ Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 
 Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 {
-   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(false, ::geteuid());
    if (provider)
    {
       return provider->getProcessMemoryUsed(pUsedKb, pProvider);
@@ -694,7 +917,7 @@ Error getProcessMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
 
 Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
 {
-   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(false, ::geteuid());
    if (provider)
    {
       return provider->getTotalMemory(pTotalKb, pProvider);
@@ -707,7 +930,7 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
 
 Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
 {
-   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider();
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(false, ::geteuid());
    if (provider)
    {
       return provider->getProcessMemoryLimit(pTotalKb, pProvider);
@@ -716,6 +939,46 @@ Error getProcessMemoryLimit(long *pTotalKb, MemoryProvider *pProvider)
    *pTotalKb = 0;
    *pProvider = MemoryProviderUnknown;
    return Success();
+}
+
+Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
+{
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(false, ::geteuid());
+   if (provider)
+   {
+      return provider->getProcessCpuLimit(pNumCpus, pProvider);
+   }
+
+   *pNumCpus = 0;
+   *pProvider = MemoryProviderUnknown;
+   return Success();
+}
+
+Error setProcessMemoryLimit(long highMemKb, long maxMemKb, uid_t uid, MemoryProvider *pProvider)
+{
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(true, uid);
+   if (provider)
+   {
+      return provider->setProcessMemoryLimit(highMemKb, maxMemKb, pProvider);
+   }
+
+   *pProvider = MemoryProviderUnknown;
+   return systemError(boost::system::errc::not_supported,
+                      "Process memory limit not supported",
+                      ERROR_LOCATION);
+}
+
+Error setProcessCpuLimit(double numCpus, uid_t uid, MemoryProvider *pProvider)
+{
+   boost::shared_ptr<LinuxMemoryProvider> provider = getMemoryProvider(true, uid);
+   if (provider)
+   {
+      return provider->setProcessCpuLimit(numCpus, pProvider);
+   }
+   *pProvider = MemoryProviderUnknown;
+   return systemError(boost::system::errc::not_supported,
+                      "Process cpu limit not supported",
+                      ERROR_LOCATION);
 }
 
 long getProcessSize()
