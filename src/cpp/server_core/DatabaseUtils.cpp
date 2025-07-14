@@ -379,7 +379,7 @@ Error applyOptionsFromSettings(const Settings& databaseSettings,
                   const std::string& defaultDatabaseName,
                   const std::string& defaultDatabaseProvider)
 {
-   std::string databaseProvider = databaseSettings.get(kDatabaseProvider, defaultDatabaseProvider);
+   std::string databaseProvider = defaultDatabaseProvider.empty()? databaseSettings.get(kDatabaseProvider, defaultDatabaseProvider) : defaultDatabaseProvider;
    Error result = Success();
 
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
