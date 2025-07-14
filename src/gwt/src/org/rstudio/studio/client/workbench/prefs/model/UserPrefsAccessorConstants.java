@@ -790,6 +790,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String helpFontSizePointsDescription();
 
    /**
+    * Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.
+    */
+   @DefaultStringValue("Zoom with mouse wheel when holding Ctrl (Cmd on macOS)")
+   String enableMousewheelZoomTitle();
+   @DefaultStringValue("Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.")
+   String enableMousewheelZoomDescription();
+
+   /**
+    * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+    */
+   @DefaultStringValue("Mouse wheel zoom debounce delay (ms)")
+   String mousewheelZoomDebounceMsTitle();
+   @DefaultStringValue("A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.")
+   String mousewheelZoomDebounceMsDescription();
+
+   /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
    @DefaultStringValue("Theme")

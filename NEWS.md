@@ -15,6 +15,7 @@
 - ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), an option to stop ignoring updates prompts
 - ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduces a new structure for release note entries
+- ([#16226](https://github.com/rstudio/rstudio/issues/16226)): Added option (off by default) to zoom RStudio Desktop UI with Ctrl/Cmd+mouse wheel
 
 #### Posit Workbench
 
