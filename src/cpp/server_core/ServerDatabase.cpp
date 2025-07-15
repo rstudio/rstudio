@@ -151,13 +151,15 @@ Error readOptions(const std::string& databaseConfigFile,
       return error;
    }
 
-   // If the database provider is not specified, use the default provider
+   // Internal database defaults to SQLite if no provider is specified
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+
+   // Database migration uses a forced provider to get settings
    if (!forceDatabaseProvider.empty())
       databaseProvider = forceDatabaseProvider;
 
    // Translate the Settings object to a database::ConnectionOptions object
-   error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, kDatabaseProviderSqlite);
+   error = utils::applyOptionsFromSettings(settings, pOptions, defaultDatabaseName, databaseProvider);
    if (error)
    {
       LOG_ERROR_MESSAGE("Failed to apply database options from " + optionsFile.getAbsolutePath() + ": " + error.getMessage());

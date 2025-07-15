@@ -379,8 +379,11 @@ Error applyOptionsFromSettings(const Settings& databaseSettings,
                   const std::string& defaultDatabaseName,
                   const std::string& defaultDatabaseProvider)
 {
-   std::string databaseProvider = databaseSettings.get(kDatabaseProvider, defaultDatabaseProvider);
    Error result = Success();
+   
+   // If the defaultDatabaseProvider is specified, use it. This allows for a "forced" provider
+   // to be used, which we use for internal database migration.
+   std::string databaseProvider = defaultDatabaseProvider.empty()? databaseSettings.get(kDatabaseProvider, defaultDatabaseProvider) : defaultDatabaseProvider;
 
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
    {
