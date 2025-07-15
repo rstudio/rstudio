@@ -71,6 +71,13 @@ Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
    return Success();
 }
 
+Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
+{
+   *pNumCpus = 0.0;
+   *pProvider = MemoryProviderUnknown;
+   return Success();
+}
+
 } // namespace system
 } // namespace core
 } // namespace rstudio
