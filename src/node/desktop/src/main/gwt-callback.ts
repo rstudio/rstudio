@@ -785,6 +785,20 @@ export class GwtCallback extends EventEmitter {
       nativeTheme.themeSource = isDark ? 'dark' : 'light';
     });
 
+    ipcMain.on('desktop_set_mousewheel_zoom_enabled', (_event, enabled: boolean) => {
+      // Broadcast to all windows
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('desktop_set_mousewheel_zoom_enabled', enabled);
+      }
+    });
+
+    ipcMain.on('desktop_set_mousewheel_zoom_debounce', (_event, zoomDebounceMs: number) => {
+      // Broadcast to all windows
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('desktop_set_mousewheel_zoom_debounce', zoomDebounceMs);
+      }
+    });
+
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
     });
@@ -946,6 +960,26 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_stop_main_thread', () => {
       process.crash();
+    });
+
+    // Define an interface for owners that have notifyAltMouseDown
+    interface AltMouseDownNotifiable {
+      notifyAltMouseDown: () => void;
+      window: BrowserWindow;
+    }
+
+    // Handle Alt+mouse down notification for Windows multi-cursor fix
+    ipcMain.on('desktop_alt_mouse_down', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender);
+      if (window) {
+        // Find the GwtWindow that owns this BrowserWindow
+        for (const owner of this.owners) {
+          if (owner.window === window && 'notifyAltMouseDown' in owner) {
+            (owner as AltMouseDownNotifiable).notifyAltMouseDown();
+            break;
+          }
+        }
+      }
     });
 
     ipcMain.handle('desktop_get_session_server', () => {

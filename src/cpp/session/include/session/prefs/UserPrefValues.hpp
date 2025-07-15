@@ -173,6 +173,8 @@ namespace prefs {
 #define kFontSizePoints "font_size_points"
 #define kEditorLineHeight "editor_line_height"
 #define kHelpFontSizePoints "help_font_size_points"
+#define kEnableMousewheelZoom "enable_mousewheel_zoom"
+#define kMousewheelZoomDebounceMs "mousewheel_zoom_debounce_ms"
 #define kEditorTheme "editor_theme"
 #define kServerEditorFontEnabled "server_editor_font_enabled"
 #define kServerEditorFont "server_editor_font"
@@ -998,6 +1000,18 @@ public:
     */
    double helpFontSizePoints();
    core::Error setHelpFontSizePoints(double val);
+
+   /**
+    * Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.
+    */
+   bool enableMousewheelZoom();
+   core::Error setEnableMousewheelZoom(bool val);
+
+   /**
+    * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+    */
+   int mousewheelZoomDebounceMs();
+   core::Error setMousewheelZoomDebounceMs(int val);
 
    /**
     * The name of the color theme to apply to the text editor in RStudio.

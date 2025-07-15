@@ -1353,6 +1353,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.
+    */
+   public PrefValue<Boolean> enableMousewheelZoom()
+   {
+      return bool(
+         "enable_mousewheel_zoom",
+         _constants.enableMousewheelZoomTitle(), 
+         _constants.enableMousewheelZoomDescription(), 
+         false);
+   }
+
+   /**
+    * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+    */
+   public PrefValue<Integer> mousewheelZoomDebounceMs()
+   {
+      return integer(
+         "mousewheel_zoom_debounce_ms",
+         _constants.mousewheelZoomDebounceMsTitle(), 
+         _constants.mousewheelZoomDebounceMsDescription(), 
+         100);
+   }
+
+   /**
     * The name of the color theme to apply to the text editor in RStudio.
     */
    public PrefValue<String> editorTheme()
@@ -3996,6 +4020,10 @@ public class UserPrefsAccessor extends Prefs
          editorLineHeight().setValue(layer, source.getDbl("editor_line_height"));
       if (source.hasKey("help_font_size_points"))
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
+      if (source.hasKey("enable_mousewheel_zoom"))
+         enableMousewheelZoom().setValue(layer, source.getBool("enable_mousewheel_zoom"));
+      if (source.hasKey("mousewheel_zoom_debounce_ms"))
+         mousewheelZoomDebounceMs().setValue(layer, source.getInteger("mousewheel_zoom_debounce_ms"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
       if (source.hasKey("server_editor_font_enabled"))
@@ -4440,6 +4468,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(fontSizePoints());
       prefs.add(editorLineHeight());
       prefs.add(helpFontSizePoints());
+      prefs.add(enableMousewheelZoom());
+      prefs.add(mousewheelZoomDebounceMs());
       prefs.add(editorTheme());
       prefs.add(serverEditorFontEnabled());
       prefs.add(serverEditorFont());

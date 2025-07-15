@@ -1194,6 +1194,32 @@ core::Error UserPrefValues::setHelpFontSizePoints(double val)
 }
 
 /**
+ * Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and out.
+ */
+bool UserPrefValues::enableMousewheelZoom()
+{
+   return readPref<bool>("enable_mousewheel_zoom");
+}
+
+core::Error UserPrefValues::setEnableMousewheelZoom(bool val)
+{
+   return writePref("enable_mousewheel_zoom", val);
+}
+
+/**
+ * A delay in milliseconds to wait before applying the zoom level after a mouse wheel event.
+ */
+int UserPrefValues::mousewheelZoomDebounceMs()
+{
+   return readPref<int>("mousewheel_zoom_debounce_ms");
+}
+
+core::Error UserPrefValues::setMousewheelZoomDebounceMs(int val)
+{
+   return writePref("mousewheel_zoom_debounce_ms", val);
+}
+
+/**
  * The name of the color theme to apply to the text editor in RStudio.
  */
 std::string UserPrefValues::editorTheme()
@@ -3561,6 +3587,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kEditorLineHeight,
       kHelpFontSizePoints,
+      kEnableMousewheelZoom,
+      kMousewheelZoomDebounceMs,
       kEditorTheme,
       kServerEditorFontEnabled,
       kServerEditorFont,

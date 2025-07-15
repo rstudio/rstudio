@@ -1,5 +1,5 @@
 ---
-title: "Log files and crash reports"
+title: "Log files"
 date-meta: 2025-01-07
 ---
 
@@ -32,9 +32,3 @@ The log file is located in this directory:
 ```
 
 Open the log files directly from the file browser or with the text editor of your choice.
-
-# Crash reports
-
-An administrator can enable crash reports. For more information, see the [Automated Crash Reporting](https://docs.posit.co/ide/server-pro/server_management/automated_crash_reporting.html) section in the Posit Workbench Administrator Guide.
-
-

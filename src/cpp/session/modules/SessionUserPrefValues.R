@@ -850,6 +850,26 @@
    clear = function() { .rs.clearUserPref("help_font_size_points") }
 )
 
+# Zoom with mouse wheel when holding Ctrl (Cmd on macOS)
+#
+# Use Ctrl+Mouse Wheel (Cmd+Mouse Wheel on macOS) to zoom the interface in and
+# out.
+.rs.uiPrefs$enableMousewheelZoom <- list(
+   get = function() { .rs.getUserPref("enable_mousewheel_zoom") },
+   set = function(value) { .rs.setUserPref("enable_mousewheel_zoom", value) },
+   clear = function() { .rs.clearUserPref("enable_mousewheel_zoom") }
+)
+
+# Mouse wheel zoom debounce delay (ms)
+#
+# A delay in milliseconds to wait before applying the zoom level after a mouse
+# wheel event.
+.rs.uiPrefs$mousewheelZoomDebounceMs <- list(
+   get = function() { .rs.getUserPref("mousewheel_zoom_debounce_ms") },
+   set = function(value) { .rs.setUserPref("mousewheel_zoom_debounce_ms", value) },
+   clear = function() { .rs.clearUserPref("mousewheel_zoom_debounce_ms") }
+)
+
 # Theme
 #
 # The name of the color theme to apply to the text editor in RStudio.

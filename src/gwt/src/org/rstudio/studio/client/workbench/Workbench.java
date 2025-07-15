@@ -246,7 +246,6 @@ public class Workbench implements BusyEvent.Handler,
 
    public void onDeferredInitCompleted(DeferredInitCompletedEvent ev)
    {
-      checkForCrashHandlerPermission();
    }
 
    public void onBusy(BusyEvent event)
@@ -562,32 +561,6 @@ public class Workbench implements BusyEvent.Handler,
       if (!StringUtil.isNullOrEmpty(licenseMessage))
       {
          globalDisplay_.showLicenseWarningBar(false, licenseMessage);
-      }
-   }
-
-   private void checkForCrashHandlerPermission()
-   {
-      boolean shouldPrompt = session_.getSessionInfo().getPromptForCrashHandlerPermission();
-      if (shouldPrompt)
-      {
-         String message = constants_.checkForCrashHandlerPermissionMessage();
-         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-               constants_.enableCrashReportingCaption(),
-               message,
-               false,
-               new Operation() {
-                  @Override
-                  public void execute() {
-                     server_.setUserCrashHandlerPrompted(true, new SimpleRequestCallback<>());
-                  }
-               },
-               new Operation() {
-                  @Override
-                  public void execute() {
-                     server_.setUserCrashHandlerPrompted(false, new SimpleRequestCallback<>());
-                  }
-               },
-               true);
       }
    }
 

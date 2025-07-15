@@ -15,12 +15,15 @@
 - ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), an option to stop ignoring updates prompts
 - ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduces a new structure for release note entries
+- ([#16226](https://github.com/rstudio/rstudio/issues/16226)): Added option (off by default) to zoom RStudio Desktop UI with Ctrl/Cmd+mouse wheel
 
 #### Posit Workbench
 
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
 - (rstudio-pro#5357): Allows strict enforcement of the user limit specified by the Posit Workbench product license
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
+- (rstudio-pro#8186): Enables Positron Pro sessions by default
+- (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
 
 ### Fixed
 
@@ -46,16 +49,29 @@
 - ([#15444](https://github.com/rstudio/rstudio/issues/15444)): Fixed an issue where hitting the Escape key to close the "Update Available" dialog would exit RStudio
 - ([#16191](https://github.com/rstudio/rstudio/issues/16191)): Fixed an issue where the splash screen would not close and the RStudio main window would not show when starting RStudio Desktop
 - ([#16198](https://github.com/rstudio/rstudio/issues/16198)): Fixed an issue where the "Switch Focus between Source/Console" command would not work when the Visual Editor was active
+- ([#12470](https://github.com/rstudio/rstudio/issues/12470)): Fixed an issue in RStudio Desktop on Windows where creating multiple cursors using Alt + the mouse would move focus to the menu bar
 
 #### Posit Workbench
 
 - (rstudio-pro#8144): Fixed an issue where Positron State wasn't being loaded on login
 - (rstudio-pro#7368): Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions
 
+### Upgrade Instructions
+
+#### Posit Workbench
+
+With this release, Positron Pro sessions are moving from preview to General Availability (GA). The upgrade process will automatically back up any existing Positron Pro configuration files to ensure production-ready defaults are properly installed.
+
+During package upgrade, the following files will be backed up if they exist:
+- `/etc/rstudio/positron.conf` as `/etc/rstudio/positron.conf.bak`
+- `/etc/rstudio/positron-user-settings.conf` as `/etc/rstudio/positron-user-settings.conf.bak`
+
+After completing the package upgrade, carefully review the backed up files and the new default configuration files and merge any customizations as needed.
+
 ### Dependencies
 
 - ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.342.0
-- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.0
+- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.1
 - ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
 - ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
 
@@ -64,3 +80,4 @@
 - ([#15940](https://github.com/rstudio/rstudio/issues/15940)): RStudio Server and Posit Workbench are no longer supported on Ubuntu Focal
 - ([#16104](https://github.com/rstudio/rstudio/issues/16104)): Removed the "Limit visible console output" feature
 - (rstudio-pro#8257): Removed publishing to Posit Cloud
+- ([#16233](https://github.com/rstudio/rstudio/issues/16233)): Removed the "Send automated crash reports" feature from RStudio Desktop

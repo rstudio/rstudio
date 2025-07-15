@@ -203,16 +203,6 @@ public class GeneralPreferencesPane extends PreferencesPane
                    prefs_.checkForUpdates(), true /*defaultSpaced*/));
       }
 
-      // crash reporting - only show in desktop mode
-      enableCrashReporting_ = checkboxPref(constants_.otherSendReportsLabel(),
-            prefs_.submitCrashReports());
-      if (Desktop.isDesktop())
-      {
-         lessSpaced(enableCrashReporting_);
-         enableCrashReporting_.setEnabled(session.getSessionInfo().getCrashHandlerSettingsModifiable());
-         basic.add(enableCrashReporting_);
-      }
-
       CheckBox autohideMenubar = checkboxPref(constants_.autohideMenubarLabel(), prefs_.autohideMenubar());
       if (BrowseCap.isElectron() && !BrowseCap.isMacintosh())
       {
@@ -221,9 +211,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       CheckBox enableSplashScreen = checkboxPref(prefs_.enableSplashScreen());
+      CheckBox enableMouseWheelZoom = checkboxPref(prefs_.enableMousewheelZoom());
       if (BrowseCap.isElectron())
       {
          basic.add(enableSplashScreen);
+         basic.add(enableMouseWheelZoom);
       }
 
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
@@ -518,8 +510,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (fullPathInTitle_ != null)
          fullPathInTitle_.setValue(prefs.fullProjectPathInWindowTitle().getValue());
 
-      enableCrashReporting_.setValue(prefs.submitCrashReports().getValue());
-
       // projects prefs
       restoreLastProject_.setEnabled(true);
       restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
@@ -778,7 +768,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox restoreLastProject_;
    private CheckBox rProfileOnResume_;
    private CheckBox showLastDotValue_;
-   private CheckBox enableCrashReporting_;
    private final UserPrefs prefs_;
    private final Session session_;
    private String initialProjectUserDataDir_;

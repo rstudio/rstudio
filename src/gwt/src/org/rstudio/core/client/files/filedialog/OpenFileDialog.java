@@ -14,11 +14,11 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 
 public class OpenFileDialog extends FileDialog
@@ -87,7 +87,8 @@ public class OpenFileDialog extends FileDialog
       // 'fresh' from 'stale' user input; ie, tell whether
       // the user is navigating in the widget or typing in
       // the file name textbox
-      if (event.getSelectedItem().isDirectory())
+      FileSystemItem item = event.getSelectedItem();
+      if (item != null && item.isDirectory())
          browser_.setFilename("");
    }
 
