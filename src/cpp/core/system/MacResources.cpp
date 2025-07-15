@@ -103,7 +103,7 @@ Error getProcessMemoryLimit(long *pLimitKb, MemoryProvider *pProvider)
 Error getProcessCpuLimit(double *pNumCpus, MemoryProvider *pProvider)
 {
    *pNumCpus = 0.0;
-   *pProvider = MemoryProviderUnknown.
+   *pProvider = MemoryProviderUnknown;
    return Success();
 }
 
