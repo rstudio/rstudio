@@ -72,7 +72,7 @@ This page provides the release notes associated with each release of RStudio and
 - Introduced a new admin configuration UI **in preview** to modify and deploy distributed workload (Launcher) settings (rstudio-pro#7401, rstudio-pro#7403, rstudio-pro#7481)
 - Updated to Launcher 2.19.0, which now writes an active state file to the filesystem for each config file loaded on reload or restart (launcher#1172)
 - Consolidated the Posit Workbench Administrator Guide and Posit Workbench User Guide into a single site that includes a Posit Workbench documentation landing page (rstudio-pro#6892)
-- Introduced audited Workbench jobs to provide auditing information alongside Workbench job output (rstudio-pro#7418, rstudio-pro#7569, rstudio-pro#7571, rstudio-pro#7581, rstudio-pro#7935)
+- Introduced audited Workbench jobs to provide auditing information alongside Workbench job output. Enable audited Workbench jobs with the `audited-jobs` parameter in the `rserver.conf` file (rstudio-pro#7418, rstudio-pro#7569, rstudio-pro#7571, rstudio-pro#7581, rstudio-pro#7935)
 - Sessions now set the environment variable `SPARK_CONNECT_USER_AGENT` to `posit-workbench-rstudio`, `posit-workbench-positron`, `posit-workbench-jupyter`, or `posit-workbench-vscode` depending on the session type (rstudio-pro#7970)
 - Sessions now set the environment variable `SF_PARTNER` to `posit_workbench_rstudio`, `posit_workbench_positron`, `posit_workbench_jupyter`, or `posit_workbench_vscode` depending on the session type (rstudio-pro#7970)
 - Updated dependencies for the JupyterLab extension to address security vulnerabilities (rstudio-pro#7621)
