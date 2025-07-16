@@ -368,11 +368,11 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     String pleaseEnterFormatString();
 
     /**
-     * Translated "Please insert a comma separated list of factors".
+     * Translated "Enter a comma separated list of factor levels".
      *
-     * @return translated "Please insert a comma separated list of factors"
+     * @return translated "Enter a comma separated list of factor levels"
      */
-    @DefaultMessage("Please insert a comma separated list of factors")
+    @DefaultMessage("Enter a comma separated list of factor levels")
     @Key("pleaseInsertACommaSeparatedList")
     String pleaseInsertACommaSeparatedList();
 
