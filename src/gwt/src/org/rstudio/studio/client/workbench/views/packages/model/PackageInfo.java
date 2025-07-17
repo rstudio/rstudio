@@ -67,6 +67,10 @@ public class PackageInfo extends JavaScriptObject
       return this["attached"] || false;
    }-*/;
 
+   public final native String getMetadata() /*-{
+      return this["metadata"] || "";
+   }-*/;
+
    public final native void setAttached(boolean attached) /*-{
       this["attached"] = attached;
    }-*/;
