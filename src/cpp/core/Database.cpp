@@ -1110,6 +1110,8 @@ Error SchemaUpdater::isUpToDate(bool* pUpToDate)
 
 Error SchemaUpdater::update()
 {
+   LOG_INFO_MESSAGE("Updating database schema version using migration path: " + migrationsPath_.getAbsolutePath());
+   
    bool schemaPresent = false;
    Error error = isSchemaVersionPresent(&schemaPresent);
    if (error)
