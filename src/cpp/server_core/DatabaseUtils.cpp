@@ -429,6 +429,36 @@ core::database::Driver getConfiguredDriver(const ConnectionOptions& options)
    return boost::apply_visitor(visitor, options);
 }
 
+Error migrationsDir(const std::string& rootDir, FilePath* pMigrationsDir)
+{
+   return migrationsDir(rootDir, "", pMigrationsDir);
+}
+
+Error migrationsDir(const std::string& rootDir, const std::string& migrationEnvVarName, core::FilePath* pMigrationsDir)
+{
+   FilePath exePath;
+   Error error = core::system::executablePath(nullptr, &exePath);
+   if (error)
+      return error;
+
+   // get the path for the migration files - this may be overridden via env var
+   // for supporting development setups
+   FilePath migrationsDir;
+   if (!migrationEnvVarName.empty())
+   {
+      std::string migrationsPathEnv = core::system::getenv(migrationEnvVarName);
+      if (!migrationsPathEnv.empty())
+      {
+         *pMigrationsDir = FilePath(migrationsPathEnv);
+         return Success();
+      }
+   }
+   
+   *pMigrationsDir = exePath.getParent().getParent().completeChildPath(rootDir);
+
+   return Success();
+}
+
 } // namespace utils
 } // namespace database
 } // namespace server_core

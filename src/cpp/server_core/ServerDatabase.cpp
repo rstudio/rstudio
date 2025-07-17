@@ -50,28 +50,10 @@ constexpr const char* kConfigFile = "database.conf";
 
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
+constexpr const char* kDatabaseMigrationsRootDir = "db";
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 boost::optional<ConnectionOptions> s_connectionOptions = boost::none;
-
-Error migrationsDir(FilePath* pMigrationsDir)
-{
-   FilePath exePath;
-   Error error = core::system::executablePath(nullptr, &exePath);
-   if (error)
-      return error;
-
-   // get the path for the migration files - this may be overridden via env var
-   // for supporting development setups
-   FilePath migrationsDir;
-   std::string migrationsPathEnv = core::system::getenv(kDatabaseMigrationsPathEnvVar);
-   if (!migrationsPathEnv.empty())
-      *pMigrationsDir = FilePath(migrationsPathEnv);
-   else
-      *pMigrationsDir = exePath.getParent().getParent().completeChildPath("db");
-
-   return Success();
-}
 
 // Converts the database configuration file path to a FilePath object.
 FilePath getDatabaseFilePath(const std::string& databaseConfigFile)
@@ -214,7 +196,7 @@ Error initialize(const std::string& databaseConfigFile,
       boost::shared_ptr<IConnection> connection = s_connectionPool->getConnection();
 
       FilePath migrationsDirectory;
-      error = migrationsDir(&migrationsDirectory);
+      error = utils::migrationsDir(kDatabaseMigrationsRootDir, kDatabaseMigrationsPathEnvVar, &migrationsDirectory);
       if (error)
       {
          LOG_ERROR_MESSAGE("Could not determine path to database migration files");

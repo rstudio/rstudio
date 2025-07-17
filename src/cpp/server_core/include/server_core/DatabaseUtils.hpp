@@ -76,6 +76,18 @@ void determineConnectionPoolSize(const core::database::ConnectionOptions& option
 void validateMinimumPostgreSqlVersion(boost::shared_ptr<core::database::IConnection> pConnection);
 core::database::Driver getConfiguredDriver(const core::database::ConnectionOptions& options);
 
+/**
+ * Determines the migrations directory based on the provided root directory and environment variable name.
+ * 
+ * @param rootDir The root directory to use for migrations.
+ * @param migrationEnvVarName The name of the environment variable that may override the migrations directory.
+ * @param pMigrationsDir [out parameter] Pointer to a FilePath object where the determined migrations directory will be stored.
+ * 
+ * @return Success if the migrations directory was successfully determined, error otherwise
+ */
+core::Error migrationsDir(const std::string& rootDir, const std::string& migrationEnvVarName, core::FilePath* pMigrationsDir);
+core::Error migrationsDir(const std::string& rootDir, core::FilePath* pMigrationsDir);
+
 struct ConnectionOptionsVisitor : boost::static_visitor<core::Error>
 {
    // Constructor for SqliteConnectionOptions
