@@ -93,7 +93,7 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
 
    // Translate the Settings object to a database::ConnectionOptions object
-   error = utils::applyOptionsFromSettings(settings, &options, defaultDatabaseName, kDatabaseProviderSqlite);
+   error = utils::applyOptionsFromSettings(settings, &options, defaultDatabaseName, databaseProvider);
    if (error)
    {
       LOG_ERROR(error);
