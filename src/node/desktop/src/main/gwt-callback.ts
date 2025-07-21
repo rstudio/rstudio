@@ -481,7 +481,6 @@ export class GwtCallback extends EventEmitter {
 
       // ask the user what version of R they'd like to use
       const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
-
       void handleLocaleCookies(chooseRDialog);
 
       const [data, error] = await chooseRDialog.showModal();
@@ -495,13 +494,15 @@ export class GwtCallback extends EventEmitter {
         return '';
       }
 
-      // we need to save the binary directory in the options, but
-      // return a formatted string for the client, so do that here
+      // save options from dialog result
+      const options = ElectronDesktopOptions();
       const path = data.binaryPath as string;
+      options.setUseDefault32BitR(data.useDefault32BitR || false);
+      options.setUseDefault64BitR(data.useDefault64BitR || false);
+      options.setRExecutablePath(path);
+
+      // return a formatted string for the client
       const rBinDir = dirname(path);
-
-      ElectronDesktopOptions().setRExecutablePath(path);
-
       logger().logDebug(`Using R: ${rBinDir}`);
       return formatSelectedVersionForUi(rBinDir);
     });
