@@ -208,7 +208,7 @@ Error getPackageStateJson(json::Object* pJson)
 
    json::Value packageListJson;
    r::sexp::Protect protect;
-   SEXP packageListSEXP;
+   SEXP packageListSEXP = R_NilValue;
 
    bool renvActive = renvContext.getObject()["active"].getBool();
 

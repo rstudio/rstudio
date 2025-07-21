@@ -1478,12 +1478,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    pkgInfos
 })
 
-.rs.addFunction("addPackageManagerMetadata", function(pkgInfos)
-{
-   print(pkgInfos)
-   str(pkgInfos)
-})
-
 .rs.addFunction("readPackageImports", function(pkg)
 {
    pkgPath <- find.package(pkg, quiet = TRUE)
