@@ -1397,8 +1397,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
-   # TODO: This key should be passed in via some other means.
-   ppmMeta <- .rs.ppm.getMetadata("risk-level")
+   ppmMeta <- .rs.ppm.getMetadata()
    
    # Look for packages in the library paths.
    pkgPaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)

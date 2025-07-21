@@ -351,6 +351,14 @@ SEXP rs_promiseCode(SEXP promiseSEXP)
          : R_NilValue;
 }
 
+SEXP rs_getSessionOverlayOption(SEXP keySEXP)
+{
+   std::string key = r::sexp::asString(keySEXP);
+   auto value = session::options().getOverlayOption(key);
+   r::sexp::Protect protect;
+   return r::sexp::create(value, &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -365,6 +373,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_systemToUtf8);
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_promiseCode);
+   RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    
    using boost::bind;
    using namespace module_context;

@@ -158,7 +158,8 @@
       return(cache)
    
    # begin building a curl handle
-   handle <- curl::new_handle(verbose = TRUE)
+   verbose <- getOption("rstudio.ppm.verbose", default = FALSE)
+   handle <- curl::new_handle(verbose = verbose)
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")
@@ -207,8 +208,15 @@
 })
 
 #' @param key The name of the metadata key which should be pulled.
-.rs.addFunction("ppm.getMetadata", function(key)
+.rs.addFunction("ppm.getMetadata", function(key = NULL)
 {
+   # figure out what metadata key should be used
+   key <- .rs.nullCoalesce(key, {
+      getOption("rstudio.ppm.metadataKey", default = {
+         .rs.getSessionOverlayOption("posit-package-manager-metadata-key")
+      })
+   })
+   
    # figure out the packages for which we need to request metadata
    db <- as.data.frame(
       installed.packages(priority = "NA"),
