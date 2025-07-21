@@ -947,7 +947,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          return null;
       
       String repos = activeRepository_.getString("repos");
+      if (Js.isFalsy(repos))
+         return null;
+
       String snapshot = activeRepository_.getString("snapshot");
+      if (Js.isFalsy(snapshot))
+         return null;
+
       return repos + "/" + snapshot;
    }
 
@@ -957,6 +963,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          return null;
 
       String url = activeRepository_.getString("url");
+      if (Js.isFalsy(url))
+         return null;
+      
       return url;
    }
 
