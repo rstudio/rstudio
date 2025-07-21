@@ -161,10 +161,9 @@
    handle <- curl::new_handle(verbose = TRUE)
    
    # set headers for request
-   curl::handle_setheaders(handle, .list = list(
-      "Content-Type"  = "application/json",
-      "Authorization" = .rs.ppm.getAuthorizationHeader(parts)
-   ))
+   headers <- list("Content-Type" = "application/json")
+   headers[["Authorization"]] <- .rs.ppm.getAuthorizationHeader(parts)
+   curl::handle_setheaders(handle, .list = headers)
    
    # start building POST options
    data <- list(
@@ -234,16 +233,4 @@
    # return sorted metadata
    result[order(names(result))]
    
-})
-
-.rs.addFunction("markScalars", function(object)
-{
-   if (is.recursive(object))
-      for (i in seq_along(object))
-         object[[i]] <- .rs.markScalars(object[[i]])
-   
-   if (is.atomic(object) && length(object) == 1L)
-      .rs.scalar(object)
-   else
-      object
 })
