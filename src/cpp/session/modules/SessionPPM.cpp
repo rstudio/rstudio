@@ -25,6 +25,10 @@
 
 using namespace rstudio::core;
 
+#define kPwbPpmIntegrationEnabled  "PWB_PPM_INTEGRATION_ENABLED"
+#define kPwbPpmRepoUrl             "PWB_PPM_REPO_URL"
+#define kPwbPpmMetadataColumnLabel "PWB_PPM_METADATA_COLUMN_LABEL"
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -33,13 +37,36 @@ namespace ppm {
 bool isPpmIntegrationEnabled()
 {
    // primarily for testing
-   std::string enabled = core::system::getenv("PWB_PPM_INTEGRATION_ENABLED");
+   std::string enabled = core::system::getenv(kPwbPpmIntegrationEnabled);
    if (!enabled.empty())
       return string_utils::isTruthy(enabled);
 
    // otherwise, assume integration is enabled if a repository URL was provided
-   std::string url = core::system::getenv("PWB_PPM_REPO_URL");
+   std::string url = core::system::getenv(kPwbPpmRepoUrl);
    return !url.empty();
+}
+
+std::string getPpmRepositoryUrl()
+{
+   return core::system::getenv(kPwbPpmRepoUrl);
+}
+
+std::string getPpmMetadataColumnLabel()
+{
+   std::string label;
+
+   // primarily for testing
+   label = core::system::getenv(kPwbPpmMetadataColumnLabel);
+   if (!label.empty())
+      return label;
+
+   // otherwise, read from session options
+   label = session::options().getOverlayOption("posit-package-manager-metadata-key-display-name");
+   if (!label.empty())
+      return label;
+
+   // if nothing else provided, just use a default label
+   return "Metadata";
 }
 
 namespace {

@@ -94,24 +94,6 @@ namespace session {
 namespace client_init {
 namespace {
 
-std::string getPpmMetadataColumnLabel()
-{
-   std::string label;
-
-   // primarily for testing
-   label = core::system::getenv("PWB_PPM_METADATA_COLUMN_LABEL");
-   if (!label.empty())
-      return label;
-
-   // otherwise, read from session options
-   label = session::options().getOverlayOption("posit-package-manager-metadata-key-display-name");
-   if (!label.empty())
-      return label;
-
-   // if nothing else provided, just use a default label
-   return "Metadata";
-}
-
 std::string userIdentityDisplay(const http::Request& request)
 {
    std::string userIdentity = request.headerValue(kRStudioUserIdentityDisplay);
@@ -541,9 +523,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 
    // package manager options
-   std::string ppmRepoUrl = core::system::getenv("PWB_PPM_REPO_URL");
+   std::string ppmRepoUrl = session::modules::ppm::getPpmRepositoryUrl();
    sessionInfo["ppm_integration_enabled"] = session::modules::ppm::isPpmIntegrationEnabled();
-   sessionInfo["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
+   sessionInfo["ppm_metadata_column_label"] = session::modules::ppm::getPpmMetadataColumnLabel();
    sessionInfo["ppm_repository_url"] = ppmRepoUrl;
 
    // publishing may be disabled globally or just for external services, and

@@ -16,6 +16,8 @@
 #ifndef SESSION_PPM_HPP
 #define SESSION_PPM_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 class Error;
@@ -26,9 +28,10 @@ namespace rstudio {
 namespace session {
 namespace modules { 
 namespace ppm {
- 
-bool isPpmIntegrationEnabled();
 
+bool isPpmIntegrationEnabled();
+std::string getPpmRepositoryUrl();
+std::string getPpmMetadataColumnLabel();
 
 core::Error initialize();
                        
