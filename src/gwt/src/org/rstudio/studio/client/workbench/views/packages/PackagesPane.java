@@ -158,6 +158,24 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       repositoryButton_.setText(StringUtil.notNull(reposLabel));
       repositoryButton_.setTitle(reposTitle);
       repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
+      
+      // manage presence of metadata column
+      int oldIndex = packagesTable_.getColumnIndex(metadataColumn_);
+      if (activeRepository_ != null)
+      {
+         if (oldIndex == -1)
+         {
+            int newIndex = packagesTable_.getColumnIndex(sourceColumn_);
+            packagesTable_.insertColumn(newIndex, metadataColumn_, new TextHeader(getMetadataColumnLabel()));
+         }
+      }
+      else
+      {
+         if (oldIndex != -1)
+         {
+            packagesTable_.removeColumn(metadataColumn_);
+         }
+      }
 
       // manage visibility of Packrat / renv menu buttons
       PackratContext packratContext = projectContext_.getPackratContext();
@@ -738,7 +756,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
-      packagesTable_.addColumn(metadataColumn_, new TextHeader("Risk Level"));
+      packagesTable_.addColumn(metadataColumn_, new TextHeader(getMetadataColumnLabel()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
 
@@ -813,6 +831,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
    private void updateColumnWidths()
    {
+   }
+
+   private String getMetadataColumnLabel()
+   {
+      String label = session_.getSessionInfo().getPpmMetadataColumnLabel();
+      return StringUtil.nullCoalesce(label, "Metadata");
    }
 
    class LoadedCell extends AbstractCell<PackageInfo>

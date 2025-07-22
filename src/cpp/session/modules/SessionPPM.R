@@ -123,11 +123,16 @@
    
    # retrieve credentials for this authority
    creds <- allcreds[[authority]]
+   if (is.null(creds))
+      return(NULL)
    
    # form authorization header
    username <- creds[["login"]]
    password <- creds[["password"]]
    contents <- paste(username, password, sep = ":")
+   if (length(contents) == 0L)
+      return(NULL)
+   
    encoded <- .rs.base64encode(contents)
    paste("Basic", encoded)
 })
@@ -163,7 +168,6 @@
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")
-   headers[["Authorization"]] <- .rs.ppm.getAuthorizationHeader(parts)
    curl::handle_setheaders(handle, .list = headers)
    
    # start building POST options
@@ -175,11 +179,24 @@
    
    json <- .rs.toJSON(data, unbox = TRUE)
    
+   # get netrc file path
    curl::handle_setopt(
       handle     = handle,
       post       = TRUE,
       postfields = json
    )
+   
+   # use netrc if available
+   netrcFile <- getOption("netrc", default = Sys.getenv("NETRC", unset = "~/.netrc"))
+   if (file.exists(netrcFile))
+   {
+      curl::handle_setopt(
+         handle     = handle,
+         httpauth   = 1L,
+         netrc      = 1L,
+         netrc_file = path.expand(netrcFile)
+      )
+   }
    
    # make the request, collect the response
    endpoint <- file.path(parts[["root"]], "__api__/filter/packages")
@@ -188,8 +205,24 @@
    splat <- strsplit(contents, "\n", fixed = TRUE)[[1L]]
    data <- lapply(splat, .rs.fromJSON)
    
+   # handle errors
+   for (i in seq_along(data))
+   {
+      error <- data[[i]][["error"]]
+      if (!is.character(error))
+         next
+      
+      code <- .rs.nullCoalesce(data[[i]][["code"]], "unknown")
+      fmt <- "error requesting package metadata; %s [error code %s]"
+      msg <- sprintf(fmt, error, as.character(code))
+      warning(msg, call. = FALSE)
+   }
+   
    # pull out the metadata from each response
    metadata <- lapply(data, `[[`, "metadata")
+   if (length(metadata) == 0L)
+      return(cache)
+   
    names(metadata) <- vapply(data, function(datum) {
       paste(datum[["name"]], datum[["version"]], sep = "==")
    }, FUN.VALUE = character(1))
@@ -207,15 +240,24 @@
    
 })
 
+.rs.addFunction("ppm.getMetadataKey", function()
+{
+   value <- Sys.getenv("PWB_PPM_METADATA_KEY", unset = NA)
+   if (!is.na(value))
+      return(value)
+   
+   .rs.getSessionOverlayOption("posit-package-manager-metadata-key")
+})
+
 #' @param key The name of the metadata key which should be pulled.
 .rs.addFunction("ppm.getMetadata", function(key = NULL)
 {
+   parts <- .rs.ppm.getActiveRepository()
+   if (length(parts) == 0L)
+      return(list())
+
    # figure out what metadata key should be used
-   key <- .rs.nullCoalesce(key, {
-      getOption("rstudio.ppm.metadataKey", default = {
-         .rs.getSessionOverlayOption("posit-package-manager-metadata-key")
-      })
-   })
+   key <- .rs.nullCoalesce(key, .rs.ppm.getMetadataKey())
    
    # figure out the packages for which we need to request metadata
    db <- as.data.frame(

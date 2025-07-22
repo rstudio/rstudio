@@ -93,6 +93,31 @@ namespace session {
 namespace client_init {
 namespace {
 
+bool getPpmIntegrationEnabled()
+{
+   std::string enabled = core::system::getenv("PWB_PPM_INTEGRATION_ENABLED");
+   if (!enabled.empty())
+      return string_utils::isTruthy(enabled);
+
+   std::string url = core::system::getenv("PWB_PPM_REPO_URL");
+   return !url.empty();
+}
+
+std::string getPpmMetadataColumnLabel()
+{
+   std::string label;
+
+   label = session::options().getOverlayOption("posit-package-manager-metadata-key-display-name");
+   if (!label.empty())
+      return label;
+
+   label = core::system::getenv("PWB_PPM_METADATA_COLUMN_LABEL");
+   if (!label.empty())
+      return label;
+
+   return "Metadata";
+}
+
 std::string userIdentityDisplay(const http::Request& request)
 {
    std::string userIdentity = request.headerValue(kRStudioUserIdentityDisplay);
@@ -520,6 +545,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_full_ui"] = options.allowFullUI();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
+
+   // package manager options
+   std::string ppmRepoUrl = core::system::getenv("PWB_PPM_REPO_URL");
+   sessionInfo["ppm_integration_enabled"] = getPpmIntegrationEnabled();
+   sessionInfo["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
+   sessionInfo["ppm_repository_url"] = ppmRepoUrl;
 
    // publishing may be disabled globally or just for external services, and
    // via configuration options or environment variables
