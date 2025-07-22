@@ -16,6 +16,11 @@
 .rs.setVar("ppm.vulns", new.env(parent = emptyenv()))
 .rs.setVar("ppm.metadataCache", new.env(parent = emptyenv()))
 
+.rs.addFunction("ppm.isIntegrationEnabled", function()
+{
+   .Call("rs_ppmIntegrationEnabled", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("ppm.getVulnerabilityInformation", function(repos = NULL)
 {
    # For each available repository, ask it for vulnerability information,

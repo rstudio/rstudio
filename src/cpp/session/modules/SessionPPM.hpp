@@ -26,7 +26,10 @@ namespace rstudio {
 namespace session {
 namespace modules { 
 namespace ppm {
-   
+ 
+bool isPpmIntegrationEnabled();
+
+
 core::Error initialize();
                        
 } // namespace ppm

@@ -19,6 +19,8 @@
 
 #include <core/Exec.hpp>
 
+#include <r/RRoutines.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -28,10 +30,35 @@ namespace session {
 namespace modules {
 namespace ppm {
 
+bool isPpmIntegrationEnabled()
+{
+   // primarily for testing
+   std::string enabled = core::system::getenv("PWB_PPM_INTEGRATION_ENABLED");
+   if (!enabled.empty())
+      return string_utils::isTruthy(enabled);
+
+   // otherwise, assume integration is enabled if a repository URL was provided
+   std::string url = core::system::getenv("PWB_PPM_REPO_URL");
+   return !url.empty();
+}
+
+namespace {
+
+SEXP rs_ppmIntegrationEnabled()
+{
+   bool enabled = isPpmIntegrationEnabled();
+   r::sexp::Protect protect;
+   return r::sexp::create(enabled, &protect);
+}
+
+} // end anonymous namespace
+
 Error initialize()
 {
    using std::bind;
    using namespace module_context;
+
+   RS_REGISTER_CALL_METHOD(rs_ppmIntegrationEnabled);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

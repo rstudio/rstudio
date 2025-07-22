@@ -34,6 +34,7 @@
 #include "modules/clang/SessionClang.hpp"
 #include "modules/SessionMarkers.hpp"
 #include "modules/SessionPlots.hpp"
+#include "modules/SessionPPM.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
@@ -92,18 +93,6 @@ namespace rstudio {
 namespace session {
 namespace client_init {
 namespace {
-
-bool getPpmIntegrationEnabled()
-{
-   // primarily for testing
-   std::string enabled = core::system::getenv("PWB_PPM_INTEGRATION_ENABLED");
-   if (!enabled.empty())
-      return string_utils::isTruthy(enabled);
-
-   // otherwise, assume integration is enabled if a repository URL was provided
-   std::string url = core::system::getenv("PWB_PPM_REPO_URL");
-   return !url.empty();
-}
 
 std::string getPpmMetadataColumnLabel()
 {
@@ -553,7 +542,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // package manager options
    std::string ppmRepoUrl = core::system::getenv("PWB_PPM_REPO_URL");
-   sessionInfo["ppm_integration_enabled"] = getPpmIntegrationEnabled();
+   sessionInfo["ppm_integration_enabled"] = session::modules::ppm::isPpmIntegrationEnabled();
    sessionInfo["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    sessionInfo["ppm_repository_url"] = ppmRepoUrl;
 
