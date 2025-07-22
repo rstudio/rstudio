@@ -172,9 +172,13 @@
    
    # start building POST options
    data <- list(
-      names    = as.list(packages),
       repo     = parts[["repos"]],
-      snapshot = parts[["snapshot"]]
+      snapshot = parts[["snapshot"]],
+      names    = as.list(packages),
+      metadata = TRUE,
+      vulns = TRUE,
+      omit_dependencies = TRUE,
+      omit_downloads = TRUE
    )
    
    json <- .rs.toJSON(data, unbox = TRUE)
