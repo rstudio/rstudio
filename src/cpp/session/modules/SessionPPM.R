@@ -163,8 +163,8 @@
       return(cache)
    
    # begin building a curl handle
-   verbose <- getOption("rstudio.ppm.verbose", default = FALSE)
-   handle <- curl::new_handle(verbose = verbose)
+   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "0")
+   handle <- curl::new_handle(verbose = as.logical(verbose))
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")
