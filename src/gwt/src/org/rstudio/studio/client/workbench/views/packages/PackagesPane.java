@@ -153,27 +153,32 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       createPackagesTable();
 
       // manage visibility of repository button
-      String reposLabel = getRepositoryButtonLabel();
-      String reposTitle = getRepositoryButtonTitle();
-      repositoryButton_.setText(StringUtil.notNull(reposLabel));
-      repositoryButton_.setTitle(reposTitle);
-      repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
-      
-      // manage presence of metadata column
-      int oldIndex = packagesTable_.getColumnIndex(metadataColumn_);
-      if (activeRepository_ != null)
+      if (session_.getSessionInfo().isPpmIntegrationEnabled())
       {
-         if (oldIndex == -1)
+         String reposLabel = getRepositoryButtonLabel();
+         String reposTitle = getRepositoryButtonTitle();
          {
-            int newIndex = packagesTable_.getColumnIndex(sourceColumn_);
-            packagesTable_.insertColumn(newIndex, metadataColumn_, new TextHeader(getMetadataColumnLabel()));
+            repositoryButton_.setText(StringUtil.notNull(reposLabel));
+            repositoryButton_.setTitle(reposTitle);
+            repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
          }
-      }
-      else
-      {
-         if (oldIndex != -1)
+      
+         // manage presence of metadata column
+         int oldIndex = packagesTable_.getColumnIndex(metadataColumn_);
+         if (activeRepository_ != null)
          {
-            packagesTable_.removeColumn(metadataColumn_);
+            if (oldIndex == -1)
+            {
+               int newIndex = packagesTable_.getColumnIndex(sourceColumn_);
+               packagesTable_.insertColumn(newIndex, metadataColumn_, new TextHeader(getMetadataColumnLabel()));
+            }
+         }
+         else
+         {
+            if (oldIndex != -1)
+            {
+               packagesTable_.removeColumn(metadataColumn_);
+            }
          }
       }
 
@@ -756,7 +761,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.addColumn(loadedColumn_, new TextHeader(""));
       packagesTable_.addColumn(nameColumn_, new TextHeader("Package"));
       packagesTable_.addColumn(descColumn_, new TextHeader(constants_.descriptionText()));
-      packagesTable_.addColumn(metadataColumn_, new TextHeader(getMetadataColumnLabel()));
       packagesTable_.addColumn(sourceColumn_, new TextHeader(constants_.sourceText()));
       packagesTable_.addColumn(versionColumn_, new TextHeader(constants_.versionText()));
 
@@ -764,9 +768,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setColumnWidth(loadedColumn_, 30, Unit.PX);
       packagesTable_.setColumnWidth(nameColumn_, 130, Unit.PX);
       packagesTable_.setColumnWidth(descColumn_, "auto");
-      packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
+
+      // add metadata column if enabled
+      if (session_.getSessionInfo().isPpmIntegrationEnabled())
+      {
+         int index = packagesTable_.getColumnIndex(sourceColumn_);
+         packagesTable_.insertColumn(index, metadataColumn_, new TextHeader(getMetadataColumnLabel()));
+         packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
+      }
 
       // add columns when using project-local library
       if (projectContext_.isActive())

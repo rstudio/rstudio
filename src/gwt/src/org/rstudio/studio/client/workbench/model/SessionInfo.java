@@ -701,7 +701,7 @@ public class SessionInfo extends JavaScriptObject
       return this.is_automation_agent;
    }-*/;
 
-   public final native boolean getPpmIntegrationEnabled() /*-{
+   public final native boolean isPpmIntegrationEnabled() /*-{
       return this.ppm_integration_enabled || false;
    }-*/;
 
