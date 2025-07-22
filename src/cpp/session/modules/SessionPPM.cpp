@@ -27,6 +27,7 @@ using namespace rstudio::core;
 
 #define kPwbPpmIntegrationEnabled  "PWB_PPM_INTEGRATION_ENABLED"
 #define kPwbPpmRepoUrl             "PWB_PPM_REPO_URL"
+#define kPwbPpmMetadataKey         "PWB_PPM_METADATA_KEY"
 #define kPwbPpmMetadataColumnLabel "PWB_PPM_METADATA_COLUMN_LABEL"
 
 namespace rstudio {
@@ -49,6 +50,19 @@ bool isPpmIntegrationEnabled()
 std::string getPpmRepositoryUrl()
 {
    return core::system::getenv(kPwbPpmRepoUrl);
+}
+
+std::string getPpmMetadataKey()
+{
+   std::string key;
+
+   // primarily for testing
+   key = core::system::getenv(kPwbPpmMetadataKey);
+   if (!key.empty())
+      return key;
+
+   // otherwise, read from session options
+   return session::options().getOverlayOption("posit-package-manager-metadata-key");
 }
 
 std::string getPpmMetadataColumnLabel()
@@ -78,6 +92,12 @@ SEXP rs_ppmIntegrationEnabled()
    return r::sexp::create(enabled, &protect);
 }
 
+SEXP rs_ppmMetadataKey()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(getPpmMetadataKey(), &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -86,6 +106,7 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_ppmIntegrationEnabled);
+   RS_REGISTER_CALL_METHOD(rs_ppmMetadataKey);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

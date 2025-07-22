@@ -168,8 +168,8 @@
       return(cache)
    
    # begin building a curl handle
-   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "0")
-   handle <- curl::new_handle(verbose = as.logical(verbose))
+   verbose <- Sys.getenv("PWB_PPM_CURL_VERBOSE", unset = "FALSE")
+   handle <- curl::new_handle(verbose = if (verbose) TRUE else FALSE)
    
    # set headers for request
    headers <- list("Content-Type" = "application/json")
@@ -251,11 +251,7 @@
 
 .rs.addFunction("ppm.getMetadataKey", function()
 {
-   value <- Sys.getenv("PWB_PPM_METADATA_KEY", unset = NA)
-   if (!is.na(value))
-      return(value)
-   
-   .rs.getSessionOverlayOption("posit-package-manager-metadata-key")
+   .Call("rs_ppmMetadataKey", PACKAGE = "(embedding)")
 })
 
 #' @param key The name of the metadata key which should be pulled.

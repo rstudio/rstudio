@@ -39,6 +39,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionPackrat.hpp"
+#include "SessionPPM.hpp"
 
 #include "session-config.h"
 
@@ -255,18 +256,22 @@ Error getPackageStateJson(json::Object* pJson)
    (*pJson)["active_repository"] = activeRepository;
 
    // collect vulnerability information as well
-   SEXP vulnsSEXP = R_NilValue;
-   error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
-      .call(&vulnsSEXP, &protect);
-   if (error)
-      LOG_ERROR(error);
+   if (session::modules::ppm::isPpmIntegrationEnabled())
+   {
+      SEXP vulnsSEXP = R_NilValue;
+      error = r::exec::RFunction(".rs.ppm.getVulnerabilityInformation")
+                  .call(&vulnsSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
 
-   json::Value vulnsJson;
-   error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
-   if (error)
-      LOG_ERROR(error);
+      json::Value vulnsJson;
+      error = r::json::jsonValueFromObject(vulnsSEXP, &vulnsJson);
+      if (error)
+         LOG_ERROR(error);
 
-   (*pJson)["vulns"] = vulnsJson;
+      (*pJson)["vulns"] = vulnsJson;
+   }
+
    return Success();
 }
 
