@@ -1397,6 +1397,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
+   includePpmMeta <- .rs.ppm.isIntegrationEnabled()
+   ppmMeta <- if (includePpmMeta) .rs.ppm.getMetadata()
+   
    # Look for packages in the library paths.
    pkgPaths <- list.files(.rs.uniqueLibraryPaths(), full.names = TRUE)
    
@@ -1458,6 +1461,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          .rs.inferPackageDocumentationUrl(pkgDesc),
          error = function(cnd) ""
       )
+      
+      if (includePpmMeta)
+      {
+         ppmMetaKey <- paste(pkgInfo[["name"]], pkgInfo[["version"]], sep = "==")
+         pkgInfo[["metadata"]] <- ppmMeta[[ppmMetaKey]]
+      }
       
       # Return the resulting object.
       .rs.scalarListFromList(pkgInfo)

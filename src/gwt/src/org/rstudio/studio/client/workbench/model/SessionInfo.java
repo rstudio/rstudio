@@ -700,7 +700,18 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isAutomationAgent() /*-{
       return this.is_automation_agent;
    }-*/;
-   
+
+   public final native boolean isPpmIntegrationEnabled() /*-{
+      return this.ppm_integration_enabled || false;
+   }-*/;
+
+   public final native String getPpmMetadataColumnLabel() /*-{
+      return this.ppm_metadata_column_label || "Metadata";
+   }-*/;
+
+   public final native String getPpmRepositoryUrl() /*-{
+      return this.ppm_repository_url;
+   }-*/;
 
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

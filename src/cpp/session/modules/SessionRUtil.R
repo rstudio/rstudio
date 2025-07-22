@@ -212,3 +212,8 @@
    if (is.list(range))
       rapply(range, `+`, e2 = offset, how = "replace")
 })
+
+.rs.addFunction("getSessionOverlayOption", function(key)
+{
+   .Call("rs_getSessionOverlayOption", as.character(key), PACKAGE = "(embedding)")
+})

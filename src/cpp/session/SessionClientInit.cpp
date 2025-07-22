@@ -34,6 +34,7 @@
 #include "modules/clang/SessionClang.hpp"
 #include "modules/SessionMarkers.hpp"
 #include "modules/SessionPlots.hpp"
+#include "modules/SessionPPM.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
@@ -520,6 +521,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_full_ui"] = options.allowFullUI();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
+
+   // package manager options
+   std::string ppmRepoUrl = session::modules::ppm::getPpmRepositoryUrl();
+   sessionInfo["ppm_integration_enabled"] = session::modules::ppm::isPpmIntegrationEnabled();
+   sessionInfo["ppm_metadata_column_label"] = session::modules::ppm::getPpmMetadataColumnLabel();
+   sessionInfo["ppm_repository_url"] = ppmRepoUrl;
 
    // publishing may be disabled globally or just for external services, and
    // via configuration options or environment variables
