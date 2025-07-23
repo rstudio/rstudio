@@ -162,6 +162,40 @@ static constexpr rlim_t kOpenFilesLimit = 1048576;
 
 } // anonymous namespace
 
+OSInfo parseOsReleaseContent(const std::string& content)
+{
+   OSInfo osInfo;
+
+   std::string id, version, versionCodename;
+   
+   std::istringstream osReleaseStream(content);
+   std::string line;
+   while (std::getline(osReleaseStream, line))
+   {
+      if (versionCodename.empty() && boost::starts_with(line, "VERSION_CODENAME="))
+      {
+         versionCodename = line.substr(strlen("VERSION_CODENAME="));
+         boost::trim_if(versionCodename, boost::is_any_of("\""));
+      }
+      else if (id.empty() && boost::starts_with(line, "ID="))
+      {
+         id = line.substr(strlen("ID="));
+         boost::trim_if(id, boost::is_any_of("\""));
+      }
+      else if (version.empty() && boost::starts_with(line, "VERSION_ID="))
+      {
+         version = line.substr(strlen("VERSION_ID="));
+         boost::trim_if(version, boost::is_any_of("\""));
+      }
+   }
+
+   osInfo.osId = id;
+   osInfo.osVersion = version;
+   osInfo.osVersionCodename = versionCodename;
+
+   return osInfo;
+}
+
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
 {
    std::string path = string_utils::utf8ToSystem(filePath.getAbsolutePath());
