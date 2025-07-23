@@ -66,6 +66,16 @@ enum ResourceLimit
    NiceLimit
 };
 
+struct OSInfo 
+{
+   OSInfo() : osId(""), osVersion(""), osArch("") {}
+
+   std::string osId;    // e.g. "rhel, debian, ubuntu, centos"
+   std::string osVersion; // e.g. "9, 24.04"
+   std::string osVersionCodename; // e.g. "noble, bookworm"
+   std::string osArch;    // e.g. "arm64, amd64"
+};
+
 bool resourceIsUnlimited(RLimitType limitValue);
 
 core::Error getResourceLimit(ResourceLimit resourcelimit,
@@ -215,6 +225,8 @@ Error terminateChildProcesses(int signal);
 // terminate _all descendants_ of the specified process
 Error terminateChildProcesses(pid_t pid,
                               int signal);
+
+Error getOsInfo(OSInfo* pOsInfo);
 
 bool isUserNotFoundError(const core::Error& error);
 

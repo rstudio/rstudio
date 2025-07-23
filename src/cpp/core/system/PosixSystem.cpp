@@ -75,6 +75,7 @@
 #include <boost/range/as_array.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
@@ -2613,6 +2614,129 @@ Error terminateChildProcesses(pid_t pid,
 
    // the actual kill is best effort
    // so return success regardless
+   return Success();
+}
+
+Error getOsInfo(OSInfo* pOsInfo)
+{
+   std::string id = "";
+   std::string version = "";
+   std::string versionCodename = "";
+
+   // Try to read /etc/os-release first
+   std::ifstream osReleaseFile("/etc/os-release");
+   if (osReleaseFile.is_open())
+   {
+      std::string content((std::istreambuf_iterator<char>(osReleaseFile)), std::istreambuf_iterator<char>());
+      *pOsInfo = parseOsReleaseContent(content);
+
+      return Success();
+   }
+   // Fallback to distribution-specific files
+   LOG_WARNING_MESSAGE("Failed to read /etc/os-release, falling back to distribution-specific files");
+   
+   // Try Debian-based systems
+   FilePath debianVersionFile("/etc/debian_version");
+   if (debianVersionFile.exists())
+   {
+      id = "debian";
+   }
+   else
+   {
+      // Try RHEL-based systems
+      std::ifstream redhatReleaseFile("/etc/redhat-release");
+      if (redhatReleaseFile.is_open())
+      {
+         std::string releaseContent;
+         std::getline(redhatReleaseFile, releaseContent);
+         boost::trim(releaseContent);
+         
+         if (boost::contains(releaseContent, "Red Hat"))
+         {
+            id = "rhel";
+         }
+         else if (boost::contains(releaseContent, "CentOS"))
+         {
+            id = "centos";
+         }
+         else if (boost::contains(releaseContent, "Fedora"))
+         {
+            id = "fedora";
+         }
+         else
+         {
+            id = "rhel"; // Default to RHEL for unknown RHEL-based
+         }
+         
+         // Extract version from the release string
+         boost::regex versionRegex(R"(\s(\d+(?:\.\d+)?))");
+         boost::smatch match;
+         if (boost::regex_search(releaseContent, match, versionRegex))
+         {
+            version = match[1].str();
+         }
+      }
+      else
+      {
+         // Try SUSE-based systems
+         std::ifstream suseReleaseFile("/etc/SuSE-release");
+         if (!suseReleaseFile.is_open())
+         {
+            // Try alternative SUSE release file
+            suseReleaseFile.open("/etc/SUSE-brand");
+         }
+         
+         if (suseReleaseFile.is_open())
+         {
+            id = "suse";
+            std::string line;
+            while (std::getline(suseReleaseFile, line))
+            {
+               if (boost::starts_with(line, "VERSION"))
+               {
+                  size_t pos = line.find('=');
+                  if (pos != std::string::npos)
+                  {
+                     version = line.substr(pos + 1);
+                     boost::trim(version);
+                     boost::trim_if(version, boost::is_any_of("\""));
+                     break;
+                  }
+               }
+            }
+            
+            // If no version found, try to read from first line
+            if (version.empty())
+            {
+               suseReleaseFile.clear();
+               suseReleaseFile.seekg(0);
+               std::string firstLine;
+               if (std::getline(suseReleaseFile, firstLine))
+               {
+                  // Extract version from something like "openSUSE 15.3"
+                  boost::regex versionRegex(R"(\s(\d+(?:\.\d+)?))");
+                  boost::smatch match;
+                  if (boost::regex_search(firstLine, match, versionRegex))
+                  {
+                     version = match[1].str();
+                  }
+               }
+            }
+         }
+         else {
+            return systemError(
+               boost::system::errc::no_such_file_or_directory,
+               "Unable to determine OS information: /etc/os-release, /etc/debian_version, /etc/redhat-release, /etc/SuSE-release, and /etc/SUSE-brand files not found.",
+               ERROR_LOCATION);
+         }
+      }
+   }
+
+   // Populate the OSInfo structure
+   pOsInfo->osId = id;
+   pOsInfo->osVersion = version;
+   pOsInfo->osVersionCodename = versionCodename;
+
    return Success();
 }
 
