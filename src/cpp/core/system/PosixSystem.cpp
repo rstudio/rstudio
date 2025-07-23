@@ -2448,7 +2448,19 @@ Error runProcess(const std::string& path,
    core::system::setenv(&env, "USER", user.getUsername());
    core::system::setenv(&env, "LOGNAME", user.getUsername());
    core::system::setenv(&env, "HOME", user.getHomePath().getAbsolutePath());
-   copyEnvironmentVar("SHELL", &env);
+
+   // forward SHELL if present, otherwise respect the user's setting (again, if
+   // present)
+   const std::string shell = core::system::getenv("SHELL");
+   const std::string userShell = user.getShell();
+   if (!shell.empty())
+   {
+      core::system::setenv(&env, "SHELL", shell);
+   }
+   else if (!userShell.empty())
+   {
+      core::system::setenv(&env, "SHELL", userShell);
+   }
 
    // apply config filter if we have one
    if (configFilter)
