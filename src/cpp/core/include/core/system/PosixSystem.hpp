@@ -297,6 +297,8 @@ FilePath currentWorkingDirViaProcFs(PidType pid);
 // handler on your behalf, such as when initializing logging with config reload enabled
 void registerSighupHandler(const boost::function<void()>& sighupHandler);
 
+std::string getHostname();
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

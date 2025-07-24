@@ -29,6 +29,7 @@
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 
 #ifdef _WIN32
@@ -43,41 +44,6 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace xdg {
-namespace {
-
-/**
- * Returns the hostname from the operating system
- */
-std::string getHostname()
-{
-   // Use a static string to store the hostname so we don't have to look it up
-   // multiple times
-   static std::string hostname;
-   static boost::mutex mutex;
-   std::string result;
-
-   // Lock to ensure that we don't try to read/write the hostname from two
-   // threads
-   LOCK_MUTEX(mutex)
-   {
-      if (hostname.empty())
-      {
-         char buffer[256];
-         int status = ::gethostname(buffer, 255);
-         if (status == 0)
-         {
-            // If successful, store the hostname for later; swallow errors here
-            // since they are not actionable
-            hostname = std::string(buffer);
-         }
-      }
-      result = hostname;
-   }
-   END_LOCK_MUTEX
-
-   return result;
-}
-
 namespace {
 
 FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
@@ -140,8 +106,6 @@ FilePath xdgDefaultDir(
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
    return FilePath::resolveAliasedPath(defaultDir, resolvedHome);
 }
-
-} // end anonymous namespace
 
 /**
  * Resolves an RStudio XDG file or directory location, based on the user and environment.
