@@ -29,7 +29,6 @@
 #include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
-#include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 
 #ifdef _WIN32
