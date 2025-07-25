@@ -535,13 +535,23 @@ std::string getHostname()
    {
       if (hostname.empty())
       {
-         char buffer[256];
-         int status = ::gethostname(buffer, 255);
-         if (status == 0)
+         // First check if HOSTNAME environment variable is set
+         std::string hostnameEnv = getenv("HOSTNAME");
+         if (!hostnameEnv.empty())
          {
-            // If successful, store the hostname for later; swallow errors here
-            // since they are not actionable
-            hostname = std::string(buffer);
+            hostname = hostnameEnv;
+         }
+         else
+         {
+            // Fall back to system hostname if HOSTNAME env var is not set
+            char buffer[256];
+            int status = ::gethostname(buffer, 255);
+            if (status == 0)
+            {
+               // If successful, store the hostname for later; swallow errors here
+               // since they are not actionable
+               hostname = std::string(buffer);
+            }
          }
       }
       result = hostname;

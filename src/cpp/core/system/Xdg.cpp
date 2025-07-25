@@ -51,8 +51,7 @@ FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
                            const std::string& suffix = "")
 {
    // expand HOME, USER, and HOSTNAME if given
-   std::string hostname = getenv("HOSTNAME");
-   std::string resolvedHostname = hostname.empty() ? getHostname() : hostname;
+   std::string resolvedHostname = getHostname();
    std::string resolvedUser = user ? *user : username();
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
    
