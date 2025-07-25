@@ -75,6 +75,7 @@
 #include <boost/range/as_array.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/Error.hpp>
@@ -160,6 +161,40 @@ int signalForType(SignalType type)
 static constexpr rlim_t kOpenFilesLimit = 1048576;
 
 } // anonymous namespace
+
+OSInfo parseOsReleaseContent(const std::string& content)
+{
+   OSInfo osInfo;
+
+   std::string id, version, versionCodename;
+   
+   std::istringstream osReleaseStream(content);
+   std::string line;
+   while (std::getline(osReleaseStream, line))
+   {
+      if (versionCodename.empty() && boost::starts_with(line, "VERSION_CODENAME="))
+      {
+         versionCodename = line.substr(strlen("VERSION_CODENAME="));
+         boost::trim_if(versionCodename, boost::is_any_of("\""));
+      }
+      else if (id.empty() && boost::starts_with(line, "ID="))
+      {
+         id = line.substr(strlen("ID="));
+         boost::trim_if(id, boost::is_any_of("\""));
+      }
+      else if (version.empty() && boost::starts_with(line, "VERSION_ID="))
+      {
+         version = line.substr(strlen("VERSION_ID="));
+         boost::trim_if(version, boost::is_any_of("\""));
+      }
+   }
+
+   osInfo.osId = id;
+   osInfo.osVersion = version;
+   osInfo.osVersionCodename = versionCodename;
+
+   return osInfo;
+}
 
 Error realPath(const FilePath& filePath, FilePath* pRealPath)
 {
@@ -2413,7 +2448,19 @@ Error runProcess(const std::string& path,
    core::system::setenv(&env, "USER", user.getUsername());
    core::system::setenv(&env, "LOGNAME", user.getUsername());
    core::system::setenv(&env, "HOME", user.getHomePath().getAbsolutePath());
-   copyEnvironmentVar("SHELL", &env);
+
+   // forward SHELL if present, otherwise respect the user's setting (again, if
+   // present)
+   const std::string shell = core::system::getenv("SHELL");
+   const std::string userShell = user.getShell();
+   if (!shell.empty())
+   {
+      core::system::setenv(&env, "SHELL", shell);
+   }
+   else if (!userShell.empty())
+   {
+      core::system::setenv(&env, "SHELL", userShell);
+   }
 
    // apply config filter if we have one
    if (configFilter)
@@ -2613,6 +2660,129 @@ Error terminateChildProcesses(pid_t pid,
 
    // the actual kill is best effort
    // so return success regardless
+   return Success();
+}
+
+Error getOsInfo(OSInfo* pOsInfo)
+{
+   std::string id;
+   std::string version;
+   std::string versionCodename;
+
+   // Try to read /etc/os-release first
+   std::ifstream osReleaseFile("/etc/os-release");
+   if (osReleaseFile.is_open())
+   {
+      std::string content((std::istreambuf_iterator<char>(osReleaseFile)), std::istreambuf_iterator<char>());
+      *pOsInfo = parseOsReleaseContent(content);
+
+      return Success();
+   }
+   // Fallback to distribution-specific files
+   LOG_WARNING_MESSAGE("Failed to read /etc/os-release, falling back to distribution-specific files");
+   
+   // Try Debian-based systems
+   FilePath debianVersionFile("/etc/debian_version");
+   if (debianVersionFile.exists())
+   {
+      id = "debian";
+   }
+   else
+   {
+      // Try RHEL-based systems
+      std::ifstream redhatReleaseFile("/etc/redhat-release");
+      if (redhatReleaseFile.is_open())
+      {
+         std::string releaseContent;
+         std::getline(redhatReleaseFile, releaseContent);
+         boost::trim(releaseContent);
+         
+         if (boost::contains(releaseContent, "Red Hat"))
+         {
+            id = "rhel";
+         }
+         else if (boost::contains(releaseContent, "CentOS"))
+         {
+            id = "centos";
+         }
+         else if (boost::contains(releaseContent, "Fedora"))
+         {
+            id = "fedora";
+         }
+         else
+         {
+            id = "rhel"; // Default to RHEL for unknown RHEL-based
+         }
+         
+         // Extract version from the release string
+         boost::regex versionRegex(R"(\s(\d+(?:\.\d+)?))");
+         boost::smatch match;
+         if (boost::regex_search(releaseContent, match, versionRegex))
+         {
+            version = match[1].str();
+         }
+      }
+      else
+      {
+         // Try SUSE-based systems
+         std::ifstream suseReleaseFile("/etc/SuSE-release");
+         if (!suseReleaseFile.is_open())
+         {
+            // Try alternative SUSE release file
+            suseReleaseFile.open("/etc/SUSE-brand");
+         }
+         
+         if (suseReleaseFile.is_open())
+         {
+            id = "suse";
+            std::string line;
+            while (std::getline(suseReleaseFile, line))
+            {
+               if (boost::starts_with(line, "VERSION"))
+               {
+                  size_t pos = line.find('=');
+                  if (pos != std::string::npos)
+                  {
+                     version = line.substr(pos + 1);
+                     boost::trim(version);
+                     boost::trim_if(version, boost::is_any_of("\""));
+                     break;
+                  }
+               }
+            }
+            
+            // If no version found, try to read from first line
+            if (version.empty())
+            {
+               suseReleaseFile.clear();
+               suseReleaseFile.seekg(0);
+               std::string firstLine;
+               if (std::getline(suseReleaseFile, firstLine))
+               {
+                  // Extract version from something like "openSUSE 15.3"
+                  boost::regex versionRegex(R"(\s(\d+(?:\.\d+)?))");
+                  boost::smatch match;
+                  if (boost::regex_search(firstLine, match, versionRegex))
+                  {
+                     version = match[1].str();
+                  }
+               }
+            }
+         }
+         else {
+            return systemError(
+               boost::system::errc::no_such_file_or_directory,
+               "Unable to determine OS information: /etc/os-release, /etc/debian_version, /etc/redhat-release, /etc/SuSE-release, and /etc/SUSE-brand files not found.",
+               ERROR_LOCATION);
+         }
+      }
+   }
+
+   // Populate the OSInfo structure
+   pOsInfo->osId = id;
+   pOsInfo->osVersion = version;
+   pOsInfo->osVersionCodename = versionCodename;
+
    return Success();
 }
 

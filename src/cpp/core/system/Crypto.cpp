@@ -35,6 +35,8 @@
 
 #include <algorithm>
 #include <stdio.h>
+#include <iomanip>
+#include <sstream>
 
 #include <boost/utility.hpp>
 
@@ -92,6 +94,16 @@ EVP_PKEY* EVP_RSA_gen(int bits)
 
 #endif
 
+Error sha256Raw(const std::string& message, unsigned char* hash)
+{
+   if (SHA256(reinterpret_cast<const unsigned char*>(message.c_str()),
+              message.size(), hash) == nullptr)
+   {
+      return getLastCryptoError(ERROR_LOCATION);
+   }
+   return Success();
+}
+
 } // end anonymous namespace
 
 void initialize()
@@ -147,13 +159,28 @@ Error sha256(const std::string& message,
              std::string* pHash)
 {
    unsigned char hash[SHA256_DIGEST_LENGTH];
-   if (SHA256(reinterpret_cast<const unsigned char*>(message.c_str()),
-              message.size(), hash) == nullptr)
-   {
-      return getLastCryptoError(ERROR_LOCATION);
-   }
+   Error error = sha256Raw(message, hash);
+   if (error)
+      return error;
 
    *pHash = std::string((const char*)hash, SHA256_DIGEST_LENGTH);
+   return Success();
+}
+
+Error sha256Hex(const std::string& message,
+                std::string* pHashHex)
+{
+   unsigned char hash[SHA256_DIGEST_LENGTH];
+   Error error = sha256Raw(message, hash);
+   if (error)
+      return error;
+
+   std::ostringstream oss;
+   for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+   {
+      oss << std::hex << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(hash[i]);
+   }
+   *pHashHex = oss.str();
    return Success();
 }
 

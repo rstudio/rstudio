@@ -43,6 +43,9 @@ core::Error HMAC_SHA2(const std::string& data,
 core::Error sha256(const std::string& message,
                    std::string* pHash);
 
+core::Error sha256Hex(const std::string& message,
+                      std::string* pHashHex);
+
 core::Error rsaInit();
 
 core::Error rsaSign(const std::string& message,

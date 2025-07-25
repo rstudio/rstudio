@@ -31,6 +31,10 @@
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
+#ifndef _WIN32
+# include <core/system/PosixSystem.hpp>
+#endif
+
 #ifdef _WIN32
 # define kRStudioDataFolderName "RStudio"
 # define kRStudioCacheSuffix    "Cache"
@@ -45,49 +49,13 @@ namespace system {
 namespace xdg {
 namespace {
 
-/**
- * Returns the hostname from the operating system
- */
-std::string getHostname()
-{
-   // Use a static string to store the hostname so we don't have to look it up
-   // multiple times
-   static std::string hostname;
-   static boost::mutex mutex;
-   std::string result;
-
-   // Lock to ensure that we don't try to read/write the hostname from two
-   // threads
-   LOCK_MUTEX(mutex)
-   {
-      if (hostname.empty())
-      {
-         char buffer[256];
-         int status = ::gethostname(buffer, 255);
-         if (status == 0)
-         {
-            // If successful, store the hostname for later; swallow errors here
-            // since they are not actionable
-            hostname = std::string(buffer);
-         }
-      }
-      result = hostname;
-   }
-   END_LOCK_MUTEX
-
-   return result;
-}
-
-namespace {
-
 FilePath resolveXdgDirImpl(FilePath rstudioXdgPath,
                            const boost::optional<std::string>& user,
                            const boost::optional<FilePath>& homeDir,
                            const std::string& suffix = "")
 {
    // expand HOME, USER, and HOSTNAME if given
-   std::string hostname = getenv("HOSTNAME");
-   std::string resolvedHostname = hostname.empty() ? getHostname() : hostname;
+   std::string resolvedHostname = getHostname();
    std::string resolvedUser = user ? *user : username();
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
    
@@ -140,8 +108,6 @@ FilePath xdgDefaultDir(
    FilePath resolvedHome = homeDir ? *homeDir : userHomePath();
    return FilePath::resolveAliasedPath(defaultDir, resolvedHome);
 }
-
-} // end anonymous namespace
 
 /**
  * Resolves an RStudio XDG file or directory location, based on the user and environment.

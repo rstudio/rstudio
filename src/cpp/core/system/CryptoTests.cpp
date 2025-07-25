@@ -150,6 +150,66 @@ test_context("CryptoTests")
       REQUIRE(hash.size() == 32);
       REQUIRE(hash == expected);
    }
+
+   test_that("SHA-256 hex hashing works correctly")
+   {
+      // Generated with openssl sha256 -hex.
+      std::string message = "secret message";
+      std::string expectedHex = "bb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521";
+      std::string hexHash;
+      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
+      REQUIRE(hexHash.size() == 64);
+      REQUIRE(hexHash == expectedHex);
+   }
+
+   test_that("SHA-256 binary and hex produce equivalent results")
+   {
+      std::string message = "test consistency";
+      std::string binaryHash, hexHash;
+      
+      REQUIRE_FALSE(core::system::crypto::sha256(message, &binaryHash));
+      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
+      
+      // Convert binary hash to hex manually and compare
+      std::string expectedHex;
+      for (unsigned char byte : binaryHash)
+      {
+         char hexByte[3];
+         snprintf(hexByte, sizeof(hexByte), "%02x", static_cast<unsigned int>(byte));
+         expectedHex += hexByte;
+      }
+      
+      REQUIRE(hexHash == expectedHex);
+      REQUIRE(hexHash.size() == 64);
+      REQUIRE(binaryHash.size() == 32);
+   }
+
+   test_that("SHA-256 hex output contains only valid hexadecimal characters")
+   {
+      std::string message = "validate hex format";
+      std::string hexHash;
+      
+      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
+      
+      // Check that all characters are valid hex (0-9, a-f)
+      for (char c : hexHash)
+      {
+         REQUIRE(((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')));
+      }
+   }
+
+   test_that("SHA-256 hex handles empty string")
+   {
+      std::string emptyMessage = "";
+      std::string hexHash;
+      
+      REQUIRE_FALSE(core::system::crypto::sha256Hex(emptyMessage, &hexHash));
+      REQUIRE(hexHash.size() == 64);
+      
+      // The SHA256 of an empty string is a known value
+      std::string expectedEmpty = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+      REQUIRE(hexHash == expectedEmpty);
+   }
 }
 
 } // end namespace tests
