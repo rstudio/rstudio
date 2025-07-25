@@ -18,7 +18,11 @@
 #include <atomic>
 #include <unordered_set>
 
-#include <unistd.h>
+#ifndef _WIN32
+# include <unistd.h>
+#else
+# include <winsock.h>
+#endif
 
 #include <boost/variant.hpp>
 

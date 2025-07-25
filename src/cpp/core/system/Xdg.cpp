@@ -31,6 +31,10 @@
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
+#ifndef _WIN32
+# include <core/system/PosixSystem.hpp>
+#endif
+
 #ifdef _WIN32
 # define kRStudioDataFolderName "RStudio"
 # define kRStudioCacheSuffix    "Cache"
