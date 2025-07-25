@@ -68,7 +68,7 @@ enum ResourceLimit
 
 struct OSInfo 
 {
-   OSInfo() : osId(""), osVersion(""), osArch("") {}
+   OSInfo() : osId(), osVersion(), osVersionCodename(), osArch() {}
 
    std::string osId;    // e.g. "rhel, debian, ubuntu, centos"
    std::string osVersion; // e.g. "9, 24.04"
