@@ -12,7 +12,7 @@
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/node": "^22.14.1",
-    "eslint": "^9.25.1",
+    "eslint": "^9.27.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
   } ,
