@@ -2665,9 +2665,9 @@ Error terminateChildProcesses(pid_t pid,
 
 Error getOsInfo(OSInfo* pOsInfo)
 {
-   std::string id = "";
-   std::string version = "";
-   std::string versionCodename = "";
+   std::string id;
+   std::string version;
+   std::string versionCodename;
 
    // Try to read /etc/os-release first
    std::ifstream osReleaseFile("/etc/os-release");
