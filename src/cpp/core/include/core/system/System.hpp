@@ -364,6 +364,8 @@ void createProcessTree(const std::vector<ProcessInfo>& processes,
 void getChildren(const boost::shared_ptr<ProcessTreeNode>& node,
                  std::vector<ProcessInfo>* pOutChildren,
                  int depth = 0);
+
+std::string getHostname();
    
 } // namespace system
 } // namespace core 
