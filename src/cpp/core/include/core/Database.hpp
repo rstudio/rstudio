@@ -18,6 +18,7 @@
 
 #include <core/Thread.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/optional.hpp>
@@ -30,6 +31,9 @@
 namespace rstudio {
 namespace core {
 namespace database {
+
+Error getDatabaseError(const soci::soci_error& sociError, const ErrorLocation& in_location);
+#define DatabaseError(sociError) getDatabaseError(sociError, ERROR_LOCATION);
 
 struct SqliteConnectionOptions
 {
@@ -100,6 +104,26 @@ public:
       return *this;
    }
 
+   /*
+   * @brief Use when the value in a database statement may be NULL
+   */
+   template <typename T>
+   Query & withOptionalInput(const boost::optional<T>& optionalValue, const std::string& varName)
+   {
+      static T dummyValueWithLifetime = T();
+      static soci::indicator nullWithLifetime = soci::i_null;
+
+      if (optionalValue.has_value())
+      {
+         statement_.exchange(soci::use(optionalValue.value(), varName));
+      }
+      else
+      {
+         statement_.exchange(soci::use(dummyValueWithLifetime, nullWithLifetime, varName));
+      }
+      return *this;
+   }
+
    template <typename T>
    Query& withOutput(T& out)
    {
@@ -133,10 +157,145 @@ using RowsetIterator = soci::rowset_iterator<Row>;
 class Rowset
 {
 public:
+   /*
+   * Warning - SOCI rowset iterators, which these are typing, are single-pass input iterators.
+   *    You cannot safely copy and advance multiple iterators independently.
+   *    You cannot reliably count rows by advancing iterators multiple times.
+   *    You cannot use std::distance(begin, end) or end - begin, to count rows.
+   */
    RowsetIterator begin();
    RowsetIterator end();
 
    size_t columnCount() const;
+
+   /*
+   * @brief Get a NULLable value from a row as a boost::optional<T>
+   * @details Converts soci::error exceptions and std::exceptions into core::Error.
+   * The wrapped SOCI library supports the following C++ types:
+   * Commonly Supported Types
+   *    int
+   *    long
+   *    long long
+   *    double
+   *    std::string
+   *    std::tm (for date/time)
+   *    char
+   *    short
+   *    unsigned long (sometimes, but not always safe)
+   *    std::vector<T> (for bulk operations, not for get<T> on a single row)
+   * Not reliably supported, may cause SOCI to throw or cause undefined behavior
+   *    Unsigned types (unsigned int, unsigned short, etc.)
+   * Also, be aware that the DB column type must match up with the requested type T.
+   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast 
+   * exception in the underlying library. See Utility functions for conversions.
+   *
+   * @param row - iterator to the row from which to extract the value.
+   *              IMPORTANT - It is left to the caller to ensure the iterator is valid!
+   * @param columnName - Name of the column from which to retrieve the value
+   * @param result - If the value was NULL boost::optional containing boost::none.
+   *                 Otherwise, the optional contains value obtained from the row
+   * @return core::Error indicating error from the underlying library. This can occur if the
+   *    column did not exist or if an unsupported type was used. Otherwise, core::Success()
+   */
+   template <typename T>
+   static core::Error getOptionalValue(RowsetIterator & row, const std::string& columnName, boost::optional<T> * result)
+   {
+      *result = boost::none;
+
+      try
+      {
+         // SOCI library has find_column private, so we'll check if it exists by whether or not the following call throws
+         row->get_properties(columnName);
+      }
+      catch(soci::soci_error & e)
+      {
+         // Column did not exist
+         return DatabaseError(e);
+      }
+
+      if (row->get_indicator(columnName) != soci::i_null)
+      {
+         try
+         {
+            *result = row->get<T>(columnName);
+         }
+         catch (soci::soci_error & e)
+         {
+            return core::Error(boost::system::errc::invalid_argument,
+               "soci::exception from the underlying library when getting value for column: " + columnName + " . " + e.what(), ERROR_LOCATION);
+         }
+         catch(std::exception & e)
+         {
+            // This is likely from an unsupported type T
+            return core::Error(boost::system::errc::invalid_argument, 
+               "std::exception from the underlying library when getting value for column: " + columnName + " . " + e.what(), ERROR_LOCATION);
+         }
+      }
+
+      return core::Success();
+   }
+
+   /*
+   * @brief Get a value from a row that should not be NULL
+   * @details Converts soci::error exceptions and std::exceptions into core::Error.
+   * The wrapped SOCI library supports the following C++ types:
+   *    int
+   *    long
+   *    long long
+   *    double
+   *    std::string
+   *    std::tm (for date/time)
+   *    char
+   *    short
+   *    unsigned long (sometimes, but not always safe)
+   *    std::vector<T> (for bulk operations, not for get<T> on a single row)
+   *  Not reliably supported, may cause SOCI to throw or cause undefined behavior
+   *    Unsigned types (unsigned int, unsigned short, etc.)
+   * Also, be aware that the DB column type must match up with the requested type T.
+   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast 
+   * exception in the underlying library. See Utility functions for conversions.
+   *
+   * @param row - iterator to the row from which to extract the value.
+   *              IMPORTANT - It is left to the caller to ensure the iterator is valid!
+   * @param columnName - Name of the column from which to retrieve the value
+   * @param result - If the value was NULL boost::optional containing boost::none.
+   *                 Otherwise, the optional contains value obtained from the row
+   * @return core::Error indicating error from the underlying library. This can occur if the
+   *    column did not exist or if an unsupported type was used. Otherwise, core::Success()
+   */
+   template <typename T>
+   static core::Error getValue(RowsetIterator & row, const std::string& columnName, T * result)
+   {
+      boost::optional<T> optionalValue;
+      core::Error error = getOptionalValue<T>(row, columnName, &optionalValue);
+      if (error)
+      {
+         return error;
+      }
+
+      if( !optionalValue.has_value() )
+      {
+         return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL, but was expected to be NOT NULL", ERROR_LOCATION);
+      }
+
+      *result = optionalValue.value();
+      return core::Success();
+   }
+
+   // The following are utility functions for obtaining value types that are not directly supported by the underlying SOCI library
+   // The boost::optional overloads are for when a DB value may be NULL
+   static core::Error getBoolStrValue(RowsetIterator & row, const std::string& columnName, bool * result);
+   static core::Error getBoolStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<bool> * result);
+   static core::Error getUIntIntValue(RowsetIterator & row, const std::string& columnName, unsigned int * result);
+   static core::Error getUIntIntValue(RowsetIterator & row, const std::string& columnName, boost::optional<unsigned int> * result);
+   static core::Error getMillisecondSinceEpochStrValue(RowsetIterator & row, const std::string& columnName, boost::posix_time::ptime * result);
+   static core::Error getMillisecondSinceEpochStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<boost::posix_time::ptime> * result);
+   static core::Error getISO8601StrValue(RowsetIterator & row, const std::string& columnName, boost::posix_time::ptime * result);
+   static core::Error getISO8601StrValue(RowsetIterator & row, const std::string& columnName, boost::optional<boost::posix_time::ptime> * result);
+   static core::Error getFilepathStrValue(RowsetIterator & row, const std::string& columnName, core::FilePath * result);
+   static core::Error getFilepathStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::FilePath> * result);
+   static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, core::json::Object * result);
+   static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::json::Object> * result);
 
 private:
    friend class Connection;
