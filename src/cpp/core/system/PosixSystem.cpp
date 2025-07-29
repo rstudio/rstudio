@@ -160,6 +160,13 @@ int signalForType(SignalType type)
 // This value is the default hard limit on Ubuntu 22.04 circa 2025.
 static constexpr rlim_t kOpenFilesLimit = 1048576;
 
+std::string trimQuotes(const std::string& str)
+{
+   std::string result = str;
+   boost::trim_if(result, boost::is_any_of("\""));
+   return result;
+}
+
 } // anonymous namespace
 
 OSInfo parseOsReleaseContent(const std::string& content)
@@ -174,18 +181,15 @@ OSInfo parseOsReleaseContent(const std::string& content)
    {
       if (versionCodename.empty() && boost::starts_with(line, "VERSION_CODENAME="))
       {
-         versionCodename = line.substr(strlen("VERSION_CODENAME="));
-         boost::trim_if(versionCodename, boost::is_any_of("\""));
+         versionCodename = trimQuotes(line.substr(strlen("VERSION_CODENAME=")));
       }
       else if (id.empty() && boost::starts_with(line, "ID="))
       {
-         id = line.substr(strlen("ID="));
-         boost::trim_if(id, boost::is_any_of("\""));
+         id = trimQuotes(line.substr(strlen("ID=")));
       }
       else if (version.empty() && boost::starts_with(line, "VERSION_ID="))
       {
-         version = line.substr(strlen("VERSION_ID="));
-         boost::trim_if(version, boost::is_any_of("\""));
+         version = trimQuotes(line.substr(strlen("VERSION_ID=")));
       }
    }
 
