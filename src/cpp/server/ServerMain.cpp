@@ -84,7 +84,7 @@
 #include "ServerLogVars.hpp"
 
 #if defined(__linux__)
-# define kOpenProgram "/usr/bin/xdg-open"
+# define kOpenProgram "xdg-open"
 #elif defined(__APPLE__)
 # define kOpenProgram "/usr/bin/open"
 #elif defined(_WIN32)
