@@ -68,12 +68,11 @@ enum ResourceLimit
 
 struct OSInfo 
 {
-   OSInfo() : osId(""), osVersion(""), osArch("") {}
+   OSInfo() : osId(""), osVersion(""), osVersionCodename("") {}
 
    std::string osId;    // e.g. "rhel, debian, ubuntu, centos"
    std::string osVersion; // e.g. "9, 24.04"
    std::string osVersionCodename; // e.g. "noble, bookworm"
-   std::string osArch;    // e.g. "arm64, amd64"
 };
 
 bool resourceIsUnlimited(RLimitType limitValue);
