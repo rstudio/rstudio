@@ -25,7 +25,7 @@
 - (rstudio-pro#8186): Enables Positron Pro sessions by default
 - (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
 - (rstudio-pro#8090): Improved integration with Posit Package Manager including repository discovery, authentication, and improved Posit Package Manager feature visibility in the RStudio IDE. 
-- (rstudio-pro#5068): Added support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication.
+- (rstudio-pro#5068): Adds support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication
 
 ### Fixed
 
