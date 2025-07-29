@@ -30,10 +30,6 @@ Documentation
 For information on how to use RStudio check out our
 [online documentation](https://docs.posit.co/ide/user/). 
 
-For documentation on running your own RStudio Server see the 
-[server getting started](https://support.posit.co/hc/en-us/articles/200552306-Getting-Started)
-guide.
-
 See also the following files included with the distribution:
 
 - COPYING - RStudio license (AGPLv3)
