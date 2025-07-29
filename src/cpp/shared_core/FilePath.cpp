@@ -1241,6 +1241,16 @@ bool FilePath::hasTextMimeType() const
           boost::algorithm::ends_with(mimeType, "+xml");
 }
 
+bool FilePath::isAbsolute() const
+{
+   return m_impl->Path.is_absolute();
+}
+
+bool FilePath::isRelative() const
+{
+   return m_impl->Path.is_relative();
+}
+
 bool FilePath::isDirectory() const
 {
    try

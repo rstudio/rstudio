@@ -593,6 +593,20 @@ public:
    bool hasTextMimeType() const;
 
    /**
+    * @brief Checks whether this file path is an absolute path.
+    *
+    * @return True if this file path is an absolute path; false otherwise.
+    */
+   bool isAbsolute() const;
+
+   /**
+    * @brief Checks whether this file path is an relative path.
+    *
+    * @return True if this file path is an relative path; false otherwise.
+    */
+   bool isRelative() const;
+
+   /**
     * @brief Checks whether this file path is a directory.
     *
     * @return True if this file path is a directory; false otherwise.
