@@ -84,7 +84,7 @@
 #include "ServerLogVars.hpp"
 
 #if defined(__linux__)
-# define kOpenProgram "/usr/bin/xdg-open"
+# define kOpenProgram "xdg-open"
 #elif defined(__APPLE__)
 # define kOpenProgram "/usr/bin/open"
 #elif defined(_WIN32)
@@ -1074,12 +1074,26 @@ int main(int argc, char * const argv[])
             LOG_ERROR(error);
             return EXIT_FAILURE;
          }
-         
+
+         FilePath openProgramPath(kOpenProgram);
+
+#ifndef _WIN32
+         if (openProgramPath.isRelative())
+         {
+            Error findError = core::system::findProgramOnPath(kOpenProgram, &openProgramPath);
+            if (findError)
+            {
+               LOG_ERROR(findError);
+               return EXIT_FAILURE;
+            }
+         }
+#endif
+
          std::string url = fmt::format("http://{}:{}", address, port);
          core::system::ProcessOptions options;
          core::system::ProcessCallbacks callbacks;
          Error error = server::process_supervisor::runProgram(
-                  kOpenProgram,
+                  openProgramPath.getAbsolutePath(),
                   { url },
                   options,
                   callbacks);

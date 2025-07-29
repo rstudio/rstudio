@@ -53,6 +53,7 @@
 - ([#16198](https://github.com/rstudio/rstudio/issues/16198)): Fixed an issue where the "Switch Focus between Source/Console" command would not work when the Visual Editor was active
 - ([#12470](https://github.com/rstudio/rstudio/issues/12470)): Fixed an issue in RStudio Desktop on Windows where creating multiple cursors using Alt + the mouse would move focus to the menu bar
 - ([#15797](https://github.com/rstudio/rstudio/issues/15797)): Changed label in readr-based text import dialog from "factors" to "factor levels"
+- (#16266): RStudio now resolves xdg-open on the PATH, rather than assuming it is located at /usr/bin/xdg-open
 
 #### Posit Workbench
 
