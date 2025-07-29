@@ -24,6 +24,7 @@
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - (rstudio-pro#8186): Enables Positron Pro sessions by default
 - (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
+- (rstudio-pro##8697) : Adds a product check request that calls to a Posit server. This is controlled by the `server-product-check-enabled` configuration setting in `rserver.conf`, default `1`.
 
 ### Fixed
 
