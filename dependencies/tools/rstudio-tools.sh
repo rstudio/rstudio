@@ -34,7 +34,7 @@ export RSTUDIO_TOOLS_ROOT
 
 
 # version of go used for building
-export WORKBENCH_GO_VERSION="1.22.3"
+export WORKBENCH_GO_VERSION="1.24.5"
 
 
 # RStudio dependency cache

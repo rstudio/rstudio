@@ -25,6 +25,12 @@
 - (rstudio-pro#8186): Enables Positron Pro sessions by default
 - (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
 - (rstudio-pro##8697) : Adds a product check request that calls to a Posit server. This is controlled by the `server-product-check` configuration setting in `rserver.conf`, default `1`.
+- (rstudio-pro#8090): Improves integration with Posit Package Manager, including: repository discovery, authentication, and improved Package Manager feature visibility in the RStudio IDE
+- (rstudio-pro#5068): Adds support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication
+- (rstudio-pro#7817): R and Python scripts in Positron and VS Code now have a `Run Script in a Workbench Job` action in the editor toolbar (and matching command).
+- (rstudio-pro#8463): The Workbench Jobs pane in Positron and VS Code is now organized by script, similar to the Explorer pane, and uses more familiar VS Code UI conventions. Clicking on a script will open it in the editor, while clicking on a job will open a virtual `Job Details` document
+- (rstudio-pro#7862): Completed jobs can now be individually "dismissed" from the Workbench Jobs pane in Positron and VS Code. There are also new `Dismiss Completed Jobs` and `Restore Completed Jobs` view actions to (un)hide *all* completed jobs. Note that hidden jobs are not persistent across sessions
+- (rstudio-pro#8464): A new setting allows users to launch Workbench jobs from Positron and VS Code that make use of managed credentials. This feature is in preview and is not enabled by default
 
 ### Fixed
 
@@ -52,11 +58,17 @@
 - ([#16198](https://github.com/rstudio/rstudio/issues/16198)): Fixed an issue where the "Switch Focus between Source/Console" command would not work when the Visual Editor was active
 - ([#12470](https://github.com/rstudio/rstudio/issues/12470)): Fixed an issue in RStudio Desktop on Windows where creating multiple cursors using Alt + the mouse would move focus to the menu bar
 - ([#15797](https://github.com/rstudio/rstudio/issues/15797)): Changed label in readr-based text import dialog from "factors" to "factor levels"
+- (#16266): RStudio now resolves xdg-open on the PATH, rather than assuming it is located at /usr/bin/xdg-open
+- (#16217): Fixed an issue where error messages were not wrapped when presented in the Console
 
 #### Posit Workbench
 
 - (rstudio-pro#8144): Fixed an issue where Positron State wasn't being loaded on login
 - (rstudio-pro#7368): Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions
+- (rstudio-pro#7818): Workbench jobs launched from Positron and VS Code now set the working directory correctly even for scripts outside of the current workspace
+- (rstudio-pro#7861): Completed jobs in the Workbench Jobs pane in Positron and VS Code no longer have a non-functional `Stop Workbench Job` action
+- (rstudio-pro#8088): Workbench jobs launched from Positron and VS Code no longer ignore queues, resource limits, or resource profiles
+- (rstudio-workbench-vscode-ext#291): Long-running Workbench jobs launched from Positron and VS Code no longer display incorrect runtimes
 
 ### Upgrade Instructions
 
@@ -72,8 +84,8 @@ After completing the package upgrade, carefully review the backed up files and t
 
 ### Dependencies
 
-- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.342.0
-- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.3
+- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.349.0
+- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.4
 - ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
 - ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
 

@@ -40,7 +40,7 @@
    filter: brightness(0.80);
 }
 
-.rstudio-themes-default img:hover {
+.rstudio-themes-default .dataGridCell img:hover {
    filter: brightness(0.50) !important;
 }
 

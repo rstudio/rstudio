@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
+#include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Util.hpp>
 #include <core/RegexUtils.hpp>
@@ -135,8 +136,6 @@ std::string DatabaseErrorCategory::message(int ev) const
          return "Unknown Error";
    }
 }
-
-#define DatabaseError(sociError) getDatabaseError(sociError, ERROR_LOCATION);
 
 Error getDatabaseError(const soci::soci_error& sociError, const ErrorLocation& in_location)
 {
@@ -550,6 +549,291 @@ RowsetIterator Rowset::end()
 size_t Rowset::columnCount() const
 {
    return row_.size();
+}
+
+core::Error Rowset::getBoolStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<bool> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> valueAsOptionaString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &valueAsOptionaString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!valueAsOptionaString.has_value())
+   {
+      return core::Success();
+   }
+
+   std::transform(valueAsOptionaString.value().begin(), valueAsOptionaString.value().end(),
+      valueAsOptionaString.value().begin(), ::tolower);
+   if (valueAsOptionaString.value() == "true" || valueAsOptionaString.value() == "t" || valueAsOptionaString.value() == "1" ||
+       valueAsOptionaString.value() == "yes" || valueAsOptionaString.value() == "y")
+   {
+      *result = true;
+      return core::Success();
+   }
+
+   if (valueAsOptionaString.value() == "false" || valueAsOptionaString.value() == "f" || valueAsOptionaString.value() == "0" ||
+       valueAsOptionaString.value() == "no" || valueAsOptionaString.value() == "n")
+   {
+      *result = false;
+      return core::Success();
+   }
+
+   // Conversion failed
+   return core::Error(boost::system::errc::invalid_argument, 
+      "Could not convert field " + columnName + " from string to bool", ERROR_LOCATION);
+}
+
+core::Error Rowset::getBoolStrValue(RowsetIterator & row, const std::string& columnName, bool * result)
+{
+   boost::optional<bool> optionalValue;
+   core::Error error = getBoolStrValue(row, columnName, &optionalValue);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalValue.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalValue.value();
+   return core::Success();
+}
+
+core::Error Rowset::getUIntIntValue(RowsetIterator & row, const std::string& columnName, boost::optional<unsigned int> * result)
+{
+   *result = boost::none;
+
+   boost::optional<int> valueAsOptionaInt;
+   core::Error error = getOptionalValue<int>(row, columnName, &valueAsOptionaInt);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!valueAsOptionaInt.has_value())
+   {
+      return core::Success();
+   }
+
+   *result = core::safe_convert::numberTo<int, unsigned int>(valueAsOptionaInt.value());
+   if( !result->has_value() )
+   {
+      // Conversion failed
+      return core::Error(boost::system::errc::invalid_argument, 
+         "Could not convert field " + columnName + " from integral to unsigned", ERROR_LOCATION);
+   }
+
+   return core::Success();
+}
+
+core::Error Rowset::getUIntIntValue(RowsetIterator & row, const std::string& columnName, unsigned int * result)
+{
+   boost::optional<unsigned int> optionalValue;
+   core::Error error = getUIntIntValue(row, columnName, &optionalValue);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalValue.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalValue.value();
+   return core::Success();
+}
+
+core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator &row, const std::string& columnName, boost::optional<boost::posix_time::ptime> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> timestampAsOptionalString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &timestampAsOptionalString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!timestampAsOptionalString.has_value())
+   {
+      return core::Success();
+   }
+
+   auto timestampAsOptionalDouble = core::safe_convert::stringTo<double>(timestampAsOptionalString.value());
+   if( timestampAsOptionalDouble.has_value() )
+   {
+      *result = core::date_time::timeFromMillisecondsSinceEpoch(timestampAsOptionalDouble.value());
+      return core::Success();
+   }
+
+   // Could not convert the DB value to a valid timestamp
+   return core::Error(boost::system::errc::invalid_argument, 
+      "Could not convert field " + columnName + " from milliseconds since epoc string to ptime", ERROR_LOCATION);
+}
+
+core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator & row, const std::string& columnName, boost::posix_time::ptime * result)
+{
+   boost::optional<boost::posix_time::ptime> optionalPtime;
+   core::Error error = getMillisecondSinceEpochStrValue(row, columnName, &optionalPtime);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalPtime.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalPtime.value();
+   return core::Success();
+}
+
+core::Error Rowset::getISO8601StrValue(RowsetIterator & row, const std::string& columnName, boost::optional<boost::posix_time::ptime> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> timestampAsOptionalString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &timestampAsOptionalString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!timestampAsOptionalString.has_value())
+   {
+      return core::Success();
+   }
+
+   try
+   {
+      *result = boost::posix_time::from_iso_string(timestampAsOptionalString.value());
+   }
+   catch(const std::bad_cast & e)
+   {
+      return core::Error(boost::system::errc::invalid_argument,
+         "Could not convert field " + columnName + " from ISO 8601 string to ptime", ERROR_LOCATION);
+   }
+
+   if( result->value().is_not_a_date_time() )
+   {
+      return core::Error(boost::system::errc::invalid_argument,
+         "Could not convert field " + columnName + " from ISO 8601 string to ptime", ERROR_LOCATION);
+   }
+
+   return core::Success();
+}
+
+core::Error Rowset::getISO8601StrValue(RowsetIterator & row, const std::string& columnName, boost::posix_time::ptime * result)
+{
+   boost::optional<boost::posix_time::ptime> optionalPtime;
+   core::Error error = getISO8601StrValue(row, columnName, &optionalPtime);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalPtime.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalPtime.value();
+   return core::Success();
+}
+
+core::Error Rowset::getFilepathStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::FilePath> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> filepathAsOptionalString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &filepathAsOptionalString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!filepathAsOptionalString.has_value())
+   {
+      return core::Success();
+   }
+
+   // TODO - There is currently no validation that the string is a valid filepath.
+   //        It is only checked when the exists method is called, and we don't necessarily want to check whether it exists on this node.
+   core::FilePath filepath(filepathAsOptionalString.value());
+   return core::Success();
+}
+
+core::Error Rowset::getFilepathStrValue(RowsetIterator & row, const std::string& columnName, core::FilePath * result)
+{
+   boost::optional<core::FilePath> optionalFilepath;
+   core::Error error = getFilepathStrValue(row, columnName, &optionalFilepath);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalFilepath.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalFilepath.value();
+   return core::Success();
+}
+
+core::Error Rowset::getJSONStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::json::Object> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> jsonAsOptionalString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &jsonAsOptionalString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!jsonAsOptionalString.has_value())
+   {
+      return core::Success();
+   }
+
+   core::json::Object jsonObject;
+   error = jsonObject.parse(jsonAsOptionalString.value());
+   if( error )
+   {
+      return core::Error(boost::system::errc::invalid_argument,
+         "Could not convert field " + columnName + " from JSON string to JSON object: " + error.asString(), ERROR_LOCATION);
+   }
+   *result = jsonObject;
+
+   return core::Success();
+}
+
+core::Error Rowset::getJSONStrValue(RowsetIterator & row, const std::string& columnName, core::json::Object * result)
+{
+   boost::optional<core::json::Object> optionalJson;
+   core::Error error = getJSONStrValue(row, columnName, &optionalJson);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalJson.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalJson.value();
+   return core::Success();
 }
 
 Connection::Connection(const soci::backend_factory& factory,
