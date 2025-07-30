@@ -153,17 +153,16 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       createPackagesTable();
 
       // manage visibility of repository button
+      String reposLabel = getRepositoryButtonLabel();
+      String reposTitle = getRepositoryButtonTitle();
+
+      repositoryButton_.setText(StringUtil.notNull(reposLabel));
+      repositoryButton_.setTitle(reposTitle);
+      repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
+      
+      // manage presence of metadata column
       if (session_.getSessionInfo().isPpmIntegrationEnabled())
       {
-         String reposLabel = getRepositoryButtonLabel();
-         String reposTitle = getRepositoryButtonTitle();
-         {
-            repositoryButton_.setText(StringUtil.notNull(reposLabel));
-            repositoryButton_.setTitle(reposTitle);
-            repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
-         }
-      
-         // manage presence of metadata column
          int oldIndex = packagesTable_.getColumnIndex(metadataColumn_);
          if (activeRepository_ != null)
          {
