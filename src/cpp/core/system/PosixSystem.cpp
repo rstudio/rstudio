@@ -2715,6 +2715,7 @@ Error getOsInfo(OSInfo* pOsInfo)
          }
          else
          {
+            LOG_DEBUG_MESSAGE("Unknown RHEL-based distribution: " + releaseContent + ". Coerced to 'rhel'.");
             id = "rhel"; // Default to RHEL for unknown RHEL-based
          }
          
