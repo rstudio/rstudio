@@ -58,6 +58,7 @@
 - ([#12470](https://github.com/rstudio/rstudio/issues/12470)): Fixed an issue in RStudio Desktop on Windows where creating multiple cursors using Alt + the mouse would move focus to the menu bar
 - ([#15797](https://github.com/rstudio/rstudio/issues/15797)): Changed label in readr-based text import dialog from "factors" to "factor levels"
 - (#16266): RStudio now resolves xdg-open on the PATH, rather than assuming it is located at /usr/bin/xdg-open
+- (#16217): Fixed an issue where error messages were not wrapped when presented in the Console
 
 #### Posit Workbench
 
