@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -429,9 +430,7 @@ public class ChunkOutputWidget extends Composite
       
       if (state_ != CHUNK_PRE_OUTPUT)
       {
-         // if we got some output, synchronize the chunk's height to accommodate
-         // it
-         syncHeight(true, ensureVisible);
+         Scheduler.get().scheduleDeferred(() -> syncHeight(true, ensureVisible));
       }
       else if (execScope == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
