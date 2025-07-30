@@ -44,8 +44,8 @@
    }
    
    .errorMessage {
-      white-space: pre;
       display: inline;
+      white-space: pre-wrap;
       word-wrap: break-word;
       word-break: break-word;
    }
