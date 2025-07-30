@@ -26,6 +26,8 @@
 namespace rstudio {
 namespace core {
 namespace system {
+
+OSInfo parseOsReleaseContent(const std::string&);
 namespace tests {
 
 #ifdef __linux__
@@ -566,6 +568,44 @@ TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
       // since we provided a target group, we now expect the target group
       expect_true(rgid == s_testGroup.groupId);
       expect_true(egid == s_testGroup.groupId);
+   }
+}
+
+test_context("PosixSystem parseOsReleaseContent Tests")
+{
+   test_that("parseOsReleaseContent returns empty strings for empty content")
+   {
+      const auto content = "";
+      OSInfo info = parseOsReleaseContent(content);
+      expect_true(info.osId.empty());
+      expect_true(info.osVersion.empty());
+      expect_true(info.osVersionCodename.empty());
+   }
+
+   test_that("parseOsReleaseContent returns correct values for unquoted content")
+   {
+      std::string content = R"(
+ID=ubuntu
+VERSION_ID=20.04
+VERSION_CODENAME=focal
+)";
+      OSInfo info = parseOsReleaseContent(content);
+      expect_equal(info.osId, "ubuntu");
+      expect_equal(info.osVersion, "20.04");
+      expect_equal(info.osVersionCodename, "focal");
+   }
+
+   test_that("parseOsReleaseContent returns correct values for quoted content")
+   {
+            std::string content = R"(
+ID="rhel"
+VERSION_ID="9.5"
+VERSION_CODENAME="rhel9"
+)";
+      OSInfo info = parseOsReleaseContent(content);
+      expect_equal(info.osId, "rhel");
+      expect_equal(info.osVersion, "9.5");
+      expect_equal(info.osVersionCodename, "rhel9");
    }
 }
 

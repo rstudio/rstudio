@@ -18,6 +18,12 @@
 #include <atomic>
 #include <unordered_set>
 
+#ifndef _WIN32
+# include <unistd.h>
+#else
+# include <winsock.h>
+#endif
+
 #include <boost/variant.hpp>
 
 #include <shared_core/Hash.hpp>
@@ -518,6 +524,46 @@ bool isAppleSilicon()
 }
 
 #endif
+
+std::string getHostname()
+{
+   // Use a static string to store the hostname so we don't have to look it up
+   // multiple times
+   static std::string hostname;
+   static boost::mutex mutex;
+   std::string result;
+
+   // Lock to ensure that we don't try to read/write the hostname from two
+   // threads
+   LOCK_MUTEX(mutex)
+   {
+      if (hostname.empty())
+      {
+         // First check if HOSTNAME environment variable is set
+         std::string hostnameEnv = getenv("HOSTNAME");
+         if (!hostnameEnv.empty())
+         {
+            hostname = hostnameEnv;
+         }
+         else
+         {
+            // Fall back to system hostname if HOSTNAME env var is not set
+            char buffer[256];
+            int status = ::gethostname(buffer, 255);
+            if (status == 0)
+            {
+               // If successful, store the hostname for later; swallow errors here
+               // since they are not actionable
+               hostname = std::string(buffer);
+            }
+         }
+      }
+      result = hostname;
+   }
+   END_LOCK_MUTEX
+
+   return result;
+}
 
 } // namespace system
 } // namespace core
