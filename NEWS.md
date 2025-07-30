@@ -82,7 +82,7 @@ After completing the package upgrade, carefully review the backed up files and t
 
 ### Dependencies
 
-- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.349.0
+- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.350.0
 - ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.4
 - ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
 - ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
