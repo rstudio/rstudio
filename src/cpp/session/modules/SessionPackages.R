@@ -1294,9 +1294,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             else
                "PPM"
             
-            snapshot <- basename(repos)
-            name <- basename(dirname(repos))
-            source <- sprintf("%s [%s/%s]", ppm, name, snapshot)
+            parts <- .rs.ppm.fromRepositoryUrl(repos)
+            if (length(parts))
+            {
+               snapshot <- parts[["snapshot"]]
+               name <- parts[["repos"]]
+               source <- sprintf("%s [%s/%s]", ppm, name, snapshot)
+            }
+            else
+            {
+               snapshot <- basename(repos)
+               name <- basename(dirname(repos))
+               source <- sprintf("%s [%s/%s]", ppm, name, snapshot)
+            }
          }
       }
       
