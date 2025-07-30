@@ -84,13 +84,12 @@
       "$"
    )
    
-   m <- regexec(pattern, url, perl = TRUE)
-   matches <- regmatches(url, m)[[1L]]
+   matches <- .rs.regexMatches(pattern, url)
    if (length(matches) == 0L)
       return(NULL)
    
-   names(matches)[[1L]] <- "url"
-   as.list(matches)
+   as.list(c(url = url, matches))
+
 })
 
 .rs.addFunction("ppm.toRepositoryUrl", function(parts)
