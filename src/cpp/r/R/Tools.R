@@ -1131,10 +1131,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 .rs.addFunction("regexMatches", function(pattern, x) {
+   
    matches <- gregexpr(pattern, x, perl = TRUE)[[1]]
    starts <- attr(matches, "capture.start")
    ends <- starts + attr(matches, "capture.length") - 1
-   substring(x, starts, ends)
+   strings <- substring(x, starts, ends)
+   
+   names(strings) <- attr(matches, "capture.names")
+   strings
+   
 })
 
 .rs.addFunction("withChangedExtension", function(path, ext)
