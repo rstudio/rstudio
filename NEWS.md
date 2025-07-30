@@ -66,6 +66,7 @@
 - (rstudio-pro#7818): Workbench jobs launched from Positron and VS Code now set the working directory correctly even for scripts outside of the current workspace
 - (rstudio-pro#7861): Completed jobs in the Workbench Jobs pane in Positron and VS Code no longer have a non-functional `Stop Workbench Job` action
 - (rstudio-pro#8088): Workbench jobs launched from Positron and VS Code no longer ignore queues, resource limits, or resource profiles
+- (rstudio-workbench-vscode-ext#291): Long-running Workbench jobs launched from Positron and VS Code no longer display incorrect runtimes
 
 ### Upgrade Instructions
 
