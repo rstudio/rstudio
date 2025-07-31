@@ -198,28 +198,6 @@
    result
 })
 
-.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths())
-{
-   pkgPaths <- list.files(lib, full.names = TRUE)
-   descPaths <- file.path(pkgPaths, "DESCRIPTION")
-   pkgInfo <- file.info(pkgPaths, extra_cols = FALSE)
-   pkgInfo$path <- row.names(pkgInfo)
-   pkgInfo
-})
-
-.rs.addFunction("installedPackagesFileInfoDiff", function(before, after)
-{
-   result <- merge(before, after, by = "path", all = TRUE)
-   
-   diffs <-
-      (is.na(result$ctime.x) & !is.na(result$ctime.y)) |
-      (is.na(result$mtime.x) & !is.na(result$mtime.y)) |
-      (result$ctime.x != result$ctime.y) |
-      (result$mtime.x != result$mtime.y)
-   
-   result[which(diffs), ]
-})
-
 .rs.addFunction("onInstallScriptJobStarted", function()
 {
    .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())
@@ -238,3 +216,4 @@
    # tag their DESCRIPTION file with their installation source.
    .rs.recordPackageSource(rows$path, local = FALSE)
 })
+

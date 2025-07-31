@@ -113,34 +113,6 @@
    .rs.ppm.fromRepositoryUrl(repos)
 })
 
-.rs.addFunction("ppm.getAuthorizationHeader", function(parts)
-{
-   # check for known authority
-   authority <- parts[["authority"]]
-   if (is.null(authority))
-      return(NULL)
-   
-   # check for netrc credentials
-   allcreds <- .rs.readNetrc()
-   if (is.null(allcreds))
-      return(NULL)
-   
-   # retrieve credentials for this authority
-   creds <- allcreds[[authority]]
-   if (is.null(creds))
-      return(NULL)
-   
-   # form authorization header
-   username <- creds[["login"]]
-   password <- creds[["password"]]
-   contents <- paste(username, password, sep = ":")
-   if (length(contents) == 0L)
-      return(NULL)
-   
-   encoded <- .rs.base64encode(contents)
-   paste("Basic", encoded)
-})
-
 .rs.addFunction("ppm.updateMetadataCache", function(packages)
 {
    # get the active ppm repository
