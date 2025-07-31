@@ -16,29 +16,14 @@ package org.rstudio.studio.client.workbench.model;
 
 public interface ModelConstants extends com.google.gwt.i18n.client.Messages {
 
-    /**
-     * Translated "Create Session".
-     *
-     * @return translated "Create Session"
-     */
     @DefaultMessage("Create Session")
     @Key("createSessionCaption")
     String createSessionCaption();
 
-    /**
-     * Translated "Could not allocate a new session.".
-     *
-     * @return translated "Could not allocate a new session."
-     */
     @DefaultMessage("Could not allocate a new session.")
     @Key("createSessionMessage")
     String createSessionMessage();
 
-    /**
-     * Translated "Presentation".
-     *
-     * @return translated "Presentation"
-     */
     @DefaultMessage("Presentation")
     @Key("presentationCaption")
     String presentationCaption();

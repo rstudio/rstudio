@@ -16,47 +16,22 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 
 public interface Presentation2Constants extends com.google.gwt.i18n.client.Messages {
 
-    /**
-     * Translated "Presentation".
-     *
-     * @return translated "Presentation"
-     */
     @DefaultMessage("Presentation")
     @Key("presentationTitle")
     String presentationTitle();
 
-    /**
-     * Translated "Presentation Toolbar".
-     *
-     * @return translated "Presentation Toolbar"
-     */
     @DefaultMessage("Presentation Toolbar")
     @Key("presentationToolbarLabel")
     String presentationToolbarLabel();
 
-    /**
-     * Translated "Present".
-     *
-     * @return translated "Present"
-     */
     @DefaultMessage("Present")
     @Key("presentTitle")
     String presentTitle();
 
-    /**
-     * Translated "Presentation Slides Toolbar".
-     *
-     * @return translated "Presentation Slides Toolbar"
-     */
     @DefaultMessage("Presentation Slides Toolbar")
     @Key("presentationSlidesToolbarLabel")
     String presentationSlidesToolbarLabel();
 
-    /**
-     * Translated "Presentation Preview".
-     *
-     * @return translated "Presentation Preview"
-     */
     @DefaultMessage("Presentation Preview")
     @Key("presentationPreviewTitle")
     String presentationPreviewTitle();

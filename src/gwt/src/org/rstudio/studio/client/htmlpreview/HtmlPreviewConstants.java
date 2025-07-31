@@ -154,5 +154,4 @@ public interface HtmlPreviewConstants extends Constants {
     @Key("closeText")
     String closeText();
 
-
 }
