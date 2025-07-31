@@ -274,6 +274,8 @@
    # update the metadata cache
    cache <- .rs.ppm.updateMetadataCache(packages)
    metadata <- as.list.environment(cache, all.names = TRUE)
+   if (length(metadata) == 0L)
+      return(list())
    
    # filter to requested metadata key
    result <- lapply(metadata, function(data) {
