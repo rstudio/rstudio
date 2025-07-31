@@ -29,6 +29,9 @@
 
 .envVarsList
 {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
 	margin-top: 6px;
 	margin-bottom: 6px;
 }

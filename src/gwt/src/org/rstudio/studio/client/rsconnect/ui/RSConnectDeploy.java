@@ -1475,22 +1475,10 @@ public class RSConnectDeploy extends Composite
          envVarsLabel_.setText(constants_.envVarsPublishMessage(selectedEnvVars_.size(), appContentType()));
          envVarsLabel_.setVisible(true);
 
-         if (selectedEnvVars_.size() > 3)
-         {
-            String label =
-               selectedEnvVars_.get(0) + ", " +
-               selectedEnvVars_.get(1) + ", " +
-               selectedEnvVars_.get(2) + ", " +
-               "...";
-            envVarsList_.setText(label);
-            envVarsList_.setVisible(true);
-         }
-         else
-         {
-            String label = StringUtil.join(selectedEnvVars_, ", ");
-            envVarsList_.setText(label);
-            envVarsList_.setVisible(true);
-         }
+         String label = StringUtil.join(selectedEnvVars_, ", ");
+         envVarsList_.setText(label);
+         envVarsList_.setTitle(label);
+         envVarsList_.setVisible(true);
       }
    }
    
