@@ -141,7 +141,7 @@ void asyncDownloadFile(const std::string& url,
    if (!userAgent.empty())
       cmd += "options(HTTPUserAgent = '" + string_utils::singleQuotedStrEscape(userAgent) + "'); ";
    cmd += "tmp <- tempfile(); ";
-   cmd += "download.file('" + url +"'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
+   cmd += "download.file('" + url + "'" + headersStr + ", destfile = tmp, quiet = TRUE); ";
    cmd += "cat(readLines(tmp, warn = FALSE)); ";
    cmd += "} ";
 

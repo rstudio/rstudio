@@ -176,6 +176,7 @@ sys.source('{}', envir = as.environment('tools:rstudio'));
          ? *spec_.procOptions()
          : async_r::R_PROCESS_NO_RDATA;
 
+   options = options | async_r::R_PROCESS_AUGMENTED;
    async_r::AsyncRProcess::start(command.c_str(), environment, spec_.workingDir(), options);
 }
 

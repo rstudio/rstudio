@@ -153,6 +153,42 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    exists(fullName, envir = envir)
 })
 
+.rs.addFunction("defineHookImpl", function(package, binding, hook, all)
+{
+   # get reference to original function definition
+   namespace <- getNamespace(package)
+   original <- get(binding, envir = namespace)
+   
+   # update our hook to match definition of original
+   environment(hook) <- environment(original)
+   formals(hook) <- formals(original)
+   
+   # replace binding in search path environment
+   envir <- as.environment(paste("package", package, sep = ":"))
+   .rs.replaceBindingImpl(envir, binding, hook)
+   
+   # also replace the binding in the package namespace if requested
+   if (all)
+   {
+      .rs.registerPackageAttachedHook(package, function(...)
+      {
+         .rs.replaceBindingImpl(namespace, binding, hook)
+      })
+   }
+})
+
+.rs.addFunction("defineGlobalHook", function(package, binding, hook, when = TRUE)
+{
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = TRUE)
+})
+
+.rs.addFunction("defineHook", function(package, binding, hook, when = TRUE)
+{
+   if (when)
+      .rs.defineHookImpl(package, binding, hook, all = FALSE)
+})
+
 .rs.addFunction("setOption", function(name, value)
 {
    data <- list(value)
@@ -1783,6 +1819,36 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    lapply(packages, getNamespaceInfo, "path")
 })
 
+.rs.addFunction("startsWith", function(strings, string)
+{
+   if (!length(string))
+      string <- ""
+   
+   n <- nchar(string)
+   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
+})
+
+.rs.addFunction("selectStartsWith", function(strings, string)
+{
+   strings[.rs.startsWith(strings, string)]
+})
+
+.rs.addFunction("endsWith", function(strings, string)
+{
+   if (!length(string))
+      string <- ""
+   
+   nstrings <- nchar(strings)
+   nstring <- nchar(string)
+   (nstrings >= nstring) &
+      (substring(strings, nstrings - nstring + 1, nstrings) == string)
+})
+
+.rs.addFunction("selectEndsWith", function(strings, string)
+{
+   strings[.rs.endsWith(strings, string)]
+})
+
 .rs.addFunction("readNetrc", function(netrcPath = NULL)
 {
    # Resolve the path to the .netrc file.
@@ -1871,8 +1937,101 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    result
 })
 
+.rs.addFunction("rBase64EncodeMain", function(input, table)
+{
+   ni <- as.integer(length(input))
+   if (ni < 3L)
+      return(integer())
+   
+   no <- ni %/% 3L * 4L
+   output <- integer(no)
+   
+   i0 <- seq.int(1L, ni - 2L, by = 3L)
+   i1 <- seq.int(2L, ni - 1L, by = 3L)
+   i2 <- seq.int(3L, ni - 0L, by = 3L)
+   
+   o0 <- seq.int(1L, no - 3L, by = 4L)
+   o1 <- seq.int(2L, no - 2L, by = 4L)
+   o2 <- seq.int(3L, no - 1L, by = 4L)
+   o3 <- seq.int(4L, no - 0L, by = 4L)
+   
+   output[o0] <- table[1L + bitwShiftR(input[i0], 2L)]
+   
+   output[o1] <- table[1L + bitwOr(
+      bitwShiftL(bitwAnd(input[i0], 0x03L), 4L),
+      bitwShiftR(bitwAnd(input[i1], 0xF0L), 4L)
+   )]
+   
+   output[o2] <- table[1L + bitwOr(
+      bitwShiftL(bitwAnd(input[i1], 0x0FL), 2L),
+      bitwShiftR(bitwAnd(input[i2], 0xC0L), 6L)
+   )]
+   
+   output[o3] <- table[1L + bitwAnd(input[i2], 0x3FL)]
+   
+   output
+})
+
+.rs.addFunction("rBase64EncodeRest", function(input, table)
+{
+   ni <- as.integer(length(input))
+   remaining <- ni %% 3L
+   if (remaining == 0L)
+      return(integer())
+   
+   output <- rep.int(61L, 4L)
+   i <- ni - remaining + 1
+   
+   output[1L] <- table[1L + bitwShiftR(input[i + 0L], 2L)]
+   
+   if (remaining == 1L)
+   {
+      output[2L] <- table[1L + bitwShiftL(bitwAnd(input[i + 0L], 0x03L), 4L)]
+   }
+   else if (remaining == 2L)
+   {
+      output[2L] <- table[1L + bitwOr(
+         bitwShiftL(bitwAnd(input[i + 0L], 0x03L), 4L),
+         bitwShiftR(bitwAnd(input[i + 1L], 0xF0L), 4L)
+      )]
+      
+      output[3L] <- table[1L + bitwShiftL(bitwAnd(input[i + 1L], 0x0FL), 2L)]
+   }
+   
+   output
+})
+
+.rs.addFunction("rBase64Encode", function(text)
+{
+   # coerce input
+   input <- if (is.character(text))
+      as.integer(charToRaw(text))
+   else if (is.raw(text))
+      as.integer(text)
+   else
+      stop("unexpected input type ", typeof(text))
+   
+   # build base64 table
+   chars <- "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="  # pragma: allowlist secret
+   table <- as.integer(charToRaw(chars))
+   
+   # encode the data
+   encoded <- c(
+      .rs.rBase64EncodeMain(input, table),
+      .rs.rBase64EncodeRest(input, table)
+   )
+
+   # convert back to character
+   rawToChar(as.raw(encoded))
+})
+
 .rs.addFunction("computeAuthorizationHeader", function(url)
 {
+   # Read user's .netrc file (if any)
+   netrcEntries <- .rs.readNetrc()
+   if (is.null(netrcEntries))
+      return("")
+   
    # Parse the URL into its component parts.
    pattern <- paste0(
       "^",
@@ -1886,13 +2045,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       "$"
    )
    
-   match <- regexec(pattern, url, perl = TRUE)
-   parts <- as.list(regmatches(url, match)[[1L]])
-   
-   # Read user's .netrc file (if any)
-   netrcEntries <- .rs.readNetrc()
-   if (is.null(netrcEntries))
-      return("")
+   matches <- .rs.regexMatches(pattern, url)
+   parts <- as.list(matches)
    
    # Look for valid credentials for the provided URLs.
    for (netrcEntry in netrcEntries)
@@ -1900,7 +2054,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       if (.rs.startsWith(parts$host, netrcEntry$machine))
       {
          userPass <- paste(netrcEntry$login, netrcEntry$password, sep = ":")
-         result <- paste("Basic", .rs.base64encode(userPass))
+         result <- paste("Basic", .rs.rBase64Encode(userPass))
          return(result)
       }
    }
@@ -1911,9 +2065,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("recordPackageSource", function(pkgPaths, local = FALSE)
 {
    # Request available packages.
-   avPkgs <- .rs.availablePackages()
    db <- if (!local) as.data.frame(
-      .rs.nullCoalesce(avPkgs$value, available.packages()),
+      utils::available.packages(),
       stringsAsFactors = FALSE
    )
    
@@ -2016,3 +2169,281 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    else
       object
 })
+
+.rs.addFunction("installedPackagesFileInfo", function(lib = .libPaths())
+{
+   pkgPaths <- list.files(lib, full.names = TRUE)
+   descPaths <- file.path(pkgPaths, "DESCRIPTION")
+   pkgInfo <- file.info(pkgPaths, extra_cols = FALSE)
+   pkgInfo$path <- row.names(pkgInfo)
+   pkgInfo
+})
+
+.rs.addFunction("installedPackagesFileInfoDiff", function(before, after)
+{
+   result <- merge(before, after, by = "path", all = TRUE)
+   
+   diffs <-
+      (is.na(result$ctime.x) & !is.na(result$ctime.y)) |
+      (is.na(result$mtime.x) & !is.na(result$mtime.y)) |
+      (result$ctime.x != result$ctime.y) |
+      (result$mtime.x != result$mtime.y)
+   
+   result[which(diffs), ]
+})
+
+.rs.addFunction("onInstallScriptJobStarted", function()
+{
+   .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())
+})
+
+.rs.addFunction("onInstallScriptJobFinished", function(pkgInfo)
+{
+   before <- .rs.getVar("jobPackageInfo")
+   after <- .rs.installedPackagesFileInfo()
+   .rs.clearVar("jobPackageInfo")
+   
+   # Figure out which packages were changed.
+   rows <- .rs.installedPackagesFileInfoDiff(before, after)
+   
+   # For any packages which appear to have been updated,
+   # tag their DESCRIPTION file with their installation source.
+   .rs.recordPackageSource(rows$path, local = FALSE)
+})
+
+.rs.addFunction("stack", function(mode = "list")
+{
+   .data <- list()
+   storage.mode(.data) <- mode
+   
+   list(
+      
+      push = function(...) {
+         dots <- list(...)
+         for (data in dots) {
+            if (is.null(data))
+               .data[length(.data) + 1] <<- list(NULL)
+            else
+               .data[[length(.data) + 1]] <<- data
+         }
+      },
+      
+      pop = function() {
+         item <- .data[[length(.data)]]
+         length(.data) <<- length(.data) - 1
+         item
+      },
+      
+      peek = function() {
+         .data[[length(.data)]]
+      },
+      
+      contains = function(data) {
+         data %in% .data
+      },
+      
+      empty = function() {
+         length(.data) == 0
+      },
+      
+      get = function(index) {
+         if (index <= length(.data)) .data[[index]]
+      },
+      
+      set = function(index, value) {
+         .data[[index]] <<- value
+      },
+      
+      clear = function() {
+         .data <<- list()
+      },
+      
+      data = function() {
+         .data
+      }
+      
+   )
+   
+})
+
+.rs.addFunction("isAbsolutePath", function(path)
+{
+   grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
+})
+
+
+# Hooks -------------------------------------------------------------------
+
+assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
+
+.rs.defineGlobalHook(
+   package = "utils",
+   binding = "download.file",
+   when    = "headers" %in% names(formals(utils::download.file)),
+   function(url, destfile, method)
+   {
+      ""
+      "This is an RStudio hook."
+      "Use `.rs.downloadFile` to bypass this hook if necessary."
+      ""
+      
+      # Note that R also supports downloading multiple files in parallel,
+      # so the 'url' parameter may be a vector of URLs.
+      #
+      # Unfortunately, it doesn't support the use of URL-specific headers,
+      # so we try to handle this appropriately here.
+      if (missing(method))
+         method <- getOption("download.file.method", default = "auto")
+      
+      # Silence diagnostic warnings.
+      headers <- get("headers", envir = environment(), inherits = FALSE)
+      
+      # Handle the simpler length-one URL case up front.
+      if (length(url) == 1L)
+      {
+         authHeader <- .rs.computeAuthorizationHeader(url)
+         call <- match.call(expand.dots = TRUE)
+         call[[1L]] <- quote(.rs.downloadFile)
+         call["headers"] <- list(c(headers, Authorization = authHeader))
+         status <- eval(call, envir = parent.frame())
+         return(invisible(status))
+      }
+      
+      # Otherwise, do some more work to map headers to URLs as appropriate.
+      retvals <- vector("integer", length = length(url))
+      authHeaders <- .rs.mapChr(url, .rs.computeAuthorizationHeader)
+      for (authHeader in unique(authHeaders))
+      {
+         # Figure out which URLs are associated with the current header.
+         idx <- which(authHeaders == authHeader)
+         
+         # Build a call to download these files all in one go.
+         call <- match.call(expand.dots = TRUE)
+         call[[1L]] <- quote(.rs.downloadFile)
+         call["url"] <- list(url[idx])
+         call["destfile"] <- list(destfile[idx])
+         call["headers"] <- list(c(headers, Authorization = authHeader))
+         retvals[idx] <- eval(call, envir = parent.frame())
+      }
+      
+      # Note that even if multiple files are downloaded, R only reports
+      # a single status code, with 0 implying that all downloads succeeded.
+      status <- if (all(retvals == 0L)) 0L else 1L
+      attr(status, "retvals") <- retvals
+      invisible(status)
+      
+   })
+
+.rs.defineHook(
+   package = "utils",
+   binding = "install.packages",
+   function(pkgs, lib, repos)
+   {
+      ""
+      "This is an RStudio hook."
+      "Use `utils::install.packages()` to bypass this hook if necessary."
+      ""
+      
+      # Check if package installation was disabled in this version of RStudio.
+      if (interactive())
+      {
+         canInstallPackages <- .Call("rs_canInstallPackages", PACKAGE = "(embedding)")
+         if (!canInstallPackages)
+         {
+            msg <- "Package installation is disabled in this version of RStudio."
+            stop(msg, call. = FALSE)
+         }
+         
+         # Notify if we're about to update an already-loaded package.
+         # Skip this within renv and packrat projects.
+         if (.rs.installPackagesRequiresRestart(pkgs))
+         {
+            call <- sys.call()
+            call[[1L]] <- quote(install.packages)
+            command <- .rs.deparseCall(call)
+            
+            .rs.enqueLoadedPackageUpdates(command)
+            invokeRestart("abort")
+         }
+         
+         # Make sure Rtools is on the PATH for Windows.
+         .rs.addRToolsToPath()
+         on.exit(.rs.restorePreviousPath(), add = TRUE)
+      }
+      
+      # Resolve library path.
+      if (missing(lib) || is.null(lib))
+         lib <- .libPaths()[1L]
+      
+      # Check if we're installing a package from the filesystem,
+      # versus installing a package from CRAN.
+      isLocal <- is.null(repos) || any(grepl("/", pkgs, fixed = TRUE))
+      
+      if (isLocal)
+      {
+         # Invoke the original function.
+         call <- sys.call()
+         call[[1L]] <- quote(utils::install.packages)
+         result <- eval(call, envir = parent.frame())
+         
+         # Record the package source.
+         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
+         if (shouldRecord)
+            .rs.recordPackageSource(pkgs, local = TRUE)
+      }
+      else
+      {
+         # Get paths to DESCRIPTION files, so we can see what packages
+         # were updated before and after installation.
+         before <- .rs.installedPackagesFileInfo(lib)
+         
+         # Invoke the original function.
+         call <- sys.call()
+         call[[1L]] <- quote(utils::install.packages)
+         result <- eval(call, envir = parent.frame())
+         
+         # Check and see what packages were updated.
+         after <- .rs.installedPackagesFileInfo(lib)
+         
+         # Figure out which packages were changed.
+         rows <- .rs.installedPackagesFileInfoDiff(before, after)
+         
+         # For any packages which appear to have been updated,
+         # tag their DESCRIPTION file with their installation source.
+         .rs.recordPackageSource(rows$path, local = FALSE)
+      }
+      
+      # Notify the front-end that we've made some updates.
+      if (interactive())
+      {
+         .rs.updatePackageEvents()
+         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
+      }
+      
+      # Return installation result, invisibly.
+      invisible(result)
+   })
+
+.rs.defineHook(
+   package = "utils",
+   binding = "remove.packages",
+   function(pkgs, lib)
+   {
+      ""
+      "This is an RStudio hook."
+      "Use `utils::remove.packages()` to bypass this hook if necessary."
+      ""
+      
+      # Invoke original.
+      result <- utils::remove.packages(pkgs, lib)
+      
+      # Notify front-end that the package library was mutated.
+      if (interactive())
+      {
+         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
+      }
+      
+      # Return original result.
+      invisible(result)
+   })
+

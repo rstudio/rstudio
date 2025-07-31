@@ -52,36 +52,6 @@
    tryCatch(expr, error = function(e) fail)
 })
 
-.rs.addFunction("startsWith", function(strings, string)
-{
-   if (!length(string))
-      string <- ""
-
-   n <- nchar(string)
-   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
-})
-
-.rs.addFunction("selectStartsWith", function(strings, string)
-{
-   strings[.rs.startsWith(strings, string)]
-})
-
-.rs.addFunction("endsWith", function(strings, string)
-{
-   if (!length(string))
-      string <- ""
-
-   nstrings <- nchar(strings)
-   nstring <- nchar(string)
-   (nstrings >= nstring) &
-      (substring(strings, nstrings - nstring + 1, nstrings) == string)
-})
-
-.rs.addFunction("selectEndsWith", function(strings, string)
-{
-   strings[.rs.endsWith(strings, string)]
-})
-
 # Return the scope names in which the given names exist
 .rs.addFunction("which", function(names) {
    scopes = search()
@@ -2855,64 +2825,4 @@
    # otherwise, treat 'envir' directly as the name of a namespace
    getNamespace(envir)
 
-})
-
-.rs.addFunction("stack", function(mode = "list")
-{
-   .data <- list()
-   storage.mode(.data) <- mode
-   
-   list(
-      
-      push = function(...) {
-         dots <- list(...)
-         for (data in dots) {
-            if (is.null(data))
-               .data[length(.data) + 1] <<- list(NULL)
-            else
-               .data[[length(.data) + 1]] <<- data
-         }
-      },
-      
-      pop = function() {
-         item <- .data[[length(.data)]]
-         length(.data) <<- length(.data) - 1
-         item
-      },
-      
-      peek = function() {
-         .data[[length(.data)]]
-      },
-      
-      contains = function(data) {
-         data %in% .data
-      },
-      
-      empty = function() {
-         length(.data) == 0
-      },
-      
-      get = function(index) {
-         if (index <= length(.data)) .data[[index]]
-      },
-      
-      set = function(index, value) {
-         .data[[index]] <<- value
-      },
-      
-      clear = function() {
-         .data <<- list()
-      },
-      
-      data = function() {
-         .data
-      }
-      
-   )
-   
-})
-
-.rs.addFunction("isAbsolutePath", function(path)
-{
-   grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
 })
