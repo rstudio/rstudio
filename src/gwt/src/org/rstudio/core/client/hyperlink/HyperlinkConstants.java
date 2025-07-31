@@ -17,27 +17,21 @@ package org.rstudio.core.client.hyperlink;
 public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages {
     
 
-    @DefaultMessage("Documentation not found.")
     @Key("noDocumentation")
     String noDocumentation();
 
-    @DefaultMessage("Package not found")
     @Key("noPackage")
     String noPackage();
 
-    @DefaultMessage("Vignette not found.")
     @Key("noVignette")
     String noVignette();
 
-    @DefaultMessage("click to run")
     @Key("clickToRun")
     String clickToRun();
 
-    @DefaultMessage("No such file")
     @Key("noSuchFile")
     String noSuchFile();
 
-    @DefaultMessage("''{0}'' does not exist.")
     @Key("doesNotExist")
     String doesNotExist(String filename);
 

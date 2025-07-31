@@ -16,39 +16,30 @@ package org.rstudio.studio.client.workbench.views.help;
 
 public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
 
-    @DefaultMessage("Help")
     @Key("helpText")
     String helpText();
 
-    @DefaultMessage("Help Pane")
     @Key("helpPaneTitle")
     String helpPaneTitle();
 
-    @DefaultMessage("Help Tab")
     @Key("helpTabLabel")
     String helpTabLabel();
 
-    @DefaultMessage("Help Tab Second")
     @Key("helpTabSecondLabel")
     String helpTabSecondLabel();
 
-    @DefaultMessage("Find next (Enter)")
     @Key("findNextLabel")
     String findNextLabel();
 
-    @DefaultMessage("Find previous")
     @Key("findPreviousLabel")
     String findPreviousLabel();
 
-    @DefaultMessage("Find in Topic")
     @Key("findInTopicLabel")
     String findInTopicLabel();
 
-    @DefaultMessage("No occurrences found")
     @Key("noOccurrencesFoundMessage")
     String noOccurrencesFoundMessage();
 
-    @DefaultMessage("Search help")
     @Key("searchHelpLabel")
     String searchHelpLabel();
 

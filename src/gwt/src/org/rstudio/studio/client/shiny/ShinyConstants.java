@@ -24,7 +24,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Running Shiny applications")
     @Key("runningShinyUserAction")
     String runningShinyUserAction();
 
@@ -33,7 +32,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Failed to reload")
     @Key("reloadFailErrorCaption")
     String reloadFailErrorCaption();
 
@@ -42,7 +40,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Could not reload the Shiny application.\\n\\n{0}")
     @Key("reloadFailErrorMsg")
     String reloadFailErrorMsg(String error);
 
@@ -51,7 +48,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Shiny App Launch Failed")
     @Key("launchFailedErrorCaption")
     String launchFailedErrorCaption();
 
@@ -60,7 +56,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Shiny App Background Launch Failed")
     @Key("backgroundLaunchFailedErrorCaption")
     String backgroundLaunchFailedErrorCaption();
 
@@ -69,7 +64,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Failed to Stop")
     @Key("failedToStopErrorCaption")
     String failedToStopErrorCaption();
 
@@ -78,7 +72,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Could not stop the Shiny application.\\n\\n{0}")
     @Key("failedToStopErrorMsg")
     String failedToStopErrorMsg(String error);
 
@@ -87,7 +80,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Shiny Application")
     @Key("shinyApplicationTitle")
     String shinyApplicationTitle();
 
@@ -96,7 +88,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Open in Browser")
     @Key("openInBrowserButtonText")
     String openInBrowserButtonText();
 
@@ -105,7 +96,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("In R Console")
     @Key("inRConsoleLabel")
     String inRConsoleLabel();
 
@@ -114,7 +104,6 @@ public interface ShinyConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("In Background Job")
     @Key("inBackgroundJobLabel")
     String inBackgroundJobLabel();
 }

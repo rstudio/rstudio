@@ -16,11 +16,9 @@ package org.rstudio.studio.client.workbench.addins;
 
 public interface AddinsConstants extends com.google.gwt.i18n.client.Messages {
 
-    @DefaultMessage("Unable to execute {0} addin\\n(R session is currently busy)")
     @Key("isServerBusyMessage")
     String isServerBusyMessage(String name);
 
-    @DefaultMessage("Error Executing Addin")
     @Key("executingAddinError")
     String executingAddinError();
 

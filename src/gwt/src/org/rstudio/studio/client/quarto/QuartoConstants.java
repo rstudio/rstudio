@@ -24,7 +24,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Presentation")
     @Key("presentationLabel")
     String presentationLabel();
 
@@ -33,7 +32,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Document")
     @Key("documentLabel")
     String documentLabel();
 
@@ -42,7 +40,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Interactive")
     @Key("interactiveLabel")
     String interactiveLabel();
 
@@ -51,7 +48,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("New Quarto Document")
     @Key("newQuartoDocumentCaption")
     String newQuartoDocumentCaption();
 
@@ -60,7 +56,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create")
     @Key("createDocButtonCaption")
     String createDocButtonCaption();
 
@@ -69,7 +64,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("(optional)")
     @Key("newDocAuthorPlaceholderText")
     String newDocAuthorPlaceholderText();
 
@@ -78,7 +72,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Templates")
     @Key("templateAriaLabelValue")
     String templateAriaLabelValue();
 
@@ -87,7 +80,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Engine:")
     @Key("engineLabelCaption")
     String engineLabelCaption();
 
@@ -96,7 +88,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("(None)")
     @Key("engineSelectNoneLabel")
     String engineSelectNoneLabel();
 
@@ -105,7 +96,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Kernel:")
     @Key("kernelLabelCaption")
     String kernelLabelCaption();
 
@@ -114,7 +104,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto")
     @Key("learnMoreLinkCaption")
     String learnMoreLinkCaption();
 
@@ -123,7 +112,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto presentations")
     @Key("learnMorePresentationsLinkCaption")
     String learnMorePresentationsLinkCaption();
 
@@ -132,7 +120,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto interactive documents")
     @Key("learnMoreInteractiveDocsLinkCaption")
     String learnMoreInteractiveDocsLinkCaption();
 
@@ -141,7 +128,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create Empty Document")
     @Key("createEmptyDocButtonTitle")
     String createEmptyDocButtonTitle();
 
@@ -150,7 +136,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Title Required")
     @Key("titleRequiredErrorCaption")
     String titleRequiredErrorCaption();
 
@@ -159,7 +144,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("You must provide a title for the document")
     @Key("titleRequiredErrorMessage")
     String titleRequiredErrorMessage();
 
@@ -168,7 +152,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("HTML")
     @Key("htmlFormatText")
     String htmlFormatText();
 
@@ -177,7 +160,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Recommended format for authoring (you can switch to PDF or Word output anytime)")
     @Key("htmlFormatDesc")
     String htmlFormatDesc();
 
@@ -186,7 +168,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF")
     @Key("pdfFormatText")
     String pdfFormatText();
 
@@ -195,7 +176,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
     @Key("pdfFormatDesc")
     String pdfFormatDesc();
 
@@ -204,7 +184,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Word")
     @Key("wordFormatText")
     String wordFormatText();
 
@@ -213,7 +192,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)")
     @Key("wordFormatDesc")
     String wordFormatDesc();
 
@@ -222,7 +200,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Reveal JS")
     @Key("jsFormatText")
     String jsFormatText();
 
@@ -231,7 +208,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("HTML presentation viewable with any browser (you can also print to PDF with Chrome)")
     @Key("jsFormatDesc")
     String jsFormatDesc();
 
@@ -240,7 +216,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Beamer")
     @Key("beamerFormatText")
     String beamerFormatText();
 
@@ -249,7 +224,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
     @Key("beamerFormatDesc")
     String beamerFormatDesc();
 
@@ -258,7 +232,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint")
     @Key("powerPointFormatText")
     String powerPointFormatText();
 
@@ -267,7 +240,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice")
     @Key("powerPointFormatDesc")
     String powerPointFormatDesc();
 
@@ -276,7 +248,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Shiny components")
     @Key("shinyFormatDesc")
     String shinyFormatDesc();
 
@@ -285,7 +256,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Observable JS components")
     @Key("observableJSFormatDesc")
     String observableJSFormatDesc();
 
@@ -294,7 +264,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Use visual markdown editor")
     @Key("chkVisualEditorLabel")
     String chkVisualEditorLabel();
 
@@ -303,7 +272,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("About the Quarto visual editor")
     @Key("aboutHelpButtonTitle")
     String aboutHelpButtonTitle();
 
@@ -312,7 +280,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Editor:")
     @Key("editorText")
     String editorText();
 }

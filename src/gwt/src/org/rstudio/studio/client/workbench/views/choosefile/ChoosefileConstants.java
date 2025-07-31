@@ -16,15 +16,12 @@ package org.rstudio.studio.client.workbench.views.choosefile;
 
 public interface ChoosefileConstants extends com.google.gwt.i18n.client.Messages {
 
-    @DefaultMessage("Saving...")
     @Key("savingMessage")
     String savingMessage();
 
-    @DefaultMessage("Cancelling...")
     @Key("cancellingMessage")
     String cancellingMessage();
 
-    @DefaultMessage("Choose File")
     @Key("chooseFileCaption")
     String chooseFileCaption();
 

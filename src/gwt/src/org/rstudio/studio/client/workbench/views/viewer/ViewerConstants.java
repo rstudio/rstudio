@@ -16,67 +16,51 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
-    @DefaultMessage("Viewer")
     @Key("viewerTitle")
     String viewerTitle();
 
-    @DefaultMessage("Viewer Tab")
     @Key("viewerTabLabel")
     String viewerTabLabel();
 
-    @DefaultMessage("Export")
     @Key("exportText")
     String exportText();
 
-    @DefaultMessage("Could Not Publish")
     @Key("couldNotPublishCaption")
     String couldNotPublishCaption();
 
-    @DefaultMessage("Viewer Content")
     @Key("viewerContentTitle")
     String viewerContentTitle();
 
-    @DefaultMessage("Viewer Pane")
     @Key("viewerPaneTitle")
     String viewerPaneTitle();
 
-    @DefaultMessage("Sync Editor")
     @Key("syncEditorLabel")
     String syncEditorLabel();
 
-    @DefaultMessage("Error")
     @Key("errorCaption")
     String errorCaption();
 
-    @DefaultMessage("Preparing to export plot...")
     @Key("preparingToExportPlotMessage")
     String preparingToExportPlotMessage();
 
-    @DefaultMessage("Saving standalone web pages")
     @Key("savingStandaloneWebPagesMessage")
     String savingStandaloneWebPagesMessage();
 
-    @DefaultMessage("Save As Web Page")
     @Key("saveAsWebPageCaption")
     String saveAsWebPageCaption();
 
-    @DefaultMessage("Saving as web page...")
     @Key("savingAsWebPageMessage")
     String savingAsWebPageMessage();
 
-    @DefaultMessage("Clear Viewer")
     @Key("clearViewerCaption")
     String clearViewerCaption();
 
-    @DefaultMessage("Are you sure you want to clear all of the items in the history?")
     @Key("clearViewerMessage")
     String clearViewerMessage();
 
-    @DefaultMessage("Clearing viewer...")
     @Key("clearingViewerMessage")
     String clearingViewerMessage();
 
-    @DefaultMessage("Viewer Pane Preview")
     @Key("viewerPanePreviewTitle")
     String viewerPanePreviewTitle();
 

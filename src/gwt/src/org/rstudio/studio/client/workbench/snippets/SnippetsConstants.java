@@ -16,19 +16,15 @@ package org.rstudio.studio.client.workbench.snippets;
 
 public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
 
-    @DefaultMessage("Save")
     @Key("saveTitle")
     String saveTitle();
 
-    @DefaultMessage("Edit Snippets")
     @Key("editSnippetsText")
     String editSnippetsText();
 
-    @DefaultMessage("Using Code Snippets")
     @Key("usingCodeSnippetsText")
     String usingCodeSnippetsText();
 
-    @DefaultMessage("Error Applying Snippets ({0})")
     @Key("applyingSnippetsError")
     String applyingSnippetsError(String fileTypeLabel);
 }
