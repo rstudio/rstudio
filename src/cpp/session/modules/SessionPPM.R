@@ -134,6 +134,11 @@
    # one or more packages have not yet been cached; try to update them
    # make a request to the active PPM instance for available metadata
    
+   # set some dummy values in our local cache, so we can avoid re-querying
+   # packages which have no metadata available (or for queries that fail)
+   for (package in packages)
+      assign(package, list(), envir = cache)
+   
    # TODO: can we avoid the curl requirement?
    if (!requireNamespace("curl", quietly = TRUE))
       return(cache)
