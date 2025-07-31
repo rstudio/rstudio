@@ -2192,25 +2192,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    result[which(diffs), ]
 })
 
-.rs.addFunction("onInstallScriptJobStarted", function()
-{
-   .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())
-})
-
-.rs.addFunction("onInstallScriptJobFinished", function(pkgInfo)
-{
-   before <- .rs.getVar("jobPackageInfo")
-   after <- .rs.installedPackagesFileInfo()
-   .rs.clearVar("jobPackageInfo")
-   
-   # Figure out which packages were changed.
-   rows <- .rs.installedPackagesFileInfoDiff(before, after)
-   
-   # For any packages which appear to have been updated,
-   # tag their DESCRIPTION file with their installation source.
-   .rs.recordPackageSource(rows$path, local = FALSE)
-})
-
 .rs.addFunction("stack", function(mode = "list")
 {
    .data <- list()

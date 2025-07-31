@@ -197,3 +197,23 @@
    # Return the expanded and sorted result
    result
 })
+
+.rs.addFunction("onInstallScriptJobStarted", function()
+{
+   .rs.setVar("jobPackageInfo", .rs.installedPackagesFileInfo())
+})
+
+.rs.addFunction("onInstallScriptJobFinished", function(pkgInfo)
+{
+   before <- .rs.getVar("jobPackageInfo")
+   after <- .rs.installedPackagesFileInfo()
+   .rs.clearVar("jobPackageInfo")
+   
+   # Figure out which packages were changed.
+   rows <- .rs.installedPackagesFileInfoDiff(before, after)
+   
+   # For any packages which appear to have been updated,
+   # tag their DESCRIPTION file with their installation source.
+   .rs.recordPackageSource(rows$path, local = FALSE)
+})
+
