@@ -20,11 +20,22 @@
   if (!nzchar(environFile) || !file.exists(environFile))
     return(character())
 
-    # Read environment variable names from the file
-    contents <- readLines(environFile, warn = FALSE)
-    pattern <- "^\\s*([\\w_]+)\\s*="
-    matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
-    gsub("\\s*=.*", "", matchedLines)
+  # Read environment variable names from the file
+  contents <- readLines(environFile, warn = FALSE)
+  pattern <- "^\\s*([\\w_]+)\\s*="
+  matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
+  variables <- gsub("\\s*=.*", "", matchedLines)
+  
+  # Auto-select certain special environment variables
+  selected <- getOption(
+     "rstudio.deployments.autoselectEnvVars",
+     default = c("DATABRICKS_HOST", "SNOWFLAKE_ACCOUNT")
+  )
+
+  list(
+   variables = variables,
+   selected  = intersect(variables, selected)
+  )
 })
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)

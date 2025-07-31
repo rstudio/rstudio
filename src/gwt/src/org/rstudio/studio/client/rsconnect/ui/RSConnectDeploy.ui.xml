@@ -135,7 +135,7 @@
      </rw:customCell>
    </rw:row>
    </rw:LayoutGrid>
-   <g:Label styleName="{res.style.envVarsLabel}" ui:field="envVarsLabel_" visible="true">
-   </g:Label>
+   <g:Label styleName="{res.style.envVarsLabel}" ui:field="envVarsLabel_" visible="true"/>
+   <g:Label styleName="{res.style.envVarsList}" ui:field="envVarsList_" visible="true"/>
    </g:HTMLPanel>
 </ui:UiBinder> 

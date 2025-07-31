@@ -136,6 +136,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentEnvVars;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectLintResults;
@@ -5648,7 +5649,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getDeploymentEnvVars(ServerRequestCallback<JsArrayString> resultCallback)
+   public void getDeploymentEnvVars(ServerRequestCallback<RSConnectDeploymentEnvVars> resultCallback)
    {
       sendRequest(RPC_SCOPE, "get_deployment_env_vars", resultCallback);
    }

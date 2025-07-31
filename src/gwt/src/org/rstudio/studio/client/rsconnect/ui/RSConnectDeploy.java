@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentEnvVars;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
@@ -60,7 +61,6 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.FontWeight;
@@ -114,6 +114,7 @@ public class RSConnectDeploy extends Composite
       String deployLabel();
       String descriptionPanel();
       String envVarsLabel();
+      String envVarsList();
       String fileList();
       String firstControlLabel();
       String gridControl();
@@ -304,6 +305,24 @@ public class RSConnectDeploy extends Composite
 
       final boolean rsConnectEnabled = 
          userState_.enableRsconnectPublishUi().getGlobalValue();
+
+      // request environment variables for deployment
+      server_.getDeploymentEnvVars(new ServerRequestCallback<RSConnectDeploymentEnvVars>()
+      {
+         @Override
+         public void onResponseReceived(RSConnectDeploymentEnvVars response)
+         {
+            allEnvVars_ = JsUtil.toList(response.getVariables());
+            selectedEnvVars_ = JsUtil.toList(response.getSelected());
+            updateEnvVarsLabel();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
       
       // Invoke the "add account" wizard if either Shiny app or Connect enabled
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
@@ -362,47 +381,33 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent arg0)
          {
-            server_.getDeploymentEnvVars(new ServerRequestCallback<JsArrayString>()
-            {
-               @Override
-               public void onResponseReceived(JsArrayString envVars)
+            EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
+               appContentType(),
+               allEnvVars_, new OperationWithInput<List<String>>()
                {
-                  EnvironmentVariablesDialog dialog = new EnvironmentVariablesDialog(
-                        appContentType(),
-                        JsUtil.toList(envVars),
-                        new OperationWithInput<List<String>>()
-                        {
-                           @Override
-                           public void execute(List<String> envVars)
-                           {
-                              appEnvVars_ = envVars;
-                              updateEnvVarsLabel();
-                           }
-                        },
-                        new Operation()
-                        {
-                           @Override
-                           public void execute()
-                           {
-                              appEnvVars_.clear();;
-                              updateEnvVarsLabel();
-                           }
-                        });
-                  
-                  for (String envVar : appEnvVars_)
+                  @Override
+                  public void execute(List<String> envVars)
                   {
-                     dialog.setItemSelected(envVar);
+                     selectedEnvVars_ = envVars;
+                     updateEnvVarsLabel();
                   }
-                  
-                  dialog.showModal();
-               }
-               
-               @Override
-               public void onError(ServerError error)
+               },
+               new Operation()
                {
-                  Debug.logError(error);
-               }
-            });
+                  @Override
+                  public void execute()
+                  {
+                     selectedEnvVars_.clear();
+                     updateEnvVarsLabel();
+                  }
+               });
+
+            for (String envVar : selectedEnvVars_)
+            {
+               dialog.setItemSelected(envVar);
+            }
+
+            dialog.showModal();
          }
       });
       
@@ -658,7 +663,7 @@ public class RSConnectDeploy extends Composite
             new RSConnectPublishSettings(deployFiles, 
                additionalFiles, 
                getIgnoredFileList(),
-               appEnvVars_,
+               selectedEnvVars_,
                asMultipleRmd_,
                asStatic_),
             isUpdate());
@@ -1370,7 +1375,7 @@ public class RSConnectDeploy extends Composite
 
       // pretend we're creating a brand-new app
       fromPrevious_ = null;
-      appEnvVars_.clear();
+      selectedEnvVars_.clear();
    }
    
    private void checkUncheckAll()
@@ -1457,15 +1462,35 @@ public class RSConnectDeploy extends Composite
    
    private void updateEnvVarsLabel()
    {
-      if (appEnvVars_.isEmpty())
+      if (selectedEnvVars_.isEmpty())
       {
          envVarsLabel_.setText("");
          envVarsLabel_.setVisible(false);
+
+         envVarsList_.setText("");
+         envVarsList_.setVisible(false);
       }
       else
       {
-         envVarsLabel_.setText(constants_.envVarsPublishMessage(appEnvVars_.size(), appContentType()));
+         envVarsLabel_.setText(constants_.envVarsPublishMessage(selectedEnvVars_.size(), appContentType()));
          envVarsLabel_.setVisible(true);
+
+         if (selectedEnvVars_.size() > 3)
+         {
+            String label =
+               selectedEnvVars_.get(0) + ", " +
+               selectedEnvVars_.get(1) + ", " +
+               selectedEnvVars_.get(2) + ", " +
+               "...";
+            envVarsList_.setText(label);
+            envVarsList_.setVisible(true);
+         }
+         else
+         {
+            String label = StringUtil.join(selectedEnvVars_, ", ");
+            envVarsList_.setText(label);
+            envVarsList_.setVisible(true);
+         }
       }
    }
    
@@ -1515,6 +1540,7 @@ public class RSConnectDeploy extends Composite
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton envVarsButton_;
    @UiField Label envVarsLabel_;
+   @UiField Label envVarsList_;
    @UiField ThemedButton checkUncheckAllButton_;
    @UiField ThemedButton previewButton_;
    @UiField VerticalPanel fileListPanel_;
@@ -1530,7 +1556,8 @@ public class RSConnectDeploy extends Composite
    
    private ArrayList<DirEntryCheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = new ArrayList<>();
-   private List<String> appEnvVars_ = new ArrayList<String>();
+   private List<String> allEnvVars_ = new ArrayList<>();
+   private List<String> selectedEnvVars_ = new ArrayList<>();
    
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
