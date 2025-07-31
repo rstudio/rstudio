@@ -2325,9 +2325,9 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       "Use `utils::install.packages()` to bypass this hook if necessary."
       ""
       
-      # Check if package installation was disabled in this version of RStudio.
       if (interactive())
       {
+         # Check if package installation was disabled in this version of RStudio.
          canInstallPackages <- .Call("rs_canInstallPackages", PACKAGE = "(embedding)")
          if (!canInstallPackages)
          {
