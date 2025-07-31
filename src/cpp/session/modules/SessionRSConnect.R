@@ -15,26 +15,38 @@
 
 .rs.addJsonRpcHandler("get_deployment_env_vars", function()
 {
-  # Find active .Renviron file
-  environFile <- .rs.findEnvironFile()
-  if (!nzchar(environFile) || !file.exists(environFile))
-    return(character())
-
-  # Read environment variable names from the file
-  contents <- readLines(environFile, warn = FALSE)
-  pattern <- "^\\s*([\\w_]+)\\s*="
-  matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
-  variables <- gsub("\\s*=.*", "", matchedLines)
+  variables <- character()
   
-  # Auto-select certain special environment variables
-  selected <- getOption(
+  # Find active .Renviron file, and if it exists,
+  # read all of the variables defined within
+  environFile <- .rs.findEnvironFile()
+  if (file.exists(environFile))
+  {
+     contents <- readLines(environFile, warn = FALSE)
+     pattern <- "^\\s*([\\w_]+)\\s*="
+     matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
+     variables <- gsub("\\s*=.*", "", matchedLines)
+  }
+
+  
+  # Include other 'special' environment variables
+  autoSelectEnvVars <- getOption(
      "rstudio.deployments.autoselectEnvVars",
      default = c("DATABRICKS_HOST", "SNOWFLAKE_ACCOUNT")
   )
+  
+  variables <- union(variables, autoSelectEnvVars)
+  
+  # Only keep environment variables which actually appear
+  # to be defined in the current session
+  allEnvVars <- Sys.getenv()
+  variables <- intersect(variables, names(allEnvVars))
+  selected <- intersect(autoSelectEnvVars, names(allEnvVars))
 
+  # Return computed lists to client
   list(
-   variables = variables,
-   selected  = intersect(variables, selected)
+   variables = sort(variables),
+   selected  = selected
   )
 })
 
