@@ -4102,6 +4102,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String presentationTab();
 
     /**
+     * Translated "Databricks".
+     *
+     * @return translated "Databricks"
+     */
+    @DefaultMessage("Databricks")
+    @Key("databricksTab")
+    String databricksTab();
+
+    /**
      * Translated "Confirm Remove".
      *
      * @return translated "Confirm Remove"

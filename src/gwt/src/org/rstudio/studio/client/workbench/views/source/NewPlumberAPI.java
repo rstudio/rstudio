@@ -171,6 +171,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       loadAndPersistClientState();
 
       VerticalPanel controls = new VerticalPanel();
+
       // Create individual widgets
       apiNameTextBox_ = new TextBox();
       DomUtils.disableSpellcheck(apiNameTextBox_);
@@ -181,6 +182,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       apiNameLabel.addStyleName(RES.styles().label());
       controls.add(apiNameLabel);
       controls.add(apiNameTextBox_);
+
       directoryChooserTextBox_ = new DirectoryChooserTextBox(
          constants_.createWithinDirectoryColon(),
          ElementIds.TextBoxButtonId.PLUMBER_DIR,
@@ -191,6 +193,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       controls.add(directoryChooserTextBox_);
 
       controls.add(new VerticalSpacer("20px"));
+
       container_ = new HorizontalPanel();
       DecorativeImage image =
          new DecorativeImage(new ImageResource2x(NewProjectResources.INSTANCE.plumberAppIcon2x()));
@@ -259,6 +262,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    private final TextBox apiNameTextBox_;
 
    private final DirectoryChooserTextBox directoryChooserTextBox_;
+
    private static Result result_ = Result.create();
    private static PlumberAPIClientState clientStateValue_;
 

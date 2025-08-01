@@ -2225,7 +2225,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
       else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
       {
-         // this happens when we have to open an untitled buffer for the the
+         // this happens when we have to open an untitled buffer for the
          // notebook (usually because the of a conflict between the Rmd on disk
          // and the one in the .nb.html file)
          server_.getSourceDocument(doc.getDocId(),

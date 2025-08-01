@@ -32,7 +32,7 @@ public class ProjectUser extends JavaScriptObject
       // RStudio Workbench, so use the username as a fallback.
       return this.display_name || this.username;
    }-*/;
-
+   
    public final native String getSessionId() /*-{
       return this.session_id;
    }-*/;

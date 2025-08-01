@@ -1060,7 +1060,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
                   {
                      // If the job succeeded, check to be sure our dependencies
                      // are now satisfied
-                     ifDependenciesSatisifed(dependencies,
+                     ifDependenciesSatisified(dependencies,
                            silentEmbeddedUpdate,
                            onCompletion);
 
@@ -1092,7 +1092,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          });
    }
 
-   private void ifDependenciesSatisifed(JsArray<Dependency> dependencies,
+   private void ifDependenciesSatisified(JsArray<Dependency> dependencies,
                                 boolean silentEmbeddedUpdate,
                                 final CommandWithArg<Boolean> onComplete)
    {

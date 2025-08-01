@@ -1625,7 +1625,16 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withRagg();
 
     /**
-     * Translated "is not available".
+     * Translated "Using the Databricks Connect integration".
+     *
+     * @return translated "Using the Databricks Connect integration"
+     */
+    @DefaultMessage("Using the Databricks Connect integration")
+    @Key("withDatabricksConnect")
+    String withDatabricksConnect();
+
+    /**
+     * Translated " is not available\n".
      *
      * @return translated "is not available"
      */
