@@ -42,6 +42,7 @@ struct SqliteConnectionOptions
    std::string file;
    int poolSize;
    bool readonly;
+   bool autoCreate;
    core::FilePath databaseDirectory;
 };
 
@@ -58,6 +59,7 @@ struct PostgresqlConnectionOptions
    std::string secureKey; // obfuscated secure-key value
    std::string secureKeyFileUsed; // absolute path to file containing the key, for troubleshooting
    std::string secureKeyHash; // hash of secureKey (pre-obfuscation)
+   bool autoCreate;
 };
 
 // Default options for an empty or an unread configuration
