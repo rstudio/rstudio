@@ -62,6 +62,7 @@
 - ([#15797](https://github.com/rstudio/rstudio/issues/15797)): Changed label in readr-based text import dialog from "factors" to "factor levels"
 - (#16266): RStudio now resolves xdg-open on the PATH, rather than assuming it is located at /usr/bin/xdg-open
 - (#16217): Fixed an issue where error messages were not wrapped when presented in the Console
+- (#16225): Fixed an issue where RStudio memory panel shows shared memory resources for certain cgroup configurations
 
 #### Posit Workbench
 
@@ -73,6 +74,9 @@
 - (rstudio-workbench-vscode-ext#291): Long-running Workbench jobs launched from Positron and VS Code no longer display incorrect runtimes
 - (rstudio-pro#8251): Fixed an issue where `RS_SERVER_URL` was not set correctly in Positron and VS Code sessions launched through the Workbench API
 - (rstudio-pro#8003): Fixed an issue where Positron user settings were not being copied to `user-data-dir`
+- (rstudio-pro#8287): Fixed problem where RStudio memory limits applied to shared processes for certain cgroup configurations.
+- (rstudio-pro#8120): Fixed issue where local launcher resource limits would not work with pam_systemd
+- (rstudio-pro#8246): Fixed bug where rworkspaces would sometimes segfault when it exited (no user impact).
 
 ### Upgrade Instructions
 
