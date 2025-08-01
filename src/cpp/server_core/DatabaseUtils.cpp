@@ -356,7 +356,7 @@ void applySqliteOptions(const Settings& settings,
    FilePath databaseFile = options.databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
    options.file = databaseFile.getAbsolutePath();
    options.poolSize = settings.getInt(kConnectionPoolSize, 0);
-   options.autoCreate = settings.getBool(kAutoCreateDatabase, false);
+   options.autoCreate = settings.getBool(kAutoCreateDatabase, true);
 }
 
 Error applyPostgresqlOptions(const Settings& settings,
