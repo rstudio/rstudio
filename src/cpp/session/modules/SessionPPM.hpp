@@ -30,6 +30,7 @@ namespace modules {
 namespace ppm {
 
 bool isPpmIntegrationEnabled();
+bool isPpmMetadataColumnEnabled();
 std::string getPpmRepositoryUrl();
 std::string getPpmMetadataColumnLabel();
 

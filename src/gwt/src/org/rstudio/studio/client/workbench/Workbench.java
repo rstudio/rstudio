@@ -14,12 +14,6 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -70,9 +64,28 @@ import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
-import org.rstudio.studio.client.workbench.events.*;
+import org.rstudio.studio.client.workbench.events.AdminNotificationEvent;
+import org.rstudio.studio.client.workbench.events.BrowseUrlEvent;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.InstallRtoolsEvent;
+import org.rstudio.studio.client.workbench.events.QuotaStatusEvent;
+import org.rstudio.studio.client.workbench.events.ShowErrorMessageEvent;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
-import org.rstudio.studio.client.workbench.model.*;
+import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
+import org.rstudio.studio.client.workbench.events.UserPromptEvent;
+import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
+import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
+import org.rstudio.studio.client.workbench.model.AdminNotification;
+import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
+import org.rstudio.studio.client.workbench.model.ErrorMessage;
+import org.rstudio.studio.client.workbench.model.QuotaStatus;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.UserPrompt;
+import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
@@ -83,6 +96,12 @@ import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tuto
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class Workbench implements BusyEvent.Handler,
                                   ShowErrorMessageEvent.Handler,
@@ -244,8 +263,9 @@ public class Workbench implements BusyEvent.Handler,
       });
    }
 
-   public void onDeferredInitCompleted(DeferredInitCompletedEvent ev)
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
+      session_.updateSessionInfo(event.getData());
    }
 
    public void onBusy(BusyEvent event)

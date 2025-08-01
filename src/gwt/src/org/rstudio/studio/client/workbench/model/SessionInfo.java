@@ -705,6 +705,10 @@ public class SessionInfo extends JavaScriptObject
       return this.ppm_integration_enabled || false;
    }-*/;
 
+   public final native boolean isPpmMetadataColumnEnabled() /*-{
+      return this.ppm_metadata_column_enabled || false;
+   }-*/;
+
    public final native String getPpmMetadataColumnLabel() /*-{
       return this.ppm_metadata_column_label || "Metadata";
    }-*/;

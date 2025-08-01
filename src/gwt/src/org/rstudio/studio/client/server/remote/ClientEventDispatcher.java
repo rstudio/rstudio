@@ -558,7 +558,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.DeferredInitCompleted)
          {
-            eventBus_.dispatchEvent(new DeferredInitCompletedEvent());
+            JavaScriptObject data = event.getData();
+            eventBus_.dispatchEvent(new DeferredInitCompletedEvent(data));
          }
          else if (type == ClientEvent.PlotsZoomSizeChanged)
          {

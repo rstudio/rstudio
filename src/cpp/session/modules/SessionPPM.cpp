@@ -35,18 +35,6 @@ namespace session {
 namespace modules {
 namespace ppm {
 
-bool isPpmIntegrationEnabled()
-{
-   // primarily for testing
-   std::string enabled = core::system::getenv(kPwbPpmIntegrationEnabled);
-   if (!enabled.empty())
-      return string_utils::isTruthy(enabled);
-
-   // otherwise, assume integration is enabled if a repository URL was provided
-   std::string url = core::system::getenv(kPwbPpmRepoUrl);
-   return !url.empty();
-}
-
 std::string getPpmRepositoryUrl()
 {
    return core::system::getenv(kPwbPpmRepoUrl);
@@ -83,13 +71,44 @@ std::string getPpmMetadataColumnLabel()
    return "Metadata";
 }
 
+bool isPpmIntegrationEnabled()
+{
+   // primarily for testing
+   std::string enabled = core::system::getenv(kPwbPpmIntegrationEnabled);
+   if (!enabled.empty())
+      return string_utils::isTruthy(enabled);
+
+   // otherwise, assume integration is enabled if a repository URL was provided
+   std::string url = core::system::getenv(kPwbPpmRepoUrl);
+   return !url.empty();
+}
+
+bool isPpmMetadataColumnEnabled()
+{
+   if (!isPpmIntegrationEnabled())
+      return false;
+
+   std::string key = getPpmMetadataKey();
+   if (key.empty())
+      return false;
+
+   std::string label = getPpmMetadataColumnLabel();
+   if (label.empty())
+      return false;
+
+   return true;
+}
+
 namespace {
 
 SEXP rs_ppmIntegrationEnabled()
 {
-   bool enabled = isPpmIntegrationEnabled();
-   r::sexp::Protect protect;
-   return r::sexp::create(enabled, &protect);
+   return isPpmIntegrationEnabled() ? R_TrueValue : R_FalseValue;
+}
+
+SEXP rs_ppmMetadataColumnEnabled()
+{
+   return isPpmMetadataColumnEnabled() ? R_TrueValue : R_FalseValue;
 }
 
 SEXP rs_ppmMetadataKey()
@@ -106,6 +125,7 @@ Error initialize()
    using namespace module_context;
 
    RS_REGISTER_CALL_METHOD(rs_ppmIntegrationEnabled);
+   RS_REGISTER_CALL_METHOD(rs_ppmMetadataColumnEnabled);
    RS_REGISTER_CALL_METHOD(rs_ppmMetadataKey);
 
    ExecBlock initBlock;

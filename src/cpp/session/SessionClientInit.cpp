@@ -525,6 +525,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // package manager options
    std::string ppmRepoUrl = session::modules::ppm::getPpmRepositoryUrl();
    sessionInfo["ppm_integration_enabled"] = session::modules::ppm::isPpmIntegrationEnabled();
+   sessionInfo["ppm_metadata_column_enabled"] = session::modules::ppm::isPpmMetadataColumnEnabled();
    sessionInfo["ppm_metadata_column_label"] = session::modules::ppm::getPpmMetadataColumnLabel();
    sessionInfo["ppm_repository_url"] = ppmRepoUrl;
 

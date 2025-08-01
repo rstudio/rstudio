@@ -161,7 +161,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       repositoryButton_.setVisible(!StringUtil.isNullOrEmpty(reposLabel));
       
       // manage presence of metadata column
-      if (session_.getSessionInfo().isPpmIntegrationEnabled())
+      if (session_.getSessionInfo().isPpmMetadataColumnEnabled())
       {
          int oldIndex = packagesTable_.getColumnIndex(metadataColumn_);
          if (activeRepository_ != null)
@@ -771,7 +771,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
 
       // add metadata column if enabled
-      if (session_.getSessionInfo().isPpmIntegrationEnabled())
+      if (session_.getSessionInfo().isPpmMetadataColumnEnabled())
       {
          int index = packagesTable_.getColumnIndex(sourceColumn_);
          packagesTable_.insertColumn(index, metadataColumn_, new TextHeader(getMetadataColumnLabel()));

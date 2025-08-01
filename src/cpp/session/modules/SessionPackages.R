@@ -1407,7 +1407,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("listInstalledPackages", function()
 {
-   includePpmMeta <- .rs.ppm.isIntegrationEnabled()
+   includePpmMeta <- .rs.ppm.isMetadataColumnEnabled()
    ppmMeta <- if (includePpmMeta) .rs.ppm.getMetadata()
    
    # Look for packages in the library paths.

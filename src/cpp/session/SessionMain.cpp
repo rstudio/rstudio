@@ -162,6 +162,7 @@
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionPlumberViewer.hpp"
+#include "modules/SessionPPM.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionRCompletions.hpp"
@@ -922,8 +923,18 @@ void rSessionInitHook(bool newSession)
    // notify the user if the R version has changed
    notifyIfRVersionChanged();
 
+   // synchronize session info
+   json::Object dataJson;
+
+   using namespace rstudio::session::modules::ppm;
+   std::string ppmRepoUrl = getPpmRepositoryUrl();
+   dataJson["ppm_integration_enabled"] = isPpmIntegrationEnabled();
+   dataJson["ppm_metadata_column_enabled"] = isPpmMetadataColumnEnabled();
+   dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
+   dataJson["ppm_repository_url"] = ppmRepoUrl;
+
    // fire an event to the client
-   ClientEvent event(client_events::kDeferredInitCompleted);
+   ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
    module_context::enqueClientEvent(event);
 }
 

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,9 +25,17 @@ public class DeferredInitCompletedEvent extends GwtEvent<DeferredInitCompletedEv
       void onDeferredInitCompleted(DeferredInitCompletedEvent event);
    }
 
-   public DeferredInitCompletedEvent()
+   public DeferredInitCompletedEvent(JavaScriptObject data)
    {
+      data_ = data;
    }
+
+   public JavaScriptObject getData()
+   {
+      return data_;
+   }
+
+   private final JavaScriptObject data_;
 
    @Override
    public Type<Handler> getAssociatedType()

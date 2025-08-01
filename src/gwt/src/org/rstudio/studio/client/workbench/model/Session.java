@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.inject.Inject;
 
 /**
  * The session information stored in this class is generally only
@@ -51,10 +53,21 @@ public class Session
       sessionInfo_ = sessionInfo;
    }
 
+   public void updateSessionInfo(JavaScriptObject overlay)
+   {
+      updateImpl(sessionInfo_, overlay);
+   }
+
    public void persistClientState()
    {
       events_.fireEvent(new PushClientStateEvent());
    }
+
+   private static final native void updateImpl(JavaScriptObject sessionInfo,
+                                               JavaScriptObject sessionInfoOverlay)
+   /*-{
+      Object.assign(sessionInfo, sessionInfoOverlay);
+   }-*/;
 
    private SessionInfo sessionInfo_;
    private final EventBus events_;

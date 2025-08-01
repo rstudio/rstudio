@@ -21,6 +21,11 @@
    .Call("rs_ppmIntegrationEnabled", PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("ppm.isMetadataColumnEnabled", function()
+{
+   .Call("rs_ppmMetadataColumnEnabled", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("ppm.getVulnerabilityInformation", function(repos = NULL)
 {
    # For each available repository, ask it for vulnerability information,
