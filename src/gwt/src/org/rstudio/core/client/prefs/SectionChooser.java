@@ -92,7 +92,9 @@ class SectionChooser extends SimplePanel implements
    {
       DecorativeImage img = new DecorativeImage(icon.getSafeUri());
       nudgeDown(img);
-      img.setSize("29px", "20px");
+      img.setHeight("20px");
+      img.setWidth("29px");
+      img.getElement().getStyle().setProperty("objectFit", "contain");
       Label label = new Label(name, false);
       final ClickableVerticalPanel panel = new ClickableVerticalPanel();
       panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
@@ -101,6 +103,7 @@ class SectionChooser extends SimplePanel implements
       innerPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_CENTER);
       innerPanel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
       innerPanel.add(img);
+
       innerPanel.add(nudgeRightPlus(label));
       panel.add(innerPanel);
       panel.setStyleName(res_.styles().section());
