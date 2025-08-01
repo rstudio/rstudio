@@ -42,6 +42,7 @@ constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connection-
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
 constexpr const char* kConnectionPoolSize = "pool-size";
+constexpr const char* kAutoCreateDatabase = "auto-create";
 
 // Choosing a modest pool size as the db usage of rserver is not high enough to
 // justify anything larger and with 20 a cluster of 5 nodes hits the postgres default limit of 100.

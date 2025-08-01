@@ -216,9 +216,21 @@ Error processSqliteOptions(const SqliteConnectionOptions& options,
       return error;
 
    FilePath databaseFile = FilePath(options.file);
-   error = databaseFile.ensureFile();
-   if (error)
-      return error;
+   if (!databaseFile.exists())
+   {      // If the database file does not exist, we will create it if autoCreate is true
+      if (options.autoCreate)
+      {
+         error = databaseFile.ensureFile();
+         if (error)
+            return error;
+      }
+      else
+      {
+         return Error(boost::system::errc::no_such_file_or_directory,
+                      "SQLite database file does not exist: " + databaseFile.getAbsolutePath() + " and " + kAutoCreateDatabase + " is set to false.",
+                      ERROR_LOCATION);
+      }
+   }
 
    // want to ensure users other than the server can't read the database
    error = databaseFile.changeFileMode(FileMode::USER_READ_WRITE);
@@ -344,6 +356,7 @@ void applySqliteOptions(const Settings& settings,
    FilePath databaseFile = options.databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
    options.file = databaseFile.getAbsolutePath();
    options.poolSize = settings.getInt(kConnectionPoolSize, 0);
+   options.autoCreate = settings.getBool(kAutoCreateDatabase, true);
 }
 
 Error applyPostgresqlOptions(const Settings& settings,
@@ -364,6 +377,7 @@ Error applyPostgresqlOptions(const Settings& settings,
    options.secureKeyFileUsed = core::http::secure_cookie::getKeyFileUsed();
    options.secureKeyHash = core::http::secure_cookie::getKeyHash();
    options.poolSize = settings.getInt(kConnectionPoolSize, 0);
+   options.autoCreate = settings.getBool(kAutoCreateDatabase, false);
 
    Error error = utils::overlay::readPostgresqlOptions(options);
    if (error)
