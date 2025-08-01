@@ -31,6 +31,7 @@
 - (rstudio-pro#8463): The Workbench Jobs pane in Positron and VS Code is now organized by script, similar to the Explorer pane, and uses more familiar VS Code UI conventions. Clicking on a script will open it in the editor, while clicking on a job will open a virtual `Job Details` document
 - (rstudio-pro#7862): Completed jobs can now be individually "dismissed" from the Workbench Jobs pane in Positron and VS Code. There are also new `Dismiss Completed Jobs` and `Restore Completed Jobs` view actions to (un)hide *all* completed jobs. Note that hidden jobs are not persistent across sessions
 - (rstudio-pro#8464): A new setting allows users to launch Workbench jobs from Positron and VS Code that make use of managed credentials. This feature is in preview and is not enabled by default
+- (rstudio-pro#8148): A new Audit Database and `get_historical_session` Workbench API endpoint allows retrieving data about sessions that have ended
 
 ### Fixed
 
