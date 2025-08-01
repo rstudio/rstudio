@@ -4,6 +4,9 @@
 
 #### RStudio
 
+- ([#16293](https://github.com/rstudio/rstudio/issues/16293)): RStudio now displays a package's origin (if known) as part of a Source column in the Packages pane
+- ([#16294](https://github.com/rstudio/rstudio/issues/16294)): RStudio now provides an additional icon in the Packages pane, linking to a package's external documentation (e.g. `pkgdown` website) when available
+- ([#16295](https://github.com/rstudio/rstudio/issues/16295)): RStudio now provides UI for changing the current repository / snapshot when using [Posit Package Manager](https://posit.co/products/enterprise/package-manager/)
 - ([#15841](https://github.com/rstudio/rstudio/issues/15841)): RStudio now highlights all keywords from the SQL 2023 standard in SQL documents 
 - ([#15919](https://github.com/rstudio/rstudio/issues/15919)): RStudio now uses lobstr when computing object sizes
 - ([#16138](https://github.com/rstudio/rstudio/issues/16138)): RStudio now supports version 17 of the R graphics engine
@@ -19,6 +22,7 @@
 
 #### Posit Workbench
 
+- (rstudio-pro#8162): RStudio now supports the display of a custom "Metadata" column in the Packages pane, for sessions using [Posit Package Manager](https://posit.co/products/enterprise/package-manager/)
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
 - (rstudio-pro#5357): Allows strict enforcement of the user limit specified by the Posit Workbench product license
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
