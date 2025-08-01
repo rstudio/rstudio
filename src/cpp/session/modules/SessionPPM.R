@@ -206,6 +206,7 @@
       fmt <- "error requesting package metadata; %s [error code %s]"
       msg <- sprintf(fmt, error, as.character(code))
       warning(msg, call. = FALSE)
+      return(cache)
    }
    
    # pull out the metadata from each response
