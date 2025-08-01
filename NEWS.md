@@ -37,6 +37,9 @@
 - (rstudio-pro#8464): A new setting allows users to launch Workbench jobs from Positron and VS Code that make use of managed credentials. This feature is in preview and is not enabled by default
 - (rstudio-pro#8148): A new Audit Database and `get_historical_session` Workbench API endpoint allows retrieving data about sessions that have ended
 - (rstudio-pro#8502): Version information for Positron and Posit Workbench Code Server is now included in the output of the diagnostic report
+- (rstudio-workbench-vscode-ext#278): Updates Positron Pro sessions to detect Python/R console activity even when browser is closed, preventing sessions from terminating due to inactivity
+- (rstudio-pro#8504): Displays Positron version information in Positron Pro session output
+- (vscode-server#202): Adds GitHub Device Login url as a default trusted domain for VS Code and Positron Pro sessions
 
 ### Fixed
 
@@ -81,6 +84,8 @@
 - (rstudio-pro#8287): Fixed problem where RStudio memory limits applied to shared processes for certain cgroup configurations.
 - (rstudio-pro#8120): Fixed issue where local launcher resource limits would not work with pam_systemd
 - (rstudio-pro#8246): Fixed bug where rworkspaces would sometimes segfault when it exited (no user impact).
+- (rstudio-pro#8462): Fixed an issue where VS Code/Positron Pro session browser state would not be loaded on sign in after being signed out due to inactivity
+- (rstudio-workbench-vscode-ext#268): Fixed an issue where the custom port warning for FastAPI application in VS Code and Positron Pro sessions would not be displayed in some cases
 
 ### Upgrade Instructions
 
