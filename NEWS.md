@@ -12,7 +12,7 @@
 - ([#15614](https://github.com/rstudio/rstudio/issues/15614)): The splash screen closes when clicked with the mouse
 - ([#16111](https://github.com/rstudio/rstudio/issues/16111)): Increases the default console buffer size to 10000 lines
 - ([#11661](https://github.com/rstudio/rstudio/issues/11661)): The Zoom button in the RStudio Desktop plots pane now brings an existing zoomed plot window to the foreground 
-- ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), an option to stop ignoring updates prompts
+- ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), add an option to stop ignoring updates prompts
 - ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduces a new structure for release note entries
 - ([#16226](https://github.com/rstudio/rstudio/issues/16226)): Added option (off by default) to zoom RStudio Desktop UI with Ctrl/Cmd+mouse wheel
@@ -32,6 +32,7 @@
 - (rstudio-pro#7862): Completed jobs can now be individually "dismissed" from the Workbench Jobs pane in Positron and VS Code. There are also new `Dismiss Completed Jobs` and `Restore Completed Jobs` view actions to (un)hide *all* completed jobs. Note that hidden jobs are not persistent across sessions
 - (rstudio-pro#8464): A new setting allows users to launch Workbench jobs from Positron and VS Code that make use of managed credentials. This feature is in preview and is not enabled by default
 - (rstudio-pro#8148): A new Audit Database and `get_historical_session` Workbench API endpoint allows retrieving data about sessions that have ended
+- (rstudio-pro#8502): Version information for Positron and Posit Workbench Code Server is now included in the output of the diagnostic report
 
 ### Fixed
 
@@ -70,6 +71,8 @@
 - (rstudio-pro#7861): Completed jobs in the Workbench Jobs pane in Positron and VS Code no longer have a non-functional `Stop Workbench Job` action
 - (rstudio-pro#8088): Workbench jobs launched from Positron and VS Code no longer ignore queues, resource limits, or resource profiles
 - (rstudio-workbench-vscode-ext#291): Long-running Workbench jobs launched from Positron and VS Code no longer display incorrect runtimes
+- (rstudio-pro#8251): Fixed an issue where `RS_SERVER_URL` was not set correctly in Positron and VS Code sessions launched through the Workbench API
+- (rstudio-pro#8003): Fixed an issue where Positron user settings were not being copied to `user-data-dir`
 
 ### Upgrade Instructions
 
@@ -85,7 +88,7 @@ After completing the package upgrade, carefully review the backed up files and t
 
 ### Dependencies
 
-- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.350.0
+- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.352.0
 - ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.4
 - ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
 - ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
