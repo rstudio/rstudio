@@ -3,19 +3,13 @@ title: "Connecting"
 date-meta: 2022-12-12
 ---
 
-RStudio provides "Push button deployment" to Posit Connect (formerly RStudio Connect), Shinyapps.io, and RPubs.com.
+RStudio provides Push-button deployment to Posit Connect, Shinyapps.io, and RPubs.com.
 
-[Posit Connect](https://www.posit.co/products/enterprise/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and so much more. Connect enables flexible permissions configurations and meets all enterprise security requirements.
+[Posit Connect](https://www.posit.co/products/enterprise/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and more. Connect enables flexible permissions configurations and meets all enterprise security requirements.
 
 [Shinyapps.io](https://www.shinyapps.io/) supports hosting of Shiny for R and Python.
 
-[RPubs.com](https://rpubs.com/) supports hosting of static content only such as R Markdown.
-
-Full Documentation for:
-
--   [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
--   [RPubs - Getting Started](https://rpubs.com/about/getting-started)
--   [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
+[RPubs.com](https://rpubs.com/) only supports hosting of static content, such as R Markdown.
 
 ## Connecting Your Account
 
@@ -28,11 +22,15 @@ install.packages("rsconnect")
 # devtools::install_github("rstudio/rsconnect")
 ```
 
+### Publishing to Connect or Shinyapps.io
+
+You need to connect RStudio to the remote hosting environment (e.g., Connect, Shinyapps.io) and authorize RStudio to use your account. 
+
+To connect a publishing account to RStudio, from the main menu, click **Tools** > **Global Options\...**.
+
 ![Global options menu](images/connecting-1.png){fig-alt="Global options menu"}
 
-You'll need to connect RStudio to the remote hosting environment (e.g. Posit Connect, Shinyapps.io) and authorize RStudio to use your account. To add a publishing account to RStudio, press **Tools** in the main menu, then **Global Options\...**.
-
-In the Options panel that appears, choose **Publishing** in the sidebar, and use the **Connect\...** button to add a new account.
+In the Options panel that displays, click **Publishing** > **Connect\...** button to add a new account.
 
 ![](images/connecting-publishing.png){fig-alt="The Global options menu, highlighting the Publishing tab and the Connect... button"}
 
@@ -40,12 +38,30 @@ Select the publishing destination, then follow the **Connect Account** wizard's 
 
 ![Publishing account configuration](images/connect-account.png){fig-alt="Publishing account configuration"}
 
-Log in and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
+To authorize the IDE to deploy on your behalf, Log in and click **Connect**. Then, return to the IDE and click **Connect Account**.
 
-Once you have successfully configured the connection within RStudio, you may now publish content to Posit Connect or Shinyapps.io.
+Once you have successfully configured the connection within RStudio, you can now publish content to Connect or Shinyapps.io.
 
-Full Documentation for:
+### Publishing to RPubs
+
+Publishing static content, such as R Markdown, to RPubs has a slightly different publishing workflow.
+
+Once you save and knit your R Markdown document, click **Publish**.
+
+![Publish R Markdown document](images/rmarkdown-publish-button.png){fig-alt="Publishing R Markdown file"}
+
+Select **RPubs** as your publishing destination.
+
+![Publish to RPubs](images/publish-to-rpubs.png){fig-alt="Publishing to RPubs"}
+
+Click **Publish**.
+
+![Click Publish](images/rpubs-click-publish.png){fig-alt="Click Publish"}
+
+## Additional resources
+
+For more information, reference the documentation for your desired push-button deployment destination:
 
 -   [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+-   [RPubs - Getting Started](https://rpubs.com/about/getting-started)
 -   [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
--   [RPubs Getting Started](https://rpubs.com/about/getting-started)
