@@ -20,11 +20,21 @@
   if (!nzchar(environFile) || !file.exists(environFile))
     return(character())
 
-    # Read environment variable names from the file
-    contents <- readLines(environFile, warn = FALSE)
-    pattern <- "^\\s*([\\w_]+)\\s*="
-    matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
-    gsub("\\s*=.*", "", matchedLines)
+  # Read environment variable names from the file
+  contents <- readLines(environFile, warn = FALSE)
+  pattern <- "^\\s*([\\w_]+)\\s*="
+  matchedLines <- grep(pattern, contents, perl = TRUE, value = TRUE)
+  variables <- gsub("\\s*=.*", "", matchedLines)
+  
+  # Include some other special environment variables
+  special <- c("DATABRICKS_HOST", "SNOWFLAKE_ACCOUNT")
+  variables <- sort(union(variables, special))
+  
+  # Only include variables which are actually defined in the current session
+  variables <- intersect(variables, names(Sys.getenv()))
+  
+  # All done
+  variables
 })
 
 .rs.addJsonRpcHandler("forget_rsconnect_deployments", function(sourcePath, outputPath)
