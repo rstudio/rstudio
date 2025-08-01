@@ -41,7 +41,7 @@ public class ElementIds
       {
          elementId = elementIdBase + "_" + counter++;
       }
-     return elementId;
+      return elementId;
    }
 
    public static void assignElementId(Element ele, String id)
@@ -400,7 +400,10 @@ public class ElementIds
    public final static String JOB_LAUNCHER_PRO_OPTIONS = "job_launcher_pro_options";
    public final static String JOB_LAUNCHER_PRO_ENVIRONMENT = "job_launcher_pro_environment";
    public final static String SHARE_MANAGED_CREDENTIALS = "share_managed_credentials_checkbox";
-   public static String getShareManagedCredentials() { return getElementId(SHARE_MANAGED_CREDENTIALS); }
+   public final static String getShareManagedCredentials() { return getElementId(SHARE_MANAGED_CREDENTIALS); }
+   
+   public final static String INCLUDE_AUDIT_DETAILS = "include_audit_details";
+   public final static String getIncludeAuditDetails() { return getElementId(INCLUDE_AUDIT_DETAILS); }
 
    // OpenSharedProjectDialog (Pro)
    public final static String SHARED_PROJ_MINE = "shared_proj_mine";
