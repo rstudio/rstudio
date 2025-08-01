@@ -523,7 +523,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FireEvents.class).to(EventBus.class);
    }
 
-   private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)
+   protected <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)
    {
       bind(WorkbenchTab.class).annotatedWith(Names.named(name)).to(clazz);
    }

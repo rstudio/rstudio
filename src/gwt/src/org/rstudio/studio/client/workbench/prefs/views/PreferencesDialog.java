@@ -179,7 +179,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       {
          // filter out panes here basd on prefs as required
          // (not doing any filtering right now)
-    
+
          allPanes.add(pane);
       }
       return allPanes;
