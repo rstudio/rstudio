@@ -7,14 +7,14 @@
 - ([#16293](https://github.com/rstudio/rstudio/issues/16293)): RStudio now displays a package's origin (if known) as part of a Source column in the Packages pane
 - ([#16294](https://github.com/rstudio/rstudio/issues/16294)): RStudio now provides an additional icon in the Packages pane, linking to a package's external documentation (e.g. `pkgdown` website) when available
 - ([#16295](https://github.com/rstudio/rstudio/issues/16295)): RStudio now provides UI for changing the current repository / snapshot when using [Posit Package Manager](https://posit.co/products/enterprise/package-manager/)
-- ([#15841](https://github.com/rstudio/rstudio/issues/15841)): RStudio now highlights all keywords from the SQL 2023 standard in SQL documents 
+- ([#15841](https://github.com/rstudio/rstudio/issues/15841)): RStudio now highlights all keywords from the SQL 2023 standard in SQL documents
 - ([#15919](https://github.com/rstudio/rstudio/issues/15919)): RStudio now uses lobstr when computing object sizes
 - ([#16138](https://github.com/rstudio/rstudio/issues/16138)): RStudio now supports version 17 of the R graphics engine
 - ([#16213](https://github.com/rstudio/rstudio/issues/16213)): Improves legibility of highlighted code when RStudio debugger is active
 - ([#15945](https://github.com/rstudio/rstudio/issues/15945)): Adds a user preference to disable showing the splash screen at startup
 - ([#15614](https://github.com/rstudio/rstudio/issues/15614)): The splash screen closes when clicked with the mouse
 - ([#16111](https://github.com/rstudio/rstudio/issues/16111)): Increases the default console buffer size to 10000 lines
-- ([#11661](https://github.com/rstudio/rstudio/issues/11661)): The Zoom button in the RStudio Desktop plots pane now brings an existing zoomed plot window to the foreground 
+- ([#11661](https://github.com/rstudio/rstudio/issues/11661)): The Zoom button in the RStudio Desktop plots pane now brings an existing zoomed plot window to the foreground
 - ([#16009](https://github.com/rstudio/rstudio/issues/16009)): When manually checking for updates (after previously ignoring an update), add an option to stop ignoring updates prompts
 - ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Posit Product Documentation theme v7.0.0; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduces a new structure for release note entries
@@ -22,30 +22,33 @@
 
 #### Posit Workbench
 
+- (rstudio-pro#8093): Workbench homepage has been redesigned to provide a more efficient and intuitive user experience, with a focus on projects
+- (rstudio-pro#6768): Initial support for displaying Positron and VS Code projects on the homepage alongside RStudio projects
 - (rstudio-pro#8162): RStudio now supports the display of a custom "Metadata" column in the Packages pane, for sessions using [Posit Package Manager](https://posit.co/products/enterprise/package-manager/)
 - ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Allows for custom certificate bundles for GitHub Copilot
 - (rstudio-pro#5357): Allows strict enforcement of the user limit specified by the Posit Workbench product license
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - (rstudio-pro#8186): Enables Positron Pro sessions by default
 - (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
-- (rstudio-pro##8697) : Adds a product check request that calls to a Posit server. This is controlled by the `server-product-check` configuration setting in `rserver.conf`, default `1`.
+- (rstudio-pro#8697): Workbench runs a product check request that notifies a Posit server when the service is set up and actively using a license. This check helps us proactively support customers by confirming successful installation. This is controlled by the `server-product-check` configuration setting, enabled by default (`1`).
 - (rstudio-pro#8090): Improves integration with Posit Package Manager, including: repository discovery, authentication, and improved Package Manager feature visibility in the RStudio IDE
 - (rstudio-pro#5068): Adds support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication
 - (rstudio-pro#7817): R and Python scripts in Positron and VS Code now have a `Run Script in a Workbench Job` action in the editor toolbar (and matching command).
 - (rstudio-pro#8463): The Workbench Jobs pane in Positron and VS Code is now organized by script, similar to the Explorer pane, and uses more familiar VS Code UI conventions. Clicking on a script will open it in the editor, while clicking on a job will open a virtual `Job Details` document
-- (rstudio-pro#7862): Completed jobs can now be individually "dismissed" from the Workbench Jobs pane in Positron and VS Code. There are also new `Dismiss Completed Jobs` and `Restore Completed Jobs` view actions to (un)hide *all* completed jobs. Note that hidden jobs are not persistent across sessions
+- (rstudio-pro#7862): Completed jobs can now be individually "dismissed" from the Workbench Jobs pane in Positron and VS Code. There are also new `Dismiss Completed Jobs` and `Restore Completed Jobs` view actions to (un)hide _all_ completed jobs. Note that hidden jobs are not persistent across sessions
 - (rstudio-pro#8464): A new setting allows users to launch Workbench jobs from Positron and VS Code that make use of managed credentials. This feature is in preview and is not enabled by default
 - (rstudio-pro#8148): A new Audit Database and `get_historical_session` Workbench API endpoint allows retrieving data about sessions that have ended
 - (rstudio-pro#8502): Version information for Positron and Posit Workbench Code Server is now included in the output of the diagnostic report
 - (rstudio-workbench-vscode-ext#278): Updates Positron Pro sessions to detect Python/R console activity even when browser is closed, preventing sessions from terminating due to inactivity
 - (rstudio-pro#8504): Displays Positron version information in Positron Pro session output
 - (vscode-server#202): Adds GitHub Device Login url as a default trusted domain for VS Code and Positron Pro sessions
+- (rstudio-pro#6867): Image selection in the launcher dialog has been enhanced to more clearly display and classify various images to the user
 
 ### Fixed
 
 #### RStudio
 
-- ([#15482](https://github.com/rstudio/rstudio/issues/15482)): Fixed an issue where RStudio would display a "Cannot reinitialise DataTable" error when viewing data sets 
+- ([#15482](https://github.com/rstudio/rstudio/issues/15482)): Fixed an issue where RStudio would display a "Cannot reinitialise DataTable" error when viewing data sets
 - ([#15133](https://github.com/rstudio/rstudio/issues/15133)): Fixed an issue where pkgdown websites built outside of the user directory could not be viewed from RStudio Server
 - ([#14113](https://github.com/rstudio/rstudio/issues/14113)): RStudio no longer displays factors with more than 64 levels as though they were character vectors
 - ([#15955](https://github.com/rstudio/rstudio/issues/15955)): Fixed an issue where the "Save As" dialog would not be visible when trying to save an older git revision of a file
@@ -86,6 +89,7 @@
 - (rstudio-pro#8246): Fixed bug where rworkspaces would sometimes segfault when it exited (no user impact).
 - (rstudio-pro#8462): Fixed an issue where VS Code/Positron Pro session browser state would not be loaded on sign in after being signed out due to inactivity
 - (rstudio-workbench-vscode-ext#268): Fixed an issue where the custom port warning for FastAPI application in VS Code and Positron Pro sessions would not be displayed in some cases
+- (rstudio-pro#6867): Image selection in the launcher UI behaves more consistently
 
 ### Upgrade Instructions
 
@@ -94,6 +98,7 @@
 With this release, Positron Pro sessions are moving from preview to General Availability (GA). The upgrade process will automatically back up any existing Positron Pro configuration files to ensure production-ready defaults are properly installed.
 
 During package upgrade, the following files will be backed up if they exist:
+
 - `/etc/rstudio/positron.conf` as `/etc/rstudio/positron.conf.bak`
 - `/etc/rstudio/positron-user-settings.conf` as `/etc/rstudio/positron-user-settings.conf.bak`
 
