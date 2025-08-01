@@ -30,7 +30,7 @@
 - (rstudio-pro#7533): Posit Product Documentation theme v7.0.1; adds cookie consent, several style updates, accessibility fixes, dark theme improvements
 - (rstudio-pro#8186): Enables Positron Pro sessions by default
 - (rstudio-pro#7599): Backs up existing Positron Pro configuration files and installs defaults during upgrade
-- (rstudio-pro#8697): Adds a product check request that calls to a Posit server. This is controlled by the `server-product-check` configuration setting in `rserver.conf`, default `1`.
+- (rstudio-pro#8697): Workbench runs a product check request that notifies a Posit server when the service is set up and actively using a license. This check helps us proactively support customers by confirming successful installation. This is controlled by the `server-product-check` configuration setting, enabled by default (`1`).
 - (rstudio-pro#8090): Improves integration with Posit Package Manager, including: repository discovery, authentication, and improved Package Manager feature visibility in the RStudio IDE
 - (rstudio-pro#5068): Adds support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication
 - (rstudio-pro#7817): R and Python scripts in Positron and VS Code now have a `Run Script in a Workbench Job` action in the editor toolbar (and matching command).
