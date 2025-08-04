@@ -166,19 +166,34 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
  * Handle that here.
  */
 def optionalPublishToDailies(String packageFile, String destinationPath, String urlPath = '', String product = '') {
-  // Noble and Jammy use the same binaries. Re-publish jammy builds under the noble path on the dailies site.
-  if (env.OS == "jammy") {
-    if (product == '') {
-      // If the product name is not passed as a parameter, we expect it
-      // to be set in the environment.
-      product = "${env.PRODUCT}"
-    }
-    def noble_dalies_path = "${product}/noble-${getArchForOs(env.OS, env.ARCH)}"
-    if (destinationPath.contains("-xcopy")) {
-      noble_dalies_path = "${noble_dalies_path}-xcopy"
-    }
-    publishToDailiesSite(packageFile, noble_dalies_path, urlPath)
+  // Define OS mappings for republishing compatible binaries
+  def osRepublishMappings = [
+    'jammy': 'noble',  // Noble and Jammy use the same binaries
+    'rhel9': 'rhel10'  // RHEL 10 and RHEL 9 use the same binaries
+  ]
+  
+  def currentOs = env.OS
+  if (osRepublishMappings.containsKey(currentOs)) {
+    republishForCompatibleOs(packageFile, destinationPath, urlPath, product, osRepublishMappings[currentOs])
   }
+}
+
+/**
+ * Helper function to republish a build for a compatible OS
+ */
+def republishForCompatibleOs(String packageFile, String destinationPath, String urlPath, String product, String targetOs) {
+  if (product == '') {
+    // If the product name is not passed as a parameter, we expect it
+    // to be set in the environment.
+    product = "${env.PRODUCT}"
+  }
+  
+  def targetDailiesPath = "${product}/${targetOs}-${getArchForOs(env.OS, env.ARCH)}"
+  if (destinationPath.contains("-xcopy")) {
+    targetDailiesPath = "${targetDailiesPath}-xcopy"
+  }
+  
+  publishToDailiesSite(packageFile, targetDailiesPath, urlPath)
 }
 
 /**
