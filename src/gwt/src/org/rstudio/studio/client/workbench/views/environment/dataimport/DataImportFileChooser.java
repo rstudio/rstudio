@@ -214,8 +214,8 @@ public class DataImportFileChooser extends Composite
    private final Operation updateOperation_;
    private String ariaLabelSuffix_;
 
-   private static DataImportFileChooserUiBinder uiBinder = GWT.create(DataImportFileChooserUiBinder.class);
-   interface DataImportFileChooserUiBinder extends UiBinder<Widget, DataImportFileChooser> {}
+   private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+   interface MyUiBinder extends UiBinder<Widget, DataImportFileChooser> {}
 
    private WorkbenchContext workbenchContext_;
 
