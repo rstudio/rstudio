@@ -188,7 +188,7 @@ def republishForCompatibleOs(String packageFile, String destinationPath, String 
     product = "${env.PRODUCT}"
   }
   
-  def targetDailiesPath = "${product}/${targetOs}-${getArchForOs(env.OS, env.ARCH)}"
+  def targetDailiesPath = "${product}/${targetOs}-${getArchForOs(targetOs, env.ARCH)}"
   if (destinationPath.contains("-xcopy")) {
     targetDailiesPath = "${targetDailiesPath}-xcopy"
   }
