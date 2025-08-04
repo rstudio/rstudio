@@ -83,7 +83,7 @@ public class DataImport extends Composite
    
    private Integer zIndex_;
    
-   private DataImportColumnTypesMenu columnTypesMenu_;
+   private DataImportColTypesMenu columnTypesMenu_;
    
    private DataImportPreviewResponse lastSuccessfulResponse_;
    
@@ -117,7 +117,7 @@ public class DataImport extends Composite
       
       setCodeAreaDefaults();
       
-      columnTypesMenu_ = new DataImportColumnTypesMenu();
+      columnTypesMenu_ = new DataImportColTypesMenu();
       
       dataImportOptionsUi_ = getOptionsUiForMode(dataImportMode);
       importOptions_ = getOptions();

@@ -3,7 +3,7 @@
     ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
     ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
     ui:generateLocales="default">
-    <ui:style type='org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportColumnTypesMenu.DataImportColumnTypesMenuCss'>
+    <ui:style type='org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportColTypesMenu.DataImportColTypesMenuCss'>
     .important {
         font-weight: bold;
     }

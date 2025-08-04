@@ -37,10 +37,10 @@ import com.google.gwt.user.client.ui.Widget;
 public class DataImportOptionsUiXls extends DataImportOptionsUi
 {
 
-   private static DataImportOptionsUiXlsUiBinder uiBinder = GWT
-         .create(DataImportOptionsUiXlsUiBinder.class);
+   private static MyUiBinder uiBinder = GWT
+         .create(MyUiBinder.class);
 
-   interface DataImportOptionsUiXlsUiBinder
+   interface MyUiBinder
          extends UiBinder<Widget, DataImportOptionsUiXls>
    {
    }
