@@ -10,7 +10,7 @@
 !dependencies/windows/install-boost/install-boost.R
 !dependencies/windows/install-crashpad/install-crashpad.r
 !dependencies/windows/install-openssl/install-openssl.R
-!dependencies/windows/install-panmirror/clone-quarto-repo.cmd
+!dependencies/windows/install-panmirror/clone-panmirror-repo.cmd
 !dependencies/windows/install-quarto/get-quarto-version.ps1
 !dependencies/windows/install-soci/build-sqlite.cmd
 !dependencies/windows/install-soci/install-soci.R

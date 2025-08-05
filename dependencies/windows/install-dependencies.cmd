@@ -224,7 +224,7 @@ cd ..\windows
 
 echo -- Installing panmirror (Visual Editor)
 pushd install-panmirror
-call clone-quarto-repo.cmd
+call clone-panmirror-repo.cmd
 popd
 
 echo -- Installing crashpad

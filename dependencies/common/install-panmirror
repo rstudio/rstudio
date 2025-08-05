@@ -35,8 +35,8 @@ info "QUARTO_DIR: ${QUARTO_DIR}"
 # clone quarto monorepo if not already cloned
 if ! test -e "$QUARTO_DIR"; then
   echo "Cloning quarto repo"
-  # git clone https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
-  git clone --branch release/rstudio-cucumberleaf-sunflower https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
+  git clone https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
+  # git clone --branch release/rstudio-apple-blossom https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
   pushd $QUARTO_DIR
   git rev-parse HEAD
   popd
@@ -46,8 +46,8 @@ else
   pushd $QUARTO_DIR
   git fetch
   git reset --hard && git clean -dfx
-  # git checkout main
-  git checkout release/rstudio-cucumberleaf-sunflower
+  git checkout main
+  # git checkout release/rstudio-apple-blossom
   git pull
   git rev-parse HEAD
 
