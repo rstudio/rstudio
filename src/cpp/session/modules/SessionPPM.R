@@ -90,7 +90,7 @@
    )
    
    matches <- .rs.regexMatches(pattern, url)
-   if (length(matches) == 0L)
+   if (length(matches) == 0L || !any(nzchar(matches)))
       return(NULL)
    
    as.list(c(url = url, matches))
