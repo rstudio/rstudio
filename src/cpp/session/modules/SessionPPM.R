@@ -114,14 +114,19 @@
 
 .rs.addFunction("ppm.getActiveRepository", function()
 {
-   repos <- getOption("repos")[[1L]]
-   .rs.ppm.fromRepositoryUrl(repos)
+   repos <- getOption("repos")
+   if (length(repos) == 0L)
+      return(list())
+
+   .rs.ppm.fromRepositoryUrl(repos[[1L]])
 })
 
 .rs.addFunction("ppm.updateMetadataCache", function(packages)
 {
    # get the active ppm repository
    parts <- .rs.ppm.getActiveRepository()
+   if (length(parts) == 0L)
+      return(new.env(parent = emptyenv()))
    
    # check and see if we've already cached results for these packages
    url <- parts[["url"]]
