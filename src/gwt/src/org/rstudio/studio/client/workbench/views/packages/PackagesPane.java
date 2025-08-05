@@ -450,6 +450,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          });
 
       repositoryButton_.setVisible(false);
+      ElementIds.assignElementId(repositoryButton_, "packages_pane_repository_button");
       toolbar.addRightWidget(repositoryButton_);
       toolbar.addRightSeparator();
 
