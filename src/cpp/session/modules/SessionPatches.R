@@ -39,6 +39,19 @@
    parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 })
 
+.rs.registerPackageLoadHook("renv", function(...)
+{
+   # compute authorization headers for renv using .netrc if available
+   default <- getOption("renv.download.headers", default = function(url) {})
+   options(renv.download.headers = function(url) {
+      headers <- as.character(default())
+      authorization <- .rs.computeAuthorizationHeader(url)
+      if (length(authorization) && nzchar(authorization))
+         headers["Authorization"] <- authorization
+      headers
+   })
+})
+
 # On Windows, because we now set the active code page to UTF-8,
 # we need to be careful to ensure the outputs from list.files(), list.dirs()
 # and dir() have their encoding properly marked. We do this here.
