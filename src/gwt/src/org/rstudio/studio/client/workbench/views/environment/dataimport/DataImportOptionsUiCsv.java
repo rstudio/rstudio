@@ -48,8 +48,8 @@ import com.google.inject.Inject;
 public class DataImportOptionsUiCsv extends DataImportOptionsUi
 {
    private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
-   private static DataImportOptionsCsvUiBinder uiBinder = GWT
-         .create(DataImportOptionsCsvUiBinder.class);
+   private static MyUiBinder uiBinder = GWT
+         .create(MyUiBinder.class);
 
    private final String escapeBoth_ = "both";
    private final String escapeBackslash_ = "backslash";
@@ -58,7 +58,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    private DataImportOptionsCsvLocale localeInfo_ = null;
    private int lastDelimiterListBoxIndex_ = 0;
    
-   interface DataImportOptionsCsvUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
+   interface MyUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
 
    HTMLPanel mainPanel_;
    

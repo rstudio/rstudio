@@ -1,5 +1,5 @@
 /*
- * DataImportColumnTypesMenu.java
+ * DataImportColTypesMenu.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -31,11 +31,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class DataImportColumnTypesMenu extends PopupPanel
+public class DataImportColTypesMenu extends PopupPanel
 {
 
-   private static DataImportColumnTypesMenuUiBinder uiBinder = GWT
-         .create(DataImportColumnTypesMenuUiBinder.class);
+   private static MyUiBinder uiBinder = GWT
+         .create(MyUiBinder.class);
 
    private OperationWithInput<String> onTypeChange_;
    private OperationWithInput<String> onSelectionChange_;
@@ -65,19 +65,19 @@ public class DataImportColumnTypesMenu extends PopupPanel
    private ArrayList<MenuItem> menuItems_;
    private HashMap<String, MenuItem> menuItemsMap_;
    
-   interface DataImportColumnTypesMenuUiBinder
-         extends UiBinder<Widget, DataImportColumnTypesMenu>
+   interface MyUiBinder
+         extends UiBinder<Widget, DataImportColTypesMenu>
    {
    }
    
-   interface DataImportColumnTypesMenuCss extends CssResource {
+   interface DataImportColTypesMenuCss extends CssResource {
       String entry();
       String entrySelected();
    }
    
-   @UiField DataImportColumnTypesMenuCss style;
+   @UiField DataImportColTypesMenuCss style;
 
-   public DataImportColumnTypesMenu()
+   public DataImportColTypesMenu()
    {
       super(true);
       setWidget(uiBinder.createAndBindUi(this));
