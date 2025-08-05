@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@electron/universal": "2.0.2"
+    "@electron/universal": "3.0.1"
   }
 }
