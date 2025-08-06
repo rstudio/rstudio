@@ -11,10 +11,10 @@
   },
   "devDependencies": {
     "@types/glob": "^9.0.0",
-    "@types/node": "^24.1.0",
+    "@types/node": "^24.2.0",
     "eslint": "^9.32.0",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   } ,
   "scripts": {
     "start": "tsx locdiff.ts"
