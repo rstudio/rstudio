@@ -2111,7 +2111,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       pkgSource <- gsub("/(src|bin)/.*", "", pkgEntry$Repository, perl = TRUE)
       
       # Also remove a potential binary component.
-      pkgSource <- sub("/__[^_]+__/[^/]+/", "", pkgSource)
+      pkgSource <- sub("/__[^_]+__/[^/]+/", "/", pkgSource)
       
       c(
          RemoteType   = "standard",
