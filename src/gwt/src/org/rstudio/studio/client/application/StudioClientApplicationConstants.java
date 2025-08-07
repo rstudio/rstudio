@@ -1472,7 +1472,7 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      * @return translated "Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available."
      */
     @DefaultMessage("Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.")
-    @Key("visitWebsiteForNewVersion")
+    @Key("visitWebsiteForNewVersionText")
     String visitWebsiteForNewVersionText();
 
     /**
