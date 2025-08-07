@@ -22,7 +22,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error While Retrieving History"
      */
     @DefaultMessage("Error While Retrieving History")
-    @Key("errorRetrievingHistoryCaption")
     String errorRetrievingHistoryCaption();
 
     /**
@@ -31,7 +30,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Load History"
      */
     @DefaultMessage("Load History")
-    @Key("loadHistoryCaption")
     String loadHistoryCaption();
 
     /**
@@ -40,7 +38,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Save History As"
      */
     @DefaultMessage("Save History As")
-    @Key("saveHistoryAsCaption")
     String saveHistoryAsCaption();
 
     /**
@@ -49,7 +46,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error"
      */
     @DefaultMessage("Error")
-    @Key("errorCaption")
     String errorCaption();
 
     /**
@@ -58,7 +54,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "No history entries currently selected."
      */
     @DefaultMessage("No history entries currently selected.")
-    @Key("noHistoryEntriesSelectedMessage")
     String noHistoryEntriesSelectedMessage();
 
     /**
@@ -67,7 +62,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Confirm Remove Entries"
      */
     @DefaultMessage("Confirm Remove Entries")
-    @Key("confirmRemoveEntriesCaption")
     String confirmRemoveEntriesCaption();
 
     /**
@@ -76,7 +70,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you want to remove the selected entries from the history?"
      */
     @DefaultMessage("Are you sure you want to remove the selected entries from the history?")
-    @Key("confirmRemoveEntriesMessage")
     String confirmRemoveEntriesMessage();
 
     /**
@@ -85,7 +78,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Removing items..."
      */
     @DefaultMessage("Removing items...")
-    @Key("removingItemsProgressMessage")
     String removingItemsProgressMessage();
 
     /**
@@ -94,7 +86,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Confirm Clear History"
      */
     @DefaultMessage("Confirm Clear History")
-    @Key("confirmClearHistoryCaption")
     String confirmClearHistoryCaption();
 
     /**
@@ -103,7 +94,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you want to clear all history entries?"
      */
     @DefaultMessage("Are you sure you want to clear all history entries?")
-    @Key("confirmClearHistoryMessage")
     String confirmClearHistoryMessage();
 
     /**
@@ -112,7 +102,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Clearing history..."
      */
     @DefaultMessage("Clearing history...")
-    @Key("clearingHistoryProgressMessage")
     String clearingHistoryProgressMessage();
 
     /**
@@ -121,7 +110,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "History"
      */
     @DefaultMessage("History")
-    @Key("historyTitle")
     String historyTitle();
 
     /**
@@ -130,7 +118,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Show command in original context"
      */
     @DefaultMessage("Show command in original context")
-    @Key("showCommandTitle")
     String showCommandTitle();
 
 
@@ -140,7 +127,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Load more entries..."
      */
     @DefaultMessage("Load more entries...")
-    @Key("loadMoreEntriesText")
     String loadMoreEntriesText();
 
     /**
@@ -149,7 +135,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Load {0} more entries"
      */
     @DefaultMessage("Load {0} more entries")
-    @Key("setMoreCommandsText")
     String setMoreCommandsText(long commands);
 
     /**
@@ -158,7 +143,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Search results: {0}"
      */
     @DefaultMessage("Search results: {0}")
-    @Key("searchResultsText")
     String searchResultsText(String commands);
 
     /**
@@ -167,7 +151,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Showing command in context"
      */
     @DefaultMessage("Showing command in context")
-    @Key("showingCommandInContext")
     String showingCommandInContext();
 
     /**
@@ -176,7 +159,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Filter command history"
      */
     @DefaultMessage("Filter command history")
-    @Key("filterCommandHistoryLabel")
     String filterCommandHistoryLabel();
 
     /**
@@ -185,7 +167,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "History Tab"
      */
     @DefaultMessage("History Tab")
-    @Key("historyTabLabel")
     String historyTabLabel();
 
     /**
@@ -194,7 +175,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "History Entry Table"
      */
     @DefaultMessage("History Entry Table")
-    @Key("historyEntryTableText")
     String historyEntryTableText();
 
 }

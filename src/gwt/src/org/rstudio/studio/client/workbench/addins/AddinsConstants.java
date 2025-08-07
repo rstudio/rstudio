@@ -22,7 +22,6 @@ public interface AddinsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Unable to execute {0} addin\n(R session is currently busy)"
      */
     @DefaultMessage("Unable to execute {0} addin\\n(R session is currently busy)")
-    @Key("isServerBusyMessage")
     String isServerBusyMessage(String name);
 
     /**
@@ -31,7 +30,6 @@ public interface AddinsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Executing Addin"
      */
     @DefaultMessage("Error Executing Addin")
-    @Key("executingAddinError")
     String executingAddinError();
 
 

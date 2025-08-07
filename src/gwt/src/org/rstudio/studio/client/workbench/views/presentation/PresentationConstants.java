@@ -22,7 +22,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Opening Presentation..."
      */
     @DefaultMessage("Opening Presentation...")
-    @Key("openingPresentationProgressMessage")
     String openingPresentationProgressMessage();
 
     /**
@@ -31,7 +30,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Unknown Presentation Command"
      */
     @DefaultMessage("Unknown Presentation Command")
-    @Key("unknownPresentationCommandCaption")
     String unknownPresentationCommandCaption();
 
     /**
@@ -40,7 +38,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Unknown Console Directive"
      */
     @DefaultMessage("Unknown Console Directive")
-    @Key("unknownConsoleDirectiveCaption")
     String unknownConsoleDirectiveCaption();
 
     /**
@@ -49,7 +46,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Presentation Frame"
      */
     @DefaultMessage("Presentation Frame")
-    @Key("presentationFrameTitle")
     String presentationFrameTitle();
 
     /**
@@ -58,7 +54,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Presentation"
      */
     @DefaultMessage("Presentation")
-    @Key("presentationTitle")
     String presentationTitle();
 
     /**
@@ -67,7 +62,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Presentation Tab"
      */
     @DefaultMessage("Presentation Tab")
-    @Key("presentationTabLabel")
     String presentationTabLabel();
 
     /**
@@ -76,7 +70,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "More"
      */
     @DefaultMessage("More")
-    @Key("moreText")
     String moreText();
 
     /**
@@ -85,7 +78,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "More presentation commands"
      */
     @DefaultMessage("More presentation commands")
-    @Key("morePresentationCommandsTitle")
     String morePresentationCommandsTitle();
 
 
@@ -95,7 +87,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Error Saving Presentation"
      */
     @DefaultMessage("Error Saving Presentation")
-    @Key("errorSavingPresentationCaption")
     String errorSavingPresentationCaption();
 
     /**
@@ -104,7 +95,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Presentation:\n{0}"
      */
     @DefaultMessage("Presentation:\\n{0}")
-    @Key("presentationLabel")
     String presentationLabel(String title);
 
     /**
@@ -113,7 +103,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Save Presentation As"
      */
     @DefaultMessage("Save Presentation As")
-    @Key("savePresentationAsCaption")
     String savePresentationAsCaption();
 
     /**
@@ -122,7 +111,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Saving Presentation..."
      */
     @DefaultMessage("Saving Presentation...")
-    @Key("savingPresentationProgressMessage")
     String savingPresentationProgressMessage();
 
     /**
@@ -131,7 +119,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Clear Knitr Cache"
      */
     @DefaultMessage("Clear Knitr Cache")
-    @Key("clearKnitrCacheCaption")
     String clearKnitrCacheCaption();
 
     /**
@@ -140,7 +127,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\n\nAre you sure you want to clear the cache now?"
      */
     @DefaultMessage("Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\\n\\nAre you sure you want to clear the cache now?")
-    @Key("clearKnitrCacheMessage")
     String clearKnitrCacheMessage();
 
     /**
@@ -149,7 +135,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Clearing Knitr Cache..."
      */
     @DefaultMessage("Clearing Knitr Cache...")
-    @Key("clearingKnitrCaption")
     String clearingKnitrCaption();
 
     /**
@@ -158,7 +143,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Error Clearing Cache"
      */
     @DefaultMessage("Error Clearing Cache")
-    @Key("errorClearingCache")
     String errorClearingCache();
 
     /**
@@ -167,7 +151,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Closing Presentation..."
      */
     @DefaultMessage("Closing Presentation...")
-    @Key("closingPresentationProgressMessage")
     String closingPresentationProgressMessage();
 
 }

@@ -25,6 +25,5 @@ public interface VCSConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("RStudio: Review Changes")
-    @Key("vcsWindowTitle")
     String vcsWindowTitle();
 }

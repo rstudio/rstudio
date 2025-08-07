@@ -22,7 +22,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help"
      */
     @DefaultMessage("Help")
-    @Key("helpText")
     String helpText();
 
     /**
@@ -31,7 +30,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help Pane"
      */
     @DefaultMessage("Help Pane")
-    @Key("helpPaneTitle")
     String helpPaneTitle();
 
     /**
@@ -40,7 +38,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help Tab"
      */
     @DefaultMessage("Help Tab")
-    @Key("helpTabLabel")
     String helpTabLabel();
 
     /**
@@ -49,7 +46,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help Tab Second"
      */
     @DefaultMessage("Help Tab Second")
-    @Key("helpTabSecondLabel")
     String helpTabSecondLabel();
 
     /**
@@ -58,7 +54,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Find next (Enter)"
      */
     @DefaultMessage("Find next (Enter)")
-    @Key("findNextLabel")
     String findNextLabel();
 
     /**
@@ -67,7 +62,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Find previous"
      */
     @DefaultMessage("Find previous")
-    @Key("findPreviousLabel")
     String findPreviousLabel();
 
     /**
@@ -76,7 +70,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Find in Topic"
      */
     @DefaultMessage("Find in Topic")
-    @Key("findInTopicLabel")
     String findInTopicLabel();
 
     /**
@@ -85,7 +78,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "No occurrences found"
      */
     @DefaultMessage("No occurrences found")
-    @Key("noOccurrencesFoundMessage")
     String noOccurrencesFoundMessage();
 
     /**
@@ -94,7 +86,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Search help"
      */
     @DefaultMessage("Search help")
-    @Key("searchHelpLabel")
     String searchHelpLabel();
 
 }

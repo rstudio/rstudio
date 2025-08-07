@@ -22,7 +22,6 @@ public interface ChoosefileConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Saving..."
      */
     @DefaultMessage("Saving...")
-    @Key("savingMessage")
     String savingMessage();
 
     /**
@@ -31,7 +30,6 @@ public interface ChoosefileConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Cancelling..."
      */
     @DefaultMessage("Cancelling...")
-    @Key("cancellingMessage")
     String cancellingMessage();
 
     /**
@@ -40,7 +38,6 @@ public interface ChoosefileConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Choose File"
      */
     @DefaultMessage("Choose File")
-    @Key("chooseFileCaption")
     String chooseFileCaption();
 
 }

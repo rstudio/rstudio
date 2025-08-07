@@ -22,7 +22,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connections"
      */
     @DefaultMessage("Connections")
-    @Key("connectionsTitle")
     String connectionsTitle();
 
     /**
@@ -31,7 +30,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Error"
      */
     @DefaultMessage("Error")
-    @Key("errorCaption")
     String errorCaption();
 
     /**
@@ -40,7 +38,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "The R session is currently busy. Wait for completion or interrupt the current session and retry."
      */
     @DefaultMessage("The R session is currently busy. Wait for completion or interrupt the current session and retry.")
-    @Key("newConnectionError")
     String newConnectionError();
 
     /**
@@ -49,7 +46,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Checking for Updates..."
      */
     @DefaultMessage("Checking for Updates...")
-    @Key("checkingForUpdatesProgress")
     String checkingForUpdatesProgress();
 
     /**
@@ -58,7 +54,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Failed to check for updates"
      */
     @DefaultMessage("Failed to check for updates")
-    @Key("failedToCheckUpdatesError")
     String failedToCheckUpdatesError();
 
     /**
@@ -67,7 +62,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Preparing connections..."
      */
     @DefaultMessage("Preparing connections...")
-    @Key("preparingConnectionsProgressMessage")
     String preparingConnectionsProgressMessage();
 
     /**
@@ -76,7 +70,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connecting"
      */
     @DefaultMessage("Connecting")
-    @Key("connectingLabel")
     String connectingLabel();
 
     /**
@@ -85,7 +78,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Previewing table..."
      */
     @DefaultMessage("Previewing table...")
-    @Key("previewTableProgressMessage")
     String previewTableProgressMessage();
 
     /**
@@ -94,7 +86,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Remove Connection"
      */
     @DefaultMessage("Remove Connection")
-    @Key("removeConnectionCaption")
     String removeConnectionCaption();
 
     /**
@@ -103,7 +94,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Are you sure you want to remove this connection from the connection history?"
      */
     @DefaultMessage("Are you sure you want to remove this connection from the connection history?")
-    @Key("removeConnectionQuestion")
     String removeConnectionQuestion();
 
     /**
@@ -112,7 +102,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Are you sure you want to disconnect?"
      */
     @DefaultMessage("Are you sure you want to disconnect?")
-    @Key("disconnectQuestion")
     String disconnectQuestion();
 
     /**
@@ -121,7 +110,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Disconnect"
      */
     @DefaultMessage("Disconnect")
-    @Key("disconnectCaption")
     String disconnectCaption();
 
     /**
@@ -130,7 +118,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} Connection"
      */
     @DefaultMessage("{0} Connection")
-    @Key("connectionNameLabel")
     String connectionNameLabel(String name);
 
     /**
@@ -139,7 +126,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connection"
      */
     @DefaultMessage("Connection")
-    @Key("connectionTextHeader")
     String connectionTextHeader();
 
     /**
@@ -148,7 +134,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connected"
      */
     @DefaultMessage("Connected")
-    @Key("connectedText")
     String connectedText();
 
     /**
@@ -157,7 +142,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Status"
      */
     @DefaultMessage("Status")
-    @Key("statusText")
     String statusText();
 
     /**
@@ -166,7 +150,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Explore connection"
      */
     @DefaultMessage("Explore connection")
-    @Key("exploreConnectionTitle")
     String exploreConnectionTitle();
 
     /**
@@ -175,7 +158,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connections Tab"
      */
     @DefaultMessage("Connections Tab")
-    @Key("connectionsTabLabel")
     String connectionsTabLabel();
 
     /**
@@ -184,7 +166,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Filter by connection"
      */
     @DefaultMessage("Filter by connection")
-    @Key("filterByConnectionLabel")
     String filterByConnectionLabel();
 
     /**
@@ -193,7 +174,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Filter by object"
      */
     @DefaultMessage("Filter by object")
-    @Key("filterByObjectLabel")
     String filterByObjectLabel();
 
     /**
@@ -202,7 +182,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "View all connections"
      */
     @DefaultMessage("View all connections")
-    @Key("viewAllConnectionsTitle")
     String viewAllConnectionsTitle();
 
     /**
@@ -211,7 +190,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "R Console"
      */
     @DefaultMessage("R Console")
-    @Key("rConsoleText")
     String rConsoleText();
 
     /**
@@ -220,7 +198,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "New R Script"
      */
     @DefaultMessage("New R Script")
-    @Key("newRScriptText")
     String newRScriptText();
 
     /**
@@ -229,7 +206,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "New R Notebook"
      */
     @DefaultMessage("New R Notebook")
-    @Key("newRNotebookText")
     String newRNotebookText();
 
     /**
@@ -238,7 +214,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Copy to Clipboard"
      */
     @DefaultMessage("Copy to Clipboard")
-    @Key("copyToClipboardText")
     String copyToClipboardText();
 
     /**
@@ -247,7 +222,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connect"
      */
     @DefaultMessage("Connect")
-    @Key("connectLabel")
     String connectLabel();
 
     /**
@@ -256,7 +230,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connections Tab Connection"
      */
     @DefaultMessage("Connections Tab Connection")
-    @Key("connectionsTab")
     String connectionsTab();
 
     /**
@@ -265,7 +238,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "R Console"
      */
     @DefaultMessage("R Console")
-    @Key("rConsoleItem")
     String rConsoleItem();
 
     /**
@@ -274,7 +246,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "New R Script"
      */
     @DefaultMessage("New R Script")
-    @Key("newRScriptItem")
     String newRScriptItem();
 
     /**
@@ -283,7 +254,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "New R Notebook"
      */
     @DefaultMessage("New R Notebook")
-    @Key("newRNotebookItem")
     String newRNotebookItem();
 
     /**
@@ -292,7 +262,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Copy to Clipboard"
      */
     @DefaultMessage("Copy to Clipboard")
-    @Key("copyToClipboardItem")
     String copyToClipboardItem();
 
     /**
@@ -301,7 +270,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connection:"
      */
     @DefaultMessage("Connection:")
-    @Key("connectionTitle")
     String connectionTitle();
 
     /**
@@ -310,7 +278,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connect from:"
      */
     @DefaultMessage("Connect from:")
-    @Key("connectFromText")
     String connectFromText();
 
     /**
@@ -319,7 +286,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "(Not connected)"
      */
     @DefaultMessage("(Not connected)")
-    @Key("notConnectedLabel")
     String notConnectedLabel();
 
     /**
@@ -328,7 +294,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "The {0} driver is being installed..."
      */
     @DefaultMessage("The {0} driver is being installed...")
-    @Key("installOdbcDriverText")
     String installOdbcDriverText(String name);
 
     /**
@@ -337,7 +302,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Installation for the {0} driver failed with status {1}."
      */
     @DefaultMessage("Installation for the {0} driver failed with status {1}.")
-    @Key("installationFailedMessage")
     String installationFailedMessage(String name, int exitCode);
 
     /**
@@ -346,7 +310,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "The {0} driver is now installed!"
      */
     @DefaultMessage("The {0} driver is now installed!")
-    @Key("driverInstalledText")
     String driverInstalledText(String name);
 
     /**
@@ -355,7 +318,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Installation failed"
      */
     @DefaultMessage("Installation failed")
-    @Key("installationFailedCaption")
     String installationFailedCaption();
 
     /**
@@ -364,7 +326,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} Installation"
      */
     @DefaultMessage("{0} Installation")
-    @Key("installationPageCaption")
     String installationPageCaption(String name);
 
     /**
@@ -373,7 +334,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connect to Existing Data Sources"
      */
     @DefaultMessage("Connect to Existing Data Sources")
-    @Key("connectExistingDataSourceCaption")
     String connectExistingDataSourceCaption();
 
     /**
@@ -382,7 +342,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} via {1}"
      */
     @DefaultMessage("{0} via {1}")
-    @Key("connectionInfoSubTitle")
     String connectionInfoSubTitle(String name, String source);
 
     /**
@@ -391,7 +350,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "title"
      */
     @DefaultMessage("title")
-    @Key("titleText")
     String titleText();
 
     /**
@@ -400,7 +358,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "The {0} driver is currently not installed. "
      */
     @DefaultMessage("The {0} driver is currently not installed. ")
-    @Key("driverLabelText")
     String driverLabelText(String name);
 
     /**
@@ -409,7 +366,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} Installation"
      */
     @DefaultMessage("{0} Installation")
-    @Key("installOdbcCaption")
     String installOdbcCaption(String name);
 
     /**
@@ -418,7 +374,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Connecting to "
      */
     @DefaultMessage("Connecting to ")
-    @Key("connectionUserActionLabel")
     String connectionUserActionLabel();
 
     /**
@@ -427,7 +382,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Shiny Mini UI"
      */
     @DefaultMessage("Shiny Mini UI")
-    @Key("shinyMiniUITitle")
     String shinyMiniUITitle();
 
 
@@ -437,7 +391,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} Connection"
      */
     @DefaultMessage("{0} Connection")
-    @Key("newConnectionPage")
     String newConnectionPage(String name);
 
     /**
@@ -446,7 +399,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Using {0}"
      */
     @DefaultMessage("Using {0}")
-    @Key("connectionHelpLink")
     String connectionHelpLink(String name);
 
     /**
@@ -455,7 +407,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Advanced Options"
      */
     @DefaultMessage("Advanced Options")
-    @Key("advancedOptionsCaption")
     String advancedOptionsCaption();
 
     /**
@@ -464,7 +415,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Configure"
      */
     @DefaultMessage("Configure")
-    @Key("configureButtonLabel")
     String configureButtonLabel();
 
     /**
@@ -473,7 +423,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Using {0}"
      */
     @DefaultMessage("Using {0}")
-    @Key("newConnectionInfoCaption")
     String newConnectionInfoCaption(String name);
 
     /**
@@ -482,7 +431,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "<b>Success!</b> The given parameters can be used to connect and disconnect correctly."
      */
     @DefaultMessage("<b>Success!</b> The given parameters can be used to connect and disconnect correctly.")
-    @Key("newConnectionSuccessHTML")
     String newConnectionSuccessHTML();
 
     /**
@@ -491,7 +439,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Test Results"
      */
     @DefaultMessage("Test Results")
-    @Key("testResultsCaption")
     String testResultsCaption();
 
     /**
@@ -500,7 +447,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "OK"
      */
     @DefaultMessage("OK")
-    @Key("okLabel")
     String okLabel();
 
     /**
@@ -509,7 +455,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "<b>Failure.</b> "
      */
     @DefaultMessage("<b>Failure.</b> ")
-    @Key("failureHTML")
     String failureHTML();
 
     /**
@@ -518,7 +463,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Test"
      */
     @DefaultMessage("Test")
-    @Key("testButtonLabel")
     String testButtonLabel();
 
     /**
@@ -527,7 +471,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Testing Connection..."
      */
     @DefaultMessage("Testing Connection...")
-    @Key("testingConnectionProgressMessage")
     String testingConnectionProgressMessage();
 
     /**
@@ -536,7 +479,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Options..."
      */
     @DefaultMessage("Options...")
-    @Key("optionsButtonLabel")
     String optionsButtonLabel();
 
     /**
@@ -545,7 +487,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstall..."
      */
     @DefaultMessage("Uninstall...")
-    @Key("uninstallButton")
     String uninstallButton();
 
     /**
@@ -554,7 +495,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstall {0} Driver"
      */
     @DefaultMessage("Uninstall {0} Driver")
-    @Key("uninstallDriverCaption")
     String uninstallDriverCaption(String name);
 
     /**
@@ -563,7 +503,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstall the {0} driver by removing files and registration entries?"
      */
     @DefaultMessage("Uninstall the {0} driver by removing files and registration entries?")
-    @Key("uninstallDriverMessage")
     String uninstallDriverMessage(String name);
 
     /**
@@ -572,7 +511,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstallation failed"
      */
     @DefaultMessage("Uninstallation failed")
-    @Key("uninstallationFailedCaption")
     String uninstallationFailedCaption();
 
     /**
@@ -581,7 +519,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstallation complete"
      */
     @DefaultMessage("Uninstallation complete")
-    @Key("uninstallationCompleteCaption")
     String uninstallationCompleteCaption();
 
     /**
@@ -590,7 +527,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Driver {0} was successfully uninstalled."
      */
     @DefaultMessage("Driver {0} was successfully uninstalled.")
-    @Key("driverUninstalledSuccess")
     String driverUninstalledSuccess(String name);
 
     /**
@@ -599,7 +535,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Uninstallation failed"
      */
     @DefaultMessage("Uninstallation failed")
-    @Key("uninstalledFailedMessage")
     String uninstalledFailedMessage();
 
     /**
@@ -608,7 +543,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "New Connection"
      */
     @DefaultMessage("New Connection")
-    @Key("newConnectionCaption")
     String newConnectionCaption();
 
     /**
@@ -617,7 +551,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Using RStudio Connections"
      */
     @DefaultMessage("Using RStudio Connections")
-    @Key("rstudioConnectionsCaption")
     String rstudioConnectionsCaption();
 
     /**
@@ -626,7 +559,6 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Loading objects"
      */
     @DefaultMessage("Loading objects")
-    @Key("loadingObjectsMessage")
     String loadingObjectsMessage();
 
     /**
@@ -635,11 +567,9 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
      * @return translated ""View table (up to 1,000 records)""
      */
     @DefaultMessage("\"View table (up to 1,000 records)\"")
-    @Key("viewTableHTML")
     String viewTableHTML();
     
     @DefaultMessage("Installation path:")
-    @Key("installationPath")
     String installationPath();
     
 

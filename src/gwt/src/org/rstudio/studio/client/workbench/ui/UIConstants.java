@@ -22,7 +22,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "weaving Rnw files"
      */
     @DefaultMessage("weaving Rnw files")
-    @Key("weavingRnwFilesText")
     String weavingRnwFilesText();
 
     /**
@@ -31,7 +30,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "LaTeX typesetting"
      */
     @DefaultMessage("LaTeX typesetting")
-    @Key("latexTypesettingText")
     String latexTypesettingText();
 
     /**
@@ -40,7 +38,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Project Option Unchanged"
      */
     @DefaultMessage("Project Option Unchanged")
-    @Key("projectOptionUnchangedCaption")
     String projectOptionUnchangedCaption();
 
     /**
@@ -49,7 +46,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "You changed the global option for {0} to {1}, however the current project is still configured to use {2}.\n\nDo you want to edit the options for the current project as well?"
      */
     @DefaultMessage("You changed the global option for {0} to {1}, however the current project is still configured to use {2}.\\n\\nDo you want to edit the options for the current project as well?")
-    @Key("projectOptionUnchangedMessage")
     String projectOptionUnchangedMessage(String valueName, String globalValue, String value);
 
     /**
@@ -58,7 +54,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Save Selected"
      */
     @DefaultMessage("Save Selected")
-    @Key("saveSelectedCaption")
     String saveSelectedCaption();
 
     /**
@@ -67,7 +62,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Don't Save"
      */
     @DefaultMessage("Don''t Save")
-    @Key("dontSaveButtonText")
     String dontSaveButtonText();
 
     /**
@@ -76,7 +70,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The following file has unsaved changes:"
      */
     @DefaultMessage("The following file has unsaved changes:")
-    @Key("fileUnsavedChangesText")
     String fileUnsavedChangesText();
 
     /**
@@ -85,7 +78,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The following {0} files have unsaved changes:"
      */
     @DefaultMessage("The following {0} files have unsaved changes:")
-    @Key("filesUnsavedChangesText")
     String filesUnsavedChangesText(int size);
 
     /**
@@ -94,7 +86,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Cannot Add Column"
      */
     @DefaultMessage("Cannot Add Column")
-    @Key("cannotAddColumnText")
     String cannotAddColumnText();
 
     /**
@@ -103,7 +94,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "You can''t add more than {0} columns."
      */
     @DefaultMessage("You can''t add more than {0} columns.")
-    @Key("cannotAddMoreColumnsText")
     String cannotAddMoreColumnsText(int maxColumnCount);
 
     /**
@@ -112,7 +102,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Close"
      */
     @DefaultMessage("Close")
-    @Key("closeText")
     String closeText();
 
 

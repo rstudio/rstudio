@@ -25,7 +25,6 @@ public interface DataViewerConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Cols:")
-    @Key("colsLabel")
     String colsLabel();
 
     /**
@@ -34,7 +33,6 @@ public interface DataViewerConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Filter")
-    @Key("filterButtonText")
     String filterButtonText();
 
     /**
@@ -43,7 +41,6 @@ public interface DataViewerConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Search data table")
-    @Key("searchWidgetLabel")
     String searchWidgetLabel();
 
     /**
@@ -52,6 +49,5 @@ public interface DataViewerConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("(Displaying up to 1,000 records)")
-    @Key("toolbarLabel")
     String toolbarLabel();
 }

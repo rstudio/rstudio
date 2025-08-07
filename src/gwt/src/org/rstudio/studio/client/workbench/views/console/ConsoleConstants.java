@@ -23,7 +23,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "(unknown)"
      */
     @DefaultMessage("(unknown)")
-    @Key("unknownLabel")
     String unknownLabel();
 
     /**
@@ -32,7 +31,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Profiling Code"
      */
     @DefaultMessage("Profiling Code")
-    @Key("profilingCodeTitle")
     String profilingCodeTitle();
 
     /**
@@ -41,7 +39,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console"
      */
     @DefaultMessage("Console")
-    @Key("consoleLabel")
     String consoleLabel();
 
     /**
@@ -50,7 +47,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Tab"
      */
     @DefaultMessage("Console Tab")
-    @Key("consoleTabLabel")
     String consoleTabLabel();
 
     /**
@@ -59,7 +55,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Tab Second"
      */
     @DefaultMessage("Console Tab Second")
-    @Key("consoleTabSecondLabel")
     String consoleTabSecondLabel();
 
     /**
@@ -68,7 +63,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Interrupt R"
      */
     @DefaultMessage("Interrupt R")
-    @Key("interruptRTitle")
     String interruptRTitle();
 
     /**
@@ -77,7 +71,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Interrupt Python"
      */
     @DefaultMessage("Interrupt Python")
-    @Key("interruptPythonTitle")
     String interruptPythonTitle();
 
     /**
@@ -86,7 +79,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Tab Debug"
      */
     @DefaultMessage("Console Tab Debug")
-    @Key("consoleTabDebugLabel")
     String consoleTabDebugLabel();
 
     /**
@@ -95,7 +87,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Tab Profiler"
      */
     @DefaultMessage("Console Tab Profiler")
-    @Key("consoleTabProfilerLabel")
     String consoleTabProfilerLabel();
 
     /**
@@ -104,7 +95,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Tab Job Progress"
      */
     @DefaultMessage("Console Tab Job Progress")
-    @Key("consoleJobProgress")
     String consoleJobProgress();
 
     /**
@@ -113,7 +103,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console cleared"
      */
     @DefaultMessage("Console cleared")
-    @Key("consoleClearedMessage")
     String consoleClearedMessage();
 
     /**
@@ -122,7 +111,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Warning: Focus console output command unavailable when {0} option is enabled."
      */
     @DefaultMessage("Warning: Focus console output command unavailable when {0} option is enabled.")
-    @Key("focusConsoleWarningMessage")
     String focusConsoleWarningMessage(String title);
 
     /**
@@ -131,7 +119,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error: {0}\n"
      */
     @DefaultMessage("Error: {0}\\n")
-    @Key("errorString")
     String errorString(String userMessage);
 
     /**
@@ -140,7 +127,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Executing Python code"
      */
     @DefaultMessage("Executing Python code")
-    @Key("executingPythonCodeProgressCaption")
     String executingPythonCodeProgressCaption();
 
     /**
@@ -149,7 +135,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Console Output"
      */
     @DefaultMessage("Console Output")
-    @Key("consoleOutputLabel")
     String consoleOutputLabel();
 
     /**
@@ -158,7 +143,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "(No matches)"
      */
     @DefaultMessage("(No matches)")
-    @Key("noMatchesLabel")
     String noMatchesLabel();
 
     /**
@@ -167,7 +151,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "... Not all items shown"
      */
     @DefaultMessage("... Not all items shown")
-    @Key("notAllItemsShownText")
     String notAllItemsShownText();
 
     /**
@@ -176,7 +159,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Press F1 for additional help"
      */
     @DefaultMessage("Press F1 for additional help")
-    @Key("f1prompt")
     String f1prompt();
 
     /**
@@ -185,7 +167,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Retrieving Help"
      */
     @DefaultMessage("Error Retrieving Help")
-    @Key("errorRetrievingHelp")
     String errorRetrievingHelp();
 
     /**
@@ -194,7 +175,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "(No matching commands)"
      */
     @DefaultMessage("(No matching commands)")
-    @Key("noMatchingCommandsText")
     String noMatchingCommandsText();
 
     /**
@@ -203,7 +183,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Opening help..."
      */
     @DefaultMessage("Opening help...")
-    @Key("openingHelpProgressMessage")
     String openingHelpProgressMessage();
 
     /**
@@ -212,7 +191,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Finding definition..."
      */
     @DefaultMessage("Finding definition...")
-    @Key("findingDefinitionProgressMessage")
     String findingDefinitionProgressMessage();
 
     /**
@@ -221,7 +199,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help"
      */
     @DefaultMessage("Help")
-    @Key("helpCaption")
     String helpCaption();
 
     /**
@@ -230,7 +207,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Searching for definition..."
      */
     @DefaultMessage("Searching for definition...")
-    @Key("searchingForDefinitionMessage")
     String searchingForDefinitionMessage();
 
     /**
@@ -239,7 +215,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Searching for Function"
      */
     @DefaultMessage("Error Searching for Function")
-    @Key("errorSearchingForFunctionMessage")
     String errorSearchingForFunctionMessage();
 
     /**
@@ -248,7 +223,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Position {0}"
      */
     @DefaultMessage("Position {0}")
-    @Key("positionText")
     String positionText(int position);
 
     /**
@@ -257,7 +231,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Start: "
      */
     @DefaultMessage("Start: ")
-    @Key("startText")
     String startText();
 
     /**
@@ -266,7 +239,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "null"
      */
     @DefaultMessage("null")
-    @Key("nullText")
     String nullText();
 
     /**
@@ -275,7 +247,6 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "End: "
      */
     @DefaultMessage("End: ")
-    @Key("endText")
     String endText();
 
     /**
@@ -284,6 +255,5 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Session Suspended"
      */
     @DefaultMessage("Session Suspended")
-    @Key("sessionSuspendedTitle")
     String sessionSuspendedTitle();
 }

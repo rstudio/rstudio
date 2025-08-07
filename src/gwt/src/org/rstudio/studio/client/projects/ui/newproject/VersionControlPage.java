@@ -85,7 +85,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          else
          {
             HTML msg = new HTML(
-                    constants_.installtionNotDetectedHTML(getTitle())
+                    constants_.installationNotDetectedHTML(getTitle())
             );
                msg.setWidth("100%");
                

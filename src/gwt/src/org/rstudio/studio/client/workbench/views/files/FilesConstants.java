@@ -22,7 +22,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "New Folder"
      */
     @DefaultMessage("New Folder")
-    @Key("newFolderTitle")
     String newFolderTitle();
 
     /**
@@ -31,7 +30,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Please enter the new folder name"
      */
     @DefaultMessage("Please enter the new folder name")
-    @Key("newFolderNameLabel")
     String newFolderNameLabel();
 
     /**
@@ -40,7 +38,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Creating folder..."
      */
     @DefaultMessage("Creating folder...")
-    @Key("creatingFolderProgressLabel")
     String creatingFolderProgressLabel();
 
     /**
@@ -49,7 +46,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Multiple Items Selected"
      */
     @DefaultMessage("Multiple Items Selected")
-    @Key("multipleItemsSelectedCaption")
     String multipleItemsSelectedCaption();
 
     /**
@@ -58,7 +54,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Please select a single file or folder to copy"
      */
     @DefaultMessage("Please select a single file or folder to copy")
-    @Key("multipleItemsSelectedMessage")
     String multipleItemsSelectedMessage();
 
     /**
@@ -67,7 +62,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Choose Destination"
      */
     @DefaultMessage("Choose Destination")
-    @Key("chooseDestinationTitle")
     String chooseDestinationTitle();
 
     /**
@@ -76,7 +70,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Choose Folder"
      */
     @DefaultMessage("Choose Folder")
-    @Key("chooseFolderTitle")
     String chooseFolderTitle();
 
     /**
@@ -85,7 +78,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Invalid target folder"
      */
     @DefaultMessage("Invalid target folder")
-    @Key("invalidTargetFolderErrorMessage")
     String invalidTargetFolderErrorMessage();
 
     /**
@@ -94,7 +86,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Moving files..."
      */
     @DefaultMessage("Moving files...")
-    @Key("movingFilesLabel")
     String movingFilesLabel();
 
     /**
@@ -103,7 +94,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Export Files"
      */
     @DefaultMessage("Export Files")
-    @Key("exportFilesCaption")
     String exportFilesCaption();
 
     /**
@@ -112,7 +102,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "selected file(s)"
      */
     @DefaultMessage("selected file(s)")
-    @Key("selectedFilesCaption")
     String selectedFilesCaption();
 
     /**
@@ -121,7 +110,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Invalid Selection"
      */
     @DefaultMessage("Invalid Selection")
-    @Key("invalidSelectionCaption")
     String invalidSelectionCaption();
 
     /**
@@ -130,7 +118,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Please select a single file to rename."
      */
     @DefaultMessage("Please select a single file to rename.")
-    @Key("invalidSelectionMessage")
     String invalidSelectionMessage();
 
     /**
@@ -139,7 +126,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you want to permanently delete "
      */
     @DefaultMessage("Are you sure you want to permanently delete ")
-    @Key("permanentDeleteMessage")
     String permanentDeleteMessage();
 
 
@@ -149,7 +135,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "the {0} selected files"
      */
     @DefaultMessage("the {0} selected files")
-    @Key("selectedFilesMessage")
     String selectedFilesMessage(int size);
 
     /**
@@ -158,7 +143,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "?\n\nThis cannot be undone."
      */
     @DefaultMessage("?\\n\\nThis cannot be undone.")
-    @Key("cannotBeUndoneMessage")
     String cannotBeUndoneMessage();
 
     /**
@@ -167,7 +151,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Confirm Delete"
      */
     @DefaultMessage("Confirm Delete")
-    @Key("confirmDeleteCaption")
     String confirmDeleteCaption();
 
     /**
@@ -176,7 +159,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Deleting files..."
      */
     @DefaultMessage("Deleting files...")
-    @Key("deletingFilesLabel")
     String deletingFilesLabel();
 
     /**
@@ -185,7 +167,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error"
      */
     @DefaultMessage("Error")
-    @Key("errorCaption")
     String errorCaption();
 
     /**
@@ -194,7 +175,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The Public folder cannot be {0}."
      */
     @DefaultMessage("The Public folder cannot be {0}.")
-    @Key("publicFolderMessage")
     String publicFolderMessage(String verb);
 
     /**
@@ -203,7 +183,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Opening Files"
      */
     @DefaultMessage("Error Opening Files")
-    @Key("errorOpeningFilesCaption")
     String errorOpeningFilesCaption();
 
     /**
@@ -212,7 +191,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "{0} RNotebook files were unable to be processed and opened."
      */
     @DefaultMessage("{0} RNotebook files were unable to be processed and opened.")
-    @Key("fileErrorMessage")
     String fileErrorMessage(int size);
 
     /**
@@ -221,7 +199,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "\n\nErrors:"
      */
     @DefaultMessage("\\n\\nErrors:")
-    @Key("errorMessage")
     String errorMessage();
 
     /**
@@ -230,7 +207,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated ""{0}" failed to open\n{1}\n"
      */
     @DefaultMessage("\"{0}\" failed to open\\n{1}\\n")
-    @Key("failedToOpenMessage")
     String failedToOpenMessage(String notebookName, String userMessage);
 
     /**
@@ -239,7 +215,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Create a New {0} File in Current Directory"
      */
     @DefaultMessage("Create a New {0} File in Current Directory")
-    @Key("createNewFileTitle")
     String createNewFileTitle(String formmattedExt);
 
     /**
@@ -248,7 +223,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Create a New File in Current Directory"
      */
     @DefaultMessage("Create a New File in Current Directory")
-    @Key("createNewFileInCurrentDirectoryTitle")
     String createNewFileInCurrentDirectoryTitle();
     
     /**
@@ -257,7 +231,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Please enter the new file name:"
      */
     @DefaultMessage("Please enter the new file name:")
-    @Key("enterFileNameLabel")
     String enterFileNameLabel();
 
     /**
@@ -266,7 +239,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Creating file..."
      */
     @DefaultMessage("Creating file...")
-    @Key("creatingFileLabel")
     String creatingFileLabel();
 
     /**
@@ -275,7 +247,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Blank File Creation Failed"
      */
     @DefaultMessage("Blank File Creation Failed")
-    @Key("blankFileFailedCaption")
     String blankFileFailedCaption();
 
     /**
@@ -284,7 +255,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "A blank {0} file named "{1}" was unable to be created.\n\nThe server failed with the following error: \n{2}"
      */
     @DefaultMessage("A blank {0} file named \"{1}\" was unable to be created.\\n\\nThe server failed with the following error: \\n{2}")
-    @Key("blankFileFailedMessage")
     String blankFileFailedMessage(String deafultExtension, String input, String userMessage);
 
     /**
@@ -293,7 +263,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Rename File"
      */
     @DefaultMessage("Rename File")
-    @Key("renameFileTitle")
     String renameFileTitle();
 
     /**
@@ -302,7 +271,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Please enter the new file name:"
      */
     @DefaultMessage("Please enter the new file name:")
-    @Key("renameFileCaption")
     String renameFileCaption();
 
     /**
@@ -311,7 +279,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Renaming file..."
      */
     @DefaultMessage("Renaming file...")
-    @Key("renamingFileProgressMessage")
     String renamingFileProgressMessage();
 
     /**
@@ -320,7 +287,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Folder"
      */
     @DefaultMessage("Folder")
-    @Key("folderLabel")
     String folderLabel();
 
     /**
@@ -329,7 +295,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File"
      */
     @DefaultMessage("File")
-    @Key("fileLabel")
     String fileLabel();
 
     /**
@@ -338,7 +303,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Copy {0}"
      */
     @DefaultMessage("Copy {0}")
-    @Key("copyTitle")
     String copyTitle(String objectName);
 
     /**
@@ -347,7 +311,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Enter a name for the copy of ''{0}'':"
      */
     @DefaultMessage("Enter a name for the copy of ''{0}'':")
-    @Key("enterNameLabel")
     String enterNameLabel(String name);
 
     /**
@@ -356,7 +319,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Copying {0}..."
      */
     @DefaultMessage("Copying {0}...")
-    @Key("copyingLabel")
     String copyingLabel(String objectName);
 
     /**
@@ -365,7 +327,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Files"
      */
     @DefaultMessage("Files")
-    @Key("filesTitle")
     String filesTitle();
 
     /**
@@ -374,7 +335,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File Listing Error"
      */
     @DefaultMessage("File Listing Error")
-    @Key("fileListingErrorCaption")
     String fileListingErrorCaption();
 
     /**
@@ -383,7 +343,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error navigating to {0}:\n\n{1}"
      */
     @DefaultMessage("Error navigating to {0}:\\n\\n{1}")
-    @Key("fileListingErrorMessage")
     String fileListingErrorMessage(String path, String userMessage);
 
     /**
@@ -392,7 +351,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Open in Editor"
      */
     @DefaultMessage("Open in Editor")
-    @Key("openInEditorLabel")
     String openInEditorLabel();
 
     /**
@@ -401,7 +359,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "View in Web Browser"
      */
     @DefaultMessage("View in Web Browser")
-    @Key("viewInWebBrowserLabel")
     String viewInWebBrowserLabel();
 
     /**
@@ -410,7 +367,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "View File"
      */
     @DefaultMessage("View File")
-    @Key("viewFileLabel")
     String viewFileLabel();
 
     /**
@@ -419,7 +375,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Import Dataset..."
      */
     @DefaultMessage("Import Dataset...")
-    @Key("importDatasetLabel")
     String importDatasetLabel();
 
     /**
@@ -428,7 +383,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "unzip not found"
      */
     @DefaultMessage("unzip not found")
-    @Key("unzipNotFoundCaption")
     String unzipNotFoundCaption();
 
     /**
@@ -437,7 +391,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The unzip system utility could not be found. unzip is required for decompressing .zip archives after upload.\n\nWould you like to upload the zip archive without unzipping?"
      */
     @DefaultMessage("The unzip system utility could not be found. unzip is required for decompressing .zip archives after upload.\\n\\nWould you like to upload the zip archive without unzipping?")
-    @Key("unzipNotFoundMessage")
     String unzipNotFoundMessage();
 
     /**
@@ -446,7 +399,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The upload will overwrite "
      */
     @DefaultMessage("The upload will overwrite ")
-    @Key("uploadOverwriteMessage")
     String uploadOverwriteMessage();
 
     /**
@@ -455,7 +407,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "multiple files including "
      */
     @DefaultMessage("multiple files including ")
-    @Key("multipleFilesMessage")
     String multipleFilesMessage();
 
     /**
@@ -464,7 +415,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "the file "
      */
     @DefaultMessage("the file ")
-    @Key("theFileMessage")
     String theFileMessage();
 
     /**
@@ -473,7 +423,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you want to overwrite "
      */
     @DefaultMessage("Are you sure you want to overwrite ")
-    @Key("overwriteQuestion")
     String overwriteQuestion();
 
     /**
@@ -482,7 +431,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "these files?"
      */
     @DefaultMessage("these files?")
-    @Key("filesLabel")
     String filesLabel();
 
     /**
@@ -491,7 +439,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "this file?"
      */
     @DefaultMessage("this file?")
-    @Key("thisFileLabel")
     String thisFileLabel();
 
     /**
@@ -500,7 +447,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "{0} file upload..."
      */
     @DefaultMessage("{0} file upload...")
-    @Key("fileUploadMessage")
     String fileUploadMessage(String commit);
 
     /**
@@ -509,7 +455,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Completing"
      */
     @DefaultMessage("Completing")
-    @Key("completingLabel")
     String completingLabel();
 
     /**
@@ -518,7 +463,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Cancelling"
      */
     @DefaultMessage("Cancelling")
-    @Key("cancellingLabel")
     String cancellingLabel();
 
     /**
@@ -527,7 +471,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File Upload Error"
      */
     @DefaultMessage("File Upload Error")
-    @Key("fileUploadErrorMessage")
     String fileUploadErrorMessage();
 
     /**
@@ -536,7 +479,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Confirm Overwrite"
      */
     @DefaultMessage("Confirm Overwrite")
-    @Key("confirmOverwriteCaption")
     String confirmOverwriteCaption();
 
     /**
@@ -545,7 +487,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File Commands"
      */
     @DefaultMessage("File Commands")
-    @Key("fileCommandsLabel")
     String fileCommandsLabel();
 
     /**
@@ -554,7 +495,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "New File"
      */
     @DefaultMessage("New File")
-    @Key("newFileText")
     String newFileText();
     
     /**
@@ -563,7 +503,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "New Blank File"
      */
     @DefaultMessage("New Blank File")
-    @Key("newBlankFileText")
     String newBlankFileText();
 
     /**
@@ -572,7 +511,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Create a new file in the current directory"
      */
     @DefaultMessage("Create a new file in the current directory")
-    @Key("createNewFileText")
     String createNewFileText();
     
     /**
@@ -581,7 +519,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Create a new blank file in current directory"
      */
     @DefaultMessage("Create a new blank file in current directory")
-    @Key("createNewBlankFileText")
     String createNewBlankFileText();
 
     /**
@@ -590,7 +527,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Synchronize Working Directory"
      */
     @DefaultMessage("Synchronize Working Directory")
-    @Key("synchronizeWorkingDirectoryLabel")
     String synchronizeWorkingDirectoryLabel();
 
     /**
@@ -599,7 +535,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Show Hidden Files"
      */
     @DefaultMessage("Show Hidden Files")
-    @Key("showHiddenFilesLabel")
     String showHiddenFilesLabel();
 
     /**
@@ -608,7 +543,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "More"
      */
     @DefaultMessage("More")
-    @Key("moreText")
     String moreText();
 
     /**
@@ -617,7 +551,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "More file commands"
      */
     @DefaultMessage("More file commands")
-    @Key("moreFileCommandsLabel")
     String moreFileCommandsLabel();
 
     /**
@@ -626,7 +559,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Folder"
      */
     @DefaultMessage("Folder")
-    @Key("folderText")
     String folderText();
 
     /**
@@ -635,7 +567,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Blank File"
      */
     @DefaultMessage("Blank File")
-    @Key("blankFileText")
     String blankFileText();
 
     /**
@@ -644,7 +575,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Upload"
      */
     @DefaultMessage("Upload")
-    @Key("uploadText")
     String uploadText();
 
     /**
@@ -653,7 +583,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Delete"
      */
     @DefaultMessage("Delete")
-    @Key("deleteText")
     String deleteText();
 
     /**
@@ -662,7 +591,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Rename"
      */
     @DefaultMessage("Rename")
-    @Key("renameText")
     String renameText();
 
     /**
@@ -671,7 +599,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "New Folder"
      */
     @DefaultMessage("New Folder")
-    @Key("newFolderText")
     String newFolderText();
 
     /**
@@ -680,7 +607,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Select all files"
      */
     @DefaultMessage("Select all files")
-    @Key("selectAllFilesLabel")
     String selectAllFilesLabel();
 
     /**
@@ -689,7 +615,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Size"
      */
     @DefaultMessage("Size")
-    @Key("sizeText")
     String sizeText();
 
     /**
@@ -698,7 +623,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Modified"
      */
     @DefaultMessage("Modified")
-    @Key("modifiedText")
     String modifiedText();
 
     /**
@@ -707,7 +631,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "refresh not supported"
      */
     @DefaultMessage("refresh not supported")
-    @Key("refreshNotSupportedException")
     String refreshNotSupportedException();
 
     /**
@@ -716,7 +639,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "mkdir not supported"
      */
     @DefaultMessage("mkdir not supported")
-    @Key("mkdirNotSupportedException")
     String mkdirNotSupportedException();
 
     /**
@@ -725,7 +647,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "getIcon not supported"
      */
     @DefaultMessage("getIcon not supported")
-    @Key("getIconNotSupportedException")
     String getIconNotSupportedException();
 
     /**
@@ -734,7 +655,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Unexpected response from server"
      */
     @DefaultMessage("Unexpected response from server")
-    @Key("unexpectedResponseException")
     String unexpectedResponseException();
 
     /**
@@ -743,7 +663,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "You must specify a file to upload."
      */
     @DefaultMessage("You must specify a file to upload.")
-    @Key("specifyFileToUploadException")
     String specifyFileToUploadException();
 
     /**
@@ -752,7 +671,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Upload Files"
      */
     @DefaultMessage("Upload Files")
-    @Key("uploadFilesTitle")
     String uploadFilesTitle();
 
     /**
@@ -761,7 +679,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Uploading file..."
      */
     @DefaultMessage("Uploading file...")
-    @Key("uploadingFileProgressMessage")
     String uploadingFileProgressMessage();
 
     /**
@@ -770,7 +687,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Target directory:"
      */
     @DefaultMessage("Target directory:")
-    @Key("targetDirectoryLabel")
     String targetDirectoryLabel();
 
     /**
@@ -779,7 +695,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File to upload:"
      */
     @DefaultMessage("File to upload:")
-    @Key("fileToUploadLabel")
     String fileToUploadLabel();
 
     /**
@@ -788,7 +703,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "<b>TIP</b>: To upload multiple files or a directory, create a zip file. The zip file will be automatically expanded after upload."
      */
     @DefaultMessage("<b>TIP</b>: To upload multiple files or a directory, create a zip file. The zip file will be automatically expanded after upload.")
-    @Key("tipHTML")
     String tipHTML();
 
     /**
@@ -797,7 +711,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "File"
      */
     @DefaultMessage("File")
-    @Key("fileText")
     String fileText();
 
     /**
@@ -806,7 +719,6 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Name"
      */
     @DefaultMessage("Name")
-    @Key("nameHeaderText")
     String nameHeaderText();
 
 }

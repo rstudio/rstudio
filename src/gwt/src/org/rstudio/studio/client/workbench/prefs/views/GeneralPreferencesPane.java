@@ -422,10 +422,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTablistLabel());
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTabListLabel());
       setTabPanelSize(tabPanel);
-      tabPanel.add(basic, constants_.generalTablListBasicOption(), basic.getBasePanelId());
-      tabPanel.add(graphics, constants_.generalTablListGraphicsOption(), graphics.getBasePanelId());
+      tabPanel.add(basic, constants_.generalTabListBasicOption(), basic.getBasePanelId());
+      tabPanel.add(graphics, constants_.generalTabListGraphicsOption(), graphics.getBasePanelId());
       tabPanel.add(advanced, constants_.generalTabListAdvancedOption(), advanced.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
@@ -665,7 +665,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return constants_.generalTablistLabel();
+      return constants_.generalTabListLabel();
    }
 
    @SuppressWarnings("unused")

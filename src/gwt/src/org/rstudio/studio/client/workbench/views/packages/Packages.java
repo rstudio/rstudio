@@ -626,7 +626,7 @@ public class Packages
 
    private void renvAction(final String action)
    {
-      String errorMessage = constants_.errorCheckingPackrat(action);
+      String errorMessage = constants_.errorCheckingPackratAction(action);
       ProgressIndicator indicator =
             globalDisplay_.getProgressIndicator(errorMessage);
 

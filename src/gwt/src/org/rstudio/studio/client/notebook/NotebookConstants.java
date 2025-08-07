@@ -25,7 +25,6 @@ public interface NotebookConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Compile Report from R Script")
-    @Key("compileNotebookOptionsDialogCaption")
     String compileNotebookOptionsDialogCaption();
 
     /**
@@ -34,7 +33,6 @@ public interface NotebookConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Help on report types")
-    @Key("helpButtonTitle")
     String helpButtonTitle();
 
     /**
@@ -43,6 +41,5 @@ public interface NotebookConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Compile")
-    @Key("okButtonCaption")
     String okButtonCaption();
 }

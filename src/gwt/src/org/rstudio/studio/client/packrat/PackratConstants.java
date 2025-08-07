@@ -25,7 +25,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Package")
-    @Key("packageColumnHeaderLabel")
     String packageColumnHeaderLabel();
 
     /**
@@ -34,7 +33,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Packrat")
-    @Key("packratColumnHeaderLabel")
     String packratColumnHeaderLabel();
 
     /**
@@ -43,7 +41,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Library")
-    @Key("libraryColumnHeaderLabel")
     String libraryColumnHeaderLabel();
 
     /**
@@ -52,7 +49,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Action")
-    @Key("actionColumnHeaderLabel")
     String actionColumnHeaderLabel();
 
     /**
@@ -63,7 +59,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("The following packages have changed in your project's private library. Select Snapshot to save these changes in Packrat.")
-    @Key("snapshotSummaryLabel")
     String snapshotSummaryLabel();
 
     /**
@@ -74,7 +69,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("The following packages have changed in Packrat. Select Restore to apply these changes to your project's private library.")
-    @Key("restoreSummaryLabel")
     String restoreSummaryLabel();
 
     /**
@@ -83,7 +77,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Resolve Conflict")
-    @Key("packratResolveConflictDialogCaption")
     String packratResolveConflictDialogCaption();
 
     /**
@@ -92,7 +85,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Resolve")
-    @Key("okButtonCaption")
     String okButtonCaption();
 
     /**
@@ -104,7 +96,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Packrat's packages are out of sync with the packages currently installed in your library. To resolve the conflict you need to either update Packrat to match your library or update your library to match Packrat.")
-    @Key("resolveConflictLabelText")
     String resolveConflictLabelText();
 
     /**
@@ -113,7 +104,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Resolution:")
-    @Key("resolutionLabel")
     String resolutionLabel();
 
     /**
@@ -122,7 +112,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Update Packrat (Snapshot)")
-    @Key("snapshotChoiceRadioButtonLabel")
     String snapshotChoiceRadioButtonLabel();
 
     /**
@@ -131,7 +120,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Update Library (Restore)")
-    @Key("libraryChoiceRadioButton")
     String libraryChoiceRadioButton();
 
     /**
@@ -140,7 +128,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("No Selection Made")
-    @Key("noSelectionMadeText")
     String noSelectionMadeText();
 
     /**
@@ -150,7 +137,6 @@ public interface PackratConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("You must choose to either update Packrat (snapshot) or update the project's private library (restore).")
-    @Key("noSelectionMadeMessage")
     String noSelectionMadeMessage();
 
 }

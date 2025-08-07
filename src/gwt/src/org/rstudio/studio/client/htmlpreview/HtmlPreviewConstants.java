@@ -25,7 +25,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Knitting...")
-    @Key("progressPreviewStartedCaption")
     String progressPreviewStartedCaption();
 
     /**
@@ -34,7 +33,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Preview failed")
-    @Key("progressPreviewFailedCaption")
     String progressPreviewFailedCaption();
 
     /**
@@ -43,7 +41,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Save File As")
-    @Key("saveFileAsCaption")
     String saveFileAsCaption();
 
     /**
@@ -52,7 +49,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Saving File...")
-    @Key("savingFileCaption")
     String savingFileCaption();
 
     /**
@@ -61,7 +57,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Download to Local File")
-    @Key("downloadToLocalFileCaption")
     String downloadToLocalFileCaption();
 
     /**
@@ -70,7 +65,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("web page")
-    @Key("downloadToLocalFileDescription")
     String downloadToLocalFileDescription();
 
     /**
@@ -79,7 +73,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Preview Tab")
-    @Key("previewTabToolbarLabel")
     String previewTabToolbarLabel();
 
     /**
@@ -88,7 +81,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Preview: ")
-    @Key("previewToolbarLabelText")
     String previewToolbarLabelText();
 
     /**
@@ -97,7 +89,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Save As")
-    @Key("saveAsToolbarMenuButtonText")
     String saveAsToolbarMenuButtonText();
 
     /**
@@ -106,7 +97,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Find")
-    @Key("findTextBoxCueText")
     String findTextBoxCueText();
 
     /**
@@ -115,7 +105,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Find in Page")
-    @Key("findInPageText")
     String findInPageText();
 
     /**
@@ -124,7 +113,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("No occurrences found")
-    @Key("noOccurrencesFoundText")
     String noOccurrencesFoundText();
 
     /**
@@ -133,7 +121,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("HTML Preview Panel")
-    @Key("htmlPreviewPanelTitle")
     String htmlPreviewPanelTitle();
 
     /**
@@ -142,7 +129,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Log")
-    @Key("showLogDialogCaption")
     String showLogDialogCaption();
 
     /**
@@ -151,7 +137,6 @@ public interface HtmlPreviewConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Close")
-    @Key("closeText")
     String closeText();
 
 

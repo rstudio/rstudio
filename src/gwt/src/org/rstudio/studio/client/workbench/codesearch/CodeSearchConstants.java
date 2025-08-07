@@ -22,7 +22,6 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Code Search Error"
      */
     @DefaultMessage("Code Search Error")
-    @Key("codeSearchError")
     String codeSearchError();
 
     /**
@@ -31,7 +30,6 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Go to File/Function"
      */
     @DefaultMessage("Go to File/Function")
-    @Key("fileFunctionLabel")
     String fileFunctionLabel();
 
     /**
@@ -40,7 +38,6 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Filter by file or function name"
      */
     @DefaultMessage("Filter by file or function name")
-    @Key("codeSearchLabel")
     String codeSearchLabel();
 
     /**
@@ -49,6 +46,5 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Go to file/function"
      */
     @DefaultMessage("Go to file/function")
-    @Key("textBoxWithCue")
     String textBoxWithCue();
 }

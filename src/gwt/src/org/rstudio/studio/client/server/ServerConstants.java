@@ -23,7 +23,6 @@ public interface ServerConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error parsing results: {0}"
      */
     @DefaultMessage("Error parsing results: {0}")
-    @Key("errorParsingResults")
     String errorParsingResults(String results);
 
     /**
@@ -32,7 +31,6 @@ public interface ServerConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "(null)"
      */
     @DefaultMessage("(null)")
-    @Key("nullText")
     String nullText();
 
 }

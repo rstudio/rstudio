@@ -22,7 +22,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Create Package Library"
      */
     @DefaultMessage("Create Package Library")
-    @Key("createPackageLibraryCaption")
     String createPackageLibraryCaption();
 
     /**
@@ -31,7 +30,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Would you like to create a personal library ''{0}'' to install packages into?"
      */
     @DefaultMessage("Would you like to create a personal library ''{0}'' to install packages into?")
-    @Key("createPackageLibraryMessage")
     String createPackageLibraryMessage(String libraryPath);
 
     /**
@@ -40,7 +38,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Creating Library"
      */
     @DefaultMessage("Error Creating Library")
-    @Key("errorCreatingLibraryCaption")
     String errorCreatingLibraryCaption();
 
     /**
@@ -49,7 +46,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install Packages"
      */
     @DefaultMessage("Install Packages")
-    @Key("installPackagesCaption")
     String installPackagesCaption();
 
     /**
@@ -58,7 +54,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Unable to install packages (default library ''{0}'' is not writeable)"
      */
     @DefaultMessage("Unable to install packages (default library ''{0}'' is not writeable)")
-    @Key("unableToInstallPackagesMessage")
     String unableToInstallPackagesMessage(String libraryPath);
 
     /**
@@ -67,7 +62,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Check for Updates"
      */
     @DefaultMessage("Check for Updates")
-    @Key("checkForUpdatesCaption")
     String checkForUpdatesCaption();
 
     /**
@@ -76,7 +70,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "All packages are up to date."
      */
     @DefaultMessage("All packages are up to date.")
-    @Key("checkForUpdatesMessage")
     String checkForUpdatesMessage();
 
     /**
@@ -85,7 +78,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Export Project Bundle to Gzipped Tarball"
      */
     @DefaultMessage("Export Project Bundle to Gzipped Tarball")
-    @Key("exportProjectBundleCaption")
     String exportProjectBundleCaption();
 
     /**
@@ -94,7 +86,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Up to Date"
      */
     @DefaultMessage("Up to Date")
-    @Key("upToDateCaption")
     String upToDateCaption();
 
     /**
@@ -103,7 +94,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The Packrat library is up to date."
      */
     @DefaultMessage("The Packrat library is up to date.")
-    @Key("packratLibraryUpToDate")
     String packratLibraryUpToDate();
 
     /**
@@ -112,7 +102,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error checking Packrat library status"
      */
     @DefaultMessage("Error checking Packrat library status")
-    @Key("errorCheckingPackrat")
     String errorCheckingPackrat();
 
     /**
@@ -121,8 +110,7 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error during {0}"
      */
     @DefaultMessage("Error during {0}")
-    @Key("errorMessage")
-    String errorCheckingPackrat(String action);
+    String errorCheckingPackratAction(String action);
 
     /**
      * Translated "Performing {0}...".
@@ -130,7 +118,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Performing {0}..."
      */
     @DefaultMessage("Performing {0}...")
-    @Key("renvActionOnProgressMessage")
     String renvActionOnProgressMessage(String action);
 
     /**
@@ -139,7 +126,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The project is already up to date."
      */
     @DefaultMessage("The project is already up to date.")
-    @Key("projectUpToDateMessage")
     String projectUpToDateMessage();
 
     /**
@@ -148,7 +134,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you wish to permanently uninstall the ''{0}'' package"
      */
     @DefaultMessage("Are you sure you wish to permanently uninstall the ''{0}'' package")
-    @Key("uninstallPackage")
     String uninstallPackage(String packageName);
 
     /**
@@ -157,7 +142,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "from library ''{0}''"
      */
     @DefaultMessage("from library ''{0}''")
-    @Key("libraryMessage")
     String libraryMessage(String library);
 
     /**
@@ -166,7 +150,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "? This action cannot be undone."
      */
     @DefaultMessage("? This action cannot be undone.")
-    @Key("actionCannotBeUndoneMessage")
     String actionCannotBeUndoneMessage();
 
     /**
@@ -175,7 +158,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Uninstall Package "
      */
     @DefaultMessage("Uninstall Package ")
-    @Key("uninstallPackageCaption")
     String uninstallPackageCaption();
 
     /**
@@ -184,7 +166,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error"
      */
     @DefaultMessage("Error")
-    @Key("errorCaption")
     String errorCaption();
 
     /**
@@ -193,7 +174,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Retrieving package installation context..."
      */
     @DefaultMessage("Retrieving package installation context...")
-    @Key("retrievingPackageInstallationMessage")
     String retrievingPackageInstallationMessage();
 
     /**
@@ -202,7 +182,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "One or more of the packages to be updated are currently loaded. Restarting R prior to install is highly recommended.\n\nRStudio can restart R before installing the requested packages. All work and data will be preserved during restart.\n\nDo you want to restart R prior to install?"
      */
     @DefaultMessage("One or more of the packages to be updated are currently loaded. Restarting R prior to install is highly recommended.\\n\\nRStudio can restart R before installing the requested packages. All work and data will be preserved during restart.\\n\\nDo you want to restart R prior to install?")
-    @Key("restartForInstallWithConfirmation")
     String restartForInstallWithConfirmation();
 
     /**
@@ -211,7 +190,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Updating Loaded Packages"
      */
     @DefaultMessage("Updating Loaded Packages")
-    @Key("updatingLoadedPackagesCaption")
     String updatingLoadedPackagesCaption();
 
     /**
@@ -220,7 +198,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Listing Packages"
      */
     @DefaultMessage("Error Listing Packages")
-    @Key("errorListingPackagesCaption")
     String errorListingPackagesCaption();
 
     /**
@@ -229,7 +206,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Packages"
      */
     @DefaultMessage("Packages")
-    @Key("packagesTitle")
     String packagesTitle();
 
     /**
@@ -238,7 +214,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Packages Tab"
      */
     @DefaultMessage("Packages Tab")
-    @Key("packagesTabLabel")
     String packagesTabLabel();
 
     /**
@@ -247,7 +222,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Filter by package name"
      */
     @DefaultMessage("Filter by package name")
-    @Key("filterByPackageNameLabel")
     String filterByPackageNameLabel();
 
     /**
@@ -256,7 +230,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse package on CRAN"
      */
     @DefaultMessage("Browse package on CRAN")
-    @Key("browsePackageCRANLabel")
     String browsePackageCRANLabel();
 
     /**
@@ -265,7 +238,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse package on Bioconductor"
      */
     @DefaultMessage("Browse package on CRAN")
-    @Key("browsePackageBioconductorLabel")
     String browsePackageBioconductorLabel();
 
     /**
@@ -274,7 +246,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse package [{0}]"
      */
     @DefaultMessage("Browse package [{0}]")
-    @Key("brosePackageLabel")
     String browsePackageLabel(String browseUrl);
 
     /**
@@ -283,7 +254,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse package on {0} [{1}]"
      */
     @DefaultMessage("Browse package on {0} [{1}]")
-    @Key("browsePackageOn")
     String browsePackageOn(String remoteType, String browseUrl);
 
     /**
@@ -292,7 +262,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse package on GitHub"
      */
     @DefaultMessage("Browse package on GitHub")
-    @Key("browsePackageGitHubLabel")
     String browsePackageGitHubLabel();
 
     /**
@@ -301,7 +270,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Remove package"
      */
     @DefaultMessage("Remove package")
-    @Key("removePackageTitle")
     String removePackageTitle();
 
     /**
@@ -310,7 +278,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Name"
      */
     @DefaultMessage("Name")
-    @Key("nameText")
     String nameText();
 
     /**
@@ -319,7 +286,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Description"
      */
     @DefaultMessage("Description")
-    @Key("descriptionText")
     String descriptionText();
 
     /**
@@ -328,7 +294,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Version"
      */
     @DefaultMessage("Version")
-    @Key("versionText")
     String versionText();
 
     /**
@@ -337,7 +302,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Lockfile"
      */
     @DefaultMessage("Lockfile")
-    @Key("lockfileText")
     String lockfileText();
 
     /**
@@ -346,7 +310,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Source"
      */
     @DefaultMessage("Source")
-    @Key("sourceText")
     String sourceText();
 
     /**
@@ -355,7 +318,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package Not Loaded"
      */
     @DefaultMessage("Package Not Loaded")
-    @Key("packageNotLoadedCaption")
     String packageNotLoadedCaption();
 
     /**
@@ -364,7 +326,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The package ''{0}'' cannot be loaded because it is not installed. Install the package to make it available for loading."
      */
     @DefaultMessage("The package ''{0}'' cannot be loaded because it is not installed. Install the package to make it available for loading.")
-    @Key("packageNotLoadedMessage")
     String packageNotLoadedMessage(String packageName);
 
     /**
@@ -373,7 +334,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Help Not Available"
      */
     @DefaultMessage("Help Not Available")
-    @Key("helpNotAvailableCaption")
     String helpNotAvailableCaption();
 
     /**
@@ -382,7 +342,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "The package ''{0}'' is not installed. Install the package to make its help content available."
      */
     @DefaultMessage("The package ''{0}'' is not installed. Install the package to make its help content available.")
-    @Key("helpNotAvailableMessage")
     String helpNotAvailableMessage(String packageName);
 
     /**
@@ -391,7 +350,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Project Library"
      */
     @DefaultMessage("Project Library")
-    @Key("projectLibraryText")
     String projectLibraryText();
 
     /**
@@ -400,7 +358,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "User Library"
      */
     @DefaultMessage("User Library")
-    @Key("userLibraryText")
     String userLibraryText();
 
 
@@ -410,7 +367,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "System Library"
      */
     @DefaultMessage("System Library")
-    @Key("systemLibraryText")
     String systemLibraryText();
 
     /**
@@ -419,7 +375,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Library"
      */
     @DefaultMessage("Library")
-    @Key("libraryText")
     String libraryText();
 
     /**
@@ -428,7 +383,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Update Packages"
      */
     @DefaultMessage("Update Packages")
-    @Key("updatePackagesCaption")
     String updatePackagesCaption();
 
     /**
@@ -437,7 +391,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install Updates"
      */
     @DefaultMessage("Install Updates")
-    @Key("installUpdatesCaption")
     String installUpdatesCaption();
 
     /**
@@ -446,7 +399,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package"
      */
     @DefaultMessage("Package")
-    @Key("packageHeader")
     String packageHeader();
 
     /**
@@ -455,7 +407,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Installed"
      */
     @DefaultMessage("Installed")
-    @Key("installedHeader")
     String installedHeader();
 
     /**
@@ -464,7 +415,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Available"
      */
     @DefaultMessage("Available")
-    @Key("availableHeader")
     String availableHeader();
 
     /**
@@ -473,7 +423,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Opening NEWS..."
      */
     @DefaultMessage("Opening NEWS...")
-    @Key("openingNewsProgressMessage")
     String openingNewsProgressMessage();
 
     /**
@@ -482,7 +431,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Show package NEWS"
      */
     @DefaultMessage("Show package NEWS")
-    @Key("showPackageNewsTitle")
     String showPackageNewsTitle();
 
     /**
@@ -491,7 +439,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "NEWS"
      */
     @DefaultMessage("NEWS")
-    @Key("newsHeader")
     String newsHeader();
 
     /**
@@ -500,7 +447,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Opening NEWS"
      */
     @DefaultMessage("Error Opening NEWS")
-    @Key("errorOpeningNewsCaption")
     String errorOpeningNewsCaption();
 
     /**
@@ -509,7 +455,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "This package does not have a NEWS file or RStudio was unable to determine an appropriate NEWS URL for this package."
      */
     @DefaultMessage("This package does not have a NEWS file or RStudio was unable to determine an appropriate NEWS URL for this package.")
-    @Key("errorOpeningNewsMessage")
     String errorOpeningNewsMessage();
 
     /**
@@ -518,7 +463,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Clean Unused Packages"
      */
     @DefaultMessage("Clean Unused Packages")
-    @Key("cleanUnusedPackagesCaption")
     String cleanUnusedPackagesCaption();
 
     /**
@@ -527,7 +471,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Remove Packages"
      */
     @DefaultMessage("Remove Packages")
-    @Key("removePackagesCaption")
     String removePackagesCaption();
 
     /**
@@ -536,7 +479,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Packrat Clean"
      */
     @DefaultMessage("Packrat Clean")
-    @Key("packratCleanCaption")
     String packratCleanCaption();
 
     /**
@@ -545,7 +487,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "No unused packages were found in the library."
      */
     @DefaultMessage("No unused packages were found in the library.")
-    @Key("packratCleanMessage")
     String packratCleanMessage();
 
     /**
@@ -554,7 +495,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "These packages are present in your library, but do not appear to be used by code in your project. Select any you''d like to clean up."
      */
     @DefaultMessage("These packages are present in your library, but do not appear to be used by code in your project. Select any you''d like to clean up.")
-    @Key("explanatoryMessage")
     String explanatoryMessage();
 
     /**
@@ -563,7 +503,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install"
      */
     @DefaultMessage("Install")
-    @Key("installButtonCaption")
     String installButtonCaption();
 
     /**
@@ -572,7 +511,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "No Package Selected"
      */
     @DefaultMessage("No Package Selected")
-    @Key("noPackageSelectedCaption")
     String noPackageSelectedCaption();
 
     /**
@@ -581,7 +519,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "You must specify one or more packages to install."
      */
     @DefaultMessage("You must specify one or more packages to install.")
-    @Key("noPackageSelectedMessage")
     String noPackageSelectedMessage();
 
     /**
@@ -590,7 +527,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package Repository ({0})"
      */
     @DefaultMessage("Package Repository ({0})")
-    @Key("repositoryLabel")
     String repositoryLabel(String repo);
 
     /**
@@ -599,7 +535,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package Repository ("
      */
     @DefaultMessage("Package Repository (")
-    @Key("repositoryItemLabel")
     String repositoryItemLabel();
 
     /**
@@ -608,7 +543,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package Archive File ("
      */
     @DefaultMessage("Package Archive File (")
-    @Key("packageArchiveFileLabel")
     String packageArchiveFileLabel();
 
     /**
@@ -617,7 +551,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install from:"
      */
     @DefaultMessage("Install from:")
-    @Key("installFromCaption")
     String installFromCaption();
 
     /**
@@ -626,7 +559,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Configuring Repositories"
      */
     @DefaultMessage("Configuring Repositories")
-    @Key("configuringRepositoriesHelpCaption")
     String configuringRepositoriesHelpCaption();
 
     /**
@@ -635,7 +567,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Packages (separate multiple with space or comma):"
      */
     @DefaultMessage("Packages (separate multiple with space or comma):")
-    @Key("packagesLabel")
     String packagesLabel();
 
     /**
@@ -644,7 +575,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Package archive:"
      */
     @DefaultMessage("Package archive:")
-    @Key("packageArchiveLabel")
     String packageArchiveLabel();
 
     /**
@@ -653,7 +583,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Browse..."
      */
     @DefaultMessage("Browse...")
-    @Key("browseActionLabel")
     String browseActionLabel();
 
     /**
@@ -662,7 +591,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install to Library:"
      */
     @DefaultMessage("Install to Library:")
-    @Key("installToLibraryText")
     String installToLibraryText();
 
     /**
@@ -671,7 +599,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Install dependencies"
      */
     @DefaultMessage("Install dependencies")
-    @Key("installDependenciesText")
     String installDependenciesText();
 
     /**
@@ -680,7 +607,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Select Package Archive"
      */
     @DefaultMessage("Select Package Archive")
-    @Key("selectPackageArchiveCaption")
     String selectPackageArchiveCaption();
 
     /**
@@ -689,7 +615,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Select All"
      */
     @DefaultMessage("Select All")
-    @Key("selectAllLabel")
     String selectAllLabel();
 
     /**
@@ -698,7 +623,6 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Select None"
      */
     @DefaultMessage("Select None")
-    @Key("selectNoneLabel")
     String selectNoneLabel();
 
 }

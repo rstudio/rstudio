@@ -22,7 +22,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Tutorial"
      */
     @DefaultMessage("Tutorial")
-    @Key("tutorialTitle")
     String tutorialTitle();
 
     /**
@@ -31,7 +30,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Loading Tutorial"
      */
     @DefaultMessage("Error Loading Tutorial")
-    @Key("errorLoadingTutorialCaption")
     String errorLoadingTutorialCaption();
 
     /**
@@ -40,7 +38,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Tutorial Pane"
      */
     @DefaultMessage("Tutorial Pane")
-    @Key("tutorialPaneTitle")
     String tutorialPaneTitle();
 
     /**
@@ -49,7 +46,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Tutorial Tab"
      */
     @DefaultMessage("Tutorial Tab")
-    @Key("tutorialTabLabel")
     String tutorialTabLabel();
 
     /**
@@ -58,7 +54,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Loading tutorial..."
      */
     @DefaultMessage("Loading tutorial...")
-    @Key("loadingTutorialProgressMessage")
     String loadingTutorialProgressMessage();
 
     /**
@@ -67,7 +62,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error installing learnr"
      */
     @DefaultMessage("Error installing learnr")
-    @Key("errorInstallingLearnr")
     String errorInstallingLearnr();
 
     /**
@@ -76,7 +70,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "RStudio was unable to install the learnr package."
      */
     @DefaultMessage("RStudio was unable to install the learnr package.")
-    @Key("errorInstallingLearnrMessage")
     String errorInstallingLearnrMessage();
 
     /**
@@ -85,7 +78,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Installing learnr..."
      */
     @DefaultMessage("Installing learnr...")
-    @Key("installingLearnrCaption")
     String installingLearnrCaption();
 
     /**
@@ -94,7 +86,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error installing shiny"
      */
     @DefaultMessage("Error installing shiny")
-    @Key("errorInstallingShiny")
     String errorInstallingShiny();
 
     /**
@@ -103,7 +94,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "RStudio was unable to install the shiny package."
      */
     @DefaultMessage("RStudio was unable to install the shiny package.")
-    @Key("errorInstallingShinyMessage")
     String errorInstallingShinyMessage();
 
     /**
@@ -112,7 +102,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Installing shiny..."
      */
     @DefaultMessage("Installing shiny...")
-    @Key("installingShinyCaption")
     String installingShinyCaption();
 
 }

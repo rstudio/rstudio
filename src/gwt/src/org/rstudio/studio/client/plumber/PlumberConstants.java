@@ -25,7 +25,6 @@ public interface PlumberConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Running Plumber API")
-    @Key("runningPlumberApiUserAction")
     String runningPlumberApiUserAction();
 
     /**
@@ -34,7 +33,6 @@ public interface PlumberConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Plumber API Launch Failed")
-    @Key("apiLaunchFailedCaption")
     String apiLaunchFailedCaption();
 
     /**
@@ -43,7 +41,6 @@ public interface PlumberConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Plumber API Panel")
-    @Key("plumberApiPanelTitle")
     String plumberApiPanelTitle();
 
     /**
@@ -52,7 +49,6 @@ public interface PlumberConstants extends Constants {
      * @return the translated value
      */
     @DefaultStringValue("Open in Browser")
-    @Key("openInBrowserButtonText")
     String openInBrowserButtonText();
 
 }

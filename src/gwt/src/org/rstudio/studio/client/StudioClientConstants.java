@@ -22,7 +22,6 @@ public interface StudioClientConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Loading session..."
      */
     @DefaultMessage("Loading session...")
-    @Key("loadingSessionsText")
     String loadingSessionsText();
 
     /**
@@ -31,6 +30,5 @@ public interface StudioClientConstants extends com.google.gwt.i18n.client.Messag
      * @return translated "Error: {0}"
      */
     @DefaultMessage("Error: {0}")
-    @Key("errorText")
     String errorText(String errorMessage);
 }

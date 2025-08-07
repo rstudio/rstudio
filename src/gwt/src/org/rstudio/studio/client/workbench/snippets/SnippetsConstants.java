@@ -22,7 +22,6 @@ public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Save"
      */
     @DefaultMessage("Save")
-    @Key("saveTitle")
     String saveTitle();
 
 
@@ -32,7 +31,6 @@ public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Edit Snippets"
      */
     @DefaultMessage("Edit Snippets")
-    @Key("editSnippetsText")
     String editSnippetsText();
 
     /**
@@ -41,7 +39,6 @@ public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Using Code Snippets"
      */
     @DefaultMessage("Using Code Snippets")
-    @Key("usingCodeSnippetsText")
     String usingCodeSnippetsText();
 
     /**
@@ -50,6 +47,5 @@ public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Error Applying Snippets ({0})"
      */
     @DefaultMessage("Error Applying Snippets ({0})")
-    @Key("applyingSnippetsError")
     String applyingSnippetsError(String fileTypeLabel);
 }
