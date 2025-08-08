@@ -2474,30 +2474,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String clearLabel();
 
     /**
-     * Translated "System".
-     *
-     * @return translated "System"
-     */
-    @DefaultMessage("System")
-    String systemTab();
-
-    /**
-     * Translated "Virtual Environments".
-     *
-     * @return translated "Virtual Environments"
-     */
-    @DefaultMessage("Virtual Environments")
-    String virtualEnvTab();
-
-    /**
-     * Translated "Conda Environments".
-     *
-     * @return translated "Conda Environments"
-     */
-    @DefaultMessage("Conda Environments")
-    String condaEnvTab();
-
-    /**
      * Translated "[Unknown]".
      *
      * @return translated "[Unknown]"
@@ -3560,103 +3536,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String chkPythonIntegrationTitle();
 
     /**
-     * Translated "History".
-     *
-     * @return translated "History"
-     */
-    @DefaultMessage("History")
-    String historyTab();
-
-    /**
-     * Translated "Files".
-     *
-     * @return translated "Files"
-     */
-    @DefaultMessage("Files")
-    String filesTab();
-
-
-    /**
-     * Translated "Plots".
-     *
-     * @return translated "Plots"
-     */
-    @DefaultMessage("Plots")
-    String plotsTab();
-
-    /**
-     * Translated "Connections".
-     *
-     * @return translated "Connections"
-     */
-    @DefaultMessage("Connections")
-    String connectionsTab();
-
-    /**
-     * Translated "Packages".
-     *
-     * @return translated "Packages"
-     */
-    @DefaultMessage("Packages")
-    String packagesTab();
-
-    /**
-     * Translated "Help".
-     *
-     * @return translated "Help"
-     */
-    @DefaultMessage("Help")
-    String helpTab();
-
-    /**
-     * Translated "Build".
-     *
-     * @return translated "Build"
-     */
-    @DefaultMessage("Build")
-    String buildTab();
-
-    /**
-     * Translated "VCS".
-     *
-     * @return translated "VCS"
-     */
-    @DefaultMessage("VCS")
-    String vcsTab();
-
-    /**
-     * Translated "Tutorial".
-     *
-     * @return translated "Tutorial"
-     */
-    @DefaultMessage("Tutorial")
-    String tutorialTab();
-
-    /**
-     * Translated "Viewer".
-     *
-     * @return translated "Viewer"
-     */
-    @DefaultMessage("Viewer")
-    String viewerTab();
-
-    /**
-     * Translated "Presentation".
-     *
-     * @return translated "Presentation"
-     */
-    @DefaultMessage("Presentation")
-    String presentationTab();
-
-    /**
-     * Translated "Databricks".
-     *
-     * @return translated "Databricks"
-     */
-    @DefaultMessage("Databricks")
-    String databricksTab();
-
-    /**
      * Translated "Confirm Remove".
      *
      * @return translated "Confirm Remove"
@@ -4601,7 +4480,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      */
     @DefaultMessage("Loading...")
     String copilotLoadingMessage();
-    
     
     /**
      * Translated "Generating diagnostic report..."
