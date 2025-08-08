@@ -488,7 +488,8 @@ void forwardXdgEnvVars(Options *pEnvironment)
    core::system::forwardEnvVars({"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
                                  "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
                                  "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
-                                 "XDG_DATA_HOME",       "XDG_DATA_DIRS"},
+                                 "XDG_DATA_HOME",       "XDG_DATA_DIRS",
+                                 "XDG_STATE_HOME"},
                                 pEnvironment);
 }
 
