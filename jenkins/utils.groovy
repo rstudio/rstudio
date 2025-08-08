@@ -396,41 +396,51 @@ def prApiUrl() {
   return "https://api.github.com/repos/${ownerAndRepo}/check-runs"
 }
 
-def checkRunsRequest(String method, String payload = "", String url = prApiUrl()) {
-  if (method == "GET") {
-    return httpRequest(
-      url: url,
-      httpMode: method,
-      customHeaders: [
-        [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
-        [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-        [name: 'Accept', value: 'application/vnd.github+json'],
-      ],
-      validResponseCodes: "100:599" // Don't make the job fail if the request fails
-    )
-  } else {
-    return httpRequest(
-      url: url,
-      httpMode: method,
-      requestBody: payload,
-      customHeaders: [
-        [name: "Authorization", value: 'token ' + GITHUB_LOGIN_PSW, maskValue: true],
-        [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
-        [name: 'Accept', value: 'application/vnd.github+json'],
-      ],
-      validResponseCodes: "100:599" // Don't make the job fail if the request fails
-    )
+def checkRunsRequestWithRetry(String method, String payload = "", String url = prApiUrl(), int maxRetries = 3) {
+  def lastResponse = null
+  
+  for (int attempt = 1; attempt <= maxRetries; attempt++) {
+    echo "Attempt ${attempt} of ${maxRetries} - using fresh credentials"
+    
+    withCredentials([usernamePassword(credentialsId: 'posit-jenkins-rstudio', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+      if (method == "GET") {
+        lastResponse = httpRequest(
+          url: url,
+          httpMode: method,
+          customHeaders: [
+            [name: "Authorization", value: 'token ' + GITHUB_TOKEN, maskValue: true],
+            [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+            [name: 'Accept', value: 'application/vnd.github+json'],
+          ],
+          validResponseCodes: "100:599"
+        )
+      } else {
+        lastResponse = httpRequest(
+          url: url,
+          httpMode: method,
+          requestBody: payload,
+          customHeaders: [
+            [name: "Authorization", value: 'token ' + GITHUB_TOKEN, maskValue: true],
+            [name: 'X-GitHub-Api-Version', value: '2022-11-28'],
+            [name: 'Accept', value: 'application/vnd.github+json'],
+          ],
+          validResponseCodes: "100:599"
+        )
+      }
+    }
+    
+    if (lastResponse.status != 401) {
+      return lastResponse
+    }
+    
+    if (attempt < maxRetries) {
+      echo "Received 401 response. Waiting before retry..."
+      sleep time: Math.pow(2, attempt), unit: 'SECONDS' // Exponential backoff
+    }
   }
-}
-
-def checkRunsRequestWithRetry(String method, String payload = "", String url = prApiUrl()) {
-  def response = checkRunsRequest(method, payload, url)
-  if (response.status == 401) {
-    echo "Received 401 response. Retrying with new token."
-    GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
-    response = checkRunsRequest(method, payload, url)
-  }
-  return response
+  
+  echo "All ${maxRetries} attempts failed with 401. Returning last response."
+  return lastResponse
 }
 
 checks = [:]
