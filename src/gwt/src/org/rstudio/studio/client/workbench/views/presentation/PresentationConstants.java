@@ -15,125 +15,21 @@
 package org.rstudio.studio.client.workbench.views.presentation;
 
 public interface PresentationConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Opening Presentation...".
-     *
-     * @return translated "Opening Presentation..."
-     */
     String openingPresentationProgressMessage();
-
-    /**
-     * Translated "Unknown Presentation Command".
-     *
-     * @return translated "Unknown Presentation Command"
-     */
     String unknownPresentationCommandCaption();
-
-    /**
-     * Translated "Unknown Console Directive".
-     *
-     * @return translated "Unknown Console Directive"
-     */
     String unknownConsoleDirectiveCaption();
-
-    /**
-     * Translated "Presentation Frame".
-     *
-     * @return translated "Presentation Frame"
-     */
     String presentationFrameTitle();
-
-    /**
-     * Translated "Presentation".
-     *
-     * @return translated "Presentation"
-     */
     String presentationTitle();
-
-    /**
-     * Translated "Presentation Tab".
-     *
-     * @return translated "Presentation Tab"
-     */
     String presentationTabLabel();
-
-    /**
-     * Translated "More".
-     *
-     * @return translated "More"
-     */
     String moreText();
-
-    /**
-     * Translated "More presentation commands".
-     *
-     * @return translated "More presentation commands"
-     */
     String morePresentationCommandsTitle();
-
-
-    /**
-     * Translated "Error Saving Presentation".
-     *
-     * @return translated "Error Saving Presentation"
-     */
     String errorSavingPresentationCaption();
-
-    /**
-     * Translated "Presentation:\n{0}".
-     *
-     * @return translated "Presentation:\n{0}"
-     */
     String presentationLabel(String title);
-
-    /**
-     * Translated "Save Presentation As".
-     *
-     * @return translated "Save Presentation As"
-     */
     String savePresentationAsCaption();
-
-    /**
-     * Translated "Saving Presentation...".
-     *
-     * @return translated "Saving Presentation..."
-     */
     String savingPresentationProgressMessage();
-
-    /**
-     * Translated "Clear Knitr Cache".
-     *
-     * @return translated "Clear Knitr Cache"
-     */
     String clearKnitrCacheCaption();
-
-    /**
-     * Translated "Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\n\nAre you sure you want to clear the cache now?".
-     *
-     * @return translated "Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\n\nAre you sure you want to clear the cache now?"
-     */
     String clearKnitrCacheMessage();
-
-    /**
-     * Translated "Clearing Knitr Cache...".
-     *
-     * @return translated "Clearing Knitr Cache..."
-     */
     String clearingKnitrCaption();
-
-    /**
-     * Translated "Error Clearing Cache".
-     *
-     * @return translated "Error Clearing Cache"
-     */
     String errorClearingCache();
-
-    /**
-     * Translated "Closing Presentation...".
-     *
-     * @return translated "Closing Presentation..."
-     */
     String closingPresentationProgressMessage();
-
 }

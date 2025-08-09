@@ -15,83 +15,15 @@
 package org.rstudio.studio.client.workbench.ui;
 
 public interface UIConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "weaving Rnw files".
-     *
-     * @return translated "weaving Rnw files"
-     */
     String weavingRnwFilesText();
-
-    /**
-     * Translated "LaTeX typesetting".
-     *
-     * @return translated "LaTeX typesetting"
-     */
     String latexTypesettingText();
-
-    /**
-     * Translated "Project Option Unchanged".
-     *
-     * @return translated "Project Option Unchanged"
-     */
     String projectOptionUnchangedCaption();
-
-    /**
-     * Translated "You changed the global option for {0} to {1}, however the current project is still configured to use {2}.\n\nDo you want to edit the options for the current project as well?".
-     *
-     * @return translated "You changed the global option for {0} to {1}, however the current project is still configured to use {2}.\n\nDo you want to edit the options for the current project as well?"
-     */
     String projectOptionUnchangedMessage(String valueName, String globalValue, String value);
-
-    /**
-     * Translated "Save Selected".
-     *
-     * @return translated "Save Selected"
-     */
     String saveSelectedCaption();
-
-    /**
-     * Translated "Don't Save".
-     *
-     * @return translated "Don't Save"
-     */
     String dontSaveButtonText();
-
-    /**
-     * Translated "The following file has unsaved changes:".
-     *
-     * @return translated "The following file has unsaved changes:"
-     */
     String fileUnsavedChangesText();
-
-    /**
-     * Translated "The following {0} files have unsaved changes:".
-     *
-     * @return translated "The following {0} files have unsaved changes:"
-     */
     String filesUnsavedChangesText(int size);
-
-    /**
-     * Translated "Cannot Add Column".
-     *
-     * @return translated "Cannot Add Column"
-     */
     String cannotAddColumnText();
-
-    /**
-     * Translated "You can''t add more than {0} columns.".
-     *
-     * @return translated "You can''t add more than {0} columns."
-     */
     String cannotAddMoreColumnsText(int maxColumnCount);
-
-    /**
-     * Translated "Close".
-     *
-     * @return translated "Close"
-     */
     String closeText();
-
-
 }

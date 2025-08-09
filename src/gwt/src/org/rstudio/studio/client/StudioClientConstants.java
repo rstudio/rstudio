@@ -15,18 +15,6 @@
 package org.rstudio.studio.client;
 
 public interface StudioClientConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Loading session...".
-     *
-     * @return translated "Loading session..."
-     */
     String loadingSessionsText();
-
-    /**
-     * Translated "Error: {0}".
-     *
-     * @return translated "Error: {0}"
-     */
     String errorText(String errorMessage);
 }

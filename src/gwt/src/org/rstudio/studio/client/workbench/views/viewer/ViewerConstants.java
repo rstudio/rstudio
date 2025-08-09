@@ -15,117 +15,20 @@
 package org.rstudio.studio.client.workbench.views.viewer;
 
 public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Viewer".
-     *
-     * @return translated "Viewer"
-     */
     String viewerTitle();
-
-    /**
-     * Translated "Viewer Tab".
-     *
-     * @return translated "Viewer Tab"
-     */
     String viewerTabLabel();
-
-    /**
-     * Translated "Export".
-     *
-     * @return translated "Export"
-     */
     String exportText();
-
-    /**
-     * Translated "Could Not Publish".
-     *
-     * @return translated "Could Not Publish"
-     */
     String couldNotPublishCaption();
-
-    /**
-     * Translated "Viewer Content".
-     *
-     * @return translated "Viewer Content"
-     */
     String viewerContentTitle();
-
-    /**
-     * Translated "Viewer Pane".
-     *
-     * @return translated "Viewer Pane"
-     */
     String viewerPaneTitle();
-
-    /**
-     * Translated "Sync Editor".
-     *
-     * @return translated "Sync Editor"
-     */
     String syncEditorLabel();
-
-    /**
-     * Translated "Error".
-     *
-     * @return translated "Error"
-     */
     String errorCaption();
-
-    /**
-     * Translated "Preparing to export plot...".
-     *
-     * @return translated "Preparing to export plot..."
-     */
     String preparingToExportPlotMessage();
-
-    /**
-     * Translated "Saving standalone web pages".
-     *
-     * @return translated "Saving standalone web pages"
-     */
     String savingStandaloneWebPagesMessage();
-
-    /**
-     * Translated "Save As Web Page".
-     *
-     * @return translated "Save As Web Page"
-     */
     String saveAsWebPageCaption();
-
-    /**
-     * Translated "Saving as web page...".
-     *
-     * @return translated "Saving as web page..."
-     */
     String savingAsWebPageMessage();
-
-    /**
-     * Translated "Clear Viewer".
-     *
-     * @return translated "Clear Viewer"
-     */
     String clearViewerCaption();
-
-    /**
-     * Translated "Are you sure you want to clear all of the items in the history?".
-     *
-     * @return translated "Are you sure you want to clear all of the items in the history?"
-     */
     String clearViewerMessage();
-
-    /**
-     * Translated "Clearing viewer...".
-     *
-     * @return translated "Clearing viewer..."
-     */
     String clearingViewerMessage();
-
-    /**
-     * Translated "Viewer Pane Preview".
-     *
-     * @return translated "Viewer Pane Preview"
-     */
     String viewerPanePreviewTitle();
-
 }

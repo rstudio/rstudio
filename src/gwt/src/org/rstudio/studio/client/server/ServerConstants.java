@@ -12,23 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.server;
 
 public interface ServerConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Error parsing results: {0}".
-     *
-     * @return translated "Error parsing results: {0}"
-     */
     String errorParsingResults(String results);
-
-    /**
-     * Translated "(null)".
-     *
-     * @return translated "(null)"
-     */
     String nullText();
-
 }

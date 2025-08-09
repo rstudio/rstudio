@@ -15,47 +15,10 @@
 package org.rstudio.core.client.hyperlink;
 
 public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages {
-    
-    /**
-     * Translated "Documentation not found.".
-     *
-     * @return translated "Documentation not found."
-     */
     String noDocumentation();
-
-    /**
-     * Translated "Package not found.".
-     *
-     * @return translated "Package not found."
-     */
     String noPackage();
-
-    /**
-     * Translated "Vignette not found.".
-     *
-     * @return translated "Vignette not found."
-     */
     String noVignette();
-
-    /**
-     * Translated "click to run".
-     *
-     * @return translated "click to run"
-     */
     String clickToRun();
-
-    /**
-     * Translated "No such file".
-     *
-     * @return translated "No such file"
-     */
     String noSuchFile();
-
-    /**
-     * Translated "''{0}'' does not exist.".
-     *
-     * @return translated "''{0}'' does not exist."
-     */
     String doesNotExist(String filename);
-
 }

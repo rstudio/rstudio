@@ -15,32 +15,8 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Code Search Error".
-     *
-     * @return translated "Code Search Error"
-     */
     String codeSearchError();
-
-    /**
-     * Translated "Go to File/Function".
-     *
-     * @return translated "Go to File/Function"
-     */
     String fileFunctionLabel();
-
-    /**
-     * Translated "Filter by file or function name".
-     *
-     * @return translated "Filter by file or function name"
-     */
     String codeSearchLabel();
-
-    /**
-     * Translated "Go to file/function".
-     *
-     * @return translated "Go to file/function"
-     */
     String textBoxWithCue();
 }

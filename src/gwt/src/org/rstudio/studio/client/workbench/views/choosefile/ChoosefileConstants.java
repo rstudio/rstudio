@@ -15,26 +15,7 @@
 package org.rstudio.studio.client.workbench.views.choosefile;
 
 public interface ChoosefileConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Saving...".
-     *
-     * @return translated "Saving..."
-     */
     String savingMessage();
-
-    /**
-     * Translated "Cancelling...".
-     *
-     * @return translated "Cancelling..."
-     */
     String cancellingMessage();
-
-    /**
-     * Translated "Choose File".
-     *
-     * @return translated "Choose File"
-     */
     String chooseFileCaption();
-
 }

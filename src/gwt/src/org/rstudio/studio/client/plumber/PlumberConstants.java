@@ -12,16 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.plumber;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface PlumberConstants extends Constants {
-
     String runningPlumberApiUserAction();
     String apiLaunchFailedCaption();
     String plumberApiPanelTitle();
     String openInBrowserButtonText();
-
 }

@@ -12,13 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.notebook;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface NotebookConstants extends Constants {
-
     String compileNotebookOptionsDialogCaption();
     String helpButtonTitle();
     String okButtonCaption();

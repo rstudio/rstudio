@@ -15,82 +15,15 @@
 package org.rstudio.studio.client.workbench.views.tutorial;
 
 public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Tutorial".
-     *
-     * @return translated "Tutorial"
-     */
     String tutorialTitle();
-
-    /**
-     * Translated "Error Loading Tutorial".
-     *
-     * @return translated "Error Loading Tutorial"
-     */
     String errorLoadingTutorialCaption();
-
-    /**
-     * Translated "Tutorial Pane".
-     *
-     * @return translated "Tutorial Pane"
-     */
     String tutorialPaneTitle();
-
-    /**
-     * Translated "Tutorial Tab".
-     *
-     * @return translated "Tutorial Tab"
-     */
     String tutorialTabLabel();
-
-    /**
-     * Translated "Loading tutorial...".
-     *
-     * @return translated "Loading tutorial..."
-     */
     String loadingTutorialProgressMessage();
-
-    /**
-     * Translated "Error installing learnr".
-     *
-     * @return translated "Error installing learnr"
-     */
     String errorInstallingLearnr();
-
-    /**
-     * Translated "RStudio was unable to install the learnr package.".
-     *
-     * @return translated "RStudio was unable to install the learnr package."
-     */
     String errorInstallingLearnrMessage();
-
-    /**
-     * Translated "Installing learnr...".
-     *
-     * @return translated "Installing learnr..."
-     */
     String installingLearnrCaption();
-
-    /**
-     * Translated "Error installing shiny".
-     *
-     * @return translated "Error installing shiny"
-     */
     String errorInstallingShiny();
-
-    /**
-     * Translated "RStudio was unable to install the shiny package.".
-     *
-     * @return translated "RStudio was unable to install the shiny package."
-     */
     String errorInstallingShinyMessage();
-
-    /**
-     * Translated "Installing shiny...".
-     *
-     * @return translated "Installing shiny..."
-     */
     String installingShinyCaption();
-
 }

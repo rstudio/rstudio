@@ -12,13 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.packrat;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface PackratConstants extends Constants {
-
     String packageColumnHeaderLabel();
     String packratColumnHeaderLabel();
     String libraryColumnHeaderLabel();

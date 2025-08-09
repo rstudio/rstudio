@@ -15,33 +15,8 @@
 package org.rstudio.studio.client.workbench.snippets;
 
 public interface SnippetsConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Save".
-     *
-     * @return translated "Save"
-     */
     String saveTitle();
-
-
-    /**
-     * Translated "Edit Snippets".
-     *
-     * @return translated "Edit Snippets"
-     */
     String editSnippetsText();
-
-    /**
-     * Translated "Using Code Snippets".
-     *
-     * @return translated "Using Code Snippets"
-     */
     String usingCodeSnippetsText();
-
-    /**
-     * Translated "Error Applying Snippets ({0})".
-     *
-     * @return translated "Error Applying Snippets ({0})"
-     */
     String applyingSnippetsError(String fileTypeLabel);
 }

@@ -15,68 +15,13 @@
 package org.rstudio.studio.client.workbench.views.help;
 
 public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
-
-    /**
-     * Translated "Help".
-     *
-     * @return translated "Help"
-     */
     String helpText();
-
-    /**
-     * Translated "Help Pane".
-     *
-     * @return translated "Help Pane"
-     */
     String helpPaneTitle();
-
-    /**
-     * Translated "Help Tab".
-     *
-     * @return translated "Help Tab"
-     */
     String helpTabLabel();
-
-    /**
-     * Translated "Help Tab Second".
-     *
-     * @return translated "Help Tab Second"
-     */
     String helpTabSecondLabel();
-
-    /**
-     * Translated "Find next (Enter)".
-     *
-     * @return translated "Find next (Enter)"
-     */
     String findNextLabel();
-
-    /**
-     * Translated "Find previous".
-     *
-     * @return translated "Find previous"
-     */
     String findPreviousLabel();
-
-    /**
-     * Translated "Find in Topic".
-     *
-     * @return translated "Find in Topic"
-     */
     String findInTopicLabel();
-
-    /**
-     * Translated "No occurrences found".
-     *
-     * @return translated "No occurrences found"
-     */
     String noOccurrencesFoundMessage();
-
-    /**
-     * Translated "Search help".
-     *
-     * @return translated "Search help"
-     */
     String searchHelpLabel();
-
 }
