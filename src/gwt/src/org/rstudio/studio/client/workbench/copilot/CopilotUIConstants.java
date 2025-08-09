@@ -21,7 +21,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot: Diagnostic Report"
      */
-    @DefaultMessage("GitHub Copilot: Diagnostic Report")
     String copilotDiagnosticsTitle();
    
     /**
@@ -29,7 +28,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot: Sign in"
      */
-    @DefaultMessage("GitHub Copilot: Sign in")
     String copilotSignInDialogTitle();
 
     /**
@@ -37,7 +35,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot: Sign out"
      */
-    @DefaultMessage("GitHub Copilot: Sign out")
     String copilotSignOutDialogTitle();
 
     /**
@@ -45,7 +42,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Authenticating..."
      */
-    @DefaultMessage("Authenticating...")
     String copilotAuthenticating();
 
     /**
@@ -53,7 +49,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Verifying copilot installation..."
      */
-    @DefaultMessage("Verifying copilot installation...")
     String copilotVerifyingInstallation();
 
     /**
@@ -61,7 +56,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You are now signed in as ''{0}''."
      */
-    @DefaultMessage("You are now signed in as ''{0}''.")
     String copilotSignedIn(String user);
 
     /**
@@ -69,7 +63,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Signing in..."
      */
-    @DefaultMessage("Signing in...")
     String copilotSigningIn();
 
     /**
@@ -77,7 +70,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Signing out..."
      */
-    @DefaultMessage("Signing out...")
     String copilotSigningOut();
 
     /**
@@ -85,7 +77,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Error {0}: {1}"
      */
-    @DefaultMessage("Error {0}: {1}")
     String copilotError(int code, String message);
 
     /**
@@ -93,7 +84,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You are already signed in as ''{0}''.\n\nIf you''d like to sign in as a different user, please sign out from this account first."
      */
-    @DefaultMessage("You are already signed in as ''{0}''.\n\nIf you''d like to sign in as a different user, please sign out from this account first.")
     String copilotAlreadySignedIn(String name);
 
     /**
@@ -101,7 +91,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You have successfully signed out from GitHub Copilot"
      */
-    @DefaultMessage("You have successfully signed out from GitHub Copilot")
     String copilotSignedOut();
 
     /**
@@ -109,7 +98,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Checking status..."
      */
-    @DefaultMessage("Checking status...")
     String copilotCheckingStatus();
 
     /**
@@ -117,7 +105,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot: Check Status"
      */
-    @DefaultMessage("GitHub Copilot: Check Status")
     String copilotCheckStatusDialogTitle();
 
     /**
@@ -125,7 +112,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot: Status"
      */
-    @DefaultMessage("GitHub Copilot: Status")
     String copilotStatusDialogTitle();
 
     /**
@@ -133,7 +119,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "RStudio received an unexpected empty response from the GitHub Copilot agent."
      */
-    @DefaultMessage("RStudio received an unexpected empty response from the GitHub Copilot agent.")
     String copilotEmptyResponse();
 
     /**
@@ -141,7 +126,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(no output available)"
      */
-    @DefaultMessage("(no output available)")
     String copilotNoOutput();
 
     /**
@@ -149,7 +133,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "An error occurred while starting the GitHub Copilot agent.\n\nError: {0}\n\nOutput: {1}"
      */
-    @DefaultMessage("An error occurred while starting the GitHub Copilot agent.\n\nError: {0}\n\nOutput: {1}")
     String copilotErrorStartingAgent(String error, String output);
 
     /**
@@ -157,7 +140,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "The GitHub Copilot agent is running, but you have not yet signed in."
      */
-    @DefaultMessage("The GitHub Copilot agent is running, but you have not yet signed in.")
     String copilotNotSignedIn();
 
     /**
@@ -165,7 +147,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Not signed in."
      */
-    @DefaultMessage("Not signed in.")
     String copilotNotSignedInShort();
 
     /**
@@ -173,7 +154,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You are currently signed in as: {0}"
      */
-    @DefaultMessage("You are currently signed in as: {0}")
     String copilotCurrentlySignedIn(String user);
 
     /**
@@ -181,7 +161,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "An unknown error occurred."
      */
-    @DefaultMessage("An unknown error occurred.")
     String copilotUnknownError();
 
     /**
@@ -189,7 +168,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "The GitHub Copilot Language Server could not be located."
      */
-    @DefaultMessage("The GitHub Copilot Language Server could not be located.")
     String copilotNotInstalledError();
 
     /**
@@ -197,7 +175,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot has been disabled by the system administrator."
      */
-    @DefaultMessage("GitHub Copilot has been disabled by the system administrator.")
     String copilotDisabledByAdministratorError();
 
     /**
@@ -205,7 +182,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot has been disabled via project preferences."
      */
-    @DefaultMessage("GitHub Copilot has been disabled via project preferences.")
     String copilotDisabledViaProjectPreferencesError();
 
     /**
@@ -213,7 +189,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "GitHub Copilot has been disabled via global options."
      */
-    @DefaultMessage("GitHub Copilot has been disabled via global options.")
     String copilotDisabledViaGlobalOptionsError();
 
     /**
@@ -221,7 +196,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "An error occurred while attempting to launch GitHub Copilot."
      */
-    @DefaultMessage("An error occurred while attempting to launch GitHub Copilot.")
     String copilotLaunchError();
 
     /**
@@ -229,7 +203,6 @@ public interface CopilotUIConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "[unknown]"
      */
-    @DefaultMessage("[unknown]")
     String copilotUnknownErrorShort();
 
 }

@@ -21,7 +21,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Add"
      */
-    @DefaultMessage("Add")
     String addCapitalized();
 
     /**
@@ -29,7 +28,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Remote Name:"
      */
-    @DefaultMessage("Remote Name:")
     String remoteNameColon();
 
     /**
@@ -37,7 +35,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Remote URL:"
      */
-    @DefaultMessage("Remote URL:")
     String remoteUrlColon();
 
     /**
@@ -45,7 +42,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Switch branch"
      */
-    @DefaultMessage("Switch branch")
     String switchBranch();
 
     /**
@@ -53,7 +49,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Search by branch name"
      */
-    @DefaultMessage("Search by branch name")
     String searchByBranchName();
 
     /**
@@ -61,7 +56,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(Remote: {0})"
      */
-    @DefaultMessage("(Remote: {0})")
     String remoteBranchCaption(String caption);
 
     /**
@@ -69,7 +63,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(no branch)"
      */
-    @DefaultMessage("(no branch)")
     String noBranchParentheses();
 
     /**
@@ -77,7 +70,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(no branches available)"
      */
-    @DefaultMessage("(no branches available)")
     String noBranchesAvailableParentheses();
 
     /**
@@ -85,7 +77,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(local branches)"
      */
-    @DefaultMessage("(local branches)")
     String localBranchesParentheses();
 
     /**
@@ -93,7 +84,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Create"
      */
-    @DefaultMessage("Create")
     String createCapitalized();
 
     /**
@@ -101,7 +91,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Remote:"
      */
-    @DefaultMessage("Remote:")
     String remoteColon();
 
     /**
@@ -109,7 +98,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Add Remote..."
      */
-    @DefaultMessage("Add Remote...")
     String addRemoteEllipses();
 
     /**
@@ -117,7 +105,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Add Remote"
      */
-    @DefaultMessage("Add Remote")
     String addRemote();
 
     /**
@@ -125,7 +112,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Sync branch with remote"
      */
-    @DefaultMessage("Sync branch with remote")
     String syncBranchWithRemote();
 
     /**
@@ -133,7 +119,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Branch Name:"
      */
-    @DefaultMessage("Branch Name:")
     String branchNameColon();
 
     /**
@@ -141,7 +126,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "New Branch"
      */
-    @DefaultMessage("New Branch")
     String newBranchCapitalized();
 
     /**
@@ -149,7 +133,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "A local branch named ''{0}'' already exists. Would you like to check out that branch, or overwrite it?"
      */
-    @DefaultMessage("A local branch named ''{0}'' already exists. Would you like to check out that branch, or overwrite it?")
     String localBranchAlreadyExists(String branchName);
 
     /**
@@ -157,7 +140,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Checkout"
      */
-    @DefaultMessage("Checkout")
     String checkoutCapitalized();
 
     /**
@@ -165,7 +147,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Overwrite"
      */
-    @DefaultMessage("Overwrite")
     String overwriteCapitalized();
 
     /**
@@ -173,7 +154,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancelCapitalized();
 
     /**
@@ -181,7 +161,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Local Branch Already Exists"
      */
-    @DefaultMessage("Local Branch Already Exists")
     String localBranchAlreadyExistsCaption();
 
     /**
@@ -189,7 +168,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "A remote branch named ''{0}'' already exists on the remote repository ''{1}''. Would you like to check out that branch?"
      */
-    @DefaultMessage("A remote branch named ''{0}'' already exists on the remote repository ''{1}''. Would you like to check out that branch?")
     String remoteBranchNameAlreadyExists(String remoteBranch, String remote);
 
     /**
@@ -197,7 +175,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Remote Branch Already Exists"
      */
-    @DefaultMessage("Remote Branch Already Exists")
     String remoteBranchAlreadyExistsCaption();
 
     /**
@@ -205,7 +182,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(all branches)"
      */
-    @DefaultMessage("(all branches)")
     String allBranchesParentheses();
 
     /**
@@ -213,7 +189,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Close"
      */
-    @DefaultMessage("Close")
     String closeCapitalized();
 
     /**
@@ -221,7 +196,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Stop"
      */
-    @DefaultMessage("Stop")
     String stopCapitalized();
 
     /**
@@ -229,7 +203,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Progress details"
      */
-    @DefaultMessage("Progress details")
     String progressDetails();
 
     /**
@@ -237,7 +210,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Commits {0}"
      */
-    @DefaultMessage("Commits {0}")
     String commitsPager(String wordText);
 
     /**
@@ -245,7 +217,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      * Empty String so there can be leading space
      * @return translated "{0} selection"
      */
-    @DefaultMessage("{0} selection")
     String selectionSuffix(String emptyString);
 
     /**
@@ -253,7 +224,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      * Empty String so there can be leading space
      * @return translated "{0} line"
      */
-    @DefaultMessage("{0} line")
     String lineSuffix(String emptyString);
 
     /**
@@ -261,7 +231,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      * Empty String so there can be leading space
      * @return translated "{0} chunk"
      */
-    @DefaultMessage("{0} chunk")
     String chunkSuffix(String emptyString);
 
     /**
@@ -269,7 +238,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(No commit selected)"
      */
-    @DefaultMessage("(No commit selected)")
     String noCommitSelectedParentheses();
 
     /**
@@ -277,7 +245,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "(all commits)"
      */
-    @DefaultMessage("(all commits)")
     String allCommitsParentheses();
 
     /**
@@ -285,7 +252,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Filter by File..."
      */
-    @DefaultMessage("Filter by File...")
     String filterByFileEllipses();
 
     /**
@@ -293,7 +259,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose File"
      */
-    @DefaultMessage("Choose File")
     String chooseFileCapitalized();
 
     /**
@@ -301,7 +266,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Filter by Directory..."
      */
-    @DefaultMessage("Filter by Directory...")
     String filterByDirectoryEllipses();
 
     /**
@@ -309,7 +273,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose Folder"
      */
-    @DefaultMessage("Choose Folder")
     String chooseFolderCapitalized();
 
     /**
@@ -317,7 +280,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Filter: {0}"
      */
-    @DefaultMessage("Filter: {0}")
     String filterColonPath(String path);
 
     /**
@@ -325,7 +287,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Filter: (None)"
      */
-    @DefaultMessage("Filter: (None)")
     String filterColonNone();
 
     /**
@@ -333,7 +294,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "View file @ {0}"
      */
-    @DefaultMessage("View file @ {0}")
     String viewFileAtString(String substr);
 
     /**
@@ -341,7 +301,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Fetching History"
      */
-    @DefaultMessage("Error Fetching History")
     String errorFetchingHistory();
 
     /**
@@ -349,7 +308,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "History"
      */
-    @DefaultMessage("History")
     String historyCapitalized();
 
     /**
@@ -357,7 +315,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changes"
      */
-    @DefaultMessage("Changes")
     String changesCapitalized();
 
     /**
@@ -365,7 +322,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Search version control history"
      */
-    @DefaultMessage("Search version control history")
     String searchVersionControlHistory();
 
     /**
@@ -373,7 +329,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Search"
      */
-    @DefaultMessage("Search")
     String searchCapitalized();
 
     /**
@@ -381,7 +336,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Reading file..."
      */
-    @DefaultMessage("Reading file...")
     String readingFileEllipses();
 
     /**
@@ -389,7 +343,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Show History"
      */
-    @DefaultMessage("Show History")
     String showHistoryCapitalized();
 
     /**
@@ -397,7 +350,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Show Diff"
      */
-    @DefaultMessage("Show Diff")
     String showDiffCapitalized();
 
     /**
@@ -405,7 +357,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "commit depth {0}"
      */
-    @DefaultMessage("commit depth {0}")
     String commitDepthAltText(int nexusColumn);
 
     /**
@@ -413,7 +364,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Your branch is ahead of ''{0}'' by {1} commit."
      */
-    @DefaultMessage("Your branch is ahead of ''{0}'' by {1} commit.")
     String branchAheadOfRemoteSingular(String remoteName, int commitBehind);
 
     /**
@@ -421,7 +371,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Your branch is ahead of ''{0}'' by {1} commits."
      */
-    @DefaultMessage("Your branch is ahead of ''{0}'' by {1} commits.")
     String branchAheadOfRemotePlural(String remoteName, int commitBehind);
 
     /**
@@ -429,7 +378,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Status"
      */
-    @DefaultMessage("Status")
     String statusCapitalized();
 
     /**
@@ -437,7 +385,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Path"
      */
-    @DefaultMessage("Path")
     String pathCapitalized();
 
     /**
@@ -445,7 +392,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Subject"
      */
-    @DefaultMessage("Subject")
     String subjectCapitalized();
 
     /**
@@ -453,7 +399,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Author"
      */
-    @DefaultMessage("Author")
     String authorCapitalized();
 
     /**
@@ -461,7 +406,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Date"
      */
-    @DefaultMessage("Date")
     String dateCapitalized();
 
     /**
@@ -469,7 +413,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Staged"
      */
-    @DefaultMessage("Staged")
     String stagedCapitalized();
 
     /**
@@ -477,7 +420,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Git Tab"
      */
-    @DefaultMessage("Git Tab")
     String gitTabCapitalized();
 
     /**
@@ -485,7 +427,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Pull options"
      */
-    @DefaultMessage("Pull options")
     String pullOptions();
 
     /**
@@ -493,7 +434,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "More"
      */
-    @DefaultMessage("More")
     String moreCapitalized();
 
     /**
@@ -501,7 +441,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Refresh Now"
      */
-    @DefaultMessage("Refresh Now")
     String refreshNowCapitalized();
 
     /**
@@ -509,7 +448,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Refresh options"
      */
-    @DefaultMessage("Refresh options")
     String refreshOptions();
 
     /**
@@ -517,7 +455,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Pull"
      */
-    @DefaultMessage("Pull")
     String pullCapitalized();
 
     /**
@@ -525,7 +462,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Push"
      */
-    @DefaultMessage("Push")
     String pushCapitalized();
 
     /**
@@ -533,7 +469,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Changes to File"
      */
-    @DefaultMessage("No Changes to File")
     String noChangesToFile();
 
     /**
@@ -541,7 +476,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "There are no changes to the file \"{0}\" to diff."
      */
-    @DefaultMessage("There are no changes to the file \"{0}\" to diff.")
     String noChangesToFileToDiff(String filename);
 
     /**
@@ -549,7 +483,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Changes to Revert"
      */
-    @DefaultMessage("No Changes to Revert")
     String noChangesToRevert();
 
     /**
@@ -557,7 +490,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "There are no changes to the file \"{0}\" to revert."
      */
-    @DefaultMessage("There are no changes to the file \"{0}\" to revert.")
     String noChangesToFileToRevert(String filename);
 
     /**
@@ -565,7 +497,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Revert Changes"
      */
-    @DefaultMessage("Revert Changes")
     String revertChangesCapitalized();
 
     /**
@@ -573,7 +504,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changes to the selected file will be lost, including staged changes.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("Changes to the selected file will be lost, including staged changes.\n\nAre you sure you want to continue?")
     String changesToFileWillBeLost();
 
     /**
@@ -581,7 +511,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changes to the selected files will be lost, including staged changes.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("Changes to the selected files will be lost, including staged changes.\n\nAre you sure you want to continue?")
     String changesToFileWillBeLostPlural();
 
     /**
@@ -589,7 +518,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCapitalized();
 
     /**
@@ -597,7 +525,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unable to view {0} on GitHub.\n\nAre you sure that this file is on GitHub and is contained in the currently active project?"
      */
-    @DefaultMessage("Unable to view {0} on GitHub.\n\nAre you sure that this file is on GitHub and is contained in the currently active project?")
     String unableToViewPathOnGithub(String path);
 
     /**
@@ -605,7 +532,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Git Ignore"
      */
-    @DefaultMessage("Git Ignore")
     String gitIgnoreCapitalized();
 
     /**
@@ -613,7 +539,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Diff"
      */
-    @DefaultMessage("Diff")
     String diffCapitalized();
 
     /**
@@ -621,7 +546,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Commit"
      */
-    @DefaultMessage("Commit")
     String commitCapitalized();
 
     /**
@@ -629,7 +553,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Git Review"
      */
-    @DefaultMessage("Git Review")
     String gitReviewCapitalized();
 
     /**
@@ -637,7 +560,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Git Diff"
      */
-    @DefaultMessage("Git Diff")
     String gitDiffCapitalized();
 
     /**
@@ -645,7 +567,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Stage"
      */
-    @DefaultMessage("Stage")
     String stageCapitalized();
 
     /**
@@ -653,7 +574,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Revert"
      */
-    @DefaultMessage("Revert")
     String revertCapitalized();
 
     /**
@@ -661,7 +581,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Ignore"
      */
-    @DefaultMessage("Ignore")
     String ignoreCapitalized();
 
     /**
@@ -669,7 +588,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Stage All"
      */
-    @DefaultMessage("Stage All")
     String stageAllCapitalized();
 
     /**
@@ -677,7 +595,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Discard All"
      */
-    @DefaultMessage("Discard All")
     String discardAllCapitalized();
 
     /**
@@ -685,7 +602,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unstage All"
      */
-    @DefaultMessage("Unstage All")
     String unstageAllCapitalized();
 
     /**
@@ -693,7 +609,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Revert..."
      */
-    @DefaultMessage("Revert...")
     String revertEllipses();
 
     /**
@@ -701,7 +616,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Ignore..."
      */
-    @DefaultMessage("Ignore...")
     String ignoreEllipses();
 
     /**
@@ -709,7 +623,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Open File"
      */
-    @DefaultMessage("Open File")
     String openFileCapitalized();
 
     /**
@@ -717,7 +630,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      * Character as in a letter in a string.
      * @return translated "{0} characters"
      */
-    @DefaultMessage("{0} characters")
     String lengthCharacters(int length);
 
     /**
@@ -725,7 +637,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "{0} characters in message"
      */
-    @DefaultMessage("{0} characters in message")
     String lengthCharactersInMessage(int length);
 
     /**
@@ -733,7 +644,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unstage"
      */
-    @DefaultMessage("Unstage")
     String unstageCapitalized();
 
     /**
@@ -741,7 +651,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Discard"
      */
-    @DefaultMessage("Discard")
     String discardCapitalized();
 
     /**
@@ -749,7 +658,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "All unstaged changes in this file will be lost.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("All unstaged changes in this file will be lost.\n\nAre you sure you want to continue?")
     String allUnstagedChangesWillBeLost();
 
     /**
@@ -757,7 +665,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The selected changes in this file will be lost.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("The selected changes in this file will be lost.\n\nAre you sure you want to continue?")
     String theSelectedChangesWillBeLost();
 
     /**
@@ -765,7 +672,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Some of the files to be committed are quite large (>{0} in size). Are you sure you want to commit these files?"
      */
-    @DefaultMessage("Some of the files to be committed are quite large (>{0} in size). Are you sure you want to commit these files?")
     String someFilesAreQuiteLarge(String prettySize);
 
     /**
@@ -773,7 +679,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Committing Large Files"
      */
-    @DefaultMessage("Committing Large Files")
     String committingLargeFiles();
 
     /**
@@ -781,7 +686,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Diff Error"
      */
-    @DefaultMessage("Diff Error")
     String diffError();
 
     /**
@@ -789,7 +693,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changelist"
      */
-    @DefaultMessage("Changelist")
     String changeList();
 
     /**
@@ -797,7 +700,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Ignore"
      */
-    @DefaultMessage("SVN Ignore")
     String svnIgnore();
 
     /**
@@ -805,7 +707,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "svn:ignore"
      */
-    @DefaultMessage("svn:ignore")
     String svnColonIgnore();
 
     /**
@@ -813,7 +714,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Add"
      */
-    @DefaultMessage("SVN Add")
     String svnAdd();
 
     /**
@@ -821,7 +721,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Delete"
      */
-    @DefaultMessage("SVN Delete")
     String svnDelete();
 
     /**
@@ -829,7 +728,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Resolve"
      */
-    @DefaultMessage("Resolve")
     String resolveCapitalized();
 
     /**
@@ -837,7 +735,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Resolve"
      */
-    @DefaultMessage("SVN Resolve")
     String svnResolve();
 
     /**
@@ -845,7 +742,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "None of the selected paths appear to have conflicts.\n\nDo you want to resolve anyway?"
      */
-    @DefaultMessage("None of the selected paths appear to have conflicts.\n\nDo you want to resolve anyway?")
     String noneOfSelectedPathsHaveConflicts();
 
     /**
@@ -853,7 +749,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The selected path does not appear to have conflicts.\n\nDo you want to resolve anyway?"
      */
-    @DefaultMessage("The selected path does not appear to have conflicts.\n\nDo you want to resolve anyway?")
     String selectedPathDoesNotAppearToHaveConflicts();
 
     /**
@@ -861,7 +756,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Conflicts Detected"
      */
-    @DefaultMessage("No Conflicts Detected")
     String noConflictsDetected();
 
     /**
@@ -869,7 +763,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changes to the selected file will be reverted.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("Changes to the selected file will be reverted.\n\nAre you sure you want to continue?")
     String changesToSelectedFileWillBeReverted();
 
     /**
@@ -877,7 +770,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Changes to the selected files will be reverted.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("Changes to the selected files will be reverted.\n\nAre you sure you want to continue?")
     String changesToSelectedFileWillBeRevertedPlural();
 
     /**
@@ -885,7 +777,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Revert"
      */
-    @DefaultMessage("SVN Revert")
     String svnRevert();
 
     /**
@@ -893,7 +784,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Tab"
      */
-    @DefaultMessage("SVN Tab")
     String svnTab();
 
     /**
@@ -901,7 +791,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Cleanup"
      */
-    @DefaultMessage("SVN Cleanup")
     String svnCleanup();
 
     /**
@@ -909,7 +798,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Cleaning up working directory..."
      */
-    @DefaultMessage("Cleaning up working directory...")
     String cleaningUpWorkingDirectoryEllipses();
 
     /**
@@ -917,7 +805,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "There are no changes to the file \"{0}\" to diff."
      */
-    @DefaultMessage("There are no changes to the file \"{0}\" to diff.")
     String noChangesToFileTODiff(String fileName);
 
     /**
@@ -925,7 +812,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "path"
      */
-    @DefaultMessage("path")
     String path();
 
     /**
@@ -933,7 +819,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "paths"
      */
-    @DefaultMessage("paths")
     String paths();
 
     /**
@@ -941,7 +826,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "File Conflict"
      */
-    @DefaultMessage("File Conflict")
     String fileConflictCapitalized();
 
     /**
@@ -949,7 +833,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "This file has a conflict. Would you like to mark it as resolved now?"
      */
-    @DefaultMessage("This file has a conflict. Would you like to mark it as resolved now?")
     String fileConflictMarkAsResolved();
 
     /**
@@ -957,7 +840,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Commit"
      */
-    @DefaultMessage("SVN Commit")
     String svnCommit();
 
     /**
@@ -965,7 +847,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Items Selected"
      */
-    @DefaultMessage("No Items Selected")
     String noItemsSelectedCapitalized();
 
     /**
@@ -973,7 +854,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Please select one or more items to commit."
      */
-    @DefaultMessage("Please select one or more items to commit.")
     String selectOneOrMoreItemsToCommit();
 
     /**
@@ -981,7 +861,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Message Required"
      */
-    @DefaultMessage("Message Required")
     String messageRequiredCapitalized();
 
     /**
@@ -989,7 +868,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Please provide a commit message."
      */
-    @DefaultMessage("Please provide a commit message.")
     String provideACommitMessage();
 
     /**
@@ -997,7 +875,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Revision"
      */
-    @DefaultMessage("Revision")
     String revisionCapitalized();
 
     /**
@@ -1005,7 +882,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Review"
      */
-    @DefaultMessage("SVN Review")
     String svnReview();
 
     /**
@@ -1013,7 +889,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "SVN Diff"
      */
-    @DefaultMessage("SVN Diff")
     String svnDiff();
 
     /**
@@ -1021,7 +896,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Refresh"
      */
-    @DefaultMessage("Refresh")
     String refreshCapitalized();
 
     /**
@@ -1029,7 +903,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Update"
      */
-    @DefaultMessage("Update")
     String updateCapitalized();
 
     /**
@@ -1037,7 +910,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "All changes in this file will be lost.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("All changes in this file will be lost.\n\nAre you sure you want to continue?")
     String allChangesInFileWillBeLost();
 
     /**
@@ -1045,7 +917,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The selected changes in this file will be lost.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("The selected changes in this file will be lost.\n\nAre you sure you want to continue?")
     String selectedChangesInFileWillBeLost();
 
     /**
@@ -1053,7 +924,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "commit"
      */
-    @DefaultMessage("commit")
     String commit();
 
     /**
@@ -1061,7 +931,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "diff"
      */
-    @DefaultMessage("diff")
     String diff();
 
     /**
@@ -1069,7 +938,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Added"
      */
-    @DefaultMessage("Added")
     String addedCapitalized();
 
     /**
@@ -1077,7 +945,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Modified"
      */
-    @DefaultMessage("Modified")
     String modifiedCapitalized();
 
     /**
@@ -1085,7 +952,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Deleted"
      */
-    @DefaultMessage("Deleted")
     String deletedCapitalized();
 
     /**
@@ -1093,7 +959,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Renamed"
      */
-    @DefaultMessage("Renamed")
     String renamedCapitalized();
 
     /**
@@ -1101,7 +966,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Copied"
      */
-    @DefaultMessage("Copied")
     String copiedCapitalized();
 
     /**
@@ -1109,7 +973,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Untracked"
      */
-    @DefaultMessage("Untracked")
     String untrackedCapitalized();
 
     /**
@@ -1117,7 +980,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unmerged"
      */
-    @DefaultMessage("Unmerged")
     String unmergedCapitalized();
 
     /**
@@ -1125,7 +987,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Conflicted"
      */
-    @DefaultMessage("Conflicted")
     String conflictedCapitalized();
 
     /**
@@ -1133,7 +994,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "External"
      */
-    @DefaultMessage("External")
     String externalCapitalized();
 
     /**
@@ -1141,7 +1001,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Ignored"
      */
-    @DefaultMessage("Ignored")
     String ignoredCapitalized();
 
     /**
@@ -1149,7 +1008,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Missing"
      */
-    @DefaultMessage("Missing")
     String missingCapitalized();
 
     /**
@@ -1157,7 +1015,6 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Obstructed"
      */
-    @DefaultMessage("Obstructed")
     String obstructedCapitalized();
 
     /**
@@ -1165,6 +1022,5 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unversioned"
      */
-    @DefaultMessage("Unversioned")
     String unversionedCapitalized();
 }

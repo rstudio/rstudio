@@ -21,7 +21,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Console"
      */
-    @DefaultMessage("R Console")
     String rConsole();
 
     /**
@@ -29,7 +28,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk Feedback"
      */
-    @DefaultMessage("Chunk Feedback")
     String chunkFeedback();
 
     /**
@@ -37,7 +35,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk HTML Page Output Frame"
      */
-    @DefaultMessage("Chunk HTML Page Output Frame")
     String chunkHtmlPageOutputFrame();
 
     /**
@@ -45,7 +42,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk HTML Output Frame"
      */
-    @DefaultMessage("Chunk HTML Output Frame")
     String chunkHtmlOutputFrame();
 
     /**
@@ -53,7 +49,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "RStudio: Notebook Output"
      */
-    @DefaultMessage("RStudio: Notebook Output")
     String chunkSatelliteWindowInitTitle();
 
     /**
@@ -61,7 +56,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "(No image at path {0})"
      */
-    @DefaultMessage("(No image at path {0})")
     String noImageLabel(String path);
 
     /**
@@ -69,7 +63,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "No image at path {0}"
      */
-    @DefaultMessage("No image at path {0}")
     String noImageLabelNoParentheses(String path);
 
     /**
@@ -77,7 +70,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Double-Click to Zoom"
      */
-    @DefaultMessage("Double-Click to Zoom")
     String doubleClickToZoom();
 
     /**
@@ -85,7 +77,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The selected code could not be parsed.\n\nAre you sure you want to continue?"
      */
-    @DefaultMessage("The selected code could not be parsed.\n\nAre you sure you want to continue?")
     String refactorServerRequestCallbackError();
 
     /**
@@ -93,7 +84,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Failed to check if results are available"
      */
-    @DefaultMessage("Failed to check if results are available")
     String onShinyCompareTestError();
 
     /**
@@ -101,7 +91,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "No Failed Results"
      */
-    @DefaultMessage("No Failed Results")
     String onShinyCompareTestResponseCaption();
 
     /**
@@ -109,7 +98,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "There are no failed tests to compare."
      */
-    @DefaultMessage("There are no failed tests to compare.")
     String onShinyCompareTestResponseMessage();
 
     /**
@@ -117,7 +105,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Failed to check for additional dependencies"
      */
-    @DefaultMessage("Failed to check for additional dependencies")
     String checkTestPackageDependenciesError();
 
     /**
@@ -125,7 +112,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The package shinytest requires additional components to run.\n\nInstall additional components?"
      */
-    @DefaultMessage("The package shinytest requires additional components to run.\\n\\nInstall additional components?")
     String checkTestPackageDependenciesMessage();
 
     /**
@@ -133,7 +119,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Install Shinytest Dependencies"
      */
-    @DefaultMessage("Install Shinytest Dependencies")
     String checkTestPackageDependenciesCaption();
 
     /**
@@ -141,7 +126,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Failed to install additional dependencies"
      */
-    @DefaultMessage("Failed to install additional dependencies")
     String installShinyTestDependenciesError();
 
     /**
@@ -149,7 +133,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The file {0} has changed on disk. Do you want to reload the file from disk and discard your unsaved changes?"
      */
-    @DefaultMessage("The file {0} has changed on disk. Do you want to reload the file from disk and discard your unsaved changes?")
     String checkForExternalEditFileChangedMessage(String fileName);
 
     /**
@@ -157,7 +140,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "File Changed"
      */
-    @DefaultMessage("File Changed")
     String checkForExternalEditFileChangedCaption();
 
     /**
@@ -165,7 +147,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The file {0} has been deleted or moved. Do you want to close this file now?"
      */
-    @DefaultMessage("The file {0} has been deleted or moved. Do you want to close this file now?")
     String checkForExternalEditFileDeletedMessage(String pathName);
 
     /**
@@ -173,7 +154,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "File Deleted"
      */
-    @DefaultMessage("File Deleted")
     String checkForExternalEditFileDeletedCaption();
 
     /**
@@ -181,7 +161,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The file ''{0}'' cannot be compiled to a PDF because TeX does not understand paths with spaces. If you rename the file to remove spaces then PDF compilation will work correctly."
      */
-    @DefaultMessage("The file ''{0}'' cannot be compiled to a PDF because TeX does not understand paths with spaces. If you rename the file to remove spaces then PDF compilation will work correctly.")
     String fireCompilePdfEventErrorMessage(String fileName);
 
     /**
@@ -189,7 +168,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Invalid Filename"
      */
-    @DefaultMessage("Invalid Filename")
     String fireCompilePdfEventErrorCaption();
 
     /**
@@ -197,7 +175,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This will remove all previously generated output for {0} (html, prerendered data, knitr cache, etc.).\n\nAre you sure you want to clear the output now?"
      */
-    @DefaultMessage("This will remove all previously generated output for {0} (html, prerendered data, knitr cache, etc.).\n\nAre you sure you want to clear the output now?")
     String onClearPrerenderedOutputMessage(String docPath);
 
     /**
@@ -205,7 +182,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Clear Prerendered Output"
      */
-    @DefaultMessage("Clear Prerendered Output")
     String onClearPrerenderedOutputCaption();
 
     /**
@@ -213,7 +189,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Clearing the Knitr cache will delete the cache directory for {0}. \n\nAre you sure you want to clear the cache now?"
      */
-    @DefaultMessage("Clearing the Knitr cache will delete the cache directory for {0}. \n\nAre you sure you want to clear the cache now?")
     String onClearKnitrCacheMessage(String docPath);
 
     /**
@@ -221,7 +196,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Clear Knitr Cache"
      */
-    @DefaultMessage("Clear Knitr Cache")
     String onClearKnitrCacheCaption();
 
     /**
@@ -229,7 +203,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Unable to Compile Report"
      */
-    @DefaultMessage("Unable to Compile Report")
     String generateNotebookCaption();
 
     /**
@@ -237,7 +210,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Presentations require the knitr package (version 1.2 or higher)"
      */
-    @DefaultMessage("R Presentations require the knitr package (version 1.2 or higher)")
     String previewRpresentationMessage();
 
     /**
@@ -245,7 +217,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Unable to Preview"
      */
-    @DefaultMessage("Unable to Preview")
     String previewRpresentationCaption();
 
     /**
@@ -253,7 +224,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Sourcing Python scripts"
      */
-    @DefaultMessage("Sourcing Python scripts")
     String sourcePythonUserPrompt();
 
     /**
@@ -261,7 +231,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Executing Python"
      */
-    @DefaultMessage("Executing Python")
     String sourcePythonProgressCaption();
 
     /**
@@ -269,7 +238,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The currently active source file is not saved so doesn''t have a directory to change into."
      */
-    @DefaultMessage("The currently active source file is not saved so doesn''t have a directory to change into.")
     String onSetWorkingDirToActiveDocMessage();
 
     /**
@@ -277,7 +245,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source File Not Saved"
      */
-    @DefaultMessage("Source File Not Saved")
     String onSetWorkingDirToActiveDocCaption();
 
     /**
@@ -285,7 +252,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Enter line number:"
      */
-    @DefaultMessage("Enter line number:")
     String onGoToLineLabel();
 
     /**
@@ -293,7 +259,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Go to Line"
      */
-    @DefaultMessage("Go to Line")
     String onGoToLineTitle();
 
     /**
@@ -301,7 +266,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * Has to be empty string as an argument to include the space
      * @return translated "{0} File name "
      */
-    @DefaultMessage("{0} File name ")
     String getCurrentStatusFileName(String emptyString);
 
     /**
@@ -309,7 +273,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * Has to be empty string as an argument to include the space
      * @return translated "{0} File type"
      */
-    @DefaultMessage("{0} File type")
     String getCurrentStatusFileType(String emptyString);
 
     /**
@@ -317,7 +280,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} Scope"
      */
-    @DefaultMessage("{0} Scope")
     String getCurrentStatusScope(String emptyString);
 
     /**
@@ -325,7 +287,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} Column"
      */
-    @DefaultMessage("{0} Column")
     String getCurrentStatusColumn(String emptyString);
 
     /**
@@ -333,7 +294,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Row"
      */
-    @DefaultMessage("Row")
     String getCurrentStatusRow();
 
     /**
@@ -341,7 +301,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "No name"
      */
-    @DefaultMessage("No name")
     String noName();
 
     /**
@@ -349,7 +308,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "None"
      */
-    @DefaultMessage("None")
     String none();
 
     /**
@@ -357,7 +315,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run After"
      */
-    @DefaultMessage("Run After")
     String runAfter();
 
     /**
@@ -365,7 +322,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run Previous"
      */
-    @DefaultMessage("Run Previous")
     String runPrevious();
 
     /**
@@ -373,7 +329,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run All"
      */
-    @DefaultMessage("Run All")
     String runAll();
 
     /**
@@ -381,7 +336,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Section label:"
      */
-    @DefaultMessage("Section label:")
     String onInsertSectionLabel();
 
     /**
@@ -389,7 +343,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Insert Section"
      */
-    @DefaultMessage("Insert Section")
     String onInsertSectionTitle();
 
     /**
@@ -397,7 +350,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Couldn''t determine the format options from the YAML front matter. Make sure the YAML defines a supported output format in its ''output'' field."
      */
-    @DefaultMessage("Couldn''t determine the format options from the YAML front matter. Make sure the YAML defines a supported output format in its ''output'' field.")
     String showFrontMatterEditorDialogMessage();
 
     /**
@@ -405,7 +357,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Edit Format Failed"
      */
-    @DefaultMessage("Edit Format Failed")
     String showFrontMatterEditorDialogCaption();
 
     /**
@@ -413,7 +364,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The YAML front matter in this document could not be successfully parsed. This parse error needs to be resolved before format options can be edited."
      */
-    @DefaultMessage("The YAML front matter in this document could not be successfully parsed. This parse error needs to be resolved before format options can be edited.")
     String showFrontMatterEditorErrMsg();
 
     /**
@@ -421,7 +371,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Edit Format Failed"
      */
-    @DefaultMessage("Edit Format Failed")
     String showFrontMatterEditorErrCaption();
 
     /**
@@ -429,7 +378,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Can''t find the YAML front matter for this document. Make sure the front matter is enclosed by lines containing only three dashes: ---."
      */
-    @DefaultMessage("Can''t find the YAML front matter for this document. Make sure the front matter is enclosed by lines containing only three dashes: ---.")
     String showFrontMatterEditorMessage();
 
     /**
@@ -437,7 +385,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Function Name"
      */
-    @DefaultMessage("Function Name")
     String functionNameLabel();
 
     /**
@@ -445,7 +392,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Please select the code to extract into a function."
      */
-    @DefaultMessage("Please select the code to extract into a function.")
     String pleaseSelectCodeMessage();
 
     /**
@@ -453,7 +399,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Extract Function"
      */
-    @DefaultMessage("Extract Function")
     String extractActiveFunctionRefactoringName();
 
     /**
@@ -461,7 +406,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The {0} command is only valid for R code chunks."
      */
-    @DefaultMessage("The {0} command is only valid for R code chunks.")
     String showRModeWarningMessage(String command);
 
     /**
@@ -469,7 +413,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Command Not Available"
      */
-    @DefaultMessage("Command Not Available")
     String showRModeWarningCaption();
 
     /**
@@ -477,7 +420,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Variable Name"
      */
-    @DefaultMessage("Variable Name")
     String variableName();
 
     /**
@@ -485,7 +427,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Extract local variable"
      */
-    @DefaultMessage("Extract local variable")
     String extractLocalVariableRefactoringName();
 
     /**
@@ -493,7 +434,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancel();
 
     /**
@@ -501,7 +441,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Reopen Document"
      */
-    @DefaultMessage("Reopen Document")
     String reopenDocument();
 
     /**
@@ -509,7 +448,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This document has unsaved changes. These changes will be discarded when re-opening the document.\n\nWould you like to proceed?"
      */
-    @DefaultMessage("This document has unsaved changes. These changes will be discarded when re-opening the document.\n\nWould you like to proceed?")
     String onReopenSourceDocWithEncodingMessage();
 
     /**
@@ -517,7 +455,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Reopen with Encoding"
      */
-    @DefaultMessage("Reopen with Encoding")
     String onReopenSourceDocWithEncodingCaption();
 
     /**
@@ -525,7 +462,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Total words: {0} {1}"
      */
-    @DefaultMessage("Total words: {0} {1}")
     String onWordCountMessage(int totalWords, String selectedWordsText);
 
     /**
@@ -533,7 +469,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Word Count"
      */
-    @DefaultMessage("Word Count")
     String wordCount();
 
     /**
@@ -541,7 +476,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "\nSelected words: {0}"
      */
-    @DefaultMessage("\nSelected words: {0}")
     String selectedWords(int selectionWords);
 
     /**
@@ -549,7 +483,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "for {0}."
      */
-    @DefaultMessage("for {0}.")
     String renameInScopeSelectedItemMessage(String selectedItem);
 
     /**
@@ -557,7 +490,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "matches "
      */
-    @DefaultMessage("matches ")
     String renameInScopeMatchesPlural();
 
     /**
@@ -565,7 +497,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "match "
      */
-    @DefaultMessage("match ")
     String renameInScopeMatch();
 
     /**
@@ -573,7 +504,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Found {0} "
      */
-    @DefaultMessage("Found {0} ")
     String renameInScopeFoundMatchesMessage(int matches);
 
     /**
@@ -581,7 +511,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "No matches for ''{0}''"
      */
-    @DefaultMessage("No matches for ''{0}''")
     String renameInScopeNoMatchesMessage(String selectionValue);
 
     /**
@@ -589,7 +518,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This file was created as an R script however the file extension you specified will change it into another file type that will no longer open as an R script.\n\nAre you sure you want to change the type of the file so that it is no longer an R script?"
      */
-    @DefaultMessage("This file was created as an R script however the file extension you specified will change it into another file type that will no longer open as an R script.\\n\\nAre you sure you want to change the type of the file so that it is no longer an R script?")
     String saveNewFileWithEncodingWarningMessage();
 
     /**
@@ -597,7 +525,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Confirm Change File Type"
      */
-    @DefaultMessage("Confirm Change File Type")
     String saveNewFileWithEncodingWarningCaption();
 
     /**
@@ -605,7 +532,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save File - {0}"
      */
-    @DefaultMessage("Save File - {0}")
     String saveNewFileWithEncodingSaveFileCaption(String nameValue);
 
     /**
@@ -613,7 +539,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Don''t Save"
      */
-    @DefaultMessage("Don''t Save")
     String dontSave();
 
     /**
@@ -621,7 +546,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String save();
 
     /**
@@ -629,7 +553,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The document ''{0}'' has unsaved changes.\n\nDo you want to save these changes?"
      */
-    @DefaultMessage("The document ''{0}'' has unsaved changes.\\n\\nDo you want to save these changes?")
     String saveWithPromptMessage(String documentName);
 
     /**
@@ -637,7 +560,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} - Unsaved Changes"
      */
-    @DefaultMessage("{0} - Unsaved Changes")
     String saveWithPromptCaption(String documentName);
 
     /**
@@ -645,7 +567,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Close Anyway"
      */
-    @DefaultMessage("Close Anyway")
     String closeAnyway();
 
     /**
@@ -653,7 +574,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "You''re actively following another user''s cursor in ''{0}''.\n\nIf you close this file, you won''t see their cursor until they edit another file."
      */
-    @DefaultMessage("You''re actively following another user''s cursor in ''{0}''.\n\nIf you close this file, you won''t see their cursor until they edit another file.")
     String onBeforeDismissMessage(String nameValue);
 
     /**
@@ -661,7 +581,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} - Active Following Session"
      */
-    @DefaultMessage("{0} - Active Following Session")
     String onBeforeDismissCaption(String nameValue);
 
     /**
@@ -669,7 +588,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "(No {0} defined)"
      */
-    @DefaultMessage("(No {0} defined)")
     String addFunctionsToMenuText(String typeText);
 
     /**
@@ -677,7 +595,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "chunks"
      */
-    @DefaultMessage("chunks")
     String chunks();
 
     /**
@@ -685,7 +602,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "functions"
      */
-    @DefaultMessage("functions")
     String functions();
 
     /**
@@ -693,7 +609,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints will be activated when this file is sourced."
      */
-    @DefaultMessage("Breakpoints will be activated when this file is sourced.")
     String updateBreakpointWarningBarSourcedMessage();
 
     /**
@@ -701,7 +616,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints will be activated when an updated version of the {0} package is loaded"
      */
-    @DefaultMessage("Breakpoints will be activated when an updated version of the {0} package is loaded")
     String updateBreakpointWarningBarPackageMessage(String pendingPackageName);
 
     /**
@@ -709,7 +623,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints will be activated when the package is built and reloaded."
      */
-    @DefaultMessage("Breakpoints will be activated when the package is built and reloaded.")
     String updateBreakpointWarningBarPackageLoadMessage();
 
     /**
@@ -717,7 +630,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints will be activated when the file or function is finished executing."
      */
-    @DefaultMessage("Breakpoints will be activated when the file or function is finished executing.")
     String updateBreakpointWarningBarFunctionMessage();
 
     /**
@@ -725,7 +637,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints cannot be set until the file is saved."
      */
-    @DefaultMessage("Breakpoints cannot be set until the file is saved.")
     String onBreakpointSetNewDocWarning();
 
     /**
@@ -733,7 +644,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints not supported in Plumber API files."
      */
-    @DefaultMessage("Breakpoints not supported in Plumber API files.")
     String onBreakpointSetPlumberfileWarning();
 
     /**
@@ -741,7 +651,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Error Saving Setting"
      */
-    @DefaultMessage("Error Saving Setting")
     String errorSavingSetting();
 
     /**
@@ -749,7 +658,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save File"
      */
-    @DefaultMessage("Save File")
     String saveFile();
 
     /**
@@ -757,7 +665,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Installing TinyTeX"
      */
-    @DefaultMessage("Installing TinyTeX")
     String installTinyTeX();
 
     /**
@@ -765,7 +672,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Installing tinytex"
      */
-    @DefaultMessage("Installing tinytex")
     String installTinytexLowercase();
 
     /**
@@ -773,7 +679,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Debug lines may not match because the file contains unsaved changes."
      */
-    @DefaultMessage("Debug lines may not match because the file contains unsaved changes.")
     String updateDebugWarningBarMessage();
 
     /**
@@ -781,7 +686,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Work on a Copy"
      */
-    @DefaultMessage("Work on a Copy")
     String beginQueuedCollabSessionNoLabel();
 
     /**
@@ -789,7 +693,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Discard and Join"
      */
-    @DefaultMessage("Discard and Join")
     String beginQueuedCollabSessionYesLabel();
 
     /**
@@ -797,7 +700,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "You have unsaved changes to {0}, but another user is editing the file. Do you want to discard your changes and join their edit session, or make your own copy of the file to work on?"
      */
-    @DefaultMessage("You have unsaved changes to {0}, but another user is editing the file. Do you want to discard your changes and join their edit session, or make your own copy of the file to work on?")
     String beginQueuedCollabSessionMessage(String filename);
 
     /**
@@ -805,7 +707,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Join Edit Session"
      */
-    @DefaultMessage("Join Edit Session")
     String beginQueuedCollabSessionCaption();
 
     /**
@@ -813,7 +714,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Breakpoints can only be set inside the body of a function. "
      */
-    @DefaultMessage("Breakpoints can only be set inside the body of a function. ")
     String onBreakpointsSavedWarningBar();
 
     /**
@@ -821,7 +721,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0}-copy{1}"
      */
-    @DefaultMessage("{0}-copy{1}")
     String saveAsPathName(String stem, String extension);
 
     /**
@@ -829,7 +728,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This source file is read-only so changes cannot be saved"
      */
-    @DefaultMessage("This source file is read-only so changes cannot be saved")
     String onResponseReceivedMessage();
 
     /**
@@ -837,7 +735,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Error Saving File"
      */
-    @DefaultMessage("Error Saving File")
     String errorSavingFile();
 
     /**
@@ -845,7 +742,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The process cannot access the file because it is being used by another process"
      */
-    @DefaultMessage("The process cannot access the file because it is being used by another process")
     String onErrorMessage();
 
     /**
@@ -853,7 +749,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} is configured to weave {1} however the {2} package is not installed."
      */
-    @DefaultMessage("{0} is configured to weave {1} however the {2} package is not installed.")
     String checkCompilersRnWPackageNotInstalled(String fRnWname, String forcontext, String fRnWPackage);
 
     /**
@@ -861,7 +756,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Rnw files"
      */
-    @DefaultMessage("Rnw files")
     String rnwFiles();
 
     /**
@@ -869,7 +763,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Rnw files for this project"
      */
-    @DefaultMessage("Rnw files for this project")
     String rnwFilesForProject();
 
     /**
@@ -877,7 +770,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "this file"
      */
-    @DefaultMessage("this file")
     String thisFile();
 
     /**
@@ -885,7 +777,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This server does not have LaTeX installed. You may not be able to compile."
      */
-    @DefaultMessage("This server does not have LaTeX installed. You may not be able to compile.")
     String checkCompilersServerWarning();
 
     /**
@@ -893,7 +784,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "No LaTeX installation detected. Please install LaTeX before compiling."
      */
-    @DefaultMessage("No LaTeX installation detected. Please install LaTeX before compiling.")
     String checkCompilersDesktopWarning();
 
     /**
@@ -901,7 +791,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Unknown Rnw weave method ''{0}'' specified (valid types are {1})"
      */
-    @DefaultMessage("Unknown Rnw weave method ''{0}'' specified (valid types are {1})")
     String checkCompilersRnWWeaveTypeError(String directiveName, String typeNames);
 
     /**
@@ -909,7 +798,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Unknown LaTeX program type ''{0}'' specified (valid types are {1})"
      */
-    @DefaultMessage("Unknown LaTeX program type ''{0}'' specified (valid types are {1}")
     String checkCompilersUnknownLatexType(String latexProgramDirective, String typeNames);
 
     /**
@@ -917,7 +805,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Finding usages..."
      */
-    @DefaultMessage("Finding usages...")
     String findingUsages();
 
     /**
@@ -925,7 +812,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The Rcpp package (version 0.10.1 or higher) is not currently installed"
      */
-    @DefaultMessage("The Rcpp package (version 0.10.1 or higher) is not currently installed")
     String checkBuildCppDependenciesRcppPackage();
 
     /**
@@ -933,7 +819,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "The tools required to build C/C++ code for R are not currently installed"
      */
-    @DefaultMessage("The tools required to build C/C++ code for R are not currently installed")
     String checkBuildCppDependenciesToolsNotInstalled();
 
     /**
@@ -941,7 +826,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Find"
      */
-    @DefaultMessage("Find")
     String find();
 
     /**
@@ -949,7 +833,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Find/Replace"
      */
-    @DefaultMessage("Find/Replace")
     String findOrReplace();
 
     /**
@@ -957,7 +840,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "''{0}'' is not a known previewer for JavaScript files. Did you mean ''r2d3''?"
      */
-    @DefaultMessage("''{0}'' is not a known previewer for JavaScript files. Did you mean ''r2d3''?")
     String previewJSErrorMessage(String functionString);
 
     /**
@@ -965,7 +847,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Error Previewing JavaScript"
      */
-    @DefaultMessage("Error Previewing JavaScript")
     String previewJSErrorCaption();
 
     /**
@@ -973,7 +854,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Block Quote"
      */
-    @DefaultMessage("Block Quote")
     String blockQuote();
 
     /**
@@ -981,7 +861,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Verbatim"
      */
-    @DefaultMessage("Verbatim")
     String verbatim();
 
     /**
@@ -989,7 +868,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Description List"
      */
-    @DefaultMessage("Description List")
     String descriptionList();
 
     /**
@@ -997,7 +875,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Numbered List"
      */
-    @DefaultMessage("Numbered List")
     String numberedList();
 
     /**
@@ -1005,7 +882,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Bullet List"
      */
-    @DefaultMessage("Bullet List")
     String bulletList();
 
     /**
@@ -1013,7 +889,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Quote"
      */
-    @DefaultMessage("Quote")
     String quote();
 
     /**
@@ -1021,7 +896,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Typewriter"
      */
-    @DefaultMessage("Typewriter")
     String typewriter();
 
     /**
@@ -1029,7 +903,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Italic"
      */
-    @DefaultMessage("Italic")
     String italic();
 
     /**
@@ -1037,7 +910,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Bold"
      */
-    @DefaultMessage("Bold")
     String bold();
 
     /**
@@ -1045,7 +917,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Sub-Subsection"
      */
-    @DefaultMessage("Sub-Subsection")
     String subSubsection();
 
     /**
@@ -1053,7 +924,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Subsection"
      */
-    @DefaultMessage("Subsection")
     String subsection();
 
     /**
@@ -1061,7 +931,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Section"
      */
-    @DefaultMessage("Section")
     String section();
 
     /**
@@ -1069,7 +938,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "(Untitled Slide)"
      */
-    @DefaultMessage("(Untitled Slide)")
     String untitledSlide();
 
     /**
@@ -1077,7 +945,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "(No Slides)"
      */
-    @DefaultMessage("(No Slides)")
     String noSlides();
 
     /**
@@ -1085,7 +952,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String rMarkdown();
 
     /**
@@ -1093,7 +959,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Notebook"
      */
-    @DefaultMessage("R Notebook")
     String rNotebook();
 
     /**
@@ -1101,7 +966,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Overwrite {0}"
      */
-    @DefaultMessage("Overwrite {0}")
     String createDraftFromTemplateCaption(String fileType);
 
     /**
@@ -1109,7 +973,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} exists. Overwrite it?"
      */
-    @DefaultMessage("{0} exists. Overwrite it?")
     String createDraftFromTemplateMessage(String name);
 
     /**
@@ -1117,7 +980,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Overwrite"
      */
-    @DefaultMessage("Overwrite")
     String overwrite();
 
     /**
@@ -1125,7 +987,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Template Creation Failed"
      */
-    @DefaultMessage("Template Creation Failed")
     String getTemplateContentErrorCaption();
 
     /**
@@ -1133,7 +994,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Failed to load content from the template at {0}: {1}"
      */
-    @DefaultMessage("Failed to load content from the template at {0}: {1}")
     String getTemplateContentErrorMessage(String templatePath, String errorMessage);
 
     /**
@@ -1141,7 +1001,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Session Busy"
      */
-    @DefaultMessage("R Session Busy")
     String getRMarkdownParamsFileCaption();
 
     /**
@@ -1149,7 +1008,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Unable to edit parameters (the R session is currently busy)."
      */
-    @DefaultMessage("Unable to edit parameters (the R session is currently busy).")
     String getRMarkdownParamsFileMessage();
 
     /**
@@ -1157,7 +1015,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "File Remove Failed"
      */
-    @DefaultMessage("File Remove Failed")
     String cleanAndCreateTemplateCaption();
 
     /**
@@ -1165,7 +1022,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Couldn''t remove {0}"
      */
-    @DefaultMessage("Couldn''t remove {0}")
     String cleanAndCreateTemplateMessage(String path);
 
     /**
@@ -1173,7 +1029,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Creating R Markdown Document..."
      */
-    @DefaultMessage("Creating R Markdown Document...")
     String createDraftFromTemplateProgressMessage();
 
     /**
@@ -1181,7 +1036,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Couldn''t create a template from {0} at {1}.\n\n{2}"
      */
-    @DefaultMessage("Couldn''t create a template from {0} at {1}.\n\n{2}")
     String createDraftFromTemplateOnError(String templatePath, String target, String errorMessage);
 
     /**
@@ -1189,7 +1043,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} requires the knitr package (version {1} or higher)"
      */
-    @DefaultMessage("{0} requires the knitr package (version {1} or higher)")
     String showKnitrPreviewWarningBar(String feature, String requiredVersion);
 
     /**
@@ -1197,7 +1050,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Spellcheck"
      */
-    @DefaultMessage("Spellcheck")
     String spellcheck();
 
     /**
@@ -1205,7 +1057,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "''{0}'' is misspelled"
      */
-    @DefaultMessage("''{0}'' is misspelled")
     String wordIsMisspelled(String word);
     
     /**
@@ -1213,7 +1064,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Ignore word"
      */
-    @DefaultMessage("Ignore word")
     String ignoreWord();
 
     /**
@@ -1221,7 +1071,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Add to user dictionary"
      */
-    @DefaultMessage("Add to user dictionary")
     String addToUserDictionary();
 
     /**
@@ -1229,7 +1078,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Error Previewing SQL"
      */
-    @DefaultMessage("Error Previewing SQL")
     String errorPreviewingSql();
 
     /**
@@ -1237,7 +1085,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source on Save"
      */
-    @DefaultMessage("Source on Save")
     String sourceOnSave();
 
     /**
@@ -1245,7 +1092,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Text editor"
      */
-    @DefaultMessage("Text editor")
     String textEditor();
 
     /**
@@ -1253,7 +1099,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Compare Results"
      */
-    @DefaultMessage("Compare Results")
     String compareResults();
 
     /**
@@ -1261,7 +1106,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run Tests"
      */
-    @DefaultMessage("Run Tests")
     String runTests();
 
     /**
@@ -1269,7 +1113,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Compile Report ({0})"
      */
-    @DefaultMessage("Compile Report ({0})")
     String compileReport(String cmdtext);
 
     /**
@@ -1277,7 +1120,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Shiny test options"
      */
-    @DefaultMessage("Shiny test options")
     String shinyTestOptions();
 
     /**
@@ -1285,7 +1127,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Knit options"
      */
-    @DefaultMessage("Knit options")
     String knitOptions();
 
     /**
@@ -1293,7 +1134,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run document options"
      */
-    @DefaultMessage("Run document options")
     String runDocumentOptions();
 
     /**
@@ -1301,7 +1141,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source the active document"
      */
-    @DefaultMessage("Source the active document")
     String sourceButtonTitle();
 
     /**
@@ -1309,7 +1148,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source"
      */
-    @DefaultMessage("Source")
     String source();
 
     /**
@@ -1317,7 +1155,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} (with echo)"
      */
-    @DefaultMessage("{0} (with echo)")
     String sourceButtonTitleWithEcho(String title);
 
     /**
@@ -1325,7 +1162,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source options"
      */
-    @DefaultMessage("Source options")
     String sourceOptions();
 
     /**
@@ -1333,7 +1169,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run Setup Chunk Automatically"
      */
-    @DefaultMessage("Run Setup Chunk Automatically")
     String runSetupChunkAuto();
 
     /**
@@ -1341,7 +1176,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run"
      */
-    @DefaultMessage("Run")
     String run();
 
     /**
@@ -1349,7 +1183,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run app options"
      */
-    @DefaultMessage("Run app options")
     String runAppOptions();
 
     /**
@@ -1357,7 +1190,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run API options"
      */
-    @DefaultMessage("Run API options")
     String runApiOptions();
 
     /**
@@ -1365,7 +1197,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Show "
      */
-    @DefaultMessage("Show ")
     String show();
 
     /**
@@ -1373,7 +1204,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Hide "
      */
-    @DefaultMessage("Hide ")
     String hide();
 
     /**
@@ -1381,7 +1211,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Show whitespace"
      */
-    @DefaultMessage("Show whitespace")
     String showWhitespace();
 
     /**
@@ -1389,7 +1218,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Format"
      */
-    @DefaultMessage("Format")
     String format();
 
     /**
@@ -1397,7 +1225,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Code Tools"
      */
-    @DefaultMessage("Veria")
     String codeTools();
 
     /**
@@ -1405,7 +1232,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "{0} on Save"
      */
-    @DefaultMessage("{0} on Save")
     String actionOnSave(String action);
 
     /**
@@ -1413,7 +1239,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Untitled Text editor"
      */
-    @DefaultMessage("Untitled Text editor")
     String untitledTextEditor();
 
     /**
@@ -1421,7 +1246,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Compile PDF"
      */
-    @DefaultMessage("Compile PDF")
     String compilePdf();
 
     /**
@@ -1429,7 +1253,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "R Script"
      */
-    @DefaultMessage("R Script")
     String rScript();
 
     /**
@@ -1437,7 +1260,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Install {0} dependencies"
      */
-    @DefaultMessage("Install {0} dependencies")
     String showRequiredPackagesMissingWarningCaption(String scriptname);
 
     /**
@@ -1445,7 +1267,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview"
      */
-    @DefaultMessage("Preview")
     String preview();
 
     /**
@@ -1453,7 +1274,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Knit to "
      */
-    @DefaultMessage("Knit to ")
     String knitTo();
 
     /**
@@ -1461,7 +1281,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview Notebook"
      */
-    @DefaultMessage("Preview Notebook")
     String previewNotebook();
 
     /**
@@ -1469,7 +1288,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Document Directory"
      */
-    @DefaultMessage("Document Directory")
     String documentDirectory();
 
     /**
@@ -1477,7 +1295,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Project Directory"
      */
-    @DefaultMessage("Project Directory")
     String projectDirectory();
 
     /**
@@ -1485,7 +1302,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Current Working Directory"
      */
-    @DefaultMessage("Current Working Directory")
     String currentWorkingDirectory();
 
     /**
@@ -1493,7 +1309,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Knit Directory"
      */
-    @DefaultMessage("Knit Directory")
     String knitDirectory();
 
     /**
@@ -1501,7 +1316,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Render {0}"
      */
-    @DefaultMessage("Render {0}")
     String renderFormatName(String formatName);
 
     /**
@@ -1509,7 +1323,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Presentation"
      */
-    @DefaultMessage("Presentation")
     String presentation();
 
     /**
@@ -1517,7 +1330,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Document"
      */
-    @DefaultMessage("Document")
     String document();
 
     /**
@@ -1525,7 +1337,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run {0}"
      */
-    @DefaultMessage("Run {0}")
     String setIsShinyFormatKnitCommandText(String docType);
 
     /**
@@ -1533,7 +1344,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "View the current {0} with Shiny ({1})"
      */
-    @DefaultMessage("View the current {0} with Shiny ({1})")
     String setIsShinyFormatKnitDocumentButtonTitle(String doctype, String htmlString);
 
     /**
@@ -1541,7 +1351,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview the notebook ({0})"
      */
-    @DefaultMessage("Preview the notebook ({0})")
     String setIsNotebookFormatButtonTitle(String htmlString);
 
     /**
@@ -1549,7 +1358,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Content not publishable"
      */
-    @DefaultMessage("Content not publishable")
     String invokePublishCaption();
 
     /**
@@ -1557,7 +1365,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "This item cannot be published."
      */
-    @DefaultMessage("This item cannot be published.")
     String invokePublishMessage();
 
     /**
@@ -1565,7 +1372,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Knit{0}"
      */
-    @DefaultMessage("Knit{0}")
     String setFormatTextKnitCommandText(String text);
 
     /**
@@ -1573,7 +1379,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Render"
      */
-    @DefaultMessage("Render")
     String setFormatTextQuartoCommandText();
 
     /**
@@ -1581,7 +1386,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview{0}"
      */
-    @DefaultMessage("Preview{0}")
     String setFormatTextPreviewCommandText(String text);
 
     /**
@@ -1589,7 +1393,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Source Script"
      */
-    @DefaultMessage("Source Script")
     String sourceScript();
 
     /**
@@ -1597,7 +1400,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save changes and source the current script"
      */
-    @DefaultMessage("Save changes and source the current script")
     String setSourceButtonFromScriptStatePythonDesc();
 
     /**
@@ -1605,7 +1407,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run Script"
      */
-    @DefaultMessage("Run Script")
     String runScript();
 
     /**
@@ -1613,7 +1414,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save changes and run the current script"
      */
-    @DefaultMessage("Save changes and run the current script")
     String setSourceButtonFromScriptStateDesc();
 
     /**
@@ -1621,7 +1421,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save changes and preview"
      */
-    @DefaultMessage("Save changes and preview")
     String setSourceButtonFromScriptStateSavePreview();
 
     /**
@@ -1629,7 +1428,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Reload App"
      */
-    @DefaultMessage("Reload App")
     String reloadApp();
 
     /**
@@ -1637,7 +1435,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save changes and reload the Shiny application"
      */
-    @DefaultMessage("Save changes and reload the Shiny application")
     String saveChangesAndReload();
 
     /**
@@ -1645,7 +1442,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run App"
      */
-    @DefaultMessage("Run App")
     String runApp();
 
     /**
@@ -1653,7 +1449,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run the Shiny application"
      */
-    @DefaultMessage("Run the Shiny application")
     String runTheShinyApp();
 
     /**
@@ -1661,7 +1456,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Reload API"
      */
-    @DefaultMessage("Reload API")
     String reloadApi();
 
     /**
@@ -1669,7 +1463,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Save changes and reload the Plumber API"
      */
-    @DefaultMessage("Save changes and reload the Plumber API")
     String saveChangesReloadPlumberApi();
 
     /**
@@ -1677,7 +1470,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run API"
      */
-    @DefaultMessage("Run API")
     String runApi();
 
     /**
@@ -1685,7 +1477,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Run the Plumber API"
      */
-    @DefaultMessage("Run the Plumber API")
     String runPlumberApi();
 
     /**
@@ -1693,7 +1484,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview in Viewer Pane"
      */
-    @DefaultMessage("Preview in Viewer Pane")
     String previewInViewerPane();
 
     /**
@@ -1701,7 +1491,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview in Window"
      */
-    @DefaultMessage("Preview in Window")
     String previewInWindow();
 
     /**
@@ -1709,7 +1498,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "(No Preview)"
      */
-    @DefaultMessage("(No Preview)")
     String noPreviewParentheses();
 
     /**
@@ -1717,7 +1505,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Use Visual Editor"
      */
-    @DefaultMessage("Use Visual Editor")
     String useVisualEditor();
 
     /**
@@ -1725,7 +1512,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Preview Images and Equations"
      */
-    @DefaultMessage("Preview Images and Equations")
     String previewImagesEquations();
 
     /**
@@ -1733,7 +1519,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Show Previews Inline"
      */
-    @DefaultMessage("Show Previews Inline")
     String showPreviewsInline();
 
     /**
@@ -1741,7 +1526,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk Output Inline"
      */
-    @DefaultMessage("Chunk Output Inline")
     String chunkOutputInline();
 
     /**
@@ -1749,7 +1533,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk Output in Console"
      */
-    @DefaultMessage("Chunk Output in Console")
     String chunkOutputInConsole();
 
     /**
@@ -1757,7 +1540,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Knit"
      */
-    @DefaultMessage("Knit")
     String knit();
 
     /**
@@ -1765,7 +1547,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Render"
      */
-    @DefaultMessage("Render")
     String render();
 
     /**
@@ -1773,7 +1554,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Print Frame"
      */
-    @DefaultMessage("Print Frame")
     String printFrame();
 
     /**
@@ -1781,7 +1561,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "visual"
      */
-    @DefaultMessage("Visual")
     String visual();
 
     /**
@@ -1789,7 +1568,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Markdown editing tools"
      */
-    @DefaultMessage("Markdown editing tools")
     String markdownEditingTools();
 
     /**
@@ -1797,7 +1575,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Compiling C/C++ code for R"
      */
-    @DefaultMessage("Compiling C/C++ code for R")
     String compilingCode();
 
     /**
@@ -1805,7 +1582,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Running shiny documents"
      */
-    @DefaultMessage("Running shiny documents")
     String runningShinyDocuments();
 
     /**
@@ -1813,7 +1589,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Compiling notebooks from R scripts"
      */
-    @DefaultMessage("Compiling notebooks from R scripts")
     String compilingNotebooks();
 
     /**
@@ -1821,7 +1596,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Rendering R Markdown documents"
      */
-    @DefaultMessage("Rendering R Markdown documents")
     String renderingR();
 
     /**
@@ -1829,7 +1603,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Specifying Knit parameters"
      */
-    @DefaultMessage("Specifying Knit parameters")
     String specifyingKnit();
 
     /**
@@ -1837,7 +1610,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Creating R Markdown documents"
      */
-    @DefaultMessage("Creating R Markdown documents")
     String creatingRMarkdown();
 
     /**
@@ -1845,7 +1617,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: Waiting for completions..."
      */
-    @DefaultMessage("Copilot: Waiting for completions...")
     String copilotWaiting();
 
     /**
@@ -1853,7 +1624,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: No completions available."
      */
-    @DefaultMessage("Copilot: No completions available.")
     String copilotNoCompletions();
 
     /**
@@ -1861,7 +1631,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: Completion response received."
      */
-    @DefaultMessage("Copilot: Completion response received.")
     String copilotResponseReceived();
 
     /**
@@ -1869,7 +1638,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: {0}"
      */
-    @DefaultMessage("Copilot: {0}")
     String copilotResponseErrorMessage(String message);
 
     /**
@@ -1877,7 +1645,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: Automatic completions have been enabled."
      */
-    @DefaultMessage("Copilot: Automatic completions have been enabled.")
     String copilotEnabled();
 
     /**
@@ -1885,7 +1652,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Copilot: Automatic completions have been disabled."
      */
-    @DefaultMessage("Copilot: Automatic completions have been disabled.")
     String copilotDisabled();
     
     /**
@@ -1893,7 +1659,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Reformat Document on Save"
      */
-    @DefaultMessage("Reformat Document on Save")
     String reformatDocumentOnSave();
     
 }

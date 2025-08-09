@@ -21,7 +21,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer"
      */
-    @DefaultMessage("Viewer")
     String viewerTitle();
 
     /**
@@ -29,7 +28,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer Tab"
      */
-    @DefaultMessage("Viewer Tab")
     String viewerTabLabel();
 
     /**
@@ -37,7 +35,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Export"
      */
-    @DefaultMessage("Export")
     String exportText();
 
     /**
@@ -45,7 +42,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Could Not Publish"
      */
-    @DefaultMessage("Could Not Publish")
     String couldNotPublishCaption();
 
     /**
@@ -53,7 +49,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer Content"
      */
-    @DefaultMessage("Viewer Content")
     String viewerContentTitle();
 
     /**
@@ -61,7 +56,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer Pane"
      */
-    @DefaultMessage("Viewer Pane")
     String viewerPaneTitle();
 
     /**
@@ -69,7 +63,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sync Editor"
      */
-    @DefaultMessage("Sync Editor")
     String syncEditorLabel();
 
     /**
@@ -77,7 +70,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -85,7 +77,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Preparing to export plot..."
      */
-    @DefaultMessage("Preparing to export plot...")
     String preparingToExportPlotMessage();
 
     /**
@@ -93,7 +84,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Saving standalone web pages"
      */
-    @DefaultMessage("Saving standalone web pages")
     String savingStandaloneWebPagesMessage();
 
     /**
@@ -101,7 +91,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save As Web Page"
      */
-    @DefaultMessage("Save As Web Page")
     String saveAsWebPageCaption();
 
     /**
@@ -109,7 +98,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Saving as web page..."
      */
-    @DefaultMessage("Saving as web page...")
     String savingAsWebPageMessage();
 
     /**
@@ -117,7 +105,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clear Viewer"
      */
-    @DefaultMessage("Clear Viewer")
     String clearViewerCaption();
 
     /**
@@ -125,7 +112,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to clear all of the items in the history?"
      */
-    @DefaultMessage("Are you sure you want to clear all of the items in the history?")
     String clearViewerMessage();
 
     /**
@@ -133,7 +119,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clearing viewer..."
      */
-    @DefaultMessage("Clearing viewer...")
     String clearingViewerMessage();
 
     /**
@@ -141,7 +126,6 @@ public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer Pane Preview"
      */
-    @DefaultMessage("Viewer Pane Preview")
     String viewerPanePreviewTitle();
 
 }

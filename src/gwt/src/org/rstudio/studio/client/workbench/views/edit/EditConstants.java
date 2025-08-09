@@ -22,7 +22,6 @@ public interface EditConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Saving..."
      */
-    @DefaultMessage("Saving...")
     String savingProgressLabel();
 
     /**
@@ -30,7 +29,6 @@ public interface EditConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancelling..."
      */
-    @DefaultMessage("Cancelling...")
     String cancellingProgressLabel();
 
 }

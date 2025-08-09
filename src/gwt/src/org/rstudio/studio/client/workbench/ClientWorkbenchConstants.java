@@ -20,7 +20,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Addins"
      */
-    @DefaultMessage("Addins")
     String addinCaption();
 
     /**
@@ -28,7 +27,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Execute"
      */
-    @DefaultMessage("Execute")
     String executeButtonLabel();
 
     /**
@@ -36,7 +34,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Using RStudio Addins"
      */
-    @DefaultMessage("Using RStudio Addins")
     String rstudioAddinsCaption();
 
     /**
@@ -44,7 +41,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Loading addins..."
      */
-    @DefaultMessage("Loading addins...")
     String loadingAddinsCaption();
 
     /**
@@ -52,7 +48,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "No addins available"
      */
-    @DefaultMessage("No addins available")
     String noAddinsAvailableCaption();
 
     /**
@@ -60,7 +55,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Keyboard Shortcuts..."
      */
-    @DefaultMessage("Keyboard Shortcuts...")
     String keyboardShortcutsTitle();
 
     /**
@@ -68,7 +62,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Filter addins:"
      */
-    @DefaultMessage("Filter addins:")
     String filterAddinsText();
 
     /**
@@ -76,7 +69,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Package"
      */
-    @DefaultMessage("Package")
     String packageTextHeader();
 
     /**
@@ -84,7 +76,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Name"
      */
-    @DefaultMessage("Name")
     String nameTextHeader();
 
     /**
@@ -92,7 +83,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Description"
      */
-    @DefaultMessage("Description")
     String descTextHeader();
 
     /**
@@ -100,7 +90,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Found {0} addins matching {1}"
      */
-    @DefaultMessage("Found {0} addins matching {1}")
     String foundAddinsMessage(int size, String query);
 
     /**
@@ -108,7 +97,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "You are {0} over your {1} file storage limit. Please remove files to continue working."
      */
-    @DefaultMessage("You are {0} over your {1} file storage limit. Please remove files to continue working.")
     String onQuotaMessage(String fileSize, String quota);
 
     /**
@@ -116,7 +104,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "You are nearly over your {0} file storage limit."
      */
-    @DefaultMessage("You are nearly over your {0} file storage limit.")
     String quotaStatusMessage(String quota);
 
     /**
@@ -124,7 +111,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Choose Working Directory"
      */
-    @DefaultMessage("Choose Working Directory")
     String chooseWorkingDirCaption();
 
     /**
@@ -132,7 +118,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Source File"
      */
-    @DefaultMessage("Source File")
     String sourceFileCaption();
 
     /**
@@ -140,7 +125,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Reading RSA public key..."
      */
-    @DefaultMessage("Reading RSA public key...")
     String rsaKeyProgressMessage();
 
     /**
@@ -148,7 +132,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "RSA Public Key"
      */
-    @DefaultMessage("RSA Public Key")
     String rsaPublicKeyCaption();
 
     /**
@@ -156,7 +139,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Error attempting to read key ''{0}' ({1})"
      */
-    @DefaultMessage("Error attempting to read key ''{0}'' ({1})")
     String onErrorReadKey(String keyPath, String userMessage);
 
     /**
@@ -164,7 +146,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "No"
      */
-    @DefaultMessage("No")
     String noLabel();
 
     /**
@@ -172,7 +153,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Yes"
      */
-    @DefaultMessage("Yes")
     String yesLabel();
 
     /**
@@ -180,7 +160,6 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Admin Notification"
      */
-    @DefaultMessage("Admin Notification")
     String adminNotificationCaption();
 
 }

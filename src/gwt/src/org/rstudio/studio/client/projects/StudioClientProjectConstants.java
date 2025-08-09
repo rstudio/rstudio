@@ -22,7 +22,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Open project in a new R session"
      */
-    @DefaultMessage("Open project in a new R session")
     String openProjectLabel();
 
     /**
@@ -30,7 +29,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Open Project"
      */
-    @DefaultMessage("Open Project")
     String openProjectCaption();
 
     /**
@@ -38,7 +36,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "R Projects (*.Rproj)"
      */
-    @DefaultMessage("R Projects (*.Rproj)")
     String projectFilter();
 
     /**
@@ -46,7 +43,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Show _{0}"
      */
-    @DefaultMessage("Show _{0}")
     String showVCSMenuLabel(String vcsName);
 
     /**
@@ -54,7 +50,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Zoom _{0}"
      */
-    @DefaultMessage("Zoom _{0}")
     String zoomVCSMenuLabel(String vcsName);
 
     /**
@@ -62,7 +57,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Update"
      */
-    @DefaultMessage("Update")
     String updateButtonLabel();
 
     /**
@@ -70,7 +64,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "_Update"
      */
-    @DefaultMessage("_Update")
     String updateMenuLabel();
 
     /**
@@ -78,7 +71,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Save Current Workspace"
      */
-    @DefaultMessage("Save Current Workspace")
     String newProjectCaption();
 
     /**
@@ -86,7 +78,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -94,7 +85,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "New Project..."
      */
-    @DefaultMessage("New Project...")
     String newProjectProjectIndicator();
 
     /**
@@ -102,7 +92,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Error Creating Project"
      */
-    @DefaultMessage("Error Creating Project")
     String creatingProjectError();
 
     /**
@@ -110,7 +99,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Saving defaults..."
      */
-    @DefaultMessage("Saving defaults...")
     String savingDefaultsLabel();
 
     /**
@@ -118,7 +106,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Checking out SVN repository..."
      */
-    @DefaultMessage("Checking out SVN repository...")
     String cloneSVNRepoLabel();
 
     /**
@@ -126,7 +113,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Cloning Git repository..."
      */
-    @DefaultMessage("Cloning Git repository...")
     String cloneGitRepoLabel();
 
     /**
@@ -134,7 +120,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "vcsClone failed"
      */
-    @DefaultMessage("vcsClone failed")
     String vcsCloneFailMessage();
 
     /**
@@ -142,7 +127,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Invalid package name ''{0}'': package names must start with a letter, and contain only letters and numbers."
      */
-    @DefaultMessage("Invalid package name ''{0}'': package names must start with a letter, and contain only letters and numbers.")
     String invalidPackageMessage(String packageName);
 
     /**
@@ -150,7 +134,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Invalid package name {0}"
      */
-    @DefaultMessage("Invalid package name {0}")
     String invalidPackageName(String packageName);
 
     /**
@@ -158,7 +141,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Creating project..."
      */
-    @DefaultMessage("Creating project...")
     String creatingProjectLabel();
 
     /**
@@ -166,7 +148,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto create project failed"
      */
-    @DefaultMessage("Quarto create project failed")
     String projectFailedMessage();
 
     /**
@@ -174,7 +155,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Creating project"
      */
-    @DefaultMessage("Creating project")
     String creatingProjectCaption();
 
     /**
@@ -182,7 +162,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Creating a project with {0}"
      */
-    @DefaultMessage("Creating a project with {0}")
     String creatingProjectWithLabel(String pkg);
 
     /**
@@ -190,7 +169,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "{0} Project"
      */
-    @DefaultMessage("{0} Project")
     String projectContext(String pkg);
 
     /**
@@ -198,7 +176,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Error installing {0}"
      */
-    @DefaultMessage("Error installing {0}")
     String errorInstallingCaption(String pkg);
 
     /**
@@ -206,7 +183,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Installation of package ''{0}'' failed, and so the project cannot be created. Try installing the package manually with ''install.packages("{0}")''."
      */
-    @DefaultMessage("Installation of package ''{0}'' failed, and so the project cannot be created. Try installing the package manually with ''install.packages(\"{0}\")''.")
     String errorInstallingCaptionMessage(String pkg);
 
     /**
@@ -214,7 +190,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "creating project"
      */
-    @DefaultMessage("creating project")
     String creatingProjectResultMessage();
 
     /**
@@ -222,7 +197,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Initializing git repository..."
      */
-    @DefaultMessage("Initializing git repository...")
     String initializingGitRepoMessage();
 
     /**
@@ -230,7 +204,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Initializing renv..."
      */
-    @DefaultMessage("Initializing renv...")
     String initializingRenvMessage();
 
     /**
@@ -238,7 +211,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Preparing to open project..."
      */
-    @DefaultMessage("Preparing to open project...")
     String executeOpenProjectMessage();
 
     /**
@@ -246,7 +218,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "No Active Project"
      */
-    @DefaultMessage("No Active Project")
     String noActiveProjectCaption();
 
     /**
@@ -254,7 +225,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Build tools can only be configured from within an RStudio project."
      */
-    @DefaultMessage("Build tools can only be configured from within an RStudio project.")
     String noActiveProjectMessage();
 
     /**
@@ -262,7 +232,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Version control features can only be accessed from within an RStudio project. Note that if you have an existing directory under version control you can associate an RStudio project with that directory using the New Project dialog."
      */
-    @DefaultMessage("Version control features can only be accessed from within an RStudio project. Note that if you have an existing directory under version control you can associate an RStudio project with that directory using the New Project dialog.")
     String versionControlProjectSetupMessage();
 
     /**
@@ -270,7 +239,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Error Reading Options"
      */
-    @DefaultMessage("Error Reading Options")
     String errorReadingOptionsCaption();
 
     /**
@@ -278,7 +246,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Reading options..."
      */
-    @DefaultMessage("Reading options...")
     String readingOptionsMessage();
 
     /**
@@ -286,7 +253,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Confirm Open Project"
      */
-    @DefaultMessage("Confirm Open Project")
     String confirmOpenProjectCaption();
 
     /**
@@ -294,7 +260,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Do you want to open the project {0}?"
      */
-    @DefaultMessage("Do you want to open the project {0}?")
     String openProjectPathMessage(String projectPath);
 
     /**
@@ -302,7 +267,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project ''{0}'' could not be opened: {1}"
      */
-    @DefaultMessage("Project ''{0}'' could not be opened: {1}")
     String openProjectError(String project, String message);
 
     /**
@@ -310,7 +274,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "\n\nEnsure the project URL is correct; if it is, contact the project owner to request access."
      */
-    @DefaultMessage("\n\nEnsure the project URL is correct; if it is, contact the project owner to request access.")
     String openProjectErrorMessage();
 
     /**
@@ -318,7 +281,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Error Opening Project"
      */
-    @DefaultMessage("Error Opening Project")
     String errorOpeningProjectCaption();
 
     /**
@@ -326,7 +288,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Switch Projects"
      */
-    @DefaultMessage("Switch Projects")
     String switchProjectsCaption();
 
     /**
@@ -334,7 +295,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Analyzing project sources..."
      */
-    @DefaultMessage("Analyzing project sources...")
     String onShowDiagnosticsProject();
 
     /**
@@ -342,7 +302,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project ''{0}'' does not exist (it has been moved or deleted), or it is not writeable"
      */
-    @DefaultMessage("Project ''{0}'' does not exist (it has been moved or deleted), or it is not writeable")
     String projectOpenError(String projectFilePath);
 
     /**
@@ -350,7 +309,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "none"
      */
-    @DefaultMessage("none")
     String noneLabel();
 
     /**
@@ -358,7 +316,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create package based on source files:"
      */
-    @DefaultMessage("Create package based on source files:")
     String createPackageFormLabel();
 
     /**
@@ -366,7 +323,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Add..."
      */
-    @DefaultMessage("Add...")
     String addButtonCaption();
 
     /**
@@ -374,7 +330,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Remove"
      */
-    @DefaultMessage("Remove")
     String removeButtonCaption();
 
     /**
@@ -382,7 +337,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Add Source File"
      */
-    @DefaultMessage("Add Source File")
     String addSourceFileCaption();
 
     /**
@@ -390,7 +344,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Existing Directory"
      */
-    @DefaultMessage("Existing Directory")
     String existingDirectoryTitle();
 
     /**
@@ -398,7 +351,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Associate a project with an existing working directory"
      */
-    @DefaultMessage("Associate a project with an existing working directory")
     String existingDirectorySubTitle();
 
     /**
@@ -406,7 +358,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Project from Existing Directory"
      */
-    @DefaultMessage("Create Project from Existing Directory")
     String existingDirectoryPageCaption();
 
     /**
@@ -414,7 +365,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project working directory:"
      */
-    @DefaultMessage("Project working directory:")
     String projectWorkingDirectoryTitle();
 
     /**
@@ -422,7 +372,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "You must specify an existing working directory to create the new project within."
      */
-    @DefaultMessage("You must specify an existing working directory to create the new project within.")
     String validateMessage();
 
     /**
@@ -430,7 +379,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Your home directory cannot be treated as an RStudio Project; select a different directory."
      */
-    @DefaultMessage("Your home directory cannot be treated as an RStudio Project; select a different directory.")
     String homeDirectoryErrorMessage();
 
 
@@ -439,7 +387,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Clone a project from a Git repository"
      */
-    @DefaultMessage("Clone a project from a Git repository")
     String cloneGitRepo();
 
     /**
@@ -447,7 +394,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Clone Git Repository"
      */
-    @DefaultMessage("Clone Git Repository")
     String cloneGitRepoPageCaption();
 
     /**
@@ -455,7 +401,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "New Directory"
      */
-    @DefaultMessage("New Directory")
     String newDirectoryTitle();
 
     /**
@@ -463,7 +408,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Start a project in a brand new working directory"
      */
-    @DefaultMessage("Start a project in a brand new working directory")
     String newDirectorySubTitle();
 
     /**
@@ -471,7 +415,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project Type"
      */
-    @DefaultMessage("Project Type")
     String newDirectoryPageCaption();
 
     /**
@@ -479,7 +422,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "title"
      */
-    @DefaultMessage("title")
     String titleName();
 
     /**
@@ -487,7 +429,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "New Project"
      */
-    @DefaultMessage("New Project")
     String newProjectTitle();
 
     /**
@@ -495,7 +436,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new project in an empty directory"
      */
-    @DefaultMessage("Create a new project in an empty directory")
     String newProjectSubTitle();
 
     /**
@@ -503,7 +443,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create New Project"
      */
-    @DefaultMessage("Create New Project")
     String createNewProjectPageCaption();
 
     /**
@@ -511,7 +450,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create project as subdirectory of:"
      */
-    @DefaultMessage("Create project as subdirectory of:")
     String newProjectParentLabel();
 
     /**
@@ -519,7 +457,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a git repository"
      */
-    @DefaultMessage("Create a git repository")
     String createGitRepoLabel();
 
     /**
@@ -527,7 +464,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use renv with this project"
      */
-    @DefaultMessage("Use renv with this project")
     String chkRenvInitLabel();
 
     /**
@@ -535,7 +471,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Using renv"
      */
-    @DefaultMessage("Using renv")
     String chkRenvInitUserAction();
 
     /**
@@ -543,7 +478,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Directory name:"
      */
-    @DefaultMessage("Directory name:")
     String directoryNameLabel();
 
     /**
@@ -551,7 +485,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "You must specify a name for the new project directory."
      */
-    @DefaultMessage("You must specify a name for the new project directory.")
     String specifyProjectDirectoryName();
 
     /**
@@ -559,7 +492,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "New Project Wizard"
      */
-    @DefaultMessage("New Project Wizard")
     String newProjectWizardCaption();
 
     /**
@@ -567,7 +499,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Project"
      */
-    @DefaultMessage("Create Project")
     String createProjectCaption();
 
     /**
@@ -575,7 +506,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Open in new session"
      */
-    @DefaultMessage("Open in new session")
     String openNewSessionLabel();
 
     /**
@@ -583,7 +513,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create project from:"
      */
-    @DefaultMessage("Create project from:")
     String createProjectFromLabel();
 
     /**
@@ -591,7 +520,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "R Package"
      */
-    @DefaultMessage("R Package")
     String newPackageTitle();
 
     /**
@@ -599,7 +527,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new R package"
      */
-    @DefaultMessage("Create a new R package")
     String createNewPackageSubTitle();
 
     /**
@@ -607,7 +534,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create R Package"
      */
-    @DefaultMessage("Create R Package")
     String createRPackagePageCaption();
 
     /**
@@ -615,7 +541,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Type:"
      */
-    @DefaultMessage("Type:")
     String typeLabel();
 
     /**
@@ -623,7 +548,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Package name:"
      */
-    @DefaultMessage("Package name:")
     String packageNameLabel();
 
     /**
@@ -631,7 +555,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Package w/ Rcpp"
      */
-    @DefaultMessage("Package w/ Rcpp")
     String rcppPackageOption();
 
     /**
@@ -639,7 +562,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Invalid package name ''{0}''. Package names should start with a letter, and contain only letters and numbers."
      */
-    @DefaultMessage("Invalid package name ''{0}''. Package names should start with a letter, and contain only letters and numbers.")
     String validateAsyncMessage(String packageName);
 
     /**
@@ -647,7 +569,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "A file already exists at path ''{0}''."
      */
-    @DefaultMessage("A file already exists at path ''{0}''.")
     String fileAlreadyExistsMessage(String path);
 
     /**
@@ -655,7 +576,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Directory ''{0}'' already exists and is not empty."
      */
-    @DefaultMessage("Directory ''{0}'' already exists and is not empty.")
     String directoryAlreadyExistsMessage(String path);
 
     /**
@@ -663,7 +583,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Please enter a new directory name."
      */
-    @DefaultMessage("Please enter a new directory name.")
     String pleaseEnterDirectoryNameMessage();
 
     /**
@@ -671,7 +590,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto Book"
      */
-    @DefaultMessage("Quarto Book")
     String quartoBookTitle();
 
     /**
@@ -679,7 +597,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Quarto book project"
      */
-    @DefaultMessage("Create a new Quarto book project")
     String quartoBookSubTitle();
 
     /**
@@ -687,7 +604,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Quarto Book"
      */
-    @DefaultMessage("Create Quarto Book")
     String quartoBookPageCaption();
 
     /**
@@ -695,7 +611,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto Manuscript"
      */
-    @DefaultMessage("Quarto Manuscript")
     String quartoManuscriptTitle();
 
     /**
@@ -703,7 +618,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Quarto manuscript project"
      */
-    @DefaultMessage("Create a new Quarto manuscript project")
     String quartoManuscriptSubTitle();
 
     /**
@@ -711,7 +625,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Quarto Manuscript"
      */
-    @DefaultMessage("Create Quarto Manuscript")
     String quartoManuscriptPageCaption();
 
    
@@ -720,7 +633,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto Project"
      */
-    @DefaultMessage("Quarto Project")
     String quartoProjectTitle();
 
     /**
@@ -728,7 +640,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Quarto project"
      */
-    @DefaultMessage("Create a new Quarto project")
     String quartoProjectSubTitle();
 
     /**
@@ -736,7 +647,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Quarto Project"
      */
-    @DefaultMessage("Create Quarto Project")
     String quartoProjectPageCaption();
 
     /**
@@ -744,7 +654,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Type:"
      */
-    @DefaultMessage("Type:")
     String typeText();
 
     /**
@@ -752,7 +661,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Default)"
      */
-    @DefaultMessage("(Default)")
     String projectTypeDefault();
 
     /**
@@ -760,7 +668,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Website"
      */
-    @DefaultMessage("Website")
     String projectTypeWebsite();
 
     /**
@@ -768,7 +675,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Book"
      */
-    @DefaultMessage("Book")
     String projectTypeBook();
     
     /**
@@ -776,7 +682,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Manuscript"
      */
-    @DefaultMessage("Manuscript")
     String projectTypeManuscript();
 
     /**
@@ -784,7 +689,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Engine:"
      */
-    @DefaultMessage("Engine:")
     String engineLabel();
 
     /**
@@ -792,7 +696,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String engineSelectNone();
 
     /**
@@ -800,7 +703,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Kernel:"
      */
-    @DefaultMessage("Kernel:")
     String kernelLabel();
 
     /**
@@ -808,7 +710,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use venv with packages: "
      */
-    @DefaultMessage("Use venv with packages: ")
     String chkUseVenvLabel();
 
     /**
@@ -816,7 +717,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(none)"
      */
-    @DefaultMessage("(none)")
     String txtVenvPackagesNone();
 
     /**
@@ -824,7 +724,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "type"
      */
-    @DefaultMessage("type")
     String quartoProjectTypeOption();
 
     /**
@@ -832,7 +731,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "engine"
      */
-    @DefaultMessage("engine")
     String quartoProjectEngineOption();
 
     /**
@@ -840,7 +738,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "kernel"
      */
-    @DefaultMessage("kernel")
     String quartoProjectKernelOption();
 
     /**
@@ -848,7 +745,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto Blog"
      */
-    @DefaultMessage("Quarto Blog")
     String quartoBlogTitle();
 
     /**
@@ -856,7 +752,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Quarto blog project"
      */
-    @DefaultMessage("Create a new Quarto blog project")
     String quartoBlogSubTitle();
 
     /**
@@ -864,7 +759,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Quarto Blog"
      */
-    @DefaultMessage("Create Quarto Blog")
     String quartoBlogPageCaption();
 
     /**
@@ -872,7 +766,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quarto Website"
      */
-    @DefaultMessage("Quarto Website")
     String quartoWebsiteTitle();
 
     /**
@@ -880,7 +773,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Quarto website project"
      */
-    @DefaultMessage("Create a new Quarto website project")
     String quartoWebsiteSubTitle();
 
     /**
@@ -888,7 +780,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Quarto Website"
      */
-    @DefaultMessage("Create Quarto Website")
     String quartoWebsitePageCaption();
 
     /**
@@ -896,7 +787,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Shiny Application"
      */
-    @DefaultMessage("Shiny Application")
     String shinyApplicationTitle();
 
     /**
@@ -904,7 +794,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create a new Shiny application"
      */
-    @DefaultMessage("Create a new Shiny application")
     String shinyApplicationSubTitle();
 
     /**
@@ -912,7 +801,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Shiny Application"
      */
-    @DefaultMessage("Create Shiny Application")
     String shinyApplicationPageCaption();
 
     /**
@@ -920,7 +808,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Subversion"
      */
-    @DefaultMessage("Subversion")
     String svnPageTitle();
 
     /**
@@ -928,7 +815,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Checkout a project from a Subversion repository"
      */
-    @DefaultMessage("Checkout a project from a Subversion repository")
     String svnPageSubTitle();
 
     /**
@@ -936,7 +822,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Checkout Subversion Repository"
      */
-    @DefaultMessage("Checkout Subversion Repository")
     String svnPagePageCaption();
 
     /**
@@ -944,7 +829,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Version Control"
      */
-    @DefaultMessage("Version Control")
     String versionControlTitle();
 
     /**
@@ -952,7 +836,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Checkout a project from a version control repository"
      */
-    @DefaultMessage("Checkout a project from a version control repository")
     String versionControlSubTitle();
 
     /**
@@ -960,7 +843,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create Project from Version Control"
      */
-    @DefaultMessage("Create Project from Version Control")
     String versionControlPageCaption();
 
     /**
@@ -968,7 +850,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "<p>{0} was not detected on the system path.</p><p>To create projects from {0} repositories you should install {0} and then restart RStudio.</p><p>Note that if {0} is installed and not on the path, then you can specify its location using the {1} dialog.</p>"
      */
-    @DefaultMessage("<p>{0} was not detected on the system path.</p><p>To create projects from {0} repositories you should install {0} and then restart RStudio.</p><p>Note that if {0} is installed and not on the path, then you can specify its location using the {1} dialog.</p>")
     String acceptNavigationHTML(String title, String location);
 
     /**
@@ -976,7 +857,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Options"
      */
-    @DefaultMessage("Options")
     String optionsLabel();
 
     /**
@@ -984,7 +864,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Preferences"
      */
-    @DefaultMessage("Preferences")
     String preferencesLabel();
 
     /**
@@ -992,7 +871,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Using {0} with RStudio"
      */
-    @DefaultMessage("Using {0} with RStudio")
     String vcsHelpLink(String title);
 
     /**
@@ -1000,7 +878,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Preferences"
      */
-    @DefaultMessage("<p>An installation of {0} was not detected on this system.</p><p>To create projects from {0} repositories you should request that your server administrator install the {0} package.</p>")
     String installationNotDetectedHTML(String title);
 
     /**
@@ -1008,7 +885,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "{0} Not Found"
      */
-    @DefaultMessage("{0} Not Found")
     String titleNotFound(String title);
 
     /**
@@ -1016,7 +892,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
     String okLabel();
 
     /**
@@ -1024,7 +899,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Repository URL:"
      */
-    @DefaultMessage("Repository URL:")
     String repoURLLabel();
 
     /**
@@ -1032,7 +906,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Username (if required for this repository URL):"
      */
-    @DefaultMessage("Username (if required for this repository URL):")
     String usernameLabel();
 
     /**
@@ -1040,7 +913,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project directory name:"
      */
-    @DefaultMessage("Project directory name:")
     String projDirNameLabel();
 
     /**
@@ -1048,7 +920,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Create project as subdirectory of:"
      */
-    @DefaultMessage("Create project as subdirectory of:")
     String existingRepoDestDirLabel();
 
     /**
@@ -1056,7 +927,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "You must specify a repository URL and directory to create the new project within."
      */
-    @DefaultMessage("You must specify a repository URL and directory to create the new project within.")
     String specifyRepoURLErrorMessage();
 
     /**
@@ -1064,7 +934,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "PDF Generation"
      */
-    @DefaultMessage("PDF Generation")
     String pdfGenerationCaption();
 
     /**
@@ -1072,7 +941,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "PDF Preview"
      */
-    @DefaultMessage("PDF Preview")
     String pdfPreviewCaption();
 
     /**
@@ -1080,7 +948,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Compile PDF root document:"
      */
-    @DefaultMessage("Compile PDF root document:")
     String compilePDFLabel();
 
     /**
@@ -1088,7 +955,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Current Document)"
      */
-    @DefaultMessage("(Current Document)")
     String compilePDFEmptyLabel();
 
     /**
@@ -1096,7 +962,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Browse..."
      */
-    @DefaultMessage("Browse...")
     String browseActionLabel();
 
     /**
@@ -1104,7 +969,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Get help on Compile PDF root document"
      */
-    @DefaultMessage("Get help on Compile PDF root document")
     String rootDocumentChooserTitle();
 
     /**
@@ -1112,7 +976,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Choose File"
      */
-    @DefaultMessage("Choose File")
     String chooseFileCaption();
 
     /**
@@ -1120,7 +983,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Index source files (for code search/navigation)"
      */
-    @DefaultMessage("Index source files (for code search/navigation)")
     String enableCodeIndexingLabel();
 
     /**
@@ -1128,7 +990,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Insert spaces for tab"
      */
-    @DefaultMessage("Insert spaces for tab")
     String chkSpacesForTabLabel();
 
     /**
@@ -1136,7 +997,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Tab width"
      */
-    @DefaultMessage("Tab width")
     String tabWidthLabel();
 
     /**
@@ -1144,7 +1004,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use native pipe operator, |> (requires R 4.1+)"
      */
-    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
     String useNativePipeOperatorLabel();
 
     /**
@@ -1152,7 +1011,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Ensure that source files end with newline"
      */
-    @DefaultMessage("Ensure that source files end with newline")
     String chkAutoAppendNewlineLabel();
 
     /**
@@ -1160,7 +1018,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Strip trailing horizontal whitespace when saving"
      */
-    @DefaultMessage("Strip trailing horizontal whitespace when saving")
     String chkStripTrailingWhitespaceLabel();
 
     /**
@@ -1168,7 +1025,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Text encoding:"
      */
-    @DefaultMessage("Text encoding:")
     String textEncodingLabel();
 
     /**
@@ -1176,7 +1032,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Change..."
      */
-    @DefaultMessage("Change...")
     String changeLabel();
 
     /**
@@ -1184,7 +1039,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Code Editing"
      */
-    @DefaultMessage("Code Editing")
     String codingEditingLabel();
 
     /**
@@ -1192,7 +1046,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting.")
     String projectGeneralInfoLabel();
 
     /**
@@ -1200,7 +1053,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Restore .RData into workspace at startup"
      */
-    @DefaultMessage("Restore .RData into workspace at startup")
     String restoreWorkspaceText();
 
     /**
@@ -1208,7 +1060,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Save workspace to .RData on exit"
      */
-    @DefaultMessage("Save workspace to .RData on exit")
     String saveWorkspaceText();
 
     /**
@@ -1216,7 +1067,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Always save history (even if not saving .RData)"
      */
-    @DefaultMessage("Always save history (even if not saving .RData)")
     String alwaysSaveHistoryText();
 
     /**
@@ -1224,7 +1074,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Disable .Rprofile execution on session start/resume"
      */
-    @DefaultMessage("Disable .Rprofile execution on session start/resume")
     String disableExecuteRprofileText();
 
     /**
@@ -1232,7 +1081,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Quit child processes on exit"
      */
-    @DefaultMessage("Quit child processes on exit")
     String quitChildProcessesOnExitText();
 
     /**
@@ -1240,7 +1088,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String generalText();
 
     /**
@@ -1248,7 +1095,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Packrat is a dependency management tool that makes your R code more isolated, portable, and reproducible by giving your project its own privately managed package library."
      */
-    @DefaultMessage("Packrat is a dependency management tool that makes your R code more isolated, portable, and reproducible by giving your project its own privately managed package library.")
     String initializePackratMessage();
 
     /**
@@ -1256,7 +1102,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use packrat with this project"
      */
-    @DefaultMessage("Use packrat with this project")
     String chkUsePackratLabel();
 
     /**
@@ -1264,7 +1109,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Automatically snapshot local changes"
      */
-    @DefaultMessage("Automatically snapshot local changes")
     String chkAutoSnapshotLabel();
 
     /**
@@ -1272,7 +1116,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "{0} ignore packrat library"
      */
-    @DefaultMessage("{0} ignore packrat library")
     String chkVcsIgnoreLibLabel(String vcsName);
 
     /**
@@ -1280,7 +1123,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "{0} ignore packrat sources"
      */
-    @DefaultMessage("{0} ignore packrat sources")
     String chkVcsIgnoreSrcLabel(String vcsName);
 
     /**
@@ -1288,7 +1130,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "External packages (comma separated):"
      */
-    @DefaultMessage("External packages (comma separated):")
     String panelExternalPackagesText();
 
     /**
@@ -1296,7 +1137,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Help on external packages"
      */
-    @DefaultMessage("Help on external packages")
     String panelExternalPackagesTitle();
 
     /**
@@ -1304,7 +1144,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Learn more about Packrat"
      */
-    @DefaultMessage("Learn more about Packrat")
     String packratHelpLink();
 
     /**
@@ -1312,7 +1151,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Verifying prerequisites..."
      */
-    @DefaultMessage("Verifying prerequisites...")
     String verifyPrerequisitesLabel();
 
     /**
@@ -1320,7 +1158,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Managing packages with packrat"
      */
-    @DefaultMessage("Managing packages with packrat")
     String packratManagePackages();
 
     /**
@@ -1328,7 +1165,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project Options"
      */
-    @DefaultMessage("Project Options")
     String projectOptionsCaption();
 
     /**
@@ -1336,7 +1172,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Confirm Restart RStudio"
      */
-    @DefaultMessage("Confirm Restart RStudio")
     String restartRStudioCaption();
 
     /**
@@ -1344,7 +1179,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "You need to restart RStudio in order for this change to take effect. Do you want to do this now?"
      */
-    @DefaultMessage("You need to restart RStudio in order for this change to take effect. Do you want to do this now?")
     String restartRStudioMessage();
 
     /**
@@ -1352,7 +1186,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Use default)"
      */
-    @DefaultMessage("(Use default)")
     String useDefaultText();
 
     /**
@@ -1360,7 +1193,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Environments"
      */
-    @DefaultMessage("Environments")
     String environmentsText();
 
     /**
@@ -1368,7 +1200,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "RStudio uses the renv package to give your projects their own privately-managed package library, making your R code more isolated, portable, and reproducible."
      */
-    @DefaultMessage("RStudio uses the renv package to give your projects their own privately-managed package library, making your R code more isolated, portable, and reproducible.")
     String rstudioInitializeLabel();
 
     /**
@@ -1376,7 +1207,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Learn more about renv"
      */
-    @DefaultMessage("Learn more about renv")
     String renvHelpLink();
 
     /**
@@ -1384,7 +1214,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Visual Mode: Markdown Output"
      */
-    @DefaultMessage("Visual Mode: Markdown Output")
     String visualModeCaption();
 
     /**
@@ -1392,7 +1221,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting.")
     String rMarkdownInfoLabel();
 
     /**
@@ -1400,7 +1228,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Wrap at column:"
      */
-    @DefaultMessage("Wrap at column:")
     String wrapColumnLabel();
 
     /**
@@ -1408,7 +1235,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Automatic text wrapping (line breaks)"
      */
-    @DefaultMessage("Automatic text wrapping (line breaks)")
     String wrapPanelText();
 
     /**
@@ -1416,7 +1242,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Default)"
      */
-    @DefaultMessage("(Default)")
     String referencesDefaultItem();
 
     /**
@@ -1424,7 +1249,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Write references at end of current"
      */
-    @DefaultMessage("Write references at end of current")
     String referencesFormLabel();
 
     /**
@@ -1432,7 +1256,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Default)"
      */
-    @DefaultMessage("(Default)")
     String canonicalDefaultItem();
 
     /**
@@ -1440,7 +1263,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "true"
      */
-    @DefaultMessage("true")
     String canonicalTrueItem();
 
     /**
@@ -1448,7 +1270,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "false"
      */
-    @DefaultMessage("false")
     String canonicalFalseItem();
 
     /**
@@ -1456,7 +1277,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Write canonical visual mode markdown in source mode"
      */
-    @DefaultMessage("Write canonical visual mode markdown in source mode")
     String canonicalFormLabel();
 
     /**
@@ -1464,7 +1284,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Learn more about markdown writer options"
      */
-    @DefaultMessage("Learn more about markdown writer options")
     String markdownPerFileOptionsCaption();
 
     /**
@@ -1472,7 +1291,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Visual Mode: Zotero"
      */
-    @DefaultMessage("Visual Mode: Zotero")
     String visualModeZoteroCaption();
 
     /**
@@ -1480,7 +1298,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String rMarkdownText();
 
     /**
@@ -1488,7 +1305,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Sharing"
      */
-    @DefaultMessage("Sharing")
     String sharingText();
 
     /**
@@ -1496,7 +1312,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Version control system:"
      */
-    @DefaultMessage("Version control system:")
     String vcsSelectLabel();
 
     /**
@@ -1504,7 +1319,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Origin: "
      */
-    @DefaultMessage("Origin: ")
     String originLabel();
 
     /**
@@ -1512,7 +1326,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Origin:"
      */
-    @DefaultMessage("Origin:")
     String lblOrigin();
 
     /**
@@ -1520,7 +1333,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Repo:"
      */
-    @DefaultMessage("Repo:")
     String repoCaption();
 
     /**
@@ -1528,7 +1340,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Checking for git repository..."
      */
-    @DefaultMessage("Checking for git repository...")
     String confirmGitRepoLabel();
 
     /**
@@ -1536,7 +1347,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Confirm New Git Repository"
      */
-    @DefaultMessage("Confirm New Git Repository")
     String confirmGitRepoCaption();
 
     /**
@@ -1544,7 +1354,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Do you want to initialize a new git repository for this project?"
      */
-    @DefaultMessage("Do you want to initialize a new git repository for this project?")
     String confirmGitRepoMessage();
 
     /**
@@ -1552,7 +1361,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String noneProjectSourceControlLabel();
 
     /**
@@ -1560,7 +1368,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Dictionaries"
      */
-    @DefaultMessage("Dictionaries")
     String dictionariesCaption();
 
     /**
@@ -1568,7 +1375,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use (Default) to inherit the global default dictionary."
      */
-    @DefaultMessage("Use (Default) to inherit the global default dictionary.")
     String dictionariesInfoLabel();
 
     /**
@@ -1576,7 +1382,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Spelling"
      */
-    @DefaultMessage("Spelling")
     String spellingText();
 
     /**
@@ -1584,7 +1389,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Yes"
      */
-    @DefaultMessage("Yes")
     String yesLabel();
 
     /**
@@ -1592,7 +1396,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "No"
      */
-    @DefaultMessage("No")
     String noLabel();
 
     /**
@@ -1600,7 +1403,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Ask"
      */
-    @DefaultMessage("Ask")
     String askLabel();
 
     /**
@@ -1608,7 +1410,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Custom build script:"
      */
-    @DefaultMessage("Custom build script:")
     String pathSelectorLabel();
 
     /**
@@ -1616,7 +1417,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Script Not Specified"
      */
-    @DefaultMessage("Script Not Specified")
     String validateScriptCaption();
 
     /**
@@ -1624,7 +1424,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "You must specify a path to the custom build script."
      */
-    @DefaultMessage("You must specify a path to the custom build script.")
     String validateScriptMessage();
 
     /**
@@ -1632,7 +1431,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Makefile directory:"
      */
-    @DefaultMessage("Makefile directory:")
     String pathSelectorMakefileDirLabel();
 
     /**
@@ -1640,7 +1438,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Additional arguments:"
      */
-    @DefaultMessage("Additional arguments:")
     String txtMakefileArgs();
 
     /**
@@ -1648,7 +1445,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Package directory:"
      */
-    @DefaultMessage("Package directory:")
     String pathSelectorPackageDir();
 
     /**
@@ -1656,7 +1452,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use devtools package functions if available"
      */
-    @DefaultMessage("Use devtools package functions if available")
     String chkUseDevtoolsCaption();
 
     /**
@@ -1664,7 +1459,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Always use --preclean when installing package"
      */
-    @DefaultMessage("Always use --preclean when installing package")
     String cleanBeforeInstallLabel();
 
     /**
@@ -1672,7 +1466,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Generate documentation with Roxygen"
      */
-    @DefaultMessage("Generate documentation with Roxygen")
     String chkUseRoxygenCaption();
 
     /**
@@ -1680,7 +1473,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Configure..."
      */
-    @DefaultMessage("Configure...")
     String btnConfigureRoxygenLabel();
 
     /**
@@ -1688,7 +1480,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Install Package &mdash; R CMD INSTALL additional options:"
      */
-    @DefaultMessage("Install Package &mdash; R CMD INSTALL additional options:")
     String installMdashArgument();
 
     /**
@@ -1696,7 +1487,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Check Package &mdash; R CMD check additional options:"
      */
-    @DefaultMessage("Check Package &mdash; R CMD check additional options:")
     String checkPackageMdashArgument();
 
     /**
@@ -1704,7 +1494,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Check Package &mdash; R CMD check additional options:"
      */
-    @DefaultMessage("Build Source Package &mdash; R CMD build additional options:")
     String buildSourceMdashArgument();
 
     /**
@@ -1712,7 +1501,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Build Binary Package &mdash; R CMD INSTALL additional options:"
      */
-    @DefaultMessage("Build Binary Package &mdash; R CMD INSTALL additional options:")
     String buildBinaryMdashArgument();
 
     /**
@@ -1720,7 +1508,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Browse..."
      */
-    @DefaultMessage("Browse...")
     String browseLabel();
 
     /**
@@ -1728,7 +1515,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(Project Root)"
      */
-    @DefaultMessage("(Project Root)")
     String projectRootLabel();
 
     /**
@@ -1736,7 +1522,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Choose Directory"
      */
-    @DefaultMessage("Choose Directory")
     String chooseDirectoryCaption();
 
     /**
@@ -1744,7 +1529,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String noneFileSelectorLabel();
 
     /**
@@ -1752,7 +1536,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Roxygen Options"
      */
-    @DefaultMessage("Roxygen Options")
     String roxygenOptionsCaption();
 
     /**
@@ -1760,7 +1543,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Site directory:"
      */
-    @DefaultMessage("Site directory:")
     String pathSelectorSiteDir();
 
     /**
@@ -1768,7 +1550,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Book output format(s):"
      */
-    @DefaultMessage("Book output format(s):")
     String websiteOutputFormatLabel();
 
     /**
@@ -1776,7 +1557,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "all"
      */
-    @DefaultMessage("all")
     String allLabel();
 
     /**
@@ -1784,7 +1564,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Preview site after building"
      */
-    @DefaultMessage("Preview site after building")
     String chkPreviewAfterBuildingCaption();
 
     /**
@@ -1792,7 +1571,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Re-knit current preview when supporting files change"
      */
-    @DefaultMessage("Re-knit current preview when supporting files change")
     String chkLivePreviewSiteCaption();
 
     /**
@@ -1800,7 +1578,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Supporting files include Rmd partials, R scripts, YAML config files, etc."
      */
-    @DefaultMessage("Supporting files include Rmd partials, R scripts, YAML config files, etc.")
     String infoLabel();
 
     /**
@@ -1808,7 +1585,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Preview book after building"
      */
-    @DefaultMessage("Preview book after building")
     String chkPreviewAfterBuilding();
 
     /**
@@ -1816,7 +1592,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "(All Formats)"
      */
-    @DefaultMessage("(All Formats)")
     String allFormatsLabel();
 
     /**
@@ -1824,7 +1599,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Build Tools"
      */
-    @DefaultMessage("Build Tools")
     String buildToolsLabel();
 
     /**
@@ -1832,7 +1606,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project build tools:"
      */
-    @DefaultMessage("Project build tools:")
     String projectBuildToolsLabel();
 
     /**
@@ -1840,7 +1613,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Package"
      */
-    @DefaultMessage("Package")
     String packageLabel();
 
     /**
@@ -1848,7 +1620,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Git/SVN"
      */
-    @DefaultMessage("Git/SVN")
     String gitLabel();
 
     /**
@@ -1856,7 +1627,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Close Project"
      */
-    @DefaultMessage("Close Project")
     String closeProjectLabel();
 
     /**
@@ -1864,7 +1634,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "placeholder"
      */
-    @DefaultMessage("placeholder")
     String placeholderLabel();
 
     /**
@@ -1872,7 +1641,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use global cache for installed packages"
      */
-    @DefaultMessage("Use global cache for installed packages")
     String chkUseCacheLabel();
 
     /**
@@ -1880,7 +1648,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Use condaenv with packages:"
      */
-    @DefaultMessage("Use condaenv with packages:")
     String useCondaenv();
     
     /**
@@ -1888,7 +1655,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Editing"
      */
-    @DefaultMessage("Editing")
     String editingTitle();
  
     /**
@@ -1896,7 +1662,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Indexing"
      */
-    @DefaultMessage("Indexing")
     String indexingTitle();
     
     /**
@@ -1904,7 +1669,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Saving"
      */
-    @DefaultMessage("Saving")
     String savingTitle();
     
     /**
@@ -1912,7 +1676,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Workspace"
      */
-    @DefaultMessage("Workspace")
     String workspaceTitle();
     
     /**
@@ -1920,7 +1683,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Miscellaneous"
      */
-    @DefaultMessage("Miscellaneous")
     String miscellaneousTitle();
 
     /**
@@ -1928,7 +1690,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String generalTitle();
     
     
@@ -1937,7 +1698,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project display name (defaults to folder name):"
      */
-    @DefaultMessage("Project display name (defaults to folder name):")
     String customProjectNameLabel();
     
     /**
@@ -1945,7 +1705,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      *
      * @return translated "Project scratch path:"
      */
-    @DefaultMessage("Project scratch path:")
     String scratchPathLabel();
     
 }

@@ -24,7 +24,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Presentation")
     String presentationLabel();
 
     /**
@@ -32,7 +31,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Document")
     String documentLabel();
 
     /**
@@ -40,7 +38,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Interactive")
     String interactiveLabel();
 
     /**
@@ -48,7 +45,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("New Quarto Document")
     String newQuartoDocumentCaption();
 
     /**
@@ -56,7 +52,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create")
     String createDocButtonCaption();
 
     /**
@@ -64,7 +59,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("(optional)")
     String newDocAuthorPlaceholderText();
 
     /**
@@ -72,7 +66,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Templates")
     String templateAriaLabelValue();
 
     /**
@@ -80,7 +73,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Engine:")
     String engineLabelCaption();
 
     /**
@@ -88,7 +80,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("(None)")
     String engineSelectNoneLabel();
 
     /**
@@ -96,7 +87,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Kernel:")
     String kernelLabelCaption();
 
     /**
@@ -104,7 +94,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto")
     String learnMoreLinkCaption();
 
     /**
@@ -112,7 +101,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto presentations")
     String learnMorePresentationsLinkCaption();
 
     /**
@@ -120,7 +108,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Learn more about Quarto interactive documents")
     String learnMoreInteractiveDocsLinkCaption();
 
     /**
@@ -128,7 +115,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create Empty Document")
     String createEmptyDocButtonTitle();
 
     /**
@@ -136,7 +122,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Title Required")
     String titleRequiredErrorCaption();
 
     /**
@@ -144,7 +129,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("You must provide a title for the document")
     String titleRequiredErrorMessage();
 
     /**
@@ -152,7 +136,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("HTML")
     String htmlFormatText();
 
     /**
@@ -160,7 +143,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Recommended format for authoring (you can switch to PDF or Word output anytime)")
     String htmlFormatDesc();
 
     /**
@@ -168,7 +150,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF")
     String pdfFormatText();
 
     /**
@@ -176,7 +157,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
     String pdfFormatDesc();
 
     /**
@@ -184,7 +164,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Word")
     String wordFormatText();
 
     /**
@@ -192,7 +171,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)")
     String wordFormatDesc();
 
     /**
@@ -200,7 +178,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Reveal JS")
     String jsFormatText();
 
     /**
@@ -208,7 +185,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("HTML presentation viewable with any browser (you can also print to PDF with Chrome)")
     String jsFormatDesc();
 
     /**
@@ -216,7 +192,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Beamer")
     String beamerFormatText();
 
     /**
@@ -224,7 +199,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
     String beamerFormatDesc();
 
     /**
@@ -232,7 +206,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint")
     String powerPointFormatText();
 
     /**
@@ -240,7 +213,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice")
     String powerPointFormatDesc();
 
     /**
@@ -248,7 +220,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Shiny components")
     String shinyFormatDesc();
 
     /**
@@ -256,7 +227,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Observable JS components")
     String observableJSFormatDesc();
 
     /**
@@ -264,7 +234,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Use visual markdown editor")
     String chkVisualEditorLabel();
 
     /**
@@ -272,7 +241,6 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("About the Quarto visual editor")
     String aboutHelpButtonTitle();
 
     /**
@@ -280,6 +248,5 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Editor:")
     String editorText();
 }

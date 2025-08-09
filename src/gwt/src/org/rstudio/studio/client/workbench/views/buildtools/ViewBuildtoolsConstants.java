@@ -21,7 +21,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build"
      */
-    @DefaultMessage("Build")
     String buildText();
 
     /**
@@ -29,7 +28,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build Tab"
      */
-    @DefaultMessage("Build Tab")
     String buildTabLabel();
 
     /**
@@ -37,7 +35,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build Book"
      */
-    @DefaultMessage("Build Book")
     String buildBookText();
 
     /**
@@ -45,7 +42,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build Website"
      */
-    @DefaultMessage("Build Website")
     String buildWebsiteText();
 
     /**
@@ -53,7 +49,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build book options"
      */
-    @DefaultMessage("Build book options")
     String buildBookOptionsText();
 
     /**
@@ -61,7 +56,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Preview Book"
      */
-    @DefaultMessage("Preview Book")
     String serveBookText();
 
     /**
@@ -69,7 +63,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "More"
      */
-    @DefaultMessage("More")
     String moreText();
 
     /**
@@ -77,7 +70,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "All Formats"
      */
-    @DefaultMessage("All Formats")
     String allFormatsLabel();
 
     /**
@@ -85,7 +77,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "{0} Format"
      */
-    @DefaultMessage("{0} Format")
     String formatMenuLabel(String formatName);
 
     /**
@@ -93,7 +84,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Render Website"
      */
-    @DefaultMessage("Render Website")
     String renderWebsiteText();
 
     /**
@@ -101,7 +91,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Render Book"
      */
-    @DefaultMessage("Render Book")
     String renderBookText();
 
     /**
@@ -109,7 +98,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Render Project"
      */
-    @DefaultMessage("Render Project")
     String renderProjectText();
 
     /**
@@ -117,7 +105,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Building package documentation"
      */
-    @DefaultMessage("Building package documentation")
     String packageDocumentationProgressCaption();
 
     /**
@@ -125,7 +112,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Building sites"
      */
-    @DefaultMessage("Building sites")
     String buildingSitesUserAction();
 
     /**
@@ -133,7 +119,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Terminal jobs will be terminated. Are you sure?"
      */
-    @DefaultMessage("Terminal jobs will be terminated. Are you sure?")
     String terminalTerminatedQuestion();
 
     /**
@@ -141,7 +126,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Terminating Build..."
      */
-    @DefaultMessage("Terminating Build...")
     String terminatingBuildMessage();
 
     /**
@@ -149,7 +133,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Error Terminating Build"
      */
-    @DefaultMessage("Error Terminating Build")
     String errorTerminatingBuildCaption();
 
     /**
@@ -157,7 +140,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Unable to terminate build. Please try again."
      */
-    @DefaultMessage("Unable to terminate build. Please try again.")
     String errorTerminatingBuildMessage();
 
     /**
@@ -165,7 +147,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Quarto Serve Error"
      */
-    @DefaultMessage("Quarto Serve Error")
     String quartoServeError();
 
     /**
@@ -173,7 +154,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build All"
      */
-    @DefaultMessage("Build All")
     String buildAllLabel();
 
     /**
@@ -181,7 +161,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Build all"
      */
-    @DefaultMessage("Build all")
     String buildAllDesc();
 
     /**
@@ -189,7 +168,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Project"
      */
-    @DefaultMessage("Project")
     String projectTypeText();
 
     /**
@@ -197,7 +175,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Book"
      */
-    @DefaultMessage("Book")
     String bookText();
 
     /**
@@ -205,7 +182,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Website"
      */
-    @DefaultMessage("Website")
     String projectWebsiteText();
 
     /**
@@ -213,7 +189,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Render "
      */
-    @DefaultMessage("Render ")
     String renderLabel();
 
     /**
@@ -221,7 +196,6 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
      *
      * @return translated "Preview "
      */
-    @DefaultMessage("Preview ")
     String serveLabel();
 
 }

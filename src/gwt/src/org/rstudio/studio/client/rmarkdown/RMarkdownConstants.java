@@ -24,7 +24,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Shiny Terminate Failed")
     String shinyTerminalErrorCaption();
 
     /**
@@ -32,7 +31,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("The Shiny document {0} needs to be stopped before the document can be rendered.")
     String shinyTerminalErrorMsg(String file);
 
     /**
@@ -40,7 +38,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Render Completed")
     String renderCompletedCaption();
 
     /**
@@ -48,7 +45,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("RStudio has finished rendering {0} to {1}.")
     String renderCompletedMsg(String targetFile, String outputFile);
 
     /**
@@ -56,7 +52,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Download File")
     String yesLabel();
 
     /**
@@ -64,7 +59,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("OK")
     String noLabel();
 
     /**
@@ -72,7 +66,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Rmd Output Panel")
     String rmdOutputPanelTitle();
 
     /**
@@ -80,7 +73,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Open in Browser")
     String openInBrowserButtonText();
 
     /**
@@ -88,7 +80,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Find")
     String findTextBoxCueText();
 
     /**
@@ -96,7 +87,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Find in Page")
     String findInPageCaption();
 
     /**
@@ -104,7 +94,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("No occurrences found")
     String noOccurrencesFoundMsg();
 
     /**
@@ -112,7 +101,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Template:")
     String helpCaptionTemplateText();
 
     /**
@@ -120,7 +108,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Using R Markdown Templates")
     String helpCationTemplateMsg();
 
     /**
@@ -128,7 +115,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("R Markdown Templates Not Found")
     String templatesNotFoundErrorCaption();
 
     /**
@@ -136,7 +122,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("An error occurred while looking for R Markdown templates. {0}")
     String templatesNotFoundErrorMsg(String error);
 
     /**
@@ -144,7 +129,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Edit {0} {1} Options")
     String editTemplateOptionsCaption(String type, String templateName);
 
     /**
@@ -152,7 +136,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("R Markdown Options")
     String rMarkdownOptionstabListLabel();
 
     /**
@@ -160,7 +143,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Shiny Content")
     String warningDialogText();
 
     /**
@@ -168,7 +150,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Yes, Once")
     String yesOnceButtonText();
 
     /**
@@ -176,7 +157,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Yes, Always")
     String yesAlwaysButtonText();
 
     /**
@@ -184,7 +164,6 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("No")
     String noButtonText();
 
     /**
@@ -192,6 +171,5 @@ public interface RMarkdownConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Location:")
     String locationLabel();
 }

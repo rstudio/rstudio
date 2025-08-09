@@ -21,7 +21,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Verify Key..."
      */
-    @DefaultMessage("Verify Key...")
     String verifyKey();
 
     /**
@@ -29,7 +28,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unable to verify Zotero API key.\n\nYou should verify that your API key is still valid, and if necessary create a new key."
      */
-    @DefaultMessage("Unable to verify Zotero API key.\n\nYou should verify that your API key is still valid, and if necessary create a new key.")
     String zoteroVerifyKeyFailedMessage();
 
     /**
@@ -37,7 +35,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero Web API Key:"
      */
-    @DefaultMessage("Zotero Web API Key:")
     String zoteroWebApiKey();
 
     /**
@@ -45,7 +42,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Verifying Key..."
      */
-    @DefaultMessage("Verifying Key...")
     String verifyingKey();
 
     /**
@@ -53,7 +49,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero"
      */
-    @DefaultMessage("Zotero")
     String zotero();
 
     /**
@@ -61,7 +56,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero API key successfully verified."
      */
-    @DefaultMessage("Zotero API key successfully verified.")
     String zoteroKeyVerified();
 
     /**
@@ -69,7 +63,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use libraries:"
      */
-    @DefaultMessage("Use libraries:")
     String useLibraries();
 
     /**
@@ -77,7 +70,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String error();
 
     /**
@@ -85,7 +77,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You must select at least one Zotero library"
      */
-    @DefaultMessage("You must select at least one Zotero library")
     String selectOneZoteroLibrary();
 
     /**
@@ -93,7 +84,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Default)"
      */
-    @DefaultMessage("(Default)")
     String defaultInParentheses();
 
     /**
@@ -101,7 +91,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "My Library"
      */
-    @DefaultMessage("My Library")
     String myLibrary();
 
     /**
@@ -109,7 +98,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Selected Libraries"
      */
-    @DefaultMessage("Selected Libraries")
     String selectedLibraries();
 
     /**
@@ -117,7 +105,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Conda Environment"
      */
-    @DefaultMessage("Conda Environment")
     String condaEnvironment();
 
     /**
@@ -125,7 +112,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Virtual Environment"
      */
-    @DefaultMessage("Virtual Environment")
     String virtualEnvironment();
 
     /**
@@ -133,7 +119,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Python Interpreter"
      */
-    @DefaultMessage("Python Interpreter")
     String pythonInterpreter();
 
     /**
@@ -141,7 +126,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "System"
      */
-    @DefaultMessage("System")
     String system();
 
     /**
@@ -149,7 +133,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Virtual Environments"
      */
-    @DefaultMessage("Virtual Environments")
     String virtualEnvironmentPlural();
 
     /**
@@ -157,7 +140,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Conda Environments"
      */
-    @DefaultMessage("Conda Environments")
     String condaEnvironmentPlural();
 
     /**
@@ -165,7 +147,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Python Interpreters"
      */
-    @DefaultMessage("Python Interpreters")
     String pythonInterpreterPlural();
 
     /**
@@ -173,7 +154,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Select"
      */
-    @DefaultMessage("Select")
     String select();
 
     /**
@@ -181,7 +161,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(None available)"
      */
-    @DefaultMessage("(None available)")
     String noneAvailableParentheses();
 
     /**
@@ -189,7 +168,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor Theme Preview"
      */
-    @DefaultMessage("Editor Theme Preview")
     String editorThemePreview();
 
     /**
@@ -197,7 +175,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Spelling Prefs"
      */
-    @DefaultMessage("Spelling Prefs")
     String spellingPrefsTitle();
 
     /**
@@ -205,7 +182,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The context for the user''s spelling preferences."
      */
-    @DefaultMessage("The context for the user''s spelling preferences.")
     String spellingPrefsDescription();
 
     /**
@@ -213,7 +189,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "SSH Public Key Filename"
      */
-    @DefaultMessage("SSH Public Key Filename")
     String rsaKeyFileTitle();
 
     /**
@@ -221,7 +196,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Filename of SSH public key"
      */
-    @DefaultMessage("Filename of SSH public key")
     String rsaKeyFileDescription();
 
     /**
@@ -229,7 +203,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Has SSH Key"
      */
-    @DefaultMessage("Has SSH Key")
     String haveRSAKeyTitle();
 
     /**
@@ -237,7 +210,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Whether the user has an SSH key"
      */
-    @DefaultMessage("Whether the user has an SSH key")
     String haveRSAKeyDescription();
 
     /**
@@ -245,7 +217,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error Changing Setting"
      */
-    @DefaultMessage("Error Changing Setting")
     String errorChangingSettingCaption();
 
     /**
@@ -253,7 +224,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The tab key moves focus setting could not be updated."
      */
-    @DefaultMessage("The tab key moves focus setting could not be updated.")
     String tabKeyErrorMessage();
 
     /**
@@ -261,7 +231,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tab key always moves focus on"
      */
-    @DefaultMessage("Tab key always moves focus on")
     String tabKeyFocusOnMessage();
 
     /**
@@ -269,7 +238,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tab key always moves focus off"
      */
-    @DefaultMessage("Tab key always moves focus off")
     String tabKeyFocusOffMessage();
 
     /**
@@ -277,7 +245,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The screen reader support setting could not be changed."
      */
-    @DefaultMessage("The screen reader support setting could not be changed.")
     String toggleScreenReaderErrorMessage();
 
     /**
@@ -285,7 +252,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Confirm Toggle Screen Reader Support"
      */
-    @DefaultMessage("Confirm Toggle Screen Reader Support")
     String toggleScreenReaderConfirmCaption();
 
     /**
@@ -293,7 +259,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to {0} screen reader support? The application will reload to apply the change."
      */
-    @DefaultMessage("Are you sure you want to {0} screen reader support? The application will reload to apply the change.")
     String toggleScreenReaderMessageConfirmDialog(String value);
 
     /**
@@ -301,7 +266,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "disable"
      */
-    @DefaultMessage("disable")
     String disable();
 
     /**
@@ -309,7 +273,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "enable"
      */
-    @DefaultMessage("enable")
     String enable();
 
     /**
@@ -317,7 +280,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Warning: screen reader mode not enabled. Turn on using shortcut {0}."
      */
-    @DefaultMessage("Warning: screen reader mode not enabled. Turn on using shortcut {0}.")
     String announceScreenReaderStateMessage(String shortcut);
 
     /**
@@ -325,7 +287,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} (enabled)"
      */
-    @DefaultMessage("{0} (enabled)")
     String screenReaderStateEnabled(String screenReaderLabel);
 
     /**
@@ -333,7 +294,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} (disabled)"
      */
-    @DefaultMessage("{0} (disabled)")
     String screenReaderStateDisabled(String screenReaderLabel);
 
     /**
@@ -341,7 +301,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clear Preferences"
      */
-    @DefaultMessage("Clear Preferences")
     String onClearUserPrefsYesLabel();
 
     /**
@@ -349,7 +308,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancel();
 
     /**
@@ -357,7 +315,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restart R"
      */
-    @DefaultMessage("Restart R")
     String onClearUserPrefsRestartR();
 
     /**
@@ -365,7 +322,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Preferences Cleared"
      */
-    @DefaultMessage("Preferences Cleared")
     String onClearUserPrefsResponseCaption();
 
     /**
@@ -375,8 +331,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Your preferences have been cleared, and your R session will now be restarted.
      * A backup copy of your preferences can be found at: \n\n{0}"
      */
-    @DefaultMessage("Your preferences have been cleared, and your R session will now be restarted. " +
-            "A backup copy of your preferences can be found at: \n\n{0}")
     String onClearUserPrefsResponseMessage(String path);
 
     /**
@@ -384,7 +338,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Confirm Clear Preferences"
      */
-    @DefaultMessage("Confirm Clear Preferences")
     String onClearUserPrefsCaption();
 
     /**
@@ -394,8 +347,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Are you sure you want to clear your preferences?
      * All RStudio settings will be restored to their defaults, and your R session will be restarted."
      */
-    @DefaultMessage("Are you sure you want to clear your preferences? " +
-            "All RStudio settings will be restored to their defaults, and your R session will be restarted.")
     String onClearUserPrefsMessage();
 
     /**
@@ -403,7 +354,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Using Zotero"
      */
-    @DefaultMessage("Using Zotero")
     String usingZotero();
 
     /**
@@ -411,7 +361,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero Library:"
      */
-    @DefaultMessage("Zotero Library:")
     String zoteroLibrary();
 
     /**
@@ -419,7 +368,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Web"
      */
-    @DefaultMessage("Web")
     String web();
 
     /**
@@ -427,7 +375,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Local"
      */
-    @DefaultMessage("Local")
     String local();
 
     /**
@@ -435,7 +382,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String noneParentheses();
 
     /**
@@ -443,7 +389,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String general();
 
     /**
@@ -451,7 +396,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Line ending conversion:"
      */
-    @DefaultMessage("Line ending conversion:")
     String lineEndingConversion();
 
     /**
@@ -459,7 +403,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Use Default)"
      */
-    @DefaultMessage("(Use Default)")
     String useDefaultParentheses();
 
     /**
@@ -467,7 +410,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "None"
      */
-    @DefaultMessage("None")
     String none();
 
     /**
@@ -475,7 +417,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Platform Native"
      */
-    @DefaultMessage("Platform Native")
     String platformNative();
 
     /**
@@ -483,7 +424,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Posix (LF)"
      */
-    @DefaultMessage("Posix (LF)")
     String posixLF();
 
     /**
@@ -491,7 +431,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Windows (CR/LF)"
      */
-    @DefaultMessage("Windows (CR/LF)")
     String windowsCRLF();
 
     /**
@@ -499,7 +438,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Options"
      */
-    @DefaultMessage("Options")
     String options();
 
     /**
@@ -507,7 +445,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Assistive Tools"
      */
-    @DefaultMessage("Assistive Tools")
     String generalHeaderPanel();
 
     /**
@@ -515,7 +452,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Screen reader support (requires restart)"
      */
-    @DefaultMessage("Screen reader support (requires restart)")
     String chkScreenReaderLabel();
 
     /**
@@ -523,7 +459,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Milliseconds after typing before speaking results"
      */
-    @DefaultMessage("Milliseconds after typing before speaking results")
     String typingStatusDelayLabel();
 
     /**
@@ -531,7 +466,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Maximum number of console output lines to read"
      */
-    @DefaultMessage("Maximum number of console output lines to read")
     String maxOutputLabel();
 
     /**
@@ -539,7 +473,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other"
      */
-    @DefaultMessage("Other")
     String displayLabel();
 
     /**
@@ -547,7 +480,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Reduce user interface animations"
      */
-    @DefaultMessage("Reduce user interface animations")
     String reducedMotionLabel();
 
     /**
@@ -555,7 +487,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tab key always moves focus"
      */
-    @DefaultMessage("Tab key always moves focus")
     String chkTabMovesFocusLabel();
 
     /**
@@ -563,7 +494,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Highlight focused panel"
      */
-    @DefaultMessage("Highlight focused panel")
     String generalPanelLabel();
 
     /**
@@ -571,7 +501,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "RStudio accessibility help"
      */
-    @DefaultMessage("RStudio accessibility help")
     String helpRStudioAccessibilityLinkLabel();
 
     /**
@@ -579,7 +508,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable / Disable Announcements"
      */
-    @DefaultMessage("Enable / Disable Announcements")
     String announcementsLabel();
 
     /**
@@ -587,7 +515,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Accessibility"
      */
-    @DefaultMessage("Accessibility")
     String tabHeaderPanel();
 
     /**
@@ -595,7 +522,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String generalPanelText();
 
     /**
@@ -603,7 +529,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Announcements"
      */
-    @DefaultMessage("Announcements")
     String announcementsPanelText();
 
     /**
@@ -611,7 +536,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "RStudio theme:"
      */
-    @DefaultMessage("RStudio theme:")
     String appearanceRStudioThemeLabel();
 
     /**
@@ -619,7 +543,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zoom:"
      */
-    @DefaultMessage("Zoom:")
     String appearanceZoomLabelZoom();
 
     /**
@@ -627,7 +550,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor font (loading...):"
      */
-    @DefaultMessage("Editor font (loading...):")
     String fontFaceEditorFontLabel();
 
     /**
@@ -635,7 +557,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor font:"
      */
-    @DefaultMessage("Editor font:")
     String appearanceEditorFontLabel();
 
     /**
@@ -643,7 +564,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Font size:"
      */
-    @DefaultMessage("Font size:")
     String appearanceEditorFontSizeLabel();
 
     /**
@@ -651,7 +571,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Line height (%):"
      */
-    @DefaultMessage("Line height (%):")
     String appearanceEditorLineHeightLabel();
     
     /**
@@ -659,7 +578,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor theme:"
      */
-    @DefaultMessage("Editor theme:")
     String appearanceEditorThemeLabel();
 
     /**
@@ -667,7 +585,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Add..."
      */
-    @DefaultMessage("Add...")
     String addThemeButtonLabel();
 
     /**
@@ -675,7 +592,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Theme Files (*.tmTheme *.rstheme)"
      */
-    @DefaultMessage("Theme Files (*.tmTheme *.rstheme)")
     String addThemeButtonCaption();
 
     /**
@@ -683,7 +599,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove"
      */
-    @DefaultMessage("Remove")
     String removeThemeButtonLabel();
 
     /**
@@ -691,7 +606,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Converting a tmTheme to an rstheme"
      */
-    @DefaultMessage("Converting a tmTheme to an rstheme")
     String addThemeUserActionLabel();
 
     /**
@@ -699,7 +613,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The active theme "{0}" could not be found. It''s possible it was removed outside the context of RStudio. Switching to the {1} default theme: ""
      */
-    @DefaultMessage("The active theme \"{0}\" could not be found. It''s possible it was removed outside the context of RStudio. Switching to the {1} default theme: \"")
     String setThemeWarningMessage(String name, String currentTheme);
 
     /**
@@ -707,7 +620,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "dark"
      */
-    @DefaultMessage("dark")
     String themeWarningMessageDarkLabel();
 
     /**
@@ -715,7 +627,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "light"
      */
-    @DefaultMessage("light")
     String themeWarningMessageLightLabel();
 
     /**
@@ -723,7 +634,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "A theme file with the same name, ''{0}'', already exists. Adding the theme will cause the existing file to be overwritten. Would you like to add the theme anyway?"
      */
-    @DefaultMessage("A theme file with the same name, ''{0}'', already exists. Adding the theme will cause the existing file to be overwritten. Would you like to add the theme anyway?")
     String showThemeExistsDialogLabel(String inputFileName);
 
     /**
@@ -731,7 +641,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Theme File Already Exists"
      */
-    @DefaultMessage("Theme File Already Exists")
     String globalDisplayThemeExistsCaption();
 
     /**
@@ -739,7 +648,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unable to add the theme ''"
      */
-    @DefaultMessage("Unable to add the theme ''")
     String cantAddThemeMessage();
 
 
@@ -748,7 +656,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "''. The following error occurred: "
      */
-    @DefaultMessage("''. The following error occurred: ")
     String cantAddThemeErrorCaption();
 
     /**
@@ -756,7 +663,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Failed to Add Theme"
      */
-    @DefaultMessage("Failed to Add Theme")
     String cantAddThemeGlobalMessage();
 
     /**
@@ -764,7 +670,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unable to remove the theme ''{0}'': {1}"
      */
-    @DefaultMessage("Unable to remove the theme ''{0}'': {1}")
     String showCantRemoveThemeDialogMessage(String themeName, String errorMessage);
 
     /**
@@ -772,7 +677,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Failed to Remove Theme"
      */
-    @DefaultMessage("Failed to Remove Theme")
     String showCantRemoveErrorMessage();
 
     /**
@@ -780,7 +684,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The theme "{0}" cannot be removed because it is currently in use. To delete this theme, please change the active theme and retry."
      */
-    @DefaultMessage("The theme \"{0}\" cannot be removed because it is currently in use. To delete this theme, please change the active theme and retry.")
     String showCantRemoveActiveThemeDialog(String themeName);
 
     /**
@@ -788,7 +691,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cannot Remove Active Theme"
      */
-    @DefaultMessage("Cannot Remove Active Theme")
     String showCantRemoveThemeCaption();
 
     /**
@@ -796,7 +698,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Taking this action will delete the theme "{0}" and cannot be undone. Are you sure you wish to continue?"
      */
-    @DefaultMessage("Taking this action will delete the theme \"{0}\" and cannot be undone. Are you sure you wish to continue?")
     String showRemoveThemeWarningMessage(String themeName);
 
     /**
@@ -804,7 +705,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove Theme"
      */
-    @DefaultMessage("Remove Theme")
     String showRemoveThemeGlobalMessage();
 
     /**
@@ -812,7 +712,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "There is an existing theme with the same name as the new theme in the current location. Would you like remove the existing theme, "{0}", and add the new theme?"
      */
-    @DefaultMessage("There is an existing theme with the same name as the new theme in the current location. Would you like remove the existing theme, \"{0}\", and add the new theme?")
     String showDuplicateThemeErrorMessage(String themeName);
 
     /**
@@ -820,7 +719,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Duplicate Theme In Same Location"
      */
-    @DefaultMessage("Duplicate Theme In Same Location")
     String showDuplicateThemeDuplicateGlobalMessage();
 
     /**
@@ -828,7 +726,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "There is an existing theme with the same name as the new theme, "
      */
-    @DefaultMessage("There is an existing theme with the same name as the new theme, \"{0}\" in another location. The existing theme will be hidden but not removed. Removing the new theme later will un-hide the existing theme. Would you like to continue?")
     String showDuplicateThemeWarningMessage(String themeName);
 
     /**
@@ -836,7 +733,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Duplicate Theme In Another Location"
      */
-    @DefaultMessage("Duplicate Theme In Another Location")
     String showDuplicateThemeGlobalMessage();
 
     /**
@@ -844,7 +740,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Appearance"
      */
-    @DefaultMessage("Appearance")
     String appearanceLabel();
 
     /**
@@ -852,7 +747,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor font:"
      */
-    @DefaultMessage("Editor font:")
     String editorFontLabel();
 
     /**
@@ -860,7 +754,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "PDF Generation"
      */
-    @DefaultMessage("PDF Generation")
     String headerPDFGenerationLabel();
 
     /**
@@ -868,7 +761,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "NOTE: The Rnw weave and LaTeX compilation options are also set on a per-project (and optionally per-file) basis. Click the help icons above for more details."
      */
-    @DefaultMessage("NOTE: The Rnw weave and LaTeX compilation options are also set on a per-project (and optionally per-file) basis. Click the help icons above for more details.")
     String perProjectNoteLabel();
 
     /**
@@ -876,7 +768,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "LaTeX Editing and Compilation"
      */
-    @DefaultMessage("LaTeX Editing and Compilation")
     String perProjectHeaderLabel();
 
     /**
@@ -884,7 +775,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use tinytex when compiling .tex files"
      */
-    @DefaultMessage("Use tinytex when compiling .tex files")
     String chkUseTinytexLabel();
 
     /**
@@ -892,7 +782,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clean auxiliary output after compile"
      */
-    @DefaultMessage("Clean auxiliary output after compile")
     String chkCleanTexi2DviOutputLabel();
 
     /**
@@ -900,7 +789,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable shell escape commands"
      */
-    @DefaultMessage("Enable shell escape commands")
     String chkEnableShellEscapeLabel();
 
     /**
@@ -908,7 +796,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Insert numbered sections and subsections"
      */
-    @DefaultMessage("Insert numbered sections and subsections")
     String insertNumberedLatexSectionsLabel();
 
     /**
@@ -916,7 +803,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "PDF Preview"
      */
-    @DefaultMessage("PDF Preview")
     String previewingOptionsHeaderLabel();
 
     /**
@@ -924,7 +810,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always enable Rnw concordance (required for synctex)"
      */
-    @DefaultMessage("Always enable Rnw concordance (required for synctex)")
     String alwaysEnableRnwConcordanceLabel();
 
     /**
@@ -932,7 +817,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Preview PDF after compile using:"
      */
-    @DefaultMessage("Preview PDF after compile using:")
     String pdfPreviewSelectWidgetLabel();
 
     /**
@@ -940,7 +824,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help on previewing PDF files"
      */
-    @DefaultMessage("Help on previewing PDF files")
     String pdfPreviewHelpButtonTitle();
 
     /**
@@ -948,7 +831,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sweave"
      */
-    @DefaultMessage("Sweave")
     String preferencesPaneTitle();
 
     /**
@@ -956,7 +838,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(No Preview)"
      */
-    @DefaultMessage("(No Preview)")
     String pdfNoPreviewOption();
 
     /**
@@ -964,7 +845,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Recommended)"
      */
-    @DefaultMessage("(Recommended)")
     String pdfPreviewSumatraOption();
 
     /**
@@ -972,7 +852,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "RStudio Viewer"
      */
-    @DefaultMessage("RStudio Viewer")
     String pdfPreviewRStudioViewerOption();
 
     /**
@@ -980,7 +859,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "System Viewer"
      */
-    @DefaultMessage("System Viewer")
     String pdfPreviewSystemViewerOption();
 
     /**
@@ -988,7 +866,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Execution"
      */
-    @DefaultMessage("Execution")
     String consoleExecutionLabel();
     
     /**
@@ -996,7 +873,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Discard pending console input on error"
      */
-    @DefaultMessage("Discard pending console input on error")
     String consoleDiscardPendingConsoleInputOnErrorLabel();
     
     
@@ -1005,7 +881,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display"
      */
-    @DefaultMessage("Display")
     String consoleDisplayLabel();
     
     /**
@@ -1013,7 +888,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Highlight"
      */
-    @DefaultMessage("Highlight")
     String consoleHighlightLabel();
 
     /**
@@ -1021,7 +895,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show syntax highlighting in console input"
      */
-    @DefaultMessage("Show syntax highlighting in console input")
     String consoleSyntaxHighlightingLabel();
 
     /**
@@ -1029,7 +902,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Different color for error or message output (requires restart)"
      */
-    @DefaultMessage("Different color for error or message output (requires restart)")
     String consoleDifferentColorLabel();
 
     /**
@@ -1037,7 +909,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Limit visible console output (requires restart)"
      */
-    @DefaultMessage("Limit visible console output (requires restart)")
     String consoleLimitVariableLabel();
 
     /**
@@ -1045,7 +916,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Truncate lines to maximum length (characters)"
      */
-    @DefaultMessage("Truncate lines to maximum length (characters)")
     String consoleLimitOutputLengthLabel();
 
     /**
@@ -1053,7 +923,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Number of lines to show in console history:"
      */
-    @DefaultMessage("Number of lines to show in console history:")
     String consoleMaxLinesLabel();
 
     /**
@@ -1061,7 +930,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "ANSI Escape Codes:"
      */
-    @DefaultMessage("ANSI Escape Codes:")
     String consoleANSIEscapeCodesLabel();
 
     /**
@@ -1069,7 +937,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show ANSI colors"
      */
-    @DefaultMessage("Show ANSI colors")
     String consoleColorModeANSIOption();
 
     /**
@@ -1077,7 +944,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove ANSI codes"
      */
-    @DefaultMessage("Remove ANSI codes")
     String consoleColorModeRemoveANSIOption();
 
     /**
@@ -1085,7 +951,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ignore ANSI codes (1.0 behavior)"
      */
-    @DefaultMessage("Ignore ANSI codes (1.0 behavior)")
     String consoleColorModeIgnoreANSIOption();
 
     /**
@@ -1093,7 +958,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Console"
      */
-    @DefaultMessage("Console")
     String consoleLabel();
 
     /**
@@ -1101,7 +965,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Debugging"
      */
-    @DefaultMessage("Debugging")
     String debuggingHeaderLabel();
 
     /**
@@ -1109,7 +972,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatically expand tracebacks in error inspector"
      */
-    @DefaultMessage("Automatically expand tracebacks in error inspector")
     String debuggingExpandTracebacksLabel();
 
     /**
@@ -1117,7 +979,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other"
      */
-    @DefaultMessage("Other")
     String otherHeaderCaption();
 
     /**
@@ -1125,7 +986,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Double-click to select words"
      */
-    @DefaultMessage("Double-click to select words")
     String otherDoubleClickLabel();
 
     /**
@@ -1133,7 +993,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Warn when automatic session suspension is paused"
      */
-    @DefaultMessage("Warn when automatic session suspension is paused")
     String warnAutoSuspendPausedLabel();
 
     /**
@@ -1141,7 +1000,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Number of seconds to delay warning"
      */
-    @DefaultMessage("Number of seconds to delay warning")
     String numSecondsToDelayWarningLabel();
 
     /**
@@ -1149,7 +1007,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Sessions"
      */
-    @DefaultMessage("R Sessions")
     String rSessionsTitle();
 
     /**
@@ -1157,7 +1014,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R version"
      */
-    @DefaultMessage("R version")
     String rVersionTitle();
 
     /**
@@ -1165,7 +1021,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Change..."
      */
-    @DefaultMessage("Change...")
     String rVersionChangeTitle();
 
     /**
@@ -1173,7 +1028,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Change R Version"
      */
-    @DefaultMessage("Change R Version")
     String rChangeVersionMessage();
 
     /**
@@ -1181,7 +1035,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You need to quit and re-open RStudio in order for this change to take effect."
      */
-    @DefaultMessage("You need to quit and re-open RStudio in order for this change to take effect.")
     String rQuitReOpenMessage();
 
     /**
@@ -1189,7 +1042,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Loading..."
      */
-    @DefaultMessage("Loading...")
     String rVersionLoadingText();
 
     /**
@@ -1197,7 +1049,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restore last used R version for projects"
      */
-    @DefaultMessage("Restore last used R version for projects")
     String rRestoreLabel();
 
     /**
@@ -1205,7 +1056,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "working directory (when not in a project):"
      */
-    @DefaultMessage("Default working directory (when not in a project):")
     String rDefaultDirectoryTitle();
 
     /**
@@ -1213,7 +1063,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restore most recently opened project at startup"
      */
-    @DefaultMessage("Restore most recently opened project at startup")
     String rRestorePreviousTitle();
 
     /**
@@ -1221,7 +1070,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restore previously open source documents at startup"
      */
-    @DefaultMessage("Restore previously open source documents at startup")
     String rRestorePreviousOpenTitle();
 
     /**
@@ -1229,7 +1077,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Run Rprofile when resuming suspended session"
      */
-    @DefaultMessage("Run Rprofile when resuming suspended session")
     String rRunProfileTitle();
 
     /**
@@ -1237,7 +1084,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Workspace"
      */
-    @DefaultMessage("Workspace")
     String workspaceCaption();
 
     /**
@@ -1245,7 +1091,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restore .RData into workspace at startup"
      */
-    @DefaultMessage("Restore .RData into workspace at startup")
     String workspaceLabel();
 
     /**
@@ -1253,7 +1098,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save workspace to .RData on exit:"
      */
-    @DefaultMessage("Save workspace to .RData on exit:")
     String saveWorkSpaceLabel();
 
     /**
@@ -1261,7 +1105,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always"
      */
-    @DefaultMessage("Always")
     String saveWorkAlways();
 
     /**
@@ -1269,7 +1112,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Never"
      */
-    @DefaultMessage("Never")
     String saveWorkNever();
 
     /**
@@ -1277,7 +1119,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ask"
      */
-    @DefaultMessage("Ask")
     String saveWorkAsk();
 
     /**
@@ -1285,7 +1126,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "History"
      */
-    @DefaultMessage("History")
     String historyCaption();
 
     /**
@@ -1293,7 +1133,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always save history (even when not saving .RData)"
      */
-    @DefaultMessage("Always save history (even when not saving .RData)")
     String alwaysSaveHistoryLabel();
 
     /**
@@ -1301,7 +1140,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove duplicate entries in history"
      */
-    @DefaultMessage("Remove duplicate entries in history")
     String removeDuplicatesLabel();
 
     /**
@@ -1309,7 +1147,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other"
      */
-    @DefaultMessage("Other")
     String otherCaption();
 
     /**
@@ -1317,7 +1154,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Wrap around when navigating to previous/next tab"
      */
-    @DefaultMessage("Wrap around when navigating to previous/next tab")
     String otherWrapAroundLabel();
 
     /**
@@ -1325,7 +1161,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatically notify me of updates to RStudio"
      */
-    @DefaultMessage("Automatically notify me of updates to RStudio")
     String otherNotifyMeLabel();
 
     /**
@@ -1333,7 +1168,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Send automated crash reports to Posit"
      */
-    @DefaultMessage("Send automated crash reports to Posit")
     String otherSendReportsLabel();
 
     /**
@@ -1341,7 +1175,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Graphics Device"
      */
-    @DefaultMessage("Graphics Device")
     String graphicsDeviceCaption();
 
     /**
@@ -1349,7 +1182,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Antialiasing:"
      */
-    @DefaultMessage("Antialiasing:")
     String graphicsAntialiasingLabel();
 
     /**
@@ -1357,7 +1189,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Default):"
      */
-    @DefaultMessage("(Default)")
     String antialiasingDefaultOption();
 
     /**
@@ -1365,7 +1196,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "None"
      */
-    @DefaultMessage("None")
     String antialiasingNoneOption();
 
     /**
@@ -1373,7 +1203,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Gray"
      */
-    @DefaultMessage("Gray")
     String antialiasingGrayOption();
 
     /**
@@ -1381,7 +1210,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Subpixel"
      */
-    @DefaultMessage("Subpixel")
     String antialiasingSubpixelOption();
 
     /**
@@ -1389,7 +1217,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show server home page:"
      */
-    @DefaultMessage("Show server home page:")
     String serverHomePageLabel();
 
     /**
@@ -1397,7 +1224,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Multiple active sessions"
      */
-    @DefaultMessage("Multiple active sessions")
     String serverHomePageActiveSessionsOption();
 
     /**
@@ -1405,7 +1231,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always"
      */
-    @DefaultMessage("Always")
     String serverHomePageAlwaysOption();
 
     /**
@@ -1413,7 +1238,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Never"
      */
-    @DefaultMessage("Never")
     String serverHomePageNeverOption();
 
     /**
@@ -1421,7 +1245,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Re-use idle sessions for project links"
      */
-    @DefaultMessage("Re-use idle sessions for project links")
     String reUseIdleSessionLabel();
 
     /**
@@ -1429,7 +1252,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Home Page"
      */
-    @DefaultMessage("Home Page")
     String desktopCaption();
 
     /**
@@ -1437,7 +1259,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Debugging"
      */
-    @DefaultMessage("Debugging")
     String advancedDebuggingCaption();
 
     /**
@@ -1445,7 +1266,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use debug error handler only when my code contains errors"
      */
-    @DefaultMessage("Use debug error handler only when my code contains errors")
     String advancedDebuggingLabel();
 
     /**
@@ -1453,7 +1273,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "OS Integration"
      */
-    @DefaultMessage("OS Integration")
     String advancedOsIntegrationCaption();
 
     /**
@@ -1461,7 +1280,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Rendering engine:"
      */
-    @DefaultMessage("Rendering engine:")
     String advancedRenderingEngineLabel();
 
     /**
@@ -1469,7 +1287,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Auto-detect (recommended)"
      */
-    @DefaultMessage("Auto-detect (recommended)")
     String renderingEngineAutoDetectOption();
 
     /**
@@ -1477,7 +1294,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Desktop OpenGL"
      */
-    @DefaultMessage("Desktop OpenGL")
     String renderingEngineDesktopOption();
 
     /**
@@ -1485,7 +1301,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "OpenGL for Embedded Systems"
      */
-    @DefaultMessage("OpenGL for Embedded Systems")
     String renderingEngineLinuxDesktopOption();
 
     /**
@@ -1493,7 +1308,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Software"
      */
-    @DefaultMessage("Software")
     String renderingEngineSoftwareOption();
 
     /**
@@ -1501,7 +1315,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use GPU exclusion list (recommended)"
      */
-    @DefaultMessage("Use GPU exclusion list (recommended)")
     String useGpuExclusionListLabel();
 
     /**
@@ -1509,7 +1322,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use GPU driver bug workarounds (recommended)"
      */
-    @DefaultMessage("Use GPU driver bug workarounds (recommended)")
     String useGpuDriverBugWorkaroundsLabel();
 
     /**
@@ -1517,7 +1329,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable X11 clipboard monitoring"
      */
-    @DefaultMessage("Enable X11 clipboard monitoring")
     String clipboardMonitoringLabel();
 
     /**
@@ -1525,7 +1336,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other"
      */
-    @DefaultMessage("Other")
     String otherLabel();
 
     /**
@@ -1533,7 +1343,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Experimental Features"
      */
-    @DefaultMessage("Experimental Features")
     String experimentalLabel();
 
     /**
@@ -1541,7 +1350,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "English"
      */
-    @DefaultMessage("English")
     String englishLabel();
 
     /**
@@ -1549,7 +1357,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "French (Français)"
      */
-    @DefaultMessage("French (Français)")
     String frenchLabel();
 
     /**
@@ -1557,7 +1364,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show .Last.value in environment listing"
      */
-    @DefaultMessage("Show .Last.value in environment listing")
     String otherShowLastDotValueLabel();
 
     /**
@@ -1565,7 +1371,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help font size:"
      */
-    @DefaultMessage("Help font size:")
     String helpFontSizeLabel();
 
     /**
@@ -1573,7 +1378,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "General"
      */
-    @DefaultMessage("General")
     String generalTabListLabel();
 
     /**
@@ -1581,7 +1385,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Basic"
      */
-    @DefaultMessage("Basic")
     String generalTabListBasicOption();
 
     /**
@@ -1589,7 +1392,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Graphics"
      */
-    @DefaultMessage("Graphics")
     String generalTabListGraphicsOption();
 
     /**
@@ -1597,7 +1399,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Advanced"
      */
-    @DefaultMessage("Advanced")
     String generalTabListAdvancedOption();
 
     /**
@@ -1605,7 +1406,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return " (Default)"
      */
-    @DefaultMessage("(Default)")
     String graphicsBackEndDefaultOption();
 
     /**
@@ -1613,7 +1413,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Quartz"
      */
-    @DefaultMessage("Quartz")
     String graphicsBackEndQuartzOption();
 
     /**
@@ -1621,7 +1420,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Windows"
      */
-    @DefaultMessage("Windows")
     String graphicsBackEndWindowsOption();
 
     /**
@@ -1629,7 +1427,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Cairo"
      */
-    @DefaultMessage("Cairo")
     String graphicsBackEndCairoOption();
 
     /**
@@ -1637,7 +1434,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Cairo PNG"
      */
-    @DefaultMessage("Cairo PNG")
     String graphicsBackEndCairoPNGOption();
 
     /**
@@ -1645,7 +1441,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "AGG"
      */
-    @DefaultMessage("AGG")
     String graphicsBackEndAGGOption();
 
     /**
@@ -1653,7 +1448,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Backend:"
      */
-    @DefaultMessage("Backend:")
     String graphicsBackendLabel();
 
     /**
@@ -1661,7 +1455,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Using the AGG renderer"
      */
-    @DefaultMessage("Using the AGG renderer")
     String graphicsBackendUserAction();
 
     /**
@@ -1669,7 +1462,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Browse..."
      */
-    @DefaultMessage("Browse...")
     String browseLabel();
 
     /**
@@ -1677,14 +1469,12 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return "Choose Directory"
      */
-    @DefaultMessage("Choose Directory")
     String directoryLabel();
     /**
      * Translated "Code".
      *
      * @return translated "Code"
      */
-    @DefaultMessage("Code")
     String codePaneLabel();
 
     /**
@@ -1692,7 +1482,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Package Management"
      */
-    @DefaultMessage("Package Management")
     String packageManagementTitle();
 
     /**
@@ -1700,7 +1489,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "CRAN repositories modified outside package preferences."
      */
-    @DefaultMessage("CRAN repositories modified outside package preferences.")
     String packagesInfoBarText();
     
     /**
@@ -1708,7 +1496,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Repositories are being managed by a renv.lock file"
      */
-    @DefaultMessage("Repositories are being managed by a renv.lock file")
     String packagesRenvInfoBarText();
 
     /**
@@ -1716,7 +1503,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Primary CRAN repository:"
      */
-    @DefaultMessage("Primary CRAN repository:")
     String cranMirrorTextBoxTitle();
 
     /**
@@ -1724,7 +1510,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Change..."
      */
-    @DefaultMessage("Change...")
     String cranMirrorChangeLabel();
 
     /**
@@ -1732,7 +1517,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Secondary repositories:"
      */
-    @DefaultMessage("Secondary repositories:")
     String secondaryReposTitle();
 
     /**
@@ -1740,7 +1524,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable packages pane"
      */
-    @DefaultMessage("Enable packages pane")
     String chkEnablePackagesTitle();
 
     /**
@@ -1748,7 +1531,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use secure download method for HTTP"
      */
-    @DefaultMessage("Use secure download method for HTTP")
     String useSecurePackageDownloadTitle();
 
     /**
@@ -1756,7 +1538,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help on secure package downloads for R"
      */
-    @DefaultMessage("Help on secure package downloads for R")
     String useSecurePackageTitle();
 
     /**
@@ -1764,7 +1545,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use Internet Explorer library/proxy for HTTP"
      */
-    @DefaultMessage("Use Internet Explorer library/proxy for HTTP")
     String useInternetTitle();
 
     /**
@@ -1772,7 +1552,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Managing Packages"
      */
-    @DefaultMessage("Managing Packages")
     String managePackagesTitle();
 
     /**
@@ -1780,7 +1559,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Package Development"
      */
-    @DefaultMessage("Package Development")
     String developmentTitle();
 
     /**
@@ -1788,7 +1566,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "C/C++ Development"
      */
-    @DefaultMessage("C/C++ Development")
     String cppDevelopmentTitle();
 
     /**
@@ -1796,7 +1573,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use devtools package functions if available"
      */
-    @DefaultMessage("Use devtools package functions if available")
     String useDevtoolsLabel();
 
     /**
@@ -1804,7 +1580,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save all files prior to building packages"
      */
-    @DefaultMessage("Save all files prior to building packages")
     String developmentSaveLabel();
 
     /**
@@ -1812,7 +1587,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatically navigate editor to build errors"
      */
-    @DefaultMessage("Automatically navigate editor to build errors")
     String developmentNavigateLabel();
 
     /**
@@ -1820,7 +1594,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Hide object files in package src directory"
      */
-    @DefaultMessage("Hide object files in package src directory")
     String developmentHideLabel();
 
     /**
@@ -1828,7 +1601,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cleanup output after successful R CMD check"
      */
-    @DefaultMessage("Cleanup output after successful R CMD check")
     String developmentCleanupLabel();
 
     /**
@@ -1836,7 +1608,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "View Rcheck directory after failed R CMD check"
      */
-    @DefaultMessage("View Rcheck directory after failed R CMD check")
     String developmentViewLabel();
 
     /**
@@ -1844,7 +1615,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "C++ template"
      */
-    @DefaultMessage("C++ template")
     String developmentCppTemplate();
 
     /**
@@ -1852,7 +1622,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "empty"
      */
-    @DefaultMessage("empty")
     String developmentEmptyLabel();
 
     /**
@@ -1860,7 +1629,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always use LF line-endings in Unix Makefiles"
      */
-    @DefaultMessage("Always use LF line-endings in Unix Makefiles")
     String developmentUseLFLabel();
 
     /**
@@ -1868,7 +1636,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Packages"
      */
-    @DefaultMessage("Packages")
     String tabPackagesPanelTitle();
 
     /**
@@ -1876,7 +1643,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Management"
      */
-    @DefaultMessage("Management")
     String managementPanelTitle();
 
     /**
@@ -1884,7 +1650,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Development"
      */
-    @DefaultMessage("Development")
     String developmentManagementPanelTitle();
 
     /**
@@ -1892,7 +1657,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "C / C++"
      */
-    @DefaultMessage("C / C++")
     String cppPanelTitle();
 
     /**
@@ -1900,7 +1664,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Retrieving list of CRAN mirrors..."
      */
-    @DefaultMessage("Retrieving list of CRAN mirrors...")
     String chooseMirrorDialogMessage();
 
     /**
@@ -1908,7 +1671,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String showDisconnectErrorCaption();
 
     /**
@@ -1916,7 +1678,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Please select a CRAN Mirror"
      */
-    @DefaultMessage("Please select a CRAN Mirror")
     String showDisconnectErrorMessage();
 
     /**
@@ -1924,7 +1685,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Validating CRAN repository..."
      */
-    @DefaultMessage("Validating CRAN repository...")
     String progressIndicatorMessage();
 
     /**
@@ -1932,7 +1692,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The given URL does not appear to be a valid CRAN repository."
      */
-    @DefaultMessage("The given URL does not appear to be a valid CRAN repository.")
     String progressIndicatorError();
 
     /**
@@ -1940,7 +1699,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Custom:"
      */
-    @DefaultMessage("Custom:")
     String customLabel();
 
     /**
@@ -1948,7 +1706,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "CRAN Mirrors:"
      */
-    @DefaultMessage("CRAN Mirrors:")
     String mirrorsLabel();
 
     /**
@@ -1956,7 +1713,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Choose Primary Repository"
      */
-    @DefaultMessage("Choose Primary Repository")
     String headerLabel();
 
     /**
@@ -1964,7 +1720,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Add..."
      */
-    @DefaultMessage("Add...")
     String buttonAddLabel();
 
     /**
@@ -1972,7 +1727,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove..."
      */
-    @DefaultMessage("Remove...")
     String buttonRemoveLabel();
 
     /**
@@ -1980,7 +1734,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Up"
      */
-    @DefaultMessage("Up")
     String buttonUpLabel();
 
     /**
@@ -1988,7 +1741,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Down"
      */
-    @DefaultMessage("Down")
     String buttonDownLabel();
 
     /**
@@ -1996,7 +1748,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Developing Packages"
      */
-    @DefaultMessage("Developing Packages")
     String developingPkgHelpLink();
 
     /**
@@ -2004,7 +1755,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Retrieving list of secondary repositories..."
      */
-    @DefaultMessage("Retrieving list of secondary repositories...")
     String secondaryReposDialog();
 
     /**
@@ -2012,7 +1762,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Please select or input a CRAN repository"
      */
-    @DefaultMessage("Please select or input a CRAN repository")
     String validateSyncLabel();
 
     /**
@@ -2020,7 +1769,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The repository "
      */
-    @DefaultMessage("The repository ")
     String showErrorRepoMessage();
 
     /**
@@ -2028,7 +1776,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "is already included"
      */
-    @DefaultMessage("is already included")
     String alreadyIncludedMessage();
 
     /**
@@ -2036,7 +1783,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Validating CRAN repository..."
      */
-    @DefaultMessage("Validating CRAN repository...")
     String validateAsyncProgress();
 
     /**
@@ -2044,7 +1790,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The given URL does not appear to be a valid CRAN repository."
      */
-    @DefaultMessage("The given URL does not appear to be a valid CRAN repository.")
     String onResponseReceived();
 
     /**
@@ -2052,7 +1797,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Name:"
      */
-    @DefaultMessage("Name:")
     String nameLabel();
 
     /**
@@ -2060,7 +1804,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "URL:"
      */
-    @DefaultMessage("URL:")
     String urlLabel();
 
     /**
@@ -2068,7 +1811,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Available repositories:"
      */
-    @DefaultMessage("Available repositories:")
     String reposLabel();
 
     /**
@@ -2076,7 +1818,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Add Secondary Repository"
      */
-    @DefaultMessage("Add Secondary Repository")
     String secondaryRepoLabel();
 
     /**
@@ -2084,7 +1825,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Choose the layout of the panels in RStudio by selecting from the controls in each panel. Add up to three additional Source Columns to the left side of the layout. When a column is removed, all saved files within the column are closed and any unsaved files are moved to the main Source Pane."
      */
-    @DefaultMessage("Choose the layout of the panels in RStudio by selecting from the controls in each panel. Add up to three additional Source Columns to the left side of the layout. When a column is removed, all saved files within the column are closed and any unsaved files are moved to the main Source Pane.")
     String paneLayoutText();
 
     /**
@@ -2092,7 +1832,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Manage Column Display"
      */
-    @DefaultMessage("Manage Column Display")
     String columnToolbarLabel();
 
     /**
@@ -2100,7 +1839,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Add Column"
      */
-    @DefaultMessage("Add Column")
     String addButtonText();
 
     /**
@@ -2108,7 +1846,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Add column"
      */
-    @DefaultMessage("Add column")
     String addButtonLabel();
 
     /**
@@ -2116,7 +1853,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove Column"
      */
-    @DefaultMessage("Remove Column")
     String removeButtonText();
 
     /**
@@ -2124,7 +1860,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove column"
      */
-    @DefaultMessage("Remove column")
     String removeButtonLabel();
 
     /**
@@ -2132,7 +1867,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Bad config! Falling back to a reasonable default"
      */
-    @DefaultMessage("Columns and Panes Layout")
     String createGridLabel();
 
     /**
@@ -2140,7 +1874,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Additional source column"
      */
-    @DefaultMessage("Additional source column")
     String createColumnLabel();
 
     /**
@@ -2148,7 +1881,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Pane Layout"
      */
-    @DefaultMessage("Pane Layout")
     String paneLayoutLabel();
 
     /**
@@ -2156,7 +1888,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Publishing Accounts"
      */
-    @DefaultMessage("Publishing Accounts")
     String accountListLabel();
 
     /**
@@ -2164,7 +1895,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connect..."
      */
-    @DefaultMessage("Connect...")
     String connectButtonLabel();
 
     /**
@@ -2172,7 +1902,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Reconnect..."
      */
-    @DefaultMessage("Reconnect...")
     String reconnectButtonLabel();
 
     /**
@@ -2180,7 +1909,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Disconnect"
      */
-    @DefaultMessage("Disconnect")
     String disconnectButtonLabel();
 
     /**
@@ -2188,7 +1916,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Account records appear to exist, but cannot be viewed because a required package is not installed."
      */
-    @DefaultMessage("Account records appear to exist, but cannot be viewed because a required package is not installed.")
     String missingPkgPanelMessage();
 
     /**
@@ -2196,7 +1923,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Install Missing Packages"
      */
-    @DefaultMessage("Install Missing Packages")
     String installPkgsMessage();
 
     /**
@@ -2204,7 +1930,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewing publish accounts"
      */
-    @DefaultMessage("Viewing publish accounts")
     String withRSConnectLabel();
 
     /**
@@ -2212,7 +1937,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable publishing to Posit Connect"
      */
-    @DefaultMessage("Enable publishing to Posit Connect")
     String chkEnableRSConnectLabel();
 
     /**
@@ -2220,7 +1944,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Information about Posit Connect"
      */
-    @DefaultMessage("Information about Posit Connect")
     String checkBoxWithHelpTitle();
 
     /**
@@ -2228,7 +1951,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Settings"
      */
-    @DefaultMessage("Settings")
     String settingsHeaderLabel();
 
     /**
@@ -2236,7 +1958,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable publishing documents, apps, and APIs"
      */
-    @DefaultMessage("Enable publishing documents, apps, and APIs")
     String chkEnablePublishingLabel();
 
     /**
@@ -2244,7 +1965,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostic information when publishing"
      */
-    @DefaultMessage("Show diagnostic information when publishing")
     String showPublishDiagnosticsLabel();
 
     /**
@@ -2252,7 +1972,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "SSL Certificates"
      */
-    @DefaultMessage("SSL Certificates")
     String sSLCertificatesHeaderLabel();
 
     /**
@@ -2260,7 +1979,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Check SSL certificates when publishing"
      */
-    @DefaultMessage("Check SSL certificates when publishing")
     String publishCheckCertificatesLabel();
 
     /**
@@ -2268,7 +1986,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Check SSL certificates when publishing"
      */
-    @DefaultMessage("Use custom CA bundle")
     String usePublishCaBundleLabel();
 
     /**
@@ -2276,7 +1993,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(none)"
      */
-    @DefaultMessage("(none)")
     String caBundlePath();
 
     /**
@@ -2284,7 +2000,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Troubleshooting Deployments"
      */
-    @DefaultMessage("Troubleshooting Deployments")
     String helpLinkTroubleshooting();
 
     /**
@@ -2292,7 +2007,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Publishing"
      */
-    @DefaultMessage("Publishing")
     String publishingPaneHeader();
 
     /**
@@ -2300,7 +2014,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error Disconnecting Account"
      */
-    @DefaultMessage("Error Disconnecting Account")
     String showErrorCaption();
 
     /**
@@ -2308,7 +2021,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Please select an account to disconnect."
      */
-    @DefaultMessage("Please select an account to disconnect.")
     String showErrorMessage();
 
     /**
@@ -2316,7 +2028,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Confirm Remove Account"
      */
-    @DefaultMessage("Confirm Remove Account")
     String removeAccountGlobalDisplay();
 
     /**
@@ -2324,7 +2035,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to disconnect the ''{0}'' account on ''{1}''? This won''t delete the account on the server."
      */
-    @DefaultMessage("Are you sure you want to disconnect the ''{0}'' account on ''{1}''? This won''t delete the account on the server.")
     String removeAccountMessage(String name, String server);
 
     /**
@@ -2332,7 +2042,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Disconnect Account"
      */
-    @DefaultMessage("Disconnect Account")
     String onConfirmDisconnectYesLabel();
 
     /**
@@ -2340,7 +2049,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String onConfirmDisconnectNoLabel();
 
     /**
@@ -2348,7 +2056,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error Disconnecting Account"
      */
-    @DefaultMessage("Error Disconnecting Account")
     String disconnectingErrorMessage();
 
     /**
@@ -2356,7 +2063,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connecting a publishing account"
      */
-    @DefaultMessage("Connecting a publishing account")
     String getAccountCountLabel();
 
     /**
@@ -2364,7 +2070,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(No interpreter selected)"
      */
-    @DefaultMessage("(No interpreter selected)")
     String pythonPreferencesText();
 
     /**
@@ -2372,7 +2077,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Options button to change the version of Python used in this project.)"
      */
-    @DefaultMessage("(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Options button to change the version of Python used in this project.)")
     String overrideText();
 
 
@@ -2381,7 +2085,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Python"
      */
-    @DefaultMessage("Python")
     String headerPythonLabel();
 
     /**
@@ -2389,7 +2092,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The active Python interpreter has been changed by an R startup script."
      */
-    @DefaultMessage("The active Python interpreter has been changed by an R startup script.")
     String mismatchWarningBarText();
 
     /**
@@ -2397,7 +2099,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Finding interpreters..."
      */
-    @DefaultMessage("Finding interpreters...")
     String progressIndicatorText();
 
     /**
@@ -2405,7 +2106,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Finding interpreters..."
      */
-    @DefaultMessage("Python interpreter:")
     String tbPythonInterpreterText();
 
     /**
@@ -2413,7 +2113,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Select..."
      */
-    @DefaultMessage("Select...")
     String tbPythonActionText();
 
     /**
@@ -2421,7 +2120,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error finding Python interpreters: "
      */
-    @DefaultMessage("Error finding Python interpreters: ")
     String onDependencyErrorMessage();
 
     /**
@@ -2429,7 +2127,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The selected Python interpreter appears to be invalid."
      */
-    @DefaultMessage("The selected Python interpreter appears to be invalid.")
     String invalidReasonLabel();
 
     /**
@@ -2437,7 +2134,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Using Python in RStudio"
      */
-    @DefaultMessage("Using Python in RStudio")
     String helpRnwButtonLabel();
 
     /**
@@ -2445,7 +2141,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatically activate project-local Python environments"
      */
-    @DefaultMessage("Automatically activate project-local Python environments")
     String cbAutoUseProjectInterpreter();
 
     /**
@@ -2453,7 +2148,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When enabled, RStudio will automatically find and activate a Python environment located within the project root directory (if any)."
      */
-    @DefaultMessage("When enabled, RStudio will automatically find and activate a Python environment located within the project root directory (if any).")
     String cbAutoUseProjectInterpreterMessage();
 
 
@@ -2462,7 +2156,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String tabPanelCaption();
 
     /**
@@ -2470,7 +2163,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clear"
      */
-    @DefaultMessage("Clear")
     String clearLabel();
 
     /**
@@ -2478,7 +2170,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "[Unknown]"
      */
-    @DefaultMessage("[Unknown]")
     String unknownType();
 
     /**
@@ -2486,7 +2177,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Virtual Environment"
      */
-    @DefaultMessage("Virtual Environment")
     String virtualEnvironmentType();
 
     /**
@@ -2494,7 +2184,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Conda Environment"
      */
-    @DefaultMessage("Conda Environment")
     String condaEnvironmentType();
 
     /**
@@ -2502,7 +2191,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "System Interpreter"
      */
-    @DefaultMessage("System Interpreter")
     String systemInterpreterType();
 
     /**
@@ -2512,7 +2200,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated value for Quarto preview label
      */
-    @DefaultMessage("This version of RStudio includes a preview of Quarto, a new scientific and technical publishing system. ")
     String quartoPreviewLabel();
 
     /**
@@ -2521,7 +2208,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return the translated value for the label
      */
-    @DefaultMessage("Enable Quarto preview")
     String enableQuartoPreviewCheckboxLabel();
 
     /**
@@ -2530,7 +2216,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return the translated value for the help link
      */
-    @DefaultMessage("Learn more about Quarto")
     String helpLinkCaption();
 
     /**
@@ -2538,17 +2223,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String rMarkdownHeaderLabel();
 
-    @DefaultMessage("Document Outline")
     String documentOutlineHeaderLabel();
     /**
      * Translated "Show document outline by default".
      *
      * @return translated "Show document outline by default"
      */
-    @DefaultMessage("Show document outline by default")
     String rMarkdownShowLabel();
 
     /**
@@ -2556,7 +2238,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Soft-wrap R Markdown files"
      */
-    @DefaultMessage("Soft-wrap R Markdown files")
     String rMarkdownSoftWrapLabel();
 
     /**
@@ -2564,7 +2245,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show in document outline: "
      */
-    @DefaultMessage("Show in document outline: ")
     String docOutlineDisplayLabel();
 
     /**
@@ -2572,7 +2252,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sections Only"
      */
-    @DefaultMessage("Sections Only")
     String docOutlineSectionsOption();
 
     /**
@@ -2580,7 +2259,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sections and Named Chunks"
      */
-    @DefaultMessage("Sections and Named Chunks")
     String docOutlineSectionsNamedChunksOption();
 
     /**
@@ -2588,7 +2266,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sections and All Chunks"
      */
-    @DefaultMessage("Sections and All Chunks")
     String docOutlineSectionsAllChunksOption();
 
     /**
@@ -2596,7 +2273,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show output preview in: "
      */
-    @DefaultMessage("Show output preview in: ")
     String rmdViewerModeLabel();
 
     /**
@@ -2604,7 +2280,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Window"
      */
-    @DefaultMessage("Window")
     String rmdViewerModeWindowOption();
 
     /**
@@ -2612,7 +2287,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Viewer Pane"
      */
-    @DefaultMessage("Viewer Pane")
     String rmdViewerModeViewerPaneOption();
 
     /**
@@ -2620,7 +2294,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String rmdViewerModeNoneOption();
 
     /**
@@ -2628,7 +2301,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show output inline for all R Markdown documents"
      */
-    @DefaultMessage("Show output inline for all R Markdown documents")
     String rmdInlineOutputLabel();
 
     /**
@@ -2636,7 +2308,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show equation and image previews: "
      */
-    @DefaultMessage("Show equation and image previews: ")
     String latexPreviewWidgetLabel();
 
     /**
@@ -2644,7 +2315,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Never"
      */
-    @DefaultMessage("Never")
     String latexPreviewWidgetNeverOption();
 
     /**
@@ -2652,7 +2322,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "In a popup"
      */
-    @DefaultMessage("In a popup")
     String latexPreviewWidgetPopupOption();
 
     /**
@@ -2660,7 +2329,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Inline"
      */
-    @DefaultMessage("Inline")
     String latexPreviewWidgetInlineOption();
 
     /**
@@ -2668,7 +2336,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Evaluate chunks in directory: "
      */
-    @DefaultMessage("Evaluate chunks in directory: ")
     String knitWorkingDirLabel();
 
     /**
@@ -2676,7 +2343,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Document"
      */
-    @DefaultMessage("Document")
     String knitWorkingDirDocumentOption();
 
     /**
@@ -2684,7 +2350,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Current"
      */
-    @DefaultMessage("Current")
     String knitWorkingDirCurrentOption();
 
     /**
@@ -2692,7 +2357,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Project"
      */
-    @DefaultMessage("Project")
     String knitWorkingDirProjectOption();
 
     /**
@@ -2700,7 +2364,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Notebooks"
      */
-    @DefaultMessage("R Notebooks")
     String rNotebooksCaption();
 
     /**
@@ -2708,7 +2371,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Execute setup chunk automatically in notebooks"
      */
-    @DefaultMessage("Execute setup chunk automatically in notebooks")
     String autoExecuteSetupChunkLabel();
 
     /**
@@ -2716,7 +2378,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Hide console automatically when executing notebook chunks"
      */
-    @DefaultMessage("Hide console automatically when executing notebook chunks")
     String notebookHideConsoleLabel();
 
     /**
@@ -2724,7 +2385,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Using R Notebooks"
      */
-    @DefaultMessage("Using R Notebooks")
     String helpRStudioLinkLabel();
 
     /**
@@ -2732,7 +2392,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display"
      */
-    @DefaultMessage("Display")
     String advancedHeaderLabel();
 
     /**
@@ -2740,7 +2399,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable chunk background highlight"
      */
-    @DefaultMessage("Enable chunk background highlight")
     String advancedEnableChunkLabel();
 
     /**
@@ -2748,7 +2406,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show inline toolbar for R code chunks"
      */
-    @DefaultMessage("Show inline toolbar for R code chunks")
     String advancedShowInlineLabel();
 
     /**
@@ -2756,7 +2413,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display render command in R Markdown tab"
      */
-    @DefaultMessage("Display render command in R Markdown tab")
     String advancedDisplayRender();
 
     /**
@@ -2764,7 +2420,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String visualModeGeneralCaption();
 
     /**
@@ -2772,7 +2427,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use visual editor by default for new documents"
      */
-    @DefaultMessage("Use visual editor by default for new documents")
     String visualModeUseVisualEditorLabel();
 
     /**
@@ -2780,7 +2434,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Learn more about visual editing mode"
      */
-    @DefaultMessage("Learn more about visual editing mode")
     String visualModeHelpLink();
 
     /**
@@ -2788,7 +2441,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display"
      */
-    @DefaultMessage("Display")
     String visualModeHeaderLabel();
 
     /**
@@ -2796,7 +2448,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show document outline by default"
      */
-    @DefaultMessage("Show document outline by default")
     String visualEditorShowOutlineLabel();
 
     /**
@@ -2804,7 +2455,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show margin column indicator in code blocks"
      */
-    @DefaultMessage("Show margin column indicator in code blocks")
     String visualEditorShowMarginLabel();
 
     /**
@@ -2812,7 +2462,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor content width (px):"
      */
-    @DefaultMessage("Editor content width (px):")
     String visualModeContentWidthLabel();
 
     /**
@@ -2820,7 +2469,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor font size:"
      */
-    @DefaultMessage("Editor font size:")
     String visualModeFontSizeLabel();
 
     /**
@@ -2828,7 +2476,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Markdown"
      */
-    @DefaultMessage("Markdown")
     String visualModeOptionsMarkdownCaption();
 
     /**
@@ -2836,7 +2483,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Default spacing between list items: "
      */
-    @DefaultMessage("Default spacing between list items: ")
     String visualModeListSpacingLabel();
 
     /**
@@ -2844,7 +2490,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatic text wrapping (line breaks): "
      */
-    @DefaultMessage("Automatic text wrapping (line breaks): ")
     String visualModeWrapLabel();
 
     /**
@@ -2852,7 +2497,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Learn more about automatic line wrapping"
      */
-    @DefaultMessage("Learn more about automatic line wrapping")
     String visualModeWrapHelpLabel();
 
     /**
@@ -2860,7 +2504,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Wrap at column:"
      */
-    @DefaultMessage("Wrap at column:")
     String visualModeOptionsLabel();
 
     /**
@@ -2868,7 +2511,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Write references at end of current: "
      */
-    @DefaultMessage("Write references at end of current: ")
     String visualModeReferencesLabel();
 
     /**
@@ -2876,7 +2518,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Write canonical visual mode markdown in source mode"
      */
-    @DefaultMessage("Write canonical visual mode markdown in source mode")
     String visualModeCanonicalLabel();
 
     /**
@@ -2884,7 +2525,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Visual Mode Preferences"
      */
-    @DefaultMessage("Visual Mode Preferences")
     String visualModeCanonicalMessageCaption();
 
     /**
@@ -2892,7 +2532,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to write canonical markdown from source mode for all R Markdown files?\n\nThis preference should generally only be used at a project level (to prevent re-writing of markdown source that you or others don''t intend to use with visual mode).\n\nChange this preference now?"
      */
-    @DefaultMessage("Are you sure you want to write canonical markdown from source mode for all R Markdown files?\n\nThis preference should generally only be used at a project level (to prevent re-writing of markdown source that you or others don''t intend to use with visual mode).\n\nChange this preference now?")
     String visualModeCanonicalPreferenceMessage();
 
     /**
@@ -2900,7 +2539,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Learn more about markdown writer options"
      */
-    @DefaultMessage("Learn more about markdown writer options")
     String markdownPerFileOptionsHelpLink();
 
     /**
@@ -2908,7 +2546,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Citation features are available within visual editing mode."
      */
-    @DefaultMessage("Citation features are available within visual editing mode.")
     String citationsLabel();
 
     /**
@@ -2916,7 +2553,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Learn more about using citations with visual editing mode"
      */
-    @DefaultMessage("Learn more about using citations with visual editing mode")
     String citationsHelpLink();
 
     /**
@@ -2924,7 +2560,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero"
      */
-    @DefaultMessage("Zotero")
     String zoteroHeaderLabel();
 
     /**
@@ -2932,7 +2567,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zotero Data Directory:"
      */
-    @DefaultMessage("Zotero Data Directory:")
     String zoteroDataDirLabel();
 
     /**
@@ -2940,7 +2574,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(None Detected)"
      */
-    @DefaultMessage("(None Detected)")
     String zoteroDataDirNotDectedLabel();
 
     /**
@@ -2948,7 +2581,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use Better BibTeX for citation keys and BibTeX export"
      */
-    @DefaultMessage("Use Better BibTeX for citation keys and BibTeX export")
     String zoteroUseBetterBibtexLabel();
 
     /**
@@ -2956,7 +2588,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String tabPanelTitle();
 
     /**
@@ -2964,7 +2595,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Basic"
      */
-    @DefaultMessage("Basic")
     String tabPanelBasic();
 
     /**
@@ -2972,7 +2602,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Advanced"
      */
-    @DefaultMessage("Advanced")
     String tabPanelAdvanced();
 
     /**
@@ -2980,7 +2609,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Visual"
      */
-    @DefaultMessage("Visual")
     String tabPanelVisual();
 
     /**
@@ -2988,7 +2616,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Citations"
      */
-    @DefaultMessage("Citations")
     String tabPanelCitations();
 
     /**
@@ -2996,7 +2623,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Web"
      */
-    @DefaultMessage("Web")
     String webOption();
 
     /**
@@ -3004,7 +2630,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show line numbers in code blocks"
      */
-    @DefaultMessage("Show line numbers in code blocks")
     String showLinkNumbersLabel();
 
     /**
@@ -3012,7 +2637,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable version control interface for RStudio projects"
      */
-    @DefaultMessage("Enable version control interface for RStudio projects")
     String chkVcsEnabledLabel();
 
     /**
@@ -3020,7 +2644,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable"
      */
-    @DefaultMessage("Enable")
     String globalDisplayEnable();
 
     /**
@@ -3028,7 +2651,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Disable"
      */
-    @DefaultMessage("Disable")
     String globalDisplayDisable();
 
     /**
@@ -3036,7 +2658,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} Version Control "
      */
-    @DefaultMessage("{0} Version Control ")
     String globalDisplayVC(String displayEnable);
 
     /**
@@ -3044,7 +2665,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You must restart RStudio for this change to take effect."
      */
-    @DefaultMessage("You must restart RStudio for this change to take effect.")
     String globalDisplayVCMessage();
 
     /**
@@ -3052,7 +2672,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The program ''{0}'' is unlikely to be a valid git executable.\nPlease select a git executable called ''git.exe''."
      */
-    @DefaultMessage("The program ''{0}'' is unlikely to be a valid git executable.\nPlease select a git executable called ''git.exe''.")
     String gitExePathMessage(String gitPath);
 
     /**
@@ -3060,7 +2679,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Invalid Git Executable."
      */
-    @DefaultMessage("Invalid Git Executable")
     String gitGlobalDisplay();
 
     /**
@@ -3068,7 +2686,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Git executable:"
      */
-    @DefaultMessage("Git executable:")
     String gitExePathLabel();
 
     /**
@@ -3076,7 +2693,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Not Found)"
      */
-    @DefaultMessage("(Not Found)")
     String gitExePathNotFoundLabel();
 
     /**
@@ -3084,7 +2700,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "SVN executable:"
      */
-    @DefaultMessage("SVN executable:")
     String svnExePathLabel();
 
     /**
@@ -3092,7 +2707,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal executable:"
      */
-    @DefaultMessage("Terminal executable:")
     String terminalPathLabel();
 
     /**
@@ -3100,7 +2714,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Git/SVN"
      */
-    @DefaultMessage("Git/SVN")
     String gitSVNPaneHeader();
 
     /**
@@ -3108,7 +2721,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Dictionaries"
      */
-    @DefaultMessage("Dictionaries")
     String spellingPreferencesPaneHeader();
 
     /**
@@ -3116,7 +2728,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ignore"
      */
-    @DefaultMessage("Ignore")
     String ignoreHeader();
 
     /**
@@ -3124,7 +2735,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ignore words in UPPERCASE"
      */
-    @DefaultMessage("Ignore words in UPPERCASE")
     String ignoreWordsUppercaseLabel();
 
     /**
@@ -3132,7 +2742,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ignore words with numbers"
      */
-    @DefaultMessage("Ignore words with numbers")
     String ignoreWordsNumbersLabel();
 
     /**
@@ -3140,7 +2749,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Checking"
      */
-    @DefaultMessage("Checking")
     String checkingHeader();
 
     /**
@@ -3148,7 +2756,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use real time spell-checking"
      */
-    @DefaultMessage("Use real time spell-checking")
     String realTimeSpellcheckingCheckboxLabel();
 
 
@@ -3157,7 +2764,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "User dictionary: "
      */
-    @DefaultMessage("User dictionary: ")
     String kUserDictionaryLabel();
 
     /**
@@ -3165,7 +2771,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0}{1} words"
      */
-    @DefaultMessage("{0}{1} words")
     String kUserDictionaryWordsLabel(String kUserDictionary, String entries);
 
     /**
@@ -3173,7 +2778,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Edit User Dictionary..."
      */
-    @DefaultMessage("Edit User Dictionary...")
     String editUserDictLabel();
 
     /**
@@ -3181,7 +2785,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Edit User Dictionary"
      */
-    @DefaultMessage("Edit User Dictionary")
     String editUserDictCaption();
 
     /**
@@ -3189,7 +2792,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String editUserDictSaveCaption();
 
     /**
@@ -3197,7 +2799,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Spelling"
      */
-    @DefaultMessage("Spelling")
     String spellingPaneLabel();
 
     /**
@@ -3205,7 +2806,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Edit"
      */
-    @DefaultMessage("Edit")
     String editDialog();
 
     /**
@@ -3213,7 +2813,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String saveDialog();
 
     /**
@@ -3221,7 +2820,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Cancel")
     String cancelButton();
 
     /**
@@ -3229,7 +2827,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Shell"
      */
-    @DefaultMessage("Shell")
     String shellHeaderLabel();
 
     /**
@@ -3237,7 +2834,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Initial directory:"
      */
-    @DefaultMessage("Initial directory:")
     String initialDirectoryLabel();
 
     /**
@@ -3245,7 +2841,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Project directory"
      */
-    @DefaultMessage("Project directory")
     String projectDirectoryOption();
 
     /**
@@ -3253,7 +2848,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Current directory"
      */
-    @DefaultMessage("Current directory")
     String currentDirectoryOption();
 
     /**
@@ -3261,7 +2855,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Home directory"
      */
-    @DefaultMessage("Home directory")
     String homeDirectoryOption();
 
     /**
@@ -3269,7 +2862,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "New terminals open with:"
      */
-    @DefaultMessage("New terminals open with:")
     String terminalShellLabel();
 
     /**
@@ -3277,14 +2869,12 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The program ''{0}'' is unlikely to be a valid shell executable."
      */
-    @DefaultMessage("The program ''{0}'' is unlikely to be a valid shell executable.")
     String shellExePathMessage(String shellExePath);
     /**
      * Translated "Invalid Shell Executable".
      *
      * @return translated "Invalid Shell Executable"
      */
-    @DefaultMessage("Invalid Shell Executable")
     String shellExeCaption();
 
     /**
@@ -3292,7 +2882,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Custom shell binary:"
      */
-    @DefaultMessage("Custom shell binary:")
     String customShellPathLabel();
 
     /**
@@ -3300,7 +2889,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Not Found)"
      */
-    @DefaultMessage("(Not Found)")
     String customShellChooserEmptyLabel();
 
     /**
@@ -3308,7 +2896,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Custom shell command-line options:"
      */
-    @DefaultMessage("Custom shell command-line options:")
     String customShellOptionsLabel();
 
     /**
@@ -3316,7 +2903,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connection"
      */
-    @DefaultMessage("Connection")
     String perfLabel();
 
     /**
@@ -3324,7 +2910,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Local terminal echo"
      */
-    @DefaultMessage("Local terminal echo")
     String chkTerminalLocalEchoLabel();
 
     /**
@@ -3332,7 +2917,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Local echo is more responsive but may get out of sync with some line-editing modes or custom shells."
      */
-    @DefaultMessage("Local echo is more responsive but may get out of sync with some line-editing modes or custom shells.")
     String chkTerminalLocalEchoTitle();
 
     /**
@@ -3340,7 +2924,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connect with WebSockets"
      */
-    @DefaultMessage("Connect with WebSockets")
     String chkTerminalWebsocketLabel();
 
     /**
@@ -3348,7 +2931,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WebSockets are generally more responsive; try turning off if terminal won''t connect."
      */
-    @DefaultMessage("WebSockets are generally more responsive; try turning off if terminal won''t connect.")
     String chkTerminalWebsocketTitle();
 
     /**
@@ -3356,7 +2938,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display"
      */
-    @DefaultMessage("Display")
     String displayHeaderLabel();
 
     /**
@@ -3364,7 +2945,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Hardware acceleration"
      */
-    @DefaultMessage("Hardware acceleration")
     String chkHardwareAccelerationLabel();
 
     /**
@@ -3372,7 +2952,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Audible bell"
      */
-    @DefaultMessage("Audible bell")
     String chkAudibleBellLabel();
 
     /**
@@ -3380,7 +2959,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clickable web links"
      */
-    @DefaultMessage("Clickable web links")
     String chkWebLinksLabel();
 
     /**
@@ -3388,7 +2966,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Using the RStudio terminal"
      */
-    @DefaultMessage("Using the RStudio terminal")
     String helpLinkLabel();
 
     /**
@@ -3396,7 +2973,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Miscellaneous"
      */
-    @DefaultMessage("Miscellaneous")
     String miscLabel();
 
     /**
@@ -3404,7 +2980,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When shell exits:"
      */
-    @DefaultMessage("When shell exits:")
     String autoClosePrefLabel();
 
     /**
@@ -3412,7 +2987,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Close the pane"
      */
-    @DefaultMessage("Close the pane")
     String closePaneOption();
 
     /**
@@ -3420,7 +2994,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Don''t close the pane"
      */
-    @DefaultMessage("Don''t close the pane")
     String doNotClosePaneOption();
 
     /**
@@ -3428,7 +3001,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Close pane if shell exits cleanly"
      */
-    @DefaultMessage("Close pane if shell exits cleanly")
     String shellExitsPaneOption();
 
     /**
@@ -3436,7 +3008,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save and restore environment variables"
      */
-    @DefaultMessage("Save and restore environment variables")
     String chkCaptureEnvLabel();
 
     /**
@@ -3444,7 +3015,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal occasionally runs a hidden command to capture state of environment variables."
      */
-    @DefaultMessage("Terminal occasionally runs a hidden command to capture state of environment variables.")
     String chkCaptureEnvTitle();
 
     /**
@@ -3452,7 +3022,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Process Termination"
      */
-    @DefaultMessage("Process Termination")
     String shutdownLabel();
 
     /**
@@ -3460,7 +3029,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ask before killing processes:"
      */
-    @DefaultMessage("Ask before killing processes:")
     String busyModeLabel();
 
     /**
@@ -3468,7 +3036,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Don''t ask before killing:"
      */
-    @DefaultMessage("Don''t ask before killing:")
     String busyWhitelistLabel();
 
     /**
@@ -3476,7 +3043,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal"
      */
-    @DefaultMessage("Terminal")
     String terminalPaneLabel();
 
     /**
@@ -3484,7 +3050,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String tabGeneralPanelLabel();
 
     /**
@@ -3492,7 +3057,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Closing"
      */
-    @DefaultMessage("Closing")
     String tabClosingPanelLabel();
 
     /**
@@ -3500,7 +3064,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always"
      */
-    @DefaultMessage("Always")
     String busyModeAlwaysOption();
 
     /**
@@ -3508,7 +3071,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Never"
      */
-    @DefaultMessage("Never")
     String busyModeNeverOption();
 
     /**
@@ -3516,7 +3078,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always except for list"
      */
-    @DefaultMessage("Always except for list")
     String busyModeListOption();
 
     /**
@@ -3524,7 +3085,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable Python integration"
      */
-    @DefaultMessage("Enable Python integration")
     String chkPythonIntegration();
 
     /**
@@ -3532,7 +3092,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When enabled, the active version of Python will be placed on the PATH for new terminal sessions. Only bash and zsh are supported."
      */
-    @DefaultMessage("When enabled, the active version of Python will be placed on the PATH for new terminal sessions. Only bash and zsh are supported.")
     String chkPythonIntegrationTitle();
 
     /**
@@ -3540,7 +3099,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Confirm Remove"
      */
-    @DefaultMessage("Confirm Remove")
     String confirmRemoveCaption();
 
     /**
@@ -3548,7 +3106,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to remove the {0} repository?"
      */
-    @DefaultMessage("Are you sure you want to remove the {0} repository?")
     String confirmRemoveMessage(String repo);
 
     /**
@@ -3556,7 +3113,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Modern"
      */
-    @DefaultMessage("Modern")
     String modernThemeLabel();
 
     /**
@@ -3564,7 +3120,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sky"
      */
-    @DefaultMessage("Sky")
     String skyThemeLabel();
 
     /**
@@ -3572,7 +3127,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String generalHeaderLabel();
     
     /**
@@ -3580,7 +3134,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Code Formatting"
      */
-    @DefaultMessage("Code Formatting")
     String codeFormattingHeaderLabel();
  
     /**
@@ -3588,7 +3141,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use formatter:"
      */
-    @DefaultMessage("Use formatter:")
     String useFormatterLabel();
     
 
@@ -3597,7 +3149,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Syntax"
      */
-    @DefaultMessage("Syntax")
     String syntaxHeaderLabel();
 
     /**
@@ -3605,7 +3156,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Edit Snippets..."
      */
-    @DefaultMessage("Edit Snippets...")
     String editSnippetsButtonLabel();
 
     /**
@@ -3613,7 +3163,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "tight"
      */
-    @DefaultMessage("tight")
     String listSpacingTight();
 
     /**
@@ -3621,7 +3170,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "spaced"
      */
-    @DefaultMessage("spaced")
     String listSpacingSpaced();
 
     /**
@@ -3629,7 +3177,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(none)"
      */
-    @DefaultMessage("(none)")
     String editingWrapNone();
 
     /**
@@ -3637,7 +3184,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(column)"
      */
-    @DefaultMessage("(column)")
     String editingWrapColumn();
 
     /**
@@ -3645,7 +3191,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(sentence)"
      */
-    @DefaultMessage("(sentence)")
     String editingWrapSentence();
 
     /**
@@ -3653,7 +3198,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "block"
      */
-    @DefaultMessage("block")
     String refLocationBlock();
 
     /**
@@ -3661,7 +3205,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "section"
      */
-    @DefaultMessage("section")
     String refLocationSection();
 
     /**
@@ -3669,7 +3212,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "document"
      */
-    @DefaultMessage("document")
     String refLocationDocument();
 
     /**
@@ -3677,7 +3219,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other Languages"
      */
-    @DefaultMessage("Other Languages")
     String editingDiagOtherLabel();
 
     /**
@@ -3685,7 +3226,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show Diagnostics"
      */
-    @DefaultMessage("Show Diagnostics")
     String editingDiagShowLabel();
 
     /**
@@ -3693,7 +3233,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Diagnostics"
      */
-    @DefaultMessage("R Diagnostics")
     String editingDiagnosticsPanel();
 
     /**
@@ -3701,7 +3240,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String editingDisplayPanel();
 
     /**
@@ -3709,7 +3247,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Modify Keyboard Shortcuts..."
      */
-    @DefaultMessage("Modify Keyboard Shortcuts...")
     String editingEditShortcuts();
 
     /**
@@ -3717,7 +3254,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Execution"
      */
-    @DefaultMessage("Execution")
     String editingExecutionLabel();
 
     /**
@@ -3725,7 +3261,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Completion Delay"
      */
-    @DefaultMessage("Completion Delay")
     String editingHeaderLabel();
 
     /**
@@ -3733,7 +3268,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Other Languages"
      */
-    @DefaultMessage("Other Languages")
     String editingOtherLabel();
 
     /**
@@ -3741,7 +3275,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL."
      */
-    @DefaultMessage("Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.")
     String editingOtherTip();
 
     /**
@@ -3749,7 +3282,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String editingSavePanel();
 
     /**
@@ -3757,7 +3289,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Change..."
      */
-    @DefaultMessage("Change...")
     String editingSavePanelAction();
 
     /**
@@ -3765,7 +3296,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Autosave"
      */
-    @DefaultMessage("Autosave")
     String editingSavePanelAutosave();
 
     /**
@@ -3773,7 +3303,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Serialization"
      */
-    @DefaultMessage("Serialization")
     String editingSerializationLabel();
 
     /**
@@ -3781,7 +3310,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help on code snippets"
      */
-    @DefaultMessage("Help on code snippets")
     String editingSnippetHelpTitle();
 
     /**
@@ -3789,7 +3317,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Snippets"
      */
-    @DefaultMessage("Snippets")
     String editingSnippetsLabel();
 
     /**
@@ -3797,7 +3324,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editing"
      */
-    @DefaultMessage("Editing")
     String editingTabPanel();
 
     /**
@@ -3805,7 +3331,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Completion"
      */
-    @DefaultMessage("Completion")
     String editingTabPanelCompletionPanel();
 
     /**
@@ -3813,7 +3338,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Diagnostics"
      */
-    @DefaultMessage("Diagnostics")
     String editingTabPanelDiagnosticsPanel();
 
     /**
@@ -3821,7 +3345,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Display"
      */
-    @DefaultMessage("Display")
     String editingTabPanelDisplayPanel();
 
     /**
@@ -3829,7 +3352,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Formatting"
      */
-    @DefaultMessage("Formatting")
     String editingTabPanelFormattingPanel();
     
     /**
@@ -3837,7 +3359,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Saving"
      */
-    @DefaultMessage("Saving")
     String editingTabPanelSavePanel();
 
     /**
@@ -3845,7 +3366,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R and C/C++"
      */
-    @DefaultMessage("R and C/C++")
     String editingCompletionPanel();
 
     /**
@@ -3853,7 +3373,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "General"
      */
-    @DefaultMessage("General")
     String editingHeader();
 
     /**
@@ -3861,7 +3380,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "No bindings available"
      */
-    @DefaultMessage("No bindings available")
     String editingKeyboardShortcuts();
 
     /**
@@ -3869,7 +3387,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Keyboard Shortcuts"
      */
-    @DefaultMessage("Keyboard Shortcuts")
     String editingKeyboardText();
 
     /**
@@ -3877,7 +3394,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Customized"
      */
-    @DefaultMessage("Customized")
     String editingRadioCustomized();
 
     /**
@@ -3885,7 +3401,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Filter..."
      */
-    @DefaultMessage("Filter...")
     String editingFilterWidget();
 
     /**
@@ -3893,7 +3408,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Reset..."
      */
-    @DefaultMessage("Reset...")
     String editingResetText();
 
     /**
@@ -3901,7 +3415,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Reset Keyboard Shortcuts"
      */
-    @DefaultMessage("Reset Keyboard Shortcuts")
     String editingGlobalDisplay();
 
     /**
@@ -3909,7 +3422,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? "
      */
-    @DefaultMessage("Are you sure you want to reset keyboard shortcuts to their default values? ")
     String editingGlobalCaption();
 
     /**
@@ -3917,7 +3429,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "This action cannot be undone."
      */
-    @DefaultMessage("This action cannot be undone.")
     String editingGlobalMessage();
 
     /**
@@ -3925,7 +3436,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Resetting Keyboard Shortcuts..."
      */
-    @DefaultMessage("Resetting Keyboard Shortcuts...")
     String editingProgressMessage();
 
     /**
@@ -3933,7 +3443,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String editingCancelShortcuts();
 
     /**
@@ -3941,7 +3450,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tab width"
      */
-    @DefaultMessage("Tab width")
     String editingTabWidthLabel();
 
     /**
@@ -3949,7 +3457,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Editor scroll speed sensitivity:"
      */
-    @DefaultMessage("Editor scroll speed sensitivity:")
     String editorScrollMultiplier();
 
     /**
@@ -3957,7 +3464,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Adjust the editor scroll speed sensitivity. Higher is faster."
      */
-    @DefaultMessage("Adjust the editor scroll speed sensitivity. Higher is faster.")
     String editorScrollMultiplierDesc();
 
     /**
@@ -3965,7 +3471,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Auto-detect code indentation"
      */
-    @DefaultMessage("Auto-detect code indentation")
     String editingAutoDetectIndentationLabel();
 
     /**
@@ -3973,7 +3478,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When enabled, the indentation for documents not part of an RStudio project will be automatically detected."
      */
-    @DefaultMessage("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
     String editingAutoDetectIndentationDesc();
 
     /**
@@ -3981,7 +3485,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Insert matching parens/quotes"
      */
-    @DefaultMessage("Insert matching parens/quotes")
     String editingInsertMatchingLabel();
 
     /**
@@ -3989,7 +3492,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use native pipe operator, |> (requires R 4.1+)"
      */
-    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
     String editingUseNativePipeOperatorLabel();
 
     /**
@@ -3997,7 +3499,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "NOTE: Some of these settings may be overridden by project-specific options."
      */
-    @DefaultMessage("NOTE: Some of these settings may be overridden by project-specific options.")
     String editingProjectOverrideInfoText();
 
     /**
@@ -4005,7 +3506,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Edit Project Options..."
      */
-    @DefaultMessage("Edit Project Options...")
     String editProjectPreferencesButtonLabel();
 
     /**
@@ -4013,7 +3513,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Auto-indent code after paste"
      */
-    @DefaultMessage("Auto-indent code after paste")
     String editingReindentOnPasteLabel();
 
     /**
@@ -4021,7 +3520,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Vertically align arguments in auto-indent"
      */
-    @DefaultMessage("Vertically align arguments in auto-indent")
     String editingVerticallyAlignArgumentsIndentLabel();
 
     /**
@@ -4029,7 +3527,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Continue comment when inserting new line"
      */
-    @DefaultMessage("Continue comment when inserting new line")
     String editingContinueCommentsOnNewlineLabel();
 
     /**
@@ -4037,7 +3534,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment."
      */
-    @DefaultMessage("When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment.")
     String editingContinueCommentsOnNewlineDesc();
 
     /**
@@ -4045,7 +3541,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable hyperlink highlighting in editor"
      */
-    @DefaultMessage("Enable hyperlink highlighting in editor")
     String editingHighlightWebLinkLabel();
 
     /**
@@ -4053,7 +3548,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When enabled, hyperlinks in comments will be underlined and clickable."
      */
-    @DefaultMessage("When enabled, hyperlinks in comments will be underlined and clickable.")
     String editingHighlightWebLinkDesc();
 
     /**
@@ -4061,7 +3555,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Surround selection on text insertion:"
      */
-    @DefaultMessage("Surround selection on text insertion:")
     String editingSurroundSelectionLabel();
 
     /**
@@ -4069,7 +3562,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Keybindings:"
      */
-    @DefaultMessage("Keybindings:")
     String editingKeybindingsLabel();
 
     /**
@@ -4077,7 +3569,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Focus console after executing from source"
      */
-    @DefaultMessage("Focus console after executing from source")
     String editingFocusConsoleAfterExecLabel();
 
     /**
@@ -4085,7 +3576,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ctrl+Enter executes:"
      */
-    @DefaultMessage("Ctrl+Enter executes:")
     String editingExecutionBehaviorLabel();
 
     /**
@@ -4093,7 +3583,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Highlight selected word"
      */
-    @DefaultMessage("Highlight selected word")
     String displayHighlightSelectedWordLabel();
 
     /**
@@ -4101,7 +3590,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Highlight selected line"
      */
-    @DefaultMessage("Highlight selected line")
     String displayHighlightSelectedLineLabel();
 
     /**
@@ -4109,7 +3597,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
       *
       * @return translated "Show line numbers"
       */
-    @DefaultMessage("Show line numbers")
     String displayShowLineNumbersLabel();
 
     /**
@@ -4117,7 +3604,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Relative line numbers"
      */
-    @DefaultMessage("Relative line numbers")
     String displayRelativeLineNumbersLabel();
 
     /**
@@ -4125,7 +3611,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show margin"
      */
-    @DefaultMessage("Show margin")
     String displayShowMarginLabel();
 
     /**
@@ -4133,7 +3618,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show whitespace characters"
      */
-    @DefaultMessage("Show whitespace characters")
     String displayShowInvisiblesLabel();
 
     /**
@@ -4141,7 +3625,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show indent guides"
      */
-    @DefaultMessage("Show indent guides")
     String displayShowIndentGuidesLabel();
 
     /**
@@ -4149,7 +3632,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Blinking cursor"
      */
-    @DefaultMessage("Blinking cursor")
     String displayBlinkingCursorLabel();
 
     /**
@@ -4157,7 +3639,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Allow scroll past end of document"
      */
-    @DefaultMessage("Allow scroll past end of document")
     String displayScrollPastEndOfDocumentLabel();
 
 
@@ -4166,7 +3647,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Allow drag and drop of text"
      */
-    @DefaultMessage("Allow drag and drop of text")
     String displayEnableTextDragLabel();
 
     /**
@@ -4174,7 +3654,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Fold Style:"
      */
-    @DefaultMessage("Fold Style:")
     String displayFoldStyleLabel();
 
     /**
@@ -4182,7 +3661,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Ensure that source files end with newline"
      */
-    @DefaultMessage("Ensure that source files end with newline")
     String savingAutoAppendNewLineLabel();
 
     /**
@@ -4190,7 +3668,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Strip trailing horizontal whitespace when saving"
      */
-    @DefaultMessage("Strip trailing horizontal whitespace when saving")
     String savingStripTrailingWhitespaceLabel();
 
     /**
@@ -4198,7 +3675,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restore last cursor position when opening file"
      */
-    @DefaultMessage("Restore last cursor position when opening file")
     String savingRestoreSourceDocumentCursorPositionLabel();
 
     /**
@@ -4206,7 +3682,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Default text encoding:"
      */
-    @DefaultMessage("Default text encoding:")
     String savingDefaultEncodingLabel();
 
     /**
@@ -4214,7 +3689,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Always save R scripts before sourcing"
      */
-    @DefaultMessage("Always save R scripts before sourcing")
     String savingSaveBeforeSourcingLabel();
 
     /**
@@ -4222,7 +3696,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Automatically save when editor loses focus"
      */
-    @DefaultMessage("Automatically save when editor loses focus")
     String savingAutoSaveOnBlurLabel();
 
     /**
@@ -4230,7 +3703,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "When editor is idle:"
      */
-    @DefaultMessage("When editor is idle:")
     String savingAutoSaveOnIdleLabel();
 
     /**
@@ -4238,7 +3710,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Idle period:"
      */
-    @DefaultMessage("Idle period:")
     String savingAutoSaveIdleMsLabel();
 
     /**
@@ -4246,7 +3717,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show code completions:"
      */
-    @DefaultMessage("Show code completions:")
     String completionCodeCompletionLabel();
 
     /**
@@ -4254,7 +3724,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show code completions:"
      */
-    @DefaultMessage("Show code completions:")
     String completionCodeCompletionOtherLabel();
 
     /**
@@ -4262,7 +3731,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Allow automatic completions in console"
      */
-    @DefaultMessage("Allow automatic completions in console")
     String completionConsoleCodeCompletionLabel();
 
     /**
@@ -4270,7 +3738,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Insert parentheses after function completions"
      */
-    @DefaultMessage("Insert parentheses after function completions")
     String completionInsertParensAfterFunctionCompletion();
 
     /**
@@ -4278,7 +3745,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show help tooltip after function completions"
      */
-    @DefaultMessage("Show help tooltip after function completions")
     String completionShowFunctionSignatureTooltipsLabel();
 
     /**
@@ -4286,7 +3752,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show help tooltip on cursor idle"
      */
-    @DefaultMessage("Show help tooltip on cursor idle")
     String completionShowHelpTooltipOnIdleLabel();
 
     /**
@@ -4294,7 +3759,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Insert spaces around equals for argument completions"
      */
-    @DefaultMessage("Insert spaces around equals for argument completions")
     String completionInsertSpacesAroundEqualsLabel();
 
     /**
@@ -4302,7 +3766,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use tab for autocompletions"
      */
-    @DefaultMessage("Use tab for autocompletions")
     String completionTabCompletionLabel();
 
     /**
@@ -4310,7 +3773,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use tab for multiline autocompletions"
      */
-    @DefaultMessage("Use tab for multiline autocompletions")
     String completionTabMultilineCompletionLabel();
 
     /**
@@ -4318,7 +3780,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show completions after characters entered:"
      */
-    @DefaultMessage("Show completions after characters entered:")
     String completionCodeCompletionCharactersLabel();
 
     /**
@@ -4326,7 +3787,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show completions after keyboard idle (ms):"
      */
-    @DefaultMessage("Show completions after keyboard idle (ms):")
     String completionCodeCompletionDelayLabel();
 
     /**
@@ -4334,7 +3794,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics for R"
      */
-    @DefaultMessage("Show diagnostics for R")
     String diagnosticsShowDiagnosticsRLabel();
 
     /**
@@ -4342,7 +3801,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Enable diagnostics within R function calls"
      */
-    @DefaultMessage("Enable diagnostics within R function calls")
     String diagnosticsInRFunctionCallsLabel();
 
     /**
@@ -4350,7 +3808,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Check arguments to R function calls"
      */
-    @DefaultMessage("Check arguments to R function calls")
     String diagnosticsCheckArgumentsToRFunctionCallsLabel();
 
     /**
@@ -4358,7 +3815,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Check usage of '<-' in function call"
      */
-    @DefaultMessage("Check usage of '<-' in function call")
     String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
 
     /**
@@ -4366,7 +3822,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Warn if variable used has no definition in scope"
      */
-    @DefaultMessage("Warn if variable used has no definition in scope")
     String diagnosticsWarnIfNoSuchVariableInScopeLabel();
 
     /**
@@ -4374,7 +3829,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Warn if variable is defined but not used"
      */
-    @DefaultMessage("Warn if variable is defined but not used")
     String diagnosticsWarnVariableDefinedButNotUsedLabel();
 
     /**
@@ -4382,7 +3836,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Provide R style diagnostics (e.g. whitespace)"
      */
-    @DefaultMessage("Provide R style diagnostics (e.g. whitespace)")
     String diagnosticsStyleDiagnosticsLabel();
 
     /**
@@ -4390,7 +3843,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Prompt to install missing R packages discovered in R source files"
      */
-    @DefaultMessage("Prompt to install missing R packages discovered in R source files")
     String diagnosticsAutoDiscoverPackageDependenciesLabel();
 
     /**
@@ -4398,7 +3850,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics for C/C++"
      */
-    @DefaultMessage("Show diagnostics for C/C++")
     String diagnosticsShowDiagnosticsCppLabel();
 
     /**
@@ -4406,7 +3857,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics for YAML"
      */
-    @DefaultMessage("Show diagnostics for YAML")
     String diagnosticsShowDiagnosticsYamlLabel();
 
     /**
@@ -4414,7 +3864,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics for JavaScript, HTML, and CSS"
      */
-    @DefaultMessage("Show diagnostics for JavaScript, HTML, and CSS")
     String diagnosticsShowDiagnosticsOtherLabel();
 
     /**
@@ -4422,7 +3871,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics whenever source files are saved"
      */
-    @DefaultMessage("Show diagnostics whenever source files are saved")
     String diagnosticsOnSaveLabel();
 
     /**
@@ -4430,7 +3878,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show diagnostics after keyboard is idle for a period of time"
      */
-    @DefaultMessage("Show diagnostics after keyboard is idle for a period of time")
     String diagnosticsBackgroundDiagnosticsLabel();
 
     /**
@@ -4438,7 +3885,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Keyboard idle time (ms):"
      */
-    @DefaultMessage("Keyboard idle time (ms):")
     String diagnosticsBackgroundDiagnosticsDelayMsLabel();
 
     /**
@@ -4446,7 +3892,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show full path to project in window title"
      */
-    @DefaultMessage("Show full path to project in window title")
     String fullProjectPathInWindowTitleLabel();
 
     /**
@@ -4454,7 +3899,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Hide menu bar until Alt-key pressed"
      */
-    @DefaultMessage("Hide menu bar until Alt-key pressed")
     String autohideMenubarLabel();
     
     /**
@@ -4462,7 +3906,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Text rendering:"
      */
-    @DefaultMessage("Text rendering:")
     String textRenderingLabel();
     
     /**
@@ -4470,7 +3913,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Geometric Precision"
      */
-    @DefaultMessage("Geometric Precision")
     String geometricPrecision();
     
     /**
@@ -4478,7 +3920,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Loading..."
      */
-    @DefaultMessage("Loading...")
     String copilotLoadingMessage();
     
     /**
@@ -4486,7 +3927,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Generating diagnostic report..."
      */
-    @DefaultMessage("Generating diagnostic report...")
     String copilotDiagnosticReportProgressLabel();
 
     /**
@@ -4494,7 +3934,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You are currently signed in as: {0}"
      */
-    @DefaultMessage("You are currently signed in as: {0}")
     String copilotSignedInAsLabel(String user);
 
     /**
@@ -4502,7 +3941,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show Error..."
      */
-    @DefaultMessage("Show Error...")
     String copilotShowErrorLabel();
 
     /**
@@ -4510,7 +3948,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sign In"
      */
-    @DefaultMessage("Sign In")
     String copilotSignInLabel();
 
     /**
@@ -4518,7 +3955,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sign Out"
      */
-    @DefaultMessage("Sign Out")
     String copilotSignOutLabel();
 
     /**
@@ -4526,7 +3962,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Activate"
      */
-    @DefaultMessage("Activate")
     String copilotActivateLabel();
 
     /**
@@ -4534,7 +3969,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Refresh"
      */
-    @DefaultMessage("Refresh")
     String copilotRefreshLabel();
     
     /**
@@ -4542,7 +3976,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Diagnostics"
      */
-    @DefaultMessage("Diagnostics")
     String copilotDiagnosticsLabel();
     
     /**
@@ -4550,7 +3983,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Project Options..."
      */
-    @DefaultMessage("Project Options...")
     String copilotProjectOptionsLabel();
 
     /**
@@ -4558,7 +3990,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "GitHub Copilot: Terms of Service"
      */
-    @DefaultMessage("GitHub Copilot: Terms of Service")
     String copilotTermsOfServiceLinkLabel();
 
     /**
@@ -4566,7 +3997,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "By using GitHub Copilot, you agree to abide by their terms of service."
      */
-    @DefaultMessage("By using GitHub Copilot, you agree to abide by their terms of service.")
     String copilotTermsOfServiceLabel();
 
     /**
@@ -4574,7 +4004,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "GitHub Copilot"
      */
-    @DefaultMessage("GitHub Copilot")
     String copilotDisplayName();
 
     /**
@@ -4582,7 +4011,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Copilot"
      */
-    @DefaultMessage("Copilot")
     String copilotPaneName();
 
     /**
@@ -4590,7 +4018,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Copilot Indexing"
      */
-    @DefaultMessage("Copilot Indexing")
     String copilotIndexingHeader();
 
     /**
@@ -4598,7 +4025,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Copilot Completions"
      */
-    @DefaultMessage("Copilot Completions")
     String copilotCompletionsHeader();
 
     /**
@@ -4606,7 +4032,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show code suggestions after keyboard idle (ms):"
      */
-    @DefaultMessage("Show code suggestions after keyboard idle (ms):")
     String copilotCompletionsDelayLabel();
 
     /**
@@ -4614,7 +4039,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "GitHub Copilot integration has been disabled by the administrator."
      */
-    @DefaultMessage("GitHub Copilot integration has been disabled by the administrator.")
     String copilotDisabledByAdmin();
 
     /**
@@ -4622,7 +4046,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "GitHub Copilot: Status"
      */
-    @DefaultMessage("GitHub Copilot: Status")
     String copilotStatusDialogCaption();
 
     /**
@@ -4630,7 +4053,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "An unexpected error occurred while checking the status of the GitHub Copilot agent."
      */
-    @DefaultMessage("An unexpected error occurred while checking the status of the GitHub Copilot agent.")
     String copilotUnexpectedError();
 
     /**
@@ -4638,7 +4060,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "An error occurred while starting the Copilot agent."
      */
-    @DefaultMessage("An error occurred while starting the Copilot agent.")
     String copilotStartupError();
 
     /**
@@ -4646,7 +4067,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "GitHub Copilot has been disabled in this project."
      */
-    @DefaultMessage("GitHub Copilot has been disabled in this project.")
     String copilotDisabledInProject();
 
     /**
@@ -4654,7 +4074,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The GitHub Copilot agent is not currently running."
      */
-    @DefaultMessage("The GitHub Copilot agent is not currently running.")
     String copilotAgentNotRunning();
 
     /**
@@ -4662,7 +4081,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The GitHub Copilot agent has not been enabled."
      */
-    @DefaultMessage("The GitHub Copilot agent has not been enabled.")
     String copilotAgentNotEnabled();
 
     /**
@@ -4670,7 +4088,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot."
      */
-    @DefaultMessage("You are currently signed in as {0}, but you haven''t yet activated GitHub Copilot.")
     String copilotAccountNotActivated(String name);
 
     /**
@@ -4678,7 +4095,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You are not currently signed in."
      */
-    @DefaultMessage("You are not currently signed in.")
     String copilotNotSignedIn();
 
     /**
@@ -4686,7 +4102,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "RStudio received a Copilot response that it does not understand.\n{0}"
      */
-    @DefaultMessage("RStudio received a Copilot response that it does not understand.\n{0}")
     String copilotUnknownResponse(String response);
 
     /**
@@ -4694,6 +4109,5 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sign git commits"
      */
-    @DefaultMessage("Sign git commits")
     String gitSignCommitLabel();
 }

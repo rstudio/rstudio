@@ -21,7 +21,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could Not Publish"
      */
-    @DefaultMessage("Could Not Publish")
     String couldNotPublish();
 
     /**
@@ -29,7 +28,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Preparing for Publish..."
      */
-    @DefaultMessage("Preparing for Publish...")
     String preparingForPublish();
 
     /**
@@ -37,7 +35,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String error();
 
     /**
@@ -45,7 +42,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Running Deployments Found"
      */
-    @DefaultMessage("No Running Deployments Found")
     String noRunningDeploymentsFound();
 
     /**
@@ -53,7 +49,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No applications deployed from ''{0}'' appear to be running."
      */
-    @DefaultMessage("No applications deployed from ''{0}'' appear to be running.")
     String noApplicationDeploymentsFrom(String dir);
 
     /**
@@ -61,7 +56,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Listing Applications"
      */
-    @DefaultMessage("Error Listing Applications")
     String errorListingApplications();
 
     /**
@@ -69,7 +63,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No application deployments were found for ''{0}''"
      */
-    @DefaultMessage("No application deployments were found for ''{0}''")
     String noApplicationDeploymentsFound(String dir);
 
     /**
@@ -77,7 +70,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No Deployments Found"
      */
-    @DefaultMessage("No Deployments Found")
     String noDeploymentsFound();
 
     /**
@@ -85,7 +77,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not determine application deployments for ''{0}'':{1}"
      */
-    @DefaultMessage("Could not determine application deployments for ''{0}'':{1}")
     String couldNotDetermineAppDeployments(String dir, String message);
 
     /**
@@ -93,7 +84,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Configuring Application"
      */
-    @DefaultMessage("Error Configuring Application")
     String errorConfiguringApplication();
 
     /**
@@ -101,7 +91,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Deploying Application"
      */
-    @DefaultMessage("Error Deploying Application")
     String errorDeployingApplication();
 
     /**
@@ -109,7 +98,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not deploy application ''{0}'': {1}"
      */
-    @DefaultMessage("Could not deploy application ''{0}'': {1}")
     String couldNotDeployApplication(String recordName, String message);
 
     /**
@@ -117,7 +105,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Another deployment is currently in progress; only one deployment can be performed at a time."
      */
-    @DefaultMessage("Another deployment is currently in progress; only one deployment can be performed at a time.")
     String onlyOneDeploymentAtATime();
 
     /**
@@ -125,7 +112,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Deployment In Progress"
      */
-    @DefaultMessage("Deployment In Progress")
     String deploymentInProgress();
 
     /**
@@ -133,7 +119,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Uploading {0}"
      */
-    @DefaultMessage("Uploading {0}")
     String uploadingContent(String contentType);
 
     /**
@@ -141,7 +126,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only rendered documents can be published to RPubs. To publish this document, click Knit or Preview to render it to HTML, then click the Publish button above the rendered document."
      */
-    @DefaultMessage("Only rendered documents can be published to RPubs. To publish this document, click Knit or Preview to render it to HTML, then click the Publish button above the rendered document.")
     String uploadToRPubsErrorMessage();
 
     /**
@@ -149,7 +133,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish Document"
      */
-    @DefaultMessage("Publish Document")
     String publishDocument();
 
     /**
@@ -157,7 +140,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only documents rendered to HTML can be published to RPubs. To publish this document, click Knit or Preview to render it to HTML, then click the Publish button above the rendered document."
      */
-    @DefaultMessage("Only documents rendered to HTML can be published to RPubs. To publish this document, click Knit or Preview to render it to HTML, then click the Publish button above the rendered document.")
     String showUnsupportedRPubsFormatMessageError();
 
     /**
@@ -165,7 +147,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unsupported Document Format"
      */
-    @DefaultMessage("Unsupported Document Format")
     String unsupportedDocumentFormat();
 
     /**
@@ -173,7 +154,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RStudio is deploying {0}. Check the Deploy console tab in the main window for status updates. "
      */
-    @DefaultMessage("RStudio is deploying {0}. Check the Deploy console tab in the main window for status updates. ")
     String rstudioDeployingApp(String appName);
 
     /**
@@ -181,7 +161,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Deployment Started"
      */
-    @DefaultMessage("Deployment Started")
     String deploymentStarted();
 
     /**
@@ -189,7 +168,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Content"
      */
-    @DefaultMessage("Content")
     String content();
 
     /**
@@ -197,7 +175,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Quarto Website"
      */
-    @DefaultMessage("Quarto Website")
     String quartoWebsite();
 
     /**
@@ -205,7 +182,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "API"
      */
-    @DefaultMessage("API")
     String api();
 
     /**
@@ -213,7 +189,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Website"
      */
-    @DefaultMessage("Website")
     String website();
 
     /**
@@ -221,7 +196,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Presentation"
      */
-    @DefaultMessage("Presentation")
     String presentation();
 
     /**
@@ -229,7 +203,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Document"
      */
-    @DefaultMessage("Document")
     String document();
 
     /**
@@ -237,7 +210,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "HTML"
      */
-    @DefaultMessage("HTML")
     String html();
 
     /**
@@ -245,7 +217,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Plot"
      */
-    @DefaultMessage("Plot")
     String plot();
 
     /**
@@ -253,7 +224,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Application"
      */
-    @DefaultMessage("Application")
     String application();
 
     /**
@@ -261,7 +231,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "<p>{0}</p><p>{1}</p><p><a href=\"{2}\">{2}</a></p><p>{3}</p><p><small>{4}{5}</small></p>"
      */
-    @DefaultMessage("<p>{0}</p><p>{1}</p><p><a href=\"{2}\">{2}</a></p><p>{3}</p><p><small>{4}{5}</small></p>")
     String onRSConnectDeploymentFailedHtml(String p1, String p2, String serverUrl, String p3, String p4, String errorCode);
 
     /**
@@ -269,7 +238,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Your content could not be published because of a problem on the server."
      */
-    @DefaultMessage("Your content could not be published because of a problem on the server.")
     String onRSConnectDeploymentFailedHtmlP1();
 
     /**
@@ -277,7 +245,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "More information may be available on the server''s home page:"
      */
-    @DefaultMessage("More information may be available on the server''s home page:")
     String onRSConnectDeploymentFailedHtmlP2();
 
     /**
@@ -285,7 +252,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "If the error persists, contact the server''s administrator."
      */
-    @DefaultMessage("If the error persists, contact the server''s administrator.")
     String onRSConnectDeploymentFailedHtmlP3();
 
     /**
@@ -293,7 +259,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error code: "
      */
-    @DefaultMessage("Error code: ")
     String onRSConnectDeploymentFailedHtmlP4();
 
     /**
@@ -301,7 +266,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
     String okCapitalized();
 
     /**
@@ -309,7 +273,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish Failed"
      */
-    @DefaultMessage("Publish Failed")
     String publishFailed();
 
     /**
@@ -317,7 +280,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancel();
 
     /**
@@ -325,7 +287,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Stop deployment"
      */
-    @DefaultMessage("Stop deployment")
     String stopDeployment();
 
     /**
@@ -333,7 +294,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The deployment could not be cancelled; it is not running, or termination failed."
      */
-    @DefaultMessage("The deployment could not be cancelled; it is not running, or termination failed.")
     String deploymentNotCancelledMessage();
 
     /**
@@ -341,7 +301,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not cancel deployment"
      */
-    @DefaultMessage("Could not cancel deployment")
     String couldNotCancelDeployment();
 
     /**
@@ -349,7 +308,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Stopping Deployment"
      */
-    @DefaultMessage("Error Stopping Deployment")
     String errorStoppingDeployment();
 
     /**
@@ -357,7 +315,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Do you want to stop the deployment process? If the server has already received the content, it will still be published."
      */
-    @DefaultMessage("Do you want to stop the deployment process? If the server has already received the content, it will still be published.")
     String onRSConnectDeploymentCancelledMessage();
 
     /**
@@ -365,7 +322,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Stop deployment?"
      */
-    @DefaultMessage("Stop deployment?")
     String stopDeploymentQuestion();
 
     /**
@@ -373,7 +329,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish Anyway"
      */
-    @DefaultMessage("Publish Anyway")
     String publishAnyway();
 
     /**
@@ -381,7 +336,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Review Issues"
      */
-    @DefaultMessage("Review Issues")
     String reviewIssues();
 
     /**
@@ -389,7 +343,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Some issues were found in your content, which may prevent it from working correctly after publishing. Do you want to review these issues or publish anyway?"
      */
-    @DefaultMessage("Some issues were found in your content, which may prevent it from working correctly after publishing. Do you want to review these issues or publish anyway?")
     String publishContentIssuesMessage();
 
     /**
@@ -397,7 +350,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish Content Issues Found"
      */
-    @DefaultMessage("Publish Content Issues Found")
     String publishContentIssuesFound();
 
     /**
@@ -405,7 +357,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The content you tried to publish could not be checked for errors. Do you want to proceed? \n\n{0}"
      */
-    @DefaultMessage("The content you tried to publish could not be checked for errors. Do you want to proceed? \n\n{0}")
     String lintFailedMessage(String errorMessage);
 
     /**
@@ -413,7 +364,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Lint Failed"
      */
-    @DefaultMessage("Lint Failed")
     String lintFailed();
 
     /**
@@ -421,7 +371,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publishing to Posit Connect is disabled in the Publishing options."
      */
-    @DefaultMessage("Publishing to Posit Connect is disabled in the Publishing options.")
     String apiNotPublishableMessage();
 
     /**
@@ -429,7 +378,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "API Not Publishable"
      */
-    @DefaultMessage("API Not Publishable")
     String apiNotPublishable();
 
     /**
@@ -437,7 +385,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only self-contained documents can currently be published to RPubs."
      */
-    @DefaultMessage("Only self-contained documents can currently be published to RPubs.")
     String contentNotPublishableMessage();
 
     /**
@@ -445,7 +392,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Content Not Publishable"
      */
-    @DefaultMessage("Content Not Publishable")
     String contentNotPublishable();
 
     /**
@@ -453,7 +399,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish {0}"
      */
-    @DefaultMessage("Publish {0}")
     String publishRpubTitle(String contentTypeDesc);
 
     /**
@@ -461,7 +406,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only rendered documents can be republished to RPubs. To republish this document, click Knit or Preview to render it to HTML, then click the Republish button above the rendered document."
      */
-    @DefaultMessage("Only rendered documents can be republished to RPubs. To republish this document, click Knit or Preview to render it to HTML, then click the Republish button above the rendered document.")
     String republishDocumentMessage();
 
     /**
@@ -469,7 +413,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Republish Document"
      */
-    @DefaultMessage("Republish Document")
     String republishDocument();
 
     /**
@@ -477,7 +420,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Current Plot"
      */
-    @DefaultMessage("Current Plot")
     String currentPlot();
 
     /**
@@ -485,7 +427,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Server: {0} ({1})\nVersion: {2}\nAbout: {3}\n"
      */
-    @DefaultMessage("Server: {0} ({1})\nVersion: {2}\nAbout: {3}\n")
     String rsConnectServerInfoString(String name, String url, String version, String about);
 
     /**
@@ -493,7 +434,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The title must contain at least 3 characters."
      */
-    @DefaultMessage("The title must contain at least 3 characters.")
     String titleMinimumCharacter();
 
     /**
@@ -501,7 +441,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The title must contain 4 - 64 alphanumeric characters."
      */
-    @DefaultMessage("The title must contain 4 - 64 alphanumeric characters.")
     String titleContainAlphanumeric();
 
     /**
@@ -509,7 +448,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The server appears to be valid, but rejected the request to authorize an account.\n\n{0}\n{1}"
      */
-    @DefaultMessage("The server appears to be valid, but rejected the request to authorize an account.\n\n{0}\n{1}")
     String errorConnectingAccountMessage(String infoString, String errorMessage);
 
     /**
@@ -517,7 +455,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error Connecting Account"
      */
-    @DefaultMessage("Error Connecting Account")
     String errorConnectingAccount();
 
     /**
@@ -525,7 +462,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Setting up an account..."
      */
-    @DefaultMessage("Setting up an account...")
     String settingUpAccount();
 
     /**
@@ -533,7 +469,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RStudio failed to determine whether the account was valid. Try again; if the error persists, contact your server administrator.\n\n{0}\n{1}"
      */
-    @DefaultMessage("RStudio failed to determine whether the account was valid. Try again; if the error persists, contact your server administrator.\n\n{0}\n{1}")
     String accountValidationFailedMessage(String serverInfo, String errorMessage);
 
     /**
@@ -541,7 +476,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Account Validation Failed"
      */
-    @DefaultMessage("Account Validation Failed")
     String accountValidationFailed();
 
     /**
@@ -549,7 +483,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Authentication failed. If you did not cancel authentication, try again, or contact your server administrator for assistance."
      */
-    @DefaultMessage("Authentication failed. If you did not cancel authentication, try again, or contact your server administrator for assistance.")
     String accountNotConnectedMessage();
 
     /**
@@ -557,7 +490,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Account Not Connected"
      */
-    @DefaultMessage("Account Not Connected")
     String accountNotConnected();
 
     /**
@@ -565,7 +497,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The server couldn''t be validated. {0}"
      */
-    @DefaultMessage("The server couldn''t be validated. {0}")
     String serverCouldntBeValidated(String errorMessage);
 
     /**
@@ -573,7 +504,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The URL ''{0}'' does not appear to belong to a valid server. Please double check the URL, and contact your administrator if the problem persists.\n\n{1}"
      */
-    @DefaultMessage("The URL ''{0}'' does not appear to belong to a valid server. Please double check the URL, and contact your administrator if the problem persists.\n\n{1}")
     String serverValidationFailedMessage(String serverUrl, String infoMessage);
 
     /**
@@ -581,7 +511,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Server Validation Failed"
      */
-    @DefaultMessage("Server Validation Failed")
     String serverValidationFailed();
 
     /**
@@ -589,7 +518,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Checking server connection..."
      */
-    @DefaultMessage("Checking server connection...")
     String checkingServerConnection();
 
     /**
@@ -597,7 +525,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Verifying Account"
      */
-    @DefaultMessage("Verifying Account")
     String verifyingAccount();
 
     /**
@@ -605,7 +532,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Connect ShinyApps.io Account"
      */
-    @DefaultMessage("Connect ShinyApps.io Account")
     String newRSConnectCloudPageCaption();
 
     /**
@@ -613,7 +539,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "A cloud service run by RStudio. Publish Shiny applications and interactive documents to the Internet."
      */
-    @DefaultMessage("A cloud service run by RStudio. Publish Shiny applications and interactive documents to the Internet.")
     String newRSConnectCloudPageSubTitle();
 
     /**
@@ -621,7 +546,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Posit Connect Account"
      */
-    @DefaultMessage("Posit Connect Account")
     String rstudioConnectAccount();
 
     /**
@@ -629,7 +553,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RPubs is a free service from RStudio for sharing documents on the web."
      */
-    @DefaultMessage("RPubs is a free service from RStudio for sharing documents on the web.")
     String rPubsSubtitle();
 
     /**
@@ -637,7 +560,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish To"
      */
-    @DefaultMessage("Publish To")
     String publishTo();
 
     /**
@@ -645,7 +567,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish"
      */
-    @DefaultMessage("Publish")
     String publish();
 
     /**
@@ -653,7 +574,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "All of the documents in the directory {0} will be published."
      */
-    @DefaultMessage("All of the documents in the directory {0} will be published.")
     String publishMultiplePageSubtitle(String directoryString);
 
     /**
@@ -661,7 +581,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish all documents in the directory"
      */
-    @DefaultMessage("Publish all documents in the directory")
     String publishMultiplePageTitle();
 
     /**
@@ -669,7 +588,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only the document {0} will be published."
      */
-    @DefaultMessage("Only the document {0} will be published.")
     String publishMultiplePagSingleSubtitle(String name);
 
     /**
@@ -677,7 +595,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish just this document"
      */
-    @DefaultMessage("Publish just this document")
     String publishMultiplePagSingleTitle();
 
     /**
@@ -685,7 +602,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "What do you want to publish?"
      */
-    @DefaultMessage("What do you want to publish?")
     String publishMultiplePageCaption();
 
     /**
@@ -693,7 +609,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose this option to publish the content as it appears in RStudio."
      */
-    @DefaultMessage("Choose this option to publish the content as it appears in RStudio.")
     String publishReportSourcePageStaticSubtitle();
 
     /**
@@ -701,7 +616,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish finished {0} only"
      */
-    @DefaultMessage("Publish finished {0} only")
     String publishReportSourcePageStaticTitle(String descriptor);
 
     /**
@@ -709,7 +623,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose this option if you want to create {0} or rebuild your {1} on the server."
      */
-    @DefaultMessage("Choose this option if you want to create {0} or rebuild your {1} on the server.")
     String publishReportSourcePageSubTitle(String scheduledReportNumber, String descriptor);
 
     /**
@@ -717,7 +630,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose this option if you want to be able to rebuild your {0} on the server."
      */
-    @DefaultMessage("Choose this option if you want to be able to rebuild your {0} on the server.")
     String publishReportNoScheduledSourcePageSubtitle(String descriptor);
 
     /**
@@ -725,7 +637,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "scheduled reports"
      */
-    @DefaultMessage("scheduled reports")
     String scheduledReportsPlural();
 
     /**
@@ -733,7 +644,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "a scheduled report"
      */
-    @DefaultMessage("a scheduled report")
     String scheduledReportsSingular();
 
     /**
@@ -741,7 +651,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish {0} with source code"
      */
-    @DefaultMessage("Publish {0} with source code")
     String publishFilesPageTitle(String descriptor);
 
     /**
@@ -749,7 +658,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "website"
      */
-    @DefaultMessage("website")
     String websiteLowercase();
 
     /**
@@ -757,7 +665,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "documents"
      */
-    @DefaultMessage("documents")
     String documentsLowercasePlural();
 
     /**
@@ -765,7 +672,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "document"
      */
-    @DefaultMessage("document")
     String documentLowercase();
 
     /**
@@ -773,7 +679,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish to Posit Connect"
      */
-    @DefaultMessage("Publish to Posit Connect")
     String publishToRstudioConnect();
 
     /**
@@ -781,7 +686,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish to RPubs"
      */
-    @DefaultMessage("Publish to RPubs")
     String publishToRpubs();
 
     /**
@@ -789,7 +693,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Your account was authenticated successfully, but could not be connected to RStudio. Make sure your installation of the ''rsconnect'' package is correct for the server you''re connecting to.\n\n{0}\n{1}"
      */
-    @DefaultMessage("Your account was authenticated successfully, but could not be connected to RStudio. Make sure your installation of the ''rsconnect'' package is correct for the server you''re connecting to.\\n\\n{0}\\n{1}")
     String accountConnectFailedMessage(String serverInfo, String errorMessage);
 
     /**
@@ -797,7 +700,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Account Connect Failed"
      */
-    @DefaultMessage("Account Connect Failed")
     String accountConnectFailed();
 
     /**
@@ -805,7 +707,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Adding account..."
      */
-    @DefaultMessage("Adding account...")
     String addingAccount();
 
     /**
@@ -813,7 +714,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The command ''{0}'' failed. You can set up an account manually by using rsconnect::setAccountInfo; type ?rsconnect::setAccountInfo at the R console for more information."
      */
-    @DefaultMessage("The command ''{0}'' failed. You can set up an account manually by using rsconnect::setAccountInfo; type ?rsconnect::setAccountInfo at the R console for more information.")
     String errorAccountMessage(String cmdString);
 
     /**
@@ -821,7 +721,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Connecting account..."
      */
-    @DefaultMessage("Connecting account...")
     String connectingAccount();
 
     /**
@@ -829,7 +728,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The pasted command should start with rsconnect::setAccountInfo. If you''re having trouble, try connecting your account manually; type ?rsconnect::setAccountInfo at the R console for help."
      */
-    @DefaultMessage("The pasted command should start with rsconnect::setAccountInfo. If you''re having trouble, try connecting your account manually; type ?rsconnect::setAccountInfo at the R console for help.")
     String errorAccountMessageSetInfo();
 
     /**
@@ -837,7 +735,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RStudio could not retrieve server information."
      */
-    @DefaultMessage("RStudio could not retrieve server information.")
     String rStudioCouldNotRetrieveServerInfo();
 
     /**
@@ -845,7 +742,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Can''t Find Servers"
      */
-    @DefaultMessage("Can''t Find Servers")
     String cantFindServers();
 
     /**
@@ -853,7 +749,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "RStudio could not retrieve server information for the selected account."
      */
-    @DefaultMessage("RStudio could not retrieve server information for the selected account.")
     String rStudioCouldNotRetrieveForAccount();
 
     /**
@@ -861,7 +756,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Server Information Not Found"
      */
-    @DefaultMessage("Server Information Not Found")
     String serverInformationNotFound();
 
     /**
@@ -869,7 +763,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error retrieving accounts"
      */
-    @DefaultMessage("Error retrieving accounts")
     String errorRetrievingAccounts();
 
     /**
@@ -877,7 +770,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No accounts connected."
      */
-    @DefaultMessage("No accounts connected.")
     String noAccountsConnected();
 
     /**
@@ -885,7 +777,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Posit Connect is a server product from Posit for secure sharing of applications, reports, plots, and APIs."
      */
-    @DefaultMessage("Posit Connect is a server product from Posit for secure sharing of applications, reports, plots, and APIs.")
     String rStudioConnectServiceDescription();
 
     /**
@@ -893,7 +784,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Posit Connect"
      */
-    @DefaultMessage("Posit Connect")
     String rStudioConnect();
 
     /**
@@ -901,7 +791,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Connect Account"
      */
-    @DefaultMessage("Connect Account")
     String connectAccount();
 
     /**
@@ -909,7 +798,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Choose Account Type"
      */
-    @DefaultMessage("Choose Account Type")
     String chooseAccountType();
 
     /**
@@ -917,7 +805,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Connect Publishing Account"
      */
-    @DefaultMessage("Connect Publishing Account")
     String connectPublishingAccount();
 
     /**
@@ -925,7 +812,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Pick an account"
      */
-    @DefaultMessage("Pick an account")
     String pickAnAccount();
 
     /**
@@ -933,7 +819,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Confirm account on {0}"
      */
-    @DefaultMessage("Confirm account on {0}")
     String confirmAccountOn(String serverName);
 
     /**
@@ -941,7 +826,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Connecting your ShinyApps Account"
      */
-    @DefaultMessage("Connecting your ShinyApps Account")
     String connectingShinyAppsAccount();
 
     /**
@@ -949,7 +833,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Uncheck All"
      */
-    @DefaultMessage("Uncheck All")
     String uncheckAll();
 
     /**
@@ -957,7 +840,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Check All"
      */
-    @DefaultMessage("Check All")
     String checkAll();
 
     /**
@@ -965,7 +847,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Replace"
      */
-    @DefaultMessage("Replace")
     String replace();
 
     /**
@@ -973,7 +854,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "You''ve already published an application named ''{0}'' to {1} ({2}). Do you want to replace the existing application with this content?"
      */
-    @DefaultMessage("You''ve already published an application named ''{0}'' to {1} ({2}). Do you want to replace the existing application with this content?")
     String checkForExistingAppMessage(String appName, String server, String url);
 
     /**
@@ -981,7 +861,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Overwrite {0}?"
      */
-    @DefaultMessage("Overwrite {0}?")
     String overwriteAppName(String appName);
 
     /**
@@ -989,7 +868,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "index"
      */
-    @DefaultMessage("index")
     String index();
 
     /**
@@ -997,7 +875,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Only files in the same folder as the document ({0}) or one of its sub-folders may be added."
      */
-    @DefaultMessage("Only files in the same folder as the document ({0}) or one of its sub-folders may be added.")
     String onAddFileClickMessage(String dirPath);
 
     /**
@@ -1005,7 +882,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Cannot Add File"
      */
-    @DefaultMessage("Cannot Add File")
     String cannotAddFile();
 
     /**
@@ -1013,7 +889,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Select File"
      */
-    @DefaultMessage("Select File")
     String selectFile();
 
     /**
@@ -1021,7 +896,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not find files to deploy: \n\n{0}"
      */
-    @DefaultMessage("Could not find files to deploy: \n\n{0}")
     String couldNotFindFilesToDeploy(String errorMessage);
 
     /**
@@ -1029,7 +903,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not determine the list of files to deploy."
      */
-    @DefaultMessage("Could not determine the list of files to deploy.")
     String couldNotDetermineListToDeploy();
 
     /**
@@ -1037,7 +910,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The item to be deployed ({0}) exceeds the maximum deployment size, which is {1}. Consider creating a new directory containing only the content you wish to deploy."
      */
-    @DefaultMessage("The item to be deployed ({0}) exceeds the maximum deployment size, which is {1}. Consider creating a new directory containing only the content you wish to deploy.")
     String itemExceedsDeploymentSize(String fileSource, String maxSize);
 
     /**
@@ -1045,7 +917,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Collecting files..."
      */
-    @DefaultMessage("Collecting files...")
     String collectingFiles();
 
     /**
@@ -1053,7 +924,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Could not determine the list of files to deploy. Try re-rendering and ensuring that you''re publishing to a server which supports this kind of content."
      */
-    @DefaultMessage("Could not determine the list of files to deploy. Try re-rendering and ensuring that you''re publishing to a server which supports this kind of content.")
     String couldNotDetermineListToDeployReRender();
 
     /**
@@ -1061,7 +931,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     String finishedDocumentNotFoundMessage();
 
     /**
@@ -1069,7 +938,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Finished Document Not Found"
      */
-    @DefaultMessage("Finished Document Not Found")
     String finishedDocumentNotFound();
 
     /**
@@ -1077,7 +945,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error retrieving accounts:\n\n{0}"
      */
-    @DefaultMessage("Error retrieving accounts:\n\n{0}")
     String errorRetrievingAccountsWithMessage(String errorMessage);
 
     /**
@@ -1085,7 +952,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Error retrieving application {0}."
      */
-    @DefaultMessage("Error retrieving application {0}.")
     String errorRetrievingApplicationAppId(String appId);
 
     /**
@@ -1093,7 +959,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish from Account"
      */
-    @DefaultMessage("Publish from Account")
     String publishFromAccount();
 
     /**
@@ -1101,7 +966,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "To publish this content to a new location, click the Publish drop-down menu and choose Other Destination."
      */
-    @DefaultMessage("To publish this content to a new location, click the Publish drop-down menu and choose Other Destination.")
     String createNewAccountMessage();
 
     /**
@@ -1109,7 +973,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Create New Content"
      */
-    @DefaultMessage("Create New Content")
     String createNewAccount();
 
     /**
@@ -1117,7 +980,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Deploying..."
      */
-    @DefaultMessage("Deploying...")
     String deploying();
 
     /**
@@ -1125,7 +987,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Launch browser"
      */
-    @DefaultMessage("Launch browser")
     String launchBrowser();
 
     /**
@@ -1133,7 +994,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish to Server"
      */
-    @DefaultMessage("Publish to Server")
     String publishToServer();
 
     /**
@@ -1141,7 +1001,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unable to determine file to be published. Click Knit or Preview to render it again, then click the Publish button above the rendered document."
      */
-    @DefaultMessage("Unable to determine file to be published. Click Knit or Preview to render it again, then click the Publish button above the rendered document.")
     String contentPublishFailedMessage();
 
     /**
@@ -1149,7 +1008,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Content Publish Failed"
      */
-    @DefaultMessage("Content Publish Failed")
     String contentPublishFailed();
 
     /**
@@ -1157,7 +1015,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Local deployment history for {0} successfully removed."
      */
-    @DefaultMessage("Local deployment history for {0} successfully removed.")
     String clearListMessage(String appLabel);
 
     /**
@@ -1165,7 +1022,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Clear List"
      */
-    @DefaultMessage("Clear List")
     String clearList();
 
     /**
@@ -1173,7 +1029,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "this application"
      */
-    @DefaultMessage("this application")
     String thisApplication();
 
     /**
@@ -1181,7 +1036,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish {0}..."
      */
-    @DefaultMessage("Publish {0}...")
     String publishContent(String contentDesc);
 
     /**
@@ -1189,7 +1043,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Other Destination..."
      */
-    @DefaultMessage("Other Destination...")
     String otherDestination();
 
     /**
@@ -1197,7 +1050,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Are you sure you want to remove all local deployment history for {0}?"
      */
-    @DefaultMessage("Are you sure you want to remove all local deployment history for {0}?")
     String removeLocalDeploymentMessage(String appLabel);
 
     /**
@@ -1205,7 +1057,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Republish"
      */
-    @DefaultMessage("Republish")
     String republish();
 
     /**
@@ -1213,7 +1064,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "The content type ''{0}'' is not currently supported for publishing."
      */
-    @DefaultMessage("The content type ''{0}'' is not currently supported for publishing.")
     String contentNotSupportedForPublishing(String contentTypeDesc);
 
     /**
@@ -1221,7 +1071,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Can''t publish {0}"
      */
-    @DefaultMessage("Can''t publish {0}")
     String cantPublishContent(String contentTypeDesc);
 
     /**
@@ -1229,7 +1078,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unsaved documents cannot be published. Save the document before publishing it."
      */
-    @DefaultMessage("Unsaved documents cannot be published. Save the document before publishing it.")
     String unsavedDocumentPublishMessage();
 
     /**
@@ -1237,7 +1085,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Unsaved Document"
      */
-    @DefaultMessage("Unsaved Document")
     String unsavedDocument();
 
     /**
@@ -1245,7 +1092,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "No HTML could be generated for the content."
      */
-    @DefaultMessage("No HTML could be generated for the content.")
     String noHTMLGenerated();
 
     /**
@@ -1253,7 +1099,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "This copy of the content has been published to the server ''{0}'', but you currently do not have any accounts registered on that server. \n\nConnect an account on the server ''{0}'' to update the application, or publish the content to a different server."
      */
-    @DefaultMessage("This copy of the content has been published to the server ''{0}'', but you currently do not have any accounts registered on that server. \n\nConnect an account on the server ''{0}'' to update the application, or publish the content to a different server.")
     String hostNotRegisteredMessage(String host);
 
     /**
@@ -1261,7 +1106,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "{0} Not Registered"
      */
-    @DefaultMessage("{0} Not Registered")
     String hostNotRegistered(String host);
 
     /**
@@ -1269,7 +1113,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish options"
      */
-    @DefaultMessage("Publish options")
     String publishOptions();
 
     /**
@@ -1277,7 +1120,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Reconnect Account"
      */
-    @DefaultMessage("Reconnect Account")
     String reconnectAccount();
 
     /**
@@ -1285,7 +1127,6 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publishing content"
      */
-    @DefaultMessage("Publishing content")
     String publishingContentLabel();
 
     /**
@@ -1293,26 +1134,20 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      *
      * @return translated "Publish Wizard"
      */
-    @DefaultMessage("Publish Wizard")
     String publishWizardLabel();
 
     @DefaultMessage("{0,number} environment variables will be published with this {1}.")
     @AlternateMessage({"one", "1 environment variable will be published with this {1}."})
     String envVarsPublishMessage(@PluralCount int itemCount, String contentType);
     
-    @DefaultMessage("Select one or more environment variables to publish with this {0}.")
     String envVarsSelectMessage(String contentType);
     
-    @DefaultMessage("Close")
     String close();
     
-    @DefaultMessage("Environment variables")
     String environmentVariablesDialogTitle();
     
-    @DefaultMessage("Environment Variables")
     String environmentVariablesHelpLinkLabel();
     
-    @DefaultMessage("No environment variables are currently available.")
     String noEnvVarsAvailable();
     
 }

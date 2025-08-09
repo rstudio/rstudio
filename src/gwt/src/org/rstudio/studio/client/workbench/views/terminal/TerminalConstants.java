@@ -21,7 +21,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The terminal is currently busy {0}. "
      */
-    @DefaultMessage("The terminal is currently busy. {0}")
     String terminalBusyMessage(String question);
 
     /**
@@ -29,7 +28,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal Diagnostics"
      */
-    @DefaultMessage("Terminal Diagnostics")
     String terminalDiagnosticsText();
 
     /**
@@ -37,7 +35,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Global Terminal Information\n---------------------------\n"
      */
-    @DefaultMessage("Global Terminal Information\\n---------------------------\\n")
     String globalTerminalInformationText();
 
     /**
@@ -45,7 +42,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Caption:     "
      */
-    @DefaultMessage("Caption:     ")
     String captionText();
 
     /**
@@ -53,7 +49,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Title:       ''"
      */
-    @DefaultMessage("Title:       ''")
     String titleText();
 
     /**
@@ -61,7 +56,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cols x Rows  ''"
      */
-    @DefaultMessage("Cols x Rows  ''")
     String colsText();
 
     /**
@@ -69,7 +63,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Shell:       ''"
      */
-    @DefaultMessage("Shell:       ''")
     String shellText();
 
     /**
@@ -77,7 +70,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Handle:      ''"
      */
-    @DefaultMessage("Handle:      ''")
     String handleText();
 
     /**
@@ -85,7 +77,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Sequence:    ''"
      */
-    @DefaultMessage("Sequence:    ''")
     String sequenceText();
 
     /**
@@ -93,7 +84,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Restarted:   ''"
      */
-    @DefaultMessage("Restarted:   ''")
     String restartedText();
 
     /**
@@ -101,7 +91,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Busy:        ''"
      */
-    @DefaultMessage("Busy:        ''")
     String busyText();
 
     /**
@@ -109,7 +98,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Exit Code:   ''"
      */
-    @DefaultMessage("Exit Code:   ''")
     String exitCodeText();
 
     /**
@@ -117,7 +105,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Full screen: ''client="
      */
-    @DefaultMessage("Full screen: ''client=")
     String fullScreenText();
 
     /**
@@ -125,7 +112,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zombie:      ''"
      */
-    @DefaultMessage("Zombie:      ''")
     String zombieText();
 
     /**
@@ -133,7 +119,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Track Env    ''"
      */
-    @DefaultMessage("Track Env    ''")
     String trackEnvText();
 
     /**
@@ -141,7 +126,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Local-echo:  ''"
      */
-    @DefaultMessage("Local-echo:  ''")
     String localEchoText();
 
     /**
@@ -149,7 +133,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Working Dir: ''"
      */
-    @DefaultMessage("Working Dir: ''")
     String workingDirText();
 
     /**
@@ -157,7 +140,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Interactive: ''"
      */
-    @DefaultMessage("Interactive: ''")
     String interactiveText();
 
     /**
@@ -165,7 +147,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WebSockets:  ''"
      */
-    @DefaultMessage("WebSockets:  ''")
     String webSocketsText();
 
     /**
@@ -173,7 +154,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "\nSystem Information------------------\n"
      */
-    @DefaultMessage("\\nSystem Information------------------\\n")
     String systemInformationText();
 
     /**
@@ -181,7 +161,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Desktop:    ''"
      */
-    @DefaultMessage("Desktop:    ''")
     String desktopText();
 
     /**
@@ -189,7 +168,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Platform:   ''"
      */
-    @DefaultMessage("Platform:   ''")
     String platformText();
 
     /**
@@ -197,7 +175,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Browser:    ''"
      */
-    @DefaultMessage("Browser:    ''")
     String browserText();
 
     /**
@@ -205,7 +182,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "\nConnection Information\n----------------------\n"
      */
-    @DefaultMessage("\\nConnection Information\\n----------------------\\n")
     String connectionInformationText();
 
     /**
@@ -213,7 +189,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "\nLocal-echo Match Failures\n-------------------------"
      */
-    @DefaultMessage("\nLocal-echo Match Failures\n-------------------------\n")
     String matchFailuresText();
 
     /**
@@ -221,7 +196,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "<Not applicable>\n"
      */
-    @DefaultMessage("<Not applicable>\\n")
     String notApplicableText();
 
     /**
@@ -229,7 +203,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Close"
      */
-    @DefaultMessage("Close")
     String closeTitle();
 
     /**
@@ -237,7 +210,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Append Buffer"
      */
-    @DefaultMessage("Append Buffer")
     String appendBufferTitle();
 
     /**
@@ -245,7 +217,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "\n\nTerminal Buffer (Server)\n---------------\n"
      */
-    @DefaultMessage("\\n\\nTerminal Buffer (Server)\\n---------------\\n")
     String terminalBufferText();
 
     /**
@@ -253,7 +224,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal List Count: "
      */
-    @DefaultMessage("Terminal List Count: ")
     String terminalListCountText();
 
     /**
@@ -261,7 +231,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Handle: ''"
      */
-    @DefaultMessage("Handle: ''")
     String handleDumpText();
 
     /**
@@ -269,7 +238,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "'' Caption: ''"
      */
-    @DefaultMessage("'' Caption: ''")
     String captionDumpText();
 
     /**
@@ -277,7 +245,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "'' Session Created: "
      */
-    @DefaultMessage("'' Session Created: ")
     String sessionCreatedText();
 
 
@@ -286,7 +253,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal Tab"
      */
-    @DefaultMessage("Terminal Tab")
     String terminalTabLabel();
 
     /**
@@ -294,7 +260,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal Creation Failure"
      */
-    @DefaultMessage("Terminal Creation Failure")
     String terminalCreationFailureCaption();
 
     /**
@@ -302,7 +267,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Close {0}"
      */
-    @DefaultMessage("Close {0}")
     String closeCaption(String title);
 
     /**
@@ -310,7 +274,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to exit the terminal named "{0}"? Any running jobs will be terminated."
      */
-    @DefaultMessage("Are you sure you want to exit the terminal named \"{0}\"? Any running jobs will be terminated.")
     String closeMessage(String caption);
 
     /**
@@ -318,7 +281,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminate"
      */
-    @DefaultMessage("Terminate")
     String terminateLabel();
 
     /**
@@ -326,7 +288,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancelLabel();
 
     /**
@@ -334,7 +295,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Rename Terminal"
      */
-    @DefaultMessage("Rename Terminal")
     String renameTerminalTitle();
 
     /**
@@ -342,7 +302,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Please enter the new terminal name:"
      */
-    @DefaultMessage("Please enter the new terminal name:")
     String renameTerminalLabel();
 
     /**
@@ -350,7 +309,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Name already in use"
      */
-    @DefaultMessage("Name already in use")
     String nameAlreadyInUseCaption();
 
     /**
@@ -358,7 +316,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Please enter a unique name."
      */
-    @DefaultMessage("Please enter a unique name.")
     String nameAlreadyInUseMessage();
 
     /**
@@ -366,7 +323,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Loaded TerminalSessions: "
      */
-    @DefaultMessage("Loaded TerminalSessions: ")
     String loadedTerminalSessionsLabel();
 
     /**
@@ -374,7 +330,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Handle: ''"
      */
-    @DefaultMessage("Handle: ''")
     String handleLabel();
 
     /**
@@ -382,7 +337,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "'' Caption: ''"
      */
-    @DefaultMessage("'' Caption: ''")
     String captionLabel();
 
     /**
@@ -390,7 +344,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal Reconnection Failure"
      */
-    @DefaultMessage("Terminal Reconnection Failure")
     String terminalReconnectionErrorMessage();
 
     /**
@@ -398,7 +351,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -406,7 +358,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tried to switch to unknown terminal handle."
      */
-    @DefaultMessage("Tried to switch to unknown terminal handle.")
     String errorMessage();
 
     /**
@@ -414,7 +365,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal"
      */
-    @DefaultMessage("Terminal")
     String terminalText();
 
     /**
@@ -422,7 +372,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} (busy)"
      */
-    @DefaultMessage("{0} (busy)")
     String busyCaption(String caption);
 
     /**
@@ -430,7 +379,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "No Terminal ConsoleProcess received from server"
      */
-    @DefaultMessage("No Terminal ConsoleProcess received from server")
     String noTerminalReceivedFromServerText();
 
     /**
@@ -438,7 +386,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Empty Terminal caption"
      */
-    @DefaultMessage("Empty Terminal caption")
     String emptyTerminalCaptionText();
 
     /**
@@ -446,7 +393,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Undetermined Terminal sequence"
      */
-    @DefaultMessage("Undetermined Terminal sequence")
     String undeterminedTerminalSequenceText();
 
     /**
@@ -454,7 +400,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal Failed to Connect"
      */
-    @DefaultMessage("Terminal Failed to Connect")
     String terminalFailedToConnect();
 
     /**
@@ -462,7 +407,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clearing Buffer"
      */
-    @DefaultMessage("Clearing Buffer")
     String clearingBufferCaption();
 
     /**
@@ -470,7 +414,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Interrupting child"
      */
-    @DefaultMessage("Interrupting child")
     String interruptingChildCaption();
 
     /**
@@ -478,7 +421,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0}Error: {1}{2}"
      */
-    @DefaultMessage("{0}Error: {1}{2}")
     String writeErrorMessage(String color, String message, String ansiCode);
 
     /**
@@ -486,7 +428,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "[Process completed]"
      */
-    @DefaultMessage("[Process completed]")
     String processCompletedText();
 
     /**
@@ -494,7 +435,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "[Exit code: "
      */
-    @DefaultMessage("[Exit code: ")
     String zombieExitCodeText();
 
     /**
@@ -502,7 +442,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unknown"
      */
-    @DefaultMessage("Unknown")
     String unknownText();
 
     /**
@@ -510,7 +449,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clearing Final Line of Buffer"
      */
-    @DefaultMessage("Clearing Final Line of Buffer")
     String clearingFinalLineCaption();
 
     /**
@@ -518,7 +456,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Timeout connecting via WebSockets, switching to RPC"
      */
-    @DefaultMessage("Timeout connecting via WebSockets, switching to RPC")
     String timeoutConnectingMessage();
 
     /**
@@ -526,7 +463,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zombie, not reconnecting"
      */
-    @DefaultMessage("Zombie, not reconnecting")
     String zombieNotReconnectingMessage();
 
     /**
@@ -534,7 +470,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connected with RPC"
      */
-    @DefaultMessage("Connected with RPC")
     String connectedWithRPCMessage();
 
     /**
@@ -542,7 +477,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unable to discover websocket protocol"
      */
-    @DefaultMessage("Unable to discover websocket protocol")
     String unableToDiscoverWebsocketMessage();
 
     /**
@@ -550,7 +484,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Connect WebSocket: ''"
      */
-    @DefaultMessage("Connect WebSocket: ''")
     String connectWebSocketMessage();
 
     /**
@@ -558,7 +491,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WebSocket closed"
      */
-    @DefaultMessage("WebSocket closed")
     String websockedClosedMessage();
 
     /**
@@ -566,7 +498,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WebSocket connected"
      */
-    @DefaultMessage("WebSocket connected")
     String websocketConnectedMessage();
 
     /**
@@ -574,7 +505,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WebSocket connect error, switching to RPC"
      */
-    @DefaultMessage("WebSocket connect error, switching to RPC")
     String websocketConnectError();
 
     /**
@@ -582,7 +512,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Channel type not implemented"
      */
-    @DefaultMessage("Channel type not implemented")
     String channelTypeNotImplementedError();
 
     /**
@@ -590,7 +519,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Switched to RPC"
      */
-    @DefaultMessage("Switched to RPC")
     String switchedToRPCMessage();
 
     /**
@@ -598,7 +526,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Failed to switch to RPC: "
      */
-    @DefaultMessage("Failed to switch to RPC: ")
     String failedToSwitchRPCMessage();
 
     /**
@@ -606,7 +533,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminal failed to connect. Please try again."
      */
-    @DefaultMessage("Terminal failed to connect. Please try again.")
     String terminalFailedToConnectMessage();
 
     /**
@@ -614,7 +540,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Tried to send user input over null websocket"
      */
-    @DefaultMessage("Tried to send user input over null websocket")
     String sendUserInputMessage();
 
     /**
@@ -622,7 +547,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Permanently Disconnected"
      */
-    @DefaultMessage("Permanently Disconnected")
     String permanentlyDisconnectedLabel();
 
     /**
@@ -630,7 +554,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Disconnected"
      */
-    @DefaultMessage("Disconnected")
     String disconnectedLabel();
 
     /**
@@ -638,7 +561,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Close All Terminals"
      */
-    @DefaultMessage("Close All Terminals")
     String closeAllTerminalsCaption();
 
     /**
@@ -646,7 +568,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to close all terminals? Any running jobs will be stopped"
      */
-    @DefaultMessage("Are you sure you want to close all terminals? Any running jobs will be stopped")
     String closeAllTerminalsQuestion();
 
     /**
@@ -654,7 +575,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Default"
      */
-    @DefaultMessage("Default")
     String defaultShellLabel();
 
     /**
@@ -662,7 +582,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Git Bash"
      */
-    @DefaultMessage("Git Bash")
     String winGitBashShellLabel();
 
     /**
@@ -670,7 +589,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "WSL"
      */
-    @DefaultMessage("WSL")
     String winWslBashShellLabel();
 
     /**
@@ -678,7 +596,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Command Prompt"
      */
-    @DefaultMessage("Command Prompt")
     String winCmdShellLabel();
 
     /**
@@ -686,7 +603,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "PowerShell"
      */
-    @DefaultMessage("PowerShell")
     String winPsShellLabel();
 
     /**
@@ -694,7 +610,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "PowerShell Core"
      */
-    @DefaultMessage("PowerShell Core")
     String psCoreShellLabel();
 
     /**
@@ -702,7 +617,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Bash"
      */
-    @DefaultMessage("Bash")
     String bashShellLabel();
 
     /**
@@ -710,7 +624,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Custom"
      */
-    @DefaultMessage("Custom")
     String customShellLabel();
 
     /**
@@ -718,7 +631,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "User command"
      */
-    @DefaultMessage("User command")
     String nonShellLabel();
 
     /**
@@ -726,7 +638,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Zsh"
      */
-    @DefaultMessage("Zsh")
     String zshShellLabel();
 
     /**
@@ -734,6 +645,5 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unknown"
      */
-    @DefaultMessage("Unknown")
     String unknownShellLabel();
 }

@@ -22,7 +22,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -30,7 +29,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Stop"
      */
-    @DefaultMessage("Stop")
     String stopTitle();
 
     /**
@@ -38,7 +36,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Output"
      */
-    @DefaultMessage("Output")
     String outputLeftLabel();
 
     /**
@@ -46,7 +43,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Issues"
      */
-    @DefaultMessage("Issues")
     String issuesRightLabel();
 
     /**
@@ -54,7 +50,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Clear All Breakpoints"
      */
-    @DefaultMessage("Clear All Breakpoints")
     String clearAllBreakpointsCaption();
 
     /**
@@ -62,7 +57,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Hide Traceback"
      */
-    @DefaultMessage("Hide Traceback")
     String hideTracebackText();
 
     /**
@@ -70,7 +64,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Show Traceback"
      */
-    @DefaultMessage("Show Traceback")
     String showTracebackText();
 
     /**
@@ -78,7 +71,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Converting Theme"
      */
-    @DefaultMessage("Converting Theme")
     String convertingThemeProgressCaption();
 
     /**
@@ -86,7 +78,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing Import from Mongo DB"
      */
-    @DefaultMessage("Preparing Import from Mongo DB")
     String withDataImportMongoProgressCaption();
 
     /**
@@ -94,7 +85,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using testthat"
      */
-    @DefaultMessage("Using testthat")
     String testthatMessage();
 
     /**
@@ -102,7 +92,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using shinytest"
      */
-    @DefaultMessage("Using shinytest")
     String shinytestMessage();
 
     /**
@@ -110,7 +99,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing Tests"
      */
-    @DefaultMessage("Preparing Tests")
     String preparingTestsProgressCaption();
 
     /**
@@ -118,7 +106,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Testing Tools"
      */
-    @DefaultMessage("Testing Tools")
     String testingToolsContext();
 
     /**
@@ -126,7 +113,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "No Files Selected"
      */
-    @DefaultMessage("No Files Selected")
     String noFilesSelectedCaption();
 
     /**
@@ -134,7 +120,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Please select one or more files to export."
      */
-    @DefaultMessage("Please select one or more files to export.")
     String noFilesSelectedMessage();
 
     /**
@@ -142,7 +127,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Download"
      */
-    @DefaultMessage("Download")
     String downloadButtonCaption();
 
     /**
@@ -150,7 +134,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Code Browser"
      */
-    @DefaultMessage("R Code Browser")
     String rCodeBrowserLabel();
 
     /**
@@ -158,7 +141,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Data Frame"
      */
-    @DefaultMessage("R Data Frame")
     String rDataFrameLabel();
 
     /**
@@ -166,7 +148,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Public Folder"
      */
-    @DefaultMessage("Public Folder")
     String publicFolderDesc();
 
     /**
@@ -174,7 +155,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Folder"
      */
-    @DefaultMessage("Folder")
     String folderDesc();
 
     /**
@@ -182,7 +162,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Text file"
      */
-    @DefaultMessage("Text file")
     String textFileDesc();
 
     /**
@@ -190,7 +169,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Image file"
      */
-    @DefaultMessage("Image file")
     String imageFileDesc();
 
     /**
@@ -198,7 +176,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Parent folder"
      */
-    @DefaultMessage("Parent folder")
     String parentFolderDesc();
 
     /**
@@ -206,7 +183,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Explore object"
      */
-    @DefaultMessage("Explore object")
     String exploreObjectDesc();
 
     /**
@@ -214,7 +190,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R source viewer"
      */
-    @DefaultMessage("R source viewer")
     String rSourceViewerDesc();
 
     /**
@@ -222,7 +197,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Profiler"
      */
-    @DefaultMessage("Profiler")
     String profilerDesc();
 
     /**
@@ -230,7 +204,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Script"
      */
-    @DefaultMessage("R Script")
     String rScriptLabel();
 
     /**
@@ -238,7 +211,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Rd File"
      */
-    @DefaultMessage("Rd File")
     String rdFile();
 
     /**
@@ -246,7 +218,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "NAMESPACE"
      */
-    @DefaultMessage("NAMESPACE")
     String namespaceLabel();
 
     /**
@@ -254,7 +225,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R History"
      */
-    @DefaultMessage("R History")
     String rHistoryLabel();
 
     /**
@@ -262,7 +232,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String rMarkdownLabel();
 
     /**
@@ -270,7 +239,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Notebook"
      */
-    @DefaultMessage("R Notebook")
     String rNotebookLabel();
 
     /**
@@ -278,7 +246,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Markdown"
      */
-    @DefaultMessage("Markdown")
     String markdownLabel();
 
     /**
@@ -286,7 +253,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "File Download Error"
      */
-    @DefaultMessage("File Download Error")
     String fileDownloadErrorCaption();
 
     /**
@@ -294,7 +260,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Unable to show file because file downloads are restricted on this server.\n"
      */
-    @DefaultMessage("Unable to show file because file downloads are restricted on this server.\\n")
     String fileDownloadErrorMessage();
 
     /**
@@ -302,7 +267,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Open"
      */
-    @DefaultMessage("Open")
     String openLabel();
 
     /**
@@ -310,7 +274,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String saveLabel();
 
     /**
@@ -318,7 +281,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Choose"
      */
-    @DefaultMessage("Choose")
     String chooseLabel();
 
     /**
@@ -326,7 +288,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "and "
      */
-    @DefaultMessage("and ")
     String andText();
 
     /**
@@ -334,7 +295,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Typeset LaTeX into PDF using:"
      */
-    @DefaultMessage("Typeset LaTeX into PDF using:")
     String typesetLatexLabel();
 
     /**
@@ -342,7 +302,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on customizing LaTeX options"
      */
-    @DefaultMessage("Help on customizing LaTeX options")
     String latexHelpLinkLabel();
 
     /**
@@ -350,7 +309,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error Setting CRAN Mirror"
      */
-    @DefaultMessage("Error Setting CRAN Mirror")
     String errorSettingCranMirror();
 
     /**
@@ -358,7 +316,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The CRAN mirror could not be changed."
      */
-    @DefaultMessage("The CRAN mirror could not be changed.")
     String cranMirrorCannotChange();
 
     /**
@@ -366,7 +323,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Insert Roxygen Skeleton"
      */
-    @DefaultMessage("Insert Roxygen Skeleton")
     String insertRoxygenSkeletonMessage();
 
     /**
@@ -374,7 +330,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Unable to insert skeleton (the cursor is not currently inside an R function definition)."
      */
-    @DefaultMessage("Unable to insert skeleton (the cursor is not currently inside an R function definition).")
     String unableToInsertSkeletonMessage();
 
     /**
@@ -382,7 +337,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Cannot automatically update roxygen blocks that are not self-contained."
      */
-    @DefaultMessage("Cannot automatically update roxygen blocks that are not self-contained.")
     String cannotUpdateRoxygenMessage();
 
     /**
@@ -390,7 +344,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Confirm Change"
      */
-    @DefaultMessage("Confirm Change")
     String confirmChangeCaption();
 
 
@@ -399,7 +352,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\n\nAre you sure you want to change this option?"
      */
-    @DefaultMessage("The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\\n\\nAre you sure you want to change this option?")
     String packageRequiredMessage(String packageName, String name);
 
     /**
@@ -407,7 +359,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Upload Error Occurred"
      */
-    @DefaultMessage("Upload Error Occurred")
     String uploadErrorTitle();
 
     /**
@@ -415,7 +366,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Unable to continue (another publish is currently running)"
      */
-    @DefaultMessage("Unable to continue (another publish is currently running)")
     String unableToContinueMessage();
 
     /**
@@ -423,7 +373,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Uploading document to RPubs..."
      */
-    @DefaultMessage("Uploading document to RPubs...")
     String uploadingDocumentRPubsMessage();
 
     /**
@@ -431,7 +380,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Publish to RPubs"
      */
-    @DefaultMessage("Publish to RPubs")
     String publishToRPubs();
 
     /**
@@ -439,7 +387,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started."
      */
-    @DefaultMessage("RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started.")
     String rPubsServiceMessage();
 
     /**
@@ -447,7 +394,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "This document has already been published on RPubs. You can "
      */
-    @DefaultMessage("This document has already been published on RPubs. You can ")
     String alreadyPublishedRPubs();
 
 
@@ -456,7 +402,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "IMPORTANT: All documents published to RPubs are publicly visible."
      */
-    @DefaultMessage("IMPORTANT: All documents published to RPubs are publicly visible.")
     String importantMessage();
 
     /**
@@ -464,7 +409,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "You should only publish documents that you wish to share publicly."
      */
-    @DefaultMessage("You should only publish documents that you wish to share publicly.")
     String publishMessage();
 
     /**
@@ -472,7 +416,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "<strong>{0}</strong> {1}"
      */
-    @DefaultMessage("<strong>{0}</strong> {1}")
     String importantRPubsMessage(String importantMessage, String publishMessage);
 
 
@@ -481,7 +424,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Publish"
      */
-    @DefaultMessage("Publish")
     String publishButtonTitle();
 
     /**
@@ -489,7 +431,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Update Existing"
      */
-    @DefaultMessage("Update Existing")
     String updateExistingButtonTitle();
 
     /**
@@ -497,7 +438,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create New"
      */
-    @DefaultMessage("Create New")
     String createNewButtonTitle();
 
     /**
@@ -505,7 +445,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancelTitle();
 
     /**
@@ -513,7 +452,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
     String okTitle();
 
     /**
@@ -521,7 +459,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using Keyring"
      */
-    @DefaultMessage("Using Keyring")
     String usingKeyringCaption();
 
     /**
@@ -529,7 +466,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. "
      */
-    @DefaultMessage("Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. ")
     String keyringDesc();
 
     /**
@@ -537,7 +473,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Would you like to install keyring?"
      */
-    @DefaultMessage("Would you like to install keyring?")
     String installKeyringMessage();
 
     /**
@@ -545,7 +480,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Keyring"
      */
-    @DefaultMessage("Keyring")
     String keyringCaption();
 
     /**
@@ -553,7 +487,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install"
      */
-    @DefaultMessage("Install")
     String installLabel();
 
     /**
@@ -561,7 +494,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "You must enter a value."
      */
-    @DefaultMessage("You must enter a value.")
     String enterValueMessage();
 
     /**
@@ -569,7 +501,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Too much console output to announce."
      */
-    @DefaultMessage("Too much console output to announce.")
     String consoleOutputOverLimitMessage();
 
     /**
@@ -577,7 +508,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error: {0}\n"
      */
-    @DefaultMessage("Error: {0}\\n")
     String consoleWriteError(String error);
 
     /**
@@ -585,7 +515,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Line "
      */
-    @DefaultMessage("Line ")
     String lineText();
 
     /**
@@ -593,7 +522,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View error or warning within the log file"
      */
-    @DefaultMessage("View error or warning within the log file")
     String viewErrorLogfile();
 
 
@@ -602,7 +530,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Syncing..."
      */
-    @DefaultMessage("Syncing...")
     String getSyncProgressMessage();
 
     /**
@@ -610,7 +537,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "; Page ."
      */
-    @DefaultMessage("; Page ")
     String pdfPageText();
 
     /**
@@ -618,7 +544,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "[From Click]"
      */
-    @DefaultMessage("[From Click]")
     String pdfFromClickText();
 
     /**
@@ -626,7 +551,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Password"
      */
-    @DefaultMessage("Password")
     String passwordTitle();
 
     /**
@@ -634,7 +558,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Personal Access Token"
      */
-    @DefaultMessage("Personal Access Token")
     String patTitle();
 
     /**
@@ -642,7 +565,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Personal access token"
      */
-    @DefaultMessage("Personal access token")
     String patPrompt();
 
     /**
@@ -650,7 +572,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Username"
      */
-    @DefaultMessage("Username")
     String usernameTitle();
 
     /**
@@ -658,7 +579,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Press {0} to copy the key to the clipboard"
      */
-    @DefaultMessage("Press {0} to copy the key to the clipboard")
     String pressLabel(String cmdText);
 
     /**
@@ -666,7 +586,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Close"
      */
-    @DefaultMessage("Close")
     String closeButtonLabel();
 
     /**
@@ -674,7 +593,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "(None)"
      */
-    @DefaultMessage("(None)")
     String noneLabel();
 
     /**
@@ -682,7 +600,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Getting ignored files for path..."
      */
-    @DefaultMessage("Getting ignored files for path...")
     String gettingIgnoredFilesProgressMessage();
 
     /**
@@ -690,7 +607,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Setting ignored files for path..."
      */
-    @DefaultMessage("Setting ignored files for path...")
     String settingIgnoredFilesProgressMessage();
 
     /**
@@ -698,7 +614,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error: Multiple Directories"
      */
-    @DefaultMessage("Error: Multiple Directories")
     String multipleDirectoriesCaption();
 
     /**
@@ -706,7 +621,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The selected files are not all within the same directory you can only ignore multiple files in one operation if they are located within the same directory)."
      */
-    @DefaultMessage("The selected files are not all within the same directory (you can only ignore multiple files in one operation if they are located within the same directory).")
     String selectedFilesNotInSameDirectoryMessage();
 
     /**
@@ -714,7 +628,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Directory:"
      */
-    @DefaultMessage("Directory:")
     String directoryLabel();
 
     /**
@@ -722,7 +635,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Ignored files"
      */
-    @DefaultMessage("Ignored files")
     String ignoredFilesLabel();
 
     /**
@@ -730,7 +642,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Ignore:"
      */
-    @DefaultMessage("Ignore:")
     String ignoreCaption();
 
     /**
@@ -738,7 +649,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Specifying ignored files"
      */
-    @DefaultMessage("Specifying ignored files")
     String specifyingIgnoredFilesHelpCaption();
 
     /**
@@ -746,7 +656,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Loading file contents"
      */
-    @DefaultMessage("Loading file contents")
     String loadingFileContentsProgressCaption();
 
     /**
@@ -754,7 +663,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Save As"
      */
-    @DefaultMessage("Save As")
     String saveAsText();
 
     /**
@@ -762,7 +670,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Save File - {0}"
      */
-    @DefaultMessage("Save File - {0}")
     String saveFileCaption(String name);
 
     /**
@@ -770,7 +677,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Saving file..."
      */
-    @DefaultMessage("Saving file...")
     String savingFileProgressCaption();
 
     /**
@@ -778,7 +684,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View File Tab"
      */
-    @DefaultMessage("View File Tab")
     String viewFileTabLabel();
 
     /**
@@ -786,7 +691,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "at"
      */
-    @DefaultMessage("at")
     String atText();
 
     /**
@@ -794,7 +698,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "This is a warning!"
      */
-    @DefaultMessage("This is a warning!")
     String warningMessage();
 
     /**
@@ -802,7 +705,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Presentation"
      */
-    @DefaultMessage("R Presentation")
     String rPresentationLabel();
 
     /**
@@ -810,7 +712,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Source Marker Item Table"
      */
-    @DefaultMessage("Source Marker Item Table")
     String sourceMarkerItemTableList();
 
     /**
@@ -818,7 +719,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preview"
      */
-    @DefaultMessage("Preview")
     String previewButtonText();
 
     /**
@@ -826,7 +726,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Generic Content"
      */
-    @DefaultMessage("Generic Content")
     String genericContentLabel();
 
     /**
@@ -834,7 +733,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Object Explorer"
      */
-    @DefaultMessage("Object Explorer")
     String objectExplorerLabel();
 
     /**
@@ -842,7 +740,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Profiler"
      */
-    @DefaultMessage("R Profiler")
     String rProfilerLabel();
 
     /**
@@ -850,7 +747,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Check"
      */
-    @DefaultMessage("Check")
     String checkPreviewButtonText();
 
     /**
@@ -858,7 +754,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Weave Rnw files using:"
      */
-    @DefaultMessage("Weave Rnw files using:")
     String weaveRnwLabel();
 
     /**
@@ -866,7 +761,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on weaving Rnw files"
      */
-    @DefaultMessage("Help on weaving Rnw files")
     String weaveRnwHelpTitle();
 
     /**
@@ -874,7 +768,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "SSH key:"
      */
-    @DefaultMessage("SSH key:")
     String sshRSAKeyFormLabel();
 
     /**
@@ -882,7 +775,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View public key"
      */
-    @DefaultMessage("View public key")
     String viewPublicKeyCaption();
 
     /**
@@ -890,7 +782,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create SSH Key..."
      */
-    @DefaultMessage("Create SSH Key...")
     String createRSAKeyButtonLabel();
 
     /**
@@ -898,7 +789,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Reading public key..."
      */
-    @DefaultMessage("Reading public key...")
     String readingPublicKeyProgressCaption();
 
     /**
@@ -906,7 +796,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Are you sure you want to remove all the breakpoints in this project?"
      */
-    @DefaultMessage("Are you sure you want to remove all the breakpoints in this project?")
     String clearAllBreakpointsMessage();
 
     /**
@@ -914,7 +803,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "{0}{1}"
      */
-    @DefaultMessage("{0}{1}")
     String functionNameText(String functionName, String source);
 
     /**
@@ -922,7 +810,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "{0}"
      */
-    @DefaultMessage("{0}")
     String showFileExportLabel(String description);
 
     /**
@@ -930,7 +817,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Publishing Accounts"
      */
-    @DefaultMessage("Publishing Accounts")
     String accountListLabel();
 
     /**
@@ -938,7 +824,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect..."
      */
-    @DefaultMessage("Connect...")
     String connectButtonLabel();
 
     /**
@@ -946,7 +831,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Reconnect..."
      */
-    @DefaultMessage("Reconnect...")
     String reconnectButtonLabel();
 
     /**
@@ -954,7 +838,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Disconnect"
      */
-    @DefaultMessage("Disconnect")
     String disconnectButtonLabel();
 
     /**
@@ -962,7 +845,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Account records appear to exist, but cannot be viewed because a "
      */
-    @DefaultMessage("Account records appear to exist, but cannot be viewed because a ")
     String missingPkgPanelMessage();
 
     /**
@@ -970,7 +852,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "required package is not installed."
      */
-    @DefaultMessage("required package is not installed.")
     String missingPkgRequiredMessage();
 
     /**
@@ -978,7 +859,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install Missing Packages"
      */
-    @DefaultMessage("Install Missing Packages")
     String installPkgsMessage();
 
     /**
@@ -986,7 +866,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Viewing publish accounts"
      */
-    @DefaultMessage("Viewing publish accounts")
     String withRSConnectLabel();
 
     /**
@@ -994,7 +873,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Enable publishing to Posit Connect"
      */
-    @DefaultMessage("Enable publishing to Posit Connect")
     String chkEnableRSConnectLabel();
 
     /**
@@ -1002,7 +880,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Information about Posit Connect"
      */
-    @DefaultMessage("Information about Posit Connect")
     String checkBoxWithHelpTitle();
 
     /**
@@ -1010,7 +887,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Settings"
      */
-    @DefaultMessage("Settings")
     String settingsHeaderLabel();
 
     /**
@@ -1018,7 +894,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Enable publishing documents, apps, and APIs"
      */
-    @DefaultMessage("Enable publishing documents, apps, and APIs")
     String chkEnablePublishingLabel();
 
     /**
@@ -1026,7 +901,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Show diagnostic information when publishing"
      */
-    @DefaultMessage("Show diagnostic information when publishing")
     String showPublishDiagnosticsLabel();
 
     /**
@@ -1034,7 +908,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "SSL Certificates"
      */
-    @DefaultMessage("SSL Certificates")
     String sSLCertificatesHeaderLabel();
 
     /**
@@ -1042,7 +915,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Check SSL certificates when publishing"
      */
-    @DefaultMessage("Check SSL certificates when publishing")
     String publishCheckCertificatesLabel();
 
     /**
@@ -1050,7 +922,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Check SSL certificates when publishing"
      */
-    @DefaultMessage("Use custom CA bundle")
     String usePublishCaBundleLabel();
 
     /**
@@ -1058,7 +929,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "(none)"
      */
-    @DefaultMessage("(none)")
     String caBundlePath();
 
     /**
@@ -1066,7 +936,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Troubleshooting Deployments"
      */
-    @DefaultMessage("Troubleshooting Deployments")
     String helpLinkTroubleshooting();
 
     /**
@@ -1074,7 +943,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Publishing"
      */
-    @DefaultMessage("Publishing")
     String publishingPaneHeader();
 
     /**
@@ -1082,7 +950,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error Disconnecting Account"
      */
-    @DefaultMessage("Error Disconnecting Account")
     String showErrorCaption();
 
     /**
@@ -1090,7 +957,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Confirm Remove Account"
      */
-    @DefaultMessage("Confirm Remove Account")
     String removeAccountGlobalDisplay();
 
 
@@ -1099,7 +965,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Disconnect Account"
      */
-    @DefaultMessage("Disconnect Account")
     String onConfirmDisconnectYesLabel();
 
     /**
@@ -1107,7 +972,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String onConfirmDisconnectNoLabel();
 
     /**
@@ -1115,7 +979,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error Disconnecting Account"
      */
-    @DefaultMessage("Error Disconnecting Account")
     String disconnectingErrorMessage();
 
     /**
@@ -1123,7 +986,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connecting a publishing account"
      */
-    @DefaultMessage("Connecting a publishing account")
     String getAccountCountLabel();
 
     /**
@@ -1131,7 +993,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect Account"
      */
-    @DefaultMessage("Connect Account")
     String connectAccountCaption();
 
     /**
@@ -1139,7 +1000,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect Account"
      */
-    @DefaultMessage("Connect Account")
     String connectAccountOkCaption();
 
     /**
@@ -1147,7 +1007,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect Publishing Account"
      */
-    @DefaultMessage("Connect Publishing Account")
     String newRSConnectAccountPageTitle();
 
     /**
@@ -1155,7 +1014,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Pick an account"
      */
-    @DefaultMessage("Pick an account")
     String newRSConnectAccountPageSubTitle();
 
     /**
@@ -1163,7 +1021,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect Publishing Account"
      */
-    @DefaultMessage("Connect Publishing Account")
     String newRSConnectAccountPageCaption();
 
     /**
@@ -1171,7 +1028,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Choose Account Type"
      */
-    @DefaultMessage("Choose Account Type")
     String wizardNavigationPageTitle();
 
     /**
@@ -1179,7 +1035,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Choose Account Type"
      */
-    @DefaultMessage("Choose Account Type")
     String wizardNavigationPageSubTitle();
 
     /**
@@ -1187,7 +1042,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect Account"
      */
-    @DefaultMessage("Connect Account")
     String wizardNavigationPageCaption();
 
     /**
@@ -1195,7 +1049,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Posit Connect is a server product from Posit "
      */
-    @DefaultMessage("Posit Connect is a server product from Posit ")
     String serviceDescription();
 
     /**
@@ -1203,7 +1056,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "for secure sharing of applications, reports, plots, and APIs."
      */
-    @DefaultMessage("for secure sharing of applications, reports, plots, and APIs.")
     String serviceMessageDescription();
 
     /**
@@ -1211,7 +1063,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "A cloud service run by RStudio. Publish Shiny applications "
      */
-    @DefaultMessage("A cloud service run by RStudio. Publish Shiny applications ")
     String newRSConnectCloudPageSubTitle();
 
     /**
@@ -1219,7 +1070,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "and interactive documents to the Internet."
      */
-    @DefaultMessage("and interactive documents to the Internet.")
     String newRSConnectCloudPageSub();
 
     /**
@@ -1227,7 +1077,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Connect ShinyApps.io Account"
      */
-    @DefaultMessage("Connect ShinyApps.io Account")
     String newRSConnectCloudPageCaption();
 
     /**
@@ -1235,7 +1084,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Converting Theme"
      */
-    @DefaultMessage("Converting Theme")
     String withThemesCaption();
 
     /**
@@ -1243,7 +1091,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Markdown"
      */
-    @DefaultMessage("R Markdown")
     String withRMarkdownCaption();
 
     /**
@@ -1251,7 +1098,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install Shiny Package"
      */
-    @DefaultMessage("Install Shiny Package")
     String installShinyCaption();
 
     /**
@@ -1259,7 +1105,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "requires installation of an updated version "
      */
-    @DefaultMessage("{0} requires installation of an updated version of the shiny package.\n\nDo you want to install shiny now?")
     String installShinyUserAction(String userAction);
 
     /**
@@ -1267,7 +1112,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Checking installed packages"
      */
-    @DefaultMessage("Checking installed packages")
     String installPkgsCaption();
 
     /**
@@ -1275,7 +1119,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Checking installed packages"
      */
-    @DefaultMessage("Checking installed packages")
     String withShinyAddinsCaption();
 
     /**
@@ -1283,7 +1126,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Checking installed packages"
      */
-    @DefaultMessage("Executing addins")
     String withShinyAddinsUserAction();
 
     /**
@@ -1291,7 +1133,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Reformatting code..."
      */
-    @DefaultMessage("Reformatting code...")
     String withStylerCaption();
 
     /**
@@ -1299,7 +1140,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Reformatting code with styler"
      */
-    @DefaultMessage("Reformatting code with styler")
     String withStylerUserAction();
 
     /**
@@ -1307,7 +1147,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from CSV"
      */
-    @DefaultMessage("Preparing import from CSV")
     String withDataImportCSVCaption();
 
     /**
@@ -1315,7 +1154,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from SPSS, SAS and Stata"
      */
-    @DefaultMessage("Preparing import from SPSS, SAS and Stata")
     String withDataImportSAV();
 
     /**
@@ -1323,7 +1161,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from Excel"
      */
-    @DefaultMessage("Preparing import from Excel")
     String withDataImportXLS();
 
     /**
@@ -1331,7 +1168,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from XML"
      */
-    @DefaultMessage("Preparing import from XML")
     String withDataImportXML();
 
     /**
@@ -1339,7 +1175,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from JSON"
      */
-    @DefaultMessage("Preparing import from JSON")
     String withDataImportJSON();
 
     /**
@@ -1347,7 +1182,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from JDBC"
      */
-    @DefaultMessage("Preparing import from JDBC")
     String withDataImportJDBC();
 
     /**
@@ -1355,7 +1189,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing import from ODBC"
      */
-    @DefaultMessage("Preparing import from ODBC")
     String withDataImportODBC();
 
     /**
@@ -1363,7 +1196,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing profiler"
      */
-    @DefaultMessage("Preparing profiler")
     String withProfvis();
 
     /**
@@ -1371,7 +1203,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing connection"
      */
-    @DefaultMessage("Preparing connection")
     String withConnectionPackage();
 
     /**
@@ -1379,7 +1210,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Database Connectivity"
      */
-    @DefaultMessage("Database Connectivity")
     String withConnectionPackageContext();
 
     /**
@@ -1387,7 +1217,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing Keyring"
      */
-    @DefaultMessage("Preparing Keyring")
     String withKeyring();
 
     /**
@@ -1395,7 +1224,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using keyring"
      */
-    @DefaultMessage("Using keyring")
     String withKeyringUserAction();
 
     /**
@@ -1403,7 +1231,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing "
      */
-    @DefaultMessage("Preparing ")
     String withOdbc();
 
     /**
@@ -1411,7 +1238,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing "
      */
-    @DefaultMessage("Using ")
     String withOdbcUserAction();
 
     /**
@@ -1419,7 +1245,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Starting tutorial"
      */
-    @DefaultMessage("Starting tutorial")
     String withTutorialDependencies();
 
     /**
@@ -1427,7 +1252,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Starting a tutorial"
      */
-    @DefaultMessage("Starting a tutorial")
     String withTutorialDependenciesUserAction();
 
     /**
@@ -1435,7 +1259,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using the AGG renderer"
      */
-    @DefaultMessage("Using the AGG renderer")
     String withRagg();
 
     /**
@@ -1443,7 +1266,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using the Databricks Connect integration"
      */
-    @DefaultMessage("Using the Databricks Connect integration")
     String withDatabricksConnect();
 
     /**
@@ -1451,7 +1273,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "is not available"
      */
-    @DefaultMessage("is not available")
     String unsatisfiedVersions();
 
     /**
@@ -1459,7 +1280,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "is required but is available"
      */
-    @DefaultMessage("is required but {0} is available")
     String requiredVersion(String version);
 
     /**
@@ -1467,7 +1287,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Packages Not Found"
      */
-    @DefaultMessage("Packages Not Found")
     String packageNotFoundUserAction();
 
     /**
@@ -1475,7 +1294,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Required package versions could not be found:\n\n{0}\nCheck that getOption(\"repos\") refers to a CRAN repository that contains the needed package versions."
      */
-    @DefaultMessage("Required package versions could not be found:\n\n{0}\nCheck that getOption(\\\"repos\\\") refers to a CRAN repository that contains the needed package versions.")
     String packageNotFoundMessage(String unsatisfiedVersions);
 
     /**
@@ -1483,7 +1301,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Dependency installation failed"
      */
-    @DefaultMessage("Dependency installation failed")
     String onErrorMessage();
 
     /**
@@ -1491,7 +1308,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Could not determine available packages"
      */
-    @DefaultMessage("Could not determine available packages")
     String availablePackageErrorMessage();
 
     /**
@@ -1499,7 +1315,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "requires an updated version of the {0} package.\n\nDo you want to install this package now?"
      */
-    @DefaultMessage("requires an updated version of the {0} package.\n\nDo you want to install this package now?")
     String confirmPackageInstallation(String name);
 
 
@@ -1508,7 +1323,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "requires updated versions of the following packages: {0}.\n\nDo you want to install these packages now?"
      */
-    @DefaultMessage("requires updated versions of the following packages: {0}. \n\nDo you want to install these packages now?")
     String updatedVersionMessage(String dependency);
 
     /**
@@ -1516,7 +1330,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install Required Packages"
      */
-    @DefaultMessage("Install Required Packages")
     String installRequiredCaption();
 
 
@@ -1525,7 +1338,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Enable"
      */
-    @DefaultMessage("Enable")
     String globalDisplayEnable();
 
     /**
@@ -1533,7 +1345,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Disable"
      */
-    @DefaultMessage("Disable")
     String globalDisplayDisable();
 
     /**
@@ -1541,7 +1352,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Version Control "
      */
-    @DefaultMessage("Version Control ")
     String globalDisplayVC();
 
     /**
@@ -1549,7 +1359,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "You must restart RStudio for this change to take effect."
      */
-    @DefaultMessage("You must restart RStudio for this change to take effect.")
     String globalDisplayVCMessage();
 
 
@@ -1558,7 +1367,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Terminal executable:"
      */
-    @DefaultMessage("Terminal executable:")
     String terminalPathLabel();
 
     /**
@@ -1566,7 +1374,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Public Key"
      */
-    @DefaultMessage("Public Key")
     String showPublicKeyDialogCaption();
 
     /**
@@ -1574,7 +1381,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error attempting to read key ''{0}'' ({1})''"
      */
-    @DefaultMessage("Error attempting to read key ''{0}'' ({1})''")
     String onSSHErrorMessage(String keyPath, String errorMessage);
 
     /**
@@ -1582,7 +1388,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using Version Control with RStudio"
      */
-    @DefaultMessage("Using Version Control with RStudio")
     String vCSHelpLink();
 
     /**
@@ -1590,7 +1395,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create SSH Key"
      */
-    @DefaultMessage("Create SSH Key")
     String createKeyDialogCaption();
 
     /**
@@ -1598,7 +1402,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Creating SSH Key"
      */
-    @DefaultMessage("Creating SSH Key...")
     String onProgressLabel();
 
     /**
@@ -1606,7 +1409,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create"
      */
-    @DefaultMessage("Create")
     String setOkButtonCaption();
 
     /**
@@ -1614,7 +1416,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Non-Matching Passphrases"
      */
-    @DefaultMessage("Non-Matching Passphrases")
     String showValidateErrorCaption();
 
     /**
@@ -1622,7 +1423,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The passphrase and passphrase confirmation do not match."
      */
-    @DefaultMessage("The passphrase and passphrase confirmation do not match.")
     String showValidateErrorMessage();
 
     /**
@@ -1630,7 +1430,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The SSH key will be created at:"
      */
-    @DefaultMessage("The SSH key will be created at:")
     String pathCaption();
 
     /**
@@ -1638,7 +1437,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "SSH key management"
      */
-    @DefaultMessage("SSH key management")
     String pathHelpCaption();
 
     /**
@@ -1646,7 +1444,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "SSH key type: "
      */
-    @DefaultMessage("SSH key type: ")
     String sshKeyTypeLabel();
 
     /**
@@ -1654,7 +1451,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "RSA"
      */
-    @DefaultMessage("RSA")
     String sshKeyRSAOption();
 
     /**
@@ -1662,7 +1458,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "ED25519"
      */
-    @DefaultMessage("ED25519")
     String sshKeyEd25519Option();
 
     /**
@@ -1670,7 +1465,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Passphrase (optional):"
      */
-    @DefaultMessage("Passphrase (optional):")
     String passphraseLabel();
 
     /**
@@ -1678,7 +1472,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Confirm:"
      */
-    @DefaultMessage("Confirm:")
     String passphraseConfirmLabel();
 
     /**
@@ -1686,7 +1479,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Key Already Exists"
      */
-    @DefaultMessage("Key Already Exists")
     String confirmOverwriteKeyCaption();
 
     /**
@@ -1694,7 +1486,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "An SSH key already exists at {0}. Do you want to overwrite the existing key?"
      */
-    @DefaultMessage("An SSH key already exists at {0}. Do you want to overwrite the existing key?")
     String confirmOverwriteKeyMessage(String path);
 
     /**
@@ -1702,7 +1493,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Main dictionary language:"
      */
-    @DefaultMessage("Main dictionary language:")
     String spellingLanguageSelectWidgetLabel();
 
     /**
@@ -1710,7 +1500,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on spelling dictionaries"
      */
-    @DefaultMessage("Help on spelling dictionaries")
     String addHelpButtonLabel();
 
     /**
@@ -1718,7 +1507,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Downloading dictionaries..."
      */
-    @DefaultMessage("Downloading dictionaries...")
     String progressDownloadingLabel();
 
     /**
@@ -1726,7 +1514,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Downloading dictionaries..."
      */
-    @DefaultMessage("Downloading additional languages...")
     String progressDownloadingLanguagesLabel();
 
     /**
@@ -1734,7 +1521,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error Downloading Dictionaries"
      */
-    @DefaultMessage("Error Downloading Dictionaries")
     String onErrorDownloadingCaption();
 
     /**
@@ -1742,7 +1528,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "(Default)"
      */
-    @DefaultMessage("(Default)")
     String includeDefaultOption();
 
     /**
@@ -1750,7 +1535,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Update Dictionaries..."
      */
-    @DefaultMessage("Update Dictionaries...")
     String allLanguagesInstalledOption();
 
     /**
@@ -1758,7 +1542,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install More Languages..."
      */
-    @DefaultMessage("Install More Languages...")
     String installIndexOption();
 
     /**
@@ -1766,7 +1549,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Add..."
      */
-    @DefaultMessage("Add...")
     String buttonAddLabel();
 
     /**
@@ -1774,7 +1556,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Remove..."
      */
-    @DefaultMessage("Remove...")
     String buttonRemoveLabel();
 
     /**
@@ -1782,7 +1563,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Custom dictionaries:"
      */
-    @DefaultMessage("Custom dictionaries:")
     String labelWithHelpText();
 
     /**
@@ -1790,7 +1570,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on custom spelling dictionaries"
      */
-    @DefaultMessage("Help on custom spelling dictionaries")
     String labelWithHelpTitle();
 
     /**
@@ -1798,7 +1577,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Add Custom Dictionary (*.dic)"
      */
-    @DefaultMessage("Add Custom Dictionary (*.dic)")
     String fileDialogsCaption();
 
     /**
@@ -1806,7 +1584,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Add Custom Dictionary (*.dic)"
      */
-    @DefaultMessage("Dictionaries (*.dic)")
     String fileDialogsFilter();
 
     /**
@@ -1814,7 +1591,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Adding dictionary..."
      */
-    @DefaultMessage("Adding dictionary...")
     String onProgressAddingLabel();
 
     /**
@@ -1822,7 +1598,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Confirm Remove"
      */
-    @DefaultMessage("Confirm Remove")
     String removeDictionaryCaption();
 
     /**
@@ -1830,7 +1605,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Are you sure you want to remove the {0} custom dictionary?"
      */
-    @DefaultMessage("Are you sure you want to remove the {0} custom dictionary?")
     String removeDictionaryMessage(String dictionary);
 
     /**
@@ -1838,7 +1612,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Removing dictionary..."
      */
-    @DefaultMessage("Removing dictionary...")
     String progressRemoveIndicator();
 
     /**
@@ -1846,7 +1619,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "[Detected output overflow; buffering the next {0} lines of output]"
      */
-    @DefaultMessage("[Detected output overflow; buffering the next {0} lines of output]")
     String consoleBufferedMessage(int bufferSize);
 
 }

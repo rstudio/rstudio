@@ -21,7 +21,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Confirm Remove Objects"
      */
-    @DefaultMessage("Confirm Remove Objects")
     String confirmRemoveObjects();
 
     /**
@@ -29,7 +28,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Yes"
      */
-    @DefaultMessage("Yes")
     String yesCapitalized();
 
     /**
@@ -37,7 +35,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "No"
      */
-    @DefaultMessage("No")
     String noCapitalized();
 
     /**
@@ -45,7 +42,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "all objects"
      */
-    @DefaultMessage("all objects")
     String allObjects();
 
     /**
@@ -53,7 +49,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "1 object"
      */
-    @DefaultMessage("1 object")
     String oneObject();
 
     /**
@@ -61,7 +56,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "{0} objects"
      */
-    @DefaultMessage("{0} objects")
     String multipleObjects(int numObjects);
 
     /**
@@ -69,7 +63,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Are you sure you want to remove {0} from the environment? This operation cannot be undone."
      */
-    @DefaultMessage("Are you sure you want to remove {0} from the environment? This operation cannot be undone.")
     String confirmObjectRemove(String objects);
 
     /**
@@ -77,7 +70,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Include hidden objects"
      */
-    @DefaultMessage("Include hidden objects")
     String includeHiddenObjects();
 
     /**
@@ -85,7 +77,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Environment"
      */
-    @DefaultMessage("Environment")
     String environmentCapitalized();
 
     /**
@@ -93,7 +84,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Environment Tab"
      */
-    @DefaultMessage("Environment Tab")
     String environmentTab();
 
     /**
@@ -101,7 +91,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Refresh Now"
      */
-    @DefaultMessage("Refresh Now")
     String refreshNow();
 
     /**
@@ -109,7 +98,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Refresh options"
      */
-    @DefaultMessage("Refresh options")
     String refreshOptions();
 
     /**
@@ -117,7 +105,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Environment Tab Second"
      */
-    @DefaultMessage("Environment Tab Second")
     String environmentTabSecond();
 
     /**
@@ -125,7 +112,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Viewing Python Objects"
      */
-    @DefaultMessage("Viewing Python Objects")
     String viewingPythonObjectsCapitalized();
 
     /**
@@ -133,7 +119,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Viewing Python objects"
      */
-    @DefaultMessage("Viewing Python objects")
     String viewingPythonObjects();
 
     /**
@@ -141,7 +126,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Search environment"
      */
-    @DefaultMessage("Search environment")
     String searchEnvironment();
 
     /**
@@ -149,7 +133,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Error opening call frame"
      */
-    @DefaultMessage("Error opening call frame")
     String errorOpeningCallFrame();
 
     /**
@@ -157,7 +140,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import Dataset"
      */
-    @DefaultMessage("Import Dataset")
     String importDataset();
 
     /**
@@ -165,7 +147,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Could not change monitoring state"
      */
-    @DefaultMessage("Could not change monitoring state")
     String couldNotChangeMonitoringState();
 
     /**
@@ -173,7 +154,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import"
      */
-    @DefaultMessage("Import")
     String importCapitalized();
 
     /**
@@ -181,7 +161,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Removing objects..."
      */
-    @DefaultMessage("Removing objects...")
     String removingObjectsEllipses();
 
     /**
@@ -189,7 +168,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Save Workspace As"
      */
-    @DefaultMessage("Save Workspace As")
     String saveWorkspaceAs();
 
     /**
@@ -197,7 +175,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Load Workspace"
      */
-    @DefaultMessage("Load Workspace")
     String loadWorkspace();
 
     /**
@@ -205,7 +182,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Select File to Import"
      */
-    @DefaultMessage("Select File to Import")
     String selectFileToImport();
 
     /**
@@ -213,7 +189,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import from Web URL"
      */
-    @DefaultMessage("Import from Web URL")
     String importFromWebURL();
 
     /**
@@ -221,7 +196,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Please enter the URL to import data from:"
      */
-    @DefaultMessage("Please enter the URL to import data from:")
     String pleaseEnterURLToImportDataFrom();
 
     /**
@@ -229,7 +203,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Downloading data..."
      */
-    @DefaultMessage("Downloading data...")
     String downloadingDataEllipses();
 
     /**
@@ -237,7 +210,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Load R Object"
      */
-    @DefaultMessage("Load R Object")
     String loadRObject();
 
     /**
@@ -245,7 +217,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Load ''{0}'' into an R object named:"
      */
-    @DefaultMessage("Load ''{0}'' into an R object named:")
     String loadDataIntoAnRObject(String dataFilePath);
 
     /**
@@ -253,7 +224,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Confirm Load RData"
      */
-    @DefaultMessage("Confirm Load RData")
     String confirmLoadRData();
 
     /**
@@ -261,7 +231,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Do you want to load the R data file \"{0}\" into your global environment?"
      */
-    @DefaultMessage("Do you want to load the R data file \"{0}\" into your global environment?")
     String loadRDataFileIntoGlobalEnv(String dataFilePath);
 
     /**
@@ -269,7 +238,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Error Listing Objects"
      */
-    @DefaultMessage("Error Listing Objects")
     String errorListingObjects();
 
     /**
@@ -277,7 +245,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Code Creation Error"
      */
-    @DefaultMessage("Code Creation Error")
     String codeCreationError();
 
     /**
@@ -285,7 +252,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Data Preview"
      */
-    @DefaultMessage("Data Preview")
     String dataPreview();
 
     /**
@@ -293,7 +259,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Is this a valid CSV file?\n\n"
      */
-    @DefaultMessage("Is this a valid CSV file?\n\n")
     String isThisAValidCSVFile();
 
     /**
@@ -301,7 +266,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Is this a valid SPSS, SAS or STATA file?\n\n"
      */
-    @DefaultMessage("Is this a valid SPSS, SAS or STATA file?\n\n")
     String isThisAValidSpssSasSataFile();
 
     /**
@@ -309,7 +273,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Is this a valid Excel file?\n\n"
      */
-    @DefaultMessage("Is this a valid Excel file?\n\n")
     String isThisAValidExcelFile();
 
     /**
@@ -317,7 +280,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Copy Code Preview"
      */
-    @DefaultMessage("Copy Code Preview")
     String copyCodePreview();
 
     /**
@@ -325,7 +287,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Please enter the format string"
      */
-    @DefaultMessage("Please enter the format string")
     String pleaseEnterFormatString();
 
     /**
@@ -333,7 +294,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Enter a comma separated list of factor levels"
      */
-    @DefaultMessage("Enter a comma separated list of factor levels")
     String pleaseInsertACommaSeparatedList();
 
     /**
@@ -341,7 +301,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Date Format"
      */
-    @DefaultMessage("Date Format")
     String dateFormat();
 
     /**
@@ -349,7 +308,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Time Format"
      */
-    @DefaultMessage("Time Format")
     String timeFormat();
 
     /**
@@ -357,7 +315,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Date and Time Format"
      */
-    @DefaultMessage("Date and Time Format")
     String dateAndTimeFormat();
 
     /**
@@ -365,7 +322,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Factors"
      */
-    @DefaultMessage("Factors")
     String factors();
 
     /**
@@ -373,7 +329,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "All columns must have names in order to perform column operations."
      */
-    @DefaultMessage("All columns must have names in order to perform column operations.")
     String allColumnsMustHaveName();
 
     /**
@@ -381,7 +336,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Retrieving preview data..."
      */
-    @DefaultMessage("Retrieving preview data...")
     String retrievingPreviewDataEllipses();
 
     /**
@@ -389,7 +343,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Previewing first {0} entries. {1} parsing errors."
      */
-    @DefaultMessage("Previewing first {0} entries. {1} parsing errors.")
     String previewingFirstEntriesMultiple(String rows, String parsingErrors);
 
     /**
@@ -397,7 +350,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Previewing first {0} entries. "
      */
-    @DefaultMessage("Previewing first {0} entries. ")
     String previewingFirstEntriesNone(String rows);
 
     /**
@@ -405,7 +357,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Browse"
      */
-    @DefaultMessage("Browse")
     String browseCapitalized();
 
     /**
@@ -413,7 +364,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Update"
      */
-    @DefaultMessage("Update")
     String updateCapitalized();
 
     /**
@@ -421,7 +371,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      * "Update for ariaLabelSuffix"
      * @return translated "{0} for {1}"
      */
-    @DefaultMessage("{0} for {1}")
     String updateButtonAriaLabel(String caption, String ariaLabelSuffix);
 
     /**
@@ -429,7 +378,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      * "Browse for ariaLabelSuffix..."
      * @return translated "{0} for {1}..."
      */
-    @DefaultMessage("{0} for {1}...")
     String browseButtonAriaLabel(String caption, String ariaLabelSuffix);
 
     /**
@@ -437,7 +385,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Choose File"
      */
-    @DefaultMessage("Choose File")
     String chooseFile();
 
     /**
@@ -445,7 +392,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Reading rectangular data using readr"
      */
-    @DefaultMessage("Reading rectangular data using readr")
     String readingRectangularDataUsingReadr();
 
     /**
@@ -453,7 +399,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Configure Locale"
      */
-    @DefaultMessage("Configure Locale")
     String configureLocale();
 
     /**
@@ -461,7 +406,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Character {0}"
      */
-    @DefaultMessage("Character {0}")
     String characterOtherDelimiter(String otherDelimiter);
 
     /**
@@ -469,7 +413,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Incorrect Delimiter"
      */
-    @DefaultMessage("Incorrect Delimiter")
     String incorrectDelimiter();
 
     /**
@@ -477,7 +420,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "The specified delimiter is not valid."
      */
-    @DefaultMessage("The specified delimiter is not valid.")
     String specifiedDelimiterNotValid();
 
     /**
@@ -485,7 +427,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Please enter a single character delimiter."
      */
-    @DefaultMessage("Please enter a single character delimiter.")
     String enterSingleCharacterDelimiter();
 
     /**
@@ -493,7 +434,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Other Delimiter"
      */
-    @DefaultMessage("Other Delimiter")
     String otherDelimiter();
 
     /**
@@ -501,7 +441,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Default"
      */
-    @DefaultMessage("Default")
     String defaultCapitalized();
 
     /**
@@ -509,7 +448,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "empty"
      */
-    @DefaultMessage("empty")
     String empty();
 
     /**
@@ -517,7 +455,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "NA"
      */
-    @DefaultMessage("NA")
     String notApplicableAbbreviation();
 
     /**
@@ -525,7 +462,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "null"
      */
-    @DefaultMessage("null")
     String nullWord();
 
     /**
@@ -533,7 +469,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "None"
      */
-    @DefaultMessage("None")
     String noneCapitalized();
 
     /**
@@ -541,7 +476,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Double (\")"
      */
-    @DefaultMessage("Double (\")")
     String doubleQuotesParentheses();
 
     /**
@@ -549,7 +483,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Single ('')"
      */
-    @DefaultMessage("Single ('')")
     String singleQuoteParentheses();
 
     /**
@@ -557,7 +490,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Other..."
      */
-    @DefaultMessage("Other...")
     String otherEllipses();
 
     /**
@@ -565,7 +497,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Whitespace"
      */
-    @DefaultMessage("Whitespace")
     String whitespaceCapitalized();
 
     /**
@@ -573,7 +504,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Tab"
      */
-    @DefaultMessage("Tab")
     String tabCapitalized();
 
     /**
@@ -581,7 +511,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Semicolon"
      */
-    @DefaultMessage("Semicolon")
     String semicolonCapitalized();
 
     /**
@@ -589,7 +518,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Comma"
      */
-    @DefaultMessage("Comma")
     String commaCapitalized();
 
     /**
@@ -597,7 +525,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Both"
      */
-    @DefaultMessage("Both")
     String bothCapitalized();
 
     /**
@@ -605,7 +532,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Double"
      */
-    @DefaultMessage("Double")
     String doubleCapitalized();
 
     /**
@@ -613,7 +539,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Backslash"
      */
-    @DefaultMessage("Backslash")
     String backslashCapitalized();
 
     /**
@@ -621,7 +546,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Configure"
      */
-    @DefaultMessage("Configure")
     String configureCapitalized();
 
     /**
@@ -629,7 +553,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Locales in readr"
      */
-    @DefaultMessage("Locales in readr")
     String localesInReadr();
 
     /**
@@ -637,7 +560,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Encoding Identifier"
      */
-    @DefaultMessage("Encoding Identifier")
     String encodingIdentifier();
 
     /**
@@ -645,7 +567,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Please enter an encoding identifier. For a list of valid encodings run iconvlist()."
      */
-    @DefaultMessage("Please enter an encoding identifier. For a list of valid encodings run iconvlist().")
     String enterAnEncodingIdentifier();
 
     /**
@@ -653,7 +574,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Reading data using haven"
      */
-    @DefaultMessage("Reading data using haven")
     String readingDataUsingHaven();
 
     /**
@@ -661,7 +581,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Reading Excel files using readxl"
      */
-    @DefaultMessage("Reading Excel files using readxl")
     String readingExcelFilesUsingReadxl();
 
     /**
@@ -669,7 +588,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import Excel Data"
      */
-    @DefaultMessage("Import Excel Data")
     String importExcelData();
 
     /**
@@ -677,7 +595,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import Statistical Data"
      */
-    @DefaultMessage("Import Statistical Data")
     String importStatisticalData();
 
     /**
@@ -685,7 +602,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Import Text Data"
      */
-    @DefaultMessage("Import Text Data")
     String importTextData();
 
     /**
@@ -693,7 +609,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Period"
      */
-    @DefaultMessage("Period")
     String periodCapitalized();
 
     /**
@@ -701,7 +616,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Automatic"
      */
-    @DefaultMessage("Automatic")
     String automaticCapitalized();
 
     /**
@@ -709,7 +623,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Use first column"
      */
-    @DefaultMessage("Use first column")
     String useFirstColumn();
 
     /**
@@ -717,7 +630,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Use numbers"
      */
-    @DefaultMessage("Use numbers")
     String useNumbers();
 
     /**
@@ -725,7 +637,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Updating preview"
      */
-    @DefaultMessage("Updating preview")
     String updatingPreview();
 
     /**
@@ -733,7 +644,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCapitalized();
 
     /**
@@ -741,7 +651,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Detecting data format"
      */
-    @DefaultMessage("Detecting data format")
     String detectingDataFormat();
 
     /**
@@ -749,7 +658,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Variable Name Is Required"
      */
-    @DefaultMessage("Variable Name Is Required")
     String variableNameIsRequired();
 
     /**
@@ -757,7 +665,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Please provide a variable name."
      */
-    @DefaultMessage("Please provide a variable name.")
     String pleaseProvideAVariableName();
 
     /**
@@ -765,7 +672,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Unknown"
      */
-    @DefaultMessage("Unknown")
     String unknownCapitalized();
 
     /**
@@ -773,7 +679,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "MacOS System"
      */
-    @DefaultMessage("MacOS System")
     String macOsSystem();
 
     /**
@@ -781,7 +686,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Windows System"
      */
-    @DefaultMessage("Windows System")
     String windowsSystem();
 
     /**
@@ -789,7 +693,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "[Shiny: {0}]"
      */
-    @DefaultMessage("[Shiny: {0}]")
     String shinyFunctionLabel(String functionLabel);
 
     /**
@@ -797,7 +700,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "[Debug source]"
      */
-    @DefaultMessage("[Debug source]")
     String debugSourceBrackets();
 
     /**
@@ -805,7 +707,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "{0} at {1}:{2}"
      */
-    @DefaultMessage("{0} at {1}:{2}")
     String fileLocationAtLine(String emptyString, String fileName, int lineNumber);
 
     /**
@@ -813,7 +714,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Traceback"
      */
-    @DefaultMessage("Traceback")
     String tracebackCapitalized();
 
     /**
@@ -821,7 +721,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Show internals"
      */
-    @DefaultMessage("Show internals")
     String showInternals();
 
     /**
@@ -829,7 +728,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Select all"
      */
-    @DefaultMessage("Select all")
     String selectAll();
 
     /**
@@ -837,7 +735,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Name"
      */
-    @DefaultMessage("Name")
     String nameCapitalized();
 
     /**
@@ -845,7 +742,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Type"
      */
-    @DefaultMessage("Type")
     String typeCapitalized();
 
     /**
@@ -853,7 +749,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Length"
      */
-    @DefaultMessage("Length")
     String lengthCapitalized();
 
     /**
@@ -861,7 +756,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Size"
      */
-    @DefaultMessage("Size")
     String sizeCapitalized();
 
     /**
@@ -869,7 +763,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Value"
      */
-    @DefaultMessage("Value")
     String valueCapitalized();
 
     /**
@@ -877,7 +770,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Collapse Object"
      */
-    @DefaultMessage("Collapse Object")
     String collapseObject();
 
     /**
@@ -885,7 +777,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Expand Object"
      */
-    @DefaultMessage("Expand Object")
     String expandObject();
 
     /**
@@ -893,7 +784,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Has Trace"
      */
-    @DefaultMessage("Has Trace")
     String hasTrace();
 
     /**
@@ -901,7 +791,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated ", {0} bytes"
      */
-    @DefaultMessage(", {0} bytes")
     String sizeBytes(int size);
 
     /**
@@ -909,7 +798,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "{0} ({1} {2})"
      */
-    @DefaultMessage("{0} ({1} {2})")
     String buildNameColumnTitle(String name, String type, String size);
 
     /**
@@ -917,7 +805,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "{0} (unevaluated promise)"
      */
-    @DefaultMessage("{0} (unevaluated promise)")
     String unevaluatedPromise(String emptyString);
 
     /**
@@ -925,7 +812,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Data"
      */
-    @DefaultMessage("Data")
     String dataCapitalized();
 
     /**
@@ -933,7 +819,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Functions"
      */
-    @DefaultMessage("Functions")
     String functionsCapitalized();
 
     /**
@@ -941,7 +826,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Values"
      */
-    @DefaultMessage("Values")
     String valuesCapitalized();
 
     /**
@@ -949,7 +833,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Environment is empty"
      */
-    @DefaultMessage("Environment is empty")
     String environmentIsEmpty();
 
     /**
@@ -957,7 +840,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Pie chart depicting the percentage of total memory in use"
      */
-    @DefaultMessage("Pie chart depicting the percentage of total memory in use")
     String pieChartDepictingMemoryInUse();
 
     /**
@@ -965,7 +847,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Memory in use: {0}% (source: {1})"
      */
-    @DefaultMessage("Memory in use: {0}% (source: {1})")
     String memoryInUse(int percentUsed, String providerName);
 
     /**
@@ -973,7 +854,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Memory Usage"
      */
-    @DefaultMessage("Memory Usage")
     String memoryUsage();
 
     /**
@@ -981,7 +861,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Statistic"
      */
-    @DefaultMessage("Statistic")
     String statisticCapitalized();
 
     /**
@@ -989,7 +868,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Memory"
      */
-    @DefaultMessage("Memory")
     String memoryCapitalized();
 
     /**
@@ -997,7 +875,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Source"
      */
-    @DefaultMessage("Source")
     String sourceCapitalized();
 
     /**
@@ -1005,7 +882,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Used by R objects"
      */
-    @DefaultMessage("Used by R objects")
     String usedByRObjects();
 
     /**
@@ -1013,7 +889,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Used by session"
      */
-    @DefaultMessage("Used by session")
     String usedBySession();
 
     /**
@@ -1021,7 +896,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Used by system"
      */
-    @DefaultMessage("Used by system")
     String usedBySystem();
 
     /**
@@ -1029,7 +903,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Free system memory"
      */
-    @DefaultMessage("Free system memory")
     String freeSystemMemory();
 
     /**
@@ -1037,7 +910,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Swap space used"
      */
-    @DefaultMessage("Swap space used")
     String swapSpaceUsed();
 
     /**
@@ -1045,7 +917,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Total system memory"
      */
-    @DefaultMessage("Total system memory")
     String totalSystemMemory();
 
     /**
@@ -1053,7 +924,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
     String okCapitalized();
 
     /**
@@ -1061,7 +931,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Memory Usage Report ({0}% in use)"
      */
-    @DefaultMessage("Memory Usage Report ({0}% in use)")
     String memoryUsageReport(int percentUsed);
 
     /**
@@ -1069,7 +938,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Show Current Memory Usage"
      */
-    @DefaultMessage("Show Current Memory Usage")
     String showCurrentMemoryUsage();
 
     /**
@@ -1077,7 +945,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "{0} KiB used by R session (source: {1})"
      */
-    @DefaultMessage("{0} KiB used by R session (source: {1})")
     String kiBUsedByRSession(String kb, String name);
 
     /**
@@ -1085,7 +952,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Memory in use: none (suspended)"
      */
-    @DefaultMessage("Memory in use: none (suspended)")
     String memoryInUseNone();
 
     /**
@@ -1093,7 +959,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Empty pie chart depicting no memory usage"
      */
-    @DefaultMessage("Empty pie chart depicting no memory usage")
     String emptyPieChartNoMemoryUsage();
 
     /**
@@ -1101,7 +966,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Preparing data import"
      */
-    @DefaultMessage("Preparing data import")
     String preparingDataImportText();
 
     /**
@@ -1109,7 +973,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      * 
      * @return translated "Session memory limit"
      */
-    @DefaultMessage("Session memory limit")
     String sessionMemoryLimit();
 
     /**
@@ -1117,7 +980,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "System memory used"
      */
-    @DefaultMessage("Limit: {0} MiB")
     String memoryUsageLimit(String limitMB);
 
     /**
@@ -1125,7 +987,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      * 
      * @return translated "Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4} free%)."
      */
-    @DefaultMessage("Session memory used: {0} MiB, {1}. System memory used: {2} out of {3} MiB ({4}% free).")
     String memoryUsageStatus(String sessionMem, String limitMessage, String systemMem, String totalMem, String percentFree);
 
 
@@ -1134,7 +995,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return "Session memory used: {0} MiB, {1}.\nFree system memory: {2} MiB ({3}%)."
      */
-    @DefaultMessage("Session memory used: {0} MiB.\n{1}.\nFree system memory: {2} MiB ({3}%).")
     String multiLineMemoryStatus(String sessionMem, String limitMesage, String freeMemory, String percentFree);
 
     /**
@@ -1142,7 +1002,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "unlimited"
      */
-    @DefaultMessage("unlimited")
     String unlimited();
 
     /**
@@ -1150,7 +1009,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "MiB"
      */
-    @DefaultMessage("MiB")
     String megabytes();
 
     /**
@@ -1158,7 +1016,6 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
      *
      * @return translated "Workbench limit"
      */
-    @DefaultMessage("Workbench limit")
     String workbenchLimit();
 }
 

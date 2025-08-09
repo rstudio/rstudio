@@ -21,7 +21,6 @@ public interface Presentation2Constants extends com.google.gwt.i18n.client.Messa
      *
      * @return translated "Presentation"
      */
-    @DefaultMessage("Presentation")
     String presentationTitle();
 
     /**
@@ -29,7 +28,6 @@ public interface Presentation2Constants extends com.google.gwt.i18n.client.Messa
      *
      * @return translated "Presentation Toolbar"
      */
-    @DefaultMessage("Presentation Toolbar")
     String presentationToolbarLabel();
 
     /**
@@ -37,7 +35,6 @@ public interface Presentation2Constants extends com.google.gwt.i18n.client.Messa
      *
      * @return translated "Present"
      */
-    @DefaultMessage("Present")
     String presentTitle();
 
     /**
@@ -45,7 +42,6 @@ public interface Presentation2Constants extends com.google.gwt.i18n.client.Messa
      *
      * @return translated "Presentation Slides Toolbar"
      */
-    @DefaultMessage("Presentation Slides Toolbar")
     String presentationSlidesToolbarLabel();
 
     /**
@@ -53,7 +49,6 @@ public interface Presentation2Constants extends com.google.gwt.i18n.client.Messa
      *
      * @return translated "Presentation Preview"
      */
-    @DefaultMessage("Presentation Preview")
     String presentationPreviewTitle();
 
 }

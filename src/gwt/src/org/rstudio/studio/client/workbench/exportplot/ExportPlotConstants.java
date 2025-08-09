@@ -21,7 +21,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Height:"
      */
-    @DefaultMessage("Height:")
     String heightText();
 
     /**
@@ -29,7 +28,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Maintain aspect ratio"
      */
-    @DefaultMessage("Maintain aspect ratio")
     String maintainAspectRatioText();
 
     /**
@@ -37,7 +35,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Update Preview"
      */
-    @DefaultMessage("Update Preview")
     String updatePreviewTitle();
 
 
@@ -46,7 +43,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Save Plot as Image"
      */
-    @DefaultMessage("Save Plot as Image")
     String savePlotAsImageText();
 
     /**
@@ -54,7 +50,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String saveTitle();
 
     /**
@@ -62,7 +57,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "View plot after saving"
      */
-    @DefaultMessage("View plot after saving")
     String viewAfterSaveCheckBoxTitle();
  
     /**
@@ -70,7 +64,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Use device pixel ratio"
      */
-    @DefaultMessage("Use device pixel ratio")
     String useDevicePixelRatioCheckBoxLabel();
     
     /**
@@ -78,7 +71,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "When set, the plot dimensions will be scaled according to the current display's device pixel ratio."
      */
-    @DefaultMessage("When set, the plot dimensions will be scaled according to the current display''s device pixel ratio.")
     String useDevicePixelRatioCheckBoxTitle();
 
     /**
@@ -86,7 +78,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "File Name Required"
      */
-    @DefaultMessage("File Name Required")
     String fileNameRequiredCaption();
 
     /**
@@ -94,7 +85,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "You must provide a file name for the plot image."
      */
-    @DefaultMessage("You must provide a file name for the plot image.")
     String fileNameRequiredMessage();
 
     /**
@@ -102,7 +92,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Image format:"
      */
-    @DefaultMessage("Image format:")
     String imageFormatLabel();
 
     /**
@@ -110,7 +99,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Directory..."
      */
-    @DefaultMessage("Directory...")
     String directoryButtonTitle();
 
     /**
@@ -118,7 +106,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Choose Directory"
      */
-    @DefaultMessage("Choose Directory")
     String chooseDirectoryCaption();
 
     /**
@@ -126,7 +113,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Selected Directory"
      */
-    @DefaultMessage("Selected Directory")
     String selectedDirectoryLabel();
 
     /**
@@ -134,7 +120,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "File name:"
      */
-    @DefaultMessage("File name:")
     String fileNameText();
 
     /**
@@ -142,7 +127,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Copy as:"
      */
-    @DefaultMessage("Copy as:")
     String copyAsText();
 
     /**
@@ -150,7 +134,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Format"
      */
-    @DefaultMessage("Format")
     String formatName();
 
     /**
@@ -158,7 +141,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Copy Plot to Clipboard"
      */
-    @DefaultMessage("Copy Plot to Clipboard")
     String copyPlotText();
 
     /**
@@ -166,7 +148,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Copy Plot"
      */
-    @DefaultMessage("Copy Plot")
     String copyButtonText();
 
     /**
@@ -174,7 +155,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Close"
      */
-    @DefaultMessage("Close")
     String closeButtonTitle();
 
     /**
@@ -182,7 +162,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Right click on the plot image above to copy to the clipboard."
      */
-    @DefaultMessage("Right click on the plot image above to copy to the clipboard.")
     String rightClickPlotImageText();
 
     /**
@@ -190,7 +169,6 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
      *
      * @return translated "Width:"
      */
-    @DefaultMessage("Width:")
     String widthText();
 
 }

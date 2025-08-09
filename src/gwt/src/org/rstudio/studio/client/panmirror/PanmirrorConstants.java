@@ -21,7 +21,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Visual Editor"
      */
-    @DefaultMessage("Visual Editor")
     String visualEditorText();
 
     /**
@@ -29,7 +28,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "visual editor {0}"
      */
-    @DefaultMessage("visual editor {0} ")
     String visualEditorLabel(String menuText);
 
     /**
@@ -37,7 +35,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Format"
      */
-    @DefaultMessage("Format")
     String formatTitle();
 
     /**
@@ -45,7 +42,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert"
      */
-    @DefaultMessage("Insert")
     String insertTitle();
 
     /**
@@ -53,7 +49,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table"
      */
-    @DefaultMessage("Table")
     String tableTitle();
 
     /**
@@ -61,7 +56,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Find/Replace"
      */
-    @DefaultMessage("Find/Replace")
     String findReplaceTitle();
 
     /**
@@ -69,7 +63,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Format"
      */
-    @DefaultMessage("Format")
     String formatText();
 
 
@@ -78,7 +71,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert"
      */
-    @DefaultMessage("Insert")
     String insertText();
 
     /**
@@ -86,7 +78,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table"
      */
-    @DefaultMessage("Table")
     String tableText();
 
 
@@ -95,7 +86,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Normal"
      */
-    @DefaultMessage("Normal")
     String panmirrorBlockMenuDefaultText();
 
     /**
@@ -103,7 +93,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Block Format"
      */
-    @DefaultMessage("Block Format")
     String panMirrorBlockMenuTitle();
 
     /**
@@ -111,7 +100,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Undo"
      */
-    @DefaultMessage("Undo")
     String undoMenuText();
 
     /**
@@ -119,7 +107,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Redo"
      */
-    @DefaultMessage("Redo")
     String redoMenuText();
 
     /**
@@ -127,7 +114,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Select All"
      */
-    @DefaultMessage("Select All")
     String selectAllMenuText();
 
     /**
@@ -135,7 +121,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Bold"
      */
-    @DefaultMessage("Bold")
     String boldMenuText();
 
     /**
@@ -143,7 +128,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Italic"
      */
-    @DefaultMessage("Italic")
     String italicMenuText();
 
     /**
@@ -151,7 +135,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Code"
      */
-    @DefaultMessage("Code")
     String codeMenuText();
 
     /**
@@ -159,7 +142,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Strikeout"
      */
-    @DefaultMessage("Strikeout")
     String strikeoutMenuText();
 
     /**
@@ -167,7 +149,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Superscript"
      */
-    @DefaultMessage("Superscript")
     String superscriptMenuText();
 
     /**
@@ -175,7 +156,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Subscript"
      */
-    @DefaultMessage("Subscript")
     String subscriptMenuText();
 
     /**
@@ -183,7 +163,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Small Caps"
      */
-    @DefaultMessage("Small Caps")
     String smallCapsMenuText();
 
     /**
@@ -191,7 +170,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Underline"
      */
-    @DefaultMessage("Underline")
     String underlineMenuText();
 
     /**
@@ -199,7 +177,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Span..."
      */
-    @DefaultMessage("Span...")
     String spanMenuText();
 
     /**
@@ -207,7 +184,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Normal"
      */
-    @DefaultMessage("Normal")
     String normalMenuText();
 
     /**
@@ -215,7 +191,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 1"
      */
-    @DefaultMessage("Header 1")
     String heading1MenuText();
 
     /**
@@ -223,7 +198,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 2"
      */
-    @DefaultMessage("Header 2")
     String heading2MenuText();
 
     /**
@@ -231,7 +205,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 3"
      */
-    @DefaultMessage("Header 3")
     String heading3MenuText();
 
     /**
@@ -239,7 +212,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 4"
      */
-    @DefaultMessage("Header 4")
     String heading4MenuText();
 
     /**
@@ -247,7 +219,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 5"
      */
-    @DefaultMessage("Header 5")
     String heading5MenuText();
 
     /**
@@ -255,7 +226,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Header 6"
      */
-    @DefaultMessage("Header 6")
     String heading6MenuText();
 
     /**
@@ -263,7 +233,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Code"
      */
-    @DefaultMessage("Code")
     String codeBlockMenuText();
 
     /**
@@ -271,7 +240,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Code Block..."
      */
-    @DefaultMessage("Code Block...")
     String codeBlockFormatMenuText();
 
     /**
@@ -279,7 +247,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Blockquote"
      */
-    @DefaultMessage("Blockquote")
     String blockquoteMenuText();
 
     /**
@@ -287,7 +254,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Line Block"
      */
-    @DefaultMessage("Line Block")
     String linkBlockMenuText();
 
     /**
@@ -295,7 +261,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Line Block"
      */
-    @DefaultMessage("Div...")
     String divMenuText();
 
     /**
@@ -303,7 +268,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Edit Attributes..."
      */
-    @DefaultMessage("Edit Attributes...")
     String editAttributesMenuText();
 
     /**
@@ -311,7 +275,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Clear Formatting"
      */
-    @DefaultMessage("Clear Formatting")
     String clearFormattingMenuText();
 
 
@@ -320,7 +283,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "TeX Inline"
      */
-    @DefaultMessage("TeX Inline")
     String texInlineMenuText();
 
 
@@ -329,7 +291,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "TeX Block"
      */
-    @DefaultMessage("TeX Block")
     String texBlockMenuText();
 
     /**
@@ -337,7 +298,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "HTML Inline..."
      */
-    @DefaultMessage("HTML Inline...")
     String htmlInlineMenuText();
 
     /**
@@ -345,7 +305,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "HTML Block"
      */
-    @DefaultMessage("HTML Block")
     String htmlBlockMenuText();
 
     /**
@@ -353,7 +312,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Raw Inline..."
      */
-    @DefaultMessage("Raw Inline...")
     String rawInlineMenuText();
 
     /**
@@ -361,7 +319,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Raw Block..."
      */
-    @DefaultMessage("Raw Block...")
     String rawBlockMenuText();
 
     /**
@@ -369,7 +326,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Expand Chunk"
      */
-    @DefaultMessage("Expand Chunk")
     String expandChunkMenuText();
 
     /**
@@ -377,7 +333,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Collapse Chunk"
      */
-    @DefaultMessage("Collapse Chunk")
     String collapseChunkMenuText();
 
     /**
@@ -385,7 +340,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Expand All Chunks"
      */
-    @DefaultMessage("Expand All Chunks")
     String expandAllChunksMenuText();
 
     /**
@@ -393,7 +347,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Collapse All Chunks"
      */
-    @DefaultMessage("Collapse All Chunks")
     String collapseAllChunksMenuText();
 
     /**
@@ -401,7 +354,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Bulleted List"
      */
-    @DefaultMessage("Bulleted List")
     String bulletedListMenuText();
 
     /**
@@ -409,7 +361,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Numbered List"
      */
-    @DefaultMessage("Numbered List")
     String numberedListMenuText();
 
     /**
@@ -417,7 +368,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Tight List"
      */
-    @DefaultMessage("Tight List")
     String tightListMenuText();
 
     /**
@@ -425,7 +375,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Sink Item"
      */
-    @DefaultMessage("Sink Item")
     String sinkItemMenuText();
 
     /**
@@ -433,7 +382,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Lift Item"
      */
-    @DefaultMessage("Lift Item")
     String liftItemMenuText();
 
     /**
@@ -441,7 +389,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Item Checkbox"
      */
-    @DefaultMessage("Item Checkbox")
     String itemCheckboxMenuText();
 
     /**
@@ -449,7 +396,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Item Checked"
      */
-    @DefaultMessage("Item Checked")
     String itemCheckedMenuText();
 
     /**
@@ -457,7 +403,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "List Attributes..."
      */
-    @DefaultMessage("List Attributes...")
     String listAttributesMenuText();
 
     /**
@@ -465,7 +410,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert Table..."
      */
-    @DefaultMessage("Insert Table...")
     String insertTableMenuText();
 
     /**
@@ -473,7 +417,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Header"
      */
-    @DefaultMessage("Table Header")
     String tableHeaderMenuText();
 
     /**
@@ -481,7 +424,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Caption"
      */
-    @DefaultMessage("Table Caption")
     String tableCaptionMenuText();
 
 
@@ -490,7 +432,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert Column Right"
      */
-    @DefaultMessage("Table:::Insert Column Right")
     String tableInsertColumnRightMenuText();
 
     /**
@@ -498,7 +439,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert %d Columns Right"
      */
-    @DefaultMessage("Insert %d Columns Right")
     String tableInsertColumnRightPluralMenuText();
 
     /**
@@ -506,7 +446,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert Column Left"
      */
-    @DefaultMessage("Table:::Insert Column Left")
     String tableInsertColumnLeftMenuText();
 
     /**
@@ -514,7 +453,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert %d Columns Left"
      */
-    @DefaultMessage("Insert %d Columns Left")
     String tableInsertColumnLeftPluralMenuText();
 
     /**
@@ -522,7 +460,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Delete Column"
      */
-    @DefaultMessage("Table:::Delete Column")
     String tableDeleteColumnMenuText();
 
     /**
@@ -530,7 +467,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Delete %d Columns"
      */
-    @DefaultMessage("Table:::Delete %d Columns")
     String tableDeleteColumnPluralMenuText();
 
     /**
@@ -538,7 +474,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert Row Below"
      */
-    @DefaultMessage("Table:::Insert Row Below")
     String tableInsertRowBelowMenuText();
 
     /**
@@ -546,7 +481,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert %d Rows Below"
      */
-    @DefaultMessage("Table:::Insert %d Rows Below")
     String tableInsertRowBelowPluralMenuText();
 
     /**
@@ -554,7 +488,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert Row Above"
      */
-    @DefaultMessage("Table:::Insert Row Above")
     String tableInsertRowAboveMenuText();
 
     /**
@@ -562,7 +495,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Insert %d Rows Above"
      */
-    @DefaultMessage("Table:::Insert %d Rows Above")
     String tableInsertRowAbovePluralMenuText();
 
     /**
@@ -570,7 +502,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Delete Row"
      */
-    @DefaultMessage("Table:::Delete Row")
     String tableDeleteRowMenuText();
 
     /**
@@ -578,7 +509,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Delete %d Rows"
      */
-    @DefaultMessage("Delete %d Rows")
     String tableDeleteRowPluralMenuText();
 
     /**
@@ -586,7 +516,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Delete Table"
      */
-    @DefaultMessage("Delete Table")
     String deleteTableMenuText();
 
     /**
@@ -594,7 +523,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Next Cell"
      */
-    @DefaultMessage("Table:::Next Cell")
     String tableNextCellMenuText();
 
     /**
@@ -602,7 +530,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table:::Previous Cell"
      */
-    @DefaultMessage("Table:::Previous Cell")
     String tablePreviousCellMenuText();
 
     /**
@@ -610,7 +537,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Align Column:::Left"
      */
-    @DefaultMessage("Table Align Column:::Left")
     String tableAlignColumnLeftMenuText();
 
     /**
@@ -618,7 +544,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Align Column:::Right"
      */
-    @DefaultMessage("Table Align Column:::Right")
     String tableAlignColumnRightMenuText();
 
     /**
@@ -626,7 +551,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Align Column:::Center"
      */
-    @DefaultMessage("Table Align Column:::Center")
     String tableAlignColumnCenterMenuText();
 
     /**
@@ -634,7 +558,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table Align Column:::Default"
      */
-    @DefaultMessage("Table Align Column:::Default")
     String tableAlignColumnDefaultMenuText();
 
     /**
@@ -642,7 +565,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Any..."
      */
-    @DefaultMessage("Any...")
     String anyMenuText();
 
     /**
@@ -650,7 +572,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Table..."
      */
-    @DefaultMessage("Table...")
     String tableMenuText();
 
     /**
@@ -658,7 +579,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Link..."
      */
-    @DefaultMessage("Link...")
     String linkMenuText();
 
     /**
@@ -666,7 +586,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Remove Link"
      */
-    @DefaultMessage("Remove Link")
     String removeLinkMenuText();
 
     /**
@@ -674,7 +593,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Figure / Image..."
      */
-    @DefaultMessage("Figure / Image...")
     String figureImageMenuText();
 
     /**
@@ -682,7 +600,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Footnote"
      */
-    @DefaultMessage("Footnote")
     String footnoteMenuText();
 
     /**
@@ -690,7 +607,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Horizontal Rule"
      */
-    @DefaultMessage("Horizontal Rule")
     String horizontalRuleMenuText();
 
     /**
@@ -698,7 +614,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Paragraph"
      */
-    @DefaultMessage("Paragraph")
     String paragraphMenuText();
 
     /**
@@ -706,7 +621,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Comment"
      */
-    @DefaultMessage("Comment")
     String commentMenuText();
 
     /**
@@ -714,7 +628,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "YAML Block"
      */
-    @DefaultMessage("YAML Block")
     String yamlBlockMenuText();
 
     /**
@@ -722,7 +635,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Shortcode"
      */
-    @DefaultMessage("Shortcode")
     String shortcodeMenuText();
 
     /**
@@ -730,7 +642,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Inline Math"
      */
-    @DefaultMessage("Inline Math")
     String inlineMathMenuText();
 
     /**
@@ -738,7 +649,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Display Math"
      */
-    @DefaultMessage("Display Math")
     String displayMathMenuText();
 
     /**
@@ -746,7 +656,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Definition List"
      */
-    @DefaultMessage("Definition List")
     String definitionListMenuText();
 
     /**
@@ -754,7 +663,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Term"
      */
-    @DefaultMessage("Term")
     String termMenuText();
 
     /**
@@ -762,7 +670,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Description"
      */
-    @DefaultMessage("Description")
     String descriptionMenuText();
 
     /**
@@ -770,7 +677,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Citation..."
      */
-    @DefaultMessage("Citation...")
     String citationMenuText();
 
     /**
@@ -778,7 +684,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Cross Reference"
      */
-    @DefaultMessage("Cross Reference")
     String crossReferenceMenuText();
 
     /**
@@ -786,7 +691,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert Emoji..."
      */
-    @DefaultMessage("Insert Emoji...")
     String insertEmojiMenuText();
 
     /**
@@ -794,7 +698,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert Unicode..."
      */
-    @DefaultMessage("Insert Unicode...")
     String insertUnicodeMenuText();
 
     /**
@@ -802,7 +705,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Em Dash (—)"
      */
-    @DefaultMessage("Insert:::Em Dash (—)")
     String insertEmDashMenuText();
 
     /**
@@ -810,7 +712,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::En Dash (–)"
      */
-    @DefaultMessage("Insert:::En Dash (–)")
     String insertEnDashMenuText();
 
     /**
@@ -818,7 +719,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Non-Breaking Space"
      */
-    @DefaultMessage("Insert:::Non-Breaking Space")
     String insertNonBreakingSpaceMenuText();
 
     /**
@@ -826,7 +726,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Hard Line Break"
      */
-    @DefaultMessage("Insert:::Hard Line Break")
     String insertHardLinkBreakMenuText();
 
     /**
@@ -834,7 +733,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Tabset..."
      */
-    @DefaultMessage("Insert:::Tabset...")
     String insertTabsetMenuText();
 
     /**
@@ -842,7 +740,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Callout..."
      */
-    @DefaultMessage("Insert:::Callout...")
     String insertCalloutMenuText();
 
     /**
@@ -850,7 +747,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Go to Next Section"
      */
-    @DefaultMessage("Go to Next Section")
     String goToNextSectionMenuText();
 
     /**
@@ -858,7 +754,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Go to Previous Section"
      */
-    @DefaultMessage("Go to Previous Section")
     String goToPreviousSectionMenuText();
 
     /**
@@ -866,7 +761,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Go to Next Chunk"
      */
-    @DefaultMessage("Go to Next Chunk")
     String goToNextChunkMenuText();
 
     /**
@@ -874,7 +768,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Slide Pause"
      */
-    @DefaultMessage("Insert:::Slide Pause")
     String insertSlidePauseMenuText();
 
     /**
@@ -882,7 +775,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Slide Notes"
      */
-    @DefaultMessage("Insert:::Slide Notes")
     String insertSlideNotesMenuText();
 
     /**
@@ -890,7 +782,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert:::Slide Columns"
      */
-    @DefaultMessage("Insert:::Slide Columns")
     String insertSlideColumnsMenuText();
 
     /**
@@ -898,7 +789,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Edit Attributes"
      */
-    @DefaultMessage("Edit Attributes")
     String editAttributesCaption();
 
     /**
@@ -906,7 +796,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Span Attributes"
      */
-    @DefaultMessage("Span Attributes")
     String spanAttributesCaption();
 
 
@@ -915,7 +804,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Unwrap Span"
      */
-    @DefaultMessage("Unwrap Span")
     String unwrapSpanRemoveButtonCaption();
 
     /**
@@ -923,7 +811,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Div Attributes"
      */
-    @DefaultMessage("Div Attributes")
     String divAttributesCaption();
 
     /**
@@ -931,7 +818,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Callout"
      */
-    @DefaultMessage("Callout")
     String calloutCaption();
 
     /**
@@ -939,7 +825,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Unwrap Div"
      */
-    @DefaultMessage("Unwrap Div")
     String unwrapDivTitle();
 
 
@@ -948,7 +833,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Type: "
      */
-    @DefaultMessage("Type: ")
     String typeLabel();
 
 
@@ -958,7 +842,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Appearance: "
      */
-    @DefaultMessage("Appearance: ")
     String appearanceLabel();
 
     /**
@@ -966,7 +849,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Show icon"
      */
-    @DefaultMessage("Show icon")
     String showIconLabel();
 
     /**
@@ -974,7 +856,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Caption:"
      */
-    @DefaultMessage("Caption:")
     String captionLabel();
 
     /**
@@ -982,7 +863,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(Optional)"
      */
-    @DefaultMessage("(Optional)")
     String optionalPlaceholder();
 
     /**
@@ -990,7 +870,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Div"
      */
-    @DefaultMessage("Div")
     String divTabList();
 
     /**
@@ -998,7 +877,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Callout"
      */
-    @DefaultMessage("Callout")
     String calloutText();
 
     /**
@@ -1006,7 +884,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Attributes"
      */
-    @DefaultMessage("Attributes")
     String attributesText();
 
     /**
@@ -1014,7 +891,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Code Block"
      */
-    @DefaultMessage("Code Block")
     String codeBlockText();
 
     /**
@@ -1022,7 +898,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Language"
      */
-    @DefaultMessage("Language")
     String languageFormLabel();
 
     /**
@@ -1030,7 +905,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(optional)"
      */
-    @DefaultMessage("(optional)")
     String optionalFormLabel();
 
 
@@ -1039,7 +913,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Figure"
      */
-    @DefaultMessage("Figure")
     String figureLabel();
 
     /**
@@ -1047,7 +920,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Image"
      */
-    @DefaultMessage("Image")
     String imageLabel();
 
     /**
@@ -1055,7 +927,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Width:"
      */
-    @DefaultMessage("Width:")
     String widthLabel();
 
     /**
@@ -1063,7 +934,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Height:"
      */
-    @DefaultMessage("Height:")
     String heightLabel();
 
     /**
@@ -1071,7 +941,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(Auto):"
      */
-    @DefaultMessage("(Auto)")
     String autoText();
 
     /**
@@ -1079,7 +948,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Lock ratio"
      */
-    @DefaultMessage("Lock ratio")
     String lockRatioText();
 
     /**
@@ -1087,7 +955,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Default"
      */
-    @DefaultMessage("default")
     String defaultAlignLabel();
     
     /**
@@ -1095,7 +962,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Left"
      */
-    @DefaultMessage("Left")
     String leftLabel();
 
     /**
@@ -1103,7 +969,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Center"
      */
-    @DefaultMessage("Center")
     String centerLabel();
 
     /**
@@ -1111,7 +976,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Right"
      */
-    @DefaultMessage("Right")
     String rightLabel();
 
     /**
@@ -1119,7 +983,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Alignment"
      */
-    @DefaultMessage("Alignment")
     String legendText();
 
     /**
@@ -1127,7 +990,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Alternative text:"
      */
-    @DefaultMessage("Alternative text:")
     String alternativeTextLabel();
 
     /**
@@ -1135,7 +997,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Link to:"
      */
-    @DefaultMessage("Link to:")
     String linkToLabel();
 
     /**
@@ -1143,7 +1004,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "LaTeX environment:"
      */
-    @DefaultMessage("LaTeX environment:")
     String latexEnvironmentLabel();
 
     /**
@@ -1151,7 +1011,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Title attribute:"
      */
-    @DefaultMessage("Title attribute:")
     String titleAttributeLabel();
 
     /**
@@ -1159,7 +1018,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Advanced"
      */
-    @DefaultMessage("Advanced")
     String advancedLabel();
 
     /**
@@ -1167,7 +1025,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -1175,7 +1032,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must provide a value for image width."
      */
-    @DefaultMessage("You must provide a value for image width.")
     String errorMessage();
 
     /**
@@ -1183,7 +1039,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Units"
      */
-    @DefaultMessage("Units")
     String unitsLabel();
 
     /**
@@ -1191,7 +1046,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Link"
      */
-    @DefaultMessage("Link")
     String linkLabel();
 
     /**
@@ -1199,7 +1053,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Remove Link"
      */
-    @DefaultMessage("Remove Link")
     String removeLinkTitle();
 
     /**
@@ -1207,7 +1060,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Text:"
      */
-    @DefaultMessage("Text:")
     String textFormLabel();
 
     /**
@@ -1215,7 +1067,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Title/Tooltip:"
      */
-    @DefaultMessage("Title/Tooltip:")
     String titleToolTipLabel();
 
     /**
@@ -1223,7 +1074,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must provide a value for the link target."
      */
-    @DefaultMessage("You must provide a value for the link target.")
     String validateErrorMessage();
 
     /**
@@ -1231,7 +1081,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "List"
      */
-    @DefaultMessage("List")
     String listLabel();
 
     /**
@@ -1239,7 +1088,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(Default for presentation)"
      */
-    @DefaultMessage("(Default for presentation)")
     String defaultChoiceList();
 
     /**
@@ -1247,7 +1095,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Incremental (one item at a time)"
      */
-    @DefaultMessage("Incremental (one item at a time)")
     String incrementalChoiceList();
 
     /**
@@ -1255,7 +1102,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Non-Incremental (all items at once)"
      */
-    @DefaultMessage("Non-Incremental (all items at once)")
     String nonIncrementalChoiceList();
 
     /**
@@ -1263,7 +1109,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Example"
      */
-    @DefaultMessage("Example")
     String exampleChoice();
 
     /**
@@ -1271,7 +1116,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Decimal"
      */
-    @DefaultMessage("Decimal")
     String decimalChoice();
 
     /**
@@ -1279,7 +1123,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Edit Equation ID"
      */
-    @DefaultMessage("Edit Equation ID")
     String editEquationCaption();
 
     /**
@@ -1287,7 +1130,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Invalid ID"
      */
-    @DefaultMessage("Invalid ID")
     String invalidIDCaption();
 
     /**
@@ -1295,7 +1137,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Equation IDs must start with eq-"
      */
-    @DefaultMessage("Equation IDs must start with eq-")
     String invalidIDMessage();
 
     /**
@@ -1303,7 +1144,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Raw {0}"
      */
-    @DefaultMessage("Raw {0}")
     String modelDialogCaption(String caption);
 
     /**
@@ -1311,7 +1151,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Inline"
      */
-    @DefaultMessage("Inline")
     String inlineText();
 
     /**
@@ -1319,7 +1158,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Block"
      */
-    @DefaultMessage("Block")
     String blockText();
 
     /**
@@ -1327,7 +1165,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Remove Format"
      */
-    @DefaultMessage("Remove Format")
     String removeFormatText();
 
     /**
@@ -1335,7 +1172,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "No Content Specified"
      */
-    @DefaultMessage("No Content Specified")
     String validateCaption();
 
     /**
@@ -1343,7 +1179,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must provide content to apply the raw format to."
      */
-    @DefaultMessage("You must provide content to apply the raw format to.")
     String validateMessage();
 
     /**
@@ -1351,7 +1186,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Image (File or URL):"
      */
-    @DefaultMessage("Image (File or URL):")
     String imageChooserLabel();
 
     /**
@@ -1359,7 +1193,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Browse..."
      */
-    @DefaultMessage("Browse...")
     String browseLabel();
 
     /**
@@ -1367,7 +1200,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Choose Image"
      */
-    @DefaultMessage("Choose Image")
     String chooseImageCaption();
 
     /**
@@ -1375,7 +1207,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Looking Up DOI.."
      */
-    @DefaultMessage("Looking Up DOI..")
     String onProgressMessage();
 
     /**
@@ -1383,7 +1214,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must provide a value for the citation id."
      */
-    @DefaultMessage("You must provide a value for the citation id.")
     String errorValidateMessage();
 
     /**
@@ -1391,7 +1221,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Please provide a validation citation Id."
      */
-    @DefaultMessage("Please provide a validation citation Id.")
     String citationErrorMessage();
 
     /**
@@ -1399,7 +1228,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Please select a unique citation Id."
      */
-    @DefaultMessage("Please select a unique citation Id.")
     String uniqueCitationErrorMessage();
 
     /**
@@ -1407,7 +1235,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must select a bibliography."
      */
-    @DefaultMessage("You must select a bibliography.")
     String bibliographyErrorMessage();
 
     /**
@@ -1415,7 +1242,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must provide a bibliography file name."
      */
-    @DefaultMessage("You must provide a bibliography file name.")
     String bibliographyFileNameErrorMessage();
 
     /**
@@ -1423,7 +1249,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "DOI Unavailable"
      */
-    @DefaultMessage("DOI Unavailable")
     String doiUnavailableCaption();
 
     /**
@@ -1431,7 +1256,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Citation from DOI"
      */
-    @DefaultMessage("Citation from DOI")
     String citationDOITitle();
 
     /**
@@ -1439,7 +1263,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Citation from "
      */
-    @DefaultMessage("Citation from ")
     String citationFromText();
 
     /**
@@ -1447,7 +1270,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "An error occurred while loading citation data for this DOI."
      */
-    @DefaultMessage("An error occurred while loading citation data for this DOI.")
     String kUnknownError();
 
     /**
@@ -1455,7 +1277,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Citation data for this DOI couldn't be found."
      */
-    @DefaultMessage("Citation data for this DOI couldn''t be found.")
     String kNoDataError();
 
     /**
@@ -1463,7 +1284,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Unable to reach server to load citation data for this DOI."
      */
-    @DefaultMessage("Unable to reach server to load citation data for this DOI.")
     String kServerError();
 
     /**
@@ -1471,7 +1291,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert Table"
      */
-    @DefaultMessage("Insert Table")
     String insertTableCaption();
 
     /**
@@ -1479,7 +1298,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Insert Tabset"
      */
-    @DefaultMessage("Insert Tabset")
     String insertTabsetCaption();
 
     /**
@@ -1487,7 +1305,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Tab names:"
      */
-    @DefaultMessage("Tab names:")
     String tabNamesFormLabel();
 
     /**
@@ -1495,7 +1312,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Image"
      */
-    @DefaultMessage("Image")
     String imageTabListLabel();
 
     /**
@@ -1503,7 +1319,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Tabs"
      */
-    @DefaultMessage("Tabs")
     String tabsText();
 
     /**
@@ -1511,7 +1326,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "You must specify at least two tab names"
      */
-    @DefaultMessage("You must specify at least two tab names")
     String tabSetErrorMessage();
 
     /**
@@ -1519,7 +1333,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(Tab {0}{1})"
      */
-    @DefaultMessage("(Tab {0}{1})")
     String addTabCaptionInput(int index, String required);
 
     /**
@@ -1527,7 +1340,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "- Optional"
      */
-    @DefaultMessage("- Optional")
     String optionalText();
 
     /**
@@ -1535,7 +1347,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Format:"
      */
-    @DefaultMessage("Format:")
     String formatLabel();
 
     /**
@@ -1543,7 +1354,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(Choose Format)"
      */
-    @DefaultMessage("(Choose Format)")
     String chooseFormatLabel();
 
 
@@ -1552,7 +1362,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "{0} occurrences replaced."
      */
-    @DefaultMessage("{0} occurrences replaced.")
     String rStudioGinjectorErrorMessage(int replaced);
 
     /**
@@ -1560,7 +1369,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "(chunk {0})"
      */
-    @DefaultMessage("(chunk {0})")
     String chunkText(int sequence);
 
     /**
@@ -1568,7 +1376,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Reading bibliography..."
      */
-    @DefaultMessage("Reading bibliography...")
     String readingBibliographyProgressText();
 
     /**
@@ -1576,7 +1383,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Saving bibliography..."
      */
-    @DefaultMessage("Saving bibliography...")
     String savingBibliographyProgressText();
 
     /**
@@ -1584,7 +1390,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Looking up DOI..."
      */
-    @DefaultMessage("Looking up DOI...")
     String lookingUpDOIProgress();
 
     /**
@@ -1592,7 +1397,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Loading Collections..."
      */
-    @DefaultMessage("Loading Collections...")
     String loadingCollectionsProgressText();
 
     /**
@@ -1600,7 +1404,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
      *
      * @return translated "Reading Collections..."
      */
-    @DefaultMessage("Reading Collections...")
     String readingCollectionsProgressText();
 
 }

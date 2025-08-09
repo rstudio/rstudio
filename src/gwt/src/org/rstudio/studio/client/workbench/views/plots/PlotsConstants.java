@@ -21,7 +21,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Locator active (Esc to finish)"
      */
-    @DefaultMessage("Locator active (Esc to finish)")
     String locatorActiveText();
 
     /**
@@ -29,7 +28,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Finish"
      */
-    @DefaultMessage("Finish")
     String finishText();
 
     /**
@@ -37,7 +35,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove Plot"
      */
-    @DefaultMessage("Remove Plot")
     String removePlotCaption();
 
     /**
@@ -45,7 +42,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to remove the current plot?"
      */
-    @DefaultMessage("Are you sure you want to remove the current plot?")
     String removePlotMessage();
 
     /**
@@ -53,7 +49,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Removing plot..."
      */
-    @DefaultMessage("Removing plot...")
     String removingPlotText();
 
     /**
@@ -61,7 +56,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clear Plots"
      */
-    @DefaultMessage("Clear Plots")
     String clearPlotsCaption();
 
     /**
@@ -69,7 +63,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to clear all of the plots in the history?"
      */
-    @DefaultMessage("Are you sure you want to clear all of the plots in the history?")
     String clearPlotsMessage();
 
     /**
@@ -77,7 +70,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Clearing plots..."
      */
-    @DefaultMessage("Clearing plots...")
     String clearingPlotsText();
 
     /**
@@ -85,7 +77,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String errorCaption();
 
     /**
@@ -93,7 +84,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Preparing to export plot..."
      */
-    @DefaultMessage("Preparing to export plot...")
     String preparingExportPlotText();
 
     /**
@@ -101,7 +91,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Server Error"
      */
-    @DefaultMessage("Server Error")
     String serverErrorCaption();
 
     /**
@@ -109,7 +98,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Plots"
      */
-    @DefaultMessage("Plots")
     String plotsTitle();
 
     /**
@@ -117,7 +105,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Current Plot"
      */
-    @DefaultMessage("Current Plot")
     String currentPlotTitle();
 
     /**
@@ -125,7 +112,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Publishing plots"
      */
-    @DefaultMessage("Publishing plots")
     String publishingPlotsLabel();
 
     /**
@@ -133,7 +119,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Plot"
      */
-    @DefaultMessage("Plot")
     String plotText();
 
     /**
@@ -141,7 +126,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Plots Pane"
      */
-    @DefaultMessage("Plots Pane")
     String plotsPaneLabel();
 
     /**
@@ -149,7 +133,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Export"
      */
-    @DefaultMessage("Export")
     String exportText();
 
     /**
@@ -157,7 +140,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Plot Preview"
      */
-    @DefaultMessage("Plot Preview")
     String plotPreviewTitle();
 
     /**
@@ -165,7 +147,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Converting Plot..."
      */
-    @DefaultMessage("Converting Plot...")
     String convertingPlotText();
 
     /**
@@ -173,7 +154,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Error Saving Plot"
      */
-    @DefaultMessage("Error Saving Plot")
     String errorSavingPlotCaption();
 
     /**
@@ -181,7 +161,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "File Exists"
      */
-    @DefaultMessage("File Exists")
     String fileExistsCaption();
 
     /**
@@ -189,7 +168,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The specified file name already exists. Do you want to overwrite it?"
      */
-    @DefaultMessage("The specified file name already exists. Do you want to overwrite it?")
     String fileExistsMessage();
 
     /**
@@ -197,7 +175,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save Plot as PDF"
      */
-    @DefaultMessage("Save Plot as PDF")
     String savePlotPDFText();
 
     /**
@@ -205,7 +182,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String saveTitle();
 
     /**
@@ -213,7 +189,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Preview"
      */
-    @DefaultMessage("Preview")
     String previewTitle();
 
     /**
@@ -221,7 +196,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "PDF Size:"
      */
-    @DefaultMessage("PDF Size:")
     String pdfSizeText();
 
     /**
@@ -229,7 +203,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Orientation:"
      */
-    @DefaultMessage("Orientation:")
     String orientationText();
 
     /**
@@ -237,7 +210,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Orientation"
      */
-    @DefaultMessage("Orientation")
     String orientationLabel();
 
     /**
@@ -245,7 +217,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Portrait"
      */
-    @DefaultMessage("Portrait")
     String portraitLabel();
 
     /**
@@ -253,7 +224,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Landscape"
      */
-    @DefaultMessage("Landscape")
     String landscapeLabel();
 
     /**
@@ -261,7 +231,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Options:"
      */
-    @DefaultMessage("Options:")
     String optionsText();
 
     /**
@@ -269,7 +238,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Use cairo_pdf device"
      */
-    @DefaultMessage("Use cairo_pdf device")
     String useCairoPdfDeviceLabel();
 
     /**
@@ -277,7 +245,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} (requires X11)"
      */
-    @DefaultMessage("{0} (requires X11)")
     String requiresX11Label(String label);
 
     /**
@@ -285,7 +252,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Directory..."
      */
-    @DefaultMessage("Directory...")
     String directoryTitle();
 
     /**
@@ -293,7 +259,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Choose Directory"
      */
-    @DefaultMessage("Choose Directory")
     String chooseDirectoryCaption();
 
     /**
@@ -301,7 +266,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Selected Directory"
      */
-    @DefaultMessage("Selected Directory")
     String selectedDirectoryLabel();
 
     /**
@@ -309,7 +273,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "File name:"
      */
-    @DefaultMessage("File name:")
     String fileNameText();
 
     /**
@@ -317,7 +280,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "View plot after saving"
      */
-    @DefaultMessage("View plot after saving")
     String viewPlotAfterSavingLabel();
 
     /**
@@ -325,7 +287,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "File Name Required"
      */
-    @DefaultMessage("File Name Required")
     String fileNameRequiredCaption();
 
     /**
@@ -333,7 +294,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "You must provide a file name for the plot pdf."
      */
-    @DefaultMessage("You must provide a file name for the plot pdf.")
     String fileNameRequiredMessage();
 
     /**
@@ -341,7 +301,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Size Preset"
      */
-    @DefaultMessage("Size Preset")
     String sizePresetLabel();
 
     /**
@@ -349,7 +308,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Device Size)"
      */
-    @DefaultMessage("(Device Size)")
     String deviceSizeName();
 
     /**
@@ -357,7 +315,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Width"
      */
-    @DefaultMessage("Width")
     String widthLabel();
 
     /**
@@ -365,7 +322,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Height"
      */
-    @DefaultMessage("Height")
     String heightLabel();
 
     /**
@@ -373,7 +329,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "inches"
      */
-    @DefaultMessage("inches")
     String inchesLabel();
 
     /**
@@ -381,7 +336,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Custom)"
      */
-    @DefaultMessage("(Custom)")
     String customLabel();
 
     /**
@@ -389,7 +343,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Show plot manipulator"
      */
-    @DefaultMessage("Show plot manipulator")
     String showPlotManipulatorTitle();
 
     /**
@@ -397,7 +350,6 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Manipulate"
      */
-    @DefaultMessage("Manipulate")
     String manipulateTitle();
 
 }

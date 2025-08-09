@@ -24,7 +24,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Library")
     String libraryCaption();
 
     /**
@@ -32,7 +31,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Package")
     String packageColumnText();
 
     /**
@@ -40,7 +38,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Library Version")
     String libraryVersionColumnText();
 
     /**
@@ -48,7 +45,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Lockfile Version")
     String lockfileVersionColumnText();
 
     /**
@@ -56,7 +52,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Action")
     String actionVersionColumnText();
 
     /**
@@ -64,7 +59,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("The following packages will be updated in the lockfile.")
     String snapshotHeaderLabel();
 
     /**
@@ -72,7 +66,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("The following changes will be made to the project library.")
     String restoreHeaderLabel();
 
     /**
@@ -80,7 +73,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("[Not installed]")
     String libraryVersionNotInstalled();
 
     /**
@@ -88,7 +80,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("[Not recorded]")
     String lockfileVersionNotRecorded();
 
     /**
@@ -96,7 +87,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Add ''{0}'' [{1}] to the lockfile")
     String installAction(String packageName, String libraryVersion);
 
     /**
@@ -104,7 +94,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Remove ''{0}'' [{1}] from the lockfile")
     String removeAction(String packageName, String lockfileVersion);
 
     /**
@@ -112,7 +101,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Update ''{0}'' [{1} -> {2}] in the lockfile")
     String updateAction(String packageName, String lockfileVersion, String libraryVersion);
 
     /**
@@ -120,7 +108,6 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Install ''{0}'' [{1}]")
     String restoreInstallAction(String packageName, String lockfileVersion);
 
     /**
@@ -128,6 +115,5 @@ public interface RenvConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Remove ''{0}'' [{1}]")
     String restoreRemoveAction(String packageName, String libraryfileVersion);
 }

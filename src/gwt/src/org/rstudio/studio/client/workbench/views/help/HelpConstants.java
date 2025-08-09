@@ -21,7 +21,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help"
      */
-    @DefaultMessage("Help")
     String helpText();
 
     /**
@@ -29,7 +28,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help Pane"
      */
-    @DefaultMessage("Help Pane")
     String helpPaneTitle();
 
     /**
@@ -37,7 +35,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help Tab"
      */
-    @DefaultMessage("Help Tab")
     String helpTabLabel();
 
     /**
@@ -45,7 +42,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Help Tab Second"
      */
-    @DefaultMessage("Help Tab Second")
     String helpTabSecondLabel();
 
     /**
@@ -53,7 +49,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Find next (Enter)"
      */
-    @DefaultMessage("Find next (Enter)")
     String findNextLabel();
 
     /**
@@ -61,7 +56,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Find previous"
      */
-    @DefaultMessage("Find previous")
     String findPreviousLabel();
 
     /**
@@ -69,7 +63,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Find in Topic"
      */
-    @DefaultMessage("Find in Topic")
     String findInTopicLabel();
 
     /**
@@ -77,7 +70,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "No occurrences found"
      */
-    @DefaultMessage("No occurrences found")
     String noOccurrencesFoundMessage();
 
     /**
@@ -85,7 +77,6 @@ public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Search help"
      */
-    @DefaultMessage("Search help")
     String searchHelpLabel();
 
 }

@@ -21,7 +21,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Background Jobs Still Running"
      */
-    @DefaultMessage("Background Jobs Still Running")
     String backgroundJobsRunningCaption();
 
     /**
@@ -29,7 +28,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The Background Jobs tab cannot be closed while there {0}\n\nWait until all background jobs have completed."
      */
-    @DefaultMessage("The Background Jobs tab cannot be closed while there {0}\\n\\nWait until all background jobs have completed.")
     String backgroundJobsRunningMessage(String localJobMessage);
 
     /**
@@ -37,7 +35,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "are unfinished background jobs."
      */
-    @DefaultMessage("are unfinished background jobs.")
     String backgroundJobsUnfinished();
 
     /**
@@ -45,7 +42,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "is an unfinished background job."
      */
-    @DefaultMessage("is an unfinished background job.")
     String backgroundJobUnfinished();
 
     /**
@@ -53,7 +49,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Background Jobs"
      */
-    @DefaultMessage("Background Jobs")
     String backgroundJobsTitle();
 
     /**
@@ -61,7 +56,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cannot retrieve job output"
      */
-    @DefaultMessage("Cannot retrieve job output")
     String cannotRetrieveJobOutputCaption();
 
     /**
@@ -69,7 +63,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Running"
      */
-    @DefaultMessage("Running")
     String runningState();
 
     /**
@@ -77,7 +70,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Idle"
      */
-    @DefaultMessage("Idle")
     String idleState();
 
     /**
@@ -85,7 +77,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancelled"
      */
-    @DefaultMessage("Cancelled")
     String cancelledState();
 
     /**
@@ -93,7 +84,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Failed"
      */
-    @DefaultMessage("Failed")
     String failedState();
 
     /**
@@ -101,7 +91,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Succeeded"
      */
-    @DefaultMessage("Succeeded")
     String succeededState();
 
     /**
@@ -109,7 +98,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Unknown {0}"
      */
-    @DefaultMessage("Unknown {0}")
     String unknownState(int state);
 
     /**
@@ -117,7 +105,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove Completed Background Jobs"
      */
-    @DefaultMessage("Remove Completed Background Jobs")
     String removeCompletedBackgroundJobsCaption();
 
     /**
@@ -125,7 +112,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Are you sure you want to remove completed background jobs from the list of jobs?\n\nOnce removed, background jobs cannot be recovered."
      */
-    @DefaultMessage("Are you sure you want to remove completed background jobs from the list of jobs?\\n\\nOnce removed, background jobs cannot be recovered.")
     String removeCompletedBackgroundJobsMessage();
 
     /**
@@ -133,7 +119,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Remove jobs"
      */
-    @DefaultMessage("Remove jobs")
     String removeJobsLabel();
 
     /**
@@ -141,7 +126,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Cancel"
      */
-    @DefaultMessage("Cancel")
     String cancelLabel();
 
     /**
@@ -149,7 +133,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} jobs"
      */
-    @DefaultMessage("{0} jobs")
     String numJobsLabel(int jobs);
 
     /**
@@ -157,7 +140,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Run Selection as Background Job"
      */
-    @DefaultMessage("Run Selection as Background Job")
     String runSelectionAsBackgroundJobCaption();
 
     /**
@@ -165,7 +147,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Run Script as Background Job"
      */
-    @DefaultMessage("Run Script as Background Job")
     String runScriptAsBackgroundJobCaption();
 
     /**
@@ -173,7 +154,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Stop background job"
      */
-    @DefaultMessage("Stop background job")
     String stopJobTitle();
 
     /**
@@ -181,7 +161,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Select Background Job"
      */
-    @DefaultMessage("Select Background Job")
     String selectJobText();
 
     /**
@@ -189,7 +168,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Waiting"
      */
-    @DefaultMessage("Waiting")
     String waitingText();
 
     /**
@@ -197,7 +175,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "R Script"
      */
-    @DefaultMessage("R Script")
     String rScriptLabel();
 
     /**
@@ -205,7 +182,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Working Directory"
      */
-    @DefaultMessage("Working Directory")
     String workingDirectoryCaption();
 
     /**
@@ -213,7 +189,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "(Don''t copy)"
      */
-    @DefaultMessage("(Don''t copy)")
     String dontCopyText();
 
     /**
@@ -221,7 +196,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "To global environment"
      */
-    @DefaultMessage("To global environment")
     String toGlobalEnvironmentText();
 
     /**
@@ -229,7 +203,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "To results object in global environment"
      */
-    @DefaultMessage("To results object in global environment")
     String toResultObjectText();
 
     /**
@@ -237,7 +210,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Start"
      */
-    @DefaultMessage("Start")
     String startButtonCaption();
 
     /**
@@ -245,7 +217,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Current selection"
      */
-    @DefaultMessage("Current selection")
     String currentSelectionText();
 
     /**
@@ -253,7 +224,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "{0} selection"
      */
-    @DefaultMessage("{0} selection")
     String selectionText(String path);
 
     /**
@@ -261,7 +231,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Replay job"
      */
-    @DefaultMessage("Replay job")
     String replayJobText();
 
     /**
@@ -269,7 +238,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "The following {0} jobs are still running."
      */
-    @DefaultMessage("The following {0} jobs are still running.")
     String jobListLabel(int count);
 
     /**
@@ -277,7 +245,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminate Running Jobs"
      */
-    @DefaultMessage("Terminate Running Jobs")
     String terminateRunningJobsCaption();
 
     /**
@@ -285,7 +252,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Terminate Jobs"
      */
-    @DefaultMessage("Terminate Jobs")
     String terminateJobsCaption();
 
     /**
@@ -293,7 +259,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Background Jobs Tab"
      */
-    @DefaultMessage("Background Jobs Tab")
     String backgroundJobsTabLabel();
 
     /**
@@ -301,7 +266,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "View all background jobs"
      */
-    @DefaultMessage("View all background jobs")
     String viewAllJobsTitle();
 
     /**
@@ -309,7 +273,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Workbench Jobs"
      */
-    @DefaultMessage("Workbench Jobs")
     String workbenchJobsTitle();
 
 }

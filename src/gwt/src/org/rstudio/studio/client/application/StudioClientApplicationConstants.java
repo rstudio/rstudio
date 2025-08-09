@@ -22,7 +22,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Retry"
      */
-    @DefaultMessage("Retry")
     String retryButtonLabel();
 
     /**
@@ -30,7 +29,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Licensing Limit Reached"
      */
-    @DefaultMessage("Licensing Limit Reached")
     String licensingLimitCaption();
 
     /**
@@ -38,7 +36,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Please quit any unused running sessions and try again, or contact your administrator to update your license."
      */
-    @DefaultMessage("{0}\\n\\n Please quit any unused running sessions and try again, or contact your administrator to update your license.")
     String quitRunningSessionsMessage(String userMsg);
 
     /**
@@ -46,7 +43,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Unable to connect to service"
      */
-    @DefaultMessage("Unable to connect to service")
     String unableToConnectMessage();
 
     /**
@@ -54,7 +50,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Error occurred during transmission"
      */
-    @DefaultMessage("Error occurred during transmission")
     String errorTransmissionMessage();
 
     /**
@@ -62,7 +57,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Go Home"
      */
-    @DefaultMessage("Go Home")
     String goHomeButtonLabel();
 
     /**
@@ -70,7 +64,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Cannot Connect to R Session"
      */
-    @DefaultMessage("Cannot Connect to R Session")
     String cannotConnectRCaption();
 
     /**
@@ -78,7 +71,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Could not connect to the R session on RStudio Server."
      */
-    @DefaultMessage("Could not connect to the R session on RStudio Server.\n\n{0} ({1})")
     String cannotConnectRMessage(String userMessage, int errorCode);
 
     /**
@@ -86,7 +78,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio Initialization Error"
      */
-    @DefaultMessage("RStudio Initialization Error")
     String rStudioInitializationErrorCaption();
 
     /**
@@ -94,7 +85,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "docs"
      */
-    @DefaultMessage("docs")
     String helpUsingRStudioLinkName();
 
     /**
@@ -102,7 +92,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "community-forum"
      */
-    @DefaultMessage("community-forum")
     String communityForumLinkName();
 
     /**
@@ -110,7 +99,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "support"
      */
-    @DefaultMessage("support")
     String rStudioSupportLinkName();
 
     /**
@@ -118,7 +106,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Focused Element: "
      */
-    @DefaultMessage("Focused Element: ")
     String focusedElementLabel();
 
     /**
@@ -126,7 +113,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Loading workspace"
      */
-    @DefaultMessage("Loading workspace")
     String loadingWorkspaceMessage();
 
     /**
@@ -134,7 +120,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Saving workspace image"
      */
-    @DefaultMessage("Saving workspace image")
     String savingWorkspaceImageMessage();
 
     /**
@@ -142,7 +127,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Backing up R session..."
      */
-    @DefaultMessage("Backing up R session...")
     String backingUpRSessionMessage();
 
     /**
@@ -150,7 +134,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Restoring R session..."
      */
-    @DefaultMessage("Restoring R session...")
     String restoringRSessionMessage();
     
     /**
@@ -158,7 +141,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Switch R Version"
      */
-    @DefaultMessage("Switch R Version")
     String switchRVersionCaption();
 
     /**
@@ -166,7 +148,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The workspace was not restored"
      */
-    @DefaultMessage("The workspace was not restored")
     String workspaceNotRestoredMessage();
 
     /**
@@ -174,7 +155,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated ", and startup scripts were not executed"
      */
-    @DefaultMessage(", and startup scripts were not executed")
     String startupScriptsNotExecutedMessage();
 
     /**
@@ -182,7 +162,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Startup scripts were not executed."
      */
-    @DefaultMessage("Startup scripts were not executed.")
     String startupScriptsErrorMessage();
 
     /**
@@ -190,7 +169,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "This R session was started in safe mode. "
      */
-    @DefaultMessage("This R session was started in safe mode. ")
     String rSessionSafeModeMessage();
 
     /**
@@ -198,7 +176,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Are you sure you want to terminate R?"
      */
-    @DefaultMessage("Are you sure you want to terminate R?")
     String terminateRMessage();
 
     /**
@@ -206,7 +183,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R is not responding to your request to interrupt processing so to stop the current operation you may need to terminate R entirely.\n\n{0}\n\n Do you want to terminate R now?"
      */
-    @DefaultMessage("R is not responding to your request to interrupt processing so to stop the current operation you may need to terminate R entirely.\\n\\n{0}\\n\\n Do you want to terminate R now?")
     String terminationDialog(String terminationMsg);
 
     /**
@@ -214,7 +190,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Terminate R"
      */
-    @DefaultMessage("Terminate R")
     String terminateRCaption();
 
     /**
@@ -222,7 +197,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Terminating R will cause your R session to immediately abort. Active computations will be interrupted and unsaved source file changes and workspace objects will be discarded."
      */
-    @DefaultMessage("Terminating R will cause your R session to immediately abort. Active computations will be interrupted and unsaved source file changes and workspace objects will be discarded.")
     String terminationConsequenceMessage();
 
     /**
@@ -230,7 +204,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The R session is currently busy."
      */
-    @DefaultMessage("The R session is currently busy.")
     String rSessionCurrentlyBusyMessage();
 
     /**
@@ -238,7 +211,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The R session and the terminal are currently busy."
      */
-    @DefaultMessage("The R session and the terminal are currently busy.")
     String rSessionTerminalBusyMessage();
 
     /**
@@ -246,7 +218,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The terminal is currently busy."
      */
-    @DefaultMessage("The terminal is currently busy.")
     String terminalCurrentlyBusyMessage();
 
     /**
@@ -254,7 +225,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "{0} Are you sure you want to quit?"
      */
-    @DefaultMessage("{0} Are you sure you want to quit?")
     String applicationQuitMessage(String message);
 
     /**
@@ -262,7 +232,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Quit RStudio"
      */
-    @DefaultMessage("Quit RStudio")
     String quitRStudio();
 
     /**
@@ -270,7 +239,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Are you sure you want to quit the R session?"
      */
-    @DefaultMessage("Are you sure you want to quit the R session?")
     String quitRSessionsMessage();
 
     /**
@@ -278,7 +246,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Save workspace image to "
      */
-    @DefaultMessage("Save workspace image to ")
     String saveWorkspaceImageMessage();
 
     /**
@@ -286,7 +253,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Quit R Session"
      */
-    @DefaultMessage("Quit R Session")
     String quitRSessionTitle();
 
     /**
@@ -294,7 +260,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Restart R"
      */
-    @DefaultMessage("Restart R")
     String restartRCaption();
 
     /**
@@ -302,7 +267,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Terminal jobs will be terminated. Are you sure?"
      */
-    @DefaultMessage("Terminal jobs will be terminated. Are you sure?")
     String terminalJobTerminatedQuestion();
 
     /**
@@ -310,7 +274,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Error"
      */
-    @DefaultMessage("Error")
     String progressErrorCaption();
 
     /**
@@ -318,7 +281,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Restarting R.."
      */
-    @DefaultMessage("Restarting R..")
     String restartingRMessage();
 
     /**
@@ -326,7 +288,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Quit R Session"
      */
-    @DefaultMessage("Quit R Session")
     String quitRSessionCaption();
 
     /**
@@ -334,7 +295,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Restarting RStudio"
      */
-    @DefaultMessage("Restarting RStudio")
     String restartRStudio();
 
     /**
@@ -342,7 +302,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Workspace image (.RData)"
      */
-    @DefaultMessage("Workspace image (.RData)")
     String studioClientTitle();
 
     /**
@@ -350,7 +309,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Switching to project "
      */
-    @DefaultMessage("Switching to project ")
     String switchingToProjectMessage();
 
     /**
@@ -358,7 +316,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Closing project"
      */
-    @DefaultMessage("Closing project")
     String closingProjectMessage();
 
     /**
@@ -366,7 +323,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Quitting R Session..."
      */
-    @DefaultMessage("Quitting R Session...")
     String quitRSessionMessage();
 
     /**
@@ -374,7 +330,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "server quitSession responded false"
      */
-    @DefaultMessage("server quitSession responded false")
     String serverQuitSession();
 
     /**
@@ -382,7 +337,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Console cleared"
      */
-    @DefaultMessage("Console cleared")
     String consoleClearedAnnouncement();
 
     /**
@@ -390,7 +344,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Console output (requires restart)"
      */
-    @DefaultMessage("Console output (requires restart)")
     String consoleOutputAnnouncement();
 
     /**
@@ -398,7 +351,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Console command (requires restart)"
      */
-    @DefaultMessage("Console command (requires restart)")
     String consoleCommandAnnouncement();
 
     /**
@@ -406,7 +358,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Filtered result count"
      */
-    @DefaultMessage("Filtered result count")
     String filterResultCountAnnouncement();
 
     /**
@@ -414,7 +365,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Commit message length"
      */
-    @DefaultMessage("Commit message length")
     String commitMessageLengthAnnouncement();
 
     /**
@@ -422,7 +372,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Inaccessible feature warning"
      */
-    @DefaultMessage("Inaccessible feature warning")
     String inaccessibleWarningAnnouncement();
 
     /**
@@ -430,7 +379,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Info bars"
      */
-    @DefaultMessage("Info bars")
     String infoBarsAnnouncement();
 
     /**
@@ -438,7 +386,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Task completion"
      */
-    @DefaultMessage("Task completion")
     String taskCompletionAnnouncement();
 
     /**
@@ -446,7 +393,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Task progress details"
      */
-    @DefaultMessage("Task progress details")
     String taskProgressAnnouncement();
 
     /**
@@ -454,7 +400,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Screen reader not enabled"
      */
-    @DefaultMessage("Screen reader not enabled")
     String screenReaderAnnouncement();
 
     /**
@@ -462,7 +407,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Changes in session state"
      */
-    @DefaultMessage("Changes in session state")
     String sessionStateAnnouncement();
 
     /**
@@ -470,7 +414,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Tab key focus mode change"
      */
-    @DefaultMessage("Tab key focus mode change")
     String tabKeyFocusAnnouncement();
 
     /**
@@ -478,7 +421,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Toolbar visibility change"
      */
-    @DefaultMessage("Toolbar visibility change")
     String toolBarVisibilityAnnouncement();
 
     /**
@@ -486,7 +428,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Warning bars"
      */
-    @DefaultMessage("Warning bars")
     String warningBarsAnnouncement();
 
     /**
@@ -494,7 +435,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Session suspension"
      */
-    @DefaultMessage("Session suspension")
     String sessionSuspendAnnouncement();
 
     /**
@@ -502,7 +442,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Unregistered live announcement: "
      */
-    @DefaultMessage("Unregistered live announcement: ")
     String unregisteredLiveAnnouncementMessage();
 
     /**
@@ -510,7 +449,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Close Remote Session"
      */
-    @DefaultMessage("Close Remote Session")
     String closeRemoteSessionCaption();
 
     /**
@@ -518,7 +456,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Do you want to close the remote session?"
      */
-    @DefaultMessage("Do you want to close the remote session?")
     String closeRemoteSessionMessage();
 
     /**
@@ -526,7 +463,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Unable to obtain a license. Please restart RStudio to try again."
      */
-    @DefaultMessage("Unable to obtain a license. Please restart RStudio to try again.")
     String licenseLostMessage();
 
     /**
@@ -534,7 +470,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Unable to find an active license. Please select a license file or restart RStudio to try again."
      */
-    @DefaultMessage("Unable to find an active license. Please select a license file or restart RStudio to try again.")
     String unableToFindActiveLicenseMessage();
 
     /**
@@ -542,7 +477,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Active RStudio License Not Found"
      */
-    @DefaultMessage("Active RStudio License Not Found")
     String activeRStudioLicenseNotFound();
 
     /**
@@ -550,7 +484,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Select License..."
      */
-    @DefaultMessage("Select License...")
     String selectLicense();
 
     /**
@@ -558,7 +491,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Details: "
      */
-    @DefaultMessage("Details: ")
     String detailsMessage();
 
     /**
@@ -566,7 +498,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Connection Received"
      */
-    @DefaultMessage("Connection Received")
     String connectionReceivedType();
 
     /**
@@ -574,7 +505,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Connection Dequeued"
      */
-    @DefaultMessage("Connection Dequeued")
     String connectionDequeuedType();
 
     /**
@@ -582,7 +512,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Connection Responded"
      */
-    @DefaultMessage("Connection Responded")
     String connectionRespondedType();
 
     /**
@@ -590,7 +519,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Connection Terminated"
      */
-    @DefaultMessage("Connection Terminated")
     String connectionTerminatedType();
 
     /**
@@ -598,7 +526,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Connection Error"
      */
-    @DefaultMessage("Connection Error")
     String connectionErrorType();
 
     /**
@@ -606,7 +533,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "(Unknown)"
      */
-    @DefaultMessage("(Unknown)")
     String connectionUnknownType();
 
     /**
@@ -614,7 +540,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio{0}"
      */
-    @DefaultMessage("RStudio{0}")
     String rStudioEditionName(String desktop);
 
     /**
@@ -622,7 +547,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Server"
      */
-    @DefaultMessage("Server")
     String serverLabel();
 
     /**
@@ -630,7 +554,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Copy Version"
      */
-    @DefaultMessage("Copy Version")
     String copyVersionButtonTitle();
 
     /**
@@ -638,7 +561,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "About {0}"
      */
-    @DefaultMessage("About {0}")
     String title(String version);
 
     /**
@@ -646,7 +568,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "OK"
      */
-    @DefaultMessage("OK")
     String okBtn();
 
     /**
@@ -654,7 +575,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Manage License..."
      */
-    @DefaultMessage("Manage License...")
     String manageLicenseBtn();
 
     /**
@@ -662,7 +582,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "for "
      */
-    @DefaultMessage("for ")
     String forText();
 
     /**
@@ -670,7 +589,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Version Copied"
      */
-    @DefaultMessage("Version Copied")
     String versionCopiedText();
 
     /**
@@ -678,7 +596,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Version information copied to clipboard."
      */
-    @DefaultMessage("Version information copied to clipboard.")
     String versionInformationCopiedText();
 
     /**
@@ -686,7 +603,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Copy Version"
      */
-    @DefaultMessage("Copy Version")
     String copyVersionButton();
 
     /**
@@ -694,7 +610,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Build "
      */
-    @DefaultMessage("Build ")
     String versionBuildLabel();
 
     /**
@@ -702,7 +617,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated ") for "
      */
-    @DefaultMessage(") for ")
     String buildLabelForText();
 
     /**
@@ -710,7 +624,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "This "
      */
-    @DefaultMessage("This ")
     String buildTypeThisText();
 
     /**
@@ -718,7 +631,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "build of "
      */
-    @DefaultMessage("build of ")
     String buildOfText();
 
     /**
@@ -726,7 +638,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "is provided by Posit Software, PBC for testing purposes only and is not an officially supported release."
      */
-    @DefaultMessage("is provided by Posit Software, PBC for testing purposes only and is not an officially supported release.")
     String supportNoticeText();
 
     /**
@@ -734,7 +645,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Loading..."
      */
-    @DefaultMessage("Loading...")
     String licenseBoxLoadingText();
 
     /**
@@ -742,7 +652,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Open Source Components"
      */
-    @DefaultMessage("Open Source Components")
     String openSourceComponentsText();
 
     /**
@@ -750,7 +659,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Close"
      */
-    @DefaultMessage("Close")
     String closeButtonText();
 
     /**
@@ -758,7 +666,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Open Source Component"
      */
-    @DefaultMessage("Open Source Component")
     String openSourceComponentText();
 
     /**
@@ -766,7 +673,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Main toolbar visible"
      */
-    @DefaultMessage("Main toolbar visible")
     String toolbarVisibleText();
 
     /**
@@ -774,7 +680,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Main toolbar hidden"
      */
-    @DefaultMessage("Main toolbar hidden")
     String toolbarHiddenText();
 
     /**
@@ -782,7 +687,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Toolbar hidden, unable to focus."
      */
-    @DefaultMessage("Toolbar hidden, unable to focus.")
     String focusToolbarText();
 
     /**
@@ -790,7 +694,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Application Updated"
      */
-    @DefaultMessage("Application Updated")
     String applicationUpdatedCaption();
 
     /**
@@ -798,7 +701,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "An updated version of RStudio is available. Your browser will now be refreshed with the new version. All current work and data will be preserved during the update."
      */
-    @DefaultMessage("An updated version of RStudio is available. Your browser will now be refreshed with the new version. All current work and data will be preserved during the update.")
     String applicationUpdatedMessage();
 
     /**
@@ -806,7 +708,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Warning bar"
      */
-    @DefaultMessage("Warning bar")
     String warningBarText();
 
     /**
@@ -814,7 +715,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R Session Error"
      */
-    @DefaultMessage("R Session Error")
     String rSessionErrorCaption();
 
     /**
@@ -822,7 +722,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The previous R session was abnormally terminated due to an unexpected crash.\n\nYou may have lost workspace data as a result of this crash."
      */
-    @DefaultMessage("The previous R session was abnormally terminated due to an unexpected crash.\\n\\nYou may have lost workspace data as a result of this crash.")
     String previousRSessionsMessage();
 
     /**
@@ -830,7 +729,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Main"
      */
-    @DefaultMessage("Main")
     String mainLabel();
 
     /**
@@ -838,7 +736,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "New File"
      */
-    @DefaultMessage("New File")
     String newFileTitle();
 
     /**
@@ -846,7 +743,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Open recent files"
      */
-    @DefaultMessage("Open recent files")
     String openRecentFilesTitle();
 
     /**
@@ -854,7 +750,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Version control"
      */
-    @DefaultMessage("Version control")
     String versionControlTitle();
 
     /**
@@ -862,7 +757,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Workspace Panes"
      */
-    @DefaultMessage("Workspace Panes")
     String workspacePanesTitle();
 
     /**
@@ -870,7 +764,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Project: (None)"
      */
-    @DefaultMessage("Project: (None)")
     String toolBarButtonText();
 
     /**
@@ -878,7 +771,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Looking for projects..."
      */
-    @DefaultMessage("Looking for projects...")
     String popupMenuProgressMessage();
 
     /**
@@ -886,7 +778,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Recent Projects"
      */
-    @DefaultMessage("Recent Projects")
     String recentProjectsLabel();
 
     /**
@@ -894,7 +785,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Shared with Me"
      */
-    @DefaultMessage("Shared with Me")
     String sharedWithMeLabel();
 
     /**
@@ -902,7 +792,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Export"
      */
-    @DefaultMessage("Export")
     String exportCaption();
 
     /**
@@ -910,7 +799,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Import"
      */
-    @DefaultMessage("Import")
     String importCaption();
 
     /**
@@ -918,7 +806,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Reloading..."
      */
-    @DefaultMessage("Reloading...")
     String reloadingText();
 
     /**
@@ -926,7 +813,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Retrying in Safe Mode..."
      */
-    @DefaultMessage("Retrying in Safe Mode...")
     String retryInSafeModeText();
 
     /**
@@ -934,7 +820,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Terminating R..."
      */
-    @DefaultMessage("Terminating R...")
     String terminatingRText();
 
     /**
@@ -942,7 +827,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Default version of R:"
      */
-    @DefaultMessage("Default version of R:")
     String defaultVersionRCaption();
 
     /**
@@ -950,7 +834,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Help on R versions"
      */
-    @DefaultMessage("Help on R versions")
     String helpOnRVersionsTitle();
 
     /**
@@ -958,7 +841,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Module "
      */
-    @DefaultMessage("Module ")
     String moduleText();
 
     /**
@@ -966,7 +848,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R version "
      */
-    @DefaultMessage("R version ")
     String rVersionText();
 
     /**
@@ -974,7 +855,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "(Use System Default)"
      */
-    @DefaultMessage("(Use System Default)")
     String useSystemDefaultText();
 
     /**
@@ -982,7 +862,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "User-specified..."
      */
-    @DefaultMessage("User-specified...")
     String userSpecifiedText();
 
     /**
@@ -990,7 +869,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Manage License..."
      */
-    @DefaultMessage("Manage License...")
     String manageLicenseText();
 
     /**
@@ -998,7 +876,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Addins"
      */
-    @DefaultMessage("Addins")
     String addinsText();
 
     /**
@@ -1006,7 +883,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Search for addins"
      */
-    @DefaultMessage("Search for addins")
     String searchForAddinsLabel();
 
     /**
@@ -1014,7 +890,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "No addins found"
      */
-    @DefaultMessage("No addins found")
     String noAddinsFound();
 
     /**
@@ -1022,7 +897,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R encountered a fatal error."
      */
-    @DefaultMessage("R encountered a fatal error.")
     String rFatalErrorMessage();
 
     /**
@@ -1030,7 +904,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The session was terminated."
      */
-    @DefaultMessage("The session was terminated.")
     String sessionTerminatedMessage();
 
     /**
@@ -1038,7 +911,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "This browser was disconnected from the R session because another browser connected (only one browser at a time may be connected to an RStudio session). You may reconnect using the button below."
      */
-    @DefaultMessage("This browser was disconnected from the R session because another browser connected (only one browser at a time may be connected to an RStudio session). You may reconnect using the button below.")
     String browserDisconnectedMessage();
 
     /**
@@ -1046,7 +918,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio is temporarily offline due to system maintenance. We apologize for the inconvenience, please try again in a few minutes."
      */
-    @DefaultMessage("RStudio is temporarily offline due to system maintenance. We apologize for the inconvenience, please try again in a few minutes.")
     String rStudioOfflineMessage();
 
     /**
@@ -1054,7 +925,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R Session Ended"
      */
-    @DefaultMessage("R Session Ended")
     String rSessionEndedCaption();
 
     /**
@@ -1062,7 +932,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Start New Session"
      */
-    @DefaultMessage("Start New Session")
     String startNewSessionText();
 
     /**
@@ -1070,7 +939,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R Session Aborted"
      */
-    @DefaultMessage("R Session Aborted")
     String rSessionAbortedCaption();
 
     /**
@@ -1078,7 +946,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "R Session Disconnected"
      */
-    @DefaultMessage("R Session Disconnected")
     String rSessionDisconnectedCaption();
 
     /**
@@ -1086,7 +953,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Reconnect"
      */
-    @DefaultMessage("Reconnect")
     String reconnectButtonText();
 
     /**
@@ -1094,7 +960,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio Temporarily Offline"
      */
-    @DefaultMessage("RStudio Temporarily Offline")
     String temporarilyOfflineCaption();
 
     /**
@@ -1102,7 +967,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Unknown mode "
      */
-    @DefaultMessage("Unknown mode ")
     String unknownModeText();
 
     /**
@@ -1110,7 +974,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Sign out"
      */
-    @DefaultMessage("Sign out")
     String signOutButtonText();
 
     /**
@@ -1118,7 +981,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Error Opening Devtools"
      */
-    @DefaultMessage("Error Opening Devtools")
     String errorOpeningDevToolsCaption();
 
     /**
@@ -1126,7 +988,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "The Chromium devtools server could not be activated."
      */
-    @DefaultMessage("The Chromium devtools server could not be activated.")
     String cannotActivateDevtoolsMessage();
 
     /**
@@ -1134,7 +995,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Error Checking for Updates"
      */
-    @DefaultMessage("Error Checking for Updates")
     String errorCheckingUpdatesMessage();
 
     /**
@@ -1142,7 +1002,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "An error occurred while checking for updates: "
      */
-    @DefaultMessage("An error occurred while checking for updates: ")
     String errorOccurredCheckingUpdatesMessage();
 
     /**
@@ -1150,7 +1009,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Quit and Download..."
      */
-    @DefaultMessage("Quit and Download...")
     String quitDownloadButtonLabel();
 
     /**
@@ -1158,7 +1016,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Update RStudio"
      */
-    @DefaultMessage("Update RStudio")
     String updateRStudioCaption();
 
     /**
@@ -1166,7 +1023,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Remind Later"
      */
-    @DefaultMessage("Remind Later")
     String remindLaterButtonLabel();
 
     /**
@@ -1174,7 +1030,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Ignore Update"
      */
-    @DefaultMessage("Ignore Update")
     String ignoreUpdateButtonLabel();
 
     /**
@@ -1182,7 +1037,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Update Available"
      */
-    @DefaultMessage("Update Available")
     String updateAvailableCaption();
 
     /**
@@ -1190,7 +1044,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "No Update Available"
      */
-    @DefaultMessage("No Update Available")
     String noUpdateAvailableCaption();
 
     /**
@@ -1198,7 +1051,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "You're using the newest version of RStudio."
      */
-    @DefaultMessage("You''re using the newest version of RStudio.")
     String usingNewestVersionMessage();
 
     /**
@@ -1206,7 +1058,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Posit Workbench"
      */
-    @DefaultMessage("Posit Workbench")
     String rStudioServerHomeTitle();
 
     /**
@@ -1214,7 +1065,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Your browser does not allow access to your"
      */
-    @DefaultMessage("Your browser does not allow access to your")
     String browserNotAllowAccessLabel();
 
     /**
@@ -1222,7 +1072,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "computer's clipboard. As a result you must"
      */
-    @DefaultMessage("computer''s clipboard. As a result you must")
     String computerClipBoardLabel();
 
     /**
@@ -1230,7 +1079,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "use keyboard shortcuts for:"
      */
-    @DefaultMessage("use keyboard shortcuts for:")
     String useKeyboardShortcutsLabel();
 
     /**
@@ -1238,7 +1086,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Use Keyboard Shortcut"
      */
-    @DefaultMessage("Use Keyboard Shortcut")
     String useKeyboardShortcutCaption();
 
     /**
@@ -1246,7 +1093,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Sign out"
      */
-    @DefaultMessage("Sign out")
     String signOutTitle();
 
     /**
@@ -1254,7 +1100,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "from "
      */
-    @DefaultMessage("from ")
     String fromText();
 
     /**
@@ -1262,7 +1107,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "to "
      */
-    @DefaultMessage("to ")
     String toText();
 
     /**
@@ -1270,7 +1114,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "New Session..."
      */
-    @DefaultMessage("New Session...")
     String newSessionMenuLabel();
 
     /**
@@ -1278,7 +1121,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Save"
      */
-    @DefaultMessage("Save")
     String saveYesLabel();
 
     /**
@@ -1286,7 +1128,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Don't Save"
      */
-    @DefaultMessage("Don''t Save")
     String saveNoLabel();
 
     /**
@@ -1294,7 +1135,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "(active)"
      */
-    @DefaultMessage("(active)")
     String activeText();
 
     /**
@@ -1302,7 +1142,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "<p>Click on a request to see details. Click on the background to show these instructions again.</p><h4>Available commands:</h4><ul><li>Esc: Close</li><li>P: Play/pause</li><li>E: Export</li><li>I: Import</li><li>+/-: Zoom in/out</li></ul>"
      */
-    @DefaultMessage("<p>Click on a request to see details. Click on the background to show these instructions again.</p><h4>Available commands:</h4><ul><li>Esc: Close</li><li>P: Play/pause</li><li>E: Export</li><li>I: Import</li><li>+/-: Zoom in/out</li></ul>")
     String requestLogVisualization();
 
     /**
@@ -1310,7 +1149,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available."
      */
-    @DefaultMessage("Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.")
     String visitWebsiteForNewVersionText();
 
     /**
@@ -1318,7 +1156,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Automatic update notifications were disabled for {0}."
      */
-    @DefaultMessage("Automatic update notifications were disabled for {0}.")
     String updateDisabledForVersionText(String version);
 
     /**
@@ -1326,7 +1163,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Stop Ignoring Updates"
      */
-    @DefaultMessage("Stop Ignoring Updates")
     String stopIgnoringUpdatesButtonLabel();
 
     /**
@@ -1334,7 +1170,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio will automatically check for updates the next time it starts."
      */
-    @DefaultMessage("RStudio will automatically check for updates the next time it starts.")
     String autoUpdateReenabledMessage();
 
     /**
@@ -1342,7 +1177,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Update No Longer Ignored"
      */
-    @DefaultMessage("Update No Longer Ignored")
     String autoUpdateReenabledCaption();
 
     /**
@@ -1350,7 +1184,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Danger!"
      */
-    @DefaultMessage("Danger!")
     String reallyCrashCaption();
 
     /**
@@ -1358,7 +1191,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "This will cause RStudio to immediately crash. You may lose work. Trigger crash?"
      */
-    @DefaultMessage("This will cause RStudio to immediately crash. You may lose work. Trigger crash?")
     String reallyCrashMessage();
 
     /**
@@ -1366,7 +1198,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Session memory limit exceeded. Restart required."
      */
-    @DefaultMessage("Session memory limit exceeded. Restart required.")
     String memoryLimitExceededCaption();
 
     /**
@@ -1374,7 +1205,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory."
      */
-    @DefaultMessage("Memory Limit Exceeded. Save files and restart session.\n\nSession may be aborted if system runs low on memory.")
     String memoryLimitExceededMessage();
 
     /**
@@ -1382,7 +1212,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Memory limit has been exceeded. The IDE session has been terminated."
      */
-    @DefaultMessage("Memory limit has been exceeded. The IDE session has been terminated.")
     String memoryLimitAbortedMessage();
 
     /**
@@ -1390,7 +1219,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Approaching session memory limit."
      */
-    @DefaultMessage("Approaching session memory limit.")
     String approachingMemoryLimit();
 
     /**
@@ -1398,7 +1226,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Over session memory limit."
      */
-    @DefaultMessage("Over session memory limit.")
     String overMemoryLimit();
 
     /*
@@ -1406,7 +1233,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Posit Workbench Login Required"
      */
-    @DefaultMessage("Posit Workbench Login Required")
     String workbenchLoginRequired();
 
     /**
@@ -1414,7 +1240,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "RStudio Server Login Required"
      */
-    @DefaultMessage("RStudio Server Login Required")
     String serverLoginRequired();
 
     /**
@@ -1422,7 +1247,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab. Return here to resume session."
      */
-    @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab. Return here to resume session.")
     String workbenchLoginRequiredMessage();
 
     /**
@@ -1430,7 +1254,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Login expired or signed out from another window.\nSelect 'Login' for a new login tab."
      */
-    @DefaultMessage("Login expired or signed out from another window.\nSelect ''Login'' for a new login tab.")
     String serverLoginRequiredMessage();
 
     /**
@@ -1438,6 +1261,5 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
      *
      * @return translated "Login"
      */
-    @DefaultMessage("Login")
     String loginButton();
 }

@@ -21,7 +21,6 @@ public interface ModelConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Create Session"
      */
-    @DefaultMessage("Create Session")
     String createSessionCaption();
 
     /**
@@ -29,7 +28,6 @@ public interface ModelConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Could not allocate a new session."
      */
-    @DefaultMessage("Could not allocate a new session.")
     String createSessionMessage();
 
     /**
@@ -37,7 +35,6 @@ public interface ModelConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Presentation"
      */
-    @DefaultMessage("Presentation")
     String presentationCaption();
 
 }
