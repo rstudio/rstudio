@@ -19,125 +19,19 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface HtmlPreviewConstants extends Constants {
 
-    /**
-     * Translate "Knitting...".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Knitting...")
     String progressPreviewStartedCaption();
-
-    /**
-     * Translate "Preview failed".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Preview failed")
     String progressPreviewFailedCaption();
-
-    /**
-     * Translate "Save File As".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Save File As")
     String saveFileAsCaption();
-
-    /**
-     * Translate "Saving File...".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Saving File...")
     String savingFileCaption();
-
-    /**
-     * Translate "Download to Local File".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Download to Local File")
     String downloadToLocalFileCaption();
-
-    /**
-     * Translate "web page".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("web page")
     String downloadToLocalFileDescription();
-
-    /**
-     * Translate "Preview Tab".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Preview Tab")
     String previewTabToolbarLabel();
-
-    /**
-     * Translate "Preview: ".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Preview: ")
     String previewToolbarLabelText();
-
-    /**
-     * Translate "Save As".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Save As")
     String saveAsToolbarMenuButtonText();
-
-    /**
-     * Translate "Find".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Find")
     String findTextBoxCueText();
-
-    /**
-     * Translate "Find in Page".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Find in Page")
     String findInPageText();
-
-    /**
-     * Translate "No occurrences found".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("No occurrences found")
     String noOccurrencesFoundText();
-
-    /**
-     * Translate "HTML Preview Panel".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("HTML Preview Panel")
     String htmlPreviewPanelTitle();
-
-    /**
-     * Translate "Log".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Log")
     String showLogDialogCaption();
-
-    /**
-     * Translate "Close".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Close")
     String closeText();
-
-
 }

@@ -50,11 +50,11 @@ All files in this category will following this naming convention where the part 
 is the name of the associated Java class.
 
 In addition to matching the `*Constants.java` filename, only those files containing an 
-`interface` that extends either `Messages`, `Constants`, or 
+`interface` that extends either `Messages` or `Constants`.
+
 The Java class file contains entries of the form:
 
 ```java
-    @DefaultMessage("Chunk HTML Page Output Frame")
     String chunkHtmlPageOutputFrame();
 ```
 

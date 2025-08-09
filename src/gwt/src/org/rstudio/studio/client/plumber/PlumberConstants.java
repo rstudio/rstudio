@@ -19,36 +19,9 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface PlumberConstants extends Constants {
 
-    /**
-     * Translate "Running Plumber API".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Running Plumber API")
     String runningPlumberApiUserAction();
-
-    /**
-     * Translate "Plumber API Launch Failed".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Plumber API Launch Failed")
     String apiLaunchFailedCaption();
-
-    /**
-     * Translate "Plumber API Panel".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Plumber API Panel")
     String plumberApiPanelTitle();
-
-    /**
-     * Translate "Open in Browser".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Open in Browser")
     String openInBrowserButtonText();
 
 }

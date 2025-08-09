@@ -19,124 +19,18 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface PackratConstants extends Constants {
 
-    /**
-     * Translate "Package".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Package")
     String packageColumnHeaderLabel();
-
-    /**
-     * Translate "Packrat".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Packrat")
     String packratColumnHeaderLabel();
-
-    /**
-     * Translate "Library".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Library")
     String libraryColumnHeaderLabel();
-
-    /**
-     * Translate "Action".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Action")
     String actionColumnHeaderLabel();
-
-    /**
-     * Translate "The following packages have changed in " +
-     *                "your project's private library. Select Snapshot to save " +
-     *                "these changes in Packrat.".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("The following packages have changed in your project's private library. Select Snapshot to save these changes in Packrat.")
     String snapshotSummaryLabel();
-
-    /**
-     * Translate "The following packages have changed in " +
-     *                "Packrat. Select Restore to apply these changes to your " +
-     *                "project's private library.".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("The following packages have changed in Packrat. Select Restore to apply these changes to your project's private library.")
     String restoreSummaryLabel();
-
-    /**
-     * Translate "Resolve Conflict".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Resolve Conflict")
     String packratResolveConflictDialogCaption();
-
-    /**
-     * Translate "Resolve".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Resolve")
     String okButtonCaption();
-
-    /**
-     * Translate "Packrat's packages are out of sync with the packages currently " +
-     *         "installed in your library. To resolve the conflict you need to " +
-     *         "either update Packrat to match your library or update your library " +
-     *         "to match Packrat.".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Packrat's packages are out of sync with the packages currently installed in your library. To resolve the conflict you need to either update Packrat to match your library or update your library to match Packrat.")
     String resolveConflictLabelText();
-
-    /**
-     * Translate "Resolution:".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Resolution:")
     String resolutionLabel();
-
-    /**
-     * Translate "Update Packrat (Snapshot)".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Update Packrat (Snapshot)")
     String snapshotChoiceRadioButtonLabel();
-
-    /**
-     * Translate "Update Library (Restore)".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Update Library (Restore)")
     String libraryChoiceRadioButton();
-
-    /**
-     * Translate "No Selection Made".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("No Selection Made")
     String noSelectionMadeText();
-
-    /**
-     * Translate "You must choose to either update Packrat (snapshot) or " +
-     *                "update the project's private library (restore).".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("You must choose to either update Packrat (snapshot) or update the project's private library (restore).")
     String noSelectionMadeMessage();
-
 }

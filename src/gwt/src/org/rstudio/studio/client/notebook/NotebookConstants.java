@@ -19,27 +19,7 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface NotebookConstants extends Constants {
 
-    /**
-     * Translate "Compile Report from R Script".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Compile Report from R Script")
     String compileNotebookOptionsDialogCaption();
-
-    /**
-     * Translate "Help on report types".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Help on report types")
     String helpButtonTitle();
-
-    /**
-     * Translate "Compile".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Compile")
     String okButtonCaption();
 }

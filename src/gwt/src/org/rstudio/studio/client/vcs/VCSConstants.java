@@ -19,11 +19,5 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface VCSConstants extends Constants {
 
-    /**
-     * Translate "RStudio: Review Changes".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("RStudio: Review Changes")
     String vcsWindowTitle();
 }
