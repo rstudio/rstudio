@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- Fixed message shown when ssh keyphrases don't match (#16320)
 
 #### Posit Workbench
 -
