@@ -12,19 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.vcs;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface VCSConstants extends Constants {
-
-    /**
-     * Translate "RStudio: Review Changes".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("RStudio: Review Changes")
-    @Key("vcsWindowTitle")
     String vcsWindowTitle();
 }

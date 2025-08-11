@@ -12,37 +12,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.notebook;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface NotebookConstants extends Constants {
-
-    /**
-     * Translate "Compile Report from R Script".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Compile Report from R Script")
-    @Key("compileNotebookOptionsDialogCaption")
     String compileNotebookOptionsDialogCaption();
-
-    /**
-     * Translate "Help on report types".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Help on report types")
-    @Key("helpButtonTitle")
     String helpButtonTitle();
-
-    /**
-     * Translate "Compile".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Compile")
-    @Key("okButtonCaption")
     String okButtonCaption();
 }

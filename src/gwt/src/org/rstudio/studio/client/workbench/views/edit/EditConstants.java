@@ -15,24 +15,6 @@
 package org.rstudio.studio.client.workbench.views.edit;
 
 public interface EditConstants extends com.google.gwt.i18n.client.Messages {
-
-
-    /**
-     * Translated "Saving...".
-     *
-     * @return translated "Saving..."
-     */
-    @DefaultMessage("Saving...")
-    @Key("savingProgressLabel")
     String savingProgressLabel();
-
-    /**
-     * Translated "Cancelling...".
-     *
-     * @return translated "Cancelling..."
-     */
-    @DefaultMessage("Cancelling...")
-    @Key("cancellingProgressLabel")
     String cancellingProgressLabel();
-
 }

@@ -74,8 +74,8 @@ public class AriaLiveService
       announcements_.put(CONSOLE_COMMAND, constants_.consoleCommandAnnouncement());
       announcements_.put(FILTERED_LIST, constants_.filterResultCountAnnouncement());
       announcements_.put(GIT_MESSAGE_LENGTH, constants_.commitMessageLengthAnnouncement());
-      announcements_.put(INACCESSIBLE_FEATURE, constants_.inaccessibleWarningAnnouncment());
-      announcements_.put(INFO_BAR, constants_.infoBarsAnnouncment());
+      announcements_.put(INACCESSIBLE_FEATURE, constants_.inaccessibleWarningAnnouncement());
+      announcements_.put(INFO_BAR, constants_.infoBarsAnnouncement());
       announcements_.put(PROGRESS_COMPLETION, constants_.taskCompletionAnnouncement());
       announcements_.put(PROGRESS_LOG, constants_.taskProgressAnnouncement());
       announcements_.put(SCREEN_READER_NOT_ENABLED, constants_.screenReaderAnnouncement());

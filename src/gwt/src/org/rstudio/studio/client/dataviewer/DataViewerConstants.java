@@ -12,46 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.dataviewer;
-
 import com.google.gwt.i18n.client.Constants;
 
 public interface DataViewerConstants extends Constants {
-
-    /**
-     * Translate "Cols:".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Cols:")
-    @Key("colsLabel")
     String colsLabel();
-
-    /**
-     * Translate "Filter".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Filter")
-    @Key("filterButtonText")
     String filterButtonText();
-
-    /**
-     * Translate "Search data table".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("Search data table")
-    @Key("searchWidgetLabel")
     String searchWidgetLabel();
-
-    /**
-     * Translate "(Displaying up to 1,000 records)".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("(Displaying up to 1,000 records)")
-    @Key("toolbarLabel")
     String toolbarLabel();
 }
