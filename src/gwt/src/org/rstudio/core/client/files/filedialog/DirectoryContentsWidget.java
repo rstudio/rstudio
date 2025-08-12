@@ -20,7 +20,6 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -293,11 +292,8 @@ public class DirectoryContentsWidget extends Composite
    {
       addItem(directory);
       int rowNum = data_.size() - 1;
-      TableElement table = (TableElement) table_.getElement().cast();
-      TableRowElement row = table.getRows().getItem(rowNum);
-      row.scrollIntoView();
       table_.setHorizontalScrollPosition(0);
-      setSelectedRow(rowNum);
+      table_.selectRow(rowNum, RowTable.ScrollType.DEFAULT);
    }
    
    public void focus()
