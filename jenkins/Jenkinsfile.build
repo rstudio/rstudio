@@ -24,7 +24,7 @@ pipeline {
   
   parameters {
     booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
-    booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3 and sentry.'
+    booleanParam name: 'PUBLISH', defaultValue: true, description: 'Publish the build to S3.'
     booleanParam name: 'FORCE_BUILD_BINARIES', defaultValue: false, description: 'Force build binaries even if there are no changes, and even if they have already been built previously'
     booleanParam name: 'FORCE_BUILD_DOCKER', defaultValue: false, description: 'Force build docker images even if there are no dockerfile changes'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'

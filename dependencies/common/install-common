@@ -24,7 +24,6 @@ set -e
 ./install-pandoc
 ./install-quarto
 ./install-copilot-language-server
-./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci
 ./install-panmirror
