@@ -16,7 +16,6 @@
 project (SERVER)
 
 add_subdirectory(pam)
-add_subdirectory(crash-handler-proxy)
 
 # include files
 file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
@@ -151,7 +150,6 @@ target_link_libraries(rserver
    rstudio-core
    rstudio-server-core
    rstudio-monitor
-   ${CRASHPAD_LIBRARIES}
    ${SOCI_LIBRARIES}
    ${SERVER_SYSTEM_LIBRARIES}
 )
@@ -309,7 +307,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      rstudio-core
      rstudio-server-core
      rstudio-monitor
-     ${CRASHPAD_LIBRARIES}
      ${SOCI_LIBRARIES}
      ${SERVER_SYSTEM_LIBRARIES}
   )

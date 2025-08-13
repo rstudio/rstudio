@@ -21,11 +21,11 @@
 #include <iostream>
 
 #include <shared_core/Error.hpp>
-#include <core/CrashHandler.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
-#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -62,16 +62,6 @@ int main(int argc, char * const argv[])
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
-      if (error)
-         LOG_ERROR(error);
-
-      // catch unhandled exceptions
-      core::crash_handler::ProgramMode programMode =
-            (core::system::getenv(kRStudioProgramMode) == kSessionProgramModeDesktop ?
-                core::crash_handler::ProgramMode::Desktop :
-                core::crash_handler::ProgramMode::Server);
-
-      error = core::crash_handler::initialize(programMode);
       if (error)
          LOG_ERROR(error);
 

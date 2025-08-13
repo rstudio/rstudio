@@ -102,10 +102,6 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN /bin/bash /tmp/install-dependencies
 
-# install crashpad and its dependencies
-COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad bionic
-
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
 # ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-apple-blossom panmirror.version.json

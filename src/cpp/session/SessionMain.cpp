@@ -42,7 +42,6 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/AnsiEscapes.hpp>
-#include <core/CrashHandler.hpp>
 #include <core/BoostSignals.hpp>
 #include <core/BoostThread.hpp>
 #include <core/ConfigUtils.hpp>
@@ -216,7 +215,6 @@
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
 #include "modules/SessionPythonEnvironments.hpp"
-#include "modules/SessionCrashHandler.hpp"
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
 #include "modules/SessionFonts.hpp"
@@ -729,7 +727,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::jobs::initialize)
       (modules::themes::initialize)
       (modules::customsource::initialize)
-      (modules::crash_handler::initialize)
       (modules::r_versions::initialize)
       (modules::terminal::initialize)
       (modules::config_file::initialize)
@@ -2255,14 +2252,6 @@ int main(int argc, char * const argv[])
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
       bool serverMode = options.programMode() == kSessionProgramModeServer;
-
-      // catch unhandled exceptions
-      core::crash_handler::ProgramMode mode = serverMode ?
-               core::crash_handler::ProgramMode::Server :
-               core::crash_handler::ProgramMode::Desktop;
-      error = core::crash_handler::initialize(mode);
-      if (error)
-         LOG_ERROR(error);
 
       // set program mode environment variable so any child processes
       // (like rpostback) can determine what the program mode is

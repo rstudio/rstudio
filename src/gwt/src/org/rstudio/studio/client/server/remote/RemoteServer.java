@@ -677,12 +677,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ADMIN_NOTIFICATION_ACKNOWLEDGED, id, requestCallback);
    }
 
-   public void setUserCrashHandlerPrompted(boolean enableCrashHandling,
-                                           ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, SET_USER_CRASH_HANDLER_PROMPTED, enableCrashHandling, requestCallback);
-   }
-
    @Override
    public void rstudioApiResponse(JavaScriptObject response,
                                   ServerRequestCallback<Void> requestCallback)
@@ -7455,7 +7449,6 @@ public class RemoteServer implements Server
    private static final String SET_COMPUTED_THEME_COLORS = "set_computed_theme_colors";
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
-   private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
 
    private static final String CPP_PROJECT_STYLE = "cpp_project_style";
    private static final String CPP_SOURCE_FILE = "cpp_source_file";

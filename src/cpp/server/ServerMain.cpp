@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <core/CrashHandler.hpp>
 #include <core/FileLock.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
@@ -1019,11 +1018,6 @@ int main(int argc, char * const argv[])
          return EXIT_SUCCESS;
       }
       
-      // catch unhandled exceptions
-      error = core::crash_handler::initialize();
-      if (error)
-         LOG_ERROR(error);
-
       server::session_rpc::addHandler(
          "/server_version", 
          [](const std::string&, boost::shared_ptr<core::http::AsyncConnection> pConnection)

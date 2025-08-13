@@ -245,9 +245,6 @@ fi
 if has-scope "rsession"; then
 
    section "Running 'rsession' tests"
-
-   export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
-   export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
    runWatchdogProcess 5m false                                    \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}" \
       --run-tests                                                 \
@@ -274,8 +271,6 @@ if has-scope "r"; then
    RSTUDIO_FOLDER=$(mktemp -d -t rstudio-tests-XXXXXXXXXX)
    export RSTUDIO_DATA_HOME="${RSTUDIO_FOLDER}/data"
    export RSTUDIO_CONFIG_HOME="${RSTUDIO_FOLDER}/config"
-   export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
-   export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
 
    runWatchdogProcess 5m false                                                   \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \

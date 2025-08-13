@@ -227,9 +227,6 @@ pushd install-panmirror
 call clone-panmirror-repo.cmd
 popd
 
-echo -- Installing crashpad
-call install-crashpad.cmd
-
 echo -- Installing SOCI
 call install-soci.cmd
 

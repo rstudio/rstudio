@@ -330,7 +330,6 @@ if [ -n "${build_x86_64}" ]; then
       -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
       -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
-      -DRSTUDIO_CRASHPAD_ENABLED=0                           \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
       -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"      \
       -DGWT_BUILD="${build_gwt}"                             \
@@ -382,7 +381,6 @@ if [ -n "${build_arm64}" ]; then
       -DRSESSION_ALTERNATE_BUILD=1                          \
       -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
-      -DRSTUDIO_CRASHPAD_ENABLED=0                          \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
       -DGWT_BUILD=0                                         \
       -DGWT_COPY=0                                          \

@@ -36,7 +36,6 @@ add_stripped_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FIL
 # set link dependencies
 target_link_libraries(rpostback
    rstudio-core
-   ${CRASHPAD_LIBRARIES}
 )
 
 if (RSTUDIO_SERVER)

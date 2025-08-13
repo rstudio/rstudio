@@ -53,8 +53,6 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/ROptions.hpp>
 
-#include <core/CrashHandler.hpp>
-#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Request.hpp>
@@ -637,15 +635,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       sessionInfo["memory_usage"] = pUsage->toJson();
    }
-
-   // crash handler settings
-   bool canModifyCrashSettings =
-         options.programMode() == kSessionProgramModeDesktop &&
-         crash_handler::configSource() == crash_handler::ConfigSource::User;
-   sessionInfo["crash_handler_settings_modifiable"] = canModifyCrashSettings;
-
-   bool promptForCrashHandlerPermission = canModifyCrashSettings && !crash_handler::hasUserBeenPromptedForPermission();
-   sessionInfo["prompt_for_crash_handler_permission"] = promptForCrashHandlerPermission;
 
    sessionInfo["project_id"] = session::options().sessionScope().project();
 

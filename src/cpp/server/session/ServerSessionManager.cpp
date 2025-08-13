@@ -13,8 +13,6 @@
  *
  */
 
-#include <core/CrashHandler.hpp>
-
 #include <server/session/ServerSessionManager.hpp>
 
 #include <boost/format.hpp>
@@ -210,14 +208,6 @@ core::system::ProcessConfig sessionProcessConfig(
    // the session should log an error if its version does not match, as that is
    // likely an unsupported configuration
    environment.push_back({kRStudioVersion, RSTUDIO_VERSION});
-
-   // forward over crash handler environment if we have it (used for development mode)
-   if (!core::system::getenv(kCrashHandlerEnvVar).empty())
-      environment.push_back({kCrashHandlerEnvVar, core::system::getenv(kCrashHandlerEnvVar)});
-
-   if (!core::system::getenv(kCrashpadHandlerEnvVar).empty())
-      environment.push_back({kCrashpadHandlerEnvVar, core::system::getenv(kCrashpadHandlerEnvVar)});
-
 
    // forward path for session temp dir (used for local stream path)
    environment.push_back(

@@ -29,7 +29,6 @@ set(CORE_SOURCE_FILES
    collection/MruList.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
-   CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Exec.cpp
@@ -189,23 +188,26 @@ if (UNIX)
    endif()
    find_package(ZLIB REQUIRED QUIET)
 
-   # find apple frameworks we depend on
-   if(APPLE)
-      find_library(CORE_SERVICES_LIBRARY NAMES CoreServices)
-   endif()
-
    # include directories and libraries
    set(CORE_SYSTEM_LIBRARIES
       ${PTHREAD_LIBRARIES}
       ${UTIL_LIBRARIES}
       ${UUID_LIBRARIES}
       ${RT_LIBRARIES}
-      ${ZLIB_LIBRARIES}
-      ${CORE_SERVICES_LIBRARY})
+      ${ZLIB_LIBRARIES})
 
+   # add Apple frameworks we depend on
+   if(APPLE)
+      list(APPEND CORE_SYSTEM_LIBRARIES ${CORE_FOUNDATION_LIBRARY})
+      list(APPEND CORE_SYSTEM_LIBRARIES ${CORE_SERVICES_LIBRARY})
+      list(APPEND CORE_SYSTEM_LIBRARIES ${SECURITY_LIBRARY})
+   endif()
+
+   # add OpenSSL
    list(APPEND CORE_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
    list(APPEND CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
 
+   # add PAM
    if(RSTUDIO_SERVER AND RSTUDIO_USE_PAM)
       find_package(PAM REQUIRED)
       list(APPEND CORE_SYSTEM_LIBRARIES ${PAM_LIBRARIES})
@@ -330,7 +332,6 @@ target_link_libraries(rstudio-core
    rstudio-hunspell
    rstudio-websocketpp
    ${Boost_LIBRARIES}
-   ${CRASHPAD_LIBRARIES}
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
    fmt::fmt

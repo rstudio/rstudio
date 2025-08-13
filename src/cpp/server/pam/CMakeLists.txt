@@ -44,7 +44,6 @@ target_link_libraries(rserver-pam
    rstudio-core
    rstudio-server-core
    ${PAM_LIBRARIES}
-   ${CRASHPAD_LIBRARIES}
 )
 
 # installation rules

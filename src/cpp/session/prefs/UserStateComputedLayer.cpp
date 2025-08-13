@@ -15,14 +15,15 @@
 
 #include "UserStateComputedLayer.hpp"
 
-#include <session/prefs/UserState.hpp>
-#include <session/prefs/UserStateValues.hpp>
-
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/json/Json.hpp>
+
 #include <core/system/Environment.hpp>
-#include <core/CrashHandler.hpp>
+
+#include <session/prefs/UserState.hpp>
+#include <session/prefs/UserStateValues.hpp>
+
 
 using namespace rstudio::core;
 

@@ -90,10 +90,6 @@ RUN bash /tmp/install-dependencies
 # copy python2 to python so that it can be picked up by Google scripts
 RUN cp /usr/bin/python2 /usr/bin/python
 
-# install crashpad and its dependencies
-COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad rhel8
-
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
