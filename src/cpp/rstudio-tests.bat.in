@@ -53,7 +53,6 @@ if "%RUN_SHARED_CORE%"=="1" (
 
 if "%RUN_RSESSION%"=="1" (
     echo Running 'rsession' tests...
-    set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.com"
     "@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^
         --run-tests ^
         --config-file="@CMAKE_CURRENT_BINARY_DIR@/conf/rdesktop-dev.conf"

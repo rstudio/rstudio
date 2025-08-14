@@ -15,15 +15,14 @@
 
 #include "UserPrefsComputedLayer.hpp"
 
+#include <shared_core/json/Json.hpp>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserPrefValues.hpp>
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/RVersionSettings.hpp>
-
-#include <shared_core/json/Json.hpp>
-#include <core/CrashHandler.hpp>
 
 #include <r/session/RSession.hpp>
 
@@ -72,9 +71,6 @@ Error UserPrefsComputedLayer::readPrefs()
 
    // provide name of public key file
    layer["rsa_key_file"] = keyFile + ".pub";
-
-   // Crash reporting --------------------------------------------------------
-   layer[kSubmitCrashReports] = crash_handler::isHandlerEnabled();
 
    // R versions -------------------------------------------------------------
    RVersionSettings versionSettings(module_context::userScratchPath(),

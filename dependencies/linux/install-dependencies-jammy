@@ -85,10 +85,6 @@ if [ $arch = "amd64" ] ; then
   sudo apt-get -y install gcc-multilib
 fi
 
-# crashpad
-cd ../common
-sudo ./install-crashpad bionic
-
 # common
 ./install-common jammy
 cd ../linux

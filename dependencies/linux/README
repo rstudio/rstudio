@@ -49,19 +49,7 @@ on your system.
 
 2) Run the install-common script from dependencies/common (which will
 install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.78, and
-other dependencies):
-
-NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1
-before running the script. For example:
-
-   RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
-
-To install pre-built Crashpad binaries for a particular operating system,
-pass the required variant as an argument to the Crashpad script.
-
-For example, on Ubuntu 18.04 (Bionic), you might run:
-
-   ./install-crashpad bionic
+other dependencies).
 
 3) If your system doesn't meet the minimum version requirements for CMake
 you can download a Linux binary of the latest version of CMake here:

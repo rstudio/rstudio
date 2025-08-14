@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
@@ -52,7 +53,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.mode
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
-import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -138,6 +138,4 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                       ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
-
-   void setUserCrashHandlerPrompted(boolean enableCrashHandling, ServerRequestCallback<Void> requestCallback);
 }

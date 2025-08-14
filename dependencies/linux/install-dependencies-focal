@@ -94,10 +94,6 @@ then
   ./install-overlay-common
 fi
 
-# prebuilt crashpad
-cd ../common
-sudo ./install-crashpad bionic
-
 # common
 ./install-common focal
 cd ../linux

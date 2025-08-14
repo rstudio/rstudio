@@ -20,8 +20,8 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 
-#include <core/CrashHandler.hpp>
 #include <shared_core/Error.hpp>
+
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -474,21 +474,6 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
    }
 }
 
-Error setUserCrashHandlerPrompted(const json::JsonRpcRequest& request,
-                                  json::JsonRpcResponse* /*pResponse*/)
-{
-   bool crashHandlingEnabled;
-   Error error = json::readParam(request.params, 0, &crashHandlingEnabled);
-   if (error)
-      return error;
-
-   error = crash_handler::setUserHasBeenPromptedForPermission();
-   if (error)
-      return error;
-
-   return crash_handler::setUserHandlerEnabled(crashHandlingEnabled);
-}
-
 } // anonymous namespace
    
 std::string editFileCommand()
@@ -554,8 +539,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))
-      (bind(registerRpcMethod, "execute_code", executeCode))
-      (bind(registerRpcMethod, "set_user_crash_handler_prompted", setUserCrashHandlerPrompted));
+      (bind(registerRpcMethod, "execute_code", executeCode));
    return initBlock.execute();
 }
 

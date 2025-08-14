@@ -5,7 +5,7 @@
 -
 
 #### Posit Workbench
--
+- - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
 
 ### Fixed
 #### RStudio

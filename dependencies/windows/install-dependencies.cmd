@@ -129,11 +129,6 @@ set LIBCLANG_FOLDER=libclang\%LIBCLANG_VERSION%
 set LIBCLANG_OUTPUT=
 
 
-set BREAKPAD_URL=https://s3.amazonaws.com/getsentry-builds/getsentry/breakpad-tools/windows/breakpad-tools-windows.zip
-set BREAKPAD_FOLDER=breakpad-tools-windows
-set BREAKPAD_OUTPUT=breakpad-tools-windows
-
-
 set HUNSPELL_URL=hunspell/hunspell-v1.7.2.7z
 set HUNSPELL_FOLDER=hunspell-v1.7.2
 set HUNSPELL_OUTPUT=
@@ -219,7 +214,6 @@ cd ..\windows
 %RUN% install BOOST
 %RUN% install RESHACKER
 %RUN% install NSPROCESS
-%RUN% install BREAKPAD
 
 
 echo -- Installing panmirror (Visual Editor)
@@ -227,17 +221,7 @@ pushd install-panmirror
 call clone-panmirror-repo.cmd
 popd
 
-echo -- Installing crashpad
-call install-crashpad.cmd
-
 echo -- Installing SOCI
 call install-soci.cmd
-
-if not exist sentry-cli.exe (
-  set SENTRY_CLI_VERSION=2.9.0
-  echo -- Installing sentry-cli
-  %RUN% download "https://github.com/getsentry/sentry-cli/releases/download/2.9.0/sentry-cli-Windows-x86_64.exe" sentry-cli.exe
-  sentry-cli.exe --version
-)
 
 %RUN% install-i18n-dependencies

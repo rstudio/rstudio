@@ -8,7 +8,6 @@
 !dependencies/windows/install-*.cmd
 !dependencies/windows/install-*.ps1
 !dependencies/windows/install-boost/install-boost.R
-!dependencies/windows/install-crashpad/install-crashpad.r
 !dependencies/windows/install-openssl/install-openssl.R
 !dependencies/windows/install-panmirror/clone-panmirror-repo.cmd
 !dependencies/windows/install-quarto/get-quarto-version.ps1

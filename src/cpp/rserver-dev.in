@@ -33,8 +33,7 @@ cleanup()
 trap cleanup SIGINT
 
 echo "[i] Starting RStudio Server. Please connect at http://rstudio-localhost:8787."
-RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-proxy" \
-   RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler" \
+env \
    RS_DB_MIGRATIONS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/server/db" \
    RSTUDIO_PROJECT_ROOT="@RSTUDIO_PROJECT_ROOT@" \
    server/rserver --server-user $(whoami) --auth-none=1 --config-file conf/rserver-dev.conf "$@"

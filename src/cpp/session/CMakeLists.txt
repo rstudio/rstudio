@@ -185,7 +185,6 @@ set(SESSION_SOURCE_FILES
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
    modules/SessionClipboard.cpp
-   modules/SessionCrashHandler.cpp
    modules/SessionConsole.cpp
    modules/SessionCopilot.cpp
    modules/SessionCpp.cpp
@@ -549,8 +548,7 @@ set(SESSION_LIBRARIES
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
-   ${CMAKE_DL_LIBS}
-   ${CRASHPAD_LIBRARIES})
+   ${CMAKE_DL_LIBS})
 
 # define executable
 if(WIN32)
