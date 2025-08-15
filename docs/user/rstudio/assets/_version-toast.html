@@ -1,0 +1,30 @@
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100">
+    <div id="version-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+      <div class="toast-header">
+        <strong class="me-auto">Documentation Version</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        You are viewing version <strong> {{< var version >}}</strong>.
+        <a href="https://docs.posit.co/ide/user/" class="ms-1">View the latest version</a>.
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const currentVersion = " {{< var version >}}";
+    const storedVersion = sessionStorage.getItem("docVersionToast");
+  
+    if (storedVersion !== currentVersion) {
+      sessionStorage.setItem("docVersionToast", currentVersion);
+  
+      window.addEventListener("DOMContentLoaded", () => {
+        const toastEl = document.getElementById("version-toast");
+        if (toastEl) {
+          const toast = new bootstrap.Toast(toastEl);
+          toast.show();
+        }
+      });
+    }
+  </script>
+  

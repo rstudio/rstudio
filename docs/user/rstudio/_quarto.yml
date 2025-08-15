@@ -137,3 +137,5 @@ format:
   html:
     fig-responsive: true
     code-overflow: scroll
+    include-in-header: 
+      - assets/_version-toast.html
