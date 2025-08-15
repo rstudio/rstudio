@@ -15,5 +15,5 @@
 -
 
 ### Dependencies
-- Copilot Language Server 1.355.0
+- Copilot Language Server 1.357.0
 - Electron 37.3.0
