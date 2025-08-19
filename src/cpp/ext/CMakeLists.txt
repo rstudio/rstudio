@@ -114,6 +114,13 @@ dependency(GSL_LITE
    REVISION   "21751fb0473473e27ffb1f280543885ed65447a8" # pragma: allowlist secret
 )
 
+# gtest and gmock
+dependency(GTEST
+   COMMENT    "Google Test is a C++ test framework based on the xUnit architecture."
+   VERSION    "1.17.0"
+   REPOSITORY "https://github.com/google/googletest"
+   REVISION   "52eb8108c5bdec04579160ae17225d66034bd723" # pragma: allowlist secret
+)
 
 # hunspell
 dependency(HUNSPELL
@@ -123,7 +130,6 @@ dependency(HUNSPELL
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
    CUSTOM     TRUE
 )
-
 
 # rapidjson
 dependency(RAPIDJSON
@@ -142,7 +148,6 @@ dependency(WEBSOCKETPP
    REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
    CUSTOM     TRUE
 )
-
 
 # yaml-cpp
 dependency(YAML_CPP
@@ -236,6 +241,7 @@ endfunction()
 fetch(
    fmt          FMT
    gsl-lite     GSL_LITE
+   gtest        GTEST
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
    tl-expected  TL_EXPECTED

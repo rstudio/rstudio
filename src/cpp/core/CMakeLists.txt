@@ -16,6 +16,7 @@
 project (CORE)
 
 add_subdirectory(tex/synctex)
+add_subdirectory(unittests)
 
 # include files
 file(GLOB_RECURSE CORE_HEADER_FILES "*.h*")
@@ -348,10 +349,16 @@ endif()
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
+   
+   # Remove GTest-based test files from the catch 2 tests for now
+   list(FILTER CORE_TEST_FILES EXCLUDE REGEX "unittests/.*")
+   
    if (NOT RSTUDIO_HAS_SOCI)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
    endif()
 
+   # This is the catch2 based unit tests
+   # We are migrating to gtest which will be in the unittests directory
    add_executable(rstudio-core-tests
       TestMain.cpp
       ${CORE_TEST_FILES}
