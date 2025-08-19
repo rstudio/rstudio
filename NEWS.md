@@ -10,6 +10,7 @@
 ### Fixed
 #### RStudio
 - ([#16320](https://github.com/rstudio/rstudio/issues/16320)): Fixed message shown when ssh keyphrases don't match
+- ([#16331](https://github.com/rstudio/rstudio/issues/16331)): RStudio no longer removes previously-registered global calling handlers on startup
 
 #### Posit Workbench
 -

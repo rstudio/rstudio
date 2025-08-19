@@ -32,9 +32,6 @@
 
 .rs.addFunction("globalCallingHandlers.initialize", function()
 {
-   # Remove any previously-registered handlers.
-   globalCallingHandlers(NULL)
-   
    # Install our handlers.
    if (.rs.uiPrefs$consoleHighlightConditions$get() == "errors_warnings_messages")
    {
