@@ -301,7 +301,14 @@ public:
          try
          {
             while (queue_.empty())
+            {
                notified = pWaitCondition_->timed_wait(lock, timeoutTime);
+               if (!notified)
+               {
+                  // Timed out
+                  return false;
+               }
+            }
          }
          catch(const boost::thread_resource_error& e)
          {
@@ -310,14 +317,11 @@ public:
             return false;
          }
 
-         if (notified)
-         {
-            // We are locked when wait returns and we are notified
-            *pVal = queue_.front();
-            queue_.pop();
-         }
+         // We are locked when wait returns and we are notified
+         *pVal = queue_.front();
+         queue_.pop();
 
-         return notified;
+         return true;
       }
    }
 
