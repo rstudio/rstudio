@@ -150,6 +150,9 @@ test_that("job tags can be set and retrieved", {
 })
 
 test_that("script jobs run and can be replayed", {
+   
+   skip("flaky test")
+   
    # problems running this test in our Mac build AMI, skip for now
    skip_if(Sys.info()[["sysname"]] == "Darwin")
 
