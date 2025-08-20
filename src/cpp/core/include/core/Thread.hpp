@@ -297,11 +297,22 @@ public:
       {
          boost::system_time timeoutTime = boost::get_system_time() + waitDuration;
 
-         bool notified = true;
          try
          {
+            // Handle spurious wakeups by looping
             while (queue_.empty())
-               notified = pWaitCondition_->timed_wait(lock, timeoutTime);
+            {
+               boost::system_time now = boost::get_system_time();
+               if (now >= timeoutTime)
+               {
+                  return false; // Already timed out
+               }
+
+               if( !pWaitCondition_->timed_wait(lock, timeoutTime))
+               {
+                  return false; // Timed out
+               }
+            }
          }
          catch(const boost::thread_resource_error& e)
          {
@@ -310,14 +321,11 @@ public:
             return false;
          }
 
-         if (notified)
-         {
-            // We are locked when wait returns and we are notified
-            *pVal = queue_.front();
-            queue_.pop();
-         }
+         // We are locked when wait returns and we are notified
+         *pVal = queue_.front();
+         queue_.pop();
 
-         return notified;
+         return true;
       }
    }
 
