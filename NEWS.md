@@ -13,7 +13,7 @@
 - ([#16331](https://github.com/rstudio/rstudio/issues/16331)): RStudio no longer removes previously-registered global calling handlers on startup
 
 #### Posit Workbench
-- ([#rstudio-pro/8919](https://github.com/rstudio/rstudio-pro/issues/8918)): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
+- (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
 
 ### Dependencies
 - Copilot Language Server 1.357.0
