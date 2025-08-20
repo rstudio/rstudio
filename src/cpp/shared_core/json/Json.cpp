@@ -847,11 +847,7 @@ void Value::writeFormatted(std::ostream& os) const
 
 void Value::move(Value&& in_other)
 {
-   // rapidjson copy is a move operation
-   // only move the underlying value (and none of the document members)
-   // because we do not want to move the allocators (as they are the same and rapidjson cannot
-   // handle this)
-   static_cast<JsonValue&>(*m_impl->Document) = static_cast<JsonValue&>(*in_other.m_impl->Document);
+   m_impl->Document->Swap(in_other.m_impl->Document->Move());
 }
 
 // Object Member =======================================================================================================

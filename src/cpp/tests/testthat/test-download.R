@@ -17,9 +17,9 @@ context("download")
 
 expect_download <- function(url, destfile = NULL, method = "libcurl") {
    
-   destfile <- destfile %||% {
+   destfile <- .rs.nullCoalesce(destfile, {
       .rs.mapChr(seq_along(url), function(i) tempfile())
-   }
+   })
    
    lhs <- .rs.downloadFile(
       url      = url,
