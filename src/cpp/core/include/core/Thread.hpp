@@ -276,9 +276,7 @@ public:
       else if (waitDuration.is_not_a_date_time())
       {
          while (queue_.empty()) 
-         {
             pWaitCondition_->wait(lock);
-         }
 
          // We are locked when wait returns
          *pVal = queue_.front();
