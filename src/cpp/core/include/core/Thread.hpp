@@ -275,8 +275,11 @@ public:
       }
       else if (waitDuration.is_not_a_date_time())
       {
-         pWaitCondition_->wait(lock);
-         
+         while (queue_.empty()) 
+         {
+            pWaitCondition_->wait(lock);
+         }
+
          // We are locked when wait returns
          *pVal = queue_.front();
          queue_.pop();
@@ -287,10 +290,13 @@ public:
       {
          boost::system_time timeoutTime = boost::get_system_time() + waitDuration;
 
-         bool notified = false;
+         bool notified = true;
          try
          {
-             notified = pWaitCondition_->timed_wait(lock, timeoutTime);
+            while (queue_.empty())
+            {
+               notified = pWaitCondition_->timed_wait(lock, timeoutTime);
+            }
          }
          catch(const boost::thread_resource_error& e)
          {
