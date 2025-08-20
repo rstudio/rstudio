@@ -1081,6 +1081,21 @@ TEST_CASE("Json")
       CHECK((json::readObject(obj, "intArr", badIntSet) && badIntSet.empty()));
       CHECK((json::readObject(obj, "intArr", badOptIntSet) && !!(badOptIntSet == boost::none)));
    }
+
+   SECTION("Objects and shared values")
+   {
+      json::Object object;
+      object["apple"] = "apple";
+      object["banana"] = "banana";
+      {
+         object["apple"] = object["banana"];
+         CHECK(object["apple"].isString());
+         CHECK(object["banana"].isString());
+         object["apple"] = object["banana"];
+         CHECK(object["apple"].isString());
+         CHECK(object["banana"].isString());
+      }
+   }
 }
 
 } // end namespace tests
