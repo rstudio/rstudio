@@ -297,16 +297,20 @@ public:
       {
          boost::system_time timeoutTime = boost::get_system_time() + waitDuration;
 
-         bool notified = true;
          try
          {
+            // Handle spurious wakeups by looping
             while (queue_.empty())
             {
-               notified = pWaitCondition_->timed_wait(lock, timeoutTime);
-               if (!notified)
+               boost::system_time now = boost::get_system_time();
+               if (now >= timeoutTime)
                {
-                  // Timed out
-                  return false;
+                  return false; // Already timed out
+               }
+
+               if( !pWaitCondition_->timed_wait(lock, timeoutTime))
+               {
+                  return false; // Timed out
                }
             }
          }
