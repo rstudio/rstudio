@@ -2310,7 +2310,8 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       # Note that even if multiple files are downloaded, R only reports
       # a single status code, with 0 implying that all downloads succeeded.
       status <- if (all(retvals == 0L)) 0L else 1L
-      attr(status, "retvals") <- retvals
+      if (getRversion() >= "4.5.0")
+         attr(status, "retvals") <- retvals
       invisible(status)
       
    })
