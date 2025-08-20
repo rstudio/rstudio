@@ -310,6 +310,32 @@ public:
       }
    }
 
+   // TODO - When this returns the mutex is not locked and the condition being waited on may have changed
+   bool wait(const boost::posix_time::time_duration& waitDuration =
+                boost::posix_time::time_duration(boost::posix_time::not_a_date_time))
+   {
+      using namespace boost;
+      try
+      {
+         unique_lock<mutex> lock(*pMutex_);
+         if (waitDuration.is_not_a_date_time())
+         {
+            pWaitCondition_->wait(lock);
+            return true;
+         }
+         else
+         {
+            system_time timeoutTime = get_system_time() + waitDuration;
+            return pWaitCondition_->timed_wait(lock, timeoutTime);
+         }
+      }
+      catch(const thread_resource_error& e)
+      {
+         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
+         LOG_ERROR(waitError);
+         return false;
+      }
+   }
 
 private:
    // synchronization objects. heap based so that we can control whether
