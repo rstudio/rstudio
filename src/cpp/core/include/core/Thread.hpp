@@ -264,40 +264,49 @@ public:
 
    bool deque(T* pVal, const boost::posix_time::time_duration& waitDuration)
    {
-      // first see if we already have one
-      if (deque(pVal))
+      boost::unique_lock<boost::mutex> lock(*pMutex_);
+
+      if (!queue_.empty())
+      {
+         *pVal = queue_.front();
+         queue_.pop();
+
          return true;
-
-      // now wait the specified interval for one to materialize
-      if (wait(waitDuration))
-         return deque(pVal);
-      else
-         return false;
-   }
-
-   bool wait(const boost::posix_time::time_duration& waitDuration =
-                boost::posix_time::time_duration(boost::posix_time::not_a_date_time))
-   {
-      using namespace boost;
-      try
-      {
-         unique_lock<mutex> lock(*pMutex_);
-         if (waitDuration.is_not_a_date_time())
-         {
-            pWaitCondition_->wait(lock);
-            return true;
-         }
-         else
-         {
-            system_time timeoutTime = get_system_time() + waitDuration;
-            return pWaitCondition_->timed_wait(lock, timeoutTime);
-         }
       }
-      catch(const thread_resource_error& e)
+      else if (waitDuration.is_not_a_date_time())
       {
-         Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
-         LOG_ERROR(waitError);
-         return false;
+         pWaitCondition_->wait(lock);
+         
+         // We are locked when wait returns
+         *pVal = queue_.front();
+         queue_.pop();
+         
+         return true;
+      }
+      else
+      {
+         boost::system_time timeoutTime = boost::get_system_time() + waitDuration;
+
+         bool notified = false;
+         try
+         {
+             notified = pWaitCondition_->timed_wait(lock, timeoutTime);
+         }
+         catch(const boost::thread_resource_error& e)
+         {
+            Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
+            LOG_ERROR(waitError);
+            return false;
+         }
+
+         if (notified)
+         {
+            // We are locked when wait returns and we are notified
+            *pVal = queue_.front();
+            queue_.pop();
+         }
+
+         return notified;
       }
    }
 
