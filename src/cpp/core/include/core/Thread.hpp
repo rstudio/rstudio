@@ -294,9 +294,7 @@ public:
          try
          {
             while (queue_.empty())
-            {
                notified = pWaitCondition_->timed_wait(lock, timeoutTime);
-            }
          }
          catch(const boost::thread_resource_error& e)
          {
