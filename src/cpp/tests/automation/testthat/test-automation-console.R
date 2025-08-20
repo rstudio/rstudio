@@ -210,3 +210,25 @@ withr::defer(.rs.automation.deleteRemote())
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/16337
+.rs.test("error output is not lost following caught error", {
+   
+   code <- quote({
+      foo <- function() {
+         writeLines("Some output.")
+         try(stop("try(silent = FALSE)"), silent = FALSE)
+         writeLines("Some more output.")
+         stop("Error.")
+      }
+   })
+   
+   remote$editor.openWithContents(".R", deparse(code))
+   remote$commands.execute(.rs.appCommands$sourceActiveDocument)
+   remote$console.executeExpr(foo())
+   
+   output <- remote$console.getOutput()
+   expect_true("Some output." %in% output)
+   expect_true("Some more output." %in% output)
+   
+})

@@ -58,6 +58,7 @@ import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -495,14 +496,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       {
          Element errorEl = errorEls.get(n - i - 1);
          Element parentEl = errorEl.getParentElement();
-         for (Element el = parentEl.getParentElement().getFirstChildElement();
-              el != null;
-              el = el.getNextSiblingElement())
+         for (Node node = parentEl.getParentElement().getLastChild();
+              node != null;
+              node = node.getPreviousSibling())
          {
-            if (el.hasClassName(VirtualConsole.RES.styles().groupError()))
+            if (Element.is(node))
             {
-               el.getParentElement().replaceChild(widgetEl, el);
-               return;
+               Element el = Element.as(node);
+               if (el.hasClassName(VirtualConsole.RES.styles().groupError()))
+               {
+                  el.getParentElement().replaceChild(widgetEl, el);
+                  return;
+               }
             }
          }
       }
