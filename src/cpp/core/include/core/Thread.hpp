@@ -275,8 +275,17 @@ public:
       }
       else if (waitDuration.is_not_a_date_time())
       {
-         while (queue_.empty()) 
-            pWaitCondition_->wait(lock);
+         try
+         {
+            while (queue_.empty()) 
+               pWaitCondition_->wait(lock);
+         }
+         catch(const boost::thread_resource_error& e)
+         {
+            Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
+            LOG_ERROR(waitError);
+            return false;
+         }
 
          // We are locked when wait returns
          *pVal = queue_.front();
