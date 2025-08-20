@@ -359,8 +359,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
    endif()
 
-   # This is the catch2 based unit tests
-   # We are migrating to gtest which will be in the unittests directory
    add_executable(rstudio-core-tests
       TestMain.cpp
       ${CORE_TEST_FILES}
