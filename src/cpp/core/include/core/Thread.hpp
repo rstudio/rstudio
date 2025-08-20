@@ -264,17 +264,72 @@ public:
 
    bool deque(T* pVal, const boost::posix_time::time_duration& waitDuration)
    {
-      // first see if we already have one
-      if (deque(pVal))
-         return true;
+      boost::unique_lock<boost::mutex> lock(*pMutex_);
 
-      // now wait the specified interval for one to materialize
-      if (wait(waitDuration))
-         return deque(pVal);
+      if (!queue_.empty())
+      {
+         *pVal = queue_.front();
+         queue_.pop();
+
+         return true;
+      }
+      else if (waitDuration.is_not_a_date_time())
+      {
+         try
+         {
+            while (queue_.empty()) 
+               pWaitCondition_->wait(lock);
+         }
+         catch(const boost::thread_resource_error& e)
+         {
+            Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
+            LOG_ERROR(waitError);
+            return false;
+         }
+
+         // We are locked when wait returns
+         *pVal = queue_.front();
+         queue_.pop();
+         
+         return true;
+      }
       else
-         return false;
+      {
+         boost::system_time timeoutTime = boost::get_system_time() + waitDuration;
+
+         try
+         {
+            // Handle spurious wakeups by looping
+            while (queue_.empty())
+            {
+               boost::system_time now = boost::get_system_time();
+               if (now >= timeoutTime)
+               {
+                  return false; // Already timed out
+               }
+
+               if( !pWaitCondition_->timed_wait(lock, timeoutTime))
+               {
+                  return false; // Timed out
+               }
+            }
+         }
+         catch(const boost::thread_resource_error& e)
+         {
+            Error waitError(boost::thread_error::ec_from_exception(e), ERROR_LOCATION);
+            LOG_ERROR(waitError);
+            return false;
+         }
+
+         // We are locked when wait returns and we are notified
+         *pVal = queue_.front();
+         queue_.pop();
+
+         return true;
+      }
    }
 
+   // TODO - When this returns the mutex is not locked and the condition being waited on may have changed
    bool wait(const boost::posix_time::time_duration& waitDuration =
                 boost::posix_time::time_duration(boost::posix_time::not_a_date_time))
    {
@@ -300,7 +355,6 @@ public:
          return false;
       }
    }
-
 
 private:
    // synchronization objects. heap based so that we can control whether

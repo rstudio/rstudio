@@ -143,7 +143,7 @@ test_that("custom job actions are executed", {
 
 test_that("job tags can be set and retrieved", {
    theTags <- c("one", "two", "four")
-   jobId <- .rs.api.addJob(name = "job11", tags=theTags)
+   jobId <- .rs.api.addJob(name = "job11", tags = theTags)
    jobs <- .rs.invokeRpc("get_jobs")
    job <- jobs[[jobId]]
    expect_true(sum(job[["tags"]] == theTags) == length(theTags))
@@ -151,72 +151,79 @@ test_that("job tags can be set and retrieved", {
 
 test_that("script jobs run and can be replayed", {
    
-   skip("flaky test")
-   
-   # problems running this test in our Mac build AMI, skip for now
-   skip_if(Sys.info()[["sysname"]] == "Darwin")
-
    # helper function to wait for a job to finish running
-   wait_for_job <- function(id) {
-      tries <- 0
-
-      # wait 1/10th of a second before first query (have observed timing failures if we don't)
-      Sys.sleep(0.1)
-
+   waitForJob <- function(id)
+   {
+      # wait a bit before first query to avoid timing failures
+      Sys.sleep(1L)
+      
       # wait for the job to finish
-      repeat {
-         state <- .rs.tryCatch(.Call("rs_getJobState", id, PACKAGE = "(embedding)"))
-         if (identical(state, NULL)) {
+      tries <- 0L
+      repeat
+      {
+         state <- .Call("rs_getJobState", id, PACKAGE = "(embedding)")
+         if (is.null(state))
             stop("Job ", id, " does not exist.")
-         } else if (identical(state, "running") || identical(state, "idle")) {
-            # don't wait more than 5s for a job to finish (so we don't hang the test in pathological
-            # cases)
-            tries <- tries + 1
-            if (tries > 50) {
-               stop("Giving up on job ", id, " after 5 seconds (state: ", state, ")")
-               break
-            }
+         
+         if (state %in% c("idle", "running"))
+         {
+            tries <- tries + 1L
+            if (tries > 60L)
+               stop("Giving up on job ", id, " after 60 seconds (state: ", state, ")")
 
-            # wait 1/10th of a second before querying again (don't busy loop)
-            Sys.sleep(0.1)
-
-            # force background processing (needed so the process supervisor notices that the process
-            # has exited and marks the job as completed)
+            # wait and perform background processing
+            Sys.sleep(1L)
             .Call("rs_performBackgroundProcessing", FALSE, PACKAGE = "(embedding)")
-         } else {
-            # stop waiting 
-            break
          }
+         else if (state %in% c("succeeded", "cancelled", "failed"))
+         {
+            return(state)
+         }
+         else
+         {
+            stop("Unexpected job state '", state, "'")
+         }
+         
       }
    }
 
    # tell the script job which file to create by creating a global variable
-   the_file <- tempfile(pattern = "test", fileext = ".txt")
-   assign("the_file", the_file, envir = globalenv())
+   filePath <- tempfile(pattern = "test", fileext = ".txt")
+   assign("filePath", filePath, envir = globalenv())
 
+   # create a script to run as a job
+   scriptPath <- tempfile("script-job-", fileext = ".R")
+   scriptCode <- quote({
+      writeLines("Hello, world!", con = filePath)
+   })
+   writeLines(deparse(scriptCode), con = scriptPath)
+   
    # run the script job
-   job_id <- .rs.api.runScriptJob(
-      path = file.path(getwd(), "resources", "script-jobs", "create-file.R"),
+   jobId <- .rs.api.runScriptJob(
+      path = scriptPath,
       name = "Test Job",
-      importEnv = TRUE)
+      importEnv = TRUE
+   )
 
    # wait for the script job to finish running
-   wait_for_job(job_id)
-   expect_true(file.exists(the_file))
+   status <- waitForJob(jobId)
+   expect_equal(status, "succeeded")
+   expect_true(file.exists(filePath))
 
    # clean up the file it made and verify that it's gone
-   unlink(the_file)
-   expect_false(file.exists(the_file))
+   unlink(filePath)
+   expect_false(file.exists(filePath))
 
    # now replay the job to put the file back
-   .rs.api.executeJobAction(job_id, "replay")
-   wait_for_job(job_id)
+   .rs.api.executeJobAction(jobId, "replay")
+   status <- waitForJob(jobId)
 
    # it should be back
-   expect_true(file.exists(the_file))
+   expect_equal(status, "succeeded")
+   expect_true(file.exists(filePath))
 
    # clean it up one last time
-   unlink(the_file)
+   unlink(filePath)
 })
 
 
