@@ -100,15 +100,6 @@ void onConsoleOutput(module_context::ConsoleOutputType type,
 {
    if (s_pendingOutputType == PendingOutputTypeUnknown)
    {
-      // Detect error output.
-      if (s_isErrorAnnotationEnabled)
-      {
-         if (boost::regex_search(output, s_reErrorPrefix))
-         {
-            setPendingOutputType(PendingOutputTypeError);
-         }
-      }
-
       // When 'options(warn = 0)' is set, warning output will be printed
       // if any uncaught warnings were emitted during code execution.
       if (s_isWarningAnnotationEnabled)
