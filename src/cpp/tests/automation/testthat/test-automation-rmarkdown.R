@@ -592,3 +592,42 @@ withr::defer(.rs.automation.deleteRemote())
       remote$keyboard.sendKeys("<Escape>")
    })
 })
+
+# https://github.com/rstudio/rstudio/issues/13470
+.rs.test("patchwork objects don't dump output in chunks", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: S3 Method Overrides
+      ---
+      
+      ```{r setup}
+      # simulate issue without requiring patchwork
+      registerS3method("str", "patchwork", function(object, ...) {
+         print(mtcars)
+      })
+      ```
+      
+      ```{r buggy}
+      x <- structure(list(), class = "patchwork")
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      
+      # run chunks
+      editor$gotoLine(6)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      editor$gotoLine(13)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      
+      # there shouldn't be any chunk output from running the last chunk
+      Sys.sleep(1)
+      expect_error(
+         remote$dom.querySelector("#rstudio_chunk_output_buggy")
+      )
+      
+   })
+   
+})
