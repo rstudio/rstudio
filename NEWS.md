@@ -17,5 +17,5 @@
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
 
 ### Dependencies
-- Copilot Language Server 1.357.0
+- Copilot Language Server 1.360.0
 - Electron 37.3.0
