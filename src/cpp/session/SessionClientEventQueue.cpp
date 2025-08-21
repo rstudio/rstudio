@@ -198,10 +198,6 @@ void ClientEventQueue::annotateOutput(int event,
       {
          annotateError(pOutput, true);
       }
-      else
-      {
-         annotateError(pOutput, false);
-      }
    }
 
    if (isWarningAnnotationEnabled())
