@@ -44,10 +44,11 @@
 
 .rs.addFunction("valueFromStr", function(val)
 {
-   .rs.withTimeLimit(1, fail = "<truncated>", {
-      capture.output(try(str(val), silent = TRUE))
+   .rs.withS3OverridesDisabled({
+      .rs.withTimeLimit(1, fail = "<truncated>", {
+         capture.output(try(str(val), silent = TRUE))
+      })
    })
-
 })
 
 .rs.addFunction("valueAsString", function(val)
