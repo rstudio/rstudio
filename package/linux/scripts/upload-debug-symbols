@@ -33,21 +33,16 @@ if [ "$1" = "" ] || [ "$1" = "--help" ]; then
 fi
 
 # TODO: Find a more appropriate bucket?
-AWS_BUCKET="s3://rstudio-buildtools"
+AWS_BUCKET="s3://rstudio-buildtools/debug-symbols"
 
 RSTUDIO_VERSION="$1"
 BUILD_DIRECTORY="$2"
-
-case "$(uname)" in
-	Darwin) suffix="dSYM" ;;
-	Linux)  suffix="debug" ;;
-esac
 
 # Find debug symbols in the build directory provided
 cd "${BUILD_DIRECTORY}"
 while IFS= read -r -d '' sym; do
 	src="${sym}"
-	tgt="${AWS_BUCKET}/debug-symbols/${RSTUDIO_VERSION}/$(basename "${sym}")"
+	tgt="${AWS_BUCKET}/${RSTUDIO_VERSION}/$(basename "${sym}")"
 	aws s3 cp --recursive "${src}" "${tgt}"
-done < <(find . -name "*.${suffix}" -print0)
+done < <(find . -name "*.debug" -print0)
 

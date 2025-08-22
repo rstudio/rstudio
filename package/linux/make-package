@@ -307,5 +307,12 @@ if [ "${RSTUDIO_BUILD_PACKAGE:-1}" = "1" ]; then
    cpack --verbose --debug -G "$PACKAGE_TARGET"
 fi
 
+# For Jenkins builds, upload debug symbols to S3
+if [ -n "${JENKINS_URL}" ]; then
+   "${PKG_DIR}/scripts/upload-debug-symbols" \
+      "${RSTUDIO_VERSION_FULL}"              \
+      "${BUILD_DIR}"
+fi
+
 cd "$PREV_WD"
 
