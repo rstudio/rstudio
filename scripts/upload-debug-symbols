@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+#
+# upload-debug-symbols
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+usage () {
+
+	cat <<- EOF
+
+	Usage: $0 [rstudio-version] [build-directory]
+
+	Automatically discover all debug symbols within a particular
+	build directory, and then upload those symbols to AWS S3.
+	
+	EOF
+
+}
+
+if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+	usage
+	exit 1
+fi
+
+# TODO: Find a more appropriate bucket?
+AWS_BUCKET="s3://rstudio-buildtools"
+
+RSTUDIO_VERSION="$1"
+BUILD_DIRECTORY="$2"
+
+case "$(uname)" in
+	Darwin) suffix="dSYM" ;;
+	Linux)  suffix="debug" ;;
+esac
+
+# Find debug symbols in the build directory provided
+cd "${BUILD_DIRECTORY}"
+while IFS= read -r -d '' sym; do
+	src="${sym}"
+	tgt="${AWS_BUCKET}/debug-symbols/${RSTUDIO_VERSION}/$(basename "${sym}")"
+	aws s3 cp --recursive "${src}" "${tgt}"
+done < <(find . -name "*.${suffix}" -print0)
+
