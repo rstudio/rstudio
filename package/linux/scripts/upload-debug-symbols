@@ -44,7 +44,7 @@ version="$5"
 
 
 # Construct the folder to use for hosting these debug symbols.
-aws_folder="${AWS_BUCKET}/${version}/${product}/${os}/${arch}"
+aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
 
 # Find debug symbols in the build directory provided
 cd "${builddir}"
