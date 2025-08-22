@@ -347,7 +347,14 @@ endif()
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
+   # -----------------------------------
+   # This is the catch2 based unit tests
+   # We are migrating to gtest which will be in the unittests directory
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
+
+   # Remove GTest-based test files from the catch 2 tests for now
+   list(FILTER CORE_TEST_FILES EXCLUDE REGEX ".*gtest*")
+   
    if (NOT RSTUDIO_HAS_SOCI)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
    endif()
@@ -371,5 +378,28 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    if(WIN32)
       target_link_libraries(rstudio-core-tests zlibstatic)
    endif()
+
+   # -----------------------------------
+
+   # This is the new style gtests
+   file(GLOB_RECURSE CORE_GTEST_SOURCE_FILES "*_gtests.cpp")
+   list(APPEND CORE_GTEST_SOURCE_FILES unittests/main.cpp)
+
+   add_executable(core_gtests
+       ${CORE_GTEST_SOURCE_FILES}
+   )
+
+   target_link_libraries(core_gtests PRIVATE
+       rstudio-core
+       rstudio-shared-core
+       pthread
+       gtest_main
+       ${Boost_LIBRARIES}
+       ${CORE_SYSTEM_LIBRARIES}
+   )
+
+   enable_testing()
+   include(GoogleTest)
+   gtest_discover_tests(core_gtests)
 
 endif()
