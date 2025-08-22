@@ -436,16 +436,6 @@ public class RCompletionManager implements CompletionManager
       
       if (!popup_.isShowing())
       {
-         // If no popup but ghost text is showing, ESC dismisses ghost text
-         if (keycode == KeyCodes.KEY_ESCAPE && modifier == KeyboardShortcut.NONE)
-         {
-            if (docDisplay_.hasGhostText())
-            {
-               docDisplay_.removeGhostText();
-               return true;
-            }
-         }
-         
          // don't allow ctrl + space for completions in Emacs mode
          if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
             return false;
