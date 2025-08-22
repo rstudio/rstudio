@@ -308,16 +308,29 @@ if [ "${RSTUDIO_BUILD_PACKAGE:-1}" = "1" ]; then
 fi
 
 # For Jenkins builds, upload debug symbols to S3.
-# It's expected that PRODUCT, OS, and ARCH are set
-# by the Jenkins job executing this script.
-if all-defined JENKINS_URL PRODUCT OS ARCH; then
+upload-debug-symbols () {
+
+   # Validate that the requisite environment variables are defined.
+   if ! all-defined JENKINS_URL PRODUCT OS ARCH; then
+      return 1
+   fi
+
+   # Don't upload debug symbols for builds triggered by pull requests.
+   case "${WORKSPACE}" in
+   *pull-requests*) return 1 ;;
+   esac
+
+   # Preflight checks passed; upload debug symbols.
    "${PKG_DIR}/scripts/upload-debug-symbols" \
       "${BUILD_DIR}" \
       "${PRODUCT}" \
       "${OS}" \
       "${ARCH}" \
       "${RSTUDIO_VERSION_FULL}"
-fi
+
+}
+
+upload-debug-symbols
 
 cd "$PREV_WD"
 
