@@ -356,6 +356,10 @@ public class TextEditingTargetCopilotHelper
                      {
                         display_.removeGhostText();
                      }
+                     else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                     {
+                        display_.removeGhostText();
+                     }
                      else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
                               (event.getCtrlKey() || event.getMetaKey()))
                      {
