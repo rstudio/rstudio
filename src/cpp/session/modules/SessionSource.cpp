@@ -507,8 +507,8 @@ Error saveDocumentCore(const std::string& contents,
       // note that document saves are also invoked to only update document
       // properties, not necessarily document contents, so we let the dirty
       // flag be 'sticky' across sequential autosave invocations.
-      bool dirty = contents != pDoc->contents();
-      pDoc->setDirty(pDoc->dirty() || dirty);
+      bool hasChanges = contents != pDoc->contents();
+      pDoc->setDirty(pDoc->dirty() || hasChanges);
    }
 
    // always update the contents so it holds the original UTF-8 data
