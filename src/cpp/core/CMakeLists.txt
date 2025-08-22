@@ -40,6 +40,7 @@ set(CORE_SOURCE_FILES
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
+   OneShotCommand.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp

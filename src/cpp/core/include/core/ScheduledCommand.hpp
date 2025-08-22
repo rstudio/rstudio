@@ -25,9 +25,10 @@
 namespace rstudio {
 namespace core {
 
-// NOTE: execute function should return true if it has more work to do
-// or false to indicate all work is completed
-
+/*
+* @brief Command that can be queued to run fom the async server
+* @details See child classes for scheduling options
+*/
 class ScheduledCommand : boost::noncopyable
 {
 public:

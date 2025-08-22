@@ -25,6 +25,9 @@ namespace core {
 class PeriodicCommand : public ScheduledCommand
 {
 public:
+   /*
+   * @param execute - function should return true if it has more work to do or false to indicate all work is completed
+   */
    PeriodicCommand(const boost::posix_time::time_duration& period,
                    const boost::function<bool()>& execute,
                    bool immediate = true)
