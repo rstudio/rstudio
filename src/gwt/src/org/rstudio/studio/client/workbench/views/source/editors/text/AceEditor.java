@@ -3762,6 +3762,11 @@ public class AceEditor implements DocDisplay
    {
       return popupVisible_;
    }
+   
+   public boolean hasActiveAceCompleter()
+   {
+      return widget_.getEditor().hasActiveAceCompleter();
+   }
 
    public void selectAll(String needle)
    {

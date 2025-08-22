@@ -358,7 +358,12 @@ public class TextEditingTargetCopilotHelper
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
                      {
-                        display_.removeGhostText();
+                        // Don't remove ghost text if Ace's autocomplete is active
+                        // Let Ace close its popup first
+                        if (!display_.hasActiveAceCompleter())
+                        {
+                           display_.removeGhostText();
+                        }
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
                               (event.getCtrlKey() || event.getMetaKey()))
