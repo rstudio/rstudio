@@ -167,7 +167,7 @@ public:
 
    virtual void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd)
    {
-      BOOST_ASSERT(!running_);
+      boost::unique_lock<boost::mutex> lock(scheduledCommandMutex_);
       scheduledCommands_.push_back(pCmd);
    }
 
@@ -856,20 +856,23 @@ private:
       {
          if (!ec)
          {
-            // execute all commands
-            std::for_each(scheduledCommands_.begin(),
-                          scheduledCommands_.end(),
-                          boost::bind(&ScheduledCommand::execute, _1));
+            {
+               boost::unique_lock<boost::mutex> lock(scheduledCommandMutex_);
+               // execute all commands
+               std::for_each(scheduledCommands_.begin(),
+                           scheduledCommands_.end(),
+                           boost::bind(&ScheduledCommand::execute, _1));
 
-            // remove any commands which are finished
-            scheduledCommands_.erase(
-                 std::remove_if(scheduledCommands_.begin(),
-                                scheduledCommands_.end(),
-                                boost::bind(&ScheduledCommand::finished, _1)),
-                 scheduledCommands_.end());
+               // remove any commands which are finished
+               scheduledCommands_.erase(
+                  std::remove_if(scheduledCommands_.begin(),
+                                 scheduledCommands_.end(),
+                                 boost::bind(&ScheduledCommand::finished, _1)),
+                  scheduledCommands_.end());
+            }
 
-           // wait for the timer again
-           waitForScheduledCommandTimer();
+            // wait for the timer again
+            waitForScheduledCommandTimer();
 
          }
          else
@@ -973,7 +976,10 @@ private:
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
+
+   boost::mutex scheduledCommandMutex_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
+
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;
    NotFoundHandler notFoundHandler_;

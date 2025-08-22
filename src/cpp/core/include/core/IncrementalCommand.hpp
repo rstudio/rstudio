@@ -26,6 +26,9 @@ namespace core {
 class IncrementalCommand : public ScheduledCommand
 {
 public:
+   /*
+   * @param execute - function should return true if it has more work to do or false to indicate all work is completed
+   */
    IncrementalCommand(
          const boost::posix_time::time_duration& incrementalDuration,
          const boost::function<bool()>& execute)
