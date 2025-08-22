@@ -307,11 +307,16 @@ if [ "${RSTUDIO_BUILD_PACKAGE:-1}" = "1" ]; then
    cpack --verbose --debug -G "$PACKAGE_TARGET"
 fi
 
-# For Jenkins builds, upload debug symbols to S3
-if [ -n "${JENKINS_URL}" ]; then
+# For Jenkins builds, upload debug symbols to S3.
+# It's expected that PRODUCT, OS, and ARCH are set
+# by the Jenkins job executing this script.
+if all-defined JENKINS_URL PRODUCT OS ARCH; then
    "${PKG_DIR}/scripts/upload-debug-symbols" \
-      "${RSTUDIO_VERSION_FULL}"              \
-      "${BUILD_DIR}"
+      "${BUILD_DIR}" \
+      "${PRODUCT}" \
+      "${OS}" \
+      "${ARCH}" \
+      "${RSTUDIO_VERSION_FULL}"
 fi
 
 cd "$PREV_WD"
