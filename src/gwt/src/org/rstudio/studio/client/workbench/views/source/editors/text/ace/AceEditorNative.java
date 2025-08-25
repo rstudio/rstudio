@@ -758,6 +758,10 @@ public class AceEditorNative extends JavaScriptObject
       }
    }-*/;
    
+   public final native boolean hasActiveAceCompleter() /*-{
+      return !!(this.completer && this.completer.activated);
+   }-*/;
+   
    // NOTE: We intentionally bypass Ace's 'setTheme()' API, as that only
    // allows one to load themes that are bundled with Ace, but we instead
    // load and manage themes ourselves.

@@ -433,6 +433,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();
+   boolean hasActiveAceCompleter();
    void selectAll(String needle);
 
    int getTabSize();

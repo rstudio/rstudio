@@ -2,7 +2,7 @@
 
 ### New
 #### RStudio
--
+- ([#16127](https://github.com/rstudio/rstudio/issues/16127)) ESC key now dismisses Copilot ghost text in source editor
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
@@ -18,5 +18,5 @@
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
 
 ### Dependencies
-- Copilot Language Server 1.360.0
+- Copilot Language Server 1.362.0
 - Electron 37.3.0
