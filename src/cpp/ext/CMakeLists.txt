@@ -122,6 +122,10 @@ dependency(GTEST
    REVISION   "52eb8108c5bdec04579160ae17225d66034bd723" # pragma: allowlist secret
 )
 
+# Disable installation of gtest/gmock - these are test dependencies only
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
+
 # Force gtest to use the same runtime library as the rest of the project on Windows
 if(WIN32)
    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
