@@ -310,12 +310,6 @@ fi
 # For Jenkins builds, upload debug symbols to S3.
 upload-debug-symbols () {
 
-   # Validate that the 'aws' cli is available
-   if ! command -v aws 2> /dev/null; then
-      echo "-- skipping debug symbol upload; aws cli is not available"
-      return 0
-   fi
-
    # Validate that the requisite environment variables are defined.
    if ! all-defined JENKINS_URL PRODUCT OS ARCH; then
       echo "-- skipping debug symbol upload; non-production build"
@@ -326,6 +320,15 @@ upload-debug-symbols () {
    if [[ "${WORKSPACE}" =~ "pull-requests" ]]; then
       echo "-- skipping debug symbol upload; build triggered via pull request"
       return 0
+   fi
+
+   # Validate that the 'aws' cli is available
+   if ! command -v aws 2> /dev/null; then
+      pushd "$(mktemp -d)"
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+      popd
    fi
 
    # Preflight checks passed; upload debug symbols.

@@ -42,6 +42,13 @@ arch="$4"
 version="$5"
 
 
+# Find the aws command-line tool
+PATH="$HOME/aws-cli/bin;$PATH"
+if ! command -v aws 2> /dev/null; then
+	echo ERROR: aws-cli is not available
+	exit 1
+fi
+
 # Construct the folder to use for hosting these debug symbols.
 aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
 
