@@ -393,7 +393,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    target_link_libraries(core_gtests PRIVATE
        rstudio-core
        rstudio-shared-core
-       pthread
        gtest_main
        ${Boost_LIBRARIES}
        ${CORE_SYSTEM_LIBRARIES}
