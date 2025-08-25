@@ -313,19 +313,19 @@ upload-debug-symbols () {
    # Validate that the 'aws' cli is available
    if ! command -v aws 2> /dev/null; then
       echo "-- skipping debug symbol upload; aws cli is not available"
-      return 1
+      return 0
    fi
 
    # Validate that the requisite environment variables are defined.
    if ! all-defined JENKINS_URL PRODUCT OS ARCH; then
       echo "-- skipping debug symbol upload; non-production build"
-      return 1
+      return 0
    fi
 
    # Don't upload debug symbols for builds triggered by pull requests.
    if [[ "${WORKSPACE}" =~ "pull-requests" ]]; then
       echo "-- skipping debug symbol upload; build triggered via pull request"
-      return 1
+      return 0
    fi
 
    # Preflight checks passed; upload debug symbols.
