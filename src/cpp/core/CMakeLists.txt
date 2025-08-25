@@ -397,9 +397,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
        ${Boost_LIBRARIES}
        ${CORE_SYSTEM_LIBRARIES}
    )
-   if(NOT WIN32)
-      target_link_libraries(core_gtests PRIVATE pthread)
-   endif()
 
    enable_testing()
    include(GoogleTest)
