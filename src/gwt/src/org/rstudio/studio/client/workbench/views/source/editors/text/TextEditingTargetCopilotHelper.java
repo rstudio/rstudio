@@ -363,6 +363,7 @@ public class TextEditingTargetCopilotHelper
                         if (!display_.hasActiveAceCompleter())
                         {
                            display_.removeGhostText();
+                           activeCompletion_ = null;
                         }
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
