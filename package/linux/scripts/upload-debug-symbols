@@ -43,7 +43,7 @@ version="$5"
 
 
 # Find the aws command-line tool
-PATH="$HOME/aws-cli/bin;$PATH"
+PATH="$HOME/aws-cli/bin:$PATH"
 if ! command -v aws 2> /dev/null; then
 	echo ERROR: aws-cli is not available
 	exit 1
