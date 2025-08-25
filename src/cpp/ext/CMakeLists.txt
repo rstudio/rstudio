@@ -122,6 +122,11 @@ dependency(GTEST
    REVISION   "52eb8108c5bdec04579160ae17225d66034bd723" # pragma: allowlist secret
 )
 
+# Force gtest to use the same runtime library as the rest of the project on Windows
+if(WIN32)
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
 # hunspell
 dependency(HUNSPELL
    COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
