@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+#
+# upload-debug-symbols
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+AWS_BUCKET="s3://rstudio-dbgsym"
+
+usage () {
+
+	cat <<- EOF
+
+	Usage: $0 [build-directory] [product] [os] [arch] [version]
+
+	Automatically discover all debug symbols within a particular
+	build directory, and then upload those symbols to AWS S3.
+
+	EOF
+
+}
+
+if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+	usage
+	exit 1
+fi
+
+# Read params into named variables
+builddir="$1"
+product="$2"
+os="$3"
+arch="$4"
+version="$5"
+
+
+# Find the aws command-line tool
+PATH="$HOME/aws-cli/bin;$PATH"
+if ! command -v aws 2> /dev/null; then
+	echo ERROR: aws-cli is not available
+	exit 1
+fi
+
+# Construct the folder to use for hosting these debug symbols.
+aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
+
+# Find debug symbols in the build directory provided
+cd "${builddir}"
+while IFS= read -r -d '' sym; do
+	src="${sym}"
+	tgt="${aws_folder}/$(basename "${sym}")"
+	aws s3 cp "${src}" "${tgt}"
+done < <(find . -name "*.debug" -print0)
+
