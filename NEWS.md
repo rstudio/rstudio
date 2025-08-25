@@ -3,6 +3,7 @@
 ### New
 #### RStudio
 - ([#16127](https://github.com/rstudio/rstudio/issues/16127)) ESC key now dismisses Copilot ghost text in source editor
+- ([#16281](https://github.com/rstudio/rstudio/issues/16281)): RStudio will no longer perform type inference on the completion results provided by .DollarNames methods for values where `attr(*, "suppressTypeInference")` is `TRUE`.
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
