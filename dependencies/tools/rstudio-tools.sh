@@ -54,6 +54,18 @@ export MACOSX_DEPLOYMENT_TARGET="12.0"
 
 # Generic Tools ----
 
+all-defined () {
+	
+	for VAR in "$@"; do
+		if [ -z "${!VAR}" ]; then
+			return 1
+		fi
+	done
+
+	return 0
+
+}
+
 section () {
 	echo -e "\033[1m\033[36m==>\033[39m $*\033[0m"
 }
