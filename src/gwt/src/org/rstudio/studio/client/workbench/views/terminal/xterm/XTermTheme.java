@@ -36,7 +36,8 @@ public class XTermTheme
    public String background;
    public String cursor;
    public String cursorAccent;
-   public String selection;
+   public String selection; // Deprecated in xterm.js 5.x, kept for compatibility
+   public String selectionBackground; // New in xterm.js 5.x
    public String black;
    public String red;
    public String green;
@@ -198,7 +199,8 @@ public class XTermTheme
       theme.green = green;
       theme.magenta = magenta;
       theme.red = red;
-      theme.selection = selection;
+      theme.selection = selection; // Kept for backwards compatibility
+      theme.selectionBackground = selection; // xterm.js 5.x uses this property name
       theme.white = white;
       theme.yellow = yellow;
 

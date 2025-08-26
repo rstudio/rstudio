@@ -69,7 +69,7 @@ public class XTermNative extends JavaScriptObject
     * @return Visible number of columns and rows
     */
    public final native XTermDimensions proposeGeometry() /*-{
-      return this.rstudioFitAddon_.proposeDimensions();
+      return this.rstudioProposeDimensions();
    }-*/;
 
    public final native void focus() /*-{
@@ -104,19 +104,19 @@ public class XTermNative extends JavaScriptObject
       this.element.classList.remove(classStr);
    }-*/;
 
-   // XTERM_IMP
+   // XTERM_IMP - using compatibility layer
    public final native int cursorX() /*-{
-      return this.buffer.x;
+      return this.rstudioCursorX;
    }-*/;
 
-   // XTERM_IMP
+   // XTERM_IMP - using compatibility layer
    public final native int cursorY() /*-{
-      return this.buffer.y;
+      return this.rstudioCursorY;
    }-*/;
 
-   // XTERM_IMP
+   // XTERM_IMP - using compatibility layer
    public final native boolean altBufferActive() /*-{
-      return this._core.buffers.active == this._core.buffers.alt;
+      return this.rstudioAltBufferActive();
    }-*/;
 
    public final native void showPrimaryBuffer() /*-{
@@ -129,12 +129,9 @@ public class XTermNative extends JavaScriptObject
       this.write("\x1b[?1047h"); // show alt buffer
    }-*/;
 
-   // XTERM_IMP
+   // XTERM_IMP - using compatibility layer
    public final native String currentLine() /*-{
-      var lineBuf = this._core.buffer.lines.get(this.y + this.ybase);
-      if (!lineBuf) // resize may be in progress
-         return null;
-      return lineBuf.translateToString();
+      return this.rstudioCurrentLine();
    }-*/;
 
    /**
@@ -161,19 +158,19 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    public final native void updateTheme(XTermTheme theme) /*-{
-      this.setOption("theme", theme);
+      this.rstudioSetOption("theme", theme);
    }-*/;
 
    public final native void updateBooleanOption(String option, boolean value) /*-{
-      this.setOption(option, value);
+      this.rstudioSetOption(option, value);
    }-*/;
 
    public final native void updateStringOption(String option, String value) /*-{
-      this.setOption(option, value);
+      this.rstudioSetOption(option, value);
    }-*/;
 
    public final native void updateDoubleOption(String option, double value) /*-{
-      this.setOption(option, value);
+      this.rstudioSetOption(option, value);
    }-*/;
 
    public final native void refresh() /*-{

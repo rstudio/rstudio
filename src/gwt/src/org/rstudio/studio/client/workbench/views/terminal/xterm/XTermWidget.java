@@ -416,11 +416,12 @@ public class XTermWidget extends Widget
    {
       xtermCssLoader_.addCallback(() ->
             xtermLoader_.addCallback(() ->
-               xtermWebLinksLoader_.addCallback(() ->
-                  xtermFitLoader_.addCallback(() -> {
+               xtermCompatLoader_.addCallback(() ->
+                  xtermWebLinksLoader_.addCallback(() ->
+                     xtermFitLoader_.addCallback(() -> {
          if (command != null)
             command.execute();
-      }))));
+      })))));
    }
 
    public void refresh()
@@ -436,6 +437,9 @@ public class XTermWidget extends Widget
 
    private static final ExternalJavaScriptLoader xtermLoader_ =
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermjs().getSafeUri().asString());
+
+   private static final ExternalJavaScriptLoader xtermCompatLoader_ =
+         new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermcompatjs().getSafeUri().asString());
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermfitjs().getSafeUri().asString());
