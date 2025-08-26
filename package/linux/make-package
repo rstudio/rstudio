@@ -323,6 +323,7 @@ upload-debug-symbols () {
    fi
 
    # Validate that the 'aws' cli is available
+   env | sort
    if ! command -v aws 2> /dev/null; then
       pushd "$(mktemp -d)"
       curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"

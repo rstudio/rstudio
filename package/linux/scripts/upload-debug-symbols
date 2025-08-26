@@ -43,9 +43,14 @@ version="$5"
 
 
 # Find the aws command-line tool
-PATH="$HOME/aws-cli/bin:$PATH"
-if ! command -v aws 2> /dev/null; then
-	echo ERROR: aws-cli is not available
+for aws in aws "${HOME}/aws-cli/bin/aws"; do
+	if command -v "${aws}" 2> /dev/null; then
+		break
+	fi
+done
+
+if ! command -v "${aws}" 2> /dev/null; then
+	echo "ERROR: aws-cli is not available"
 	exit 1
 fi
 
@@ -57,6 +62,6 @@ cd "${builddir}"
 while IFS= read -r -d '' sym; do
 	src="${sym}"
 	tgt="${aws_folder}/$(basename "${sym}")"
-	aws s3 cp "${src}" "${tgt}"
+	"${aws}" s3 cp "${src}" "${tgt}"
 done < <(find . -name "*.debug" -print0)
 
