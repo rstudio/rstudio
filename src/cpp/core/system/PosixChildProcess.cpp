@@ -465,7 +465,7 @@ Error ChildProcess::run()
    std::vector<std::string> args;
    args.push_back(exe_);
    args.insert(args.end(), args_.begin(), args_.end());
-   
+
    using core::system::ProcessArgs;
    std::unique_ptr<ProcessArgs> pProcessArgs(new ProcessArgs(args));
    std::unique_ptr<ProcessArgs> pEnvironment = nullptr;
@@ -487,7 +487,7 @@ Error ChildProcess::run()
       {
          env.push_back(it->first + "=" + it->second);
       }
-      
+
       pEnvironment.reset(new ProcessArgs(env));
    }
 
@@ -820,7 +820,7 @@ Error ChildProcess::run()
             LOG_ERROR(systemError(errno, ERROR_LOCATION));
 #endif
       }
-      
+
       int savedErrno = -1;
       if (options_.environment)
       {
@@ -844,7 +844,7 @@ Error ChildProcess::run()
          error.addProperty("exe", exe_);
          LOG_ERROR(error);
       }
-      
+
       // a forked child should quit using _exit -- otherwise, we can run into
       // hangs and other surprising issues when static destructors are run
       ::_exit(savedErrno == -1 ? EXIT_FAILURE : savedErrno);
@@ -932,6 +932,8 @@ Error SyncChildProcess::waitForExit(ProcessResult* pResult)
    PidType result = posix::posixCall<PidType>(
       boost::bind(::waitpid, pImpl_->pid, &status, 0));
 
+   int waitErrno = errno;
+
    // join stdout, stderr threads
    readStdOutThread.join();
    readStdErrThread.join();
@@ -944,10 +946,10 @@ Error SyncChildProcess::waitForExit(ProcessResult* pResult)
    {
       pResult->exitStatus = -1;
 
-      if (errno == ECHILD) // carve out for child already reaped
+      if (waitErrno == ECHILD) // carve out for child already reaped
          return Success();
       else
-         return systemError(errno, ERROR_LOCATION);
+         return systemError(waitErrno, ERROR_LOCATION);
    }
    else
    {
@@ -1063,7 +1065,7 @@ void AsyncChildProcess::poll()
       LOG_DEBUG_MESSAGE("Skipping poll events for child process - not on main thread");
       return;
    }
-   
+
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {
@@ -1089,7 +1091,7 @@ void AsyncChildProcess::poll()
          callbacks_.onStarted(*this);
       pAsyncImpl_->calledOnStarted_ = true;
    }
-   
+
    // call onContinue
    if (callbacks_.onContinue)
    {
@@ -1161,6 +1163,8 @@ void AsyncChildProcess::poll()
    PidType result = posix::posixCall<PidType>(
             boost::bind(::waitpid, pImpl_->pid, &status, WNOHANG));
 
+   int waitErrno = errno;
+
    // either a normal exit or an error while waiting
    if (result != 0)
    {
@@ -1210,7 +1214,7 @@ void AsyncChildProcess::poll()
                pAsyncImpl_->finishedStderr_ = true;
          }
       }
-      
+
       // close all of our pipes
       pImpl_->closeAll(ERROR_LOCATION);
 
@@ -1235,8 +1239,8 @@ void AsyncChildProcess::poll()
       // if this is an error that isn't ECHILD then log it (we never
       // expect this to occur as the only documented error codes are
       // EINTR and ECHILD, and EINTR is handled internally by posixCall)
-      if (result == -1 && errno != ECHILD && errno != ENOENT)
-         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      if (result == -1 && waitErrno != ECHILD && waitErrno != ENOENT)
+         LOG_ERROR(systemError(waitErrno, ERROR_LOCATION));
    }
 
    // Perform optional periodic operations
@@ -1879,7 +1883,7 @@ Error sendSignalToSpecifiedChildProcesses(
    for (const auto& proc : procs)
       if (procNames.count(proc.exe))
          pids.push_back(proc.pid);
-   
+
    return sendSignalToSpecifiedChildProcesses(pids, signal);
 }
 
