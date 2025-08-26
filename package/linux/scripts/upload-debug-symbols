@@ -44,7 +44,7 @@ version="$5"
 ensure-aws-cli () {
 
 	# Check and see if aws-cli is already on the PATH.
-	if command -v aws 2> /dev/null; then
+	if command -v aws &> /dev/null; then
 		return 0
 	fi
 
@@ -52,7 +52,7 @@ ensure-aws-cli () {
    PATH="${HOME}/aws-cli/bin:${PATH}"
    hash -r
 
-	if command -v aws 2> /dev/null; then
+	if command -v aws &> /dev/null; then
 		return 0
 	fi
 
@@ -65,7 +65,7 @@ ensure-aws-cli () {
 
 	# Check once more for the aws-cli.
 	hash -r
-	command -v aws 2> /dev/null
+	command -v aws &> /dev/null
 
 }
 
@@ -74,15 +74,35 @@ ensure-aws-cli || {
 	exit 1
 }
 
-# Construct the folder to use for hosting these debug symbols.
-aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
-
-# Find debug symbols in the build directory provided
+# Move to build directory
 cd "${builddir}"
+
+# Build path to archive we'll generate
+prefix="${product}-${os}-${arch}"
+tar="$(pwd)/${prefix}.tar"
+
+# Find debug symbols in the build directory provided,
+# and collect them into an archive. 
 while IFS= read -r -d '' symfile; do
-	xz -k "${symfile}"
-	src="${symfile}.xz"
-	tgt="${aws_folder}/$(basename "${sym}").xz"
-	aws s3 cp "${src}" "${tgt}"
+
+	# Move to directory containing the debug info
+	dirname="$(dirname "${symfile}")"
+	pushd "${dirname}"
+
+	# Add it to the archive
+	basename="$(basename "${symfile}")"
+	tar rf "${tar}" "${basename}"
+
+	# Return to original directory
+	popd
+
 done < <(find . -name "*.debug" -print0)
+
+# Compress the archive
+xz "${tar}"
+
+# Upload to S3
+src="${tar}.xz"
+tgt="${AWS_BUCKET}/${version}/${src}"
+aws s3 cp "${src}" "${tgt}"
 
