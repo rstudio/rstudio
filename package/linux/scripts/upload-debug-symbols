@@ -83,18 +83,9 @@ prefix="${product}-${os}-${arch}"
 # Find debug symbols in the build directory provided,
 # and collect them into an archive. 
 while IFS= read -r -d '' symfile; do
-
-	# Move to directory containing the debug info
-	dirname="$(dirname "${symfile}")"
-	pushd "${dirname}"
-
-	# Add it to the archive
-	basename="$(basename "${symfile}")"
-	tar rf "${prefix}.tar" "${basename}"
-
-	# Return to original directory
-	popd
-
+	bname="$(basename "${symfile}")"
+	dname="$(dirname "${symfile}")"
+	tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
 done < <(find . -name "*.debug" -print0)
 
 # Compress the archive
