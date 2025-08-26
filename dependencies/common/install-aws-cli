@@ -47,11 +47,11 @@ Linux)
 	unzip -q awscliv2.zip
 	./aws/install -i "${AWS_INSTDIR}" -b "${AWS_BINDIR}"
 	popd
-	;;
+;;
 
 Darwin)
 	brew install awscli
-	;;
+;;
 
 esac
 
