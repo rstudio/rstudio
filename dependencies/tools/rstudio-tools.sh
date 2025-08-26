@@ -33,10 +33,6 @@ fi
 export RSTUDIO_TOOLS_ROOT
 
 
-# version of go used for building
-export WORKBENCH_GO_VERSION="1.24.5"
-
-
 # RStudio dependency cache
 export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
@@ -50,6 +46,35 @@ export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 # https://cmake.org/cmake/help/latest/envvar/MACOSX_DEPLOYMENT_TARGET.html
 #
 export MACOSX_DEPLOYMENT_TARGET="12.0"
+
+
+# version of node.js used for building
+#
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+#
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_NODE_VERSION and update to match.
+export RSTUDIO_NODE_VERSION="22.13.1"
+
+
+# actual directory name of the node installation used
+# mainly relevant for cases like macOS, where we have an -arm64 variant installed
+if [ "$(uname -sm)" = "Darwin arm64" ]; then
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}-arm64"
+else
+	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}"
+fi
+
+# version of go used for building
+export WORKBENCH_GO_VERSION="1.24.5"
+
+
+# Initialize ----
+
+# Make sure AWS CLI is available on the PATH
+PATH="${RSTUDIO_TOOLS_ROOT}/aws-cli/bin:${PATH}"
+hash -r
 
 
 # Generic Tools ----
@@ -547,21 +572,3 @@ check_env_vars() {
 	done
 	return $all_set
 }
-
-# version of node.js used for building
-#
-# When changing node version you must upload the corresponding archives to aws s3; use
-# rstudio/dependencies/tools/upload-node.sh
-#
-# In addition to updating the version here, search the entire repo for other instances of
-# RSTUDIO_NODE_VERSION and update to match.
-export RSTUDIO_NODE_VERSION="22.13.1"
-
-
-# actual directory name of the node installation used
-# mainly relevant for cases like macOS, where we have an -arm64 variant installed
-if [ "$(uname -sm)" = "Darwin arm64" ]; then
-	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}-arm64"
-else
-	export RSTUDIO_NODE_DIR="${RSTUDIO_NODE_VERSION}"
-fi
