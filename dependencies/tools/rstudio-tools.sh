@@ -73,8 +73,10 @@ export WORKBENCH_GO_VERSION="1.24.5"
 # Initialize ----
 
 # Make sure AWS CLI is available on the PATH
-PATH="${RSTUDIO_TOOLS_ROOT}/aws-cli/bin:${PATH}"
-hash -r
+if ! command -v aws &> /dev/null; then
+	PATH="${RSTUDIO_TOOLS_ROOT}/aws-cli/bin:${PATH}"
+	hash -r
+fi
 
 
 # Generic Tools ----
