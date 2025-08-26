@@ -15,8 +15,6 @@
 #
 #
 
-set -e
-
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing AWS CLI"
 
@@ -55,4 +53,3 @@ Darwin)
 
 esac
 
-popd
