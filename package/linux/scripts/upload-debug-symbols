@@ -79,9 +79,10 @@ aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
 
 # Find debug symbols in the build directory provided
 cd "${builddir}"
-while IFS= read -r -d '' sym; do
-	src="${sym}"
-	tgt="${aws_folder}/$(basename "${sym}")"
+while IFS= read -r -d '' symfile; do
+	xz -k "${symfile}"
+	src="${symfile}.xz"
+	tgt="${aws_folder}/$(basename "${sym}").xz"
 	aws s3 cp "${src}" "${tgt}"
 done < <(find . -name "*.debug" -print0)
 

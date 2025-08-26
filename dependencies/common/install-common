@@ -18,6 +18,7 @@
 set -e
 
 ./install-packages "$1"
+./install-aws-cli
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
