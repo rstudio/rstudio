@@ -41,18 +41,38 @@ os="$3"
 arch="$4"
 version="$5"
 
+ensure-aws-cli () {
 
-# Find the aws command-line tool
-for aws in aws "${HOME}/aws-cli/bin/aws"; do
-	if command -v "${aws}" 2> /dev/null; then
-		break
+	# Check and see if aws-cli is already on the PATH.
+	if command -v aws 2> /dev/null; then
+		return 0
 	fi
-done
 
-if ! command -v "${aws}" 2> /dev/null; then
+	# Try to look for an aws-cli installation in the home directory.
+   PATH="${HOME}/aws-cli/bin:${PATH}"
+   hash -r
+
+	if command -v aws 2> /dev/null; then
+		return 0
+	fi
+
+	# The aws-cli is not installed; try to install it now.
+   pushd "$(mktemp -d)"
+   curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+   unzip -q awscliv2.zip
+   ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+   popd
+
+	# Check once more for the aws-cli.
+	hash -r
+	command -v aws 2> /dev/null
+
+}
+
+ensure-aws-cli || {
 	echo "ERROR: aws-cli is not available"
 	exit 1
-fi
+}
 
 # Construct the folder to use for hosting these debug symbols.
 aws_folder="${AWS_BUCKET}/${version}/${product}-${os}-${arch}"
@@ -62,6 +82,6 @@ cd "${builddir}"
 while IFS= read -r -d '' sym; do
 	src="${sym}"
 	tgt="${aws_folder}/$(basename "${sym}")"
-	"${aws}" s3 cp "${src}" "${tgt}"
+	aws s3 cp "${src}" "${tgt}"
 done < <(find . -name "*.debug" -print0)
 

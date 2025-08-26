@@ -322,16 +322,6 @@ upload-debug-symbols () {
       return 0
    fi
 
-   # Validate that the 'aws' cli is available
-   env | sort
-   if ! command -v aws 2> /dev/null; then
-      pushd "$(mktemp -d)"
-      curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
-      unzip awscliv2.zip
-      ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
-      popd
-   fi
-
    # Preflight checks passed; upload debug symbols.
    "${PKG_DIR}/scripts/upload-debug-symbols" \
       "${BUILD_DIR}" \
