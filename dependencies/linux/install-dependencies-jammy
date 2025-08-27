@@ -86,6 +86,7 @@ if [ $arch = "amd64" ] ; then
 fi
 
 # common
+cd ../common
 ./install-common jammy
 cd ../linux
 
