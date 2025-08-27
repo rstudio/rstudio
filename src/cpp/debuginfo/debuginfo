@@ -24,11 +24,27 @@ directory=""
 usage () {
 
 	cat <<- EOF
-	Usage:
+	Usage: $0 download [options]
 
-		$0 download [-C directory] [--directory=] [--product=] [--os=] [--arch=] [--version=]
-		Download debug symbols.
-
+	-C, --directory=<dir>
+		Download and unpack symbols into this directory.
+		Defaults to the current working directory.
+	
+	--product=<product>
+		The product for which you'd like to download debug symbols.
+		Defaults to "@RSTUDIO_BUILDINFO_PRODUCT@".
+	
+	--os=<os>
+		The OS identifier associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_OS@".
+	
+	--arch=<arch>
+		The architecture associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_ARCH@".
+	
+	--version=<version>
+		The version of RStudio / Workbench associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_VERSION@".
 	EOF
 
 }
