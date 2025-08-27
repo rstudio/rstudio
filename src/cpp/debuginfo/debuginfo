@@ -19,6 +19,7 @@ buildinfo_os="@RSTUDIO_BUILDINFO_OS@"
 buildinfo_arch="@RSTUDIO_BUILDINFO_ARCH@"
 buildinfo_version="@RSTUDIO_BUILDINFO_VERSION@"
 
+bucket="rstudio-debug-symbols"
 directory=""
 
 usage () {
@@ -73,7 +74,7 @@ debuginfo-download () {
 
 	# Download symbols from S3
 	prefix="${buildinfo_product}-${buildinfo_os}-${buildinfo_arch}"
-	src="s3://rstudio-debug-symbols/${buildinfo_version}/${prefix}.tar.xz"
+	src="s3://${bucket}/${buildinfo_version}/${prefix}.tar.xz"
 	tgt="${prefix}.tar.xz"
 
 	echo "-- Downloading ${src}"
@@ -103,6 +104,10 @@ while [ $# -gt 0 ]; do
 
 	--directory=*)
 		directory="${arg#--directory=}"
+	;;
+
+	--bucket=*)
+		bucket="${arg#--bucket=}"
 	;;
 
 	--product=*)
