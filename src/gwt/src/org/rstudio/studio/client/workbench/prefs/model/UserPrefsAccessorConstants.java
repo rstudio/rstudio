@@ -2194,7 +2194,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterDescription();
    @DefaultStringValue("(None)")
    String codeFormatterEnum_none();
-   @DefaultStringValue("air")
+   @DefaultStringValue("Air")
    String codeFormatterEnum_air();
    @DefaultStringValue("styler")
    String codeFormatterEnum_styler();

@@ -295,6 +295,10 @@ public class CodePreferencesPane extends PreferencesPane
             {
                formattingDetailsPanel.setWidget(null);
             }
+            else if (value.equals("air"))
+            {
+               formattingDetailsPanel.setWidget(null);
+            }
             else if (value.equals("styler"))
             {
                formattingDetailsPanel.setWidget(stylerPanel);
