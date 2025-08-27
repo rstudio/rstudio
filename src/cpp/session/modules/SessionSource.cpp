@@ -59,6 +59,12 @@ extern "C" const char *locale2charset(const char *);
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/Preferences.hpp>
 
+#ifdef _WIN32
+# define kAirExe "air.exe"
+#else
+# define kAirExe "air"
+#endif
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -704,7 +710,30 @@ Error formatDocumentImpl(
    };
    
    std::string formatType = prefs::userPrefs().codeFormatter();
-   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterStyler)
+
+   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterAir)
+   {
+      FilePath airPath;
+      Error error = core::system::findProgramOnPath(kAirExe, &airPath);
+      if (error)
+         airPath = session::options().airPath();
+
+      if (!airPath.exists())
+         return onError(fileNotFoundError(ERROR_LOCATION));
+
+      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
+      error = module_context::processSupervisor().runProgram(
+         airPath.getAbsolutePath(),
+         { "format", resolvedPath.getAbsolutePath() },
+         options,
+         callbacks);
+
+      if (error)
+         return onError(error);
+   
+      return Success();
+   }
+   else if (formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);

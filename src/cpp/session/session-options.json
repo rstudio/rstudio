@@ -723,6 +723,13 @@
       ],
       "external": [
          {
+            "name": "external-air-path",
+            "type": "core::FilePath",
+            "memberName": "airPath_",
+            "defaultValue": "bin/air",
+            "description": "Specifies the path to the air executable."
+         },
+         {
             "name": "external-rpostback-path",
             "type": "core::FilePath",
             "memberName": "rpostbackPath_",

@@ -445,6 +445,7 @@ namespace prefs {
 #define kRunBackgroundJobDefaultWorkingDirScript "script"
 #define kCodeFormatter "code_formatter"
 #define kCodeFormatterNone "none"
+#define kCodeFormatterAir "air"
 #define kCodeFormatterStyler "styler"
 #define kCodeFormatterExternal "external"
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"

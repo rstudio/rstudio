@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+#
+# install-air
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Air"
+
+AIR_VERSION="0.7.1"
+AIR_INSTALL_DIR="${RSTUDIO_TOOLS_ROOT}/air/${AIR_VERSION}"
+
+if [ -e "${AIR_INSTALL_DIR}/air" ]; then
+	echo "Air ${AIR_VERSION} is already installed at ${AIR_INSTALL_DIR}"
+	exit 0
+fi
+
+export AIR_VERSION
+export AIR_INSTALL_DIR
+
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+curl --proto '=https' --tlsv1.2 -LsSf -O "https://github.com/posit-dev/air/releases/download/${AIR_VERSION}/air-installer.sh"
+sh air-installer.sh --quiet --no-modify-path
+
+yay "Air ${AIR_VERSION} has been installed to ${AIR_INSTALL_DIR}"
+

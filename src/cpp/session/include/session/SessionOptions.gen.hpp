@@ -372,6 +372,9 @@ protected:
       "Indicates whether or not XFS quotas should be enforced when performing file operations via the files pane.");
 
    pExternal->add_options()
+      ("external-air-path",
+      value<std::string>(&airPath_)->default_value("bin/air"),
+      "Specifies the path to the air executable.")
       ("external-rpostback-path",
       value<std::string>(&rpostbackPath_)->default_value(kDefaultPostbackPath),
       "Specifies the path to the rpostback executable.")
@@ -574,6 +577,7 @@ public:
    int limitFileUploadSizeMb() const { return limitFileUploadSizeMb_; }
    int limitCpuTimeMinutes() const { return limitCpuTimeMinutes_; }
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
+   core::FilePath airPath() const { return core::FilePath(airPath_); }
    core::FilePath rpostbackPath() const { return core::FilePath(rpostbackPath_); }
    core::FilePath consoleIoPath() const { return core::FilePath(consoleIoPath_); }
    core::FilePath gnudiffPath() const { return core::FilePath(gnudiffPath_); }
@@ -699,6 +703,7 @@ protected:
    int limitFileUploadSizeMb_;
    int limitCpuTimeMinutes_;
    bool limitXfsDiskQuota_;
+   std::string airPath_;
    std::string rpostbackPath_;
    std::string consoleIoPath_;
    std::string gnudiffPath_;

@@ -3746,18 +3746,21 @@ public class UserPrefsAccessor extends Prefs
          _constants.codeFormatterDescription(), 
          new String[] {
             CODE_FORMATTER_NONE,
+            CODE_FORMATTER_AIR,
             CODE_FORMATTER_STYLER,
             CODE_FORMATTER_EXTERNAL
          },
          "none",
          new String[] {
             _constants.codeFormatterEnum_none(),
+            _constants.codeFormatterEnum_air(),
             _constants.codeFormatterEnum_styler(),
             _constants.codeFormatterEnum_external()
          });
    }
 
    public final static String CODE_FORMATTER_NONE = "none";
+   public final static String CODE_FORMATTER_AIR = "air";
    public final static String CODE_FORMATTER_STYLER = "styler";
    public final static String CODE_FORMATTER_EXTERNAL = "external";
 

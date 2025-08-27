@@ -5,6 +5,7 @@
 *.zip.1
 *.7z
 index.html
+air-*
 CEF/
 dictionaries/
 gwtproject/

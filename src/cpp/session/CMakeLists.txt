@@ -35,6 +35,7 @@ if(WIN32)
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
    set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server")
+   set(RSTUDIO_DEPENDENCIES_AIR_PATH         "!!! TODO")
 else()
 
    # indirection to help build machine find these libraries?
@@ -61,6 +62,13 @@ else()
    else()
       set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server")
    endif()
+
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/air")
+      set(RSTUDIO_DEPENDENCIES_AIR_PATH "${RSTUDIO_TOOLS_ROOT}/air/${AIR_VERSION}/air")
+   else()
+      set(RSTUDIO_DEPENDENCIES_AIR_PATH "${RSTUDIO_DEPENDENCIES_DIR}/air/${AIR_VERSION}/air")
+   endif()
+
 endif()
 
 
@@ -81,7 +89,8 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR
-            RSTUDIO_DEPENDENCIES_COPILOT_DIR)
+            RSTUDIO_DEPENDENCIES_COPILOT_DIR
+            RSTUDIO_DEPENDENCIES_AIR_PATH)
 
  
    # skip quarto if not enabled
@@ -845,6 +854,21 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
 
+   endif()
+
+   # install air
+   if(LINUX)
+      install(
+         PROGRAMS "${RSTUDIO_DEPENDENCIES_DIR}/air/${AIR_VERSION}/air"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   elseif(APPLE)
+      install(
+         PROGRAMS "${RSTUDIO_DEPENDENCIES_DIR}/air/${AIR_VERSION}/air"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   elseif(WIN32)
+      install(
+         PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/air/${AIR_VERSION}/air.exe"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
    endif()
 
 endif()
