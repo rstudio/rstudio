@@ -52,10 +52,6 @@ function install-node() {
    if [ "${NODE_INSTALL_TYPE}" == "installed" ]; then
       # Only keep the `node` binary to reduce size and security footprint.
       find "${NODE_SUBDIR:?}" -mindepth 1 -not -path "${NODE_SUBDIR:?}/bin/node" -delete
-
-      # if [[ -d "${NODE_SUBDIR:?}/bin" ]]; then
-      #    find "${NODE_SUBDIR:?}/bin" -mindepth 1 -not -name "node" -delete
-      # fi
    fi
 }
 

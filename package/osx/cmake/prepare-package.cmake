@@ -42,7 +42,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
       COPYONLY)
 
    # copy arm64 node installation
-   set(NODE_ARM64_SOURCE "@CMAKE_CURRENT_SOURCE_DIR@/../../dependencies/common/node/22.18.0-arm64-installed")
+   set(NODE_ARM64_SOURCE "@CMAKE_CURRENT_SOURCE_DIR@/../../dependencies/common/node/@RSTUDIO_INSTALLED_NODE_VERSION@-arm64-installed")
    if(EXISTS "${NODE_ARM64_SOURCE}")
       echo("Installing arm64 node from '${NODE_ARM64_SOURCE}'")
       file(
