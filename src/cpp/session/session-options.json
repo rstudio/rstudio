@@ -812,11 +812,9 @@
          {
             "name": "external-node-path",
             "type": "core::FilePath",
-            "memberName": "deprecatedNodePath_",
+            "memberName": "nodePath_",
             "defaultValue": {"code": "kDefaultNodePath", "description": "bin/node"},
-            "description": "Specifies the path to node binaries.",
-            "isDeprecated": true,
-            "isHidden": true
+            "description": "Specifies the path to node binaries."
          },
          {
             "name": "external-copilot-agent-path",

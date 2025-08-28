@@ -236,6 +236,8 @@ set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "22.13.1" CACHE INTERNAL "Node version for building")
 
+# node version installed with the product
+set(RSTUDIO_INSTALLED_NODE_VERSION "22.18.0" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
 

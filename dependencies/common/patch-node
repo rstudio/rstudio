@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+#
+# patch-node
+#
+# Copyright (C) 2025 Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+
+# check for required ENV vars (as set by install-npm-dependencies)
+if ! check_env_vars NODE_VERSION NODE_FOLDER NODE_ROOT NODE_SUBDIR NODE_BASE_URL; then
+	exit 1 # check_env_vars has already printed an error message
+fi
+
+section "Applying patches to node ${NODE_VERSION}"
+
+# Find and remove everything except the node binary
+find "${NODE_SUBDIR:?}" -mindepth 1 -not -path "${NODE_SUBDIR:?}/bin/node" -delete
+
+# If there are other files in bin, remove them specifically
+if [[ -d "${NODE_SUBDIR:?}/bin" ]]; then
+    find "${NODE_SUBDIR:?}/bin" -mindepth 1 -not -name "node" -delete
+fi
+
+# Verify that the node binary still exists after cleanup
+if [[ ! -f "${NODE_SUBDIR:?}/bin/node" ]]; then
+    echo "Error: Node binary not found at ${NODE_SUBDIR}/bin/node after cleanup"
+    exit 1
+fi
