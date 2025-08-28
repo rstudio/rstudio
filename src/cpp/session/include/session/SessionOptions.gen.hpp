@@ -409,7 +409,7 @@ protected:
       value<std::string>(&copilotPath_)->default_value(kDefaultCopilotPath),
       "Specifies the path to Copilot Language Server binaries.")
       ("external-node-path",
-      value<std::string>(&nodePath_)->default_value(kDefaultNodePath),
+      value<std::string>(&deprecatedNodePath_)->default_value(kDefaultNodePath),
       "Specifies the path to node binaries.")
       ("external-copilot-agent-path",
       value<std::string>(&deprecatedCopilotAgentPath_)->default_value(std::string()),
@@ -586,7 +586,7 @@ public:
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
-   core::FilePath nodePath() const { return core::FilePath(nodePath_); }
+   core::FilePath deprecatedNodePath() const { return core::FilePath(deprecatedNodePath_); }
    core::FilePath deprecatedCopilotAgentPath() const { return core::FilePath(deprecatedCopilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
@@ -711,7 +711,7 @@ protected:
    std::string pandocPath_;
    std::string quartoPath_;
    std::string copilotPath_;
-   std::string nodePath_;
+   std::string deprecatedNodePath_;
    std::string deprecatedCopilotAgentPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
