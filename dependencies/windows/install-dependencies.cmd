@@ -201,12 +201,12 @@ if exist node\%NODEBUILD_FILE% (
 %RUN% install NODEBUNDLE
 if exist node\%NODEBUNDLE_FILE% (
   rmdir /s /q node\%NODEBUNDLE_VERSION%-patched 2>NUL
-  %RUN% mkdir node\%NODEBUNDLE_VERSION%-patched
+  mkdir node\%NODEBUNDLE_VERSION%-patched 2>NUL
   if ERRORLEVEL 1 (
     echo ^^!^^! ERROR: Could not create directory node\%NODEBUNDLE_VERSION%-patched.
     exit /b
   )
-  %RUN% move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched
+  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-patched\node.exe
   if ERRORLEVEL 1 (
     echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUNDLE_VERSION%-patched.
     exit /b
