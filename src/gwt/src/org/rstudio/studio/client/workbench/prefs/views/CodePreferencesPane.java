@@ -252,6 +252,10 @@ public class CodePreferencesPane extends PreferencesPane
             false);
       codeFormatter_.setValue(prefs_.codeFormatter().getGlobalValue());
       
+      VerticalPanel airPanel = new VerticalPanel();
+      airPanel.add(checkboxPref(prefs_.reformatOnSave()));
+      airPanel.add(new HelpLink("Formatting with Air", "https://posit-dev.github.io/air/formatter.html", false, false));
+
       VerticalPanel stylerPanel = new VerticalPanel();
       stylerPanel.add(headerLabel("Format with styler"));
       stylerPanel.add(new Label("Use the styler R package to reformat code."));
@@ -297,7 +301,7 @@ public class CodePreferencesPane extends PreferencesPane
             }
             else if (value.equals("air"))
             {
-               formattingDetailsPanel.setWidget(null);
+               formattingDetailsPanel.setWidget(airPanel);
             }
             else if (value.equals("styler"))
             {

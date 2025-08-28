@@ -340,11 +340,14 @@ public class SelectWidget extends Composite
    public boolean setValue(String value)
    {
       for (int i = 0; i < listBox_.getItemCount(); i++)
-         if (value == listBox_.getValue(i))
+      {
+         if (StringUtil.equals(value, listBox_.getValue(i)))
          {
             listBox_.setSelectedIndex(i);
             return true;
          }
+      }
+
       return false;
    }
 
@@ -398,6 +401,18 @@ public class SelectWidget extends Composite
    public void insertValue(int index, String label, String value)
    {
       listBox_.insertItem(label, value, index);
+   }
+
+   public void removeValue(String value)
+   {
+      for (int i = 0, n = listBox_.getItemCount(); i < n; i++)
+      {
+         if (StringUtil.equals(listBox_.getValue(i), value))
+         {
+            listBox_.removeItem(i);
+            break;
+         }
+      }
    }
 
    @Override

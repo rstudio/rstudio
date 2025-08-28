@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -48,8 +50,10 @@ import com.google.inject.Inject;
 public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectEditingPreferencesPane(final SourceServerOperations server)
+   public ProjectEditingPreferencesPane(final UserPrefs prefs,
+                                        final SourceServerOperations server)
    {
+      // editing
       add(headerLabel(constants_.editingTitle()));
 
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
@@ -73,15 +77,34 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
       useNativePipeLabeled.setWidget(0, 1, useNativePipeOperator_);
       useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
-      add(spacedBefore(spaced(useNativePipeLabeled)));
+      add(spaced(useNativePipeLabeled));
 
+      // formatting
+
+      // TODO: Read and write this from the .Rproj file
+      add(headerLabel(constants_.formattingLabel()));
+      codeFormatter_ = new SelectWidget(
+            prefs.codeFormatter(),
+            false,
+            true,
+            false);
+
+      codeFormatter_.insertValue(0, constants_.useDefaultText(), "default");
+      codeFormatter_.removeValue(UserPrefsAccessor.CODE_FORMATTER_EXTERNAL);
+      codeFormatter_.setValue(
+         prefs.codeFormatter().hasProjectValue() 
+            ? prefs.codeFormatter().getProjectValue()
+            : "default");
+
+      add(codeFormatter_);
+
+      // indexing
       add(headerLabel(constants_.indexingTitle()));
-      
-      // source editing options
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       add(enableCodeIndexing_);
       
+      // saving
       add(spacedBefore(headerLabel(constants_.savingTitle())));
       
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
@@ -227,6 +250,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private LineEndingsSelectWidget lineEndings_;
    private TextBoxWithButton encoding_;
    private String encodingValue_;
+   private SelectWidget codeFormatter_;
+
    private RProjectConfig initialConfig_;
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }
