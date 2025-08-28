@@ -59,7 +59,7 @@ export RSTUDIO_NODE_VERSION="22.13.1"
 
 # version of node.js installed with the product
 #
-# In the dependencies folder this will have a `-patched` suffix on the folder name to indicate
+# In the dependencies folder this will have a `-installed` suffix on the folder name to indicate
 # that everything except the node binary has been removed.
 #
 # When changing node version you must upload the corresponding archives to aws s3; use

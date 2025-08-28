@@ -20,48 +20,47 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
 # ensure required environment variables
 if ! check_env_vars RSTUDIO_BUILDTOOLS RSTUDIO_NODE_VERSION RSTUDIO_INSTALLED_NODE_VERSION; then
-  exit 1
+   exit 1
 fi
 
 function install-node() {
-  # We do some cleanup ("patching") of the node.js that we install with the IDE. For example, we
-  # delete some unused files to reduce the size and security footprint. To keep this separate
-  # from the node.js we use at build time (i.e. if they are the same node.js version), the
-  # "patched" version has "-patched" suffix on its folder.
 
-  # set up node variables common to scripts
-  export NODE_VERSION="${1}"
-  if [ "${2}" == "apply-patches" ]; then
-    export NODE_FOLDER="${NODE_VERSION}-patched"
-  else
-    export NODE_FOLDER="${NODE_VERSION}"
-  fi
-  export NODE_ROOT="node"
-  export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
-  export NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v${NODE_VERSION}/"
+   # set up node variables common to scripts
+   export NODE_VERSION="${1}"
+   export NODE_FOLDER_SUFFIX=""
+   export NODE_INSTALL_TYPE="${2}"
 
-  # special case for building on M1 Mac: install x64 node in the 
-  # default location (so GWT build can easily find it), but also a
-  # separate M1 node install (for the Electron build to use)
-  if is-m1-mac; then
-    if [ "${2}" == "apply-patches" ]; then
-      export NODE_FOLDER="${NODE_VERSION}-arm64-patched"
-    else
-      export NODE_FOLDER="${NODE_VERSION}-arm64"
-    fi
-    export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
-  fi
+   if [ "${NODE_INSTALL_TYPE}" == "installed" ]; then
+      export NODE_FOLDER_SUFFIX="-installed"
+   fi
 
-  if [ "${2}" == "apply-patches" ]; then
-    ./install-node reinstall
-    ./patch-node
-  else
-    ./install-node
-  fi
+   export NODE_FOLDER="${NODE_VERSION}${NODE_FOLDER_SUFFIX}"
+   export NODE_ROOT="node"
+   export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
+   export NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v${NODE_VERSION}/"
+
+   # special case for building on Apple arm64: install x64 node in the 
+   # default location (so GWT build can easily find it), but also a
+   # separate arm64 node install (for the Electron build to use)
+   if is-m1-mac; then
+      export NODE_FOLDER="${NODE_VERSION}-arm64${NODE_FOLDER_SUFFIX}"
+      export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
+   fi
+
+   ./install-node
+
+   if [ "${NODE_INSTALL_TYPE}" == "installed" ]; then
+      # Only keep the `node` binary to reduce size and security footprint.
+      find "${NODE_SUBDIR:?}" -mindepth 1 -not -path "${NODE_SUBDIR:?}/bin/node" -delete
+
+      # if [[ -d "${NODE_SUBDIR:?}/bin" ]]; then
+      #    find "${NODE_SUBDIR:?}/bin" -mindepth 1 -not -name "node" -delete
+      # fi
+   fi
 }
 
 # the version of node.js that gets installed with the product
-install-node "${RSTUDIO_INSTALLED_NODE_VERSION}" apply-patches
+install-node "${RSTUDIO_INSTALLED_NODE_VERSION}" installed
 
 # the version we use for building product components
 install-node "${RSTUDIO_NODE_VERSION}"
