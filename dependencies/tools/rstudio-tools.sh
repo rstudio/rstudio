@@ -57,6 +57,17 @@ export MACOSX_DEPLOYMENT_TARGET="12.0"
 # RSTUDIO_NODE_VERSION and update to match.
 export RSTUDIO_NODE_VERSION="22.13.1"
 
+# version of node.js installed with the product
+#
+# In the dependencies folder this will have a `-installed` suffix on the folder name to indicate
+# that everything except the node binary has been removed.
+#
+# When changing node version you must upload the corresponding archives to aws s3; use
+# rstudio/dependencies/tools/upload-node.sh
+#
+# In addition to updating the version here, search the entire repo for other instances of
+# RSTUDIO_INSTALLED_NODE_VERSION and update to match.
+export RSTUDIO_INSTALLED_NODE_VERSION="22.18.0"
 
 # actual directory name of the node installation used
 # mainly relevant for cases like macOS, where we have an -arm64 variant installed

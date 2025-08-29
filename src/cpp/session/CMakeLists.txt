@@ -724,6 +724,12 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
+   # install node
+   install(
+      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+      USE_SOURCE_PERMISSIONS)
+
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)
       # install some quarto folders into Resources, as needed

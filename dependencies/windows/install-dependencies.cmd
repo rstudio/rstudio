@@ -141,6 +141,13 @@ set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE
 set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
+set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
+set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
+set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
+set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
+set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-installed
+set NODEBUNDLE_OUTPUT=node
+
 :: Install dependencies within 'common' first.
 cd ..\common
 
@@ -189,6 +196,22 @@ if exist node\%NODEBUILD_FILE% (
     echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUILD_VERSION%.
     exit /b
   )
+)
+
+%RUN% install NODEBUNDLE
+if exist node\%NODEBUNDLE_FILE% (
+  rmdir /s /q node\%NODEBUNDLE_VERSION%-installed 2>NUL
+  mkdir node\%NODEBUNDLE_VERSION%-installed 2>NUL
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not create directory node\%NODEBUNDLE_VERSION%-installed.
+    exit /b
+  )
+  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-installed\node.exe
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUNDLE_VERSION%-installed.
+    exit /b
+  )
+  rmdir /s /q node\%NODEBUNDLE_FILE% 2>NUL
 )
 
 pushd node\%NODEBUILD_VERSION%
