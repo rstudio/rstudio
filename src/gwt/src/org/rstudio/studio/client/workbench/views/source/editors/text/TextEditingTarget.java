@@ -3879,7 +3879,8 @@ public class TextEditingTarget implements
       withActiveEditor((editor) ->
       {
          String formatType = prefs_.codeFormatter().getValue();
-         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
+         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
          {
             Range currentRange = editor.getSelectionRange();
             editor.setSelectionRange(Range.fromPoints(
@@ -3930,7 +3931,8 @@ public class TextEditingTarget implements
          }
 
          String formatType = prefs_.codeFormatter().getValue();
-         if (StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
+         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
          }
@@ -8330,15 +8332,15 @@ public class TextEditingTarget implements
       if (fileType_ == null || !fileType_.isR())
          return false;
       
-      // TODO: What should we do if a user tries to enable 'Reformat on Save' for a document
-      // without actually setting the code formatter? Should we just opt them into using
-      // the 'styler' formatter?
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
       
       String codeFormatter = prefs_.codeFormatter().getValue();
       if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
-         return false;
+      {
+         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
+         return hasAirToml;
+      }
       
       return prefs_.reformatOnSave().getValue();
    }
