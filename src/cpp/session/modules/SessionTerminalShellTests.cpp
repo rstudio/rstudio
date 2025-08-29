@@ -17,7 +17,7 @@
 
 #include <core/system/System.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace session {
@@ -26,98 +26,94 @@ namespace tests {
 
 using namespace console_process;
 
-test_context("session terminal shell tests")
+TEST(SessionTerminalShellTest, CanGenerateJsonArrayOfShells) 
 {
+   AvailableTerminalShells shells;
+   size_t origCount = shells.count();
+   EXPECT_GT(origCount, 0u);
+   core::json::Array arr;
+   shells.toJson(&arr);
+   EXPECT_EQ(arr.getSize(), origCount);
+}
+
 #ifdef _WIN32
 
-   test_that("Can generate json array of shells")
-   {
-      AvailableTerminalShells shells;
-      size_t origCount = shells.count();
-      expect_true(origCount > 0);
-      core::json::Array arr;
-      shells.toJson(&arr);
-      expect_true(origCount == arr.getSize());
-   }
+TEST(SessionTerminalShellTest, Windows64HasCommandPrompt64) 
+{
+   AvailableTerminalShells shells;
+   EXPECT_GT(shells.count(), 0u);
+   TerminalShell shell;
+   EXPECT_TRUE(shells.getInfo(TerminalShell::ShellType::Cmd64, &shell));
+   EXPECT_EQ(TerminalShell::ShellType::Cmd64, shell.type);
+   EXPECT_TRUE(shell.path.exists());
+}
 
-   test_that("64-bit Windows has 64-bit command prompt")
-   {
-      AvailableTerminalShells shells;
-      expect_true(shells.count() > 0);
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::ShellType::Cmd64, &shell));
-      expect_true(shell.type == TerminalShell::ShellType::Cmd64);
-      expect_true(shell.path.exists());
-   }
+TEST(SessionTerminalShellTest, Windows64HasPowershell64) 
+{
+   AvailableTerminalShells shells;
+   EXPECT_GT(shells.count(), 0u);
+   TerminalShell shell;
+   EXPECT_TRUE(shells.getInfo(TerminalShell::ShellType::PS64, &shell));
+   EXPECT_EQ(TerminalShell::ShellType::PS64, shell.type);
+   EXPECT_TRUE(shell.path.exists());
+}
 
-   test_that("64-bit Windows has 64-bit powershell")
+TEST(SessionTerminalShellTest, WSLBashDetectedIfInstalled) 
+{
+   AvailableTerminalShells shells;
+   EXPECT_GT(shells.count(), 0u);
+   TerminalShell shell;
+   if (shells.getInfo(TerminalShell::ShellType::WSLBash, &shell))
    {
-      AvailableTerminalShells shells;
-      expect_true(shells.count() > 0);
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::ShellType::PS64, &shell));
-      expect_true(shell.type == TerminalShell::ShellType::PS64);
-      expect_true(shell.path.exists());
+   EXPECT_EQ(TerminalShell::ShellType::WSLBash, shell.type);
+      EXPECT_TRUE(shell.path.exists());
    }
+}
 
-   test_that("WSL Bash is detected if installed")
+TEST(SessionTerminalShellTest, GitBashDetectedIfInstalled) 
+{
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   if (shells.getInfo(TerminalShell::ShellType::GitBash, &shell))
    {
-         AvailableTerminalShells shells;
-         expect_true(shells.count() > 0);
-         TerminalShell shell;
-         if (shells.getInfo(TerminalShell::ShellType::WSLBash, &shell))
-         {
-            expect_true(shell.type == TerminalShell::ShellType::WSLBash);
-            expect_true(shell.path.exists());
-         }
+      EXPECT_EQ(TerminalShell::ShellType::GitBash, shell.type);
+      EXPECT_TRUE(shell.path.exists());
    }
+}
 
-   test_that("Git Bash is detected if installed")
-   {
-      AvailableTerminalShells shells;
-      TerminalShell shell;
-      if (shells.getInfo(TerminalShell::ShellType::GitBash, &shell))
-      {
-         expect_true(shell.type == TerminalShell::ShellType::GitBash);
-         expect_true(shell.path.exists());
-      }
-   }
-
-   // Only uncomment this test on a system known to have Windows Services
-   // for Linux installed.
+// Only uncomment this test on a system known to have Windows Services
+// for Linux installed.
 #if 0
-   test_that("WSL Bash is detected")
-   {
-      AvailableTerminalShells shells;
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::ShellType::WSLBash, &shell));
-      expect_true(shell.type == TerminalShell::ShellType::WSLBash);
-      expect_true(shell.path.exists());
-   }
+TEST(SessionTerminalShellTest, WSLBashIsDetected) 
+{
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   EXPECT_TRUE(shells.getInfo(TerminalShell::ShellType::WSLBash, &shell));
+   EXPECT_TRUE(shell.type == TerminalShell::ShellType::WSLBash);
+   EXPECT_TRUE(shell.path.exists());
+}
 
-   test_that("No Posix Bash on Windows")
-   {
-      AvailableTerminalShells shells;
-      TerminalShell shell;
-      expect_false(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
-    }
-
+TEST(SessionTerminalShellTest, NoPosixBashOnWindows) 
+{
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   EXPECT_FALSE(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
+}
 #endif
-
 
 #else // Posix
-   test_that("Bash on Posix")
-   {
-      AvailableTerminalShells shells;
-      TerminalShell shell;
-      expect_true(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
-      expect_true(shell.type == TerminalShell::ShellType::PosixBash);
-      expect_true(shell.path.exists());
-      expect_false(shell.args.empty());
-   }
+
+TEST(SessionTerminalShellTest, PosixBashFound) 
+{
+   AvailableTerminalShells shells;
+   TerminalShell shell;
+   EXPECT_TRUE(shells.getInfo(TerminalShell::ShellType::PosixBash, &shell));
+   EXPECT_EQ(TerminalShell::ShellType::PosixBash, shell.type);
+   EXPECT_TRUE(shell.path.exists());
+   EXPECT_FALSE(shell.args.empty());
+}
 
 #endif
-}
 
 } // namespace tests
 } // namespace console_process

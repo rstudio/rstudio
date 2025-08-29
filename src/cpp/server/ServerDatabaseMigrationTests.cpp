@@ -1,4 +1,4 @@
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 #include <core/Database.hpp>
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
@@ -19,16 +19,23 @@ namespace overlay {
     void overlayDatasetPath(std::map<DatasetVersion, std::map<DatasetType, std::string>>& datasetPath);
 }
 
-// When adding additional datasets are made available, the following pieces
-// need to be updated. Add a DatasetVersion value to the enum in
+namespace tests {
+// When additional datasets are made available the following pieces
+// need to be updated: Add a DatasetVersion value to the enum in
 // ServerDatabaseDataset.hpp. Then add a version entry to the datasetPath,
 // providing the path to sqlite and postgres database dump for that version.
+// Dataset entries for Workbench are separately added to overlayDatasetPath.
 // Finally update the versionToString function to include the new dataset.
 // That completes necessary updates to this test.
 // In Summary:
 //      1) Add new version name to ServerDatabaseDataset.hpp
-//      2) Add entry to datasetPath
+//      2) Add entry to datasetPath ( and overlayDatasetPath )
 //      3) Add switch case to versionToString function.
+//
+// Note: Datasets should only be added for *previous* releases after a
+// migration file for the *current* release has been created. If you add a
+// dataset for the current release the migration tests will fail as there
+// is no newer schema for the current database to upgrade to
 
 std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
     {
@@ -48,6 +55,48 @@ std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
             {Sqlite, "db/test/prairie-trillium-2022.02.2-485.sqlite.sql"},
             {Postgres, "db/test/prairie-trillium-2022.02.2-485.postgresql"}
         }
+    },
+    {
+        SpottedWakerobin, {
+            {Sqlite, "db/test/spotted-wakerobin-2022.07.2-576.sqlite.sql"},
+            {Postgres, "db/test/spotted-wakerobin-2022.07.2-576.postgresql"}
+        }
+    },
+    {
+        ElsbethGeranium, {
+            {Sqlite, "db/test/elsbeth-geranium-2022.12.0-353.workbench.sqlite.sql"},
+            {Postgres, "db/test/elsbeth-geranium-2022.12.0-353.workbench.postgresql"}
+        }
+    },
+    {
+        CherryBlossom, {
+            {Sqlite, "db/test/cherry-blossom-2023.03.2-454.workbench.sqlite.sql"},
+            {Postgres, "db/test/cherry-blossom-2023.03.2-454.workbench.postgresql"}
+        }
+    },
+    {
+        MountainHydrangea, {
+            {Sqlite, "db/test/mountain-hydrangea-2023.06.2-561.workbench.sqlite.sql"},
+            {Postgres, "db/test/mountain-hydrangea-2023.06.2-561.workbench.postgresql"}
+        }
+    },
+    {
+        DesertSunflower, {
+            {Sqlite, "db/test/desert-sunflower-2023.09.1-494.workbench.sqlite.sql"},
+            {Postgres, "db/test/desert-sunflower-2023.09.1-494.workbench.postgresql"}
+        }
+    },
+    {
+        OceanStorm, {
+            {Sqlite, "db/test/ocean-storm-2023.12.1-402.workbench.sqlite.sql"},
+            {Postgres, "db/test/ocean-storm-2023.12.1-401.workbench.postgresql"}
+        }
+    },
+    {
+        ChocolateCosmos, {
+            {Sqlite, "db/test/chocolate-cosmos-2024.04.2-764.workbench.sqlite.sql"},
+            {Postgres, "db/test/chocolate-cosmos-2024.04.2-764.workbench.postgresql"}
+        }
     }
 };
 
@@ -61,6 +110,22 @@ std::string versionToString(DatasetVersion version)
             return "Ghost Orchid";
         case PrairieTrillium:
             return "Prairie Trillium";
+        case SpottedWakerobin:
+            return "Spotted Wakerobin";
+        case ElsbethGeranium:
+            return "Elsbeth Geranium";
+        case CherryBlossom:
+            return "Cherry Blossom";
+        case MountainHydrangea:
+            return "Mountain Hydrangea";
+        case DesertSunflower:
+            return "Desert Sunflower";
+        case OceanStorm:
+            return "Ocean Storm";
+        case ChocolateCosmos:
+            return "Chocolate Cosmos";
+        case CranberryHibiscus:
+            return "Cranberry Hibiscus";
         default:
             return "UNKNOWN";
     }
@@ -81,10 +146,9 @@ std::string typeToString(DatasetType type)
 
 SqliteConnectionOptions sqliteConnectionOptions()
 {
-    boost::filesystem::path tempPath = boost::filesystem::temp_directory_path();
-    FilePath tempDb = FilePath(boost::filesystem::canonical(tempPath).string());
-    tempDb = tempDb.completeChildPath("rstudio-migration-test.sqlite");
-    return SqliteConnectionOptions { tempDb.getAbsolutePath() };
+   // Use an in-memory database instead of a file-based one
+   // This is faster and ensures complete isolation between test runs
+   return SqliteConnectionOptions { ":memory:" };
 }
 
 PostgresqlConnectionOptions postgresConnectionOptions()
@@ -105,188 +169,186 @@ PostgresqlConnectionOptions postgresConnectionOptions()
 }
 
 void updateTest(DatasetVersion version, DatasetType type, std::string path){
-    std::string testName = "A "+ versionToString(version) + " " + typeToString(type) + " Database";
-    GIVEN(testName)
-    {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-        boost::shared_ptr<IConnection> connection;
+   std::string testName = "A "+ versionToString(version) + " " + typeToString(type) + " Database";
 
-        if (type == Sqlite)
-        {
-            SqliteConnectionOptions options = sqliteConnectionOptions();
-            //Delete the db if it exists
-            FilePath db(options.file);
-            db.removeIfExists();
+   // Setup test database
+   FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
+   boost::shared_ptr<IConnection> connection;
 
-            REQUIRE_FALSE(connect(options, &connection));
-        }
-        else if (type == Postgres)
-        {
-            PostgresqlConnectionOptions options = postgresConnectionOptions();
-            REQUIRE_FALSE(connect(options, &connection));
+   if (type == Sqlite)
+   {
+      SqliteConnectionOptions options = sqliteConnectionOptions();
+      // Connect to the in-memory database
+      ASSERT_FALSE(connect(options, &connection));
+   }
+   else if (type == Postgres)
+   {
+      PostgresqlConnectionOptions options = postgresConnectionOptions();
+      ASSERT_FALSE(connect(options, &connection));
 
-            std::string queryStr =
-            R""(
-            DROP SCHEMA public CASCADE;
-            CREATE SCHEMA public;
-            GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
-            GRANT ALL ON SCHEMA public TO public;
-            ALTER DATABASE )"" + options.database + R""( SET search_path = public;
-            )"";
+      std::string queryStr =
+      R""(
+      DROP SCHEMA public CASCADE;
+      CREATE SCHEMA public;
+      GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
+      GRANT ALL ON SCHEMA public TO public;
+      ALTER DATABASE )"" + options.database + R""( SET search_path = public;
+      )"";
 
-            REQUIRE_FALSE(connection->executeStr(queryStr));
-        }
+      ASSERT_FALSE(connection->executeStr(queryStr));
+   }
 
-        std::string dbDump;
-        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[version][type]);
-        REQUIRE(dbDumpPath.exists());
-        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
-        REQUIRE_FALSE(connection->executeStr(dbDump));
+   std::string dbDump;
+   FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[version][type]);
+   ASSERT_TRUE(dbDumpPath.exists());
+   ASSERT_FALSE(readStringFromFile(dbDumpPath, &dbDump));
+   ASSERT_FALSE(connection->executeStr(dbDump));
 
-         // added, because dropping the schema ends up also dropping
-         // the search_path for that connection, so we need to reset it
-         // for postgres connections. Additionally some of our datasets also
-         // overwrite the search_path.
-         if (type == Postgres)
-            REQUIRE_FALSE(connection->executeStr("SET search_path = public;"));
+   // added, because dropping the schema ends up also dropping
+   // the search_path for that connection, so we need to reset it
+   // for postgres connections. Additionally some of our datasets also
+   // overwrite the search_path.
+   if (type == Postgres)
+   {
+      ASSERT_FALSE(connection->executeStr("SET search_path = public;"));
+   }
 
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
+   FilePath migrationPath = workingDir.completeChildPath("db");
+   SchemaUpdater schemaUpdater = {connection, migrationPath};
 
-        THEN("Schema is out of date")
-        {
-            bool initiallyUpToDate = false;
-            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
-            REQUIRE_FALSE(initiallyUpToDate);
-        }
+   // Test that schema is out of date initially
+   bool initiallyUpToDate = false;
+   ASSERT_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
+   ASSERT_FALSE(initiallyUpToDate);
 
-        WHEN("Schema updater is run")
-        {
-            REQUIRE_FALSE(schemaUpdater.update());
+   // Run schema update
+   ASSERT_FALSE(schemaUpdater.update());
 
-            THEN("Schema is up to date")
-            {
-                bool finallyUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
-                REQUIRE(finallyUpToDate);
-            }
-        }
-    }
+   // Test that schema is up to date after update
+   bool finallyUpToDate = false;
+   ASSERT_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
+   ASSERT_TRUE(finallyUpToDate);
 }
 
-TEST_CASE("Upgrading Sqlite Database","[database][integration][upgrade][sqlite]")
+TEST(DatabaseMigrationTest, UpgradeSqliteDatabaseFull)
 {
-    overlay::overlayDatasetPath(datasetPath);
-    GIVEN("An Empty Sqlite Database")
-    {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
+   // Test empty SQLite database
+   FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
 
-        boost::shared_ptr<IConnection> connection;
-        SqliteConnectionOptions options = sqliteConnectionOptions();
-        
-        //Delete the db if it exists
-        FilePath db(options.file);
-        db.removeIfExists();
+   boost::shared_ptr<IConnection> connection;
+   SqliteConnectionOptions options = sqliteConnectionOptions();
+   
+   //Delete the db if it exists
+   FilePath db(options.file);
+   db.removeIfExists();
 
-        REQUIRE_FALSE(connect(options, &connection));
+   ASSERT_FALSE(connect(options, &connection));
+   
+   // Disable WAL mode to prevent -shm and -wal files from being created
+   ASSERT_FALSE(connection->executeStr("PRAGMA journal_mode=DELETE;"));
 
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
+   FilePath migrationPath = workingDir.completeChildPath("db");
+   SchemaUpdater schemaUpdater = {connection, migrationPath};
 
-        THEN("Schema is out of date")
-        {
-            bool emptyUpToDate = false;
-            // Is up to date will fail.
-            REQUIRE(schemaUpdater.isUpToDate(&emptyUpToDate));
-            REQUIRE_FALSE(emptyUpToDate);
-        }
+   // Check schema is out of date
+   bool emptyUpToDate = false;
+   // Is up to date will fail.
+   EXPECT_TRUE(schemaUpdater.isUpToDate(&emptyUpToDate));
+   EXPECT_FALSE(emptyUpToDate);
 
-        WHEN("The initial DB is created")
-        {
-            FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.sqlite");
-            std::string createDbStr;
-            REQUIRE_FALSE(readStringFromFile(createDbPath, &createDbStr));
-            REQUIRE_FALSE(connection->executeStr(createDbStr));
-            THEN("The Schema is now up to date")
-            {
-                bool createdUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&createdUpToDate));
-                REQUIRE(createdUpToDate);
-            }
-        }
-    }
-
-    // Attempt an upgrade from each previous version
-    for(auto version : datasetPath)
-    {
-        DatasetVersion ver = version.first;
-        DatasetType type = Sqlite;
-        std::string datasetPath = version.second[type];
-        updateTest(ver, type, datasetPath);
-    }
+   // Test creating initial DB
+   FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.sqlite");
+   std::string createDbStr;
+   ASSERT_FALSE(readStringFromFile(createDbPath, &createDbStr));
+   ASSERT_FALSE(connection->executeStr(createDbStr));
+   
+   // Check schema is up to date after creation
+   bool createdUpToDate = false;
+   ASSERT_FALSE(schemaUpdater.isUpToDate(&createdUpToDate));
+   ASSERT_TRUE(createdUpToDate);
 }
 
-TEST_CASE("Upgrading Postgres Database", "[database][integration][upgrade][.postgres]")
+TEST(DatabaseMigrationTest, UpgradeSqliteDatabaseIncremental)
 {
-    overlay::overlayDatasetPath(datasetPath);
-    GIVEN("An empty Postgres Database")
-    {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-
-        boost::shared_ptr<IConnection> connection;
-        PostgresqlConnectionOptions options = postgresConnectionOptions();
-        REQUIRE_FALSE(connect(options, &connection));
-
-        std::string queryStr =
-         R""(
-         DROP SCHEMA public CASCADE;
-         CREATE SCHEMA public;
-         GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
-         GRANT ALL ON SCHEMA public TO public;
-         )"";
-
-        connection->executeStr(queryStr);
-
-        REQUIRE_FALSE(connect(options, &connection));
-
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
-
-        THEN("Schema is out of date")
-        {
-            bool emptyUpToDate = false;
-            // Is up to date will fail.
-            REQUIRE(schemaUpdater.isUpToDate(&emptyUpToDate));
-            REQUIRE_FALSE(emptyUpToDate);
-        }
-
-        WHEN("The initial DB is created")
-        {
-            FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.postgresql");
-            std::string createDbStr;
-            REQUIRE_FALSE(readStringFromFile(createDbPath, &createDbStr));
-            createDbStr = "BEGIN;\n" + createDbStr + "\nCOMMIT;";
-            REQUIRE_FALSE(connection->executeStr(createDbStr));
-
-            THEN("The Schema is now up to date")
-            {
-                bool createdUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&createdUpToDate));
-                REQUIRE(createdUpToDate);
-            }
-        }
-    }
-
-    // Attempt an upgrade from each previous version
-    for(auto version : datasetPath)
-    {
-        DatasetVersion ver = version.first;
-        DatasetType type = Postgres;
-        std::string datasetPath = version.second[type];
-        updateTest(ver, type, datasetPath);
-    }
+   // Attempt an upgrade from each previous version
+   overlay::overlayDatasetPath(datasetPath);
+   for(auto version : datasetPath)
+   {
+      DatasetVersion ver = version.first;
+      DatasetType type = Sqlite;
+      std::string datasetPath = version.second[type];
+      updateTest(ver, type, datasetPath);
+   }
 }
 
+TEST(DatabaseMigrationTest, UpgradePostgresDatabaseFull)
+{
+   if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
+   {
+      GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
+   }
+
+   // Test empty Postgres database
+   FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
+
+   boost::shared_ptr<IConnection> connection;
+   PostgresqlConnectionOptions options = postgresConnectionOptions();
+   ASSERT_FALSE(connect(options, &connection));
+
+   std::string queryStr =
+   R""(
+   DROP SCHEMA public CASCADE;
+   CREATE SCHEMA public;
+   GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
+   GRANT ALL ON SCHEMA public TO public;
+   )"";
+
+   connection->executeStr(queryStr);
+
+   ASSERT_FALSE(connect(options, &connection));
+
+   FilePath migrationPath = workingDir.completeChildPath("db");
+   SchemaUpdater schemaUpdater = {connection, migrationPath};
+
+   // Check schema is out of date
+   bool emptyUpToDate = false;
+   // Is up to date will fail.
+   EXPECT_TRUE(schemaUpdater.isUpToDate(&emptyUpToDate));
+   EXPECT_FALSE(emptyUpToDate);
+
+   // Test creating initial DB
+   FilePath createDbPath = workingDir.completeChildPath("db/CreateTables.postgresql");
+   std::string createDbStr;
+   ASSERT_FALSE(readStringFromFile(createDbPath, &createDbStr));
+   createDbStr = "BEGIN;\n" + createDbStr + "\nCOMMIT;";
+   ASSERT_FALSE(connection->executeStr(createDbStr));
+
+   // Check schema is up to date after creation
+   bool createdUpToDate = false;
+   ASSERT_FALSE(schemaUpdater.isUpToDate(&createdUpToDate));
+   ASSERT_TRUE(createdUpToDate);
+}
+
+TEST(DatabaseMigrationTest, UpgradePostgresDatabaseIncremental)
+{
+   if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
+   {
+      GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
+   }
+
+   overlay::overlayDatasetPath(datasetPath);
+   // Attempt an upgrade from each previous version
+   for(auto version : datasetPath)
+   {
+      DatasetVersion ver = version.first;
+      DatasetType type = Postgres;
+      std::string datasetPath = version.second[type];
+      updateTest(ver, type, datasetPath);
+   }
+}
+
+
+} // namespace tests
 } // namespace db
 } // namespace server
 } // namespace rstudio

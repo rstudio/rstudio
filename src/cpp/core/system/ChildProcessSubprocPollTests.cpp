@@ -18,7 +18,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 using namespace boost::placeholders;
 
@@ -131,101 +131,98 @@ public:
 
 } // anonymous namespace
 
-test_context("ChildProcess polling support class")
+TEST(ChildprocessTest, ChildprocessPollingSupportClassInitialStateWithoutSubprocPollingMatchesExpectation)
 {
-   test_that("initial state without subproc polling matches expectation")
-   {
-      PidType pid = 12345;
-      NoSubProcPollingFixture test(pid);
+   PidType pid = 12345;
+   NoSubProcPollingFixture test(pid);
 
-      expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonIgnoredSubprocess());
-      expect_false(test.poller_.hasIgnoredSubprocess());
-   }
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   ASSERT_TRUE(test.poller_.hasNonIgnoredSubprocess());
+   EXPECT_FALSE(test.poller_.hasIgnoredSubprocess());
+}
 
-   test_that("recent input state without subproc polling doesn't change immediately")
-   {
-      PidType pid = 12345;
-      NoSubProcPollingFixture test(pid);
+TEST(ChildprocessTest, ChildprocessPollingSupportClassRecentInputStateWithoutSubprocPollingDoesntChangeImmediately)
+{
+   PidType pid = 12345;
+   NoSubProcPollingFixture test(pid);
 
-      expect_false(test.poller_.poll(true));
-      expect_true(test.poller_.hasRecentOutput());
-      expect_false(test.poller_.poll(false));
-      expect_true(test.poller_.hasRecentOutput()); // timeout hasn't expired
-   }
+   EXPECT_FALSE(test.poller_.poll(true));
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   EXPECT_FALSE(test.poller_.poll(false));
+   ASSERT_TRUE(test.poller_.hasRecentOutput()); // timeout hasn't expired
+}
 
-   test_that("recent input state without subproc polling does change after timeout")
-   {
-      PidType pid = 12345;
-      NoSubProcPollingFixture test(pid);
+TEST(ChildprocessTest, ChildprocessPollingSupportClassRecentInputStateWithoutSubprocPollingDoesChangeAfterTimeout)
+{
+   PidType pid = 12345;
+   NoSubProcPollingFixture test(pid);
 
-      test.poller_.poll(true);
-      expect_true(test.poller_.hasRecentOutput());
-      blockingwait(kResetRecentDelayExpired);
-      test.poller_.poll(false);
-      expect_false(test.poller_.hasRecentOutput()); // now it flips to false
-      test.poller_.poll(true);
-      expect_true(test.poller_.hasRecentOutput()); // but right back to true
-   }
+   test.poller_.poll(true);
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   blockingwait(kResetRecentDelayExpired);
+   test.poller_.poll(false);
+   EXPECT_FALSE(test.poller_.hasRecentOutput()); // now it flips to false
+   test.poller_.poll(true);
+   ASSERT_TRUE(test.poller_.hasRecentOutput()); // but right back to true
+}
 
-   test_that("initial state for subproc polling matches expectations")
-   {
-      PidType pid = 12345;
-      SubProcPollingFixture test(pid);
+TEST(ChildprocessTest, ChildprocessPollingSupportClassInitialStateForSubprocPollingMatchesExpectations)
+{
+   PidType pid = 12345;
+   SubProcPollingFixture test(pid);
 
-      expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonIgnoredSubprocess());
-      expect_false(test.poller_.hasIgnoredSubprocess());
-   }
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   ASSERT_TRUE(test.poller_.hasNonIgnoredSubprocess());
+   EXPECT_FALSE(test.poller_.hasIgnoredSubprocess());
+}
 
-   test_that("childproc checked when recent output and timeout expires")
-   {
-      PidType pid = 12345;
-      SubProcPollingFixture test(pid);
+TEST(ChildprocessTest, ChildprocessPollingSupportClassChildprocCheckedWhenRecentOutputAndTimeoutExpires)
+{
+   PidType pid = 12345;
+   SubProcPollingFixture test(pid);
 
-      test.checkReturns_ = false;
-      test.poller_.poll(true);
-      expect_false(test.checkCalled_); // polling timeout hasn't passed
-      blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
-      expect_true(test.poller_.poll(false)); // not longer than the recent output timeout!
-      expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
-      expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.callerPid_ == pid);
-   }
+   test.checkReturns_ = false;
+   test.poller_.poll(true);
+   EXPECT_FALSE(test.checkCalled_); // polling timeout hasn't passed
+   blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
+   EXPECT_TRUE(test.poller_.poll(false)); // not longer than the recent output timeout!
+   EXPECT_TRUE(test.checkCalled_);
+   EXPECT_EQ(test.checkReturns_, test.poller_.hasNonIgnoredSubprocess());
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   EXPECT_EQ(pid, test.callerPid_);
+}
 
-   test_that("lack of recent output prevents childproc checking")
-   {
-      PidType pid = 12345;
-      SubProcPollingFixture test(pid);
+TEST(ChildprocessTest, ChildprocessPollingSupportClassLackOfRecentOutputPreventsChildprocChecking)
+{
+   PidType pid = 12345;
+   SubProcPollingFixture test(pid);
 
-      test.checkReturns_ = false;
-      test.poller_.poll(false);
-      expect_false(test.checkCalled_);
-      blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
-      test.poller_.poll(false); // not longer than the output timeout
-      expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
-      expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.callerPid_ == pid);
+   test.checkReturns_ = false;
+   test.poller_.poll(false);
+   EXPECT_FALSE(test.checkCalled_);
+   blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
+   test.poller_.poll(false); // not longer than the output timeout
+   EXPECT_TRUE(test.checkCalled_);
+   EXPECT_EQ(test.checkReturns_, test.poller_.hasNonIgnoredSubprocess());
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   EXPECT_EQ(pid, test.callerPid_);
 
-      test.clearFlags();
-      test.poller_.poll(false); // no recent output
-      blockingwait(kResetRecentDelayExpired);
-      test.poller_.poll(false);
-      expect_false(test.checkCalled_); // because of no recent output
-      expect_false(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
-   }
+   test.clearFlags();
+   test.poller_.poll(false); // no recent output
+   blockingwait(kResetRecentDelayExpired);
+   test.poller_.poll(false);
+   EXPECT_FALSE(test.checkCalled_); // because of no recent output
+   EXPECT_FALSE(test.poller_.hasRecentOutput());
+   EXPECT_EQ(test.checkReturns_, test.poller_.hasNonIgnoredSubprocess());
 
-   test_that("initial state for cwd polling matches expectations")
-   {
-      PidType pid = 12345;
-      CwdPollingFixture test(pid);
 
-      expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.getCwd().isEmpty());
-   }
+TEST(ChildprocessTest, InitialStateForCwdPollingMatchesExpectations)
+{
+   PidType pid = 12345;
+   CwdPollingFixture test(pid);
+
+   EXPECT_TRUE(test.poller_.hasRecentOutput());
+   EXPECT_TRUE(test.poller_.getCwd().isEmpty());
 }
 
 } // namespace tests

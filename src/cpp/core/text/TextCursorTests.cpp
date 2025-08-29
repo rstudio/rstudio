@@ -15,45 +15,42 @@
 
 #include <core/text/TextCursor.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace text {
 namespace tests {
 
-TEST_CASE("TextCursor")
+TEST(TextCursorTest, Navigation)
 {
-   SECTION("Navigation")
-   {
-      std::string text("a;b:c.d");
-      TextCursor cursor(text);
-      CHECK(cursor.offset() == 0);
-      CHECK(*cursor == 'a');
-      
-      // consume one character
-      CHECK(cursor.consume('a'));
-      CHECK(*cursor == ';');
-      
-      // check that we fail to consume the wrong character
-      CHECK(!cursor.consume('z'));
-      
-      // check that we can consume a string
-      CHECK(cursor.consume(";b"));
-      CHECK(*cursor == ':');
-      
-      // check that we can consume until a sequence
-      CHECK(cursor.consumeUntil(".d"));
-      CHECK(*cursor == '.');
-      
-      // check that we can advance to the end
-      CHECK(cursor.advance());
-      CHECK(*cursor == 'd');
-      
-      // check that we can't advance once we've reached
-      // the end of our string
-      CHECK(!cursor.advance());
-   }
+   std::string text("a;b:c.d");
+   TextCursor cursor(text);
+   EXPECT_EQ(cursor.offset(), 0u);
+   EXPECT_EQ(*cursor, 'a');
+   
+   // consume one character
+   EXPECT_TRUE(cursor.consume('a'));
+   EXPECT_EQ(*cursor, ';');
+   
+   // check that we fail to consume the wrong character
+   EXPECT_FALSE(cursor.consume('z'));
+   
+   // check that we can consume a string
+   EXPECT_TRUE(cursor.consume(";b"));
+   EXPECT_EQ(*cursor, ':');
+   
+   // check that we can consume until a sequence
+   EXPECT_TRUE(cursor.consumeUntil(".d"));
+   EXPECT_EQ(*cursor, '.');
+   
+   // check that we can advance to the end
+   EXPECT_TRUE(cursor.advance());
+   EXPECT_EQ(*cursor, 'd');
+   
+   // check that we can't advance once we've reached
+   // the end of our string
+   EXPECT_FALSE(cursor.advance());
 }
 
 } // end namespace tests

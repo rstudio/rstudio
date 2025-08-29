@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <core/Version.hpp>
 
@@ -26,30 +26,27 @@ void compareVersionLessThan(const std::string& lhs, const std::string& rhs)
    Version vl(lhs);
    Version vr(rhs);
    
-   expect_true(vl <  vr);
-   expect_true(vl <= vr);
-   expect_true(vl != vr);
-   expect_true(vr >  vl);
-   expect_true(vr >= vl);
+   EXPECT_LT(vl, vr);
+   EXPECT_LE(vl, vr);
+   EXPECT_NE(vl, vr);
+   EXPECT_GT(vr, vl);
+   EXPECT_GE(vr, vl);
 }
 
 void compareVersionEqual(const std::string& lhs, const std::string& rhs)
 {
-   expect_true(Version(lhs) == Version(rhs));
+   EXPECT_EQ(Version(lhs), Version(rhs));
 }
 
-test_context("Version")
+TEST(VersionTest, VariousVersionsAreComparedCorrectly)
 {
-   test_that("Various versions are compared correctly")
-   {
-      compareVersionLessThan("3.2.0", "3.3.0");
-      compareVersionLessThan("3.2", "3.3.1");
-      compareVersionLessThan("3", "3.0.1");
-      compareVersionLessThan("3.3.0", "3.3.1");
-      
-      compareVersionEqual("3.0.0", "3.0.0.0");
-      compareVersionEqual("3", "3.0-0");
-   }
+   compareVersionLessThan("3.2.0", "3.3.0");
+   compareVersionLessThan("3.2", "3.3.1");
+   compareVersionLessThan("3", "3.0.1");
+   compareVersionLessThan("3.3.0", "3.3.1");
+   
+   compareVersionEqual("3.0.0", "3.0.0.0");
+   compareVersionEqual("3", "3.0-0");
 }
 
 } // end anonymous namespace

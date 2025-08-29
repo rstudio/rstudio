@@ -16,8 +16,9 @@
 #include <core/terminal/PrivateCommand.hpp>
 
 #include <vector>
+#include <memory>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <core/BoostThread.hpp>
 
@@ -31,379 +32,376 @@ namespace tests {
 
 namespace {
 
+// Constants used in tests
+const std::string kCommand = "test-command";
+const std::string kEol = "\r\n";
+const std::string kPrompt = "$ ";
+const int kPrivate = 100; // milliseconds
+const int kUser = 200; // milliseconds
+const int kTimeout = 300; // milliseconds
+const int kPostTimeout = 50; // milliseconds
+const bool kOncePerUserEnter = true;
+const bool kNotOncePerUserEnter = false;
+const bool kHasChildProcess = true;
+const bool kNoChildProcess = false;
+
+// Mock operations
+struct MockOps : public core::system::ProcessOperations
+{
+   std::vector<std::string> writes;
+   std::vector<bool> writesEof;
+   bool ptyInterrupted = false;
+
+   Error writeToStdin(const std::string& input, bool eof) override
+   {
+      writes.push_back(input);
+      writesEof.push_back(eof);
+      return Success();
+   }
+
+   Error ptyInterrupt() override
+   {
+      ptyInterrupted = true;
+      return Success();
+   }
+   
+   Error ptySetSize(int cols, int rows) override
+   {
+      return Success();
+   }
+   
+   Error terminate() override
+   {
+      return Success();
+   }
+   
+   PidType getPid() override
+   {
+      return 0;
+   }
+};
+
 } // anonymous namespace
 
-test_context("Private Terminal Command Tests")
+// Test fixture for terminal tests that ensures proper cleanup between tests
+class TerminalTest : public ::testing::Test {
+protected:
+   void SetUp() override {
+      ops_ = std::make_unique<MockOps>();
+   }
+   
+   void TearDown() override {
+      ops_.reset();
+   }
+
+   std::unique_ptr<MockOps> ops_;
+};
+
+TEST_F(TerminalTest, CommandOutputSuccessfullyParsedAndReturned)
 {
-   // ProcessOptions impl that tracks calls
-   class OpsHarness : public system::ProcessOperations
-   {
-   public:
-      OpsHarness() : colsSet(0), rowsSet(0), ptyInterrupted(false), terminated(false), pid(0)
-      {
-      }
+   PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
 
-      virtual Error writeToStdin(const std::string& input, bool eof)
-      {
-         writes.push_back(input);
-         writesEof.push_back(eof);
-         return Success();
-      }
+   std::string results = "one=two\nthree=four\nfive=six\n";
 
-      virtual Error ptySetSize(int cols, int rows)
-      {
-         colsSet = cols;
-         rowsSet = rows;
-         return Success();
-      }
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
 
-      virtual Error ptyInterrupt()
-      {
-         ptyInterrupted = true;
-         return Success();
-      }
+   // mimic shell echoing back the command
+   cmd.output(cmd.getFullCommand());
+   cmd.output(kEol);
+   cmd.output(cmd.getBOM());
+   cmd.output(kEol);
+   cmd.output("ignorespace");
+   cmd.output(kEol);
+   cmd.output(results);
 
-      virtual Error terminate()
-      {
-         terminated = true;
-         return Success();
-      }
+   // verify we can't get results until EOM is seen
+   ASSERT_TRUE(cmd.getPrivateOutput().empty());
 
-      virtual PidType getPid()
-      {
-         return pid;
-      }
+   // close off the output
+   cmd.output(cmd.getEOM());
+   cmd.output(kEol);
+   cmd.output(kPrompt);
 
-      int colsSet;
-      int rowsSet;
-      std::vector<std::string> writes;
-      std::vector<bool> writesEof;
-      bool ptyInterrupted;
-      bool terminated;
-      int pid;
+   // trying to capture now should return true because final timeout hasn't expired
+   ASSERT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
 
-   } ops;
+   boost::this_thread::sleep(milliseconds(kPostTimeout));
 
-   const std::string kCommand = "sample_command";
-   const std::string kEol = "\r\n";
-   const std::string kPrompt = "fake-prompt someuser$ ";
-   const bool kHasChildProcess = true;
-   const bool kNoChildProcess = false;
-   const int kPrivate = 25; // min delay between private commands
-   const int kUser = 25; // min delay after user command
-   const int kTimeout = 25; // private command timeout
-   const int kPostTimeout = 25; // how long to suppress output after private command is done
+   // trying to capture now should return false, meaning we can get the output
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
 
-   const bool kOncePerUserEnter = true;
-   const bool kNotOncePerUserEnter = false;
+   // verify the captured output
+   std::string captureResult = cmd.getPrivateOutput();
+   EXPECT_EQ(results, captureResult);
 
-   // this tests the overall functionality of the expected usage pattern
-   test_that("command output successfully parsed and returned")
-   {
-      PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      std::string results = "one=two\nthree=four\nfive=six\n";
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-
-      // mimic shell echoing back the command
-      cmd.output(cmd.getFullCommand());
-      cmd.output(kEol);
-      cmd.output(cmd.getBOM());
-      cmd.output(kEol);
-      cmd.output("ignorespace");
-      cmd.output(kEol);
-      cmd.output(results);
-
-      // verify we can't get results until EOM is seen
-      expect_true(cmd.getPrivateOutput().empty());
-
-      // close off the output
-      cmd.output(cmd.getEOM());
-      cmd.output(kEol);
-      cmd.output(kPrompt);
-
-      // trying to capture now should return true because final timeout hasn't expired
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-
-      boost::this_thread::sleep(milliseconds(kPostTimeout));
-
-      // trying to capture now should return false, meaning we can get the output
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-
-      // verify the captured output
-      std::string captureResult = cmd.getPrivateOutput();
-      expect_true(captureResult == results);
-
-      // can only extract output one time per command
-      expect_true(cmd.getPrivateOutput().empty());
-   }
-
-   test_that("basic assumptions are true")
-   {
-      PrivateCommand cmd1(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      expect_false(cmd1.hasCaptured());
-      expect_true(cmd1.getPrivateOutput().empty());
-      expect_false(cmd1.output("some output\n"));
-      expect_true(cmd1.getPrivateOutput().empty());
-      expect_false(cmd1.hasCaptured());
-
-      PrivateCommand cmd2(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      expect_false(cmd2.hasCaptured());
-      expect_true(cmd2.getPrivateOutput().empty());
-      expect_false(cmd2.output("some output\n"));
-      expect_true(cmd2.getPrivateOutput().empty());
-      expect_false(cmd2.hasCaptured());
-   }
-
-   test_that("no capture if terminal has child process")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      expect_false(cmd.onTryCapture(ops, kHasChildProcess));
-      expect_false(cmd.hasCaptured());
-      expect_true(cmd.getPrivateOutput().empty());
-   }
-
-   test_that("(NotEnter) no capture if terminal has child process")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      expect_false(cmd.onTryCapture(ops, kHasChildProcess));
-      expect_false(cmd.hasCaptured());
-      expect_true(cmd.getPrivateOutput().empty());
-   }
-
-   test_that("no capture if user hasn't hit <enter>")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("partial user command");
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("no capture if user has entered a command but there is a child process")
-   {
-      PrivateCommand cmd(kCommand);
-
-      cmd.userInput("user command\n");
-      expect_false(cmd.onTryCapture(ops, kHasChildProcess));
-   }
-
-   test_that("(NotEnter) no capture if user has entered a command but there is a child process")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      cmd.userInput("user command\n");
-      expect_false(cmd.onTryCapture(ops, kHasChildProcess));
-   }
-
-   test_that("no command issued if user has entered a command and no child process, but too soon")
-   {
-      PrivateCommand cmd(kCommand);
-
-      cmd.userInput("user command\n");
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("(NotEnter) command not issued after user command, no child process, but too soon")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      cmd.userInput("user command\n");
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("command issued if user has entered a command and post-user-command timeout expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("user command\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(cmd.hasCaptured());
-      expect_true(ops.writes.size() == 2);
-      expect_true(ops.writesEof.size() == ops.writes.size());
-      std::string sentCommand = ops.writes[0];
-      expect_true(*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n');
-   }
-
-   test_that("(NotEnter) command issued, user has entered a command, post-user-cmd timeout expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      cmd.userInput("user command\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.writes.size() == 2);
-      expect_true(ops.writesEof.size() == ops.writes.size());
-      std::string sentCommand = ops.writes[0];
-      expect_true(*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n');
-   }
-
-   test_that("(NotEnter) command issued immediately w/o user command entered")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.writes.size() == 2);
-      expect_true(ops.writesEof.size() == ops.writes.size());
-   }
-
-   test_that("command not issued if user hasn't entered a new command since last private command")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("user command one\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      // no new user command entered, and enough time has passed for the private command delay
-      boost::this_thread::sleep(milliseconds(kPrivate * 2));
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("(NotEnter) command reissued if private command delay has expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      // no new user command entered, but enough time has passed for the private command delay
-      boost::this_thread::sleep(milliseconds(kPrivate * 2));
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("command not issued if private command interval hasn't expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("user command one\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      cmd.userInput("user command two\n");
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("(NotEnter) command not issued if private command interval hasn't expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      cmd.userInput("user command one\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      cmd.userInput("user command two\n");
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("command issued if private command interval has expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("user command one\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      cmd.userInput("user command two\n");
-      boost::this_thread::sleep(milliseconds(kPrivate * 2));
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("(NotEnter) command issued if private command interval has expired")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      cmd.userInput("user command one\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-      cmd.terminateCapture();
-
-      cmd.userInput("user command two\n");
-      boost::this_thread::sleep(milliseconds(kPrivate * 2));
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-   }
-
-   test_that("private command terminated if taking too long")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
-
-      cmd.userInput("user command\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-
-      boost::this_thread::sleep(milliseconds(kTimeout * 2));
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.ptyInterrupted);
-      expect_false(cmd.hasCaptured());
-   }
-
-   test_that("(NotEnter) private command terminated if taking too long")
-   {
-      PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-
-      boost::this_thread::sleep(milliseconds(kTimeout * 2));
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-      expect_true(ops.ptyInterrupted);
-      expect_false(cmd.hasCaptured());
-   }
-
-   test_that("private command stops if wrong HISTCONTROL returned")
-   {
-      PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
-
-      std::string results = "one=two\nthree=four\nfive=six\n";
-
-      expect_true(cmd.onTryCapture(ops, kNoChildProcess));
-
-      // mimic shell echoing back the command
-      cmd.output(cmd.getFullCommand());
-      cmd.output(kEol);
-      cmd.output(cmd.getBOM());
-      cmd.output(kEol);
-      cmd.output("ignoredups");
-      cmd.output(kEol);
-      cmd.output(results);
-      cmd.output(cmd.getEOM());
-      cmd.output(kEol);
-      cmd.output(kPrompt);
-
-      boost::this_thread::sleep(milliseconds(kPostTimeout));
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-
-      // verify the captured output matches expectation
-      std::string captureResult = cmd.getPrivateOutput();
-      expect_true(captureResult == results);
-
-      // wait then try to do another capture
-      boost::this_thread::sleep(milliseconds(kPrivate * 2));
-      cmd.userInput("user command\n");
-      boost::this_thread::sleep(milliseconds(kUser * 2));
-      expect_false(cmd.onTryCapture(ops, kNoChildProcess));
-      captureResult = cmd.getPrivateOutput();
-      expect_true(captureResult.empty());
-   }
+   // can only extract output one time per command
+   EXPECT_TRUE(cmd.getPrivateOutput().empty());
 }
 
-} // end namespace tests
-} // end namespace terminal
-} // end namespace core
-} // end namespace rstudio
+TEST_F(TerminalTest, BasicAssumptionsAreTrue)
+{
+   PrivateCommand cmd1(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   EXPECT_FALSE(cmd1.hasCaptured());
+   EXPECT_TRUE(cmd1.getPrivateOutput().empty());
+   EXPECT_FALSE(cmd1.output("some output\n"));
+   ASSERT_TRUE(cmd1.getPrivateOutput().empty());
+   EXPECT_FALSE(cmd1.hasCaptured());
+
+   PrivateCommand cmd2(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   EXPECT_FALSE(cmd2.hasCaptured());
+   ASSERT_TRUE(cmd2.getPrivateOutput().empty());
+   EXPECT_FALSE(cmd2.output("some output\n"));
+   ASSERT_TRUE(cmd2.getPrivateOutput().empty());
+   EXPECT_FALSE(cmd2.hasCaptured());
+}
+
+TEST_F(TerminalTest, NoCaptureIfTerminalHasChildProcess)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kHasChildProcess));
+   EXPECT_FALSE(cmd.hasCaptured());
+   EXPECT_TRUE(cmd.getPrivateOutput().empty());
+}
+
+TEST_F(TerminalTest, NotEnterNoCaptureIfTerminalHasChildProcess)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kHasChildProcess));
+   EXPECT_FALSE(cmd.hasCaptured());
+   EXPECT_TRUE(cmd.getPrivateOutput().empty());
+}
+
+TEST_F(TerminalTest, NoCaptureIfUserHasntHitEnter)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("partial user command");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, NoCaptureIfUserHasEnteredACommandButThereIsAChildProcess)
+{
+   PrivateCommand cmd(kCommand);
+
+   cmd.userInput("user command\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kHasChildProcess));
+}
+
+TEST_F(TerminalTest, NotEnterNoCaptureIfUserHasEnteredACommandButThereIsAChildProcess)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   cmd.userInput("user command\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kHasChildProcess));
+}
+
+TEST_F(TerminalTest, NoCommandIssuedIfUserHasEnteredACommandAndNoChildProcessButTooSoon)
+{
+   PrivateCommand cmd(kCommand);
+
+   cmd.userInput("user command\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, NotEnterCommandNotIssuedAfterUserCommandNoChildProcessButTooSoon)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   cmd.userInput("user command\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, CommandIssuedIfUserHasEnteredACommandAndPostUserCommandTimeoutExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("user command\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   ASSERT_TRUE(cmd.hasCaptured());
+   EXPECT_EQ(2u, ops_->writes.size());
+   EXPECT_TRUE(ops_->writesEof.size() == ops_->writes.size());
+   std::string sentCommand = ops_->writes[0];
+   EXPECT_TRUE((*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n'));
+}
+
+TEST_F(TerminalTest, NotEnterCommandIssuedUserHasEnteredACommandPostUserCmdTimeoutExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   cmd.userInput("user command\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   EXPECT_EQ(2u, ops_->writes.size());
+   EXPECT_TRUE(ops_->writesEof.size() == ops_->writes.size());
+   std::string sentCommand = ops_->writes[0];
+   EXPECT_TRUE((*sentCommand.rbegin() == '\r' || *sentCommand.rbegin() == '\n'));
+}
+
+TEST_F(TerminalTest, NotEnterCommandIssuedImmediatelyWithoutUserCommandEntered)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   EXPECT_EQ(2u, ops_->writes.size());
+   EXPECT_TRUE(ops_->writesEof.size() == ops_->writes.size());
+}
+
+TEST_F(TerminalTest, CommandNotIssuedIfUserHasntEnteredANewCommandSinceLastPrivateCommand)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("user command one\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   // no new user command entered, and enough time has passed for the private command delay
+   boost::this_thread::sleep(milliseconds(kPrivate * 2));
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, NotEnterCommandReissuedIfPrivateCommandDelayHasExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   // no new user command entered, but enough time has passed for the private command delay
+   boost::this_thread::sleep(milliseconds(kPrivate * 2));
+   ASSERT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, CommandNotIssuedIfPrivateCommandIntervalHasntExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("user command one\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   cmd.userInput("user command two\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, NotEnterCommandNotIssuedIfPrivateCommandIntervalHasntExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   cmd.userInput("user command one\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   cmd.userInput("user command two\n");
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, CommandIssuedIfPrivateCommandIntervalHasExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("user command one\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   cmd.userInput("user command two\n");
+   boost::this_thread::sleep(milliseconds(kPrivate * 2));
+   ASSERT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, NotEnterCommandIssuedIfPrivateCommandIntervalHasExpired)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   cmd.userInput("user command one\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   cmd.terminateCapture();
+
+   cmd.userInput("user command two\n");
+   boost::this_thread::sleep(milliseconds(kPrivate * 2));
+   ASSERT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+}
+
+TEST_F(TerminalTest, PrivateCommandTerminatedIfTakingTooLong)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
+
+   cmd.userInput("user command\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+
+   boost::this_thread::sleep(milliseconds(kTimeout * 2));
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   ASSERT_TRUE(ops_->ptyInterrupted);
+   EXPECT_FALSE(cmd.hasCaptured());
+}
+
+TEST_F(TerminalTest, NotEnterPrivateCommandTerminatedIfTakingTooLong)
+{
+   PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+
+   boost::this_thread::sleep(milliseconds(kTimeout * 2));
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   ASSERT_TRUE(ops_->ptyInterrupted);
+   EXPECT_FALSE(cmd.hasCaptured());
+}
+
+TEST_F(TerminalTest, PrivateCommandStopsIfWrongHistcontrolReturned)
+{
+   PrivateCommand cmd(kCommand, kPrivate * 2, kUser, kTimeout, kPostTimeout, kNotOncePerUserEnter);
+
+   std::string results = "one=two\nthree=four\nfive=six\n";
+
+   EXPECT_TRUE(cmd.onTryCapture(*ops_, kNoChildProcess));
+
+   // mimic shell echoing back the command
+   cmd.output(cmd.getFullCommand());
+   cmd.output(kEol);
+   cmd.output(cmd.getBOM());
+   cmd.output(kEol);
+   cmd.output("ignoredups");
+   cmd.output(kEol);
+   cmd.output(results);
+   cmd.output(cmd.getEOM());
+   cmd.output(kEol);
+   cmd.output(kPrompt);
+
+   boost::this_thread::sleep(milliseconds(kPostTimeout));
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+
+   // verify the captured output matches expectation
+   std::string captureResult = cmd.getPrivateOutput();
+   EXPECT_EQ(results, captureResult);
+
+   // wait then try to do another capture
+   boost::this_thread::sleep(milliseconds(kPrivate * 2));
+   cmd.userInput("user command\n");
+   boost::this_thread::sleep(milliseconds(kUser * 2));
+   EXPECT_FALSE(cmd.onTryCapture(*ops_, kNoChildProcess));
+   captureResult = cmd.getPrivateOutput();
+   EXPECT_TRUE(captureResult.empty());
+}
+
+} // namespace tests
+} // namespace terminal
+} // namespace core
+} // namespace rstudio

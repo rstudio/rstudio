@@ -15,7 +15,7 @@
 
 #include <stdlib.h>
 #include <url-ports/UrlPorts.hpp>
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace {
 
@@ -36,92 +36,89 @@ char* getPortTokenEnvVar()
 
 } // anonymous namespace
 
-TEST_CASE("Url Ports Main")
+
+TEST(UrlPortsMainTest, ProvidePort)
 {
+   int argc = 2;
+   char *args[] = {
+      (char*)"",
+      getPort(),
+      NULL
+   };
+   putenv(getPortTokenEnvVarSetter());
 
-   SECTION("Provide port")
-   {
-      int argc = 2;
-      char *args[] = {
-         (char*)"",
-         getPort(),
-         NULL
-      };
-      putenv(getPortTokenEnvVarSetter());
+   bool longOutput = false;
+   int port;
+   std::string portToken;
+   bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
 
-      bool longOutput = false;
-      int port;
-      std::string portToken;
-      bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
+   EXPECT_TRUE(pass);
+   EXPECT_FALSE(longOutput);
+   EXPECT_EQ(getPort(), std::to_string(port));
+   EXPECT_EQ(getPortTokenEnvVar(), portToken);
+}
 
-      CHECK(pass == true);
-      CHECK(longOutput == false);
-      CHECK(std::to_string(port) == getPort());
-      CHECK(portToken == getPortTokenEnvVar());
-   }
+TEST(UrlPortsMainTest, ProvidePortLongOutput)
+{
+   int argc = 3;
+   char *args[] = {
+      (char*)"",
+      (char*)"-l",
+      getPort(),
+      NULL
+   };
+   putenv(getPortTokenEnvVarSetter());
 
-   SECTION("Provide port, long ouput")
-   {
-      int argc = 3;
-      char *args[] = {
-         (char*)"",
-         (char*)"-l",
-         getPort(),
-         NULL
-      };
-      putenv(getPortTokenEnvVarSetter());
+   bool longOutput = false;
+   int port;
+   std::string portToken;
+   bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
 
-      bool longOutput = false;
-      int port;
-      std::string portToken;
-      bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
+   EXPECT_TRUE(pass);
+   EXPECT_TRUE(longOutput);
+   EXPECT_EQ(getPort(), std::to_string(port));
+   EXPECT_EQ(getPortTokenEnvVar(), portToken);
+}
 
-      CHECK(pass == true);
-      CHECK(longOutput == true);
-      CHECK(std::to_string(port) == getPort());
-      CHECK(portToken == getPortTokenEnvVar());
-   }
+TEST(UrlPortsMainTest, ProvidePortAndToken)
+{
+   int argc = 3;
+   char *args[] = {
+      (char*)"",
+      getPort(),
+      getPortTokenEnvVar(),
+      NULL
+   };
 
-   SECTION("Provide port and token")
-   {
-      int argc = 3;
-      char *args[] = {
-         (char*)"",
-         getPort(),
-         getPortTokenEnvVar(),
-         NULL
-      };
+   bool longOutput = false;
+   int port;
+   std::string portToken;
 
-      bool longOutput = false;
-      int port;
-      std::string portToken;
+   bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
+   EXPECT_TRUE(pass);
+   EXPECT_FALSE(longOutput);
+   EXPECT_EQ(getPort(), std::to_string(port));
+   EXPECT_EQ(getPortTokenEnvVar(), portToken);
+}
 
-      bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
-      CHECK(pass == true);
-      CHECK(longOutput == false);
-      CHECK(std::to_string(port) == getPort());
-      CHECK(portToken == getPortTokenEnvVar());
-   }
+TEST(UrlPortsMainTest, ProvidePortAndTokenLongOutput)
+{
+   int argc = 4;
+   char *args[] = {
+      (char*)"",
+      (char*)"-l",
+      getPort(),
+      getPortTokenEnvVar(),
+      NULL
+   };
 
-   SECTION("Provide port and token, long output")
-   {
-      int argc = 4;
-      char *args[] = {
-         (char*)"",
-         (char*)"-l",
-         getPort(),
-         getPortTokenEnvVar(),
-         NULL
-      };
+   bool longOutput = false;
+   int port;
+   std::string portToken;
 
-      bool longOutput = false;
-      int port;
-      std::string portToken;
-
-      bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
-      CHECK(pass == true);
-      CHECK(longOutput == true);
-      CHECK(std::to_string(port) == getPort());
-      CHECK(portToken == getPortTokenEnvVar());
-   }
+   bool pass = parseArguments(argc, args, longOutput, &port, &portToken);
+   EXPECT_TRUE(pass);
+   EXPECT_TRUE(longOutput);
+   EXPECT_EQ(getPort(), std::to_string(port));
+   EXPECT_EQ(getPortTokenEnvVar(), portToken);
 }

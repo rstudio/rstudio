@@ -21,13 +21,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <grp.h>
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace system {
 
 OSInfo parseOsReleaseContent(const std::string&);
+
 namespace tests {
 
 #ifdef __linux__
@@ -47,571 +48,544 @@ static std::string getNoGroupName()
    else if (getgrnam("nogroup"))
       group = "nogroup"; // Debian/Ubuntu
 
-   expect_false(group.empty());
+   EXPECT_FALSE(group.empty());
    return group;
 }
 
 #endif
 
-test_context("PosixSystemTests")
+TEST(PosixTest, FindProgramFindsWhich)
 {
-   test_that("findProgramOnPath can find core utils")
-   {
-      FilePath whichPath;
-      Error error = findProgramOnPath("which", &whichPath);
-      expect_false(error);
-      
-      std::string resolvedPath = whichPath.getAbsolutePath();
-      expect_true(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
-   }
+   FilePath whichPath;
+   Error error = findProgramOnPath("which", &whichPath);
+   EXPECT_FALSE(error);
    
-   test_that("Empty subprocess list returned correctly with pgrep method")
+   std::string resolvedPath = whichPath.getAbsolutePath();
+   EXPECT_TRUE(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
+}
+
+TEST(PosixTest, NoSubprocessesViaPgrep)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
-         expect_true(children.empty());
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::sleep(1);
+      _exit(0);
    }
-
-   test_that("Subprocess name detected correctly with pgrep method")
+   else
    {
-      std::string exe = "sleep";
+      // process we started doesn't have a subprocess
+      std::vector<SubprocInfo> children = getSubprocessesViaPgrep(pid);
+      EXPECT_TRUE(children.empty());
 
-      pid_t pid = fork();
-      expect_false(pid == -1);
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
+   }
+}
 
-      if (pid == 0)
+TEST(PosixTest, FindSubprocessNameViaPgrep)
+{
+   std::string exe = "sleep";
+
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
+   {
+      execlp(exe.c_str(), exe.c_str(), "100", nullptr);
+      EXPECT_TRUE(false); // shouldn't get here!
+   }
+   else
+   {
+      // we now have a subprocess
+      std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
+      EXPECT_TRUE(children.size() >= 1u);
+      if (children.size() >= 1u)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
-         expect_true(false); // shouldn't get here!
-      }
-      else
-      {
-         // we now have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesViaPgrep(getpid());
-         expect_true(children.size() >= 1);
-         if (children.size() >= 1)
+         bool found = false;
+         for (SubprocInfo info : children)
          {
-            bool found = false;
-            for (SubprocInfo info : children)
+            if (info.exe.compare(exe) == 0)
             {
-               if (info.exe.compare(exe) == 0)
-               {
-                  found = true;
-                  break;
-               }
+               found = true;
+               break;
             }
-            expect_true(found);
          }
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
+         EXPECT_TRUE(found);
       }
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
+}
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
 
-   test_that("Subprocess list correctly empty with Mac method")
+TEST(PosixTest, NoSubprocessesMac)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesMac(pid);
-         expect_true(children.empty());
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::sleep(1);
+      _exit(0);
    }
-
-   test_that("Subprocess count and pid detected correctly with Mac method")
+   else
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
+      // process we started doesn't have a subprocess
+      std::vector<SubprocInfo> children = getSubprocessesMac(pid);
+      EXPECT_TRUE(children.empty());
 
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
-         expect_true(children.size() == 1);
-         expect_true(children.at(0).pid == pid);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
+}
 
-   test_that("Subprocess name detected correctly with Mac method")
+TEST(PosixTest, FindSubprocessPidMac)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-      std::string exe = "sleep";
-
-      if (pid == 0)
-      {
-         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
-         expect_true(false); // shouldn't get here!
-      }
-      else
-      {
-         // we now have a subprocess, need a slight pause to allow system tables to
-         // catch up
-         ::sleep(1);
-         std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
-         expect_true(children.size() == 1);
-         if (children.size() == 1)
-            expect_true(children[0].exe.compare(exe) == 0);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::sleep(1);
+      _exit(0);
    }
-
-   test_that("Current working directory determined correctly with Mac method")
+   else
    {
-      FilePath emptyPath;
-      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
-      pid_t pid = fork();
-      expect_false(pid == -1);
+      // we now have a subprocess
+      std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+      EXPECT_TRUE(children.size() == 1u);
+      EXPECT_TRUE(children.at(0).pid == pid);
 
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         FilePath cwd = currentWorkingDirMac(pid);
-         expect_false(cwd.isEmpty());
-         expect_true(cwd.exists());
-         expect_true(startingDir == cwd);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
+}
+
+TEST(PosixTest, FindSubprocessNameMac)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+   std::string exe = "sleep";
+
+   if (pid == 0)
+   {
+      execlp(exe.c_str(), exe.c_str(), "100", nullptr);
+      EXPECT_TRUE(false); // shouldn't get here!
+   }
+   else
+   {
+      // we now have a subprocess, need a slight pause to allow system tables to
+      // catch up
+      ::sleep(1);
+      std::vector<SubprocInfo> children = getSubprocessesMac(getpid());
+      EXPECT_TRUE(children.size() == 1u);
+      if (children.size() == 1u)
+         EXPECT_TRUE(children[0].exe.compare(exe) == 0);
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
+   }
+}
+
+TEST(PosixTest, WorkingDirMac)
+{
+   FilePath emptyPath;
+   FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
+   {
+      ::sleep(1);
+      _exit(0);
+   }
+   else
+   {
+      // we now have a subprocess
+      FilePath cwd = currentWorkingDirMac(pid);
+      EXPECT_FALSE(cwd.isEmpty());
+      EXPECT_TRUE(cwd.exists());
+      EXPECT_EQ(startingDir, cwd);
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
+   }
+}
 
 #else
 
-   test_that("No subprocesses detected correctly with procfs method")
+TEST(PosixTest, NoSubprocessesProcFs)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(pid);
-         expect_true(children.empty());
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::sleep(1);
+      _exit(0);
    }
-
-   test_that("Subprocess detected correctly with procfs method")
+   else
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-      std::string exe = "sleep";
+      // process we started doesn't have a subprocess
+      std::vector<SubprocInfo> children = getSubprocessesViaProcFs(pid);
+      EXPECT_TRUE(children.empty());
 
-      if (pid == 0)
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
+   }
+}
+
+TEST(PosixTest, FindSubprocessProcFs)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+   std::string exe = "sleep";
+
+   if (pid == 0)
+   {
+      execlp(exe.c_str(), exe.c_str(), "10000", nullptr);
+      EXPECT_TRUE(false); // shouldn't get here!
+   }
+   else
+   {
+      // we now have a subprocess
+      ::sleep(1);
+      std::vector<SubprocInfo> children = getSubprocessesViaProcFs(getpid());
+      EXPECT_TRUE(children.size() >= 1u);
+      if (children.size() >= 1u)
       {
-         execlp(exe.c_str(), exe.c_str(), "10000", nullptr);
-         expect_true(false); // shouldn't get here!
-      }
-      else
-      {
-         // we now have a subprocess
-         ::sleep(1);
-         std::vector<SubprocInfo> children = getSubprocessesViaProcFs(getpid());
-         expect_true(children.size() >= 1);
-         if (children.size() >= 1)
+         bool found = false;
+         for (SubprocInfo info : children)
          {
-            bool found = false;
-            for (SubprocInfo info : children)
+            if (info.exe.compare(exe) == 0)
             {
-               if (info.exe.compare(exe) == 0)
-               {
-                  found = true;
-                  break;
-               }
+               found = true;
+               break;
             }
-            expect_true(found);
          }
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
+         EXPECT_TRUE(found);
       }
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
+}
 #endif // !__APPLE__
 
-   test_that("Empty list of subprocesses returned correctly with generic method")
+TEST(PosixTest, NoSubprocessesGeneric)
+{
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // process we started doesn't have a subprocess
-         std::vector<SubprocInfo> children = getSubprocesses(pid);
-         expect_true(children.empty());
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::sleep(1);
+      _exit(0);
    }
-
-   test_that("Current working directory determined correctly with generic method")
+   else
    {
-      FilePath emptyPath;
-      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
-      pid_t pid = fork();
-      expect_false(pid == -1);
+      // process we started doesn't have a subprocess
+      std::vector<SubprocInfo> children = getSubprocesses(pid);
+      EXPECT_TRUE(children.empty());
 
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         FilePath cwd = currentWorkingDir(pid);
-         expect_false(cwd.isEmpty());
-         expect_true(cwd.exists());
-         expect_true(startingDir == cwd);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
+}
+
+TEST(PosixTest, WorkingDirGeneric)
+{
+   FilePath emptyPath;
+   FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
+   {
+      ::sleep(1);
+      _exit(0);
+   }
+   else
+   {
+      // we now have a subprocess
+      FilePath cwd = currentWorkingDir(pid);
+      EXPECT_FALSE(cwd.isEmpty());
+      EXPECT_TRUE(cwd.exists());
+      EXPECT_EQ(startingDir, cwd);
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
+   }
+}
 
 #ifndef __APPLE__
 
-   test_that("Current working directory determined correctly with lsof method")
-   {
-      FilePath lsofPath;
-      Error error = findProgramOnPath("lsof", &lsofPath);
-      expect_false(error);
-      
-      std::string resolvedPath = lsofPath.getAbsolutePath();
-      expect_true(resolvedPath.find("lsof") != std::string::npos);
-
-      FilePath emptyPath;
-      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(10); // 1 sec was not enough time for lsof to run all the time in jenkins
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         FilePath cwd;
-         error = currentWorkingDirViaLsof(pid, &cwd);
-         expect_false(error);
-         expect_false(cwd.isEmpty());
-         expect_true(cwd.exists());
-         expect_true(startingDir == cwd);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
-   }
-
-   test_that("Current working directory determined correctly with procfs method")
-   {
-      FilePath emptyPath;
-      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
-      pid_t pid = fork();
-      expect_false(pid == -1);
-
-      if (pid == 0)
-      {
-         ::sleep(1);
-         _exit(0);
-      }
-      else
-      {
-         // we now have a subprocess
-         FilePath cwd = currentWorkingDirViaProcFs(pid);
-         expect_false(cwd.isEmpty());
-         expect_true(cwd.exists());
-         expect_true(startingDir == cwd);
-
-         ::kill(pid, SIGKILL);
-         ::waitpid(pid, nullptr, 0);
-      }
-   }
-#endif // !__APPLE__
-}
-
-User s_testUser;
-group::Group s_testGroup;
-group::Group s_testNonMemberGroup;
-
-bool initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
+TEST(PosixTest, WorkingDirLsof)
 {
-   if (!core::system::effectiveUserIsRoot())
-      return false;
+   FilePath lsofPath;
+   Error error = findProgramOnPath("lsof", &lsofPath);
+   EXPECT_FALSE(error);
+   
+   std::string resolvedPath = lsofPath.getAbsolutePath();
+   EXPECT_TRUE(resolvedPath.find("lsof") != std::string::npos);
 
-   // get user info
-   Error error = User::getUserFromIdentifier(username, s_testUser);
-   expect_false(error);
-   if (error)
+   FilePath emptyPath;
+   FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-      LOG_ERROR(error);
-      return false;
+      ::sleep(10); // 1 sec was not enough time for lsof to run all the time in jenkins
+      _exit(0);
    }
-
-   // get group info. user should be a member of this group.
-   error = group::groupFromName(groupname, &s_testGroup);
-   expect_false(error);
-   if (error)
+   else
    {
-      LOG_ERROR(error);
-      return false;
-   }
+      // we now have a subprocess
+      FilePath cwd;
+      error = currentWorkingDirViaLsof(pid, &cwd);
+      EXPECT_FALSE(error);
+      EXPECT_FALSE(cwd.isEmpty());
+      EXPECT_TRUE(cwd.exists());
+      EXPECT_EQ(startingDir, cwd);
 
-   // get secondary group info. user should not be a member of this group.
-   error = group::groupFromName(nonmember_groupname, &s_testNonMemberGroup);
-   expect_false(error);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   return true;
-}
-
-TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
-{
-   if (!core::system::effectiveUserIsRoot())
-      return;
-
-#ifdef __linux__
-   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
-#endif // __linux__
-
-#ifdef __APPLE__
-   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
-#endif // __APPLE__
-
-   test_that("temporarilyDropPriv uses primary group")
-   {
-      // drop privs to the unprivileged user
-      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), false);
-      expect_false(error);
-
-      // check real and effective user
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      expect_true(ruid == 0);
-      expect_true(euid == s_testUser.getUserId());
-
-      // check real and effective group
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      expect_true(rgid == 0);
-      // since we didn't provide a target group, we expect the target user's primary group
-      expect_true(egid == s_testUser.getGroupId());
-
-      error = restorePriv();
-      expect_false(error);
-   }
-
-   test_that("temporarilyDropPriv uses alternate group")
-   {
-      // drop privs to the unprivileged user and target group
-      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name, false);
-      expect_false(error);
-
-      // check real and effective user
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      expect_true(ruid == 0);
-      expect_true(euid == s_testUser.getUserId());
-
-      // check real and effective group
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      expect_true(rgid == 0);
-      // since we provided a target group, we now expect the target group
-      expect_true(egid == s_testGroup.groupId);
-
-      error = restorePriv();
-      expect_false(error);
-   }
-
-   test_that("temporarilyDropPriv checks group membership with alternate group")
-   {
-      // try dropping privs to a target group that target user does not belong to
-      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name, false);
-      expect_true(error.getCode() == boost::system::errc::permission_denied);
-
-      error = restorePriv();
-      expect_false(error);
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
 }
 
-
-TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
+TEST(PosixTest, ParseOsReleaseEmpty)
 {
-   if (!core::system::effectiveUserIsRoot())
-      return;
-
-#ifdef __linux__
-   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
-#endif // __linux__
-
-#ifdef __APPLE__
-   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
-#endif // __APPLE__
-
-   test_that("permanentlyDropPriv uses primary group")
-   {
-      // drop privs to the unprivileged user
-      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str());
-      expect_false(error);
-
-      // check real and effective user
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      expect_true(ruid == s_testUser.getUserId());
-      expect_true(euid == s_testUser.getUserId());
-
-      // check real and effective group
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      // since we didn't provide a target group, we expect the target user's primary group
-      expect_true(rgid == s_testUser.getGroupId());
-      expect_true(egid == s_testUser.getGroupId());
-   }
+   const auto content = "";
+   OSInfo info = parseOsReleaseContent(content);
+   EXPECT_TRUE(info.osId.empty());
+   EXPECT_TRUE(info.osVersion.empty());
+   EXPECT_TRUE(info.osVersionCodename.empty());
 }
 
-TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
+TEST(PosixTest, ParseOsReleaseUnquoted)
 {
-   if (!core::system::effectiveUserIsRoot())
-      return;
-
-#ifdef __linux__
-   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
-#endif // __linux__
-
-#ifdef __APPLE__
-   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
-#endif // __APPLE__
-
-   test_that("permanentlyDropPriv checks group membership with alternate group")
-   {
-      // try dropping privs to a target group that target user does not belong to
-      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name);
-      expect_true(error.getCode() == boost::system::errc::permission_denied);
-   }
-
-   test_that("permanentlyDropPriv uses alternate group")
-   {
-      // drop privs to the unprivileged user and target group
-      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name);
-      expect_false(error);
-
-      // check real and effective user
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      expect_true(ruid == s_testUser.getUserId());
-      expect_true(euid == s_testUser.getUserId());
-
-      // check real and effective group
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      // since we provided a target group, we now expect the target group
-      expect_true(rgid == s_testGroup.groupId);
-      expect_true(egid == s_testGroup.groupId);
-   }
-}
-
-test_context("PosixSystem parseOsReleaseContent Tests")
-{
-   test_that("parseOsReleaseContent returns empty strings for empty content")
-   {
-      const auto content = "";
-      OSInfo info = parseOsReleaseContent(content);
-      expect_true(info.osId.empty());
-      expect_true(info.osVersion.empty());
-      expect_true(info.osVersionCodename.empty());
-   }
-
-   test_that("parseOsReleaseContent returns correct values for unquoted content")
-   {
-      std::string content = R"(
+   std::string content = R"(
 ID=ubuntu
 VERSION_ID=20.04
 VERSION_CODENAME=focal
 )";
-      OSInfo info = parseOsReleaseContent(content);
-      expect_equal(info.osId, "ubuntu");
-      expect_equal(info.osVersion, "20.04");
-      expect_equal(info.osVersionCodename, "focal");
-   }
+   OSInfo info = parseOsReleaseContent(content);
+   EXPECT_EQ(info.osId, "ubuntu");
+   EXPECT_EQ(info.osVersion, "20.04");
+   EXPECT_EQ(info.osVersionCodename, "focal");
+}
 
-   test_that("parseOsReleaseContent returns correct values for quoted content")
+TEST(PosixTest, WorkingDirProcFs)
+{
+   FilePath emptyPath;
+   FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+   pid_t pid = fork();
+   EXPECT_FALSE(pid == -1);
+
+   if (pid == 0)
    {
-            std::string content = R"(
-ID="rhel"
-VERSION_ID="9.5"
-VERSION_CODENAME="rhel9"
-)";
-      OSInfo info = parseOsReleaseContent(content);
-      expect_equal(info.osId, "rhel");
-      expect_equal(info.osVersion, "9.5");
-      expect_equal(info.osVersionCodename, "rhel9");
+      ::sleep(1);
+      _exit(0);
+   }
+   else
+   {
+      // we now have a subprocess
+      FilePath cwd = currentWorkingDirViaProcFs(pid);
+      EXPECT_FALSE(cwd.isEmpty());
+      EXPECT_TRUE(cwd.exists());
+      EXPECT_EQ(startingDir, cwd);
+
+      ::kill(pid, SIGKILL);
+      ::waitpid(pid, nullptr, 0);
    }
 }
 
-} // end namespace tests
-} // end namespace system
-} // end namespace core
-} // end namespace rstudio
+#endif // !__APPLE__
 
-#endif // !_WIN32
+// Test fixture for privilege tests
+class PrivilegeTest : public ::testing::Test
+{
+protected:
+   User testUser;
+   group::Group testGroup;
+   group::Group testNonMemberGroup;
+
+   void SetUp() override
+   {
+      // Skip tests if not running as root
+      if (!core::system::effectiveUserIsRoot())
+         GTEST_SKIP() << "Test requires root privileges";
+
+      // Initialize the test user and groups
+#ifdef __linux__
+      initUserAndGroup("nobody", getNoGroupName(), "users");
+#endif // __linux__
+
+#ifdef __APPLE__
+      initUserAndGroup("nobody", "nobody", "daemon");
+#endif // __APPLE__
+   }
+
+   void initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
+   {
+      // get user info
+      Error error = User::getUserFromIdentifier(username, testUser);
+      EXPECT_FALSE(error);
+      if (error)
+      {
+         LOG_ERROR(error);
+         GTEST_SKIP() << "Could not get user information for " << username;
+         return;
+      }
+
+      // get group info. user should be a member of this group.
+      error = group::groupFromName(groupname, &testGroup);
+      EXPECT_FALSE(error);
+      if (error)
+      {
+         LOG_ERROR(error);
+         GTEST_SKIP() << "Could not get group information for " << groupname;
+         return;
+      }
+
+      // get secondary group info. user should not be a member of this group.
+      error = group::groupFromName(nonmember_groupname, &testNonMemberGroup);
+      EXPECT_FALSE(error);
+      if (error)
+      {
+         LOG_ERROR(error);
+         GTEST_SKIP() << "Could not get group information for " << nonmember_groupname;
+         return;
+      }
+   }
+};
+
+TEST_F(PrivilegeTest, TemporarilyDropPrivUsesPrimaryGroup)
+{
+   // drop privs to the unprivileged user
+   Error error = temporarilyDropPriv(testUser.getUsername().c_str(), false);
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, 0u);
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   EXPECT_EQ(rgid, 0u);
+   // since we didn't provide a target group, we expect the target user's primary group
+   EXPECT_EQ(egid, testUser.getGroupId());
+
+   error = restorePriv();
+   EXPECT_FALSE(error);
+}
+
+TEST_F(PrivilegeTest, TemporarilyDropPrivUsesAlternateGroup)
+{
+   // drop privs to the unprivileged user
+   Error error = temporarilyDropPriv(testUser.getUsername().c_str(),
+                                    testGroup.name,
+                                    false);
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, 0u);
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   EXPECT_EQ(rgid, 0u);
+   // we provided a target group, so we expect that group's ID
+   EXPECT_EQ(egid, testGroup.groupId);
+
+   error = restorePriv();
+   EXPECT_FALSE(error);
+}
+
+TEST_F(PrivilegeTest, TemporarilyDropPrivChecksGroupMembership)
+{
+   // drop privs to the unprivileged user, but specify a group that the user is not in
+   Error error = temporarilyDropPriv(testUser.getUsername().c_str(),
+                                    testNonMemberGroup.name,
+                                    false);
+   EXPECT_TRUE(error);
+}
+
+TEST_F(PrivilegeTest, PermanentlyDropPrivUsesPrimaryGroup)
+{
+   // drop privs to the unprivileged user
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str());
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, testUser.getUserId());
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   EXPECT_EQ(rgid, testUser.getGroupId());
+   EXPECT_EQ(egid, testUser.getGroupId());
+}
+
+TEST_F(PrivilegeTest, PermanentlyDropPrivUsesAlternateGroup)
+{
+   // drop privs to the unprivileged user
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str(),
+                                    testGroup.name);
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, testUser.getUserId());
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   EXPECT_EQ(rgid, testGroup.groupId);
+   EXPECT_EQ(egid, testGroup.groupId);
+}
+
+TEST_F(PrivilegeTest, PermanentlyDropPrivChecksGroupMembership)
+{
+   // drop privs to the unprivileged user, but specify a group that the user is not in
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str(),
+                                    testNonMemberGroup.name);
+   EXPECT_TRUE(error);
+}
+
+TEST(PosixTest, ParseOsReleaseQuoted)
+{
+   std::string content = R"(
+ID="ubuntu"
+VERSION_ID="20.04"
+VERSION_CODENAME="focal"
+)";
+   OSInfo info = parseOsReleaseContent(content);
+   EXPECT_EQ(info.osId, "ubuntu");
+   EXPECT_EQ(info.osVersion, "20.04");
+   EXPECT_EQ(info.osVersionCodename, "focal");
+}
+
+} // namespace tests
+} // namespace system
+} // namespace core
+} // namespace rstudio
+
+#endif // _WIN32

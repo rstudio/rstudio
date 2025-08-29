@@ -21,8 +21,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
-#define RSTUDIO_NO_TESTTHAT_ALIASES
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
@@ -40,53 +39,50 @@ FilePath s_lockFilePath = tempLockFilePath();
 
 } // end anonymous namespace
 
-TEST_CASE("File Locking")
+TEST(Win32Test, FileLockingBasicAdvisoryFileLockAssumptionsHoldTrue)
 {
-   SECTION("basic advisory file lock assumptions hold true")
+   Error error;
+
+   // create lock file
+   error = s_lockFilePath.ensureFile();
+   EXPECT_FALSE(error);
+
+   // ensure file is not locked
+   AdvisoryFileLock lock;
+   EXPECT_TRUE(s_lockFilePath.exists());
+   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+
+   // attempt to acquire that lock
+   error = lock.acquire(s_lockFilePath);
+   EXPECT_FALSE(error);
+
+   // attempt to acquire lock with alternate object
+   AdvisoryFileLock otherLock;
+   error = otherLock.acquire(s_lockFilePath);
+   EXPECT_TRUE(error);
+
+   // check that attempts to ascertain lockedness
+   // don't incidentally release the lock
+   EXPECT_TRUE(lock.isLocked(s_lockFilePath));
+   EXPECT_TRUE(otherLock.isLocked(s_lockFilePath));
+
+   // release lock
+   error = lock.release();
+   EXPECT_FALSE(error);
+
+   // ensure released
+   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+
+   // check that destructor releases lock
    {
-      Error error;
-
-      // create lock file
-      error = s_lockFilePath.ensureFile();
-      CHECK(error == Success());
-
-      // ensure file is not locked
-      AdvisoryFileLock lock;
-      CHECK(s_lockFilePath.exists());
-      CHECK_FALSE(lock.isLocked(s_lockFilePath));
-
-      // attempt to acquire that lock
-      error = lock.acquire(s_lockFilePath);
-      CHECK(error == Success());
-
-      // attempt to acquire lock with alternate object
-      AdvisoryFileLock otherLock;
-      error = otherLock.acquire(s_lockFilePath);
-      CHECK_FALSE(error == Success());
-
-      // check that attempts to ascertain lockedness
-      // don't incidentally release the lock
-      CHECK(lock.isLocked(s_lockFilePath));
-      CHECK(otherLock.isLocked(s_lockFilePath));
-
-      // release lock
-      error = lock.release();
-      CHECK(error == Success());
-
-      // ensure released
-      CHECK_FALSE(lock.isLocked(s_lockFilePath));
-
-      // check that destructor releases lock
-      {
-         AdvisoryFileLock scopedLock;
-         error = scopedLock.acquire(s_lockFilePath);
-         CHECK(error == Success());
-      }
-      CHECK_FALSE(lock.isLocked(s_lockFilePath));
-
-      // clean up file
-      s_lockFilePath.removeIfExists();
+      AdvisoryFileLock scopedLock;
+      error = scopedLock.acquire(s_lockFilePath);
+   EXPECT_FALSE(error);
    }
+   EXPECT_FALSE(lock.isLocked(s_lockFilePath));
+
+   // clean up file
+   s_lockFilePath.removeIfExists();
 }
 
 } // end namespace tests
