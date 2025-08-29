@@ -709,5 +709,9 @@ public class SessionInfo extends JavaScriptObject
       return this.ppm_repository_url;
    }-*/;
 
+   public final native boolean hasAirToml() /*-{
+      return this.has_air_toml || false;
+   }-*/;
+
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

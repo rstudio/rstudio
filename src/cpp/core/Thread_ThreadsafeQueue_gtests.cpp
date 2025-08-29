@@ -210,7 +210,7 @@ TEST_F(ThreadsafeQueueTest, SingleProducerSingleConsumer)
     EXPECT_EQ(consumedItems.size(), numItems);
     
     // Verify all items were consumed in order
-    for (int i = 0; i < numItems; ++i)
+    for (std::size_t i = 0; i < numItems; ++i)
     {
         EXPECT_EQ(consumedItems[i], i);
     }

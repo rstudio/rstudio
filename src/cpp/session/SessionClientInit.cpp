@@ -680,6 +680,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
       }
    }
 
+   if (projects::projectContext().hasProject())
+   {
+      FilePath airTomlPath = projects::projectContext().directory().completePath("air.toml");
+      sessionInfo["has_air_toml"] = airTomlPath.exists();
+   }
+
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client

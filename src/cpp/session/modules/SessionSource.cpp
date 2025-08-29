@@ -680,7 +680,7 @@ Error onFormatError(
 
 template <typename F>
 Error formatDocumentImpl(
-      const std::string& documentPath,
+      const FilePath& documentPath,
       const json::JsonRpcFunctionContinuation& continuation,
       F&& callback)
 {
@@ -702,9 +702,28 @@ Error formatDocumentImpl(
       json::JsonRpcResponse response = callback();
       continuation(Success(), &response);
    };
-   
+
    std::string formatType = prefs::userPrefs().codeFormatter();
-   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterStyler)
+   if (formatType == kCodeFormatterNone)
+   {
+      std::string airExePath;
+      Error error =
+          r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+      if (error)
+         LOG_ERROR(error);
+
+      error = module_context::processSupervisor().runProgram(
+          airExePath,
+          {"format", documentPath.getAbsolutePath()},
+          options,
+          callbacks);
+
+      if (error)
+         return onError(error);
+
+      return Success();
+   }
+   else if (formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);
@@ -737,11 +756,10 @@ Error formatDocumentImpl(
    }
    else if (formatType == kCodeFormatterExternal)
    {
-      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
       std::string command = fmt::format(
                "{} {}",
                prefs::userPrefs().codeFormatterExternalCommand(),
-               shell_utils::escape(resolvedPath));
+               shell_utils::escape(documentPath.getAbsolutePath()));
       
       error = module_context::processSupervisor().runCommand(
                command,
@@ -778,7 +796,7 @@ Error formatDocument(
       return onError(error);
  
    return formatDocumentImpl(
-            documentPath,
+            module_context::resolveAliasedPath(documentPath),
             continuation,
             [=]()
    {
@@ -808,10 +826,7 @@ Error formatCode(
    if (error)
       return onError(error);
    
-   return formatDocumentImpl(
-            documentPath.getAbsolutePath(),
-            continuation,
-            [=]()
+   return formatDocumentImpl(documentPath, continuation, [=]()
    {
       std::string code;
       Error error = readStringFromFile(documentPath, &code);
