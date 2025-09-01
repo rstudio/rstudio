@@ -602,6 +602,39 @@ bool waitFor(F&& callback)
    return false;
 }
 
+/**
+ * If running onarm64 Mac, substitute the arm64-specific node binary; returns true if this was
+ * done, false otherwise.
+ */
+bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
+{
+#if defined(__APPLE__)
+   if (isAppleSilicon())
+   {
+      FilePath nodeExePath;
+      if (inputPath.isRegularFile())
+      {
+         // change /node/bin/node to /node-arm64/bin/node
+         nodeExePath = inputPath.getParent().getParent().completeChildPath("node-arm64/bin/" kNodeExe);
+      }
+      else if (inputPath.isDirectory())
+      {
+         // change /node to /node-arm64
+         nodeExePath = inputPath.getParent().completeChildPath("node-arm64");
+      }
+      else
+         return false;
+
+      if (nodeExePath.exists())
+      {
+         *pOutputNodePath = nodeExePath;
+         return true;
+      }
+   } 
+#endif
+   return false;
+}
+
 Error findNode(FilePath* pNodePath, core::system::Options* pOptions)
 {
    // Allow user override, just in case.
@@ -616,22 +649,17 @@ Error findNode(FilePath* pNodePath, core::system::Options* pOptions)
    FilePath nodePath = session::options().nodePath();
    if (!nodePath.isEmpty())
    {
+      FilePath arm64NodePath;
+      // on arm64 Mac, substitute the arm64-specific node binary
+      if (findNodeMacArm64(nodePath, &arm64NodePath))
+      {
+         nodePath = arm64NodePath;
+      }
+
       // Allow both directories containing a 'node' binary, and the path
       // to a 'node' binary directly.
       if (nodePath.isDirectory())
       {
-#if defined(__APPLE__)
-         // on arm64 mac, substitute the arm64-specific node binary
-         if (isAppleSilicon())
-         {
-            FilePath nodeExePath = nodePath.completeChildPath("../node-arm64/bin/" kNodeExe);
-            if (nodeExePath.exists())
-            {
-               *pNodePath = nodeExePath;
-               return Success();
-            }
-         }
-#endif
          for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
          {
             FilePath nodeExePath = nodePath.completeChildPath(suffix);
