@@ -620,6 +620,18 @@ Error findNode(FilePath* pNodePath, core::system::Options* pOptions)
       // to a 'node' binary directly.
       if (nodePath.isDirectory())
       {
+#if defined(__APPLE__)
+         // on arm64 mac, substitute the arm64-specific node binary
+         if (isAppleSilicon())
+         {
+            FilePath nodeExePath = nodePath.completeChildPath("../node-arm64/bin/" kNodeExe);
+            if (nodeExePath.exists())
+            {
+               *pNodePath = nodeExePath;
+               return Success();
+            }
+         }
+#endif
          for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
          {
             FilePath nodeExePath = nodePath.completeChildPath(suffix);
