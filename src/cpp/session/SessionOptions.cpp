@@ -655,7 +655,7 @@ void Options::resolveCopilotPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultCopilotPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "copilot-language-server");
+      FilePath path = macBinaryPath(resourcePath, "copilot-language-server-js");
       *pPath = path.getAbsolutePath();
    }
    else
