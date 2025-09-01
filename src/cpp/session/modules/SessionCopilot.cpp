@@ -69,6 +69,12 @@
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
 #endif
 
+#ifndef _WIN32
+# define kNodeExe "node"
+#else
+# define kNodeExe "node.exe"
+#endif
+
 #define kCopilotDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
@@ -421,10 +427,23 @@ FilePath copilotLanguageServerPath()
 {
    FilePath copilotPath;
    
-   // first check RSTUDIO_COPILOT_FOLDER environment variable; if used, must point at
-   // the folder containing the copilot-language-server executable, but not include the
-   // executable itself
-   std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_FOLDER");
+   // Background
+   // -------------------------------------------------------------------------
+   // RStudio 2025.05 and 2025.09 bundle the standalone binary executable for
+   // Copilot Language Server (i.e. `copilot-language-server[.exe]`), which
+   // contains an embedded copy of node.js and can be executed directly. If 
+   // a user needed to use a newer version of `copilot-language-server` than
+   // included with RStudio they could set the `RSTUDIO_COPILOT_FOLDER`
+   // environment variable to point at the folder containing the
+   // copilot-language-server executable to use.
+   //
+   // In 2025.11 we ship the JavaScript distribution of the Copilot Language
+   // Server. This must be executed via node.js. The environment variable
+   // for pointing at a custom version of this Javascript distribution is
+   // `RSTUDIO_COPILOT_JS_FOLDER`.
+   // -------------------------------------------------------------------------
+   
+   std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
    if (!rstudioCopilot.empty())
    {
       if (FilePath::exists(rstudioCopilot) && FilePath(rstudioCopilot).isDirectory())
@@ -443,22 +462,15 @@ FilePath copilotLanguageServerPath()
       }
    }
 
-#if defined(_WIN32)
-   auto suffix = "copilot-language-server.exe";
-#elif defined(__APPLE__)
-   auto suffix = "copilot-language-server";
-   if (!isAppleSilicon())
-      suffix = "copilot-language-server-x64";
-#else // Linux
-   auto suffix = "copilot-language-server";
-#endif
+   auto suffix = "language-server.js";
    FilePath candidatePath = copilotPath.completePath(suffix);
    if (candidatePath.exists())
    {
+      DLOG("Copilot Language Server '{}' found at '{}'.", suffix, candidatePath.getAbsolutePath());
       return candidatePath;
    }
 
-   ELOG("Copilot Language Server executable not found at '{}'.", candidatePath.getAbsolutePath());
+   ELOG("Copilot Language Server '{}' not found at '{}'.", suffix, candidatePath.getAbsolutePath());
    return FilePath();
 }
 
@@ -588,6 +600,51 @@ bool waitFor(F&& callback)
    }
 
    return false;
+}
+
+Error findNode(FilePath* pNodePath, core::system::Options* pOptions)
+{
+   // Allow user override, just in case.
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
+   if (userNodePath.exists())
+   {
+      *pNodePath = userNodePath;
+      return Success();
+   }
+   
+   // Check for an admin-configured node path.
+   FilePath nodePath = session::options().nodePath();
+   if (!nodePath.isEmpty())
+   {
+      // Allow both directories containing a 'node' binary, and the path
+      // to a 'node' binary directly.
+      if (nodePath.isDirectory())
+      {
+         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
+         {
+            FilePath nodeExePath = nodePath.completeChildPath(suffix);
+            if (nodeExePath.exists())
+            {
+               *pNodePath = nodeExePath;
+               return Success();
+            }
+         }
+         
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
+      }
+      else if (nodePath.isRegularFile())
+      {
+         *pNodePath = nodePath;
+         return Success();
+      }
+      else
+      {
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
+      }
+   }
+
+   // Otherwise, use node from the PATH
+   return core::system::findProgramOnPath(kNodeExe, pNodePath);
 }
 
 void sendNotification(const std::string& method,
@@ -1008,6 +1065,15 @@ Error startAgent()
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
+   // Find node.js
+   FilePath nodePath;
+   error = findNode(&nodePath, &environment);
+   if (error)
+      return error;
+
+   if (!nodePath.exists())
+      return fileNotFoundError("node", ERROR_LOCATION);
+
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = &agent::onStarted;
@@ -1039,6 +1105,7 @@ Error startAgent()
          return fileNotFoundError(copilotHelper, ERROR_LOCATION);
       
       FilePath copilotPath = copilotLanguageServerPath();
+      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
       environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
       error = module_context::processSupervisor().runProgram(
@@ -1057,9 +1124,10 @@ Error startAgent()
       options.environment = environment;
 
       std::vector<std::string> args;
+      args.push_back(copilotPath.getAbsolutePath());
       args.push_back("--stdio");
       error = module_context::processSupervisor().runProgram(
-               copilotPath.getAbsolutePath(),
+               nodePath.getAbsolutePath(),
                args,
                options,
                callbacks);
