@@ -58,20 +58,29 @@ TEST(XdgTest, DirectoryResolution)
 
 TEST(XdgTest, EnvironmentOverrides)
 {
-   EnvironmentScope scope("RSTUDIO_CONFIG_HOME", "/tmp/rstudio/config");
-   EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir());
-   EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir(s_defaultUser));
-   EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir(s_defaultUser, s_defaultHome));
+   // Test config home overrides
+   {
+      EnvironmentScope scope("RSTUDIO_CONFIG_HOME", "/tmp/rstudio/config");
+      EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir());
+      EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir(s_defaultUser));
+      EXPECT_EQ(FilePath("/tmp/rstudio/config"), userConfigDir(s_defaultUser, s_defaultHome));
+   }
 
-   scope = scope("RSTUDIO_DATA_HOME", "/tmp/rstudio/data");
-   EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir());
-   EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir(s_defaultUser));
-   EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir(s_defaultUser, s_defaultHome));
+   // Test data home overrides
+   {
+      EnvironmentScope scope("RSTUDIO_DATA_HOME", "/tmp/rstudio/data");
+      EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir());
+      EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir(s_defaultUser));
+      EXPECT_EQ(FilePath("/tmp/rstudio/data"), userDataDir(s_defaultUser, s_defaultHome));
+   }
 
-   scope = scope("RSTUDIO_CACHE_HOME", "/tmp/rstudio/cache");
-   EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir());
-   EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir(s_defaultUser));
-   EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir(s_defaultUser, s_defaultHome));
+   // Test cache home overrides
+   {
+      EnvironmentScope scope("RSTUDIO_CACHE_HOME", "/tmp/rstudio/cache");
+      EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir());
+      EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir(s_defaultUser));
+      EXPECT_EQ(FilePath("/tmp/rstudio/cache"), userCacheDir(s_defaultUser, s_defaultHome));
+   }
 }
    
 

@@ -214,7 +214,7 @@ TEST(ChildprocessTest, ChildprocessPollingSupportClassLackOfRecentOutputPrevents
    EXPECT_FALSE(test.checkCalled_); // because of no recent output
    EXPECT_FALSE(test.poller_.hasRecentOutput());
    EXPECT_EQ(test.checkReturns_, test.poller_.hasNonIgnoredSubprocess());
-
+}
 
 TEST(ChildprocessTest, InitialStateForCwdPollingMatchesExpectations)
 {
