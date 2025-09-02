@@ -175,16 +175,15 @@
       "problemMatcher": []
     }
   ],
+
+  // Helper to make sure that `cmake --build .` can find the appropriate compiler
+  // during configuration. Make sure that the appropriate Visual Studio build
+  // directory, containing 'vcvarsall.bat', is on the PATH.
   "windows": {
     "options": {
       "shell": {
         "executable": "cmd.exe",
-        "args": [
-          "/C",
-          "\"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvarsall.bat\"",
-          "x64",
-          "&&"
-        ]
+        "args": ["/C", "vcvarsall.bat", "x64", "&&", "cmd.exe", "/C"]
       }
     }
   }

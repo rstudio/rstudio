@@ -39,22 +39,28 @@
    version <- .rs.air.defaultVersion()
    exe <- .rs.air.exePath(version)
    if (!file.exists(exe))
-      .rs.air.installVersion(version)
+   {
+      autoinstall <- getOption("rstudio.air.autoinstall", default = TRUE)
+      if (autoinstall)
+         .rs.air.installVersion(version)
+   }
    
    normalizePath(exe)
 })
 
 .rs.addFunction("air.binDir", function(version)
 {
-   if (.rs.platform.isWindows)
+   homeDir <- if (.rs.platform.isWindows)
    {
-      # TODO
+      Sys.getenv("USERPROFILE", unset = path.expand("~"))
    }
    else
    {
-      binDir <- sprintf("~/.local/lib/air/%s/bin", version)
-      path.expand(binDir)
+      Sys.getenv("HOME", unset = path.expand("~"))
    }
+
+   binDir <- sprintf("%s/.local/lib/air/%s/bin", homeDir, version)
+   chartr("\\", "/", binDir)
 })
 
 .rs.addFunction("air.exePath", function(version)
@@ -65,27 +71,41 @@
 
 .rs.addFunction("air.installVersion", function(version)
 {
+   # Work in temporary directory
+   owd <- setwd(tempdir())
+   on.exit(setwd(owd))
+   
+   # Set up installation directory
+   binDir <- .rs.air.binDir(version)
+   dir.create(binDir, recursive = TRUE, showWarnings = FALSE)
+   
+   # Download air binaries
    if (.rs.platform.isWindows)
    {
-      # TODO
+      fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-pc-windows-msvc.zip"
+      url <- sprintf(fmt, version, R.version$arch)
+      destfile <- basename(url)
+      download.file(url, destfile = destfile)
+      unzip(destfile, exdir = binDir)
+   }
+   else if (.rs.platform.isMacos)
+   {
+      fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-apple-darwin.tar.gz"
+      url <- sprintf(fmt, version, R.version$arch)
+      destfile <- basename(url)
+      download.file(url, destfile = destfile)
+      untar(destfile, exdir = binDir)
    }
    else
    {
-      # Work in temporary directory
-      owd <- setwd(tempdir())
-      on.exit(setwd(owd))
-      
-      # Set up installation directory
-      binDir <- .rs.air.binDir(version)
-      dir.create(binDir, recursive = TRUE)
-      
-      # Download the installer
-      fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-installer.sh"
-      url <- sprintf(fmt, version)
-      download.file(url, "air-installer.sh", quiet = TRUE)
-      
-      # Run it
-      Sys.setenv(AIR_INSTALL_DIR = normalizePath(binDir))
-      system("sh air-installer.sh --quiet --no-modify-path")
+      fmt <- "https://github.com/posit-dev/air/releases/download/%s/air-%s-unknown-linux-gnu.tar.gz"
+      url <- sprintf(fmt, version, R.version$arch)
+      destfile <- basename(url)
+      download.file(url, destfile = destfile)
+      untar(destfile, exdir = binDir)
    }
+   
+   fmt <- "Air %s has been installed to %s."
+   msg <- sprintf(fmt, version, binDir)
+   message(msg)
 })

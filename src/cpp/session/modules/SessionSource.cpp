@@ -682,9 +682,7 @@ Error onFormatError(
    return error;
 }
 
-bool canUseAirFormatterByDefault(
-   int context,
-   const FilePath& documentPath)
+bool canUseAirFormatter(int context, const FilePath& documentPath)
 {
    if (context == kFormatContextCommand)
    {
@@ -694,7 +692,7 @@ bool canUseAirFormatterByDefault(
    else if (context == kFormatContextSave)
    {
       // enable on save if user has opted in
-      if (prefs::userPrefs().useAirFormatterInProjects())
+      if (prefs::userPrefs().useAirFormatter())
       {
          if (projects::projectContext().hasProject())
          {
@@ -751,7 +749,7 @@ Error formatDocumentImpl(
    std::string formatType = prefs::userPrefs().codeFormatter();
    if (formatType == kCodeFormatterNone)
    {
-      if (canUseAirFormatterByDefault(context, documentPath))
+      if (canUseAirFormatter(context, documentPath))
       {
          std::string airExePath;
          Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
