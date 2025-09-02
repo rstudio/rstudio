@@ -15,7 +15,17 @@
 
 .rs.addFunction("air.defaultVersion", function()
 {
-   getOption("rstudio.air.version", default = "0.7.1")
+   version <- getOption("rstudio.air.version")
+   if (!is.null(version))
+      return(version)
+   
+   url <- "https://api.github.com/repos/posit-dev/air/releases/latest"
+   destfile <- tempfile(fileext = ".html")
+   download.file(url, destfile = destfile, quiet = TRUE)
+   
+   contents <- readLines(destfile, warn = FALSE)
+   response <- .rs.fromJSON(contents)
+   response[["tag_name"]]
 })
 
 .rs.addFunction("air.ensureAvailable", function()
