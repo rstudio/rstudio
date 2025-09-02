@@ -724,8 +724,7 @@ void Options::resolveCopilotPath(const FilePath& resourcePath, std::string* pPat
 void Options::resolveNodePath(const FilePath& resourcePath, std::string* pPath)
 {
 #if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
-   // node version should match RSTUDIO_INSTALLED_NODE_VERSION
-   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/22.13.0-installed");
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/" RSTUDIO_INSTALLED_NODE_VERSION "-installed");
    resolvePath(dependenciesPath, pPath);
 #else
    resolvePath(resourcePath, pPath);
