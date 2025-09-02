@@ -22,18 +22,12 @@ section "Installing node"
 
 # check for required ENV vars (as set by install-npm-dependencies)
 if ! check_env_vars NODE_VERSION NODE_FOLDER NODE_ROOT NODE_SUBDIR NODE_BASE_URL; then
-	exit 1 # check_env_vars has already printed an error message
+   exit 1 # check_env_vars has already printed an error message
 fi
 
-if [ -d "${NODE_SUBDIR}" ]; then
-	if [ "${1}" == "reinstall" ]; then
-		echo "removing previous ${NODE_VERSION} from '${NODE_SUBDIR}'"
-		rm -rf "${NODE_SUBDIR}"
-	else
-		# if we already have node, nothing to do
-		echo "node ${NODE_VERSION} is already installed at '${NODE_SUBDIR}'"
-		exit 0
-	fi
+if [ -f "${NODE_SUBDIR}/bin/node" ]; then
+   info "node ${NODE_VERSION} is already installed at '${NODE_SUBDIR}'"
+   exit 0
 fi
 
 # complete url based on platform
@@ -45,32 +39,32 @@ case "${PLATFORM}" in
 "Linux-x86_64")  NODE_FILE="node-v${NODE_VERSION}-linux-x64" ;;
 "Linux-aarch64") NODE_FILE="node-v${NODE_VERSION}-linux-arm64" ;;
 *)
-	echo "Node binaries not available for platform '${PLATFORM}'."
-	exit 0
+   echo "Node binaries not available for platform '${PLATFORM}'."
+   exit 0
 ;;
 esac
 
 # Will be set if we need to use Node 16.
 needs-node-16 () {
 
-	# Use Node 16 on Amazon Linux
-	if [ -e /etc/os-release ]; then
-		. /etc/os-release
-		if [ "${ID}" = "amzn" ] && [ "${VERSION_ID}" = "2" ]; then
-			return 0
-		fi
-	fi
+   # Use Node 16 on Amazon Linux
+   if [ -e /etc/os-release ]; then
+      . /etc/os-release
+      if [ "${ID}" = "amzn" ] && [ "${VERSION_ID}" = "2" ]; then
+         return 0
+      fi
+   fi
 
-	return 1
+   return 1
 
 }
 
 if needs-node-16; then
-	NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v16.20.2/"
-	case "$(arch)" in
-	aarch64) NODE_FILE="node-v16.20.2-linux-arm64" ;;
-	x86_64)  NODE_FILE="node-v16.20.2-linux-x64" ;;
-	esac
+   NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v16.20.2/"
+   case "$(arch)" in
+   aarch64) NODE_FILE="node-v16.20.2-linux-arm64" ;;
+   x86_64)  NODE_FILE="node-v16.20.2-linux-x64" ;;
+   esac
 fi
 
 # build archive paths, etc

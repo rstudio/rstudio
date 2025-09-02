@@ -21,7 +21,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.7.32
-set COPILOT_VERSION=1.362.0
+set COPILOT_VERSION=1.364.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -54,9 +54,9 @@ set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 
 
-set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-win32-x64-%COPILOT_VERSION%.zip
-set COPILOT_FOLDER=copilot-language-server
-set COPILOT_OUTPUT=copilot-language-server
+set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-js-%COPILOT_VERSION%.zip
+set COPILOT_FOLDER=copilot-language-server-js
+set COPILOT_OUTPUT=copilot-language-server-js
 
 
 set GNUDIFF_URL=gnudiff.zip
@@ -141,6 +141,13 @@ set NODEBUILD_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUILD_VERSION%/%NODEBUILD_FILE
 set NODEBUILD_FOLDER=node\%NODEBUILD_VERSION%
 set NODEBUILD_OUTPUT=node
 
+set NODEBUNDLE_VERSION=%RSTUDIO_INSTALLED_NODE_VERSION%
+set NODEBUNDLE_LABEL=node (%NODEBUNDLE_VERSION%; bundled)
+set NODEBUNDLE_FILE=node-v%NODEBUNDLE_VERSION%-win-x64
+set NODEBUNDLE_URL=%RSTUDIO_BUILDTOOLS%/node/v%NODEBUNDLE_VERSION%/%NODEBUNDLE_FILE%.zip
+set NODEBUNDLE_FOLDER=node\%NODEBUNDLE_VERSION%-installed
+set NODEBUNDLE_OUTPUT=node
+
 :: Install dependencies within 'common' first.
 cd ..\common
 
@@ -189,6 +196,22 @@ if exist node\%NODEBUILD_FILE% (
     echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUILD_VERSION%.
     exit /b
   )
+)
+
+%RUN% install NODEBUNDLE
+if exist node\%NODEBUNDLE_FILE% (
+  rmdir /s /q node\%NODEBUNDLE_VERSION%-installed 2>NUL
+  mkdir node\%NODEBUNDLE_VERSION%-installed 2>NUL
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not create directory node\%NODEBUNDLE_VERSION%-installed.
+    exit /b
+  )
+  move node\%NODEBUNDLE_FILE%\node.exe node\%NODEBUNDLE_VERSION%-installed\node.exe
+  if ERRORLEVEL 1 (
+    echo ^^!^^! ERROR: Could not move node installation to node\%NODEBUNDLE_VERSION%-installed.
+    exit /b
+  )
+  rmdir /s /q node\%NODEBUNDLE_FILE% 2>NUL
 )
 
 pushd node\%NODEBUILD_VERSION%

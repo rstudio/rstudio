@@ -34,7 +34,7 @@ if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
    set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
-   set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server")
+   set(RSTUDIO_DEPENDENCIES_COPILOT_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/copilot-language-server-js")
 else()
 
    # indirection to help build machine find these libraries?
@@ -56,10 +56,10 @@ else()
       set(RSTUDIO_DEPENDENCIES_QUARTO_DIR "${RSTUDIO_DEPENDENCIES_DIR}/quarto")
    endif()
 
-   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/copilot-language-server")
-      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_TOOLS_ROOT}/copilot-language-server")
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/copilot-language-server-js")
+      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_TOOLS_ROOT}/copilot-language-server-js")
    else()
-      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server")
+      set(RSTUDIO_DEPENDENCIES_COPILOT_DIR "${RSTUDIO_DEPENDENCIES_DIR}/copilot-language-server-js")
    endif()
 endif()
 
@@ -723,6 +723,12 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # install mathjax for local html preview
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install node
+   install(
+      DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+      USE_SOURCE_PERMISSIONS)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)

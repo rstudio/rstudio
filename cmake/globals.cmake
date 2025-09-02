@@ -236,6 +236,8 @@ set(PANDOC_VERSION "3.2" CACHE INTERNAL "Pandoc version")
 # node version used for building product components
 set(RSTUDIO_NODE_VERSION "22.13.1" CACHE INTERNAL "Node version for building")
 
+# node version installed with the product
+set(RSTUDIO_INSTALLED_NODE_VERSION "22.18.0" CACHE INTERNAL "Node version installed with product")
 
 # quarto support
 
@@ -318,6 +320,18 @@ if(NOT DEFINED RSTUDIO_TOOLS_ROOT)
 endif()
 
 message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
+
+# path to node (so we can find it in debug builds)
+if(WIN32)
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/node.exe")
+elseif(APPLE)
+   # this assumes debug / dev work is happening on an Apple Silicon machine
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-arm64-installed/bin/node")
+else()
+   set(RSTUDIO_NODE_PATH "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_INSTALLED_NODE_VERSION}-installed/bin/node")
+endif()
+
+set(RSTUDIO_NODE_PATH "${RSTUDIO_NODE_PATH}" CACHE INTERNAL "Path to bundled node binary")
 
 # special install directories for apple desktop
 if (APPLE)
