@@ -173,6 +173,12 @@
         "cwd": "src/gwt/devmode"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "RStudio: Generate User Preferences",
+      "type": "shell",
+      "command": "R -f scripts/generate-prefs.R",
+      "problemMatcher": []
     }
   ],
 

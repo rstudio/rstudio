@@ -2460,7 +2460,7 @@
    clear = function() { .rs.clearUserPref("code_formatter_external_command") }
 )
 
-# Use Air for formatting by default
+# Use Air for code formatting
 #
 # When set, RStudio will automatically select and use an appropriate version of
 # Air when formatting code in projects containing an air.toml file.

@@ -2218,7 +2218,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
     */
-   @DefaultStringValue("Use Air for formatting by default")
+   @DefaultStringValue("Use Air for code formatting")
    String useAirFormatterTitle();
    @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.")
    String useAirFormatterDescription();

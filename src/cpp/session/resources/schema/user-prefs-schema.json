@@ -1795,7 +1795,7 @@
         "use_air_formatter": {
             "type": "boolean",
             "default": false,
-            "title": "Use Air for formatting by default",
+            "title": "Use Air for code formatting",
             "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file."
         },
         "reformat_on_save": {
