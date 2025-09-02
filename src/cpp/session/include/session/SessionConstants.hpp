@@ -158,7 +158,7 @@
 
 #define kDefaultNodePath           "bin/node"
 #define kDefaultQuartoPath         "bin/quarto"
-#define kDefaultCopilotPath        "bin/copilot-language-server"
+#define kDefaultCopilotPath        "bin/copilot-language-server-js"
 #define kDefaultRsclangPath        "bin/rsclang"
 
 #ifdef _WIN32

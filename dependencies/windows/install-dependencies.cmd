@@ -21,7 +21,7 @@ set NSPROCESS_VERSION=1.6
 set OPENSSL_VERSION=3.1.4
 set PANDOC_VERSION=3.2
 set QUARTO_VERSION=1.7.32
-set COPILOT_VERSION=1.362.0
+set COPILOT_VERSION=1.364.0
 set SUMATRA_VERSION=3.1.2
 set WINPTY_VERSION=0.4.3-msys2-2.7.0
 set WINUTILS_VERSION=1.0
@@ -54,9 +54,9 @@ set QUARTO_FOLDER=quarto
 set QUARTO_OUTPUT=quarto
 
 
-set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-win32-x64-%COPILOT_VERSION%.zip
-set COPILOT_FOLDER=copilot-language-server
-set COPILOT_OUTPUT=copilot-language-server
+set COPILOT_URL=copilot-language-server/%COPILOT_VERSION%/copilot-language-server-js-%COPILOT_VERSION%.zip
+set COPILOT_FOLDER=copilot-language-server-js
+set COPILOT_OUTPUT=copilot-language-server-js
 
 
 set GNUDIFF_URL=gnudiff.zip
