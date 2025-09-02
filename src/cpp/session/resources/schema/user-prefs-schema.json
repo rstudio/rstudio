@@ -1776,7 +1776,7 @@
         "code_formatter": {
             "type": "string",
             "enum": ["none", "styler", "external"],
-            "enumReadable": ["(None)", "styler", "External"],
+            "enumReadable": ["(Default)", "styler", "External"],
             "default": "none",
             "title": "Code formatter",
             "description": "The formatter to use when reformatting code."

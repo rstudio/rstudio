@@ -2192,7 +2192,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterTitle();
    @DefaultStringValue("The formatter to use when reformatting code.")
    String codeFormatterDescription();
-   @DefaultStringValue("(None)")
+   @DefaultStringValue("(Default)")
    String codeFormatterEnum_none();
    @DefaultStringValue("styler")
    String codeFormatterEnum_styler();
