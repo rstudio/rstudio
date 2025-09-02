@@ -274,6 +274,10 @@ public class CodePreferencesPane extends PreferencesPane
       if (!StringUtil.isNullOrEmpty(command))
          reformatOnSaveCommand_.setText(prefs.codeFormatterExternalCommand().getGlobalValue());
       
+      VerticalPanel nonePanel = new VerticalPanel();
+      nonePanel.add(checkboxPref(prefs_.useAirFormatterInProjects()));
+      nonePanel.add(HelpLink.createExternal("Formatting with Air", "https://posit-dev.github.io/air/"));
+
       VerticalPanel externalPanel = new VerticalPanel();
       externalPanel.add(headerLabel("Format with an External Tool"));
       externalPanel.add(new Label("Use an external application to reformat code."));
@@ -293,7 +297,7 @@ public class CodePreferencesPane extends PreferencesPane
             String value = codeFormatter_.getValue();
             if (value.equals("none"))
             {
-               formattingDetailsPanel.setWidget(null);
+               formattingDetailsPanel.setWidget(nonePanel);
             }
             else if (value.equals("styler"))
             {

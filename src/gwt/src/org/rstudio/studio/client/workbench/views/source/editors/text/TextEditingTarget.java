@@ -3898,6 +3898,7 @@ public class TextEditingTarget implements
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
                         docUpdateSentinel_.getPath(),
+                        SourceServerOperations.FORMAT_CONTEXT_COMMAND,
                         new ServerRequestCallback<SourceDocument>()
                         {
                            @Override
@@ -8301,6 +8302,7 @@ public class TextEditingTarget implements
                server_.formatDocument(
                      docUpdateSentinel_.getId(),
                      docUpdateSentinel_.getPath(),
+                     SourceServerOperations.FORMAT_CONTEXT_SAVE,
                      new ServerRequestCallback<SourceDocument>()
                      {
                         @Override

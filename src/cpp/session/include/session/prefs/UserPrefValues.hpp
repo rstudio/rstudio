@@ -449,6 +449,7 @@ namespace prefs {
 #define kCodeFormatterExternal "external"
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
+#define kUseAirFormatter "use_air_formatter"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
 #define kConsoleHighlightConditions "console_highlight_conditions"
@@ -2044,6 +2045,12 @@ public:
     */
    std::string codeFormatterExternalCommand();
    core::Error setCodeFormatterExternalCommand(std::string val);
+
+   /**
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    */
+   bool useAirFormatter();
+   core::Error setUseAirFormatter(bool val);
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.
