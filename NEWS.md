@@ -2,6 +2,7 @@
 
 ### New
 #### RStudio
+- ([#15928](https://github.com/rstudio/rstudio/issues/15928)): RStudio now uses Air for formatting R code in projects configured to use Air
 - ([#16127](https://github.com/rstudio/rstudio/issues/16127)) ESC key now dismisses Copilot ghost text in source editor
 - ([#16281](https://github.com/rstudio/rstudio/issues/16281)): RStudio will no longer perform type inference on the completion results provided by .DollarNames methods for values where `attr(*, "suppressTypeInference")` is `TRUE`.
 - ([#16375](https://github.com/rstudio/rstudio/issues/16375)) Copilot Language Server (completions) is now launched via node.js instead of as a standalone binary

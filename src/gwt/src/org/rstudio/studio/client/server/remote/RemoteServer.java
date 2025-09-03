@@ -2478,11 +2478,13 @@ public class RemoteServer implements Server
    
    public void formatDocument(String id,
                               String path,
+                              int context,
                               ServerRequestCallback<SourceDocument> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(id)
             .add(path)
+            .add(context)
             .get();
       
       sendRequest(RPC_SCOPE, FORMAT_DOCUMENT, params, requestCallback);

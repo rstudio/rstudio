@@ -23,9 +23,12 @@
 # 3. Run this script: ./generate-prefs.R
 # 4. Commit the .cpp, .hpp, and .java files the script changes
 
+library(here)
 library(jsonlite)
 library(renv)
 library(stringi)
+
+root <- here::here()
 
 writeLines("Generating preferences...")
 
@@ -426,43 +429,54 @@ generate <- function(schemaPath, className) {
 }
 
 # Generate preferences
-result <- generate("../../cpp/session/resources/schema/user-prefs-schema.json",
-                   "UserPrefValues")
-template <- readLines("prefs/UserPrefsAccessor.java")
+setwd(root)
+
+result <- generate("src/cpp/session/resources/schema/user-prefs-schema.json", "UserPrefValues")
+
+template <- readLines("src/gwt/tools/prefs/UserPrefsAccessor.java")
 writeLines(gsub("%PREFS%", result$java, template), 
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
-template <- readLines("prefs/UserPrefsAccessorConstants.java")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
+
+template <- readLines("src/gwt/tools/prefs/UserPrefsAccessorConstants.java")
 writeLines(gsub("%PREFS%", result$javaConstants, template),
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants.java")
-template <- readLines("prefs/UserPrefsAccessorConstants_en.properties")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants.java")
+
+template <- readLines("src/gwt/tools/prefs/UserPrefsAccessorConstants_en.properties")
 writeLines(gsub("%PREFS%", result$javaProperties, template),
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants_en.properties")
-template <- readLines("prefs/UserPrefValues.hpp")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants_en.properties")
+
+template <- readLines("src/gwt/tools/prefs/UserPrefValues.hpp")
 writeLines(gsub("%PREFS%", result$hpp, template), 
-           con = "../../cpp/session/include/session/prefs/UserPrefValues.hpp")
-template <- readLines("prefs/UserPrefValues.cpp")
+           con = "src/cpp/session/include/session/prefs/UserPrefValues.hpp")
+
+template <- readLines("src/gwt/tools/prefs/UserPrefValues.cpp")
 writeLines(gsub("%PREFS%", result$cpp, template), 
-           con = "../../cpp/session/prefs/UserPrefValues.cpp")
-writeLines(result$r, con = "../../cpp/session/modules/SessionUserPrefValues.R")
+           con = "src/cpp/session/prefs/UserPrefValues.cpp")
+
+writeLines(result$r, con = "src/cpp/session/modules/SessionUserPrefValues.R")
 
 # Generate state
-result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
-                   "UserStateValues")
-javaTemplate <- readLines("prefs/UserStateAccessor.java")
+result <- generate("src/cpp/session/resources/schema/user-state-schema.json", "UserStateValues")
+
+javaTemplate <- readLines("src/gwt/tools/prefs/UserStateAccessor.java")
 writeLines(gsub("%STATE%", result$java, javaTemplate), 
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
-javaTemplate <- readLines("prefs/UserStateAccessorConstants.java")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
+
+javaTemplate <- readLines("src/gwt/tools/prefs/UserStateAccessorConstants.java")
 writeLines(gsub("%STATE%", result$javaConstants, javaTemplate),
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants.java")
-javaTemplate <- readLines("prefs/UserStateAccessorConstants_en.properties")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants.java")
+
+javaTemplate <- readLines("src/gwt/tools/prefs/UserStateAccessorConstants_en.properties")
 writeLines(gsub("%STATE%", result$javaProperties, javaTemplate),
-           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants_en.properties")
-template <- readLines("prefs/UserStateValues.hpp")
+           con = "src/gwt/src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants_en.properties")
+
+template <- readLines("src/gwt/tools/prefs/UserStateValues.hpp")
 writeLines(gsub("%STATE%", result$hpp, template), 
-           con = "../../cpp/session/include/session/prefs/UserStateValues.hpp")
-template <- readLines("prefs/UserStateValues.cpp")
+           con = "src/cpp/session/include/session/prefs/UserStateValues.hpp")
+
+template <- readLines("src/gwt/tools/prefs/UserStateValues.cpp")
 writeLines(gsub("%STATE%", result$cpp, template), 
-           con = "../../cpp/session/prefs/UserStateValues.cpp")
+           con = "src/cpp/session/prefs/UserStateValues.cpp")
 
 writeLines("Preference generation complete.")
 
