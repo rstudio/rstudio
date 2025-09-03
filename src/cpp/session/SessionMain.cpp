@@ -741,6 +741,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (workers::web_request::initialize)
 
       // R code
+      (bind(sourceModuleRFile, "SessionAir.R"))
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
 

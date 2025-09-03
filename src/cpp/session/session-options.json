@@ -5,7 +5,7 @@
       "includeGuard": "SESSION_SESSION_OPTIONS_GEN_HPP",
       "configFile": "rsession.conf",
       "docDescription": "The following is a list of available options that can be specified in the `rsession.conf` configuration file, which controls behavior of the `rsession` process, allowing you to tune various RStudio Pro Session parameters.",
-      "outputSourceFile": "session/include/session/SessionOptions.gen.hpp",
+      "outputSourceFile": "src/cpp/session/include/session/SessionOptions.gen.hpp",
       "outputDocFile": "/dev/null",
       "additionalIncludes": [
          "<core/system/Xdg.hpp>",
