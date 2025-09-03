@@ -4069,9 +4069,9 @@ public interface CmdConstants extends Constants {
     String copyRStudioVersionLabel();
     
     // toggleAIChat
-    @DefaultStringValue("Toggle Visibility of Chat Panel") // $NON-NLS-1$
-    String toggleAIChatLabel();
     @DefaultStringValue("Toggle Chat Panel") // $NON-NLS-1$
+    String toggleAIChatLabel();
+    @DefaultStringValue("Toggle Ch_at Panel") // $NON-NLS-1$
     String toggleAIChatMenuLabel();
     
 }

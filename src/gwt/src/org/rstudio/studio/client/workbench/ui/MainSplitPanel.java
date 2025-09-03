@@ -134,7 +134,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    public void initialize(ArrayList<Widget> leftList, Widget center, Widget right)
    {
-      initialize(leftList, center, right, null, true);
+      initialize(leftList, center, right, null, false);
    }
    
    public void initialize(ArrayList<Widget> leftList, Widget center, Widget right,
@@ -143,7 +143,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       leftList_ = leftList;
       center_ = center;
       right_ = right;
-      aiChat_ = aiChat;
+      
+      // Store the original AI Chat widget if this is the first initialization
+      if (aiChat != null && aiChat_ == null) {
+         aiChat_ = aiChat;
+      }
+      
+      // Update visibility based on whether we're showing the AI Chat
+      aiChatVisible_ = (aiChat != null);
       aiChatOnLeft_ = aiChatOnLeft;
 
       new JSObjectStateValue(GROUP_WORKBENCH,
@@ -157,7 +164,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          {
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
-            int expectedSplitterCount = leftList_.size() + 1 + (aiChat_ != null ? 1 : 0);
+            int expectedSplitterCount = leftList_.size() + 1 + (aiChatVisible_ && aiChat_ != null ? 1 : 0);
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
@@ -170,8 +177,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   int offsetWidth = Window.getClientWidth() - delta;
                   int splitterIdx = 0;
                   
-                  // Add AI Chat if present and on the right
-                  if (aiChat_ != null && !aiChatOnLeft_)
+                  // Add AI Chat if present and visible and on the right
+                  if (aiChatVisible_ && aiChat_ != null && !aiChatOnLeft_)
                   {
                      double pct = (double)state.getSplitterPos()[splitterIdx++]
                                   / state.getPanelWidth();
@@ -189,8 +196,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                      addWest(leftList_.get(i), pct * offsetWidth);
                   }
                   
-                  // Add AI Chat if present and on the left
-                  if (aiChat_ != null && aiChatOnLeft_)
+                  // Add AI Chat if present and visible and on the left
+                  if (aiChatVisible_ && aiChat_ != null && aiChatOnLeft_)
                   {
                      pct = (double)state.getSplitterPos()[splitterIdx++]
                             / state.getPanelWidth();
@@ -201,8 +208,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                {
                   int splitterIdx = 0;
                   
-                  // Add AI Chat if present and on the right
-                  if (aiChat_ != null && !aiChatOnLeft_)
+                  // Add AI Chat if present and visible and on the right
+                  if (aiChatVisible_ && aiChat_ != null && !aiChatOnLeft_)
                   {
                      addEast(aiChat_, state.getSplitterPos()[splitterIdx++]);
                   }
@@ -211,8 +218,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   for (int i = 0; i < leftList_.size(); i++)
                      addWest(leftList_.get(i), state.getSplitterPos()[splitterIdx++]);
                      
-                  // Add AI Chat if present and on the left
-                  if (aiChat_ != null && aiChatOnLeft_)
+                  // Add AI Chat if present and visible and on the left
+                  if (aiChatVisible_ && aiChat_ != null && aiChatOnLeft_)
                   {
                      addWest(aiChat_, state.getSplitterPos()[splitterIdx++]);
                   }
@@ -224,8 +231,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                // otherwise divide the space equally.
                double splitWidth = getDefaultSplitterWidth();
                
-               // Add AI Chat if present and on the right
-               if (aiChat_ != null && !aiChatOnLeft_)
+               // Add AI Chat if present and visible and on the right
+               if (aiChatVisible_ && aiChat_ != null && !aiChatOnLeft_)
                {
                   addEast(aiChat_, 400); // Default width for AI Chat
                }
@@ -235,8 +242,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                for (Widget w : leftList_)
                   addWest(w, splitWidth);
                   
-               // Add AI Chat if present and on the left
-               if (aiChat_ != null && aiChatOnLeft_)
+               // Add AI Chat if present and visible and on the left
+               if (aiChatVisible_ && aiChat_ != null && aiChatOnLeft_)
                {
                   addWest(aiChat_, 400); // Default width for AI Chat
                }
@@ -261,12 +268,12 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             // The widget's code determines the splitter positions from the width of each widget
             // so these value represent that width rather than the actual coordinates of the
             // splitter.
-            int arraySize = leftList_.size() + 1 + (aiChat_ != null ? 1 : 0);
+            int arraySize = leftList_.size() + 1 + (aiChatVisible_ && aiChat_ != null ? 1 : 0);
             int[] splitterArray = new int[arraySize];
             int idx = 0;
             
-            // Store AI Chat width if present and on the right
-            if (aiChat_ != null && !aiChatOnLeft_)
+            // Store AI Chat width if present and visible and on the right
+            if (aiChatVisible_ && aiChat_ != null && !aiChatOnLeft_)
             {
                splitterArray[idx++] = aiChat_.getOffsetWidth();
             }
@@ -279,8 +286,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   splitterArray[idx++] = leftList_.get(i).getOffsetWidth();
             }
             
-            // Store AI Chat width if present and on the left
-            if (aiChat_ != null && aiChatOnLeft_)
+            // Store AI Chat width if present and visible and on the left
+            if (aiChatVisible_ && aiChat_ != null && aiChatOnLeft_)
             {
                splitterArray[idx++] = aiChat_.getOffsetWidth();
             }
@@ -349,7 +356,25 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       clearForRefresh();
       leftList_.remove(widget);
-      initialize(leftList_, center_, right_, aiChat_, aiChatOnLeft_);
+      initialize(leftList_, center_, right_, aiChatVisible_ ? aiChat_ : null, aiChatOnLeft_);
+   }
+   
+   public void toggleAIChat(boolean show)
+   {
+      if (aiChat_ == null)
+         return;
+         
+      if (show == aiChatVisible_)
+         return; // Already in the desired state
+         
+      aiChatVisible_ = show;
+      clearForRefresh();
+      initialize(leftList_, center_, right_, aiChatVisible_ ? aiChat_ : null, aiChatOnLeft_);
+   }
+   
+   public boolean isAIChatVisible()
+   {
+      return aiChatVisible_;
    }
 
    public void onSplitterResized(SplitterResizedEvent event)
@@ -371,6 +396,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       remove(right_);
       for (Widget w : leftList_)
          remove(w);
+      if (aiChat_ != null)
+         remove(aiChat_);
    }
 
    private void enforceBoundaries()
@@ -441,6 +468,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Widget right_;
    private Widget aiChat_;
    private boolean aiChatOnLeft_;
+   private boolean aiChatVisible_ = true;
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
    private Command layoutCommand_;

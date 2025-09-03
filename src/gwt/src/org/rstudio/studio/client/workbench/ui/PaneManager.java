@@ -335,7 +335,7 @@ public class PaneManager
       }
       // Initialize with AI Chat column if enabled (TODO: add preference check)
       Widget aiChatWidget = aiChatColumn_.asWidget();
-      boolean aiChatOnLeft = true; // TODO: make this configurable via preferences
+      boolean aiChatOnLeft = false; // TODO: make this configurable via preferences
       panel_.initialize(leftList_, center_, right_, aiChatWidget, aiChatOnLeft);
 
       for (LogicalWindow window : sourceLogicalWindows_)
@@ -635,6 +635,17 @@ public class PaneManager
       if (activeWindow == null)
          return;
       toggleWindowZoom(activeWindow, null);
+   }
+   
+   @Handler
+   public void onToggleAIChat()
+   {
+      // Toggle the AI Chat visibility
+      boolean currentlyVisible = aiChatColumn_.isVisible();
+      aiChatColumn_.setVisible(!currentlyVisible);
+      
+      // Update the layout
+      panel_.toggleAIChat(!currentlyVisible);
    }
 
    @Handler

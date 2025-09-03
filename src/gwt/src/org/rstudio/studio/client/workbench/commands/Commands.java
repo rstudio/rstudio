@@ -372,6 +372,7 @@ public abstract class
    public abstract AppCommand moveTabRight();
    public abstract AppCommand moveTabToFirst();
    public abstract AppCommand moveTabToLast();
+   public abstract AppCommand toggleAIChat();
 
    // Other Panes
    public abstract AppCommand activatePresentation();

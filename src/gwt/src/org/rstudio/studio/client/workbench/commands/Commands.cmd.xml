@@ -280,6 +280,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </menu>
 
       <menu label="_View">
+         <cmd refid="toggleAIChat"/>
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
 
@@ -4312,6 +4313,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copy RStudio Version" />
 
    <cmd id="toggleAIChat"
-        label="Toggle Visibility of Chat Panel"
-        menuLabel="Toggle Chat Panel"/>
+        label="Toggle Chat Panel"
+        menuLabel="Toggle Ch_at Panel"
+        windowMode="main" />
 </commands>

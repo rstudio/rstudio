@@ -3220,4 +3220,10 @@ public class DummyCommands extends Commands {
     public AppCommand copyRStudioVersion() {
         return null;
     }
+
+    @Override
+    public AppCommand toggleAIChat() {
+        return null;
+    }
+
 }
