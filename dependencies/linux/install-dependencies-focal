@@ -95,6 +95,7 @@ then
 fi
 
 # common
+cd ../common
 ./install-common focal
 cd ../linux
 

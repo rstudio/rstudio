@@ -340,6 +340,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
    resolveCopilotPath(resourcePath_, &copilotPath_);
+   resolveNodePath(resourcePath_, &nodePath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
@@ -654,7 +655,7 @@ void Options::resolveCopilotPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultCopilotPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "copilot-language-server");
+      FilePath path = macBinaryPath(resourcePath, "copilot-language-server-js");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -662,6 +663,19 @@ void Options::resolveCopilotPath(const FilePath& resourcePath,
       resolvePath(resourcePath, pPath);
    }
 }
+
+void Options::resolveNodePath(const FilePath& resourcePath, std::string* pPath)
+   {
+      if (*pPath == kDefaultNodePath && programMode() == kSessionProgramModeDesktop)
+      {
+         FilePath path = macBinaryPath(resourcePath, "node");
+         *pPath = path.getAbsolutePath();
+      }
+      else
+      {
+         resolvePath(resourcePath, pPath);
+      }
+   }
 
 void Options::resolveRsclangPath(const FilePath& resourcePath,
                                  std::string* pPath)
@@ -705,6 +719,16 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 void Options::resolveCopilotPath(const FilePath& resourcePath, std::string* pPath)
 {
    resolvePath(resourcePath, pPath);
+}
+
+void Options::resolveNodePath(const FilePath& resourcePath, std::string* pPath)
+{
+#if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/" RSTUDIO_INSTALLED_NODE_VERSION "-installed");
+   resolvePath(dependenciesPath, pPath);
+#else
+   resolvePath(resourcePath, pPath);
+#endif
 }
 
 void Options::resolveRsclangPath(const FilePath& resourcePath,

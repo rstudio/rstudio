@@ -389,6 +389,8 @@ Error saveDocumentCore(const std::string& contents,
                        boost::shared_ptr<SourceDocument> pDoc,
                        bool retryWrite)
 {
+   Error error;
+
    // check whether we have a path and if we do get/resolve its value
    std::string oldPath, path;
    FilePath fullDocPath;
@@ -400,18 +402,11 @@ Error saveDocumentCore(const std::string& contents,
       fullDocPath = module_context::resolveAliasedPath(path);
    }
 
-   // update dirty state: dirty if there was no path AND the new contents
-   // are different from the old contents (and was thus a content autosave
-   // as distinct from a fold-spec or scroll-position/selection autosave)
-   pDoc->setDirty(!hasPath && (contents != pDoc->contents()));
-   
    bool hasType = json::isType<std::string>(jsonType);
    if (hasType)
    {
       pDoc->setType(jsonType.getString());
    }
-   
-   Error error;
    
    bool hasEncoding = json::isType<std::string>(jsonEncoding);
    if (hasEncoding)
@@ -481,6 +476,9 @@ Error saveDocumentCore(const std::string& contents,
       if (error)
          return error;
 
+      // we've successfully saved and updated the document; update its dirty state
+      pDoc->setDirty(false);
+
       // enque file changed event if we need to
       if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
       {
@@ -502,6 +500,15 @@ Error saveDocumentCore(const std::string& contents,
       {
          source_database::events().onDocRenamed(oldPath, pDoc);
       }
+   }
+   else
+   {
+      // if an autosave has been performed, then update the dirty flag.
+      // note that document saves are also invoked to only update document
+      // properties, not necessarily document contents, so we let the dirty
+      // flag be 'sticky' across sequential autosave invocations.
+      bool hasChanges = contents != pDoc->contents();
+      pDoc->setDirty(pDoc->dirty() || hasChanges);
    }
 
    // always update the contents so it holds the original UTF-8 data

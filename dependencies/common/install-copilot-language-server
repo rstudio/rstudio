@@ -21,54 +21,27 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Copilot Language Server"
 
 # version to download
-COPILOT_VERSION="1.360.0"
+COPILOT_VERSION="1.364.0"
 
-# determine platform and architecture
-PLATFORM="$(uname)-$(getconf LONG_BIT)"
-if [ "$(arch)" == "arm64" ] || [ "$(arch)" == "aarch64" ]; then
-  ARCH="arm64"
-else
-  ARCH="x64"
-fi
-
-case "${PLATFORM}" in
-
-"Darwin-64")
-  OS="darwin"
-  ;;
-
-"Linux-64")
-  OS="linux"
-  ;;
-
-*)
-  echo "Copilot binaries not available for platform '${PLATFORM}'."
-  exit 0
-  ;;
-
-esac
-
-# test if we already have it installed
-COPILOT_SUBDIR="copilot-language-server"
-COPILOT_BIN="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server"
-if test -f "${COPILOT_BIN}"; then
-  INSTALLED_COPILOT_VERSION=$(${COPILOT_BIN} --version)
-  if [ "$INSTALLED_COPILOT_VERSION" == "$COPILOT_VERSION" ]; then
-    if [ "${OS}" != "darwin" ]; then
-      echo "Copilot language server ${COPILOT_VERSION} already installed"
-      exit 0
-    else
-      # on macOS, make sure we also have the x64 binary
-      COPILOT_BIN_X64="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/copilot-language-server-x64"
-      if test -f "${COPILOT_BIN_X64}"; then
-        INSTALLED_COPILOT_VERSION_X64=$(${COPILOT_BIN_X64} --version)
-        if [ "$INSTALLED_COPILOT_VERSION_X64" == "$COPILOT_VERSION" ]; then
-          echo "Copilot language server ${COPILOT_VERSION} already installed"
-          exit 0
-        fi
+# Function to check if Copilot language server is already installed with correct version
+check_copilot_installed() {
+  COPILOT_SUBDIR="copilot-language-server-js"
+  COPILOT_JS="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/language-server.js"
+  if [[ -f "${COPILOT_JS}" ]]; then
+    COPILOT_MAIN_JS="${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR}/main.js"
+    if [[ -f "${COPILOT_MAIN_JS}" ]]; then
+      if grep -q "${COPILOT_VERSION}" "${COPILOT_MAIN_JS}"; then
+        return 0  # Success - already installed
       fi
     fi
   fi
+  return 1  # Not installed or wrong version
+}
+
+# Test if we already have it installed and is the correct version
+if check_copilot_installed; then
+  echo "Copilot language server ${COPILOT_VERSION} already installed"
+  exit 0
 fi
 
 # move to tools root
@@ -83,26 +56,18 @@ pushd "${COPILOT_SUBDIR}"
 # download and extract copilot-language-server binary
 COPILOT_URL_BASE="${RSTUDIO_BUILDTOOLS}/copilot-language-server/${COPILOT_VERSION}"
 
-if [ "${OS}" == "darwin" ]; then
-  # macOS: download and extract x64 and arm64 binaries (adding -x64 suffix to x64 binary)
-  FILE="copilot-language-server-${OS}-x64-${COPILOT_VERSION}.zip"
-  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
-  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
-  extract "${FILE}"
-  rm -f "${FILE}"
-  mv ./copilot-language-server ./copilot-language-server-x64
+# Download and extract cross-platform JS version
+FILE="copilot-language-server-js-${COPILOT_VERSION}.zip"
+echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
+download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
+echo "Extracting ${FILE} to ${COPILOT_SUBDIR}"
+extract "${FILE}"
+rm -f "${FILE}"
 
-  FILE="copilot-language-server-${OS}-arm64-${COPILOT_VERSION}.zip"
-  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
-  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
-  extract "${FILE}"
-  rm -f "${FILE}"
-  
+# Validate that the installation succeeded
+if check_copilot_installed; then
+  exit 0
 else
-  # Linux: download and extract binary matching current architecture
-  FILE="copilot-language-server-${OS}-${ARCH}-${COPILOT_VERSION}.zip"
-  echo "Downloading ${FILE} from ${COPILOT_URL_BASE}/${FILE}"
-  download "${COPILOT_URL_BASE}/${FILE}" "${FILE}"
-  extract "${FILE}"
-  rm -f "${FILE}"
+  error "Copilot language server ${COPILOT_VERSION} in ${RSTUDIO_TOOLS_ROOT}/${COPILOT_SUBDIR} is not valid." >&2
+  exit 1
 fi

@@ -1573,27 +1573,40 @@ assign(x = ".rs.acCompletionTypes",
       if (exists(".AtNames"))
       {
          .rs.tryCatch({
+            
             code <- substitute(
                utils::.AtNames(object, pattern = ""),
                list(object = object)
             )
+            
             allNames <- eval(code, envir = globalenv())
             names <- .rs.selectFuzzyMatches(allNames, token)
             type <- attr(names, "types")
+            
          })
       }
       else if (isS4(object))
       {
          .rs.tryCatch({
+            
             allNames <- .slotNames(object)
             names <- .rs.selectFuzzyMatches(allNames, token)
+            suppressTypeInference <- attr(allNames, "suppressTypeInference", exact = TRUE)
             
-            # NOTE: Getting the types forces evaluation; we avoid that if
-            # there are too many names to evaluate.
-            if (length(names) > 2E2)
+            # Skip type inference if requested.
+            if (identical(suppressTypeInference, TRUE))
             {
                type <- .rs.acCompletionTypes$UNKNOWN
             }
+            
+            # NOTE: Getting the types forces evaluation; we avoid that if
+            # there are too many names to evaluate.
+            else if (length(names) > 2E2)
+            {
+               type <- .rs.acCompletionTypes$UNKNOWN
+            }
+            
+            # Otherwise, evaluate each name, and check the completion type.
             else
             {
                type <- numeric(length(names))
@@ -1605,6 +1618,7 @@ assign(x = ".rs.acCompletionTypes",
                   ))
                }
             }
+            
          })
       }
    }
@@ -1694,24 +1708,40 @@ assign(x = ".rs.acCompletionTypes",
       }
       
       names <- .rs.selectFuzzyMatches(allNames, token)
-      
-      # See if types were provided
+      suppressTypeInference <- attr(allNames, "suppressTypeInference", exact = TRUE)
+            
+      # See if types were provided.
       types <- attr(names, "types")
       if (is.integer(types) && length(types) == length(names))
+      {
          type <- types
+      }
       
+      # Skip type inference if requested.
+      if (identical(suppressTypeInference, TRUE))
+      {
+         type <- .rs.acCompletionTypes$UNKNOWN
+      }
+      
+      # Give all entries within a 'data.frame' a special "column" type.
       else if (inherits(object, "data.frame"))
+      {
          type <- .rs.acCompletionTypes$COLUMN
+      }
       
       # NOTE: Getting the types forces evaluation; we avoid that if
       # there are too many names to evaluate.
       else if (length(names) > 2E2)
+      {
          type <- .rs.acCompletionTypes$UNKNOWN
+      }
       
       # Avoid requesting completion types for remote tables,
       # as that could be prohibitively expensive.
       else if (inherits(object, c("tbl_dbi", "tbl_sql", "tbl_lazy")))
+      {
          type <- .rs.acCompletionTypes$UNKNOWN
+      }
       
       else
       {

@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+
+#
+# debuginfo
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+buildinfo_product="@RSTUDIO_BUILDINFO_PRODUCT@"
+buildinfo_os="@RSTUDIO_BUILDINFO_OS@"
+buildinfo_arch="@RSTUDIO_BUILDINFO_ARCH@"
+buildinfo_version="@RSTUDIO_BUILDINFO_VERSION@"
+
+bucket="rstudio-debug-symbols"
+directory=""
+
+usage () {
+
+	cat <<- EOF
+	Usage: $0 download [options]
+
+	-C, --directory=<dir>
+		Download and unpack symbols into this directory.
+		Defaults to the current working directory.
+	
+	--product=<product>
+		The product for which you'd like to download debug symbols.
+		Defaults to "@RSTUDIO_BUILDINFO_PRODUCT@".
+	
+	--os=<os>
+		The OS identifier associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_OS@".
+	
+	--arch=<arch>
+		The architecture associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_ARCH@".
+	
+	--version=<version>
+		The version of RStudio / Workbench associated with the debug symbols to be downloaded.
+		Defaults to "@RSTUDIO_BUILDINFO_VERSION@".
+	EOF
+
+}
+
+debuginfo-download () {
+
+	# Validate all required variables are defined
+	for var in buildinfo_product buildinfo_os buildinfo_arch buildinfo_version; do
+		if [ -z "${!var}" ]; then
+			echo "ERROR: ${var} is not defined; cannot proceed"
+			exit 1
+		fi
+	done
+
+	# Validate that the aws cli is available
+	if ! command -v aws &> /dev/null; then
+		echo "ERROR: The aws cli is not available; cannot proceed"
+		exit 1
+	fi
+
+	# Move to directory if provided
+	if [ -n "${directory}" ]; then
+		mkdir -p "${directory}"
+		cd "${directory}"
+	fi
+
+	# Download symbols from S3
+	prefix="${buildinfo_product}-${buildinfo_os}-${buildinfo_arch}"
+	src="s3://${bucket}/${buildinfo_version}/${prefix}.tar.xz"
+	tgt="${prefix}.tar.xz"
+
+	echo "-- Downloading ${src}"
+	aws s3 cp "${src}" "${tgt}"
+
+	# Unpack debug symbols here
+	echo "-- Unpacking ${prefix.tar.xz}"
+	tar xf "${prefix}.tar.xz"
+
+}
+
+while [ $# -gt 0 ]; do
+
+	arg="$1"
+
+	case "${arg}" in
+
+	--help|help)
+		usage
+		exit 0
+	;;
+
+	-C)
+		shift
+		directory="$1"
+	;;
+
+	--directory=*)
+		directory="${arg#--directory=}"
+	;;
+
+	--bucket=*)
+		bucket="${arg#--bucket=}"
+	;;
+
+	--product=*)
+		buildinfo_product="${arg#--product=}"
+	;;
+
+	--os=*)
+		buildinfo_os="${arg#--os=}"
+	;;
+
+	--arch=*)
+		buildinfo_arch="${arg#--arch=}"
+	;;
+
+	--version=*)
+		buildinfo_version="${arg#--version=}"
+	;;
+
+	download)
+		action="debuginfo-download"
+	;;
+
+	esac
+
+	shift
+
+done
+
+case "${action}" in
+	debuginfo-download) debuginfo-download ;;
+	*) usage ;;
+esac

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+#
+# upload-debug-symbols
+#
+# Copyright (C) 2025 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+AWS_BUCKET="s3://rstudio-debug-symbols"
+
+usage () {
+
+	cat <<- EOF
+
+	Usage: $0 [build-directory] [product] [os] [arch] [version]
+
+	Automatically discover all debug symbols within a particular
+	build directory, and then upload those symbols to AWS S3.
+
+	EOF
+
+}
+
+if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+	usage
+	exit 1
+fi
+
+# Read params into named variables
+builddir="$1"
+product="$2"
+os="$3"
+arch="$4"
+version="$5"
+
+ensure-aws-cli () {
+
+	# Check and see if aws-cli is already on the PATH.
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
+
+	# Try to look for an aws-cli installation in the home directory.
+   PATH="${HOME}/aws-cli/bin:${PATH}"
+   hash -r
+
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
+
+	# The aws-cli is not installed; try to install it now.
+   pushd "$(mktemp -d)"
+   curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+   unzip -q awscliv2.zip
+   ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+   popd
+
+	# Check once more for the aws-cli.
+	hash -r
+	command -v aws &> /dev/null
+
+}
+
+ensure-aws-cli || {
+	echo "ERROR: aws-cli is not available"
+	exit 1
+}
+
+# Move to build directory
+cd "${builddir}"
+
+# Build path to archive we'll generate
+prefix="${product}-${os}-${arch}"
+
+# Find debug symbols in the build directory provided,
+# and collect them into an archive. 
+while IFS= read -r -d '' symfile; do
+	bname="$(basename "${symfile}")"
+	dname="$(dirname "${symfile}")"
+	tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
+done < <(find . -name "*.debug" -print0)
+
+# Compress the archive
+xz "${prefix}.tar"
+
+# Upload to S3
+src="${prefix}.tar.xz"
+tgt="${AWS_BUCKET}/${version}/${prefix}.tar.xz"
+aws s3 cp "${src}" "${tgt}"
+
