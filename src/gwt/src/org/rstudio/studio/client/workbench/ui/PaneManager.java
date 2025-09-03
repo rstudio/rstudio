@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumnManager.Colu
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.aichat.AIChatColumn;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,7 +99,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn, AiChat
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -225,6 +226,7 @@ public class PaneManager
                       FileTypeRegistry fileTypeRegistry,
                       Source source,
                       SourceColumnManager sourceColumnManager,
+                      AIChatColumn aiChatColumn,
                       @Named(HISTORY_PANE) final WorkbenchTab historyTab,
                       @Named(FILES_PANE) final WorkbenchTab filesTab,
                       @Named(PLOTS_PANE) final WorkbenchTab plotsTab,
@@ -260,6 +262,7 @@ public class PaneManager
       fileTypeRegistry_ = fileTypeRegistry;
       source_ = source;
       sourceColumnManager_ = sourceColumnManager;
+      aiChatColumn_ = aiChatColumn;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -330,7 +333,10 @@ public class PaneManager
                0).cast());
          }
       }
-      panel_.initialize(leftList_, center_, right_);
+      // Initialize with AI Chat column if enabled (TODO: add preference check)
+      Widget aiChatWidget = aiChatColumn_.asWidget();
+      boolean aiChatOnLeft = true; // TODO: make this configurable via preferences
+      panel_.initialize(leftList_, center_, right_, aiChatWidget, aiChatOnLeft);
 
       for (LogicalWindow window : sourceLogicalWindows_)
       {
@@ -2056,6 +2062,7 @@ public class PaneManager
    private final FileTypeRegistry fileTypeRegistry_;
    private final Source source_;
    private final SourceColumnManager sourceColumnManager_;
+   private final AIChatColumn aiChatColumn_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;
@@ -2127,6 +2134,7 @@ public class PaneManager
    public static final String PRESENTATION_PANE = "Presentation"; //$NON-NLS-1$
    public static final String PRESENTATIONS_PANE = "Presentations"; //$NON-NLS-1$
    public static final String CONNECTIONS_PANE = "Connections"; //$NON-NLS-1$
+   public static final String AI_CHAT_PANE = "AiChat"; //$NON-NLS-1$
    public static final String ENVIRONMENT_PANE = "Environment"; //$NON-NLS-1$
    public static final String VIEWER_PANE = "Viewer"; //$NON-NLS-1$
    public static final String COMPILE_PDF_PANE = "Compile PDF"; //$NON-NLS-1$

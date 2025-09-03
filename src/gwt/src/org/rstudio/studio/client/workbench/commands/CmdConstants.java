@@ -4068,4 +4068,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();
     
+    // toggleAIChat
+    @DefaultStringValue("Toggle Visibility of Chat Panel") // $NON-NLS-1$
+    String toggleAIChatLabel();
+    @DefaultStringValue("Toggle Chat Panel") // $NON-NLS-1$
+    String toggleAIChatMenuLabel();
+    
 }
