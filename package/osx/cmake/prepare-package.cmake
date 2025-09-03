@@ -41,6 +41,18 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
       "${RSESSION_BINARY_DIR}/rsession-arm64"
       COPYONLY)
 
+   # copy arm64 node installation
+   set(NODE_ARM64_SOURCE "@CMAKE_CURRENT_SOURCE_DIR@/../../dependencies/common/node/@RSTUDIO_INSTALLED_NODE_VERSION@-arm64-installed")
+   if(EXISTS "${NODE_ARM64_SOURCE}")
+      echo("Installing arm64 node from '${NODE_ARM64_SOURCE}'")
+      file(
+         COPY "${NODE_ARM64_SOURCE}/"
+         DESTINATION "${RSESSION_BINARY_DIR}/node-arm64"
+         USE_SOURCE_PERMISSIONS)
+   else()
+      echo("Warning: arm64 node not found at '${NODE_ARM64_SOURCE}'")
+   endif()
+
    if(EXISTS "@LICENSEMANAGER_ARM64_PATH@")
       echo("Found arm64 license-manager binary: '@LICENSEMANAGER_ARM64_PATH@'")
 

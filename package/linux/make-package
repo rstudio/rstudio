@@ -285,17 +285,25 @@ if [ -n "$SCCACHE_ENABLED" ]; then
     fi
 fi
 
-cmake -G"${CMAKE_GENERATOR}"                           \
-      -DRSTUDIO_TARGET=$RSTUDIO_TARGET                 \
-      -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
-      -DRSTUDIO_PACKAGE_BUILD=1                        \
-      -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
-      -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin"               \
-      -DGWT_WWW_DIR="$BUILD_DIR/gwt/www"               \
-      -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras"         \
-      -DGWT_BUILD="$GWT_BUILD"                         \
-      -DSCCACHE_ENABLED=$SCCACHE_ENABLED               \
-      $PKG_DIR/../..
+# NOTE:  The PRODUCT, OS, and ARCH environment variables are
+# normally set as part of the matrix builds on Jenkins; they
+# will typically be undefined in local / development builds.
+cmake                                                    \
+   -G"${CMAKE_GENERATOR}"                                \
+   -DRSTUDIO_BUILDINFO_PRODUCT="${PRODUCT}"              \
+   -DRSTUDIO_BUILDINFO_OS="${OS}"                        \
+   -DRSTUDIO_BUILDINFO_ARCH="${ARCH}"                    \
+   -DRSTUDIO_BUILDINFO_VERSION="${RSTUDIO_VERSION_FULL}" \
+   -DRSTUDIO_TARGET="${RSTUDIO_TARGET}"                  \
+   -DRSTUDIO_PACKAGE_BUILD=1                             \
+   -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"              \
+   -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}"      \
+   -DGWT_BIN_DIR="${BUILD_DIR}/gwt/bin"                  \
+   -DGWT_WWW_DIR="${BUILD_DIR}/gwt/www"                  \
+   -DGWT_EXTRAS_DIR="${BUILD_DIR}/gwt/extras"            \
+   -DGWT_BUILD="${GWT_BUILD}"                            \
+   -DSCCACHE_ENABLED=${SCCACHE_ENABLED}                  \
+   "${PKG_DIR}/../.."
 
 cmake --build . --target all -- ${MAKEFLAGS}
 

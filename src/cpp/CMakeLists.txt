@@ -432,6 +432,11 @@ if(NOT RSTUDIO_ADDINS_PATH)
    endif()
 endif()
 
+# debuginfo tools
+if(LINUX)
+   add_subdirectory(debuginfo)
+endif()
+
 # external libraries
 add_subdirectory(ext)
 include_directories(SYSTEM "${FMT_SOURCE_DIR}/include")

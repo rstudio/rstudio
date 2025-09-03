@@ -17,6 +17,7 @@ packrat/
 pandoc*/
 quarto/
 copilot-language-server/
+copilot-language-server-js/
 node/
 plumber/
 profvis/
