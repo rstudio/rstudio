@@ -14,16 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import org.rstudio.core.client.js.JsObject;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
-import org.rstudio.studio.client.workbench.model.ClientState;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -34,6 +24,15 @@ import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.SplitterResizedHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler

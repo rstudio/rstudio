@@ -1,7 +1,7 @@
 /*
  * AIChatPanel.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2025 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -19,13 +19,11 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.studio.client.workbench.views.aichat.ui.AIChatConstants;
 
