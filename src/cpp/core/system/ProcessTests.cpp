@@ -133,12 +133,14 @@ TEST(ProcessTest, AsioSupervisorStdoutOutput)
 
    int exitCode = -1;
    std::string output;
+   std::string errorOutput;
 
    callbacks.onExit = boost::bind(&checkExitCode, _1, &exitCode);
    callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
 
-   // run command
-   std::string command = "bash -c \"python3 -c $'for i in range(10):\\n   print(i)'\"";
+   // run command using a simple separate script approach
+   // std::string command = "bash -c \"python3 -c $'for i in range(10):\n   print(i)'\"";
+   std::string command = "bash -c \"python3 -c 'for i in range(10): print(i)'\"";
    supervisor.runCommand(command, options, callbacks);
 
    // wait for it to exit
