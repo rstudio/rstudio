@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
-import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
-import org.rstudio.core.client.events.HasEnsureHeightHandlers;
-import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 
 public interface WorkbenchTab extends IsWidget,
                                       HasEnsureVisibleHandlers,

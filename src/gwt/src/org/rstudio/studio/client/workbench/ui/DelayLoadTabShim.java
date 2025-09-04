@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Widget;
 
 public abstract class DelayLoadTabShim<T extends IsWidget,
       TParentTab extends DelayLoadWorkbenchTab<T>> extends AsyncShim<T>

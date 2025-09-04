@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 

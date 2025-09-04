@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -24,9 +22,13 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.events.*;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.events.SaveClientStateEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+
+import com.google.inject.Inject;
 
 public class ClientStateUpdater extends TimeBufferedCommand
 {

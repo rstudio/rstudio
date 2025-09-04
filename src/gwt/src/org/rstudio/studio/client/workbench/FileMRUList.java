@@ -21,10 +21,10 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 @Singleton
 public class FileMRUList extends MRUList
