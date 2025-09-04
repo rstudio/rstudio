@@ -81,7 +81,7 @@ class RStudioMain {
     }
 
     if (!options.useGpuExclusionList()) {
-      app.commandLine.appendSwitch('ignore-gpu-blacklist');
+      app.commandLine.appendSwitch('ignore-gpu-blocklist');
     }
 
     // read rendering engine, if any
