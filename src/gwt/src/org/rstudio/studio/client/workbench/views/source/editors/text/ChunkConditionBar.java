@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -69,7 +70,9 @@ public class ChunkConditionBar extends Composite
             continue;
          }
          bar.setVisible(true);
-         Label entry = new Label(conditions.get(i).getString(1));
+
+         String condition = conditions.get(i).getString(1);
+         Label entry = new Label(AnsiCode.strip(condition));
          entry.addStyleName(style.contents());
          contents.add(entry);
       }

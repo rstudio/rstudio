@@ -21,8 +21,7 @@
    }
    else
    {
-      prefix <- gettext("Warning :", domain = "R")
-      paste0(prefix, paste(conditionMessage(cnd), collapse = "\n"))
+      paste(as.character(cnd), collapse = "\n")
    }
    
    .Call("rs_signalNotebookCondition", 1L, msg, PACKAGE = "(embedding)")
