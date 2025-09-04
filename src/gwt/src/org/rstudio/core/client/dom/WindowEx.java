@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.dom;
 
+import org.rstudio.core.client.Point;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.dom.client.Document;
@@ -27,8 +29,6 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Window;
-
-import org.rstudio.core.client.Point;
 
 public class WindowEx extends JavaScriptObject
 {

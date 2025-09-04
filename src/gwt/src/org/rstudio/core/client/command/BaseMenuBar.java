@@ -14,6 +14,18 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -25,18 +37,6 @@ import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
 
 import elemental2.dom.DomGlobal;
-
-import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.SeparatorManager;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class BaseMenuBar extends MenuBar
                          implements CommandHandler

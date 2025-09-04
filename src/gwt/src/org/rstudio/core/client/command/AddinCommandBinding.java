@@ -16,8 +16,8 @@ package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 
 public class AddinCommandBinding implements CommandBinding
 {

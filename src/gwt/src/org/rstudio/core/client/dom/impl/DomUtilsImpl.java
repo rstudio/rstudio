@@ -14,9 +14,10 @@
  */
 package org.rstudio.core.client.dom.impl;
 
+import org.rstudio.core.client.Rectangle;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import org.rstudio.core.client.Rectangle;
 
 public interface DomUtilsImpl
 {
