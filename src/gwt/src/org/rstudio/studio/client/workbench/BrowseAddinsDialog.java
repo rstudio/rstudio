@@ -14,6 +14,34 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.ListUtil.FilterPredicate;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.theme.RStudioDataGridResources;
+import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.FilterWidget;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioDataGrid;
+import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
+
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -37,34 +65,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
-
-import org.rstudio.core.client.ListUtil;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.theme.RStudioDataGridResources;
-import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.FilterWidget;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.RStudioDataGrid;
-import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 public class BrowseAddinsDialog extends ModalDialog<Command>
 {

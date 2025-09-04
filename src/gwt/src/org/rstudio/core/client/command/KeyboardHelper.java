@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;

@@ -14,6 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
@@ -23,11 +28,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.events.EnsureHiddenEvent;
-import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.EnsureVisibleEvent;
 
 public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       implements WorkbenchTab

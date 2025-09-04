@@ -14,6 +14,11 @@
  */
 package org.rstudio.core.client.cellview;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.rstudio.core.client.resources.ImageResource2x;
+
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -23,11 +28,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.SelectionModel;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import org.rstudio.core.client.resources.ImageResource2x;
 
 /**
  * WARNING: If you use this, take a look at ChangelistTable.NotEditingTextCell,
