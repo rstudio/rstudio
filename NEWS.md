@@ -12,6 +12,7 @@
 
 ### Fixed
 #### RStudio
+- ([#16398](https://github.com/rstudio/rstudio/issues/16398)): Fixed issue with malformed ANSI codes being presented in warning messages captured while rendering plots
 - ([#16320](https://github.com/rstudio/rstudio/issues/16320)): Fixed message shown when ssh keyphrases don't match
 - ([#16331](https://github.com/rstudio/rstudio/issues/16331)): RStudio no longer removes previously-registered global calling handlers on startup
 - ([#13470](https://github.com/rstudio/rstudio/issues/13470)): Avoid printing positioning data when creating patchwork objects in R Markdown chunks
