@@ -1830,15 +1830,6 @@
    clear = function() { .rs.clearUserPref("clang_verbose") }
 )
 
-# Submit crash reports to Posit
-#
-# Whether to automatically submit crash reports to Posit.
-.rs.uiPrefs$submitCrashReports <- list(
-   get = function() { .rs.getUserPref("submit_crash_reports") },
-   set = function(value) { .rs.setUserPref("submit_crash_reports", value) },
-   clear = function() { .rs.clearUserPref("submit_crash_reports") }
-)
-
 # Show splash screen when RStudio is starting
 #
 # Whether to show the splash screen when RStudio is starting.
