@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Barrier.Token;
+
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 
 /**
  * This event provides components a chance to save their state before the

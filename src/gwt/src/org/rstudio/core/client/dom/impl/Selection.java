@@ -14,9 +14,10 @@
  */
 package org.rstudio.core.client.dom.impl;
 
+import org.rstudio.core.client.dom.NativeWindow;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Node;
-import org.rstudio.core.client.dom.NativeWindow;
 
 class Selection extends JavaScriptObject
 {

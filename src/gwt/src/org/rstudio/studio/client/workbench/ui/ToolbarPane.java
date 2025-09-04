@@ -14,17 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.widget.SecondaryToolbar;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.LazyPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.widget.SecondaryToolbar;
-import org.rstudio.core.client.widget.SimplePanelWithProgress;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.common.AutoGlassPanel;
 
 public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
                                                                HasEnsureVisibleHandlers,

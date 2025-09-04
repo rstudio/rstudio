@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
@@ -29,6 +27,8 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageFormat;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;

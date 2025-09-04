@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import org.rstudio.studio.client.workbench.model.ClientState;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import org.rstudio.studio.client.workbench.model.ClientState;
 
 public class SaveClientStateEvent extends GwtEvent<SaveClientStateEvent.Handler>
 {

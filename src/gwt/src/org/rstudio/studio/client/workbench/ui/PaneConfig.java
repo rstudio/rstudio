@@ -14,7 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.JsArrayString;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -22,7 +26,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
-import java.util.*;
+import com.google.gwt.core.client.JsArrayString;
 
 public class PaneConfig extends UserPrefsAccessor.Panes
 {

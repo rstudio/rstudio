@@ -16,7 +16,6 @@
 package org.rstudio.core.client.command;
 
 
-import com.google.inject.Provider;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
 import org.rstudio.core.client.widget.VimKeyInfoPanel;
@@ -26,6 +25,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -38,8 +38,8 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton
 public class ShortcutViewer implements NativePreviewHandler

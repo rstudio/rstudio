@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -27,6 +24,10 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class OptionsLoader
 {

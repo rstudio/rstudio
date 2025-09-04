@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.ui.unsaved;
 
 import java.util.ArrayList;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
@@ -29,7 +28,9 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.ui.UIConstants;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -50,7 +51,6 @@ import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
-import org.rstudio.studio.client.workbench.ui.UIConstants;
 
 public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Result>
 {

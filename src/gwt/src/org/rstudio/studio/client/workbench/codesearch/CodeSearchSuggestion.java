@@ -14,14 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.codesearch;
 
-import org.rstudio.core.client.resources.ImageResource2x;
-
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
