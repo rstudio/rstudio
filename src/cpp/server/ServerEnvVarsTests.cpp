@@ -20,7 +20,7 @@
 
 #include <shared_core/FilePath.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 
 using namespace rstudio::core;
@@ -29,20 +29,18 @@ namespace rstudio {
 namespace server {
 namespace env_vars {
 
-test_context("environment vars")
+TEST(EnvironmentVarsTest, EnvVarsAreReadFromFile)
 {
-   test_that("environment variables are read")
-   {
-      // Create a directory to host temporary configuration
-      FilePath configDir;
-      FilePath::tempFilePath(configDir);
-      configDir.ensureDirectory();
+   // Create a directory to host temporary configuration
+   FilePath configDir;
+   FilePath::tempFilePath(configDir);
+   configDir.ensureDirectory();
 
-      // Set the directory as our config directory
-      core::system::setenv("RSTUDIO_CONFIG_DIR", configDir.getAbsolutePath());
+   // Set the directory as our config directory
+   core::system::setenv("RSTUDIO_CONFIG_DIR", configDir.getAbsolutePath());
 
-      // Create the env-vars file inside the directory
-      appendToFile(configDir.completePath("env-vars"), R"(
+   // Create the env-vars file inside the directory
+   appendToFile(configDir.completePath("env-vars"), R"(
 # We are in a unit test
 RSTUDIO_UNIT_TESTS=1
 
@@ -50,17 +48,16 @@ RSTUDIO_UNIT_TESTS=1
 PINEAPPLE_ON_PIZZA=no
 )");
 
-      // Initialize env vars (reads from file)
-      initialize();
+   // Initialize env vars (reads from file)
+   initialize();
 
-      // Ensure we got the values we expected
-      expect_equal(core::system::getenv("RSTUDIO_UNIT_TESTS"), "1");
-      expect_equal(core::system::getenv("PINEAPPLE_ON_PIZZA"), "no");
+   // Ensure we got the values we expected
+   EXPECT_EQ("1", core::system::getenv("RSTUDIO_UNIT_TESTS"));
+   EXPECT_EQ("no", core::system::getenv("PINEAPPLE_ON_PIZZA"));
 
-      // Clean up
-      configDir.remove();
-      core::system::unsetenv("RSTUDIO_CONFIG_DIR");
-   }
+   // Clean up
+   configDir.remove();
+   core::system::unsetenv("RSTUDIO_CONFIG_DIR");
 }
 
 } // namespace env_vars

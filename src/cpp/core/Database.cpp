@@ -1202,6 +1202,13 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
    return versions;
 }
 
+// Add stream operator for SchemaVersion
+std::ostream& operator<<(std::ostream& os, const rstudio::core::database::SchemaVersion& version)
+{
+   os << version.toString();
+   return os;
+}
+
 SchemaUpdater::SchemaUpdater(const boost::shared_ptr<IConnection>& connection,
                              const FilePath& migrationsPath) :
    connection_(connection),

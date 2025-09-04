@@ -21,7 +21,7 @@
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 #include <shared_core/system/encryption/EncryptionVersion.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <fcntl.h>
 
@@ -80,225 +80,225 @@ bool decryptedPayloadMatches(std::vector<unsigned char>& decryptedData)
    return g_payload == decryptedPayload;
 }
 
-test_context("EncryptionVersionTests")
+TEST(SharedCoreTest, EncryptionVersionTests)
 {
-   test_that("v0: Can AES encrypt/decrypt")
+   // v0: Can AES encrypt/decrypt section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v0::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::v0::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("v1: Can AES encrypt/decrypt")
+   // v1: Can AES encrypt/decrypt section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v1::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v1::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v1::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::v1::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("v2: Can AES encrypt/decrypt")
+   // v2: Can AES encrypt/decrypt section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v2::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("v2: Can AES encrypt/decrypt detect tampering/corruption")
+   // v2: Can AES encrypt/decrypt detect tampering/corruption section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v2::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data with wrong AAD
       std::vector<unsigned char> decryptedData;
       std::vector<unsigned char> bad_aad = encryptedData;
       bad_aad[crypto::VERSION_BYTE_INDEX] += 1;
       error = core::system::crypto::v2::aesDecrypt(bad_aad, g_key, g_iv, decryptedData);
-      REQUIRE(decryptedData.size() == 0);
-      REQUIRE(error != Success());
+      ASSERT_EQ(0u, decryptedData.size());
+      ASSERT_TRUE(error != Success());
 
       // decrypt the encrypted data with changed data
       std::vector<unsigned char> bad_encryptedData = encryptedData;
       bad_encryptedData[crypto::ENCRYPTION_VERSION_SIZE_BYTES] += 1;
       error = core::system::crypto::v2::aesDecrypt(bad_encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE(decryptedData.size() == 0);
-      REQUIRE(error != Success());
+      ASSERT_EQ(0u, decryptedData.size());
+      ASSERT_TRUE(error != Success());
 
       // decrypt the encrypted data with wrong MAC
       std::vector<unsigned char> bad_mac = encryptedData;
       bad_mac.back() += 1;
       error = core::system::crypto::v2::aesDecrypt(bad_mac, g_key, g_iv, decryptedData);
-      REQUIRE(decryptedData.size() == 0);
-      REQUIRE(error != Success());
+      ASSERT_EQ(0u, decryptedData.size());
+      ASSERT_TRUE(error != Success());
 
       // Finally, decrypt the encrypted data correctly
       error = core::system::crypto::v2::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE(decryptedData.size() > 0);
-      REQUIRE_FALSE(error);
+      ASSERT_GT(decryptedData.size(), 0u);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Key size mismatches aren't allowed")
+   // Key size mismatches aren't allowed section
    {
       std::vector<unsigned char> iv(16);
       std::vector<unsigned char> encryptedData;
 
       // Encrypting v0/v1 with too small key size throws
       std::vector<unsigned char> key = {};
-      REQUIRE_THROWS(core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData));
-      REQUIRE_THROWS(core::system::crypto::v1::aesEncrypt(g_data, key, iv, encryptedData));
+      EXPECT_ANY_THROW(core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData));
+      EXPECT_ANY_THROW(core::system::crypto::v1::aesEncrypt(g_data, key, iv, encryptedData));
 
       // Encrypting v2 with v1 key size throws
       key.resize(crypto::v1::KEY_LENGTH_BYTES);
-      REQUIRE_THROWS(core::system::crypto::v2::aesEncrypt(g_data, key, iv, encryptedData));
+      EXPECT_ANY_THROW(core::system::crypto::v2::aesEncrypt(g_data, key, iv, encryptedData));
    }
 }
 
-test_context("Versioned Crypto Calls")
+TEST(SharedCoreTest, VersionedCryptoCalls)
 {
-   test_that("Crypto can decrypt v0 data")
+   // Crypto can decrypt v0 data section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v0::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Crypto can decrypt v1 data")
+   // Crypto can decrypt v1 data section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v1::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v1::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v1::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Crypto can decrypt v2 data")
+   // Crypto can decrypt v2 data section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v2::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v2::VERSION_BYTE));
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
       Error error = core::system::crypto::v2::aesEncrypt(g_data, g_key, g_iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::aesDecrypt(encryptedData, g_key, g_iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Crypto can decrypt v0 data with v1 version byte")
+   // Crypto can decrypt v0 data with v1 version byte section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // Use a key/iv combo that will generate a v0 encrypted buffer that starts with a v1 version byte
       std::vector<unsigned char> encryptedData;
       std::vector<unsigned char> key = {0x95, 0x34, 0xef, 0xab, 0x94, 0xbb, 0xb2, 0xf2, 0x49, 0x3a, 0xbc, 0xe3, 0x69, 0x71, 0x59, 0x06};
       std::vector<unsigned char> iv = {0xbc, 0x8f, 0x17, 0x56, 0x50, 0xca, 0xeb, 0x4a, 0xcb, 0xcb, 0x63, 0x53, 0xff, 0xba, 0x58, 0x51};
       Error error = core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
-      REQUIRE(encryptedData[0] == crypto::v1::VERSION_BYTE);
+      ASSERT_EQ(crypto::v1::VERSION_BYTE, encryptedData[0]);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::aesDecrypt(encryptedData, key, iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 
-   test_that("Crypto can decrypt v0 data with v2 version byte")
+   // Crypto can decrypt v0 data with v2 version byte section
    {
       // setup
-      REQUIRE(generateKeys(crypto::v0::VERSION_BYTE));
+      ASSERT_TRUE(generateKeys(crypto::v0::VERSION_BYTE));
 
       // Use a key/iv combo that will generate a v0 encrypted buffer that starts with a v2 version byte
       std::vector<unsigned char> encryptedData;
       std::vector<unsigned char> key = {0x78, 0x84, 0x9b, 0x4c, 0x27, 0x6a, 0x07, 0x17, 0xb1, 0xbb, 0x1d, 0xd0, 0x9e, 0xc5, 0x39, 0x55};
       std::vector<unsigned char> iv = {0x22, 0xaf, 0xca, 0x38, 0x2d, 0xeb, 0xf8, 0xaa, 0xa0, 0xfb, 0x97, 0x40, 0xaa, 0xbb, 0x97, 0x13};
       Error error = core::system::crypto::v0::aesEncrypt(g_data, key, iv, encryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
-      REQUIRE(encryptedData[0] == crypto::v2::VERSION_BYTE);
+      ASSERT_EQ(crypto::v2::VERSION_BYTE, encryptedData[0]);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
       error = core::system::crypto::aesDecrypt(encryptedData, key, iv, decryptedData);
-      REQUIRE_FALSE(error);
+      ASSERT_FALSE(error);
 
       // verify that the decryption gives us back the original data
-      REQUIRE(decryptedPayloadMatches(decryptedData));
+      ASSERT_TRUE(decryptedPayloadMatches(decryptedData));
    }
 }
 
