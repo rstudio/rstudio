@@ -3456,6 +3456,19 @@ core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
 }
 
 /**
+ * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+ */
+bool UserPrefValues::useAirFormatter()
+{
+   return readPref<bool>("use_air_formatter");
+}
+
+core::Error UserPrefValues::setUseAirFormatter(bool val)
+{
+   return writePref("use_air_formatter", val);
+}
+
+/**
  * When set, the selected formatter will be used to reformat documents on save.
  */
 bool UserPrefValues::reformatOnSave()
@@ -3761,6 +3774,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatter,
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
+      kUseAirFormatter,
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,

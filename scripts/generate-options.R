@@ -1,4 +1,5 @@
 #!/usr/bin/env Rscript
+
 #
 # generate-options.R
 #
@@ -26,13 +27,19 @@
 # 3. Run this script: /generate-options.R
 # 4. Commit the .gen.hpp files and the admin guide documentation files
 
+require(here)
 require(jsonlite)
 require(stringi)
 require(stringr)
 require(tibble)
 
-defaultOptionsFiles <- c("server/server-options.json",
-                         "session/session-options.json")
+root <- here::here()
+setwd(root)
+
+defaultOptionsFiles <- c(
+   "src/cpp/server/server-options.json",
+   "src/cpp/session/session-options.json"
+)
 
 generateCopyright <- function (filename) {
    sprintf("/*
@@ -772,6 +779,7 @@ generate <- function (optionsFile) {
 }
 
 main <- function () {
+
    args <- commandArgs(trailingOnly=TRUE)
    if (length(args) == 0) {
       args <- defaultOptionsFiles
@@ -786,11 +794,6 @@ main <- function () {
       generate(optionsFile)
    }
 
-   cat("Options generated successfully, verifying resulting options...\n")
-   cat("Press [enter] to continue or CTRL+C to skip")
-   a <- readLines("stdin",n=1);
-
-   system("bash report-options.sh")
 }
 
 main()

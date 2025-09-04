@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # REPORTS THE USAGE OF SERVER AND SESSION OPTIONS, pairs with generate-options.R
 ###############################################################################
 # We look in the documentation for 3 ways in which an option may be used:
