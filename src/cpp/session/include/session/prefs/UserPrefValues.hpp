@@ -331,7 +331,6 @@ namespace prefs {
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
-#define kSubmitCrashReports "submit_crash_reports"
 #define kEnableSplashScreen "enable_splash_screen"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
@@ -1637,12 +1636,6 @@ public:
     */
    int clangVerbose();
    core::Error setClangVerbose(int val);
-
-   /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   bool submitCrashReports();
-   core::Error setSubmitCrashReports(bool val);
 
    /**
     * Whether to show the splash screen when RStudio is starting.

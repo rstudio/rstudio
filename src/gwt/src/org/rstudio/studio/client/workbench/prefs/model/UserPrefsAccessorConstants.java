@@ -1648,14 +1648,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   @DefaultStringValue("Submit crash reports to Posit")
-   String submitCrashReportsTitle();
-   @DefaultStringValue("Whether to automatically submit crash reports to Posit.")
-   String submitCrashReportsDescription();
-
-   /**
     * Whether to show the splash screen when RStudio is starting.
     */
    @DefaultStringValue("Show splash screen when RStudio is starting")
