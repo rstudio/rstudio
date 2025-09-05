@@ -18,7 +18,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -33,29 +32,6 @@ public class AIChatPanel extends ResizeComposite implements AIChatDisplay
    {
       constants_ = GWT.create(AIChatConstants.class);
       
-      // Create main panel
-      mainPanel_ = new DockLayoutPanel(Unit.PX);
-      mainPanel_.setStyleName("rstudio-AIChatPanel");
-      mainPanel_.getElement().getStyle().setBackgroundColor("#fafafa");
-      
-      // Create header
-      FlowPanel header = new FlowPanel();
-      header.setStyleName("rstudio-AIChatPanel-Header");
-      header.getElement().getStyle().setPadding(8, Unit.PX);
-      header.getElement().getStyle().setBackgroundColor("#f0f0f0");
-      header.getElement().getStyle().setBorderWidth(0, Unit.PX);
-      header.getElement().getStyle().setBorderStyle(Style.BorderStyle.SOLID);
-      header.getElement().getStyle().setBorderColor("#d0d0d0");
-      header.getElement().getStyle().setProperty("borderBottomWidth", "1px");
-      
-      Label headerLabel = new Label(constants_.aiChatTitle());
-      headerLabel.setStyleName("rstudio-AIChatPanel-HeaderLabel");
-      headerLabel.getElement().getStyle().setFontSize(14, Unit.PX);
-      headerLabel.getElement().getStyle().setProperty("fontWeight", "500");
-      header.add(headerLabel);
-      
-      mainPanel_.addNorth(header, 32);
-      
       // Create content area with placeholder
       ScrollPanel contentScroll = new ScrollPanel();
       contentScroll.setStyleName("rstudio-AIChatPanel-Content");
@@ -66,30 +42,26 @@ public class AIChatPanel extends ResizeComposite implements AIChatDisplay
       contentPanel.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
       contentPanel.setSize("100%", "100%");
       
-      // Add chat icon (placeholder for now)
-      FlowPanel iconContainer = new FlowPanel();
-      iconContainer.setStyleName("rstudio-AIChatPanel-IconContainer");
-      
-      // Create a simple text icon as placeholder
-      Label iconLabel = new Label("\uD83E\uDD16"); // Robot emoji as placeholder
-      iconLabel.setStyleName("rstudio-AIChatPanel-Icon");
-      iconLabel.getElement().getStyle().setFontSize(48, Unit.PX);
-      iconContainer.add(iconLabel);
-      contentPanel.add(iconContainer);
-      
       // Add placeholder text
       Label placeholderLabel = new Label(constants_.aiChatComingSoon());
       placeholderLabel.setStyleName("rstudio-AIChatPanel-Placeholder");
-      placeholderLabel.getElement().getStyle().setFontSize(18, Unit.PX);
-      placeholderLabel.getElement().getStyle().setColor("#666666");
-      placeholderLabel.getElement().getStyle().setProperty("marginTop", "20px");
       contentPanel.add(placeholderLabel);
       
       contentScroll.add(contentPanel);
+      
+      // Create main panel without the custom header
+      mainPanel_ = new DockLayoutPanel(Unit.PX);
+      mainPanel_.setStyleName("rstudio-AIChatPanel");
       mainPanel_.add(contentScroll);
       
-      // Wrap in primary window frame
+      // Wrap in primary window frame - this provides the themed header
       PrimaryWindowFrame frame = new PrimaryWindowFrame(constants_.aiChatTitle(), mainPanel_);
+      
+      // Hide the separator and subtitle since we don't use them
+      frame.getSubtitleWidget().setVisible(false);
+      // The separator is the second widget in the panel
+      com.google.gwt.dom.client.Element separator = (com.google.gwt.dom.client.Element) frame.getTitleWidget().getParent().getElement().getChild(1);
+      separator.getStyle().setDisplay(Style.Display.NONE);
       
       initWidget(frame);
    }
