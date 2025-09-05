@@ -32,6 +32,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed an issue where audited jobs would fail if the user's Workbench username differs from their posix username (rstudio-pro#8129)
 - Fixed an issue where the session init container was being added to containerized sessions and jobs on clusters that did not support them (rstudio-pro#8009)
 - Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions (rstudio-pro#7368)
+- Fixed an issue where the positron-settings.json example in the Admin guide had an extra comma (rstudio-pro#8853) <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
 
 ### Dependencies
 
@@ -513,10 +514,10 @@ Electron | 30.4.0 | (#14582; Desktop)
 
 #### Posit Workbench
 
-- Added a Generic Architectures page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added an AWS Single Server reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added an AWS EKS reference architecture to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
-- Added a Background Jobs vs Workbench jobs page to the Workbench Admin Guide <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Added a Generic Architectures page to the Workbench Admin Guide
+- Added an AWS Single Server reference architecture to the Workbench Admin Guide
+- Added an AWS EKS reference architecture to the Workbench Admin Guide
+- Added a Background Jobs vs Workbench jobs page to the Workbench Admin Guide
 
 ### Fixed
 
@@ -529,7 +530,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 #### Posit Workbench
 
 - Fixed an issue introduced in 2024.04.0 with the create-container-user feature for job launcher plugins that reuse a container for more than one session (rstudio/rstudio-pro#6408)
-- Improved some AWS documentation links in the reference architecture section <i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+- Improved some AWS documentation links in the reference architecture section
 
 ### Dependencies
 
