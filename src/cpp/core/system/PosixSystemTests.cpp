@@ -23,6 +23,8 @@
 #include <grp.h>
 #include <gtest/gtest.h>
 
+#include <tests/fixtures/RequiresPrivilegeTestFixture.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -54,7 +56,7 @@ static std::string getNoGroupName()
 
 #endif
 
-TEST(PosixTest, FindProgramFindsWhich)
+TEST(PosixTests, FindProgramFindsWhich)
 {
    FilePath whichPath;
    Error error = findProgramOnPath("which", &whichPath);
@@ -64,7 +66,7 @@ TEST(PosixTest, FindProgramFindsWhich)
    EXPECT_TRUE(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
 }
 
-TEST(PosixTest, NoSubprocessesViaPgrep)
+TEST(PosixTests, NoSubprocessesViaPgrep)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -85,7 +87,7 @@ TEST(PosixTest, NoSubprocessesViaPgrep)
    }
 }
 
-TEST(PosixTest, FindSubprocessNameViaPgrep)
+TEST(PosixTests, FindSubprocessNameViaPgrep)
 {
    std::string exe = "sleep";
 
@@ -123,7 +125,7 @@ TEST(PosixTest, FindSubprocessNameViaPgrep)
 
 #ifdef __APPLE__ // Mac-specific subprocess detection
 
-TEST(PosixTest, NoSubprocessesMac)
+TEST(PosixTests, NoSubprocessesMac)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -144,7 +146,7 @@ TEST(PosixTest, NoSubprocessesMac)
    }
 }
 
-TEST(PosixTest, FindSubprocessPidMac)
+TEST(PosixTests, FindSubprocessPidMac)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -166,7 +168,7 @@ TEST(PosixTest, FindSubprocessPidMac)
    }
 }
 
-TEST(PosixTest, FindSubprocessNameMac)
+TEST(PosixTests, FindSubprocessNameMac)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -192,7 +194,7 @@ TEST(PosixTest, FindSubprocessNameMac)
    }
 }
 
-TEST(PosixTest, WorkingDirMac)
+TEST(PosixTests, WorkingDirMac)
 {
    FilePath emptyPath;
    FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
@@ -219,7 +221,7 @@ TEST(PosixTest, WorkingDirMac)
 
 #else
 
-TEST(PosixTest, NoSubprocessesProcFs)
+TEST(PosixTests, NoSubprocessesProcFs)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -240,7 +242,7 @@ TEST(PosixTest, NoSubprocessesProcFs)
    }
 }
 
-TEST(PosixTest, FindSubprocessProcFs)
+TEST(PosixTests, FindSubprocessProcFs)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -277,7 +279,7 @@ TEST(PosixTest, FindSubprocessProcFs)
 }
 #endif // !__APPLE__
 
-TEST(PosixTest, NoSubprocessesGeneric)
+TEST(PosixTests, NoSubprocessesGeneric)
 {
    pid_t pid = fork();
    EXPECT_FALSE(pid == -1);
@@ -298,7 +300,7 @@ TEST(PosixTest, NoSubprocessesGeneric)
    }
 }
 
-TEST(PosixTest, WorkingDirGeneric)
+TEST(PosixTests, WorkingDirGeneric)
 {
    FilePath emptyPath;
    FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
@@ -325,7 +327,7 @@ TEST(PosixTest, WorkingDirGeneric)
 
 #ifndef __APPLE__
 
-TEST(PosixTest, WorkingDirLsof)
+TEST(PosixTests, WorkingDirLsof)
 {
    FilePath lsofPath;
    Error error = findProgramOnPath("lsof", &lsofPath);
@@ -359,7 +361,7 @@ TEST(PosixTest, WorkingDirLsof)
    }
 }
 
-TEST(PosixTest, ParseOsReleaseEmpty)
+TEST(PosixTests, ParseOsReleaseEmpty)
 {
    const auto content = "";
    OSInfo info = parseOsReleaseContent(content);
@@ -368,7 +370,7 @@ TEST(PosixTest, ParseOsReleaseEmpty)
    EXPECT_TRUE(info.osVersionCodename.empty());
 }
 
-TEST(PosixTest, ParseOsReleaseUnquoted)
+TEST(PosixTests, ParseOsReleaseUnquoted)
 {
    std::string content = R"(
 ID=ubuntu
@@ -381,7 +383,7 @@ VERSION_CODENAME=focal
    EXPECT_EQ(info.osVersionCodename, "focal");
 }
 
-TEST(PosixTest, WorkingDirProcFs)
+TEST(PosixTests, WorkingDirProcFs)
 {
    FilePath emptyPath;
    FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
@@ -408,8 +410,8 @@ TEST(PosixTest, WorkingDirProcFs)
 
 #endif // !__APPLE__
 
-// Test fixture for privilege tests
-class PrivilegeTest : public ::testing::Test
+// Test fixture for privilege tests with user and group handling
+class PosixTestsRequiresPrivilege : public rstudio::tests::fixtures::RequiresPrivilegeTestFixture
 {
 protected:
    User testUser;
@@ -418,11 +420,10 @@ protected:
 
    void SetUp() override
    {
-      // Skip tests if not running as root
-      if (!core::system::effectiveUserIsRoot())
-         GTEST_SKIP() << "Test requires root privileges";
-
-      // Initialize the test user and groups
+      // Call parent SetUp to check for root privileges
+      rstudio::tests::fixtures::RequiresPrivilegeTestFixture::SetUp();
+      
+      // Initialize the test user and groups if we didn't skip the test
 #ifdef __linux__
       initUserAndGroup("nobody", getNoGroupName(), "users");
 #endif // __linux__
@@ -431,6 +432,167 @@ protected:
       initUserAndGroup("nobody", "nobody", "daemon");
 #endif // __APPLE__
    }
+
+   // Platform-specific helper functions
+#ifdef __linux__
+   static std::string getNobodyUsername() { return "nobody"; }
+   static std::string getNobodyGroup() { return getNoGroupName(); }
+   static std::string getNonMemberGroup() { return "users"; }
+#endif
+
+#ifdef __APPLE__
+   static std::string getNobodyUsername() { return "nobody"; }
+   static std::string getNobodyGroup() { return "nobody"; }
+   static std::string getNonMemberGroup() { return "daemon"; }
+#endif
+
+   // Helper function for testing primary group
+   static void testPermanentlyDropPrivUsesPrimaryGroupImpl() 
+   {
+      std::string username = getNobodyUsername();
+      Error error = permanentlyDropPriv(username.c_str());
+      if (error) 
+         exit(1);
+
+      // Get user info
+      User testUser;
+      error = User::getUserFromIdentifier(username, testUser);
+      if (error) 
+         exit(1);
+
+      // Verify user IDs
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
+         exit(2);  // User IDs don't match
+
+      // Verify group IDs
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      if (rgid != testUser.getGroupId() || egid != testUser.getGroupId())
+         exit(3);  // Group IDs don't match
+      
+      exit(0);  // Success
+   }
+   
+   // Helper function for testing alternate group
+   static void testPermanentlyDropPrivUsesAlternateGroupImpl()
+   {
+      std::string username = getNobodyUsername();
+      std::string groupName = getNobodyGroup();
+      
+      Error error = permanentlyDropPriv(username.c_str(), groupName);
+      if (error)
+         exit(1);
+
+      // Get user info
+      User testUser;
+      error = User::getUserFromIdentifier(username, testUser);
+      if (error) 
+         exit(1);
+
+      // Get group info
+      group::Group testGroup;
+      error = group::groupFromName(groupName, &testGroup);
+      if (error)
+         exit(4);  // Couldn't get group info
+
+      // Verify user IDs
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
+         exit(2);  // User IDs don't match
+
+      // Verify group IDs
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      if (rgid != testGroup.groupId || egid != testGroup.groupId)
+         exit(5);  // Group IDs don't match
+      
+      exit(0);  // Success
+   }
+   
+   // Helper function for testing group membership check
+   static void testPermanentlyDropPrivChecksGroupMembershipImpl()
+   {
+      std::string username = getNobodyUsername();
+      std::string nonMemberGroup = getNonMemberGroup();
+      
+      Error error = permanentlyDropPriv(username.c_str(), nonMemberGroup);
+      // This should fail because user is not in the specified group
+      if (!error)
+         exit(1);  // Expected an error but didn't get one
+         
+      exit(6);  // Success - we got the expected error
+   }
+   
+   // Helper function for permanently dropping privileges in death tests
+   static int testPermanentlyDropPriv(const std::string& username, const std::string& groupName = "") 
+   {
+      // Get user info
+      User testUser;
+      Error error = User::getUserFromIdentifier(username, testUser);
+      if (error) 
+         return 1;
+      
+      // Drop privileges
+      if (groupName.empty()) {
+         error = permanentlyDropPriv(username.c_str());
+      } else {
+         error = permanentlyDropPriv(username.c_str(), groupName);
+      }
+      
+      if (error)
+         return 6;  // Return consistent error code for expected failures
+         
+      // Verify drop worked
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      
+      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
+         return 2;  // User IDs don't match
+      
+      if (groupName.empty()) {
+         // Should have primary group
+         if (rgid != testUser.getGroupId() || egid != testUser.getGroupId())
+            return 3;  // Group IDs don't match
+      } else {
+         // Get the specified group
+         group::Group testGroup;
+         error = group::groupFromName(groupName, &testGroup);
+         if (error)
+            return 4;  // Couldn't get group info
+            
+         if (rgid != testGroup.groupId || egid != testGroup.groupId)
+            return 5;  // Group IDs don't match
+      }
+         
+      return 0;  // Success
+   }
+
+private:
+#ifdef __linux__
+   std::string getNoGroupName()
+   {
+      std::string group;
+
+      // Fun with groups:
+      //
+      // - Debian/Ubuntu have nobody user in the group "nogroup" and the "nobody" group doesn't exist
+      // - RHEL/CentOS have nobody in the "nobody" group, and "nogroup" doesn't exist
+      // - OpenSUSE has both groups, but nobody belongs to "nobody"
+      //
+      if (getgrnam("nobody"))
+         group = "nobody"; // RHEL/CentOS/OpenSUSE
+      else if (getgrnam("nogroup"))
+         group = "nogroup"; // Debian/Ubuntu
+
+      EXPECT_FALSE(group.empty());
+      return group;
+   }
+#endif
 
    void initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
    {
@@ -466,7 +628,7 @@ protected:
    }
 };
 
-TEST_F(PrivilegeTest, TemporarilyDropPrivUsesPrimaryGroup)
+TEST_F(PosixTestsRequiresPrivilege, TemporarilyDropPrivUsesPrimaryGroup)
 {
    // drop privs to the unprivileged user
    Error error = temporarilyDropPriv(testUser.getUsername().c_str(), false);
@@ -489,7 +651,7 @@ TEST_F(PrivilegeTest, TemporarilyDropPrivUsesPrimaryGroup)
    EXPECT_FALSE(error);
 }
 
-TEST_F(PrivilegeTest, TemporarilyDropPrivUsesAlternateGroup)
+TEST_F(PosixTestsRequiresPrivilege, TemporarilyDropPrivUsesAlternateGroup)
 {
    // drop privs to the unprivileged user
    Error error = temporarilyDropPriv(testUser.getUsername().c_str(),
@@ -514,7 +676,7 @@ TEST_F(PrivilegeTest, TemporarilyDropPrivUsesAlternateGroup)
    EXPECT_FALSE(error);
 }
 
-TEST_F(PrivilegeTest, TemporarilyDropPrivChecksGroupMembership)
+TEST_F(PosixTestsRequiresPrivilege, TemporarilyDropPrivChecksGroupMembership)
 {
    // drop privs to the unprivileged user, but specify a group that the user is not in
    Error error = temporarilyDropPriv(testUser.getUsername().c_str(),
@@ -523,54 +685,40 @@ TEST_F(PrivilegeTest, TemporarilyDropPrivChecksGroupMembership)
    EXPECT_TRUE(error);
 }
 
-TEST_F(PrivilegeTest, PermanentlyDropPrivUsesPrimaryGroup)
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivUsesPrimaryGroup)
 {
-   // drop privs to the unprivileged user
-   Error error = permanentlyDropPriv(testUser.getUsername().c_str());
-   EXPECT_FALSE(error);
-
-   // check real and effective user
-   uid_t ruid = getuid();
-   uid_t euid = geteuid();
-   EXPECT_EQ(ruid, testUser.getUserId());
-   EXPECT_EQ(euid, testUser.getUserId());
-
-   // check real and effective group
-   gid_t rgid = getgid();
-   gid_t egid = getegid();
-   EXPECT_EQ(rgid, testUser.getGroupId());
-   EXPECT_EQ(egid, testUser.getGroupId());
+   // This test uses a death test to verify permanently dropping privileges
+   // The test function will be run in a forked process, so it doesn't affect other tests
+   ASSERT_EXIT(
+      testPermanentlyDropPrivUsesPrimaryGroupImpl(),
+      ::testing::ExitedWithCode(0),  // Expect success exit code
+      ""
+   );
 }
 
-TEST_F(PrivilegeTest, PermanentlyDropPrivUsesAlternateGroup)
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivUsesAlternateGroup)
 {
-   // drop privs to the unprivileged user
-   Error error = permanentlyDropPriv(testUser.getUsername().c_str(),
-                                    testGroup.name);
-   EXPECT_FALSE(error);
-
-   // check real and effective user
-   uid_t ruid = getuid();
-   uid_t euid = geteuid();
-   EXPECT_EQ(ruid, testUser.getUserId());
-   EXPECT_EQ(euid, testUser.getUserId());
-
-   // check real and effective group
-   gid_t rgid = getgid();
-   gid_t egid = getegid();
-   EXPECT_EQ(rgid, testGroup.groupId);
-   EXPECT_EQ(egid, testGroup.groupId);
+   // This test uses a death test to verify permanently dropping privileges with alternate group
+   // The test function will be run in a forked process, so it doesn't affect other tests
+   ASSERT_EXIT(
+      testPermanentlyDropPrivUsesAlternateGroupImpl(),
+      ::testing::ExitedWithCode(0),  // Expect success exit code
+      ""
+   );
 }
 
-TEST_F(PrivilegeTest, PermanentlyDropPrivChecksGroupMembership)
+TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivChecksGroupMembership)
 {
-   // drop privs to the unprivileged user, but specify a group that the user is not in
-   Error error = permanentlyDropPriv(testUser.getUsername().c_str(),
-                                    testNonMemberGroup.name);
-   EXPECT_TRUE(error);
+   // This test uses a death test to verify that we can't drop privileges to a group
+   // the user doesn't belong to. We expect a specific non-zero exit code.
+   ASSERT_EXIT(
+      testPermanentlyDropPrivChecksGroupMembershipImpl(),
+      ::testing::ExitedWithCode(6),  // Expect specific error code
+      ""
+   );
 }
 
-TEST(PosixTest, ParseOsReleaseQuoted)
+TEST(PosixTests, ParseOsReleaseQuoted)
 {
    std::string content = R"(
 ID="ubuntu"

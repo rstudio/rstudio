@@ -32,6 +32,21 @@ namespace tests {
 using namespace core;
 using namespace core::database;
 
+// Shared helper logic (keeps fixtures DRY)
+namespace {
+Error initializeCommonTestSchema(IConnection& connection)
+{
+   // Disable WAL mode to prevent WAL/SHM files
+   Error error = connection.executeStr("PRAGMA journal_mode = DELETE;");
+   if (error)
+      return error;
+
+   Query query = connection.query("create table Test(id int, text varchar(255))");
+   error = connection.execute(query);
+   return error;
+}
+} // anonymous namespace
+
 class DatabaseTestsFixture : public ::testing::Test
 {
 protected:
@@ -40,34 +55,21 @@ protected:
 
    void SetUp() override
    {
-      // Create a path to the test database file
       dbPath = FilePath("/tmp/rstudio-test-db");
-      
-      // Ensure the database file doesn't exist before the test
       dbPath.removeIfExists();
-      
-      // Create a connection to the test database
+
       SqliteConnectionOptions options;
       options.file = dbPath.getAbsolutePath();
       Error error = connect(options, &sqliteConnection);
       ASSERT_FALSE(error) << "Failed to create SQLite test database in fixture: " << error.getMessage();
 
-      // Disable WAL mode to prevent WAL/SHM files
-      error = sqliteConnection->executeStr("PRAGMA journal_mode = DELETE;");
-      ASSERT_FALSE(error) << "Failed to set journal mode: " << error.getMessage();
-
-      // Create the Test table that multiple tests depend on
-      Query query = sqliteConnection->query("create table Test(id int, text varchar(255))");
-      error = sqliteConnection->execute(query);
-      ASSERT_FALSE(error) << "Failed to create Test table in fixture: " << error.getMessage();
+      error = initializeCommonTestSchema(*sqliteConnection);
+      ASSERT_FALSE(error) << "Failed to initialize common test schema: " << error.getMessage();
    }
 
    void TearDown() override
    {
-      // Close the connection
       sqliteConnection.reset();
-      
-      // Remove the test database file
       dbPath.removeIfExists();
    }
 };
@@ -296,6 +298,8 @@ TEST(DatabaseTest, CanUseConnectionPool)
    error = connection2->execute(query2, &dataReturned);
    ASSERT_FALSE(error) << "Failed to execute query from second pool connection: " << error.getMessage();
    ASSERT_TRUE(dataReturned) << "Expected data to be returned from second query but none was";
+
+   dbPath.removeIfExists();
 }
 
 TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
@@ -697,6 +701,78 @@ TEST_F(DatabaseTestsFixture, WithoutputReturnsErrorWhenValueIsNull)
    
    // The query fails with error for selecting a null value without a null indicator
    ASSERT_TRUE(error) << "Expected error when retrieving NULL value without indicator, but got success. Error message: " << error.getMessage();
+}
+
+class ConnectionPoolTestsFixture : public ::testing::Test
+{
+protected:
+   FilePath dbPath;
+   boost::shared_ptr<ConnectionPool> connectionPool;
+
+   void SetUp() override
+   {
+      dbPath = FilePath("/tmp/rstudio-test-db-pool");
+      dbPath.removeIfExists();
+
+      SqliteConnectionOptions options;
+      options.file = dbPath.getAbsolutePath();
+
+      Error error = createConnectionPool(5, options, &connectionPool);
+      ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
+
+      boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
+      ASSERT_TRUE(connection) << "Failed to get initial connection from pool";
+
+      error = initializeCommonTestSchema(*connection);
+      ASSERT_FALSE(error) << "Failed to initialize common test schema (pool): " << error.getMessage();
+   }
+
+   void TearDown() override
+   {
+      connectionPool.reset();
+      dbPath.removeIfExists();
+   }
+};
+
+TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
+{
+   boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
+   ASSERT_TRUE(connection) << "Failed to get connection from pool";
+
+   // Insert some data into the Test table
+   Query query = connection->query("insert into Test(id, text) values(:id, :text)");
+   for (int id = 0; id < 100; ++id)
+   {
+      std::string text = "Test text " + core::safe_convert::numberToString(id);
+      query.withInput(id).withInput(text);
+      Error error = connection->execute(query);
+      ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
+      // Rebind fresh for next iteration
+      query = connection->query("insert into Test(id, text) values(:id, :text)");
+   }
+
+   int rowId;
+   std::string rowText;
+   Query select50 = connection->query("select id, text from Test where id = 50")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+   bool dataReturned = false;
+   Error error = connection->execute(select50, &dataReturned);
+   ASSERT_FALSE(error) << "Failed to execute first query: " << error.getMessage();
+   ASSERT_TRUE(dataReturned) << "Expected data for id=50";
+
+   boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
+   ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
+   
+   Query select25 = connection2->query("select id, text from Test where id = 25")
+         .withOutput(rowId)
+         .withOutput(rowText);
+
+   dataReturned = false;
+   error = connection2->execute(select25, &dataReturned);
+   ASSERT_FALSE(error) << "Failed to execute second query: " << error.getMessage();
+   ASSERT_TRUE(dataReturned) << "Expected data for id=25";
 }
 
 } // namespace tests

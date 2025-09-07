@@ -62,42 +62,6 @@ std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
             {Postgres, "db/test/spotted-wakerobin-2022.07.2-576.postgresql"}
         }
     },
-    {
-        ElsbethGeranium, {
-            {Sqlite, "db/test/elsbeth-geranium-2022.12.0-353.workbench.sqlite.sql"},
-            {Postgres, "db/test/elsbeth-geranium-2022.12.0-353.workbench.postgresql"}
-        }
-    },
-    {
-        CherryBlossom, {
-            {Sqlite, "db/test/cherry-blossom-2023.03.2-454.workbench.sqlite.sql"},
-            {Postgres, "db/test/cherry-blossom-2023.03.2-454.workbench.postgresql"}
-        }
-    },
-    {
-        MountainHydrangea, {
-            {Sqlite, "db/test/mountain-hydrangea-2023.06.2-561.workbench.sqlite.sql"},
-            {Postgres, "db/test/mountain-hydrangea-2023.06.2-561.workbench.postgresql"}
-        }
-    },
-    {
-        DesertSunflower, {
-            {Sqlite, "db/test/desert-sunflower-2023.09.1-494.workbench.sqlite.sql"},
-            {Postgres, "db/test/desert-sunflower-2023.09.1-494.workbench.postgresql"}
-        }
-    },
-    {
-        OceanStorm, {
-            {Sqlite, "db/test/ocean-storm-2023.12.1-402.workbench.sqlite.sql"},
-            {Postgres, "db/test/ocean-storm-2023.12.1-401.workbench.postgresql"}
-        }
-    },
-    {
-        ChocolateCosmos, {
-            {Sqlite, "db/test/chocolate-cosmos-2024.04.2-764.workbench.sqlite.sql"},
-            {Postgres, "db/test/chocolate-cosmos-2024.04.2-764.workbench.postgresql"}
-        }
-    }
 };
 
 std::string versionToString(DatasetVersion version)
@@ -112,20 +76,6 @@ std::string versionToString(DatasetVersion version)
             return "Prairie Trillium";
         case SpottedWakerobin:
             return "Spotted Wakerobin";
-        case ElsbethGeranium:
-            return "Elsbeth Geranium";
-        case CherryBlossom:
-            return "Cherry Blossom";
-        case MountainHydrangea:
-            return "Mountain Hydrangea";
-        case DesertSunflower:
-            return "Desert Sunflower";
-        case OceanStorm:
-            return "Ocean Storm";
-        case ChocolateCosmos:
-            return "Chocolate Cosmos";
-        case CranberryHibiscus:
-            return "Cranberry Hibiscus";
         default:
             return "UNKNOWN";
     }
