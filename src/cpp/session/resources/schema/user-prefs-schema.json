@@ -162,7 +162,7 @@
                     "description": "Allocation of panes to quadrants.",
                     "items": {
                         "type": "string",
-                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet"]
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet", "Sidebar"]
                     }
                 },
                 "tabSet1": {
@@ -186,6 +186,13 @@
                         "type": "string"
                     }
                 },
+                "sidebar": {
+                    "type": "array",
+                    "description": "The panes included in the sidebar.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "console_left_on_top": {
                     "type": "boolean",
                     "description": "Whether the console is on top when it is on the left side of the workbench."
@@ -198,6 +205,17 @@
                    "type": "integer",
                    "default": 0,
                    "description": "The number of columns of full source columns."
+                },
+                "sidebar_visible": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the sidebar is visible."
+                },
+                "sidebar_location": {
+                    "type": "string",
+                    "enum": ["left", "right", "satellite"],
+                    "default": "right",
+                    "description": "The location of the sidebar."
                 }
             },
             "default": {
@@ -206,13 +224,17 @@
                     "Console",
                     "TabSet1",
                     "TabSet2",
-                    "HiddenTabSet"],
+                    "HiddenTabSet",
+                    "Sidebar"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer", "Presentations"],
                 "hiddenTabSet": [],
+                "sidebar": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true,
-                "additional_source_columns": 0
+                "additional_source_columns": 0,
+                "sidebar_visible": false,
+                "sidebar_location": "right"
             },
             "description": "Layout of panes in the RStudio workbench."
         },
