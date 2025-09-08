@@ -40,9 +40,10 @@ int main(int argc, char* argv[])
    std::string programId = "rstudio-tests-" + core::system::username();
    core::log::setProgramId(programId);
    core::system::initializeStderrLog(programId, LogLevel::WARN, false);
-   
-   testing::InitGoogleTest(&argc, argv);
-   return RUN_ALL_TESTS();
+
+   ::testing::InitGoogleTest(&argc, argv);
+   int result = RUN_ALL_TESTS();
+   return result;
 }
 
 #endif

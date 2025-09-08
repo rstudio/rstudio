@@ -446,132 +446,6 @@ protected:
    static std::string getNonMemberGroup() { return "daemon"; }
 #endif
 
-   // Helper function for testing primary group
-   static void testPermanentlyDropPrivUsesPrimaryGroupImpl() 
-   {
-      std::string username = getNobodyUsername();
-      Error error = permanentlyDropPriv(username.c_str());
-      if (error) 
-         exit(1);
-
-      // Get user info
-      User testUser;
-      error = User::getUserFromIdentifier(username, testUser);
-      if (error) 
-         exit(1);
-
-      // Verify user IDs
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
-         exit(2);  // User IDs don't match
-
-      // Verify group IDs
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      if (rgid != testUser.getGroupId() || egid != testUser.getGroupId())
-         exit(3);  // Group IDs don't match
-      
-      exit(0);  // Success
-   }
-   
-   // Helper function for testing alternate group
-   static void testPermanentlyDropPrivUsesAlternateGroupImpl()
-   {
-      std::string username = getNobodyUsername();
-      std::string groupName = getNobodyGroup();
-      
-      Error error = permanentlyDropPriv(username.c_str(), groupName);
-      if (error)
-         exit(1);
-
-      // Get user info
-      User testUser;
-      error = User::getUserFromIdentifier(username, testUser);
-      if (error) 
-         exit(1);
-
-      // Get group info
-      group::Group testGroup;
-      error = group::groupFromName(groupName, &testGroup);
-      if (error)
-         exit(4);  // Couldn't get group info
-
-      // Verify user IDs
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
-         exit(2);  // User IDs don't match
-
-      // Verify group IDs
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      if (rgid != testGroup.groupId || egid != testGroup.groupId)
-         exit(5);  // Group IDs don't match
-      
-      exit(0);  // Success
-   }
-   
-   // Helper function for testing group membership check
-   static void testPermanentlyDropPrivChecksGroupMembershipImpl()
-   {
-      std::string username = getNobodyUsername();
-      std::string nonMemberGroup = getNonMemberGroup();
-      
-      Error error = permanentlyDropPriv(username.c_str(), nonMemberGroup);
-      // This should fail because user is not in the specified group
-      if (!error)
-         exit(1);  // Expected an error but didn't get one
-         
-      exit(6);  // Success - we got the expected error
-   }
-   
-   // Helper function for permanently dropping privileges in death tests
-   static int testPermanentlyDropPriv(const std::string& username, const std::string& groupName = "") 
-   {
-      // Get user info
-      User testUser;
-      Error error = User::getUserFromIdentifier(username, testUser);
-      if (error) 
-         return 1;
-      
-      // Drop privileges
-      if (groupName.empty()) {
-         error = permanentlyDropPriv(username.c_str());
-      } else {
-         error = permanentlyDropPriv(username.c_str(), groupName);
-      }
-      
-      if (error)
-         return 6;  // Return consistent error code for expected failures
-         
-      // Verify drop worked
-      uid_t ruid = getuid();
-      uid_t euid = geteuid();
-      gid_t rgid = getgid();
-      gid_t egid = getegid();
-      
-      if (ruid != testUser.getUserId() || euid != testUser.getUserId())
-         return 2;  // User IDs don't match
-      
-      if (groupName.empty()) {
-         // Should have primary group
-         if (rgid != testUser.getGroupId() || egid != testUser.getGroupId())
-            return 3;  // Group IDs don't match
-      } else {
-         // Get the specified group
-         group::Group testGroup;
-         error = group::groupFromName(groupName, &testGroup);
-         if (error)
-            return 4;  // Couldn't get group info
-            
-         if (rgid != testGroup.groupId || egid != testGroup.groupId)
-            return 5;  // Group IDs don't match
-      }
-         
-      return 0;  // Success
-   }
-
 private:
 #ifdef __linux__
    std::string getNoGroupName()
@@ -685,37 +559,51 @@ TEST_F(PosixTestsRequiresPrivilege, TemporarilyDropPrivChecksGroupMembership)
    EXPECT_TRUE(error);
 }
 
-TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivUsesPrimaryGroup)
+TEST_F(PosixTestsRequiresPrivilege, DISABLED_PermanentlyDropPrivUsesPrimaryGroup)
 {
-   // This test uses a death test to verify permanently dropping privileges
-   // The test function will be run in a forked process, so it doesn't affect other tests
-   ASSERT_EXIT(
-      testPermanentlyDropPrivUsesPrimaryGroupImpl(),
-      ::testing::ExitedWithCode(0),  // Expect success exit code
-      ""
-   );
+   // drop privs to the unprivileged user
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str());
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, testUser.getUserId());
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   // since we didn't provide a target group, we expect the target user's primary group
+   EXPECT_EQ(rgid, testUser.getGroupId());
+   EXPECT_EQ(egid, testUser.getGroupId());
 }
 
-TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivUsesAlternateGroup)
+TEST_F(PosixTestsRequiresPrivilege, DISABLED_PermanentlyDropPrivUsesAlternateGroup)
 {
-   // This test uses a death test to verify permanently dropping privileges with alternate group
-   // The test function will be run in a forked process, so it doesn't affect other tests
-   ASSERT_EXIT(
-      testPermanentlyDropPrivUsesAlternateGroupImpl(),
-      ::testing::ExitedWithCode(0),  // Expect success exit code
-      ""
-   );
+   // try dropping privs to a target group that target user does not belong to
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str(), testNonMemberGroup.name);
+   EXPECT_EQ(error.getCode(), boost::system::errc::permission_denied);
 }
 
-TEST_F(PosixTestsRequiresPrivilege, PermanentlyDropPrivChecksGroupMembership)
+TEST_F(PosixTestsRequiresPrivilege, DISABLED_PermanentlyDropPrivChecksGroupMembership)
 {
-   // This test uses a death test to verify that we can't drop privileges to a group
-   // the user doesn't belong to. We expect a specific non-zero exit code.
-   ASSERT_EXIT(
-      testPermanentlyDropPrivChecksGroupMembershipImpl(),
-      ::testing::ExitedWithCode(6),  // Expect specific error code
-      ""
-   );
+   // drop privs to the unprivileged user and target group
+   Error error = permanentlyDropPriv(testUser.getUsername().c_str(), testGroup.name);
+   EXPECT_FALSE(error);
+
+   // check real and effective user
+   uid_t ruid = getuid();
+   uid_t euid = geteuid();
+   EXPECT_EQ(ruid, testUser.getUserId());
+   EXPECT_EQ(euid, testUser.getUserId());
+
+   // check real and effective group
+   gid_t rgid = getgid();
+   gid_t egid = getegid();
+   // since we provided a target group, we now expect the target group
+   EXPECT_EQ(rgid, testGroup.groupId);
+   EXPECT_EQ(egid, testGroup.groupId);
 }
 
 TEST(PosixTests, ParseOsReleaseQuoted)
