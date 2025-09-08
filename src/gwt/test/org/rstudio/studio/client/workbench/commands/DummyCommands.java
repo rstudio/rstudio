@@ -1565,6 +1565,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand moveSidebar() {
+        return null;
+    }
+
+    @Override
     public AppCommand toggleToolbar() {
         return null;
     }

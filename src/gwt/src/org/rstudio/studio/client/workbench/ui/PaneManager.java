@@ -333,6 +333,7 @@ public class PaneManager
       }
       // Initialize sidebar if configured
       Widget sidebarWidget = null;
+      String sidebarLocation = config.getSidebarLocation();
       if (config.getSidebarVisible())
       {
          LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
@@ -345,7 +346,7 @@ public class PaneManager
          }
       }
       
-      panel_.initialize(leftList_, center_, right_, sidebarWidget);
+      panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
 
       for (LogicalWindow window : sourceLogicalWindows_)
       {
@@ -984,6 +985,38 @@ public class PaneManager
          hideSidebar();
    }
 
+   @Handler
+   public void onMoveSidebar()
+   {
+      // Toggle the sidebar location between left and right
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      String currentLocation = paneConfig.getSidebarLocation();
+      String newLocation = "left".equals(currentLocation) ? "right" : "left";
+      
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         newLocation));
+      
+      // Persist the preference change
+      userPrefs_.writeUserPrefs();
+      
+      // Update the UI by hiding and re-showing the sidebar in the new location
+      if (sidebar_ != null)
+      {
+         hideSidebar();
+         showSidebar();
+      }
+   }
+
    public void showSidebar()
    {
       if (sidebar_ == null)
@@ -1011,7 +1044,8 @@ public class PaneManager
             // For sidebar, we use just the WindowFrame directly (no vertical split)
             sidebarWindow.transitionToState(WindowState.NORMAL);
             sidebar_ = sidebarWindow.getNormal();
-            panel_.setSidebarWidget(sidebar_);
+            String location = config.getSidebarLocation();
+            panel_.setSidebarWidget(sidebar_, location);
          }
       }
    }
@@ -1034,8 +1068,33 @@ public class PaneManager
    
    public void setSidebarLocation(String location)
    {
-      // This will be implemented to handle "left" vs "right" positioning
-      // For now, sidebar is always on the right
+      // Update preference and refresh the sidebar if visible
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      
+      // Only update if location has changed
+      if (!location.equals(paneConfig.getSidebarLocation()))
+      {
+         userPrefs_.panes().setGlobalValue(PaneConfig.create(
+            JsArrayUtil.copy(paneConfig.getQuadrants()),
+            paneConfig.getTabSet1(),
+            paneConfig.getTabSet2(),
+            paneConfig.getHiddenTabSet(),
+            paneConfig.getConsoleLeftOnTop(),
+            paneConfig.getConsoleRightOnTop(),
+            paneConfig.getAdditionalSourceColumns(),
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            location));
+         
+         userPrefs_.writeUserPrefs();
+         
+         // If sidebar is visible, refresh it in the new location
+         if (sidebar_ != null)
+         {
+            hideSidebar();
+            showSidebar();
+         }
+      }
    }
    
    private <T> boolean equals(T lhs, T rhs)

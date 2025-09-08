@@ -1378,6 +1378,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Toggle Visibility of Sidebar"
         menuLabel="To_ggle Sidebar"/>
 
+   <cmd id="moveSidebar"
+        label="Move Sidebar Left or Right"
+        menuLabel="Move Sidebar Left or Right"/>
+
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
         rebindable="false"/>

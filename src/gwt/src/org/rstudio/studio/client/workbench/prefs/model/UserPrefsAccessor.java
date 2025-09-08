@@ -396,11 +396,11 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
+         return this && this.tabSet1 || ["Environment","Connections","Build","VCS","Tutorial","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer","Presentations"];
+         return this && this.tabSet2 || ["Plots","Packages","Help","Viewer","Presentations"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
@@ -408,7 +408,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getSidebar() /*-{
-         return this && this.sidebar || [];
+         return this && this.sidebar || ["Files","History"];
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{

@@ -542,6 +542,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("To_ggle Sidebar") // $NON-NLS-1$
     String toggleSidebarMenuLabel();
     
+    // moveSidebar
+    @DefaultStringValue("Move Sidebar Left or Right") // $NON-NLS-1$
+    String moveSidebarLabel();
+    @DefaultStringValue("Move Sidebar Left or Right") // $NON-NLS-1$
+    String moveSidebarMenuLabel();
+    
     // showToolbar
     @DefaultStringValue("Show _Toolbar") // $NON-NLS-1$
     String showToolbarMenuLabel();
