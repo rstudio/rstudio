@@ -436,7 +436,7 @@ protected:
    // Platform-specific helper functions
 #ifdef __linux__
    static std::string getNobodyUsername() { return "nobody"; }
-   static std::string getNobodyGroup() { return getNoGroupName(); }
+   static std::string getNobodyGroup() { return tests::getNoGroupName(); }
    static std::string getNonMemberGroup() { return "users"; }
 #endif
 
