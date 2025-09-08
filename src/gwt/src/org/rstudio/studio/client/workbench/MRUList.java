@@ -15,6 +15,9 @@
 package org.rstudio.studio.client.workbench;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
@@ -22,9 +25,6 @@ import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MRUList
 {

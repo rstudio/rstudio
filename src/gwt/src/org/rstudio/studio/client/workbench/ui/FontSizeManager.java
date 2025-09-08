@@ -14,14 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 @Singleton
 public class FontSizeManager

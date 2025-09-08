@@ -5,7 +5,7 @@
       "includeGuard": "SERVER_SERVER_OPTIONS_GEN_HPP",
       "configFile": "rserver.conf",
       "docDescription": "The following is a list of available options that can be specified in the `rserver.conf` configuration file, which controls behavior of the `rserver` process, allowing you to tune HTTP, authorization options, and other settings that broadly affect RStudio Server.",
-      "outputSourceFile": "server/include/server/ServerOptions.gen.hpp",
+      "outputSourceFile": "src/cpp/server/include/server/ServerOptions.gen.hpp",
       "outputDocFile": "/dev/null",
       "additionalIncludes": [
          "<boost/regex.hpp>", 

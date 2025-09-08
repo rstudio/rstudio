@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
+import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
 
 public class BrowseUrlEvent extends GwtEvent<BrowseUrlEvent.Handler>
 {

@@ -1830,15 +1830,6 @@
    clear = function() { .rs.clearUserPref("clang_verbose") }
 )
 
-# Submit crash reports to Posit
-#
-# Whether to automatically submit crash reports to Posit.
-.rs.uiPrefs$submitCrashReports <- list(
-   get = function() { .rs.getUserPref("submit_crash_reports") },
-   set = function(value) { .rs.setUserPref("submit_crash_reports", value) },
-   clear = function() { .rs.clearUserPref("submit_crash_reports") }
-)
-
 # Show splash screen when RStudio is starting
 #
 # Whether to show the splash screen when RStudio is starting.
@@ -2458,6 +2449,16 @@
    get = function() { .rs.getUserPref("code_formatter_external_command") },
    set = function(value) { .rs.setUserPref("code_formatter_external_command", value) },
    clear = function() { .rs.clearUserPref("code_formatter_external_command") }
+)
+
+# Use Air for code formatting
+#
+# When set, RStudio will automatically select and use an appropriate version of
+# Air when formatting code in projects containing an air.toml file.
+.rs.uiPrefs$useAirFormatter <- list(
+   get = function() { .rs.getUserPref("use_air_formatter") },
+   set = function(value) { .rs.setUserPref("use_air_formatter", value) },
+   clear = function() { .rs.clearUserPref("use_air_formatter") }
 )
 
 # Reformat documents on save

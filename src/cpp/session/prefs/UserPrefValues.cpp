@@ -2572,19 +2572,6 @@ core::Error UserPrefValues::setClangVerbose(int val)
 }
 
 /**
- * Whether to automatically submit crash reports to Posit.
- */
-bool UserPrefValues::submitCrashReports()
-{
-   return readPref<bool>("submit_crash_reports");
-}
-
-core::Error UserPrefValues::setSubmitCrashReports(bool val)
-{
-   return writePref("submit_crash_reports", val);
-}
-
-/**
  * Whether to show the splash screen when RStudio is starting.
  */
 bool UserPrefValues::enableSplashScreen()
@@ -3456,6 +3443,19 @@ core::Error UserPrefValues::setCodeFormatterExternalCommand(std::string val)
 }
 
 /**
+ * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+ */
+bool UserPrefValues::useAirFormatter()
+{
+   return readPref<bool>("use_air_formatter");
+}
+
+core::Error UserPrefValues::setUseAirFormatter(bool val)
+{
+   return writePref("use_air_formatter", val);
+}
+
+/**
  * When set, the selected formatter will be used to reformat documents on save.
  */
 bool UserPrefValues::reformatOnSave()
@@ -3693,7 +3693,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexShellEscape,
       kRestoreProjectRVersion,
       kClangVerbose,
-      kSubmitCrashReports,
       kEnableSplashScreen,
       kDefaultRVersion,
       kDataViewerMaxColumns,
@@ -3761,6 +3760,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeFormatter,
       kCodeFormatterStylerStrict,
       kCodeFormatterExternalCommand,
+      kUseAirFormatter,
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,

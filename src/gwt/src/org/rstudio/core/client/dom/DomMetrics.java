@@ -14,12 +14,13 @@
  */
 package org.rstudio.core.client.dom;
 
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.widget.FontSizer;
+
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.widget.FontSizer;
 
 public class DomMetrics
 {

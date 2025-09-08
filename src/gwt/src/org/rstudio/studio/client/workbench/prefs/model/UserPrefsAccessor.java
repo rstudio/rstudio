@@ -2789,18 +2789,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   public PrefValue<Boolean> submitCrashReports()
-   {
-      return bool(
-         "submit_crash_reports",
-         _constants.submitCrashReportsTitle(), 
-         _constants.submitCrashReportsDescription(), 
-         true);
-   }
-
-   /**
     * Whether to show the splash screen when RStudio is starting.
     */
    public PrefValue<Boolean> enableSplashScreen()
@@ -3786,6 +3774,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    */
+   public PrefValue<Boolean> useAirFormatter()
+   {
+      return bool(
+         "use_air_formatter",
+         _constants.useAirFormatterTitle(), 
+         _constants.useAirFormatterDescription(), 
+         false);
+   }
+
+   /**
     * When set, the selected formatter will be used to reformat documents on save.
     */
    public PrefValue<Boolean> reformatOnSave()
@@ -4232,8 +4232,6 @@ public class UserPrefsAccessor extends Prefs
          restoreProjectRVersion().setValue(layer, source.getBool("restore_project_r_version"));
       if (source.hasKey("clang_verbose"))
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
-      if (source.hasKey("submit_crash_reports"))
-         submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
       if (source.hasKey("enable_splash_screen"))
          enableSplashScreen().setValue(layer, source.getBool("enable_splash_screen"));
       if (source.hasKey("default_r_version"))
@@ -4368,6 +4366,8 @@ public class UserPrefsAccessor extends Prefs
          codeFormatterStylerStrict().setValue(layer, source.getBool("code_formatter_styler_strict"));
       if (source.hasKey("code_formatter_external_command"))
          codeFormatterExternalCommand().setValue(layer, source.getString("code_formatter_external_command"));
+      if (source.hasKey("use_air_formatter"))
+         useAirFormatter().setValue(layer, source.getBool("use_air_formatter"));
       if (source.hasKey("reformat_on_save"))
          reformatOnSave().setValue(layer, source.getBool("reformat_on_save"));
       if (source.hasKey("project_user_data_directory"))
@@ -4574,7 +4574,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(latexShellEscape());
       prefs.add(restoreProjectRVersion());
       prefs.add(clangVerbose());
-      prefs.add(submitCrashReports());
       prefs.add(enableSplashScreen());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
@@ -4642,6 +4641,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeFormatter());
       prefs.add(codeFormatterStylerStrict());
       prefs.add(codeFormatterExternalCommand());
+      prefs.add(useAirFormatter());
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());

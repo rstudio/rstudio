@@ -1648,14 +1648,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String clangVerboseDescription();
 
    /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   @DefaultStringValue("Submit crash reports to Posit")
-   String submitCrashReportsTitle();
-   @DefaultStringValue("Whether to automatically submit crash reports to Posit.")
-   String submitCrashReportsDescription();
-
-   /**
     * Whether to show the splash screen when RStudio is starting.
     */
    @DefaultStringValue("Show splash screen when RStudio is starting")
@@ -2192,7 +2184,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterTitle();
    @DefaultStringValue("The formatter to use when reformatting code.")
    String codeFormatterDescription();
-   @DefaultStringValue("(None)")
+   @DefaultStringValue("(Default)")
    String codeFormatterEnum_none();
    @DefaultStringValue("styler")
    String codeFormatterEnum_styler();
@@ -2214,6 +2206,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeFormatterExternalCommandTitle();
    @DefaultStringValue("The external command to be used when reformatting code.")
    String codeFormatterExternalCommandDescription();
+
+   /**
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    */
+   @DefaultStringValue("Use Air for code formatting")
+   String useAirFormatterTitle();
+   @DefaultStringValue("When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.")
+   String useAirFormatterDescription();
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

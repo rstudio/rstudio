@@ -58,6 +58,9 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 CryptoServerOperations,
                                                 CopilotServerOperations
 {
+   public static int FORMAT_CONTEXT_COMMAND = 1;
+   public static int FORMAT_CONTEXT_SAVE = 2;
+
    /**
     * Create a new, empty document, without a path but with a unique ID, and
     * appends it to the current working list.
@@ -133,6 +136,7 @@ public interface SourceServerOperations extends FilesServerOperations,
     */
    void formatDocument(String id,
                        String path,
+                       int context,
                        ServerRequestCallback<SourceDocument> requestCallback);
  
    /**

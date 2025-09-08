@@ -14,15 +14,18 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
-import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
+import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -33,8 +36,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

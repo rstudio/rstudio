@@ -331,7 +331,6 @@ namespace prefs {
 #define kLatexShellEscape "latex_shell_escape"
 #define kRestoreProjectRVersion "restore_project_r_version"
 #define kClangVerbose "clang_verbose"
-#define kSubmitCrashReports "submit_crash_reports"
 #define kEnableSplashScreen "enable_splash_screen"
 #define kDefaultRVersion "default_r_version"
 #define kDefaultRVersionVersion "version"
@@ -449,6 +448,7 @@ namespace prefs {
 #define kCodeFormatterExternal "external"
 #define kCodeFormatterStylerStrict "code_formatter_styler_strict"
 #define kCodeFormatterExternalCommand "code_formatter_external_command"
+#define kUseAirFormatter "use_air_formatter"
 #define kReformatOnSave "reformat_on_save"
 #define kProjectUserDataDirectory "project_user_data_directory"
 #define kConsoleHighlightConditions "console_highlight_conditions"
@@ -1638,12 +1638,6 @@ public:
    core::Error setClangVerbose(int val);
 
    /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   bool submitCrashReports();
-   core::Error setSubmitCrashReports(bool val);
-
-   /**
     * Whether to show the splash screen when RStudio is starting.
     */
    bool enableSplashScreen();
@@ -2044,6 +2038,12 @@ public:
     */
    std::string codeFormatterExternalCommand();
    core::Error setCodeFormatterExternalCommand(std::string val);
+
+   /**
+    * When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file.
+    */
+   bool useAirFormatter();
+   core::Error setUseAirFormatter(bool val);
 
    /**
     * When set, the selected formatter will be used to reformat documents on save.

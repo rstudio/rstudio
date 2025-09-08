@@ -62,6 +62,10 @@ extern "C" const char *locale2charset(const char *);
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
+#define kFormatContextUnknown 0
+#define kFormatContextCommand 1
+#define kFormatContextSave    2
+
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -678,9 +682,48 @@ Error onFormatError(
    return error;
 }
 
+bool canUseAirFormatter(int context, const FilePath& documentPath)
+{
+   if (context == kFormatContextCommand)
+   {
+      // always enabled for command invocations
+      return true;
+   }
+   else if (context == kFormatContextSave)
+   {
+      // enable on save if user has opted in
+      if (prefs::userPrefs().useAirFormatter())
+      {
+         if (projects::projectContext().hasProject())
+         {
+            FilePath airTomlPath = projects::projectContext()
+               .directory()
+               .completePath("air.toml");
+            return airTomlPath.exists();
+         }
+         else
+         {
+            FilePath globalAirTomlPath =
+               module_context::resolveAliasedPath("~/air.toml");
+            return globalAirTomlPath.exists();
+         }
+      }
+      else
+      {
+         return false;
+      }
+   }
+   else
+   {
+      // disabled
+      return false;
+   }
+}
+
 template <typename F>
 Error formatDocumentImpl(
-      const std::string& documentPath,
+      int context,
+      const FilePath& documentPath,
       const json::JsonRpcFunctionContinuation& continuation,
       F&& callback)
 {
@@ -702,9 +745,34 @@ Error formatDocumentImpl(
       json::JsonRpcResponse response = callback();
       continuation(Success(), &response);
    };
-   
+
    std::string formatType = prefs::userPrefs().codeFormatter();
-   if (formatType == kCodeFormatterNone || formatType == kCodeFormatterStyler)
+   if (formatType == kCodeFormatterNone)
+   {
+      if (canUseAirFormatter(context, documentPath))
+      {
+         std::string airExePath;
+         Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+         if (error)
+            return onError(error);
+
+         error = module_context::processSupervisor().runProgram(
+             airExePath,
+             {"format", documentPath.getAbsolutePath()},
+             options,
+             callbacks);
+
+         if (error)
+            return onError(error);
+
+         return Success();
+      }
+      else
+      {
+         return Success();
+      }
+   }
+   else if (formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);
@@ -737,11 +805,10 @@ Error formatDocumentImpl(
    }
    else if (formatType == kCodeFormatterExternal)
    {
-      FilePath resolvedPath = module_context::resolveAliasedPath(documentPath);
       std::string command = fmt::format(
                "{} {}",
                prefs::userPrefs().codeFormatterExternalCommand(),
-               shell_utils::escape(resolvedPath));
+               shell_utils::escape(documentPath.getAbsolutePath()));
       
       error = module_context::processSupervisor().runCommand(
                command,
@@ -761,6 +828,19 @@ Error formatDocumentImpl(
    }
 }
 
+template <typename F>
+Error formatDocumentImpl(
+      const FilePath& documentPath,
+      const json::JsonRpcFunctionContinuation& continuation,
+      F&& callback)
+{
+   return formatDocumentImpl(
+      kFormatContextUnknown,
+      documentPath,
+      continuation,
+      std::forward<F>(callback));
+}
+
 Error formatDocument(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
@@ -773,12 +853,14 @@ Error formatDocument(
    Error error;
    
    std::string documentId, documentPath;
-   error = json::readParams(request.params, &documentId, &documentPath);
+   int context = kFormatContextUnknown;
+   error = json::readParams(request.params, &documentId, &documentPath, &context);
    if (error)
       return onError(error);
  
    return formatDocumentImpl(
-            documentPath,
+            context,
+            module_context::resolveAliasedPath(documentPath),
             continuation,
             [=]()
    {
@@ -808,10 +890,7 @@ Error formatCode(
    if (error)
       return onError(error);
    
-   return formatDocumentImpl(
-            documentPath.getAbsolutePath(),
-            continuation,
-            [=]()
+   return formatDocumentImpl(documentPath, continuation, [=]()
    {
       std::string code;
       Error error = readStringFromFile(documentPath, &code);

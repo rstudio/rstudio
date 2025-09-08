@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.events;
 
 import java.util.ArrayList;
 
-import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ListChangedEvent extends GwtEvent<ListChangedEvent.Handler>

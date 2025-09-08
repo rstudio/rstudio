@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.js.JsObject;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 
 public class SourceItem extends JavaScriptObject

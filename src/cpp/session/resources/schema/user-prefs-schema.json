@@ -1319,12 +1319,6 @@
             "title": "Clang verbosity level (0 - 2)",
             "description": "The verbosity level to use with Clang (0 - 2)"
         },
-        "submit_crash_reports": {
-            "type": "boolean",
-            "default": true,
-            "title": "Submit crash reports to Posit",
-            "description": "Whether to automatically submit crash reports to Posit."
-        },
         "enable_splash_screen": {
             "type": "boolean",
             "default": true,
@@ -1776,7 +1770,7 @@
         "code_formatter": {
             "type": "string",
             "enum": ["none", "styler", "external"],
-            "enumReadable": ["(None)", "styler", "External"],
+            "enumReadable": ["(Default)", "styler", "External"],
             "default": "none",
             "title": "Code formatter",
             "description": "The formatter to use when reformatting code."
@@ -1791,6 +1785,12 @@
             "type": "string",
             "default": "",
             "description": "The external command to be used when reformatting code."
+        },
+        "use_air_formatter": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use Air for code formatting",
+            "description": "When set, RStudio will automatically select and use an appropriate version of Air when formatting code in projects containing an air.toml file."
         },
         "reformat_on_save": {
             "type": "boolean",

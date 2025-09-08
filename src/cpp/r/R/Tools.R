@@ -2260,7 +2260,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
 .rs.defineGlobalHook(
    package = "utils",
    binding = "download.file",
-   when    = "headers" %in% names(formals(utils::download.file)),
+   when    = getRversion() < "4.6.0" && "headers" %in% names(formals(utils::download.file)),
    function(url, destfile, method)
    {
       ""
