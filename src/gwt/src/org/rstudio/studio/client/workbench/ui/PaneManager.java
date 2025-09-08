@@ -333,7 +333,7 @@ public class PaneManager
       }
       // Initialize sidebar if configured
       Widget sidebarWidget = null;
-      if (config.getSidebarVisible() && sidebarTabPanel_ != null)
+      if (config.getSidebarVisible())
       {
          LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
          if (sidebarWindow != null)
@@ -974,6 +974,9 @@ public class PaneManager
          newVisibility,
          paneConfig.getSidebarLocation()));
       
+      // Persist the preference change
+      userPrefs_.writeUserPrefs();
+      
       // Update the UI
       if (newVisibility)
          showSidebar();
@@ -1399,16 +1402,13 @@ public class PaneManager
       hiddenTabSetTabPanel_.setNeverVisible(true);
       hiddenTabSetMinPanel_ = tsHide.third;
       
-      // Initialize sidebar if configured
-      if (config.getSidebarVisible())
-      {
-         Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
-               UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
-               tabNamesToTabs(config.getSidebar()));
-         panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-         sidebarTabPanel_ = sidebar.second;
-         sidebarMinPanel_ = sidebar.third;
-      }
+      // Initialize sidebar (always create it, even if not initially visible)
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+            UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+            tabNamesToTabs(config.getSidebar()));
+      panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+      sidebarTabPanel_ = sidebar.second;
+      sidebarMinPanel_ = sidebar.third;
    }
 
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
