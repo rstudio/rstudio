@@ -138,15 +138,16 @@ TEST(ProcessTest, AsioSupervisorStdoutOutput)
    callbacks.onExit = boost::bind(&checkExitCode, _1, &exitCode);
    callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
 
-   // run command using a simple separate script approach
-   // std::string command = "bash -c \"python3 -c $'for i in range(10):\n   print(i)'\"";
-   std::string command = "bash -c \"python3 -c 'for i in range(10): print(i)'\"";
-   supervisor.runCommand(command, options, callbacks);
+   // Pure bash loop (avoid python & complex quoting / PATH issues)
+   std::vector<std::string> args;
+   args.push_back("-c");
+   args.push_back("for i in $(seq 0 9); do echo $i; done");
 
-   // wait for it to exit
+   Error err = supervisor.runProgram("/bin/bash", args, options, callbacks);
+   ASSERT_FALSE(err);
+
    bool success = supervisor.wait(boost::posix_time::seconds(5));
 
-   // verify process exited successfully and we got the expected output
    std::string expectedOutput = "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n";
    EXPECT_TRUE(success);
    EXPECT_EQ(0, exitCode);

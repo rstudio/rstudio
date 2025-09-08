@@ -206,9 +206,9 @@ if has-scope "core"; then
    # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs 
    # Skip these tests in CI for MacOS builds 
    if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then 
-      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter=-'PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesPrimaryGroup' --gtest_also_run_disabled_tests"
-      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter=-'PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesAlternateGroup' --gtest_also_run_disabled_tests"
-      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter=-'PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivChecksGroupMembership' --gtest_also_run_disabled_tests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesPrimaryGroup' --gtest_also_run_disabled_tests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesAlternateGroup' --gtest_also_run_disabled_tests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivChecksGroupMembership' --gtest_also_run_disabled_tests"
    fi 
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests" ]; then
