@@ -338,17 +338,10 @@ public class PaneManager
          LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
          if (sidebarWindow != null)
          {
-            // Create a simple panel for the sidebar (no vertical split for now)
-            sidebar_ = new DualWindowLayoutPanel(
-                  eventBus_,
-                  sidebarWindow,
-                  new LogicalWindow(null, null),
-                  session_,
-                  SIDEBAR_COLUMN,
-                  WindowState.NORMAL,
-                  (int) (Window.getClientHeight() * 0.5),
-                  7);
-            sidebarWidget = sidebar_;
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebarWidget = sidebarWindow.getNormal();
+            sidebar_ = sidebarWidget;
          }
       }
       
@@ -964,10 +957,28 @@ public class PaneManager
    @Handler
    public void onToggleSidebar()
    {
-      if (isSidebarVisible())
-         hideSidebar();
-      else
+      // Toggle the preference value and update UI
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      boolean newVisibility = !paneConfig.getSidebarVisible();
+      
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         newVisibility,
+         paneConfig.getSidebarLocation()));
+      
+      // Update the UI
+      if (newVisibility)
          showSidebar();
+      else
+         hideSidebar();
    }
 
    public void showSidebar()
@@ -978,27 +989,25 @@ public class PaneManager
          PaneConfig config = userPrefs_.panes().getValue().cast();
          JsArrayString sidebarTabs = config.getSidebar();
          
-         // Create sidebar tabset
-         Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
-               UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
-               tabNamesToTabs(sidebarTabs));
-         panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-         sidebarTabPanel_ = sidebar.second;
-         sidebarMinPanel_ = sidebar.third;
-         sidebarTabs_ = tabNamesToTabs(sidebarTabs);
+         // Create sidebar tabset if not already created
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow == null)
+         {
+            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+                  tabNamesToTabs(sidebarTabs));
+            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+            sidebarTabPanel_ = sidebar.second;
+            sidebarMinPanel_ = sidebar.third;
+            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
+            sidebarWindow = sidebar.first;
+         }
          
-         LogicalWindow sidebarWindow = sidebar.first;
          if (sidebarWindow != null)
          {
-            sidebar_ = new DualWindowLayoutPanel(
-                  eventBus_,
-                  sidebarWindow,
-                  new LogicalWindow(null, null),
-                  session_,
-                  SIDEBAR_COLUMN,
-                  WindowState.NORMAL,
-                  (int) (Window.getClientHeight() * 0.5),
-                  7);
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebar_ = sidebarWindow.getNormal();
             panel_.setSidebarWidget(sidebar_);
          }
       }
@@ -2199,7 +2208,7 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
    private WorkbenchTabPanel sidebarTabPanel_;
    private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
-   private DualWindowLayoutPanel sidebar_;
+   private Widget sidebar_;
    private ArrayList<Tab> sidebarTabs_;
 
    // Zoom-related members ----
