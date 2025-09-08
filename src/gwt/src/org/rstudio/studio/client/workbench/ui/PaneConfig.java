@@ -44,7 +44,34 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop,
-         additional_source_columns: additionalSources
+         additional_source_columns: additionalSources,
+         sidebar: [],
+         sidebar_visible: false,
+         sidebar_location: "right"
+      };
+   }-*/;
+   
+   public native static PaneConfig create(JsArrayString panes,
+                                          JsArrayString tabSet1,
+                                          JsArrayString tabSet2,
+                                          JsArrayString hiddenTabSet,
+                                          boolean consoleLeftOnTop,
+                                          boolean consoleRightOnTop,
+                                          int additionalSources,
+                                          JsArrayString sidebarTabs,
+                                          boolean sidebarVisible,
+                                          String sidebarLocation) /*-{
+      return {
+         quadrants: panes,
+         tabSet1: tabSet1,
+         tabSet2: tabSet2,
+         hiddenTabSet: hiddenTabSet,
+         console_left_on_top: consoleLeftOnTop,
+         console_right_on_top: consoleRightOnTop,
+         additional_source_columns: additionalSources,
+         sidebar: sidebarTabs,
+         sidebar_visible: sidebarVisible,
+         sidebar_location: sidebarLocation
       };
    }-*/;
 
@@ -91,7 +118,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
-         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET
+         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET,
+         UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR
       };
    }
 
@@ -101,7 +129,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
-         UserPrefsAccessor.Panes.QUADRANTS_TABSET2
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
+         UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR
       };
    }
 
@@ -282,7 +311,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop(),
-                    getAdditionalSourceColumns());
+                    getAdditionalSourceColumns(),
+                    copy(getSidebar()),
+                    getSidebarVisible(),
+                    getSidebarLocation());
    }
 
    public final native boolean isEqualTo(PaneConfig other)  /*-{
@@ -290,7 +322,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
              this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
              this.tabSet2.toString() == other.tabSet2.toString() &&
-             this.hiddenTabSet.toString() == other.hiddenTabSet.toString();
+             this.hiddenTabSet.toString() == other.hiddenTabSet.toString() &&
+             this.sidebar.toString() == other.sidebar.toString();
    }-*/;
 
    private boolean sameElements(JsArrayString a, String[] b)
