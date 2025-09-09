@@ -200,8 +200,17 @@ pipeline {
 
                 steps {
                   dir('package/linux') {
-                    withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                    if (params.DAILY) {
                       sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                    } else {
+                      withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                        sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                      }
+                    }
+                    if (env.WORKSPACE != "pull-requests") {
+                      withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                        sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${FLAVOR.toLowerCase()} ${ext_map[env.OS].toUpperCase()} ${ARCH}"
+                      }
                     }
                     sh '../../docker/jenkins/sign-release.sh ${BUILD_LOCATION}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }

@@ -14,32 +14,54 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+set -e
+
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
+
 AWS_BUCKET="s3://rstudio-debug-symbols"
 
 usage () {
 
 	cat <<- EOF
 
-	Usage: $0 [build-directory] [product] [os] [arch] [version]
+	Usage: $0 <product> <os> <arch>
 
 	Automatically discover all debug symbols within a particular
 	build directory, and then upload those symbols to AWS S3.
+
+	Required environment variables:
+		RSTUDIO_VERSION_MAJOR
+		RSTUDIO_VERSION_MINOR
+		RSTUDIO_VERSION_PATCH
+
+	Optional environment variables:
+		RSTUDIO_VERSION_SUFFIX
 
 	EOF
 
 }
 
-if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+if [ "$3" = "" ] || [ "$1" = "--help" ] || [[ -z "$RSTUDIO_VERSION_MAJOR" ]] || [[ -z "$RSTUDIO_VERSION_MINOR" ]] || [[ -z "$RSTUDIO_VERSION_PATCH" ]]; then
 	usage
 	exit 1
 fi
 
 # Read params into named variables
-builddir="$1"
-product="$2"
-os="$3"
-arch="$4"
-version="$5"
+product="$1"
+os="$2"
+arch="$3"
+
+PACKAGE_DIR=`pwd`
+RSTUDIO_TARGET="$product"
+PACKAGE_TARGET="$os"
+
+# This script populates BUILD_DIR and RSTUDIO_VERSION_FULL
+source "${PKG_DIR}/scripts/vars.sh"
+
+builddir="$BUILD_DIR"
+version="$RSTUDIO_VERSION_FULL"
+
 
 ensure-aws-cli () {
 
@@ -49,19 +71,19 @@ ensure-aws-cli () {
 	fi
 
 	# Try to look for an aws-cli installation in the home directory.
-   PATH="${HOME}/aws-cli/bin:${PATH}"
-   hash -r
+	PATH="${HOME}/aws-cli/bin:${PATH}"
+	hash -r
 
 	if command -v aws &> /dev/null; then
 		return 0
 	fi
 
 	# The aws-cli is not installed; try to install it now.
-   pushd "$(mktemp -d)"
-   curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
-   unzip -q awscliv2.zip
-   ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
-   popd
+	pushd "$(mktemp -d)"
+	curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+	unzip -q awscliv2.zip
+	./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+	popd
 
 	# Check once more for the aws-cli.
 	hash -r
