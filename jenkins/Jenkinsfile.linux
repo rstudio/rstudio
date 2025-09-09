@@ -1,6 +1,6 @@
 def utils
 
-def ext_map = 
+def ext_map =
 [
   'jammy':      'deb',
   'rhel8':      'rpm',
@@ -90,7 +90,7 @@ pipeline {
               RSTUDIO_VERSION_FLOWER = utils.getFlower()
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
-              
+
               // Set up environment for builds.
               ENV = utils.getBuildEnv(!params.DAILY)
             }
@@ -202,14 +202,12 @@ pipeline {
                   dir('package/linux') {
                     if (params.DAILY) {
                       sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                      withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                        sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${FLAVOR.toLowerCase()} ${ext_map[env.OS].toUpperCase()} ${ARCH}"
+                      }
                     } else {
                       withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                         sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
-                      }
-                    }
-                    if (env.WORKSPACE != "pull-requests") {
-                      withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                        sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${FLAVOR.toLowerCase()} ${ext_map[env.OS].toUpperCase()} ${ARCH}"
                       }
                     }
                     sh '../../docker/jenkins/sign-release.sh ${BUILD_LOCATION}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
@@ -355,10 +353,10 @@ pipeline {
 
                   stage ("Update Daily Build Redirects") {
                     environment {
-                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
+                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
 
-                    when { 
+                    when {
                       anyOf {
                         expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
                         expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
@@ -387,7 +385,7 @@ pipeline {
     stage('Trigger Testing Jobs') {
       agent { label 'linux' }
 
-      // Skip for hourly builds, non-published builds, and branches that don't 
+      // Skip for hourly builds, non-published builds, and branches that don't
       // have corresponding automation branches
       when {
         allOf {
