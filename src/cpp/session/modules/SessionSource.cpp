@@ -703,9 +703,10 @@ bool canUseAirFormatter(int context, const FilePath& documentPath)
          }
          else
          {
-            FilePath globalAirTomlPath =
-               module_context::resolveAliasedPath("~/air.toml");
-            return globalAirTomlPath.exists();
+            // TODO: Air has not yet formalized whether global air.toml
+            // files will be supported, or (if they are) where those files
+            // should be located.
+            return false;
          }
       }
       else
