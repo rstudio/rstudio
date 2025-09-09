@@ -545,7 +545,7 @@ public interface CmdConstants extends Constants {
     // moveSidebar
     @DefaultStringValue("Move Sidebar Left or Right") // $NON-NLS-1$
     String moveSidebarLabel();
-    @DefaultStringValue("Move Sidebar Left or Right") // $NON-NLS-1$
+    @DefaultStringValue("Move Si_debar Left or Right") // $NON-NLS-1$
     String moveSidebarMenuLabel();
     
     // showToolbar

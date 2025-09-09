@@ -281,11 +281,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
       <menu label="_View">
          <cmd refid="toggleSidebar"/>
+         <cmd refid="moveSidebar"/>
+         <separator/>
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
-
          <separator/>
-
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
@@ -1380,7 +1380,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="moveSidebar"
         label="Move Sidebar Left or Right"
-        menuLabel="Move Sidebar Left or Right"/>
+        menuLabel="Move Si_debar Left or Right"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
