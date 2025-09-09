@@ -209,6 +209,11 @@ void initWebsiteOutputDir()
    }
 }
 
+void onDeferredInit(bool)
+{
+   initWebsiteOutputDir();
+}
+
 } // anonymous namespace
 
 namespace module_context {
@@ -458,17 +463,32 @@ public:
       return runtime;
    }
 
-private:
-   RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
-             bool asShiny) :
-      terminateType_(renderTerminateAbnormal),
-      isShiny_(asShiny),
-      hasShinyContent_(false),
-      targetFile_(targetFile),
-      sourceLine_(sourceLine),
-      sourceNavigation_(sourceNavigation)
+   void replayClientEvents()
    {
+      for (auto&& clientEvent : clientEvents_)
+      {
+         module_context::enqueClientEvent(clientEvent);
+      }
    }
+
+   bool isShinyRuntime()
+   {
+      return isShiny_;
+   }
+
+private:
+  RenderRmd(const FilePath& targetFile,
+            int sourceLine,
+            bool sourceNavigation,
+            bool asShiny)
+      : terminateType_(renderTerminateAbnormal),
+        isShiny_(asShiny),
+        hasShinyContent_(false),
+        targetFile_(targetFile),
+        sourceLine_(sourceLine),
+        sourceNavigation_(sourceNavigation)
+  {
+  }
 
    void start(const std::string& format,
               const std::string& encoding,
@@ -492,7 +512,7 @@ private:
       dataJson["output_format"] = outputFormat_;
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
-      module_context::enqueClientEvent(event);
+      enqueClientEvent(event);
 
       // save encoding and viewer type
       encoding_ = encoding;
@@ -757,7 +777,7 @@ private:
 
                startedJson["is_quarto"] = isQuarto_;
 
-               module_context::enqueClientEvent(ClientEvent(
+               enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
                break;
@@ -880,7 +900,7 @@ private:
          enqueFailureDiagnostics(formatName);
 
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
-      module_context::enqueClientEvent(event);
+      enqueClientEvent(event);
    }
 
    void enqueFailureDiagnostics(const std::string& formatName)
@@ -989,6 +1009,12 @@ private:
       ClientEvent event(
                client_events::kRmdRenderOutput,
                compileOutputAsJson(compileOutput));
+      enqueClientEvent(event);
+   }
+
+   void enqueClientEvent(const ClientEvent& event)
+   {
+      clientEvents_.push_back(event);
       module_context::enqueClientEvent(event);
    }
 
@@ -1007,6 +1033,7 @@ private:
    module_context::SourceMarker renderErrorMarker_;
    std::stringstream renderErrorMessage_;
    std::string allOutput_;
+   std::vector<ClientEvent> clientEvents_;
 };
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
@@ -1143,11 +1170,22 @@ std::string onDetectRmdSourceType(
 
 void onClientInit()
 {
-   // if a new client is connecting, shut any running render process
-   // (these processes can have virtually unbounded lifetime because they
-   // leave a server running in the Shiny document case)
    if (s_pCurrentRender_ && s_pCurrentRender_->isRunning())
-      s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+   {
+      if (s_pCurrentRender_->isShinyRuntime())
+      {
+         // if a new client connects while a Shiny runtime document
+         // was being rendered, then kill that render -- new clients
+         // won't be able to access the application anyhow
+         s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+      }
+      else
+      {
+         // replay the client events to the new client, so that it
+         // can get and present an up-to-date view of the render in progress
+         s_pCurrentRender_->replayClientEvents();
+      }
+   }
 }
 
 Error getRMarkdownContext(const json::JsonRpcRequest&,
@@ -1868,10 +1906,8 @@ Error initialize()
 
    initEnvironment();
 
-   module_context::events().onDeferredInit.connect(
-                                 boost::bind(initWebsiteOutputDir));
-   module_context::events().onDetectSourceExtendedType
-                                        .connect(onDetectRmdSourceType);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
+   module_context::events().onDetectSourceExtendedType.connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
    module_context::events().onShutdown.connect(onShutdown);
    module_context::addSuspendHandler(SuspendHandler(onSuspend, onResume));
