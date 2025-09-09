@@ -23,7 +23,7 @@ AWS_BUCKET="s3://rstudio-debug-symbols"
 
 usage () {
 
-  cat <<- EOF
+	cat <<- EOF
 
 	Usage: $0 <product> <os> <arch>
 
@@ -51,47 +51,49 @@ fi
 product="$1"
 os="$2"
 arch="$3"
-version="$RSTUDIO_VERSION_FULL"
 
 PACKAGE_DIR=`pwd`
 RSTUDIO_TARGET="$product"
 PACKAGE_TARGET="$os"
+
+# This script populates BUILD_DIR and RSTUDIO_VERSION_FULL
 source "${PKG_DIR}/scripts/vars.sh"
 
 builddir="$BUILD_DIR"
+version="$RSTUDIO_VERSION_FULL"
 
 
 ensure-aws-cli () {
 
-  # Check and see if aws-cli is already on the PATH.
-  if command -v aws &> /dev/null; then
-    return 0
-  fi
+	# Check and see if aws-cli is already on the PATH.
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
 
-  # Try to look for an aws-cli installation in the home directory.
-  PATH="${HOME}/aws-cli/bin:${PATH}"
-  hash -r
+	# Try to look for an aws-cli installation in the home directory.
+	PATH="${HOME}/aws-cli/bin:${PATH}"
+	hash -r
 
-  if command -v aws &> /dev/null; then
-    return 0
-  fi
+	if command -v aws &> /dev/null; then
+		return 0
+	fi
 
-  # The aws-cli is not installed; try to install it now.
-  pushd "$(mktemp -d)"
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
-  unzip -q awscliv2.zip
-  ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
-  popd
+	# The aws-cli is not installed; try to install it now.
+	pushd "$(mktemp -d)"
+	curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+	unzip -q awscliv2.zip
+	./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+	popd
 
-  # Check once more for the aws-cli.
-  hash -r
-  command -v aws &> /dev/null
+	# Check once more for the aws-cli.
+	hash -r
+	command -v aws &> /dev/null
 
 }
 
 ensure-aws-cli || {
-  echo "ERROR: aws-cli is not available"
-  exit 1
+	echo "ERROR: aws-cli is not available"
+	exit 1
 }
 
 # Move to build directory
@@ -101,11 +103,11 @@ cd "${builddir}"
 prefix="${product}-${os}-${arch}"
 
 # Find debug symbols in the build directory provided,
-# and collect them into an archive.
+# and collect them into an archive. 
 while IFS= read -r -d '' symfile; do
-  bname="$(basename "${symfile}")"
-  dname="$(dirname "${symfile}")"
-  tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
+	bname="$(basename "${symfile}")"
+	dname="$(dirname "${symfile}")"
+	tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
 done < <(find . -name "*.debug" -print0)
 
 # Compress the archive
@@ -115,3 +117,4 @@ xz "${prefix}.tar"
 src="${prefix}.tar.xz"
 tgt="${AWS_BUCKET}/${version}/${prefix}.tar.xz"
 aws s3 cp "${src}" "${tgt}"
+

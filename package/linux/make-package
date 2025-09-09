@@ -66,10 +66,10 @@ install-npm-packages() {
    fi
 }
 
-# For a full package build the package.json file gets modified with the
-# desired build version and product name, and the build-info.ts source
+# For a full package build the package.json file gets modified with the 
+# desired build version and product name, and the build-info.ts source 
 # file gets modified with details on the build (date, git-commit, etc).
-# We try to put these back to their original state at the end of the
+# We try to put these back to their original state at the end of the 
 # package build.
 PACKAGE_VERSION_SET=0
 set-version () {
@@ -77,7 +77,7 @@ set-version () {
       pushd ${ELECTRON_SOURCE_DIR}
       echo "ensure node-gyp installed for node ${RSTUDIO_NODE_VERSION}"
       ${NPX} node-gyp install ${RSTUDIO_NODE_VERSION}
-
+      
       install-npm-packages
 
       # Set package.json info
@@ -115,6 +115,9 @@ RSTUDIO_TARGET=$1
 PACKAGE_TARGET=$2
 CLEAN=$3
 
+# This script populates BUILD_DIR, CMAKE_BUILD_TYPE, and RSTUDIO_VERSION_FULL,
+# as well as filling in RSTUDIO_VERSION_MAJOR/MINOR/PATCH with defaults if not
+# specified.
 source "${PKG_DIR}/scripts/vars.sh"
 
 if [ -f "${PKG_DIR}/scripts/overlay.sh" ]; then
@@ -267,7 +270,7 @@ fi
 # if SCCACHE_ENABLED environment variable is set, use sccache
 if [ -n "$SCCACHE_ENABLED" ]; then
     echo "Using sccache"
-
+   
     if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
         echo "AWS credentials valid, using S3 build cache"
         export SCCACHE_BUCKET="rstudio-build-cache"
