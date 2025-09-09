@@ -16,34 +16,34 @@
 context("download")
 
 expect_download <- function(url, destfile = NULL, method = "libcurl") {
-   
+
    destfile <- .rs.nullCoalesce(destfile, {
-      .rs.mapChr(seq_along(url), function(i) tempfile())
+       .rs.mapChr(seq_along(url), function(i) tempfile())
    })
-   
+
    lhs <- .rs.downloadFile(
       url      = url,
       destfile = destfile,
       method   = method,
       quiet    = TRUE
    )
-   
+
    rhs <- utils::download.file(
       url      = url,
       destfile = destfile,
       method   = method,
       quiet    = TRUE
    )
-   
+
    expect_equal(lhs, rhs)
-   
+
 }
 
 test_that("download.file hooks work as expected", {
-   
+
    url <- "https://cran.rstudio.com"
-   
+
    expect_download(url)
    expect_download(c(url, url))
-   
+
 })
