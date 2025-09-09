@@ -14,64 +14,84 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+set -e
+
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
+
 AWS_BUCKET="s3://rstudio-debug-symbols"
 
 usage () {
 
-	cat <<- EOF
+  cat <<- EOF
 
-	Usage: $0 [build-directory] [product] [os] [arch] [version]
+	Usage: $0 <product> <os> <arch>
 
 	Automatically discover all debug symbols within a particular
 	build directory, and then upload those symbols to AWS S3.
+
+	Required environment variables:
+		RSTUDIO_VERSION_MAJOR
+		RSTUDIO_VERSION_MINOR
+		RSTUDIO_VERSION_PATCH
+
+	Optional environment variables:
+		RSTUDIO_VERSION_SUFFIX
 
 	EOF
 
 }
 
-if [ "$1" = "" ] || [ "$1" = "--help" ]; then
+if [ "$3" = "" ] || [ "$1" = "--help" ] || [[ -z "$RSTUDIO_VERSION_MAJOR" ]] || [[ -z "$RSTUDIO_VERSION_MINOR" ]] || [[ -z "$RSTUDIO_VERSION_PATCH" ]]; then
 	usage
 	exit 1
 fi
 
 # Read params into named variables
-builddir="$1"
-product="$2"
-os="$3"
-arch="$4"
-version="$5"
+product="$1"
+os="$2"
+arch="$3"
+version="$RSTUDIO_VERSION_FULL"
+
+PACKAGE_DIR=`pwd`
+RSTUDIO_TARGET="$product"
+PACKAGE_TARGET="$os"
+source "${PKG_DIR}/scripts/vars.sh"
+
+builddir="$BUILD_DIR"
+
 
 ensure-aws-cli () {
 
-	# Check and see if aws-cli is already on the PATH.
-	if command -v aws &> /dev/null; then
-		return 0
-	fi
+  # Check and see if aws-cli is already on the PATH.
+  if command -v aws &> /dev/null; then
+    return 0
+  fi
 
-	# Try to look for an aws-cli installation in the home directory.
-   PATH="${HOME}/aws-cli/bin:${PATH}"
-   hash -r
+  # Try to look for an aws-cli installation in the home directory.
+  PATH="${HOME}/aws-cli/bin:${PATH}"
+  hash -r
 
-	if command -v aws &> /dev/null; then
-		return 0
-	fi
+  if command -v aws &> /dev/null; then
+    return 0
+  fi
 
-	# The aws-cli is not installed; try to install it now.
-   pushd "$(mktemp -d)"
-   curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
-   unzip -q awscliv2.zip
-   ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
-   popd
+  # The aws-cli is not installed; try to install it now.
+  pushd "$(mktemp -d)"
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip"
+  unzip -q awscliv2.zip
+  ./aws/install -i ~/aws-cli -b ~/aws-cli/bin
+  popd
 
-	# Check once more for the aws-cli.
-	hash -r
-	command -v aws &> /dev/null
+  # Check once more for the aws-cli.
+  hash -r
+  command -v aws &> /dev/null
 
 }
 
 ensure-aws-cli || {
-	echo "ERROR: aws-cli is not available"
-	exit 1
+  echo "ERROR: aws-cli is not available"
+  exit 1
 }
 
 # Move to build directory
@@ -81,11 +101,11 @@ cd "${builddir}"
 prefix="${product}-${os}-${arch}"
 
 # Find debug symbols in the build directory provided,
-# and collect them into an archive. 
+# and collect them into an archive.
 while IFS= read -r -d '' symfile; do
-	bname="$(basename "${symfile}")"
-	dname="$(dirname "${symfile}")"
-	tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
+  bname="$(basename "${symfile}")"
+  dname="$(dirname "${symfile}")"
+  tar -r -f "${prefix}.tar" -C "${dname}" "${bname}"
 done < <(find . -name "*.debug" -print0)
 
 # Compress the archive
@@ -95,4 +115,3 @@ xz "${prefix}.tar"
 src="${prefix}.tar.xz"
 tgt="${AWS_BUCKET}/${version}/${prefix}.tar.xz"
 aws s3 cp "${src}" "${tgt}"
-

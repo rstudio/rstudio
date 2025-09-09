@@ -31,6 +31,8 @@ PREV_WD=$(pwd)
 # raise the limit on number of open files
 ulimit -n 2048
 
+HELP_TARGETS='One of "Electron" or "Server"'
+
 function help() {
     cat <<EOF
 usage: make-package target package [clean]
@@ -44,7 +46,7 @@ Examples
 
 Positional Arguments
   target -- build target
-    One of "Electron" or "Server"
+    $HELP_TARGETS
 
   package
     One of "DEB" or "RPM"
@@ -64,10 +66,10 @@ install-npm-packages() {
    fi
 }
 
-# For a full package build the package.json file gets modified with the 
-# desired build version and product name, and the build-info.ts source 
+# For a full package build the package.json file gets modified with the
+# desired build version and product name, and the build-info.ts source
 # file gets modified with details on the build (date, git-commit, etc).
-# We try to put these back to their original state at the end of the 
+# We try to put these back to their original state at the end of the
 # package build.
 PACKAGE_VERSION_SET=0
 set-version () {
@@ -75,7 +77,7 @@ set-version () {
       pushd ${ELECTRON_SOURCE_DIR}
       echo "ensure node-gyp installed for node ${RSTUDIO_NODE_VERSION}"
       ${NPX} node-gyp install ${RSTUDIO_NODE_VERSION}
-      
+
       install-npm-packages
 
       # Set package.json info
@@ -113,6 +115,12 @@ RSTUDIO_TARGET=$1
 PACKAGE_TARGET=$2
 CLEAN=$3
 
+source "${PKG_DIR}/scripts/vars.sh"
+
+if [ -f "${PKG_DIR}/scripts/overlay.sh" ]; then
+  source "${PKG_DIR}/scripts/overlay.sh"
+fi
+
 if [ "$RSTUDIO_TARGET" != "Desktop" ] && [ "$RSTUDIO_TARGET" != "Electron" ] && [ "$RSTUDIO_TARGET" != "Server" ]
 then
    help
@@ -138,21 +146,6 @@ else
    GWT_MAIN_MODULE=RStudioServer
 fi
 export GWT_MAIN_MODULE
-
-if test -z "$BUILD_DIR"
-then
-   # set build type( if necessary) and build dir
-   if test -z "$CMAKE_BUILD_TYPE"
-   then
-      CMAKE_BUILD_TYPE=RelWithDebInfo
-      BUILD_DIR=build-$RSTUDIO_TARGET-$PACKAGE_TARGET
-   else
-      BUILD_DIR=build-$RSTUDIO_TARGET-$PACKAGE_TARGET-$CMAKE_BUILD_TYPE
-   fi
-fi
-
-# make build directory absolute
-BUILD_DIR=$(readlink -f "$BUILD_DIR")
 
 # clean if requested
 if [ "$CLEAN" == "clean" ]
@@ -274,7 +267,7 @@ fi
 # if SCCACHE_ENABLED environment variable is set, use sccache
 if [ -n "$SCCACHE_ENABLED" ]; then
     echo "Using sccache"
-   
+
     if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
         echo "AWS credentials valid, using S3 build cache"
         export SCCACHE_BUCKET="rstudio-build-cache"
@@ -314,33 +307,6 @@ fi
 if [ "${RSTUDIO_BUILD_PACKAGE:-1}" = "1" ]; then
    cpack --verbose --debug -G "$PACKAGE_TARGET"
 fi
-
-# For Jenkins builds, upload debug symbols to S3.
-upload-debug-symbols () {
-
-   # Validate that the requisite environment variables are defined.
-   if ! all-defined JENKINS_URL PRODUCT OS ARCH; then
-      echo "-- skipping debug symbol upload; non-production build"
-      return 0
-   fi
-
-   # Don't upload debug symbols for builds triggered by pull requests.
-   if [[ "${WORKSPACE}" =~ "pull-requests" ]]; then
-      echo "-- skipping debug symbol upload; build triggered via pull request"
-      return 0
-   fi
-
-   # Preflight checks passed; upload debug symbols.
-   "${PKG_DIR}/scripts/upload-debug-symbols" \
-      "${BUILD_DIR}" \
-      "${PRODUCT}" \
-      "${OS}" \
-      "${ARCH}" \
-      "${RSTUDIO_VERSION_FULL}"
-
-}
-
-upload-debug-symbols
 
 cd "$PREV_WD"
 
