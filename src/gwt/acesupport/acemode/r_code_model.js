@@ -430,6 +430,9 @@ var RCodeModel = function(session, tokenizer,
 
    };
 
+   // Try to find the infix operator associated with the current
+   // piped expression. Returns true and updates the cursor position
+   // when found; return false otherwise.
    var findChainScope = function(cursor)
    {
       var clone = cursor.cloneCursor();
@@ -446,7 +449,7 @@ var RCodeModel = function(session, tokenizer,
          // Move over '::' qualifiers
          if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            // Move of to pkg identifier
+            // Move onto pkg identifier
             if (!clone.moveToPreviousToken())
                return false;
 
@@ -484,7 +487,34 @@ var RCodeModel = function(session, tokenizer,
       // with the current expression. This might not exist for e.g.
       // usages of the '_' placeholder with the base pipe.
       var clone = tokenCursor.cloneCursor();
-      findChainScope(clone);
+      if (!findChainScope(clone))
+      {
+         // Check for code of the form:
+         //
+         //    |> _$ <id>
+         //    ^~~<~~^
+         //
+         // Either move the cursor to the infix operator (if any), or fail.
+
+         if (pIdentifier(clone.currentToken()))
+            if (!clone.moveToPreviousToken())
+               return false;
+
+         if (clone.currentValue() !== "$")
+            return false;
+
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         if (clone.currentValue() !== "_")
+            return false;
+
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         if (!clone.currentValue() === "|>")
+            return false;
+      }
 
       // Fill custom args
       var data = {
