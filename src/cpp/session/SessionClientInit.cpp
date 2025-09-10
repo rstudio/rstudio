@@ -23,6 +23,7 @@
 #include "modules/rmarkdown/SessionBlogdown.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
+#include "modules/SessionAir.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionRAddins.hpp"
@@ -682,8 +683,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    if (projects::projectContext().hasProject())
    {
-      FilePath airTomlPath = projects::projectContext().directory().completePath("air.toml");
-      sessionInfo["has_air_toml"] = airTomlPath.exists();
+      using namespace modules::air;
+      sessionInfo["has_air_toml"] = hasAirToml(projects::projectContext().directory());
    }
 
    module_context::events().onSessionInfo(&sessionInfo);
