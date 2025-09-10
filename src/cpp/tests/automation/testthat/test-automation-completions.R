@@ -238,3 +238,21 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(tail(output, n = 1L), "[1] \"2024\"")
    
 })
+
+.rs.test("completions from the pipe placeholder are provided", {
+   
+   contents <- .rs.heredoc('
+      library(dplyr)
+      mtcars |>
+         mutate(x = 42) |>
+         _$
+   ')
+   
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+      editor$gotoLine(4, 5)
+      completions <- remote$completions.request()
+      expect_true("x" %in% completions)
+      expect_true("mpg" %in% completions)
+   })
+   
+})

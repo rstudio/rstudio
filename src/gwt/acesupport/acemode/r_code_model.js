@@ -480,11 +480,11 @@ var RCodeModel = function(session, tokenizer,
    //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
    this.moveToDataObjectFromInfixChain = function(tokenCursor)
    {
-      // Find an opening paren associated with the nearest chain,
-      // Find the outermost opening paren
+      // Find the outer-most opening parenthesis (if any) associated
+      // with the current expression. This might not exist for e.g.
+      // usages of the '_' placeholder with the base pipe.
       var clone = tokenCursor.cloneCursor();
-      if (!findChainScope(clone))
-         return false;
+      findChainScope(clone);
 
       // Fill custom args
       var data = {
