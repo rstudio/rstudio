@@ -285,7 +285,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <separator/>
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
+
          <separator/>
+
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
