@@ -72,7 +72,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -332,43 +331,22 @@ public class PaneManager
                0).cast());
          }
       }
-      // Always initialize sidebar widget (will control visibility via width)
+      // Initialize sidebar if configured
       Widget sidebarWidget = null;
       String sidebarLocation = config.getSidebarLocation();
-      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      if (sidebarWindow != null)
+      if (config.getSidebarVisible())
       {
-         // For sidebar, we use just the WindowFrame directly (no vertical split)
-         sidebarWindow.transitionToState(WindowState.NORMAL);
-         sidebarWidget = sidebarWindow.getNormal();
-         sidebar_ = sidebarWidget;
-         
-         // Set initial visibility state (width will be controlled after panel initialization)
-         sidebarVisible_ = config.getSidebarVisible();
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebarWidget = sidebarWindow.getNormal();
+            sidebar_ = sidebarWidget;
+         }
       }
       
       panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
-      
-      // Set initial sidebar width based on visibility (deferred to allow layout to complete)
-      if (sidebar_ != null)
-      {
-         Scheduler.get().scheduleDeferred(() -> {
-            if (!sidebarVisible_)
-            {
-               // Hide sidebar by setting width to 0
-               setSidebarWidth(0);
-            }
-            else
-            {
-               // Store the default width that was set
-               double currentWidth = panel_.getSidebarWidth();
-               if (currentWidth > 0)
-               {
-                  lastSidebarWidth_ = currentWidth;
-               }
-            }
-         });
-      }
 
       for (LogicalWindow window : sourceLogicalWindows_)
       {
@@ -1041,19 +1019,34 @@ public class PaneManager
 
    public void showSidebar()
    {
-      if (sidebar_ != null)
+      if (sidebar_ == null)
       {
-         // Store current width if it's non-zero (in case it was manually resized)
-         double currentWidth = panel_.getSidebarWidth();
-         if (currentWidth > 0)
+         // Create sidebar configuration
+         PaneConfig config = userPrefs_.panes().getValue().cast();
+         JsArrayString sidebarTabs = config.getSidebar();
+         
+         // Create sidebar tabset if not already created
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow == null)
          {
-            lastSidebarWidth_ = currentWidth;
+            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+                  tabNamesToTabs(sidebarTabs));
+            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+            sidebarTabPanel_ = sidebar.second;
+            sidebarMinPanel_ = sidebar.third;
+            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
+            sidebarWindow = sidebar.first;
          }
          
-         // Use last known width or default (20% of window width)
-         double targetWidth = lastSidebarWidth_ > 0 ? lastSidebarWidth_ : Window.getClientWidth() * 0.2;
-         setSidebarWidth(targetWidth);
-         sidebarVisible_ = true;
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebar_ = sidebarWindow.getNormal();
+            String location = config.getSidebarLocation();
+            panel_.setSidebarWidget(sidebar_, location);
+         }
       }
    }
    
@@ -1061,22 +1054,9 @@ public class PaneManager
    {
       if (sidebar_ != null)
       {
-         // Store current width before hiding
-         double currentWidth = panel_.getSidebarWidth();
-         if (currentWidth > 0)
-         {
-            lastSidebarWidth_ = currentWidth;
-         }
-         
-         // Hide by setting width to 0
-         setSidebarWidth(0);
-         sidebarVisible_ = false;
+         panel_.removeSidebarWidget();
+         sidebar_ = null;
       }
-   }
-   
-   private void setSidebarWidth(double width)
-   {
-      panel_.setSidebarWidth(width);
    }
    
    public boolean isSidebarVisible()
@@ -1108,30 +1088,11 @@ public class PaneManager
          
          userPrefs_.writeUserPrefs();
          
-         // If sidebar exists, we need to recreate the panel with sidebar in new location
+         // If sidebar is visible, refresh it in the new location
          if (sidebar_ != null)
          {
-            // Store current visibility and width
-            boolean wasVisible = sidebarVisible_;
-            double currentWidth = panel_.getSidebarWidth();
-            if (currentWidth > 0)
-            {
-               lastSidebarWidth_ = currentWidth;
-            }
-            
-            // Remove and re-add all widgets with sidebar in new location
-            panel_.removeSidebarWidget();
-            panel_.setSidebarWidget(sidebar_, location);
-            
-            // Restore visibility state
-            if (wasVisible)
-            {
-               setSidebarWidth(lastSidebarWidth_ > 0 ? lastSidebarWidth_ : Window.getClientWidth() * 0.2);
-            }
-            else
-            {
-               setSidebarWidth(0);
-            }
+            hideSidebar();
+            showSidebar();
          }
       }
    }
@@ -2308,8 +2269,6 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
    private Widget sidebar_;
    private ArrayList<Tab> sidebarTabs_;
-   private boolean sidebarVisible_ = false;
-   private double lastSidebarWidth_ = 0;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;

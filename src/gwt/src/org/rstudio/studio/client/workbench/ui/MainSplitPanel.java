@@ -371,28 +371,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       return sidebar_ != null;
    }
-   
-   public void setSidebarWidth(double width)
-   {
-      if (sidebar_ != null)
-      {
-         LayoutData layoutData = (LayoutData) sidebar_.getLayoutData();
-         if (layoutData != null)
-         {
-            layoutData.size = width;
-            forceLayout();
-         }
-      }
-   }
-   
-   public double getSidebarWidth()
-   {
-      if (sidebar_ != null)
-      {
-         return sidebar_.getOffsetWidth();
-      }
-      return 0;
-   }
 
    public void onSplitterResized(SplitterResizedEvent event)
    {
