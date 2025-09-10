@@ -261,14 +261,15 @@ withr::defer(.rs.automation.deleteRemote())
       library(dplyr)
       mtcars |>
          mutate(x = 42) |>
-         _$mp
+         _$c
    ')
    
    # completions with identifier following pipebind operator
    remote$editor.executeWithContents(".R", contents, function(editor) {
       editor$gotoLine(4, 7)
       completions <- remote$completions.request()
-      expect_true("mpg" %in% completions)
+      expect_true("carb" %in% completions)
+      expect_true("cyl" %in% completions)
    })
    
 })
