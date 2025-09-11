@@ -59,6 +59,8 @@ extern "C" const char *locale2charset(const char *);
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/Preferences.hpp>
 
+#include "SessionAir.hpp"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -696,10 +698,8 @@ bool canUseAirFormatter(int context, const FilePath& documentPath)
       {
          if (projects::projectContext().hasProject())
          {
-            FilePath airTomlPath = projects::projectContext()
-               .directory()
-               .completePath("air.toml");
-            return airTomlPath.exists();
+            using namespace modules::air;
+            return hasAirToml(projects::projectContext().directory());
          }
          else
          {
