@@ -344,6 +344,9 @@ public class PaneManager
             sidebarWidget = sidebarWindow.getNormal();
             sidebar_ = sidebarWidget;
          }
+         showSidebar(true);
+      } else {
+         showSidebar(false);
       }
       
       panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
@@ -435,6 +438,9 @@ public class PaneManager
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
+
+         // manage sidebar
+         showSidebar(evt.getValue().getSidebarVisible());
 
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
@@ -955,13 +961,12 @@ public class PaneManager
       optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
    
-   @Handler
-   public void onToggleSidebar()
+   private void setSidebarPref(boolean showSidebar)
    {
-      // Toggle the preference value and update UI
       PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
-      boolean newVisibility = !paneConfig.getSidebarVisible();
-      
+      if (showSidebar == paneConfig.getSidebarVisible())
+         return;
+
       // Update the preference
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
          JsArrayUtil.copy(paneConfig.getQuadrants()),
@@ -972,17 +977,32 @@ public class PaneManager
          paneConfig.getConsoleRightOnTop(),
          paneConfig.getAdditionalSourceColumns(),
          paneConfig.getSidebar(),
-         newVisibility,
+         showSidebar,
          paneConfig.getSidebarLocation()));
-      
-      // Persist the preference change
+
       userPrefs_.writeUserPrefs();
-      
-      // Update the UI
-      if (newVisibility)
-         showSidebar();
-      else
-         hideSidebar();
+   }
+
+   @Handler
+   public void onShowSidebar()
+   {
+      setSidebarPref(true);
+   }
+
+   @Handler
+   public void onHideSidebar()
+   {
+      setSidebarPref(false);
+   }
+
+   @Handler
+   public void onToggleSidebar()
+   {
+      // Toggle the preference value and update UI
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      boolean newVisibility = !paneConfig.getSidebarVisible();
+     
+      setSidebarPref(newVisibility);
    }
 
    @Handler
@@ -1010,16 +1030,12 @@ public class PaneManager
       userPrefs_.writeUserPrefs();
       
       // Update the UI by hiding and re-showing the sidebar in the new location
-      if (sidebar_ != null)
-      {
-         hideSidebar();
-         showSidebar();
-      }
+      refreshSidebar();
    }
 
-   public void showSidebar()
+   public void showSidebar(boolean showSidebar)
    {
-      if (sidebar_ == null)
+      if (showSidebar && sidebar_ == null)
       {
          // Create sidebar configuration
          PaneConfig config = userPrefs_.panes().getValue().cast();
@@ -1048,24 +1064,27 @@ public class PaneManager
             panel_.setSidebarWidget(sidebar_, location);
          }
       }
-   }
-   
-   public void hideSidebar()
-   {
-      if (sidebar_ != null)
+      else if (!showSidebar && sidebar_ != null)
       {
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
+
+      // manage commands
+      commands_.showSidebar().setVisible(!showSidebar);
+      commands_.hideSidebar().setVisible(showSidebar);
    }
    
-   public boolean isSidebarVisible()
+   public void refreshSidebar()
    {
-      PaneConfig config = userPrefs_.panes().getValue().cast();
-      return config.getSidebarVisible();
-      // return sidebar_ != null && panel_.hasSidebarWidget();
+      // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
+      if (sidebar_ != null)
+      {
+         showSidebar(false);
+         showSidebar(true);
+      }
    }
-   
+
    public void setSidebarLocation(String location)
    {
       // Update preference and refresh the sidebar if visible
@@ -1089,11 +1108,7 @@ public class PaneManager
          userPrefs_.writeUserPrefs();
          
          // If sidebar is visible, refresh it in the new location
-         if (sidebar_ != null)
-         {
-            hideSidebar();
-            showSidebar();
-         }
+         refreshSidebar();
       }
    }
    

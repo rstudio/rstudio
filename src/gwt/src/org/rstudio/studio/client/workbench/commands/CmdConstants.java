@@ -536,11 +536,17 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("") // $NON-NLS-1$
     String projectSweaveOptionsDesc();
     
+    // showSidebar
+    @DefaultStringValue("Show Si_debar") // $NON-NLS-1$
+    String showSidebarMenuLabel();
+    
+    // hideSidebar
+    @DefaultStringValue("Hide Sideb_ar") // $NON-NLS-1$
+    String hideSidebarMenuLabel();
+    
     // toggleSidebar
     @DefaultStringValue("Toggle Visibility of Sidebar") // $NON-NLS-1$
     String toggleSidebarLabel();
-    @DefaultStringValue("To_ggle Sidebar") // $NON-NLS-1$
-    String toggleSidebarMenuLabel();
     
     // moveSidebar
     @DefaultStringValue("Move Sidebar Left or Right") // $NON-NLS-1$
