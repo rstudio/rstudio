@@ -530,9 +530,16 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             additionalColumnCount_ =
                paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
 
+         // Preserve existing sidebar settings
+         PaneConfig currentConfig = userPrefs_.panes().getGlobalValue().cast();
+         JsArrayString sidebarTabs = currentConfig.getSidebar();
+         boolean sidebarVisible = currentConfig.getSidebarVisible();
+         String sidebarLocation = currentConfig.getSidebarLocation();
+
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,
-               consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_));
+               consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_,
+               sidebarTabs, sidebarVisible, sidebarLocation));
 
          dirty_ = false;
       }
