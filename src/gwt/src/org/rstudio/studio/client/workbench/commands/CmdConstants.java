@@ -674,6 +674,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _Tutorial") // $NON-NLS-1$
     String activateTutorialMenuLabel();
     
+    // activateChat
+    @DefaultStringValue("Show Chat Pane") // $NON-NLS-1$
+    String activateChatLabel();
+    @DefaultStringValue("Show _Chat") // $NON-NLS-1$
+    String activateChatMenuLabel();
+    
     // activateBackgroundJobs
     @DefaultStringValue("Show Background Jobs Pane") // $NON-NLS-1$
     String activateBackgroundJobsLabel();
@@ -799,6 +805,12 @@ public interface CmdConstants extends Constants {
     String layoutZoomTutorialLabel();
     @DefaultStringValue("Zoom _Tutorial") // $NON-NLS-1$
     String layoutZoomTutorialMenuLabel();
+    
+    // layoutZoomChat
+    @DefaultStringValue("Zoom Chat") // $NON-NLS-1$
+    String layoutZoomChatLabel();
+    @DefaultStringValue("Zoom _Chat") // $NON-NLS-1$
+    String layoutZoomChatMenuLabel();
     
     // layoutZoomBuild
     @DefaultStringValue("Zoom Build") // $NON-NLS-1$

@@ -554,6 +554,9 @@ public abstract class
    public abstract AppCommand tutorialStop();
    public abstract AppCommand tutorialHome();
 
+   // Chat
+   public abstract AppCommand activateChat();
+   public abstract AppCommand layoutZoomChat();
 
    // Viewer
    public abstract AppCommand activateViewer();
