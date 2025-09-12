@@ -54,6 +54,5 @@ venv/
 .venv/
 
 CLAUDE.md
-AGENTS.md
 .claude/
 spec/
