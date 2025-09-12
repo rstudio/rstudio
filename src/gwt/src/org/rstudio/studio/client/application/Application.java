@@ -1277,6 +1277,10 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().remove();
       }
 
+      // hide commands for Chat pane (WIP, not available yet)
+      commands_.layoutZoomChat().remove();
+      commands_.activateChat().remove();
+
       // show support link only in RStudio Pro
       if (pEdition_.get() != null)
       {
