@@ -10,7 +10,7 @@
 set -euo pipefail
 
 # Can pass version as first argument, or fallback to hardcoded value
-COPILOT_VERSION="${1:-1.364.0}"
+COPILOT_VERSION="${1:-1.371.0}"
 
 # Validate version format 
 if [[ ! "${COPILOT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
