@@ -1378,7 +1378,7 @@ public class PaneManager
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, tutorialTab_, buildTab_, 
                                   presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_, chatTab_,
+                                  environmentTab_, viewerTab_, /* CHAT-WIP chatTab_, */
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
 
@@ -2023,6 +2023,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
+      commands.add(commands_.layoutZoomChat());
 
       return commands;
    }

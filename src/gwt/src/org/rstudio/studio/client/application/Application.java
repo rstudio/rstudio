@@ -1277,7 +1277,7 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().remove();
       }
 
-      // hide commands for Chat pane (WIP, not available yet)
+      // CHAT-WIP: hide commands for Chat pane
       commands_.layoutZoomChat().remove();
       commands_.activateChat().remove();
 

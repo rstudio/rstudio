@@ -114,7 +114,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                            PaneManager.PLOTS_PANE, PaneManager.CONNECTIONS_PANE,
                            PaneManager.PACKAGES_PANE, PaneManager.HELP_PANE, PaneManager.BUILD_PANE,
                            PaneManager.VCS_PANE, PaneManager.TUTORIAL_PANE, PaneManager.VIEWER_PANE,
-                           PaneManager.CHAT_PANE, PaneManager.PRESENTATIONS_PANE, PaneManager.PRESENTATION_PANE};
+                           /* CHAT-WIP PaneManager.CHAT_PANE, */
+                           PaneManager.PRESENTATIONS_PANE, PaneManager.PRESENTATION_PANE};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
