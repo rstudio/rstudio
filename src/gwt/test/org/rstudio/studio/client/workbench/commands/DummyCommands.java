@@ -3234,4 +3234,16 @@ public class DummyCommands extends Commands {
     public AppCommand copyRStudioVersion() {
         return null;
     }
+
+    @Override
+    public AppCommand activateChat()
+    {
+        return null;
+    }
+
+    @Override
+    public AppCommand layoutZoomChat()
+    {
+        return null;
+    }
 }
