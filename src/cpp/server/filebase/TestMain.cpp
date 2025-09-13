@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 
+// Simply include the necessary header for Google Test main
 int main(int argc, char* argv[])
 {
    ::testing::InitGoogleTest(&argc, argv);

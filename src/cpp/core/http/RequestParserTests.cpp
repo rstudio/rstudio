@@ -14,14 +14,19 @@
  */
 
 #include <cstdlib>
+#include <algorithm>
+#include <iterator>
+#include <vector>
 
 #include <boost/make_shared.hpp>
 
 #include <core/http/RequestParser.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <core/system/Crypto.hpp>
+#include <shared_core/Error.hpp>
+#include <core/Result.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
@@ -53,12 +58,17 @@ std::string simpleRequest(std::string* pBodyStr)
    return requestStr;
 }
 
-std::string generateRandomBytes()
+core::Result<std::string> generateRandomBytes()
 {
    // generate a large random payload
    uint32_t payloadSize = 1024*1024*2; // 2 MB
    std::vector<unsigned char> fileVector;
-   REQUIRE_FALSE(core::system::crypto::random(payloadSize, fileVector));
+   if (core::system::crypto::random(payloadSize, fileVector))
+   {
+      return tl::unexpected(systemError(boost::system::errc::io_error,
+                                        "Failed to generate random bytes",
+                                        ERROR_LOCATION));
+   }
 
    std::string fileBytes;
    std::copy(fileVector.begin(), fileVector.end(), std::back_inserter(fileBytes));
@@ -92,164 +102,185 @@ std::string complexRequest(const std::string& fileBytes,
    return requestStr;
 }
 
-FormHandler formHandler(const std::string& expectedData)
+core::Result<FormHandler> formHandler(const std::string& expectedData)
 {
    boost::shared_ptr<std::string> data = boost::make_shared<std::string>();
 
-   auto formHandler = [=](const std::string& formData, bool complete) -> bool
+   bool valid = true;
+   auto handler = [=, &valid](const std::string& formData, bool complete) -> bool
    {
       (*data) += formData;
 
       if (complete)
       {
-         REQUIRE(*data == expectedData);
+         if(*data != expectedData){
+            valid = false;
+         }
       }
       return true;
    };
 
-   return formHandler;
+   if(!valid)
+   {
+      return tl::unexpected(systemError(boost::system::errc::invalid_argument,
+                                        "Form handler validation failed",
+                                        ERROR_LOCATION));
+   }  
+   return handler;
 }
 
-test_context("RequestParserTests")
+TEST(HttpTest, SimpleFormParsingWorks)
 {
-   test_that("Simple form parsing works")
+   std::string bodyStr;
+   std::string requestStr = simpleRequest(&bodyStr);
+   Request request;
+
+   auto handlerResult = formHandler(bodyStr);
+   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
+   FormHandler handler = *handlerResult;
+
+   RequestParser parser;
+   parser.setFormHandler(handler);
+
+   RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::form_complete, status);
+}
+
+TEST(HttpTest, SimpleFormParsingWorksOneByteAtATime)
+{
+   std::string bodyStr;
+   std::string requestStr = simpleRequest(&bodyStr);
+   Request request;
+
+   auto handlerResult = formHandler(bodyStr);
+   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
+   FormHandler handler = *handlerResult;
+
+   RequestParser parser;
+   parser.setFormHandler(handler);
+
+   RequestParser::status status;
+   for (size_t i = 0; i < requestStr.size() - 1; ++i)
    {
-      std::string bodyStr;
-      std::string requestStr = simpleRequest(&bodyStr);
-      Request request;
+      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
+      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
 
-      FormHandler handler = formHandler(bodyStr);
-
-      RequestParser parser;
-      parser.setFormHandler(handler);
-
-      RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::headers_parsed);
-
-      status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::form_complete);
-   }
-
-   test_that("Simple form parsing works, one byte at a time")
-   {
-      std::string bodyStr;
-      std::string requestStr = simpleRequest(&bodyStr);
-      Request request;
-
-      FormHandler handler = formHandler(bodyStr);
-
-      RequestParser parser;
-      parser.setFormHandler(handler);
-
-      RequestParser::status status;
-      for (size_t i = 0; i < requestStr.size() - 1; ++i)
+      if (status == rstudio::core::http::RequestParser::headers_parsed)
       {
-         status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
-         REQUIRE((status == RequestParser::headers_parsed || status == RequestParser::incomplete));
-
-         if (status == RequestParser::headers_parsed)
-         {
-            // need to pass the same buffer to resume
-            i--;
-         }
+         // need to pass the same buffer to resume
+         i--;
       }
-
-      status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::form_complete);
    }
 
-   test_that("Long, complicated form parsing works")
+   status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::form_complete, status);
+}
+
+TEST(HttpTest, ComplicatedFormParsingWorks)
+{
+   auto result = generateRandomBytes();
+   ASSERT_TRUE(result.has_value()) << result.error().getSummary();
+   const std::string& fileBytes = *result;
+
+   std::string bodyStr;
+   std::string requestStr = complexRequest(fileBytes, &bodyStr);
+   Request request;
+
+   auto handlerResult = formHandler(bodyStr);
+   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
+   FormHandler handler = *handlerResult;
+
+   RequestParser parser;
+   parser.setFormHandler(handler);
+
+   RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::headers_parsed, status);
+
+   status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::form_complete, status);
+}
+
+TEST(HttpTest, ComplicatedFormParsingWorksOneByteAtATime)
+{
+   auto result = generateRandomBytes();
+   ASSERT_TRUE(result.has_value()) << result.error().getSummary();
+   const std::string& fileBytes = *result;
+
+   std::string bodyStr;
+   std::string requestStr = complexRequest(fileBytes, &bodyStr);
+   Request request;
+
+   auto handlerResult = formHandler(bodyStr);
+   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
+   FormHandler handler = *handlerResult;
+
+   RequestParser parser;
+   parser.setFormHandler(handler);
+
+   RequestParser::status status;
+   for (size_t i = 0; i < requestStr.size() - 1; ++i)
    {
-      std::string fileBytes = generateRandomBytes();
+      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
+      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete);
 
-      std::string bodyStr;
-      std::string requestStr = complexRequest(fileBytes, &bodyStr);
-      Request request;
-
-      FormHandler handler = formHandler(bodyStr);
-
-      RequestParser parser;
-      parser.setFormHandler(handler);
-
-      RequestParser::status status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::headers_parsed);
-
-      status = parser.parse(request, requestStr.c_str(), requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::form_complete);
-   }
-
-   test_that("Long, complicated form parsing works, one byte at a time")
-   {
-      std::string fileBytes = generateRandomBytes();
-
-      std::string bodyStr;
-      std::string requestStr = complexRequest(fileBytes, &bodyStr);
-      Request request;
-
-      FormHandler handler = formHandler(bodyStr);
-
-      RequestParser parser;
-      parser.setFormHandler(handler);
-
-      RequestParser::status status;
-      for (size_t i = 0; i < requestStr.size() - 1; ++i)
+      if (status == rstudio::core::http::RequestParser::headers_parsed)
       {
-         status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + 1);
-         REQUIRE((status == RequestParser::headers_parsed || status == RequestParser::incomplete));
-
-         if (status == RequestParser::headers_parsed)
-         {
-            // need to pass the same buffer to resume
-            i--;
-         }
+         // need to pass the same buffer to resume
+         i--;
       }
-
-      status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
-      REQUIRE(status == RequestParser::form_complete);
    }
 
-   test_that("Long, complicated form parsing works, random byte boundaries")
+   status = parser.parse(request, requestStr.c_str() + requestStr.size() - 1, requestStr.c_str() + requestStr.size());
+   ASSERT_EQ(RequestParser::form_complete, status);
+}
+
+TEST(HttpTest, ComplicatedFormParsingWorksRandomByteBoundaries)
+{
+   auto result = generateRandomBytes();
+   ASSERT_TRUE(result.has_value()) << result.error().getSummary();
+   const std::string& fileBytes = *result;
+
+   std::string bodyStr;
+   std::string requestStr = complexRequest(fileBytes, &bodyStr);
+   Request request;
+
+   auto handlerResult = formHandler(bodyStr);
+   ASSERT_TRUE(handlerResult.has_value()) << handlerResult.error().getSummary();
+   FormHandler handler = *handlerResult;
+
+   RequestParser parser;
+   parser.setFormHandler(handler);
+
+   RequestParser::status status;
+
+   for (size_t i = 0; i < requestStr.size();)
    {
-      std::string fileBytes = generateRandomBytes();
+      size_t byteAmount = rand() % 8192 + 1;
+      if (byteAmount > requestStr.size() - i)
+         byteAmount = requestStr.size() - i;
 
-      std::string bodyStr;
-      std::string requestStr = complexRequest(fileBytes, &bodyStr);
-      Request request;
+      status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + byteAmount);
+      ASSERT_TRUE(status == RequestParser::headers_parsed || status == RequestParser::incomplete || status == RequestParser::form_complete);
 
-      FormHandler handler = formHandler(bodyStr);
-
-      RequestParser parser;
-      parser.setFormHandler(handler);
-
-      RequestParser::status status;
-
-      for (size_t i = 0; i < requestStr.size();)
+      if (status == rstudio::core::http::RequestParser::headers_parsed)
       {
-         size_t byteAmount = rand() % 8192 + 1;
-         if (byteAmount > requestStr.size() - i)
-            byteAmount = requestStr.size() - i;
-
+         // need to pass the same buffer to resume
          status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + byteAmount);
-         REQUIRE((status == RequestParser::headers_parsed || status == RequestParser::incomplete || status == RequestParser::form_complete));
-
-         if (status == RequestParser::headers_parsed)
-         {
-            // need to pass the same buffer to resume
-            status = parser.parse(request, requestStr.c_str() + i, requestStr.c_str() + i + byteAmount);
-            REQUIRE(status == RequestParser::incomplete);
-         }
-         else if (status == RequestParser::form_complete)
-         {
-            break;
-         }
-
-         i += byteAmount;
+         ASSERT_EQ(rstudio::core::http::RequestParser::incomplete, status);
       }
+      else if (status == rstudio::core::http::RequestParser::form_complete)
+      {
+         break;
+      }
+
+      i += byteAmount;
    }
 }
 
-} // end namespace tests
-} // end namespace http
-} // end namespace core
-} // end namespace rstudio
-
+} // namespace tests
+} // namespace http
+} // namespace core
+} // namespace rstudio

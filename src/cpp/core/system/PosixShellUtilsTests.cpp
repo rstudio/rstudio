@@ -15,7 +15,7 @@
 
 #ifndef _WIN32
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <iostream>
 
@@ -28,36 +28,33 @@ namespace core {
 namespace shell_utils {
 namespace tests {
 
-test_context("Shell Escaping")
+TEST(ShellTest, CommandsWithSpecialCharactersAreEscaped)
 {
-   test_that("Commands with special characters are escaped")
-   {
-      std::string dollars = "$$$";
-      std::string escaped  = escape(dollars);
-      std::string expected = "'$$$'";
-      expect_true(escaped == expected);
-   }
-   
-   test_that("Commands with backslashes are escaped")
-   {
-      std::string backslashes = R"(\\\)";
-      std::string escaped = escape(backslashes);
-      std::string expected = R"('\\\')";
-      expect_true(escaped == expected);
-   }
-   
-   test_that("Inner quotes are properly handled")
-   {
-      std::string text = "Text with 'inner quotes'.";
-      std::string escaped = escape(text);
-      std::string expected = R"('Text with '"'"'inner quotes'"'"'.')";
-      expect_true(escaped == expected);
-   }
+   std::string dollars = "$$$";
+   std::string escaped  = escape(dollars);
+   std::string expected = "'$$$'";
+   EXPECT_EQ(escaped, expected);
 }
 
-} // end namespace tests
-} // end namespace shell_utils
-} // end namespace core
-} // end namespace rstudio
+TEST(ShellTest, CommandsWithBackslashesAreEscaped)
+{
+   std::string backslashes = R"(\\\)";
+   std::string escaped = escape(backslashes);
+   std::string expected = R"('\\\')";
+   EXPECT_EQ(escaped, expected);
+}
+
+TEST(ShellTest, InnerQuotesAreProperlyHandled)
+{
+   std::string text = "Text with 'inner quotes'.";
+   std::string escaped = escape(text);
+   std::string expected = R"('Text with '"'"'inner quotes'"'"'.')";
+   EXPECT_EQ(escaped, expected);
+}
+
+} // namespace tests
+} // namespace shell_utils
+} // namespace core
+} // namespace rstudio
 
 #endif // _WIN32
