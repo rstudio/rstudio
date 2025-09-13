@@ -9,11 +9,9 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## RStudio 2025.09.0
+## 2025.09.0 {#rstudio-2025.09.0}
 
-**"Cucumberleaf Sunflower"**
-
->Date: 2025-09-12
+| **"Cucumberleaf Sunflower"** | Date: 2025-09-12
 
 ### New
 
@@ -171,7 +169,7 @@ After completing the package upgrade, carefully review the backed up files and t
 - (rstudio-pro#8776): Deprecated the legacy Workbench homepage
 - (rstudio-pro#6251): Removed the deprecated Google Auth feature, including the associated documentation and server options
 
-## RStudio 2025.05.1 {#rstudio-2025.05.1}
+## 2025.05.1 {#rstudio-2025.05.1}
 
 | **"Mariposa Orchid"** | Date: 2025-06-05
 
