@@ -1562,7 +1562,7 @@ public class PaneManager
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, tutorialTab_, buildTab_, 
                                   presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_, /* CHAT-WIP chatTab_, */
+                                  environmentTab_, viewerTab_, chatTab_,
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
 
