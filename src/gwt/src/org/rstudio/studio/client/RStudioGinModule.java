@@ -144,6 +144,10 @@ import org.rstudio.studio.client.workbench.views.buildtools.BuildPane;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildPresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.BuildTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.ChatPane;
+import org.rstudio.studio.client.workbench.views.chat.ChatPresenter;
+import org.rstudio.studio.client.workbench.views.chat.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.ChatTab;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
@@ -374,6 +378,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
       bind(TutorialPresenter.Display.class).to(TutorialPane.class);
+      bind(ChatPresenter.Display.class).to(ChatPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
       bind(Presentation2.Display.class).to(Presentation2Pane.class);
@@ -412,6 +417,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab(PaneManager.LAUNCHER_PANE, LauncherJobsTab.class);
       bindTab(PaneManager.DATA_OUTPUT_PANE, DataOutputTab.class);
       bindTab(PaneManager.TUTORIAL_PANE, TutorialTab.class);
+      bindTab(PaneManager.CHAT_PANE, ChatTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class);
            
@@ -500,6 +506,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PythonServerOperations.class).to(RemoteServer.class);
       bind(QuartoServerOperations.class).to(RemoteServer.class);
       bind(CopilotServerOperations.class).to(RemoteServer.class);
+      bind(ChatServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class);
 
