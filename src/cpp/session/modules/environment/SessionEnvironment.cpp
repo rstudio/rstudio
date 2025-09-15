@@ -1872,6 +1872,13 @@ double obj_size_tree(SEXP x,
    // CHARSXP are treated as vectors for this purpose
    double size = 0;
 
+   // Handle unexpected null pointers -- it seems like certain ALTREP objects
+   // might encode them in certain cases?
+   //
+   // https://github.com/rstudio/rstudio/issues/16436
+   if (x == nullptr)
+      return 0;
+
    // Handle ALTREP objects
    if (r::sexp::isAltrep(x))
    {
