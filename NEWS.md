@@ -21,6 +21,7 @@
 - ([#15963](https://github.com/rstudio/rstudio/issues/15963)): Fixed an issue where an unsaved R Markdown document could erroneously be marked as saved after executing a chunk
 - ([#16402](https://github.com/rstudio/rstudio/issues/16402)): Fixed an issue where the wrong Python installation was chosen during Quarto render in some cases
 - ([#16532](https://github.com/rstudio/rstudio/issues/16352)): Fixed an issue where ongoing R Markdown render output was lost when after a browser refresh
+- ([#16346](https://github.com/rstudio/rstudio/issues/16436)): Fixed an issue where certain ALTREP objects could cause RStudio to crash while populating the Environment pane
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
