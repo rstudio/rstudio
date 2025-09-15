@@ -9,7 +9,167 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## RStudio 2025.05.1 {#rstudio-2025.05.1}
+## 2025.09.0 {#rstudio-2025.09.0}
+
+| **"Cucumberleaf Sunflower"** | Date: 2025-09-12
+
+### New
+
+#### RStudio
+
+- ([#16293](https://github.com/rstudio/rstudio/issues/16293)): Added a Source column that displays a package's origin (if known) in RStudio’s Packages pane
+- ([#16294](https://github.com/rstudio/rstudio/issues/16294)): Provided an additional icon in RStudio’s Packages pane that links to a package’s external documentation (e.g., pkgdown website) when available
+- ([#16295](https://github.com/rstudio/rstudio/issues/16295)): Added functionality in the RStudio UI for changing the current repository/snapshot when using Posit Package Manager
+- ([#15841](https://github.com/rstudio/rstudio/issues/15841)): Added support for highlighing all SQL 2023 standard keywords in SQL documents in RStudio
+- ([#16138](https://github.com/rstudio/rstudio/issues/16138)): Added support for version 17 of the R graphics engine in RStudio
+- ([#16213](https://github.com/rstudio/rstudio/issues/16213)): Improved legibility of highlighted code when the RStudio debugger is active
+- ([#15945](https://github.com/rstudio/rstudio/issues/15945)): Added a user preference in RStudio to disable showing the splash screen at startup
+- ([#15614](https://github.com/rstudio/rstudio/issues/15614)): Added support for closing the RStudio splash screen when clicked with the mouse
+- ([#16111](https://github.com/rstudio/rstudio/issues/16111)): Increased RStudio’s default console buffer size to 10,000 lines
+- ([#11661](https://github.com/rstudio/rstudio/issues/11661)): Added functionality to bring an existing zoomed plot window to the foreground when clicking the Zoom button in the RStudio Desktop plots pane
+- ([#16009](https://github.com/rstudio/rstudio/issues/16009)): Provided an option in RStudio to stop ignoring update prompts when manually checking for updates after previously ignoring them
+- ([#15988](https://github.com/rstudio/rstudio/issues/15988)): Added Posit Product Documentation theme v7.0.0 with cookie consent, style updates, accessibility fixes, and dark theme improvements
+- ([#16214](https://github.com/rstudio/rstudio/issues/16214)): Introduced a new structure for RStudio release note entries
+- ([#16226](https://github.com/rstudio/rstudio/issues/16226)): Added an option (off by default) to zoom RStudio Desktop UI with Ctrl/Cmd + mouse wheel
+
+#### Posit Workbench
+
+- ([#14083](https://github.com/rstudio/rstudio/issues/14083)): Added support for custom certificate bundles for GitHub Copilot in RStudio
+- (rstudio-pro#8093): Redesigned the Workbench homepage to provide a more efficient and intuitive user experience focused on projects
+- (rstudio-pro#6768): Added Positron Pro and VS Code projects alongside RStudio Pro projects on the Workbench homepage
+- (rstudio-pro#8162): Added a custom “Metadata” column in the RStudio Packages pane for sessions using Posit Package Manager
+- (rstudio-pro#5357): Added support for enforcing the user limit specified by the Posit Workbench product license strictly
+- (rstudio-pro#7533): Released Posit Product Documentation theme v7.0.1 with cookie consent, style updates, accessibility fixes, and dark theme improvements
+- (rstudio-pro#8186): Enabled Positron Pro sessions by default in Workbench
+- (rstudio-pro#7599): Added a step to back-up existing Positron Pro configuration files and install defaults during upgrade
+- (rstudio-pro#8072): Added support for importing VS Code settings into Positron Pro in Workbench
+- (rstudio-pro#7466): Added support for setting the default Connect server for the Publisher extension in Positron settings via the `default-rsconnect-server` option in `rsession.conf`
+- (rstudio-pro#8697): Added a product check request in Workbench that notifies a Posit server when the service is set up and actively using a license. Control this with the `server-product-check` configuration setting (enabled by default: `1`)`.
+- (rstudio-pro#8090): Improved integration between RStudio and Posit Package Manager, including repository discovery, authentication, and feature visibility
+- (rstudio-pro#5068): Added support for just-in-time provisioning of local groups for Proxied Auth, OpenID Connect, and SAML Authentication in Workbench
+- (rstudio-pro#7817): Added a Run Script in a Workbench Job action (and matching command) in the editor toolbar for R and Python scripts in Positron and VS Code
+- (rstudio-pro#8463): Organized the Workbench Jobs pane in Positron Pro and VS Code by script, adopt familiar VS Code UI conventions, and open scripts or virtual Job Details documents when clicked
+- (rstudio-pro#7862): Added support for dismissing completed jobs individually from the Workbench Jobs pane in Positron Pro and VS Code. Provided Dismiss Completed Jobs and Restore Completed Jobs actions to hide/unhide all completed jobs (not persistent across sessions).
+- (rstudio-pro#8464): Added a preview setting in Workbench to launch jobs from Positron Pro and VS Code with managed credentials (disabled by default)
+- (rstudio-pro#8148): Provided a new Audit Database and `get_historical_session` Workbench API endpoint to retrieve data about ended sessions
+- (rstudio-pro#8124): Made Prometheus metrics generally available and removed Preview status
+- (rstudio-pro#8289): Removed `pwb_session_duration`from Prometheus Metrics and provided session start/end times via the new Workbench API endpoint `get_historical_session`
+- (rstudio-pro#8135): Added Prometheus metrics for the Launcher component of Workbench
+- (rstudio-pro#8502): Added version information for Positron Pro and Posit Workbench Code Server to the diagnostic report output
+- (rstudio-pro#8504): Added Positron Pro version information to Positron Pro session output
+- (vscode-server#202): Added GitHub Device Login URL as a default trusted domain for VS Code and Positron Pro sessions
+- (rstudio-pro#6867): Enhanced the image selection in the Workbench New Session dialog to more clearly display and classify available images
+- (rstudio-pro#8776): Added a switch in both Workbench homepages to toggle between the new and legacy versions and remember the user’s choice locally (see deprecation notice)
+- (rstudio-pro#9009): Added the kapa.ai website widget to Posit Workbench documentation to answer questions about deploying, configuring, and using Workbench, Posit Connect, and Posit Package Manager.
+- (rstudio-pro#7247): Added support for SLURM 24 and 25
+- (rstudio-pro#8025): Improved diagnostic messages for communication errors between Workbench components
+- (rstudio-pro#8502): Added version information for Positron Pro and Posit Workbench Code Server in diagnostic report output
+- (vscode-server#164): Added support for controlling the location of VS Code session logs with the `XDG_STATE_HOME` environment variable
+- (vscode-server#202): Added GitHub Device Login URL as a default trusted domain for VS Code and Positron Pro sessions
+- Improved Positron Pro Admin and User Guide documentation
+- Added AWS Load Balanced Reference Architecture
+- Added support for RHEL 10
+
+### Fixed
+
+#### RStudio
+
+- ([#15482](https://github.com/rstudio/rstudio/issues/15482)): Fixed an issue where RStudio would display a "Cannot reinitialise DataTable" error in RStudio when viewing data sets
+- ([#15133](https://github.com/rstudio/rstudio/issues/15133)): Fixed an issue where pkgdown websites built outside of the user directory could not be viewed from RStudio Server
+- ([#14113](https://github.com/rstudio/rstudio/issues/14113)): Fixed an issue where factors with more than 64 levels were displayed as though they were character vectors in RStudio
+- ([#15955](https://github.com/rstudio/rstudio/issues/15955)): Fixed an issue where the "Save As" dialog would not be visible when trying to save an older git revision of a file
+- ([#15879](https://github.com/rstudio/rstudio/issues/15879)): Fixed an issue where code indentation stopped working following code chunks containing only Quarto comments
+- ([#15979](https://github.com/rstudio/rstudio/issues/15979)): Fixed an issue where RStudio could hang when attempting to execute notebook chunks without a registered handler
+- ([#12545](https://github.com/rstudio/rstudio/issues/12545)): (Windows) Fixed an issue where "Use default 32bit / 64bit version of R" did not always use the default version of R set in the registry
+- ([#16249](https://github.com/rstudio/rstudio/issues/16249)): Fixed an issue where Copilot would hang by updating copilot-language-server
+- ([#15923](https://github.com/rstudio/rstudio/issues/15923)): Fixed an issue where an error message was not shown when the GitHub Copilot language server was missing
+- ([#15895](https://github.com/rstudio/rstudio/issues/15895)): Fixed an issue where GitHub Copilot was unaware of files already loaded in the source editor before Copilot starts
+- ([#16133](https://github.com/rstudio/rstudio/issues/16133)): Fixed an issue where RStudio's Update Packages dialog could report packages were out-of-date for packages installed into multiple library paths
+- (rstudio-pro#8159): Fixed an issue where attempting to attach or detach a package using the Packages pane could cause UI to become out-of-sync with actual package state
+- ([#16119](https://github.com/rstudio/rstudio/issues/16119)): Fixed an issue where GitHub Copilot's status was incorrectly reported as an error in the Preferences dialog
+- ([#16128](https://github.com/rstudio/rstudio/issues/16128)): Fixed an issue where GitHub Copilot would not index project files when Copilot was started while the project is open
+- ([#15901](https://github.com/rstudio/rstudio/issues/15901)): Fixed an issue where the entire document was sent to GitHub Copilot after each edit instead of just the changes
+- ([#16129](https://github.com/rstudio/rstudio/issues/16129)): Fixed an issue where RStudio would send multiple didOpen messages to GitHub Copilot for the same file
+- ([#2900](https://github.com/rstudio/rstudio/issues/2900)): Fixed an issue where new R package projects did not inherit "Generate documentation with Roxygen" preference
+- ([#15919](https://github.com/rstudio/rstudio/issues/15919)): Fixed an issue where large character vectors were shown with an NaN size in the environment pane
+- ([#15444](https://github.com/rstudio/rstudio/issues/15444)): Fixed an issue where hitting the Escape key to close the "Update Available" dialog would exit RStudio
+- ([#16191](https://github.com/rstudio/rstudio/issues/16191)): Fixed an issue where the splash screen would not close and the RStudio main window would not show when starting RStudio Desktop
+- ([#16198](https://github.com/rstudio/rstudio/issues/16198)): Fixed an issue where the "Switch Focus between Source/Console" command would not work when the Visual Editor was active
+- ([#12470](https://github.com/rstudio/rstudio/issues/12470)): Fixed an issue in RStudio Desktop on Windows where creating multiple cursors using Alt + the mouse would move focus to the menu bar
+- ([#15797](https://github.com/rstudio/rstudio/issues/15797)): Fixed an issue where the label in readr-based text import dialog incorrectly showed "factors" instead of "factor levels"
+- ([#16266](https://github.com/rstudio/rstudio/pull/16266)): Fixed an issue where RStudio was not resolving xdg-open on the PATH, and was instead assuming it was located at /usr/bin/xdg-open
+- ([#16217](https://github.com/rstudio/rstudio/issues/16217)): Fixed an issue where error messages were not wrapped when presented in the Console
+- ([#16225](https://github.com/rstudio/rstudio/issues/16225)): Fixed an issue where the RStudio memory panel showed shared memory resources for certain cgroup configurations
+- ([#16326](https://github.com/rstudio/rstudio/issues/16326)): Fixed an issue where an error was shown when creating a new folder in the Choose Directory dialog
+- ([#15919](https://github.com/rstudio/rstudio/issues/15919)): Fixed an issue where NaN might display for the object sizes of large character vectors by using lobstr in RStudio to compute the size
+
+#### Posit Workbench
+
+- (rstudio-pro#8144): Fixed an issue where Positron State was not being loaded on login
+- (rstudio-pro#7368): Fixed an issue where Shiny for Python and other applications would regularly experience websocket failures in VS Code and Positron sessions
+- (rstudio-pro#7818): Fixed an issue where Workbench Jobs launched from Positron and VS Code did not set the working directory correctly for scripts outside of the current workspace
+- (rstudio-pro#7605): Fixed an issue where setting `create-container-user=1` in `rserver.conf` option would not work when `pam-use-password=1` was also set
+- (rstudio-pro#7861): Fixed an issue where completed jobs in the Workbench Jobs pane in Positron and VS Code had a non-functional `Stop Workbench Job` action
+- (rstudio-pro#8088): Fixed an issue where Workbench Jobs launched from Positron and VS Code were ignoring queues, resource limits, or resource profiles
+- (rstudio-pro#8251): Fixed an issue where `RS_SERVER_URL` was not set correctly in Positron and VS Code sessions launched through the Workbench API
+- (rstudio-pro#8003): Fixed an issue where Positron user settings were not being copied to `user-data-dir`
+- (rstudio-pro#8287): Fixed an issue where RStudio memory limits were applied to shared processes for certain cgroup configurations
+- (rstudio-pro#8120): Fixed an issue where local launcher resource limits did not work with pam_systemd
+- (rstudio-pro#8319): Fixed an issue where a file descriptor would leak in RStudio Pro sessions when running on a system without cgroups v1 or v2
+- (rstudio-pro#8246): Fixed an issue where rworkspaces would sometimes segfault when it exited (no user impact)
+- (rstudio-pro#8462): Fixed an issue where VS Code/Positron Pro session browser state would not be loaded on sign in after being signed out due to inactivity
+- (rstudio-pro#6867): Fixed an issue where image selection in the launcher UI was not behaving consistently
+- (rstudio-pro#8690): Fixed an issue with locking users when using a license that has unlimited user count
+- (rstudio-pro#7589) Fixed an issue where users were not gracefully returned to the homepage when clicking an invalid link
+- (rstudio-pro#8080): Fixed an issue where the original CPU and Memory requests would not be remembered when resuming a session
+- (rstudio-pro#8003): Fixed an issue where Positron user settings were not being copied to `user-data-dir`
+- (rstudio-pro#8145): Fixed an issue where VS Code sessions were incorrectly labeled as `"rstudio-pro"` in the `pwb_sessions_launched_total` Prometheus metric
+- (rstudio-pro#8563): Fixed an issue where the upload link in the Workbench diagnostics report was outdated
+- (rstudio-pro#8580): Fixed an issue where sessions started in a Kubernetes cluster would fail to start if ".0000" was appended to the CPU request
+- (rstudio-pro#8929): Fixed an issue that could cause spurious login failures in Workbench
+- (rstudio-workbench-vscode-ext#268): Fixed an issue where the custom port warning for FastAPI application in VS Code and Positron Pro sessions would not be displayed in some cases
+- (rstudio-workbench-vscode-ext#278): Fixed an issue where Python/R console activity in Positron Pro sessions was not detected when the browser was closed, which caused premature termination
+- (rstudio-workbench-vscode-ext#310): Fixed an issue where disabling the extension marketplace in Positron Pro sessions would prevent built-in extensions from being installed
+- (rstudio-workbench-vscode-ext#291): Fixed an issue where long-running Workbench Jobs launched from Positron and VS Code were displaying incorrect runtimes
+- (rstudio-workbench-vscode-ext#345): Fixed an issue where the Workbench extension for VS Code and Positron had an overly noisy notification
+- (vscode-server#171): Fixed an issue where VS Code and Positron Pro sessions would prompt the user when navigating to the Workbench homepage as though the Workbench URL were an external link
+
+
+### Upgrade Instructions
+
+#### Posit Workbench
+
+With this release, Positron Pro sessions are moving from preview to General Availability (GA). The upgrade process will automatically back up any existing Positron Pro configuration files to ensure production-ready defaults are properly installed.
+
+During package upgrade, the following files will be backed up if they exist:
+
+- `/etc/rstudio/positron.conf` as `/etc/rstudio/positron.conf.bak`
+- `/etc/rstudio/positron-user-settings.conf` as `/etc/rstudio/positron-user-settings.conf.bak`
+
+After completing the package upgrade, carefully review the backed up files and the new default configuration files and merge any customizations as needed.
+
+### Dependencies
+
+- (rstudio-pro#9080): rserver-saml 0.9.1
+- (rstudio-pro#8991): Nginx 1.29.1
+- ([#15935](https://github.com/rstudio/rstudio/issues/15935)): Copilot Language Server 1.352.0
+- ([#15933](https://github.com/rstudio/rstudio/issues/15933)): Electron 37.2.6
+- ([#16062](https://github.com/rstudio/rstudio/issues/13924)): GWT 2.12.2
+- ([#15934](https://github.com/rstudio/rstudio/issues/15934)): Quarto 1.7.32
+- (vscode-server#177): Code OSS 1.102.0
+- Node.js 22.15.1
+- Positron Pro 2025.08.1
+
+### Deprecated / Removed
+
+- ([#15940](https://github.com/rstudio/rstudio/issues/15940)): Discontinuted support for Ubuntu Focal for RStudio Server and Posit Workbench
+- ([#16104](https://github.com/rstudio/rstudio/issues/16104)): Removed the "Limit visible console output" feature
+- ([#16233](https://github.com/rstudio/rstudio/issues/16233)): Removed the "Send automated crash reports" feature from RStudio Desktop
+- (rstudio-pro#8257): Removed publishing to Posit Cloud
+- (rstudio-pro#8776): Deprecated the legacy Workbench homepage
+- (rstudio-pro#6251): Removed the deprecated Google Auth feature, including the associated documentation and server options
+
+## 2025.05.1 {#rstudio-2025.05.1}
 
 | **"Mariposa Orchid"** | Date: 2025-06-05
 
@@ -1449,7 +1609,7 @@ R:
 - Fixed for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
 
 
-## 2022.02.3+492.pro3 {#rstudio-2022.02.4500.pro1}
+## 2022.02.3+492.pro3 {#rstudio-2022.02.3492.pro3}
 
 **"Prairie Trillium"** | Date: 2022-05-17
 
