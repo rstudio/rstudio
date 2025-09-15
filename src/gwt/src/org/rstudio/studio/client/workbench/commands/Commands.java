@@ -359,7 +359,8 @@ public abstract class
    public abstract AppCommand showSidebar();
    public abstract AppCommand hideSidebar();
    public abstract AppCommand toggleSidebar();
-   public abstract AppCommand moveSidebar();
+   public abstract AppCommand moveSidebarLeft();
+   public abstract AppCommand moveSidebarRight();
    public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();

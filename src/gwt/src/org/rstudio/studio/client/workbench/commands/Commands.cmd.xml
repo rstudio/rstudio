@@ -290,7 +290,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
-            <cmd refid="moveSidebar"/>
+            <cmd refid="moveSidebarLeft"/>
+            <cmd refid="moveSidebarRight"/>
             <separator/>
             <cmd refid="layoutConsoleOnLeft"/>
             <cmd refid="layoutConsoleOnRight"/>
@@ -776,6 +777,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activateChat" value="Ctrl+Meta+i" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activateChat" value="Ctrl+Alt+i" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Meta+F7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Ctrl+F7" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
 
@@ -1389,9 +1392,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="toggleSidebar"
         label="Toggle Visibility of Sidebar"/>
 
-   <cmd id="moveSidebar"
-        label="Move Sidebar Left or Right"
-        menuLabel="Move Si_debar Left or Right"/>
+   <cmd id="moveSidebarLeft"
+        label="Show Sidebar on Left"
+        menuLabel="Show Sidebar on Le_ft"/>
+
+   <cmd id="moveSidebarRight"
+        label="Show Sidebar on Right"
+        menuLabel="Show Sidebar on Ri_ght"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"

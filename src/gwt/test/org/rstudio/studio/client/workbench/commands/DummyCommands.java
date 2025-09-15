@@ -1580,7 +1580,12 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand moveSidebar() {
+    public AppCommand moveSidebarLeft() {
+        return null;
+    }
+
+    @Override
+    public AppCommand moveSidebarRight() {
         return null;
     }
 

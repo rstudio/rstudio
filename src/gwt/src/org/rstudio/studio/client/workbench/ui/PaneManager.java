@@ -1008,7 +1008,18 @@ public class PaneManager
    }
 
    @Handler
-   public void onMoveSidebar()
+   public void onMoveSidebarLeft()
+   {
+      toggleSidebarLocation();
+   }
+
+   @Handler
+   public void onMoveSidebarRight()
+   {
+      toggleSidebarLocation();
+   }
+
+   public void toggleSidebarLocation()
    {
       // Toggle the sidebar location between left and right
       PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
@@ -1033,6 +1044,9 @@ public class PaneManager
       
       // Update the UI by hiding and re-showing the sidebar in the new location
       refreshSidebar();
+      
+      // Update command visibility based on new location
+      manageLayoutCommands();
    }
 
    public void showSidebar(boolean showSidebar)
@@ -2170,6 +2184,7 @@ public class PaneManager
          commands_.layoutConsoleOnRight().setVisible(false);
       }
 
+      manageSidebarCommands();
       manageZoomColumnCommands();
    }
 
@@ -2186,6 +2201,25 @@ public class PaneManager
 
       commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
       commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
+   }
+
+   private void manageSidebarCommands()
+   {
+      PaneConfig config = getCurrentConfig();
+      String currentLocation = config.getSidebarLocation();
+      boolean isSidebarVisible = config.getSidebarVisible();
+      
+      if (isSidebarVisible)
+      {
+         // Show moveSidebarLeft only when sidebar is on the right
+         commands_.moveSidebarLeft().setVisible("right".equals(currentLocation));
+         commands_.moveSidebarRight().setVisible("left".equals(currentLocation));
+      }
+      else
+      {
+         commands_.moveSidebarLeft().setVisible(false);
+         commands_.moveSidebarRight().setVisible(false);
+      }
    }
 
    private List<AppCommand> getLayoutCommands()
