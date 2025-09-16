@@ -2291,7 +2291,8 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # Build a call to invoke the base R downloader.
          call <- match.call(expand.dots = TRUE)
          call[[1L]] <- quote(.rs.downloadFile)
-         call["headers"] <- if (length(callHeaders)) list(callHeaders)
+         if (length(callHeaders))
+            call["headers"] <- list(callHeaders)
          status <- eval(call, envir = parent.frame())
          return(invisible(status))
       }
@@ -2314,7 +2315,8 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          call[[1L]] <- quote(.rs.downloadFile)
          call["url"] <- list(url[idx])
          call["destfile"] <- list(destfile[idx])
-         call["headers"] <- if (length(callHeaders)) list(callHeaders)
+         if (length(callHeaders))
+            call["headers"] <- list(callHeaders)
          retvals[idx] <- eval(call, envir = parent.frame())
       }
 
