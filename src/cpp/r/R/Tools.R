@@ -2282,10 +2282,16 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
       # Handle the simpler length-one URL case up front.
       if (length(url) == 1L)
       {
+         # Build relevant headers for the call.
+         callHeaders <- headers
          authHeader <- .rs.computeAuthorizationHeader(url)
+         if (length(authHeader) && nzchar(authHeader))
+            callHeaders <- c(callHeaders, Authorization = authHeader)
+
+         # Build a call to invoke the base R downloader.
          call <- match.call(expand.dots = TRUE)
          call[[1L]] <- quote(.rs.downloadFile)
-         call["headers"] <- list(c(headers, Authorization = authHeader))
+         call["headers"] <- if (length(callHeaders)) list(callHeaders)
          status <- eval(call, envir = parent.frame())
          return(invisible(status))
       }
@@ -2298,12 +2304,17 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # Figure out which URLs are associated with the current header.
          idx <- which(authHeaders == authHeader)
 
+         # Build relevant headers for the call.
+         callHeaders <- headers
+         if (length(authHeader) && nzchar(authHeader))
+            callHeaders <- c(callHeaders, Authorization = authHeader)
+
          # Build a call to download these files all in one go.
          call <- match.call(expand.dots = TRUE)
          call[[1L]] <- quote(.rs.downloadFile)
          call["url"] <- list(url[idx])
          call["destfile"] <- list(destfile[idx])
-         call["headers"] <- list(c(headers, Authorization = authHeader))
+         call["headers"] <- if (length(callHeaders)) list(callHeaders)
          retvals[idx] <- eval(call, envir = parent.frame())
       }
 
