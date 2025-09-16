@@ -22,6 +22,7 @@
 - ([#16402](https://github.com/rstudio/rstudio/issues/16402)): Fixed an issue where the wrong Python installation was chosen during Quarto render in some cases
 - ([#16532](https://github.com/rstudio/rstudio/issues/16352)): Fixed an issue where ongoing R Markdown render output was lost when after a browser refresh
 - ([#16346](https://github.com/rstudio/rstudio/issues/16436)): Fixed an issue where certain ALTREP objects could cause RStudio to crash while populating the Environment pane
+- ([#16444](https://github.com/rstudio/rstudio/issues/16444)): Fixed an issue where the file extension of a new C++ source file was truncated to `.cp` on macOS
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
