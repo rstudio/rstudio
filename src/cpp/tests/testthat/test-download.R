@@ -47,3 +47,49 @@ test_that("download.file hooks work as expected", {
    expect_download(c(url, url))
 
 })
+
+# https://github.com/rstudio/rstudio/issues/16446
+test_that("download hooks don't set an empty authorization header", {
+
+   skip_if(!"headers" %in% names(formals(utils::download.file)))   
+   
+   url <- "https://cran.rstudio.com"
+   
+   trace(.rs.downloadFile, quote({
+      expect_identical(headers, NULL)
+      stop("exiting early")
+   }), print = FALSE)
+   on.exit(untrace(.rs.downloadFile))
+   
+   tryCatch(
+      download.file(url, tempfile()),
+      error = function(cnd) NULL
+   )
+   
+})
+
+test_that("we can download packages from repositories", {
+   
+   info <- download.packages(
+      pkgs    = "rlang",
+      destdir = tempdir(),
+      repos   = "https://cloud.r-project.org"
+   )
+   
+   path <- info[1, 2]
+   expect_true(file.exists(path))
+   files <- untar(path, list = TRUE)
+   expect_true("rlang/DESCRIPTION" %in% files)
+   
+   info <- download.packages(
+      pkgs    = "rlang",
+      destdir = tempdir(),
+      repos   = "https://packagemanager.posit.co/cran/latest"
+   )
+   
+   path <- info[1, 2]
+   expect_true(file.exists(path))
+   files <- untar(path, list = TRUE)
+   expect_true("rlang/DESCRIPTION" %in% files)
+   
+})
