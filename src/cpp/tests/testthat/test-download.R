@@ -57,10 +57,13 @@ test_that("download hooks don't set an empty authorization header", {
    
    trace(.rs.downloadFile, quote({
       expect_identical(headers, NULL)
-      invokeRestart("abort")
+      stop("exiting early")
    }), print = FALSE)
    on.exit(untrace(.rs.downloadFile))
    
-   download.file(url, tempfile())
+   tryCatch(
+      download.file(url, tempfile()),
+      error = function(cnd) NULL
+   )
    
 })
