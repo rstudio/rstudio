@@ -47,3 +47,20 @@ test_that("download.file hooks work as expected", {
    expect_download(c(url, url))
 
 })
+
+# https://github.com/rstudio/rstudio/issues/16446
+test_that("download hooks don't set an empty authorization header", {
+
+   skip_if(!"headers" %in% names(formals(utils::download.file)))   
+   
+   url <- "https://cran.rstudio.com"
+   
+   trace(.rs.downloadFile, quote({
+      expect_identical(headers, NULL)
+      invokeRestart("abort")
+   }), print = FALSE)
+   on.exit(untrace(.rs.downloadFile))
+   
+   download.file(url, tempfile())
+   
+})
