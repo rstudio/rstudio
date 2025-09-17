@@ -49,6 +49,7 @@ namespace preview {
 
 namespace {
 
+// for 'quarto preview' jobs
 class QuartoPreview : public QuartoJob
 
 {
@@ -188,6 +189,19 @@ protected:
    
    virtual void environment(core::system::Options* pEnv)
    {
+      // make sure quarto and RStudio are using the same Python instance
+      std::string quartoPython = core::system::getenv("QUARTO_PYTHON");
+      if (quartoPython.empty())
+      {
+         std::string pythonPath;
+         Error error = r::exec::RFunction(".rs.python.activeInterpreterPath").call(&pythonPath);
+         if (error)
+            LOG_ERROR(error);
+
+         if (!pythonPath.empty())
+            core::system::setenv(pEnv, "QUARTO_PYTHON", pythonPath);
+      }
+
       // set render token
       core::system::setenv(pEnv, "QUARTO_RENDER_TOKEN", renderToken_);
 

@@ -16,16 +16,15 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
-
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 /**
  * Displays R Console output to user, with special behaviors for regular output

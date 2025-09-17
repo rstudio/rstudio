@@ -14,7 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.JsArrayString;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -22,7 +26,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
-import java.util.*;
+import com.google.gwt.core.client.JsArrayString;
 
 public class PaneConfig extends UserPrefsAccessor.Panes
 {
@@ -66,6 +70,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push(PaneManager.BUILD_PANE);
       tabSet1.push(PaneManager.VCS_PANE);
       tabSet1.push(PaneManager.TUTORIAL_PANE);
+      tabSet1.push(PaneManager.CHAT_PANE);
       tabSet1.push(PaneManager.PRESENTATION_PANE);
       
       JsArrayString tabSet2 = createArray().cast();
@@ -109,6 +114,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                            PaneManager.PLOTS_PANE, PaneManager.CONNECTIONS_PANE,
                            PaneManager.PACKAGES_PANE, PaneManager.HELP_PANE, PaneManager.BUILD_PANE,
                            PaneManager.VCS_PANE, PaneManager.TUTORIAL_PANE, PaneManager.VIEWER_PANE,
+                           /* CHAT-WIP PaneManager.CHAT_PANE, */
                            PaneManager.PRESENTATIONS_PANE, PaneManager.PRESENTATION_PANE};
    }
 

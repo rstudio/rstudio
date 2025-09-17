@@ -15,9 +15,10 @@
 
 package org.rstudio.studio.client.workbench.events;
 
+import org.rstudio.studio.client.workbench.model.UserPrompt;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import org.rstudio.studio.client.workbench.model.UserPrompt;
 
 public class UserPromptEvent extends GwtEvent<UserPromptEvent.Handler>
 {

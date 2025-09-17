@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.cellview;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -23,7 +25,6 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import org.rstudio.core.client.StringUtil;
 
 /**
  * A Cell used to render a checkbox. The value of the checkbox may be

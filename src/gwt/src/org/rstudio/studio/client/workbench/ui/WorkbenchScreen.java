@@ -15,22 +15,6 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.logical.shared.ResizeEvent;
-import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -50,20 +34,24 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.WorkbenchMainView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.*;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
+import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
-import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
-import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.CodePreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.RMarkdownPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SourceControlPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.SpellingPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.SweavePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -73,6 +61,26 @@ import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
 import org.rstudio.studio.client.workbench.views.plots.PlotsTab;
 import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
+import com.google.gwt.user.client.ui.SplitterResizedHandler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class WorkbenchScreen extends Composite
                              implements WorkbenchMainView,
@@ -353,6 +361,8 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
    @Handler
+   void onActivateChat() { paneManager_.activateTab(Tab.Chat); }
+   @Handler
    void onActivatePresentation2() 
    { 
       paneManager_.activateTab(Tab.Presentations); 
@@ -386,6 +396,8 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
    @Handler
    void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
+   @Handler
+   void onLayoutZoomChat() { paneManager_.zoomTab(Tab.Chat); }
    @Handler
    void onLayoutZoomPresentation2() { paneManager_.zoomTab(Tab.Presentations); }
 

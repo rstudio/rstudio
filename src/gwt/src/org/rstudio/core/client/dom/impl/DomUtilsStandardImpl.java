@@ -14,14 +14,15 @@
  */
 package org.rstudio.core.client.dom.impl;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Text;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.NativeWindow;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Text;
 
 public class DomUtilsStandardImpl implements DomUtilsImpl
 {

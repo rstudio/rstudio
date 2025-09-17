@@ -14,23 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.layout.client.Layout.AnimationCallback;
-import com.google.gwt.layout.client.Layout.Layer;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.SplitterResizedEvent;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-
-import elemental2.dom.DomGlobal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -82,10 +69,23 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.SplitterResizedEvent;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+
+import elemental2.dom.DomGlobal;
 
 /*
  * TODO: Push client state when selected tab or layout changes
@@ -98,7 +98,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn, Chat
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -247,6 +247,7 @@ public class PaneManager
                       @Named(LAUNCHER_PANE) final WorkbenchTab launcherJobsTab,
                       @Named(DATA_OUTPUT_PANE) final WorkbenchTab dataTab,
                       @Named(TUTORIAL_PANE) final WorkbenchTab tutorialTab,
+                      @Named(CHAT_PANE) final WorkbenchTab chatTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader,
@@ -285,6 +286,7 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
+      chatTab_ = chatTab;
       pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
@@ -1348,6 +1350,8 @@ public class PaneManager
             return vcsTab_;
          case Tutorial:
             return tutorialTab_;
+         case Chat:
+            return chatTab_;
          case Build:
             return buildTab_;
          case Presentation:
@@ -1374,7 +1378,7 @@ public class PaneManager
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, tutorialTab_, buildTab_, 
                                   presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_,
+                                  environmentTab_, viewerTab_, /* CHAT-WIP chatTab_, */
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
 
@@ -1906,6 +1910,8 @@ public class PaneManager
          return Tab.VCS;
       if (name.equalsIgnoreCase(TUTORIAL_PANE))
          return Tab.Tutorial;
+      if (name.equalsIgnoreCase(CHAT_PANE))
+         return Tab.Chat;
       if (name.equalsIgnoreCase(BUILD_PANE))
          return Tab.Build;
       if (name.equalsIgnoreCase(PRESENTATION_PANE))
@@ -1947,6 +1953,7 @@ public class PaneManager
       case SourceColumn: return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
       case Tutorial:     return commands_.layoutZoomTutorial();
+      case Chat:         return commands_.layoutZoomChat();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
       case Presentations: return commands_.layoutZoomPresentation2();
@@ -2016,6 +2023,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
+      commands.add(commands_.layoutZoomChat());
 
       return commands;
    }
@@ -2077,6 +2085,7 @@ public class PaneManager
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
    private final WorkbenchTab tutorialTab_;
+   private final WorkbenchTab chatTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
@@ -2139,6 +2148,7 @@ public class PaneManager
    public static final String LAUNCHER_PANE = "Launcher"; //$NON-NLS-1$
    public static final String DATA_OUTPUT_PANE = "Data Output"; //$NON-NLS-1$
    public static final String TUTORIAL_PANE = "Tutorial"; //$NON-NLS-1$
+   public static final String CHAT_PANE = "Chat"; //$NON-NLS-1$
    public static final String SOURCE_COLUMN = "SourceColumn"; //$NON-NLS-1$
    public static final String FIND_PANE = "Find"; //$NON-NLS-1$
    public static final String MARKERS_PANE = "Markers"; //$NON-NLS-1$

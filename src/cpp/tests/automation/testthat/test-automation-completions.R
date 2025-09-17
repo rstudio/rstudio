@@ -74,21 +74,21 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("list names are provided as completions following '$'", {
    
    code <- .rs.heredoc('
-      test_df <- data.frame(
+      df <- data.frame(
          col1 = rep(1, 3),
          col2 = rep(2, 3),
          col3 = rep(3, 3)
       )
 
-      test_ls <- list(
-         a = test_df,
-         b = test_df
+      lt <- list(
+         a = df,
+         b = df
       )
    ')
    
    remote$console.execute(code)
    
-   completions <- remote$completions.request("test_ls$")
+   completions <- remote$completions.request("lt$")
    expect_equal(completions, c("a", "b"))
    
 })
@@ -236,5 +236,40 @@ withr::defer(.rs.automation.deleteRemote())
    
    output <- remote$console.getOutput()
    expect_equal(tail(output, n = 1L), "[1] \"2024\"")
+   
+})
+
+.rs.test("completions from the pipe placeholder are provided", {
+   
+   # completions without identifier following pipebind operator
+   contents <- .rs.heredoc('
+      library(dplyr)
+      mtcars |>
+         mutate(x = 42) |>
+         _$
+   ')
+   
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+      editor$gotoLine(4, 5)
+      completions <- remote$completions.request()
+      expect_true("x" %in% completions)
+      expect_true("mpg" %in% completions)
+   })
+   
+   # completions with identifier following pipebind operator
+   contents <- .rs.heredoc('
+      library(dplyr)
+      mtcars |>
+         mutate(x = 42) |>
+         _$c
+   ')
+   
+   # completions with identifier following pipebind operator
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+      editor$gotoLine(4, 7)
+      completions <- remote$completions.request()
+      expect_true("carb" %in% completions)
+      expect_true("cyl" %in% completions)
+   })
    
 })

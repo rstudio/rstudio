@@ -31,7 +31,7 @@ website:
           - text: "Posit Workbench Documentation"
             url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}'
           - text: Licenses
-            url: 'https://docs.posit.co/ide/server-pro/licenses/{{< var version >}}'   
+            url: 'https://docs.posit.co/ide/server-pro/{{< var version >}}/licenses/'   
       - icon: "list"
         aria-label: 'Drop-down menu for additional Posit resources'
         menu:

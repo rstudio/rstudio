@@ -14,17 +14,17 @@
  */
 package org.rstudio.core.client.command;
 
+import java.util.List;
+
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
-
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.dom.DomUtils;
-
-import java.util.List;
 
 public class AppMenuBar extends BaseMenuBar
 {

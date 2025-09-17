@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench;
 
-import com.google.inject.Singleton;
-
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+
+import com.google.inject.Singleton;
 
 @Singleton
 public class ConsoleEditorProvider

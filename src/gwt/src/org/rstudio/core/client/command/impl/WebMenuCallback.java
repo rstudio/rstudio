@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.command.impl;
 
+import java.util.Stack;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuBar;
@@ -25,8 +27,6 @@ import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.logical.shared.AttachEvent;
-
-import java.util.Stack;
 
 public class WebMenuCallback implements MenuCallback
 {

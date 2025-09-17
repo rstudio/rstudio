@@ -22,9 +22,9 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
-import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.DirectedGraph.DefaultConstructor;
 import org.rstudio.core.client.DirectedGraph.ForEachNodeCommand;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.container.SafeMap;
 
 public class KeyMap

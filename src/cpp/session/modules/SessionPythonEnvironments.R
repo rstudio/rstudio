@@ -46,6 +46,23 @@
    .rs.python.describeInterpreter(pythonPath)
 })
 
+.rs.addFunction("python.activeInterpreterPath", function()
+{
+   if ("reticulate" %in% loadedNamespaces())
+   {
+      if (reticulate::py_available(initialize = FALSE))
+      {
+         return(path.expand(reticulate::py_exe()))
+      }
+   }
+   
+   pythonInfo <- .rs.rpc.python_active_interpreter()
+   if (!is.na(pythonInfo$path))
+      return(path.expand(pythonInfo$path))
+   
+   ""
+})
+
 .rs.addFunction("python.findCondaForEnvironment", function(envPath)
 {
    # locate history file

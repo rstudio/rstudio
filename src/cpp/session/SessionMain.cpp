@@ -133,6 +133,7 @@
 
 #include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
+#include "modules/SessionAir.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -736,12 +737,12 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::system_resources::initialize)
       (modules::copilot::initialize)
       (modules::automation::initialize)
+      (modules::air::initialize)
 
       // workers
       (workers::web_request::initialize)
 
       // R code
-      (bind(sourceModuleRFile, "SessionAir.R"))
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
 

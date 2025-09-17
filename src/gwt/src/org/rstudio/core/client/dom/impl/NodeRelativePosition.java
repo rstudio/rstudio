@@ -14,11 +14,12 @@
  */
 package org.rstudio.core.client.dom.impl;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Text;
-import org.rstudio.core.client.Debug;
 
 public class NodeRelativePosition
 {

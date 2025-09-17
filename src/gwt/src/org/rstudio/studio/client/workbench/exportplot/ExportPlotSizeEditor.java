@@ -14,10 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.GlassPanel;
+import org.rstudio.core.client.widget.ResizeGripper;
+import org.rstudio.core.client.widget.ThemedButton;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -39,11 +44,6 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.GlassPanel;
-import org.rstudio.core.client.widget.ResizeGripper;
-import org.rstudio.core.client.widget.ThemedButton;
 
 public class ExportPlotSizeEditor extends Composite 
 {  

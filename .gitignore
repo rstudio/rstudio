@@ -55,3 +55,4 @@ venv/
 
 CLAUDE.md
 .claude/
+spec/

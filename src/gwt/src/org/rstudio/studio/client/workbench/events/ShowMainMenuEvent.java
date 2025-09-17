@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.events;
 
-import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
+import com.google.gwt.event.shared.EventHandler;
 
 /**
  * Activate main menu and give it keyboard focus.

@@ -1319,12 +1319,6 @@
             "title": "Clang verbosity level (0 - 2)",
             "description": "The verbosity level to use with Clang (0 - 2)"
         },
-        "submit_crash_reports": {
-            "type": "boolean",
-            "default": true,
-            "title": "Submit crash reports to Posit",
-            "description": "Whether to automatically submit crash reports to Posit."
-        },
         "enable_splash_screen": {
             "type": "boolean",
             "default": true,

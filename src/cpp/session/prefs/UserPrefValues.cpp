@@ -2572,19 +2572,6 @@ core::Error UserPrefValues::setClangVerbose(int val)
 }
 
 /**
- * Whether to automatically submit crash reports to Posit.
- */
-bool UserPrefValues::submitCrashReports()
-{
-   return readPref<bool>("submit_crash_reports");
-}
-
-core::Error UserPrefValues::setSubmitCrashReports(bool val)
-{
-   return writePref("submit_crash_reports", val);
-}
-
-/**
  * Whether to show the splash screen when RStudio is starting.
  */
 bool UserPrefValues::enableSplashScreen()
@@ -3706,7 +3693,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexShellEscape,
       kRestoreProjectRVersion,
       kClangVerbose,
-      kSubmitCrashReports,
       kEnableSplashScreen,
       kDefaultRVersion,
       kDataViewerMaxColumns,

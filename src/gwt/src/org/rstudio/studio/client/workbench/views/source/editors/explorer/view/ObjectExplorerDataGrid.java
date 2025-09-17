@@ -39,36 +39,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
-
-/*
- * This widget provides a tabular, drill-down view into an R object.
- *
- * ## Columns
- *
- * ### Name
- *
- * The name column contains three elements:
- *
- *    1) An (optional) 'drill-down' icon, that expands the node such that
- *       children of that object are shown and added to the table,
- *
- *    2) An icon, denoting the object's type (list, environment, etc.)
- *
- *    3) The object's name; that is, the binding through which is can be accessed
- *       from the parent object.
- *
- * ### Type
- *
- * A text column, giving a short description of the object's type. Typically, this
- * will be the object's class, alongside the object's length (if relevant).
- *
- * ### Value
- *
- * A short, succinct description of the value of the object within. Icons that can
- * be used for interacting with this row (e.g. generating the R code that can access
- * that value) are drawn in this cell.
- */
-
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerInspectionResult;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerDataGrid.Data.ExpansionState;
@@ -103,6 +73,35 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
+
+/*
+ * This widget provides a tabular, drill-down view into an R object.
+ *
+ * ## Columns
+ *
+ * ### Name
+ *
+ * The name column contains three elements:
+ *
+ *    1) An (optional) 'drill-down' icon, that expands the node such that
+ *       children of that object are shown and added to the table,
+ *
+ *    2) An icon, denoting the object's type (list, environment, etc.)
+ *
+ *    3) The object's name; that is, the binding through which is can be accessed
+ *       from the parent object.
+ *
+ * ### Type
+ *
+ * A text column, giving a short description of the object's type. Typically, this
+ * will be the object's class, alongside the object's length (if relevant).
+ *
+ * ### Value
+ *
+ * A short, succinct description of the value of the object within. Icons that can
+ * be used for interacting with this row (e.g. generating the R code that can access
+ * that value) are drawn in this cell.
+ */
 
 public class ObjectExplorerDataGrid
       extends VirtualizedDataGrid<ObjectExplorerDataGrid.Data>

@@ -15,10 +15,10 @@
 package org.rstudio.studio.client.workbench.events;
 
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
-
-import com.google.gwt.event.shared.GwtEvent;
 
 
 public class ShowWarningBarEvent extends GwtEvent<ShowWarningBarEvent.Handler>

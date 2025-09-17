@@ -175,6 +175,7 @@ set(SESSION_SOURCE_FILES
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp
    modules/SessionAbout.cpp
+   modules/SessionAir.cpp
    modules/SessionApiPrefs.cpp
    modules/SessionAskPass.cpp
    modules/SessionAskSecret.cpp

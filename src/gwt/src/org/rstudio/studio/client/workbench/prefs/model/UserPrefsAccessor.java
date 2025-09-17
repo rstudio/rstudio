@@ -2789,18 +2789,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to automatically submit crash reports to Posit.
-    */
-   public PrefValue<Boolean> submitCrashReports()
-   {
-      return bool(
-         "submit_crash_reports",
-         _constants.submitCrashReportsTitle(), 
-         _constants.submitCrashReportsDescription(), 
-         true);
-   }
-
-   /**
     * Whether to show the splash screen when RStudio is starting.
     */
    public PrefValue<Boolean> enableSplashScreen()
@@ -4244,8 +4232,6 @@ public class UserPrefsAccessor extends Prefs
          restoreProjectRVersion().setValue(layer, source.getBool("restore_project_r_version"));
       if (source.hasKey("clang_verbose"))
          clangVerbose().setValue(layer, source.getInteger("clang_verbose"));
-      if (source.hasKey("submit_crash_reports"))
-         submitCrashReports().setValue(layer, source.getBool("submit_crash_reports"));
       if (source.hasKey("enable_splash_screen"))
          enableSplashScreen().setValue(layer, source.getBool("enable_splash_screen"));
       if (source.hasKey("default_r_version"))
@@ -4588,7 +4574,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(latexShellEscape());
       prefs.add(restoreProjectRVersion());
       prefs.add(clangVerbose());
-      prefs.add(submitCrashReports());
       prefs.add(enableSplashScreen());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());

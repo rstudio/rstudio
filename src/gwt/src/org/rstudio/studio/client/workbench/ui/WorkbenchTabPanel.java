@@ -15,6 +15,22 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.layout.LogicalWindow;
+import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
+import org.rstudio.core.client.theme.WindowFrame;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.model.ProvidesBusy;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
@@ -30,19 +46,6 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.layout.LogicalWindow;
-import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
-import org.rstudio.core.client.theme.WindowFrame;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.core.client.widget.model.ProvidesBusy;
-
-import java.util.ArrayList;
 
 class WorkbenchTabPanel
       extends Composite
