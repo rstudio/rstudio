@@ -36,27 +36,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop,
-                                          int additionalSources) /*-{
-      return {
-         quadrants: panes,
-         tabSet1: tabSet1,
-         tabSet2: tabSet2,
-         hiddenTabSet: hiddenTabSet,
-         console_left_on_top: consoleLeftOnTop,
-         console_right_on_top: consoleRightOnTop,
-         additional_source_columns: additionalSources,
-         sidebar: [],
-         sidebar_visible: false,
-         sidebar_location: "right"
-      };
-   }-*/;
-   
-   public native static PaneConfig create(JsArrayString panes,
-                                          JsArrayString tabSet1,
-                                          JsArrayString tabSet2,
-                                          JsArrayString hiddenTabSet,
-                                          boolean consoleLeftOnTop,
-                                          boolean consoleRightOnTop,
                                           int additionalSources,
                                           JsArrayString sidebarTabs,
                                           boolean sidebarVisible,
@@ -89,6 +68,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push(PaneManager.ENVIRONMENT_PANE);
@@ -109,7 +89,19 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push(PaneManager.PRESENTATIONS_PANE);
 
       JsArrayString hiddenTabSet = createArray().cast();
-      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
+
+      JsArrayString sidebarTabs = createArray().cast();
+      sidebarTabs.push(PaneManager.CHAT_PANE);
+      String sidebarLocation = "right";
+      boolean sidebarVisible = false;
+      boolean consoleLeftOnTop = false;
+      boolean consoleRightOnTop = true;
+      int additionalSources = 0;
+
+      return create(
+         panes, tabSet1, tabSet2, hiddenTabSet,
+         consoleLeftOnTop, consoleRightOnTop, additionalSources,
+         sidebarTabs, sidebarVisible, sidebarLocation);
    }
 
    public static String[] getAllPanes()

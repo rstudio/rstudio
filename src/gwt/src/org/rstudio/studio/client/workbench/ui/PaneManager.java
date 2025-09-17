@@ -87,10 +87,6 @@ import com.google.inject.name.Named;
 
 import elemental2.dom.DomGlobal;
 
-/*
- * TODO: Push client state when selected tab or layout changes
- */
-
 @Singleton
 public class PaneManager
 {
@@ -330,7 +326,10 @@ public class PaneManager
                paneConfig.getHiddenTabSet(),
                paneConfig.getConsoleLeftOnTop(),
                paneConfig.getConsoleRightOnTop(),
-               0).cast());
+               0,
+               paneConfig.getSidebar(),
+               paneConfig.getSidebarVisible(),
+               paneConfig.getSidebarLocation()).cast());
          }
       }
       // Initialize sidebar if configured
@@ -952,7 +951,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            sourceColumnManager_.getSize() - 1).cast());
+            sourceColumnManager_.getSize() - 1,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -1682,7 +1684,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1698,7 +1703,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1882,7 +1890,10 @@ public class PaneManager
          paneConfig.getHiddenTabSet(),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
+         additionalSourceCount_,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
 
       return panesByName_.get(name).getNormal();
@@ -1922,7 +1933,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            additionalSourceCount_).cast());
+            additionalSourceCount_,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
