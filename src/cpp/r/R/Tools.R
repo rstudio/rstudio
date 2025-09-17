@@ -2485,6 +2485,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
                      .rs.recordPackageSource(pkgPath, pkgs),
                      error = .rs.logWarningMessage
                   )
+               }
             }
          }
       }
