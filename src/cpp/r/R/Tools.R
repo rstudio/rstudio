@@ -2380,11 +2380,6 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          call <- sys.call()
          call[[1L]] <- quote(utils::install.packages)
          result <- eval(call, envir = parent.frame())
-
-         # Record the package source.
-         shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
-         if (shouldRecord)
-            .rs.recordPackageSource(pkgs, local = TRUE)
       }
       else
       {
