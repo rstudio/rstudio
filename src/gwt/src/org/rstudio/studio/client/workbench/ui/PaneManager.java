@@ -2208,18 +2208,11 @@ public class PaneManager
       PaneConfig config = getCurrentConfig();
       String currentLocation = config.getSidebarLocation();
       boolean isSidebarVisible = config.getSidebarVisible();
-      
-      if (isSidebarVisible)
-      {
-         // Show moveSidebarLeft only when sidebar is on the right
-         commands_.moveSidebarLeft().setVisible("right".equals(currentLocation));
-         commands_.moveSidebarRight().setVisible("left".equals(currentLocation));
-      }
-      else
-      {
-         commands_.moveSidebarLeft().setVisible(false);
-         commands_.moveSidebarRight().setVisible(false);
-      }
+
+      commands_.moveSidebarLeft().setEnabled(isSidebarVisible);
+      commands_.moveSidebarRight().setEnabled(isSidebarVisible);
+      commands_.moveSidebarLeft().setVisible("right".equals(currentLocation));
+      commands_.moveSidebarRight().setVisible("left".equals(currentLocation));
    }
 
    private List<AppCommand> getLayoutCommands()
