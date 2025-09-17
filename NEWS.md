@@ -23,6 +23,7 @@
 - ([#16532](https://github.com/rstudio/rstudio/issues/16352)): Fixed an issue where ongoing R Markdown render output was lost when after a browser refresh
 - ([#16346](https://github.com/rstudio/rstudio/issues/16436)): Fixed an issue where certain ALTREP objects could cause RStudio to crash while populating the Environment pane
 - ([#16446](https://github.com/rstudio/rstudio/issues/16446)): Fixed a regression that could cause file downloads to fail on Windows
+- ([#16449](https://github.com/rstudio/rstudio/issues/16449)): Fixed a regression that could cause package installation to fail when installing packages from local sources
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
