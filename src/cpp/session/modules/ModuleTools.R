@@ -32,11 +32,15 @@
 
 .rs.addFunction("logErrorMessage", function(message)
 {
+   if (inherits(message, "condition"))
+      message <- paste(conditionMessage(message), collapse = "\n")
    .Call("rs_logErrorMessage", message, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("logWarningMessage", function(message)
 {
+   if (inherits(message, "condition"))
+      message <- paste(conditionMessage(message), collapse = "\n")
    .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 

@@ -2288,15 +2288,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # infer the path to the DESCRIPTION file we want to extract
    descPaths <- grep("(?:^|/)DESCRIPTION$", files, perl = TRUE, value = TRUE)
    
-   # a package might have multiple DESCRIPTION files; the one we want
-   # should always be the shortest one in the package
+   # a package might have multiple DESCRIPTION files;
+   # we want the top-level DESCRIPTION file
    n <- nchar(descPaths)
    descPath <- descPaths[n == min(n)]
    
    # extract to temporary directory
    tmpdir <- tempfile("description-")
    dir.create(tmpdir, recursive = TRUE)
-   on.exit(unlink(tmpdir), add = TRUE)
+   on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
    
    if (isZip)
       unzip(packagePath, files = descPath, exdir = tmpdir)
@@ -2480,7 +2480,11 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
             {
                pkgPath <- file.path(lib, pkgDesc[["Package"]])
                if (file.exists(pkgPath))
-                  .rs.recordPackageSource(pkgPath, pkgs)
+               {
+                  tryCatch(
+                     .rs.recordPackageSource(pkgPath, pkgs),
+                     error = .rs.logWarningMessage
+                  )
             }
          }
       }
