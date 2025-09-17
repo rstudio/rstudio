@@ -214,6 +214,6 @@
    
    # For any packages which appear to have been updated,
    # tag their DESCRIPTION file with their installation source.
-   .rs.recordPackageSource(rows$path, local = FALSE)
+   .rs.recordPackageSource(rows$path)
 })
 

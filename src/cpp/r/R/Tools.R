@@ -2062,20 +2062,20 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    ""
 })
 
-.rs.addFunction("recordPackageSource", function(pkgPaths, local = FALSE)
+.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL)
 {
    # Request available packages.
-   db <- if (!local) as.data.frame(
+   db <- if (is.null(pkgSrc)) as.data.frame(
       utils::available.packages(),
       stringsAsFactors = FALSE
    )
 
    # Record sources for each package.
    for (pkgPath in pkgPaths)
-      .rs.recordPackageSourceImpl(pkgPath, db, local)
+      .rs.recordPackageSourceImpl(pkgPath, pkgSrc, db)
 })
 
-.rs.addFunction("recordPackageSourceImpl", function(pkgPath, db, local)
+.rs.addFunction("recordPackageSourceImpl", function(pkgPath, pkgSrc, db)
 {
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
@@ -2089,12 +2089,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (length(remotes))
       return()
 
-   remoteFields <- if (local)
+   remoteFields <- if (!is.null(pkgSrc))
    {
       c(
          RemoteType   = "local",
-         RemotePkgRef = sprintf("local::%s", pkgPath),
-         RemoteUrl    = normalizePath(pkgPath, winslash = "/", mustWork = TRUE)
+         RemotePkgRef = sprintf("local::%s", pkgSrc),
+         RemoteUrl    = normalizePath(pkgSrc, winslash = "/", mustWork = TRUE)
       )
    }
    else
@@ -2480,7 +2480,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
             {
                pkgPath <- file.path(lib, pkgDesc[["Package"]])
                if (file.exists(pkgPath))
-                  .rs.recordPackageSource(pkgPath, local = TRUE)
+                  .rs.recordPackageSource(pkgPath, pkgs)
             }
          }
       }
@@ -2503,7 +2503,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
 
          # For any packages which appear to have been updated,
          # tag their DESCRIPTION file with their installation source.
-         .rs.recordPackageSource(rows$path, local = FALSE)
+         .rs.recordPackageSource(rows$path)
       }
 
       # Notify the front-end that we've made some updates.
