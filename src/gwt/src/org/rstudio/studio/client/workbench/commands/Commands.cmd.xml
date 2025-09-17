@@ -320,6 +320,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="focusRightSeparator"/>
             <cmd refid="focusCenterSeparator"/>
             <cmd refid="focusSourceColumnSeparator"/>
+            <cmd refid="focusSidebarSeparator"/>
             <separator/>
             <cmd refid="paneLayout"/>
          </menu>
@@ -1612,7 +1613,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="layoutZoomPackages"
         checkable="true"
         label="Zoom Packages"
-        menuLabel="Zoom P_ackages"
+        menuLabel="Zoom Pac_kages"
         windowMode="main"/>
 
    <cmd id="layoutZoomHelp"
@@ -4307,6 +4308,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="focusSourceColumnSeparator"
         menuLabel="Adjust Source Column Spli_tter"
+        windowMode="main"/>
+
+   <cmd id="focusSidebarSeparator"
+        menuLabel="Adjust _Sidebar Splitter"
         windowMode="main"/>
 
    <cmd id="showShortcutCommand"

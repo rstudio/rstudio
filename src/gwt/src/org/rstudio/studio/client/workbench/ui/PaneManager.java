@@ -718,6 +718,12 @@ public class PaneManager
    }
 
    @Handler
+   public void onFocusSidebarSeparator()
+   {
+      panel_.focusSplitter(sidebar_);
+   }
+
+   @Handler
    public void onFocusNextPane()
    {
       LogicalWindow currentFocus = getActiveLogicalWindow();
@@ -2227,6 +2233,7 @@ public class PaneManager
       commands_.moveSidebarRight().setEnabled(isSidebarVisible);
       commands_.moveSidebarLeft().setVisible("right".equals(currentLocation));
       commands_.moveSidebarRight().setVisible("left".equals(currentLocation));
+      commands_.focusSidebarSeparator().setEnabled(isSidebarVisible);
    }
 
    private List<AppCommand> getLayoutCommands()

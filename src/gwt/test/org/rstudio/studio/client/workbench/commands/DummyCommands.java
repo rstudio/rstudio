@@ -3085,6 +3085,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand focusSidebarSeparator() {
+        return null;
+    }
+
+    @Override
     public AppCommand showFileMenu() {
         return null;
     }

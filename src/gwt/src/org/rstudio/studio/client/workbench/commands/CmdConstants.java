@@ -809,7 +809,7 @@ public interface CmdConstants extends Constants {
     // layoutZoomPackages
     @DefaultStringValue("Zoom Packages") // $NON-NLS-1$
     String layoutZoomPackagesLabel();
-    @DefaultStringValue("Zoom P_ackages") // $NON-NLS-1$
+    @DefaultStringValue("Zoom Pac_kages") // $NON-NLS-1$
     String layoutZoomPackagesMenuLabel();
     
     // layoutZoomHelp
@@ -4051,6 +4051,10 @@ public interface CmdConstants extends Constants {
     // focusSourceColumnSeparator
     @DefaultStringValue("Adjust Source Column Spli_tter") // $NON-NLS-1$
     String focusSourceColumnSeparatorMenuLabel();
+    
+    // focusSidebarSeparator
+    @DefaultStringValue("Adjust _Sidebar Splitter") // $NON-NLS-1$
+    String focusSidebarSeparatorMenuLabel();
     
     // showShortcutCommand
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$
