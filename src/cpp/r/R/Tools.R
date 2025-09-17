@@ -2252,6 +2252,78 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
 })
 
+.rs.addFunction("readPackageDescription", function(packagePath)
+{
+   info <- file.info(packagePath, extra_cols = FALSE)
+   if (identical(info$isdir, TRUE))
+      .rs.readPackageDescriptionFromDirectory(packagePath)
+   else
+      .rs.readPackageDescriptionFromArchive(packagePath)
+})
+
+.rs.addFunction("readPackageDescriptionFromDirectory", function(packagePath)
+{
+   # if this is an installed package with a package metafile,
+   # read from that location
+   metapath <- file.path(packagePath, "Meta/package.rds")
+   if (file.exists(metapath)) {
+      metadata <- readRDS(metapath)
+      return(as.list(metadata$DESCRIPTION))
+   }
+   
+   # otherwise, attempt to read DESCRIPTION directly
+   descPath <- file.path(packagePath, "DESCRIPTION")
+   read.dcf(descPath, all = TRUE)
+})
+
+.rs.addFunction("readPackageDescriptionFromArchive", function(packagePath)
+{
+   # figure out what files are in the archive
+   isZip <- .rs.endsWith(packagePath, ".zip")
+   files <- if (isZip)
+      unzip(packagePath, list = TRUE)[["Name"]]
+   else
+      untar(packagePath, list = TRUE)
+   
+   # infer the path to the DESCRIPTION file we want to extract
+   descPaths <- grep("(?:^|/)DESCRIPTION$", files, perl = TRUE, value = TRUE)
+   
+   # a package might have multiple DESCRIPTION files; the one we want
+   # should always be the shortest one in the package
+   n <- nchar(descPaths)
+   descPath <- descPaths[n == min(n)]
+   
+   # extract to temporary directory
+   tmpdir <- tempfile("description-")
+   dir.create(tmpdir, recursive = TRUE)
+   on.exit(unlink(tmpdir), add = TRUE)
+   
+   if (isZip)
+      unzip(packagePath, files = descPath, exdir = tmpdir)
+   else
+      untar(packagePath, files = descPath, exdir = tmpdir)
+   
+   # read the extracted DESCRIPTION file
+   tmpDescPath <- file.path(tmpdir, descPath)
+   read.dcf(tmpDescPath, all = TRUE)
+})
+
+.rs.addFunction("askForRestart", function(reason)
+{
+   payload <- list(
+      reason  = .rs.scalar(reason)
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_ASK_FOR_RESTART,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response[["value"]]
+})
 
 # Hooks -------------------------------------------------------------------
 
@@ -2353,12 +2425,25 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # Skip this within renv and packrat projects.
          if (.rs.installPackagesRequiresRestart(pkgs))
          {
-            call <- sys.call()
-            call[[1L]] <- quote(install.packages)
-            command <- .rs.deparseCall(call)
-
-            .rs.enqueLoadedPackageUpdates(command)
-            invokeRestart("abort")
+            response <- .rs.askForRestart("install.packages")
+            if (identical(response, TRUE))
+            {
+               call <- do.call(substitute, list(match.call(), parent.frame()))
+               call[[1L]] <- quote(install.packages)
+               names(call)[[2L]] <- ""
+               command <- paste(.rs.deparseCall(call), collapse = " ")
+               
+               .rs.enqueLoadedPackageUpdates(command)
+               invokeRestart("abort")
+            }
+            else if (identical(response, FALSE))
+            {
+               # fall-through
+            }
+            else
+            {
+               invokeRestart("abort")
+            }
          }
 
          # Make sure Rtools is on the PATH for Windows.
@@ -2381,10 +2466,23 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          call[[1L]] <- quote(utils::install.packages)
          result <- eval(call, envir = parent.frame())
 
-         # Record the package source.
+         # Record the package source. Note that we need to resolve the path
+         # to the newly-installed package post-hoc from the provided path.
          shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
          if (shouldRecord)
-            .rs.recordPackageSource(pkgs, local = TRUE)
+         {
+            pkgDesc <- tryCatch(
+               .rs.readPackageDescription(pkgs),
+               error = function(cnd) NULL
+            )
+            
+            if (length(pkgDesc))
+            {
+               pkgPath <- file.path(lib, pkgDesc[["Package"]])
+               if (file.exists(pkgPath))
+                  .rs.recordPackageSource(pkgPath, local = TRUE)
+            }
+         }
       }
       else
       {
