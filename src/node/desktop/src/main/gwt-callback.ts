@@ -29,7 +29,7 @@ import {
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { existsSync, writeFileSync } from 'fs';
+import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
@@ -228,9 +228,26 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
+        let defaultPath = normalizeSeparatorsNative(resolveAliasedPath(dir));
+
+        // On macOS with Electron 36+, when defaultPath is just a directory and we have a defaultExtension,
+        // provide a complete filename to avoid extension truncation issues (e.g., ".cpp" becoming ".cp")
+        // https://github.com/rstudio/rstudio/issues/16444, https://github.com/electron/electron/issues/48332
+        if (defaultExtension && process.platform === 'darwin') {
+          const endsWithSeparator = defaultPath.endsWith('/');
+          const parsedPath = path.parse(defaultPath);
+          const hasNoFilename = !parsedPath.base || parsedPath.base === '.' || parsedPath.base === '..';
+          const isExistingDir = existsSync(defaultPath) && statSync(defaultPath).isDirectory();
+
+          if (endsWithSeparator || hasNoFilename || isExistingDir) {
+            // Append a default filename with the extension
+            defaultPath = path.join(defaultPath, `Untitled${defaultExtension}`);
+          }
+        }
+
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
+          defaultPath: defaultPath,
           buttonLabel: label,
         };
         logger().logDebug(`Using path: ${saveDialogOptions.defaultPath}`);
