@@ -26,6 +26,7 @@
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
+- (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
 
 ### Dependencies
 - Copilot Language Server 1.371.0
