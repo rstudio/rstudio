@@ -2,6 +2,9 @@ library(testthat)
 
 runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
  
+   options(rstudio.tests.running = TRUE)
+   on.exit(options(rstudio.tests.running = FALSE), add = TRUE)
+
    "%||%" <- function(x, y) if (is.null(x)) y else x
 
    # print R information

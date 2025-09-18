@@ -2310,6 +2310,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("askForRestart", function(reason)
 {
+   testing <- getOption("rstudio.tests.running", default = FALSE)
+   if (testing)
+      return(FALSE)
+
    payload <- list(
       reason  = .rs.scalar(reason)
    )

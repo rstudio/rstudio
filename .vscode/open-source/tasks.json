@@ -127,7 +127,7 @@
         "isDefault": true
       },
       "isBackground": false,
-      "problemMatcher": "$gcc"
+      "problemMatcher": "$msCompile"
     },
     {
       "label": "RStudio: Install Dependencies",
