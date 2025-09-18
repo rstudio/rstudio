@@ -14,16 +14,22 @@
  */
 package org.rstudio.core.client.prefs;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
+import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
+
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import org.rstudio.core.client.ElementIds;
-
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -34,11 +40,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.widget.DecorativeImage;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Vertical tab control used by Preferences dialogs. Follows the ARIA tab pattern.
@@ -248,7 +249,7 @@ class SectionChooser extends SimplePanel implements
 
    public int getDesiredWidth()
    {
-      return 132;
+      return PreferencesDialogConstants.SECTION_CHOOSER_WIDTH;
    }
 
    public void focus()
