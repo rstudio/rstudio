@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
@@ -50,6 +51,7 @@ import org.rstudio.core.client.events.HasTabReorderHandlers;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -79,6 +81,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
+import org.rstudio.studio.client.events.RStudioApiRequestEvent.AskForRestartData;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
@@ -110,6 +113,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -3241,6 +3245,42 @@ public class Source implements InsertSourceEvent.Handler,
             server_.rstudioApiResponse(response, new VoidServerRequestCallback());
          });
       }
+      else if (type == RStudioApiRequestEvent.TYPE_ASK_FOR_RESTART)
+      {
+         RStudioApiRequestEvent.AskForRestartData data = requestEvent.getPayload().cast();
+
+         String reason = data.getReason();
+         if (StringUtil.equals(reason, AskForRestartData.REASON_INSTALL_PACKAGES))
+         {
+            JsObject response = JsObject.createJsObject();
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.WARNING,
+               packageConstants_.updatingLoadedPackagesCaption(),
+               packageConstants_.restartForInstallWithConfirmation(),
+               true,
+               () ->
+               {
+                  response.setBoolean("value", true);
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               },
+               () ->
+               {
+                  response.setBoolean("value", false);
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               },
+               () ->
+               {
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               },
+               coreConstants_.yesLabel(),
+               coreConstants_.noLabel(),
+               true);
+         }
+         else
+         {
+            server_.rstudioApiResponse(JavaScriptObject.createObject(), null);
+         }
+      }
    }
 
    private class StatFileEntry
@@ -3285,5 +3325,8 @@ public class Source implements InsertSourceEvent.Handler,
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
+
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+   private static final CoreClientConstants coreConstants_ = GWT.create(CoreClientConstants.class);
+   private static final PackagesConstants packageConstants_ = GWT.create(PackagesConstants.class);
 }

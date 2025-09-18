@@ -28,8 +28,8 @@
    TYPE_DOCUMENT_OPEN        = 4L,
    TYPE_DOCUMENT_NEW         = 5L,
    TYPE_FILES_PANE_NAVIGATE  = 6L,
-   TYPE_SET_GHOST_TEXT       = 7L
-   
+   TYPE_SET_GHOST_TEXT       = 7L,
+   TYPE_ASK_FOR_RESTART      = 8L
 ))
 
 # list of potential event targets

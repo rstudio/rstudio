@@ -110,6 +110,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    public static final int TYPE_DOCUMENT_NEW         = 5;
    public static final int TYPE_FILES_PANE_NAVIGATE  = 6;
    public static final int TYPE_SET_GHOST_TEXT       = 7;
+   public static final int TYPE_ASK_FOR_RESTART      = 8;
    
    // list of potential event targets (keep in sync with Api.R)
    public static final int TARGET_UNKNOWN       = 0;
@@ -185,6 +186,17 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       }
       
       public final native String getText() /*-{ return this["text"]; }-*/;
+   }
+
+   public static class AskForRestartData extends JavaScriptObject
+   {
+      public static final String REASON_INSTALL_PACKAGES = "install.packages";
+
+      protected AskForRestartData()
+      {
+      }
+
+      public final native String getReason()  /*-{ return this["reason"]; }-*/;
    }
    
 }

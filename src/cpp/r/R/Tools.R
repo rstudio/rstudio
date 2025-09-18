@@ -2062,20 +2062,20 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    ""
 })
 
-.rs.addFunction("recordPackageSource", function(pkgPaths, local = FALSE)
+.rs.addFunction("recordPackageSource", function(pkgPaths, pkgSrc = NULL)
 {
    # Request available packages.
-   db <- if (!local) as.data.frame(
+   db <- if (is.null(pkgSrc)) as.data.frame(
       utils::available.packages(),
       stringsAsFactors = FALSE
    )
 
    # Record sources for each package.
    for (pkgPath in pkgPaths)
-      .rs.recordPackageSourceImpl(pkgPath, db, local)
+      .rs.recordPackageSourceImpl(pkgPath, pkgSrc, db)
 })
 
-.rs.addFunction("recordPackageSourceImpl", function(pkgPath, db, local)
+.rs.addFunction("recordPackageSourceImpl", function(pkgPath, pkgSrc, db)
 {
    # Infer package name from installed path.
    pkgName <- basename(pkgPath)
@@ -2089,12 +2089,12 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (length(remotes))
       return()
 
-   remoteFields <- if (local)
+   remoteFields <- if (!is.null(pkgSrc))
    {
       c(
          RemoteType   = "local",
-         RemotePkgRef = sprintf("local::%s", pkgPath),
-         RemoteUrl    = normalizePath(pkgPath, winslash = "/", mustWork = TRUE)
+         RemotePkgRef = sprintf("local::%s", pkgSrc),
+         RemoteUrl    = normalizePath(pkgSrc, winslash = "/", mustWork = TRUE)
       )
    }
    else
@@ -2252,6 +2252,82 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
 })
 
+.rs.addFunction("readPackageDescription", function(packagePath)
+{
+   info <- file.info(packagePath, extra_cols = FALSE)
+   if (identical(info$isdir, TRUE))
+      .rs.readPackageDescriptionFromDirectory(packagePath)
+   else
+      .rs.readPackageDescriptionFromArchive(packagePath)
+})
+
+.rs.addFunction("readPackageDescriptionFromDirectory", function(packagePath)
+{
+   # if this is an installed package with a package metafile,
+   # read from that location
+   metapath <- file.path(packagePath, "Meta/package.rds")
+   if (file.exists(metapath)) {
+      metadata <- readRDS(metapath)
+      return(as.list(metadata$DESCRIPTION))
+   }
+   
+   # otherwise, attempt to read DESCRIPTION directly
+   descPath <- file.path(packagePath, "DESCRIPTION")
+   read.dcf(descPath, all = TRUE)
+})
+
+.rs.addFunction("readPackageDescriptionFromArchive", function(packagePath)
+{
+   # figure out what files are in the archive
+   isZip <- .rs.endsWith(packagePath, ".zip")
+   files <- if (isZip)
+      unzip(packagePath, list = TRUE)[["Name"]]
+   else
+      untar(packagePath, list = TRUE)
+   
+   # infer the path to the DESCRIPTION file we want to extract
+   descPaths <- grep("(?:^|/)DESCRIPTION$", files, perl = TRUE, value = TRUE)
+   
+   # a package might have multiple DESCRIPTION files;
+   # we want the top-level DESCRIPTION file
+   n <- nchar(descPaths)
+   descPath <- descPaths[n == min(n)]
+   
+   # extract to temporary directory
+   tmpdir <- tempfile("description-")
+   dir.create(tmpdir, recursive = TRUE)
+   on.exit(unlink(tmpdir, recursive = TRUE), add = TRUE)
+   
+   if (isZip)
+      unzip(packagePath, files = descPath, exdir = tmpdir)
+   else
+      untar(packagePath, files = descPath, exdir = tmpdir)
+   
+   # read the extracted DESCRIPTION file
+   tmpDescPath <- file.path(tmpdir, descPath)
+   read.dcf(tmpDescPath, all = TRUE)
+})
+
+.rs.addFunction("askForRestart", function(reason)
+{
+   testing <- getOption("rstudio.tests.running", default = FALSE)
+   if (testing)
+      return(FALSE)
+
+   payload <- list(
+      reason  = .rs.scalar(reason)
+   )
+   
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_ASK_FOR_RESTART,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   response <- .rs.api.sendRequest(request)
+   response[["value"]]
+})
 
 # Hooks -------------------------------------------------------------------
 
@@ -2353,12 +2429,25 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          # Skip this within renv and packrat projects.
          if (.rs.installPackagesRequiresRestart(pkgs))
          {
-            call <- sys.call()
-            call[[1L]] <- quote(install.packages)
-            command <- .rs.deparseCall(call)
-
-            .rs.enqueLoadedPackageUpdates(command)
-            invokeRestart("abort")
+            response <- .rs.askForRestart("install.packages")
+            if (identical(response, TRUE))
+            {
+               call <- do.call(substitute, list(match.call(), parent.frame()))
+               call[[1L]] <- quote(install.packages)
+               names(call)[[2L]] <- ""
+               command <- paste(.rs.deparseCall(call), collapse = " ")
+               
+               .rs.enqueLoadedPackageUpdates(command)
+               invokeRestart("abort")
+            }
+            else if (identical(response, FALSE))
+            {
+               # fall-through
+            }
+            else
+            {
+               invokeRestart("abort")
+            }
          }
 
          # Make sure Rtools is on the PATH for Windows.
@@ -2381,10 +2470,28 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
          call[[1L]] <- quote(utils::install.packages)
          result <- eval(call, envir = parent.frame())
 
-         # Record the package source.
+         # Record the package source. Note that we need to resolve the path
+         # to the newly-installed package post-hoc from the provided path.
          shouldRecord <- is.character(pkgs) && length(pkgs) == 1L
          if (shouldRecord)
-            .rs.recordPackageSource(pkgs, local = TRUE)
+         {
+            pkgDesc <- tryCatch(
+               .rs.readPackageDescription(pkgs),
+               error = function(cnd) NULL
+            )
+            
+            if (length(pkgDesc))
+            {
+               pkgPath <- file.path(lib, pkgDesc[["Package"]])
+               if (file.exists(pkgPath))
+               {
+                  tryCatch(
+                     .rs.recordPackageSource(pkgPath, pkgs),
+                     error = .rs.logWarningMessage
+                  )
+               }
+            }
+         }
       }
       else
       {
@@ -2405,7 +2512,7 @@ assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
 
          # For any packages which appear to have been updated,
          # tag their DESCRIPTION file with their installation source.
-         .rs.recordPackageSource(rows$path, local = FALSE)
+         .rs.recordPackageSource(rows$path)
       }
 
       # Notify the front-end that we've made some updates.
