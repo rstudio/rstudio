@@ -3,10 +3,10 @@
 ### New
 #### RStudio
 - ([#15928](https://github.com/rstudio/rstudio/issues/15928)): RStudio now uses Air for formatting R code in projects configured to use Air
-- ([#16127](https://github.com/rstudio/rstudio/issues/16127)) ESC key now dismisses Copilot ghost text in source editor
+- ([#16127](https://github.com/rstudio/rstudio/issues/16127)): ESC key now dismisses Copilot ghost text in source editor
 - ([#16415](https://github.com/rstudio/rstudio/issues/16415)): RStudio now provides completions for the `_` placeholer in piped expressions
 - ([#16281](https://github.com/rstudio/rstudio/issues/16281)): RStudio will no longer perform type inference on the completion results provided by .DollarNames methods for values where `attr(*, "suppressTypeInference")` is `TRUE`
-- ([#16375](https://github.com/rstudio/rstudio/issues/16375)) Copilot Language Server (completions) is now launched via node.js instead of as a standalone binary
+- ([#16375](https://github.com/rstudio/rstudio/issues/16375)): Copilot Language Server (completions) is now launched via node.js instead of as a standalone binary
 - ([#16427](https://github.com/rstudio/rstudio/issues/16427)): RStudio now provided a diagnostic warning for invocations of `paste()` with unexpected named arguments
 
 #### Posit Workbench
@@ -21,9 +21,8 @@
 - ([#16337](https://github.com/rstudio/rstudio/issues/16337)): Fixed an issue where R error output was not displayed in rare cases
 - ([#15963](https://github.com/rstudio/rstudio/issues/15963)): Fixed an issue where an unsaved R Markdown document could erroneously be marked as saved after executing a chunk
 - ([#16402](https://github.com/rstudio/rstudio/issues/16402)): Fixed an issue where the wrong Python installation was chosen during Quarto render in some cases
+- ([#16457](https://github.com/rstudio/rstudio/issues/16457)): Adjusted width of the standalone Accessibility Options dialog to fully display the pane
 - ([#16532](https://github.com/rstudio/rstudio/issues/16352)): Fixed an issue where ongoing R Markdown render output was lost when after a browser refresh
-- ([#16346](https://github.com/rstudio/rstudio/issues/16436)): Fixed an issue where certain ALTREP objects could cause RStudio to crash while populating the Environment pane
-- ([#16446](https://github.com/rstudio/rstudio/issues/16446)): Fixed a regression that could cause file downloads to fail on Windows
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load

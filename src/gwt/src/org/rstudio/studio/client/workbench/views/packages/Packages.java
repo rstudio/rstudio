@@ -950,7 +950,7 @@ public class Packages
 
    public void onLoadedPackageUpdates(LoadedPackageUpdatesEvent event)
    {
-      restartForInstallWithConfirmation(event.getInstallCmd());
+      doRestartForInstall(event.getInstallCmd());
    }
 
    private class InstallCommand
@@ -1014,6 +1014,14 @@ public class Packages
       events_.fireEvent(event);
    }
 
+   private void doRestartForInstall(String installCmd)
+   {
+      // Use '@' prefix to signal this should be executed eagerly
+      String command = installCmd.startsWith("@") ? installCmd : "@" + installCmd;
+      SuspendOptions options = SuspendOptions.createSaveAll(true, command);
+      events_.fireEvent(new SuspendAndRestartEvent(options));
+   }
+
    private void restartForInstallWithConfirmation(final String installCmd)
    {
       String msg = constants_.restartForInstallWithConfirmation();
@@ -1027,10 +1035,7 @@ public class Packages
             true,
             () ->
             {
-               // Use '@' prefix to signal this should be executed eagerly
-               String command = installCmd.startsWith("@") ? installCmd : "@" + installCmd;
-               SuspendOptions options = SuspendOptions.createSaveAll(true, command);
-               events_.fireEvent(new SuspendAndRestartEvent(options));
+               doRestartForInstall(installCmd);
             },
             () ->
             {
