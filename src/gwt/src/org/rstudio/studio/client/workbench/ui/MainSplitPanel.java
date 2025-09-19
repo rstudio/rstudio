@@ -133,16 +133,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       addSplitterResizedHandler(this);
    }
 
-   public void initialize(ArrayList<Widget> leftList, Widget center, Widget right)
-   {
-      initialize(leftList, center, right, null, "right");
-   }
-   
-   public void initialize(ArrayList<Widget> leftList, Widget center, Widget right, Widget sidebar)
-   {
-      initialize(leftList, center, right, sidebar, "right");
-   }
-   
    public void initialize(ArrayList<Widget> leftList, Widget center, Widget right, Widget sidebar, String sidebarLocation)
    {
       leftList_ = leftList;
@@ -430,7 +420,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       clearForRefresh();
       sidebar_ = null;
-      initialize(leftList_, center_, right_, null);
+      initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
    }
    
    public boolean hasSidebarWidget()
