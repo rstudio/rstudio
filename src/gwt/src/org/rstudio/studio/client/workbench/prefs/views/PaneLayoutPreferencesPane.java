@@ -14,8 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
+import java.util.ArrayList;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.ScrollPanelWithClick;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
+
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -34,21 +50,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.ScrollPanelWithClick;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
-
-import java.util.ArrayList;
 
 public class PaneLayoutPreferencesPane extends PreferencesPane
 {
@@ -79,7 +80,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
          private Integer notSelectedIndex()
          {
-            boolean[] seen = new boolean[5];  // Updated to 5 to include Sidebar
+            boolean[] seen = new boolean[4];
             for (ListBox listBox : lists_)
                seen[listBox.getSelectedIndex()] = true;
             for (int i = 0; i < seen.length; i++)
@@ -242,10 +243,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       add(columnToolbar);
 
       String[] visiblePanes = PaneConfig.getVisiblePanes();
-      // Add Sidebar to the list of visible panes
-      String[] visiblePanesWithSidebar = new String[visiblePanes.length + 1];
-      System.arraycopy(visiblePanes, 0, visiblePanesWithSidebar, 0, visiblePanes.length);
-      visiblePanesWithSidebar[visiblePanes.length] = "Sidebar";
 
       leftTop_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left panel");
@@ -258,7 +255,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : visiblePanes_)
       {
-         for (String value : visiblePanesWithSidebar)
+         for (String value : visiblePanes)
             lb.addItem(value);
       }
 
@@ -294,11 +291,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       tabSet1ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet1()));
       tabSet2ModuleList_ = new ModuleList(paneWidth);
       tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
-      sidebarModuleList_ = new ModuleList(paneWidth);
-      sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
       hiddenTabSetModuleList_ = new ModuleList(paneWidth);
-      hiddenTabSetModuleList_.setValue(toArrayList(
-               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
+      hiddenTabSetModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getHiddenTabSet()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -307,57 +301,36 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             dirty_ = true;
 
             ModuleList source = (ModuleList) e.getSource();
+            ModuleList other = (source == tabSet1ModuleList_)
+            ? tabSet2ModuleList_
+            : tabSet1ModuleList_;
+
+            // an index should only be on for one of these lists,
             ArrayList<Boolean> indices = source.getSelectedIndices();
-            ArrayList<Boolean> tabSet1Indices = tabSet1ModuleList_.getSelectedIndices();
-            ArrayList<Boolean> tabSet2Indices = tabSet2ModuleList_.getSelectedIndices();
-            ArrayList<Boolean> sidebarIndices = sidebarModuleList_.getSelectedIndices();
+            ArrayList<Boolean> otherIndices = other.getSelectedIndices();
             ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
 
             if (!PaneConfig.isValidConfig(source.getValue()))
             {
                // when the configuration is invalid, we must reset sources to the prior valid
-               // configuration based on the values of the other lists
+               // configuration based on the values of the other two lists
                for (int i = 0; i < indices.size(); i++)
-               {
-                  if (source == tabSet1ModuleList_)
-                     indices.set(i, !(tabSet2Indices.get(i) || sidebarIndices.get(i) || hiddenIndices.get(i)));
-                  else if (source == tabSet2ModuleList_)
-                     indices.set(i, !(tabSet1Indices.get(i) || sidebarIndices.get(i) || hiddenIndices.get(i)));
-                  else if (source == sidebarModuleList_)
-                     indices.set(i, !(tabSet1Indices.get(i) || tabSet2Indices.get(i) || hiddenIndices.get(i)));
-               }
+                  indices.set(i, !(otherIndices.get(i) || hiddenIndices.get(i)));
                source.setSelectedIndices(indices);
             }
             else
             {
-               // Ensure 4-way exclusivity: a tab can only be in one of the four lists
                for (int i = 0; i < indices.size(); i++)
                {
                   if (indices.get(i))
                   {
-                     // Clear this index from all other lists
-                     if (source != tabSet1ModuleList_)
-                        tabSet1Indices.set(i, false);
-                     if (source != tabSet2ModuleList_)
-                        tabSet2Indices.set(i, false);
-                     if (source != sidebarModuleList_)
-                        sidebarIndices.set(i, false);
+                     otherIndices.set(i, false);
                      hiddenIndices.set(i, false);
                   }
-                  else if (source != hiddenTabSetModuleList_)
-                  {
-                     // If unchecked and not in any other list, put in hidden
-                     if (!tabSet1Indices.get(i) && !tabSet2Indices.get(i) && !sidebarIndices.get(i))
-                        hiddenIndices.set(i, true);
-                  }
+                  else if (!otherIndices.get(i))
+                     hiddenIndices.set(i, true);
                }
-               
-               if (source != tabSet1ModuleList_)
-                  tabSet1ModuleList_.setSelectedIndices(tabSet1Indices);
-               if (source != tabSet2ModuleList_)
-                  tabSet2ModuleList_.setSelectedIndices(tabSet2Indices);
-               if (source != sidebarModuleList_)
-                  sidebarModuleList_.setSelectedIndices(sidebarIndices);
+               other.setSelectedIndices(otherIndices);
                hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
 
                updateTabSetLabels();
@@ -366,7 +339,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       };
       tabSet1ModuleList_.addValueChangeHandler(vch);
       tabSet2ModuleList_.addValueChangeHandler(vch);
-      sidebarModuleList_.addValueChangeHandler(vch);
 
       updateTabSetPositions();
       updateTabSetLabels();
@@ -463,7 +435,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.getCellFormatter().setWidth(0, i, columnWidth);
       tabSet1ModuleList_.setWidth(cellWidth);
       tabSet2ModuleList_.setWidth(cellWidth);
-      sidebarModuleList_.setWidth(cellWidth);
 
       return cellWidth;
    }
@@ -537,9 +508,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             tabSet2.push(tab);
 
          JsArrayString sidebar = JsArrayString.createArray().cast();
-         for (String tab : sidebarModuleList_.getValue())
+         for (String tab : toArrayList(userPrefs_.panes().getGlobalValue().getSidebar()))
             sidebar.push(tab);
-
+   
          JsArrayString hiddenTabSet = JsArrayString.createArray().cast();
          for (String tab : hiddenTabSetModuleList_.getValue())
             hiddenTabSet.push(tab);
@@ -595,8 +566,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             visiblePanePanels_[i].add(tabSet1ModuleList_);
          else if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET2))
             visiblePanePanels_[i].add(tabSet2ModuleList_);
-         else if (StringUtil.equals(value, "Sidebar"))
-            visiblePanePanels_[i].add(sidebarModuleList_);
       }
    }
 
@@ -607,9 +576,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       String itemText1 = tabSet1ModuleList_.getValue().isEmpty() ?
          "TabSet" : StringUtil.join(tabSet1ModuleList_.getValue(), ", "); 
       String itemText2 = tabSet2ModuleList_.getValue().isEmpty() ?
-         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", ");
-      String itemTextSidebar = sidebarModuleList_.getValue().isEmpty() ?
-         "Sidebar" : StringUtil.join(sidebarModuleList_.getValue(), ", ");
+         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", "); 
       if (StringUtil.equals(itemText1, "Presentation") && !tabSet1ModuleList_.presentationVisible())
          itemText1 = "TabSet";
 
@@ -617,7 +584,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       {
          pane.setItemText(2, itemText1);
          pane.setItemText(3, itemText2);
-         pane.setItemText(4, itemTextSidebar);
       }
    }
 
@@ -639,7 +605,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final VerticalPanel[] visiblePanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
-   private final ModuleList sidebarModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
