@@ -30,6 +30,6 @@
 
 ### Dependencies
 - Copilot Language Server 1.371.0
-- Electron 38.1.0
+- Electron 38.1.2
 - Node.js 22.18.0
 - Quarto 1.8.24
