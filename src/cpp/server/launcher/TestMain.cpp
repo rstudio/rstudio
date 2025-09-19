@@ -1,5 +1,5 @@
 /*
- * SystemTests.cpp
+ * TestMain.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -13,22 +13,10 @@
  *
  */
 
-#include <core/system/System.hpp>
-#include <shared_core/FilePath.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <gtest/gtest.h>
 
-#include <tests/TestThat.hpp>
-
-namespace rstudio {
-namespace core {
-namespace system {
-namespace tests {
-
-test_context("SystemTests")
+int main(int argc, char* argv[])
 {
+   ::testing::InitGoogleTest(&argc, argv);
+   return RUN_ALL_TESTS();
 }
-
-} // end namespace tests
-} // end namespace system
-} // end namespace core
-} // end namespace rstudio

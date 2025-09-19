@@ -97,6 +97,14 @@ target_link_libraries(rstudio-shared-core
 
 # Define executable for running unit tests
 if (RSTUDIO_UNIT_TESTS_ENABLED)
+   # Use gtest from vendor directory
+   set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+   
+   # Add Google Test if not already added
+   if(NOT TARGET gtest)
+      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+   endif()
 
    file(GLOB_RECURSE SHARED_CORE_TEST_FILES "*Tests.cpp")
 
@@ -106,9 +114,19 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${SHARED_CORE_HEADER_FILES}
    )
 
+   target_include_directories(rstudio-shared-core-tests PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/../tests/cpp/tests/vendor
+   )
+
    target_link_libraries(rstudio-shared-core-tests
       rstudio-shared-core
       rstudio-core
       ${Boost_LIBRARIES}
+      gtest
+      pthread
    )
+   
+   enable_testing()
+   include(GoogleTest)
+   gtest_discover_tests(rstudio-shared-core-tests)
 endif()
