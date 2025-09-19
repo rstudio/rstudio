@@ -292,7 +292,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       tabSet2ModuleList_ = new ModuleList(paneWidth);
       tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
       hiddenTabSetModuleList_ = new ModuleList(paneWidth);
-      hiddenTabSetModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getHiddenTabSet()));
+      hiddenTabSetModuleList_.setValue(toArrayList(
+               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -302,14 +303,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
             ModuleList source = (ModuleList) e.getSource();
             ModuleList other = (source == tabSet1ModuleList_)
-            ? tabSet2ModuleList_
-            : tabSet1ModuleList_;
+                               ? tabSet2ModuleList_
+                               : tabSet1ModuleList_;
 
             // an index should only be on for one of these lists,
             ArrayList<Boolean> indices = source.getSelectedIndices();
             ArrayList<Boolean> otherIndices = other.getSelectedIndices();
             ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
-
             if (!PaneConfig.isValidConfig(source.getValue()))
             {
                // when the configuration is invalid, we must reset sources to the prior valid
