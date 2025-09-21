@@ -774,6 +774,16 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
    public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
    
+   // PaneLayoutPreferencesPane
+   public final static String PANE_LAYOUT_LEFT_TOP = "pane_layout_left_top";
+   public final static String PANE_LAYOUT_LEFT_BOTTOM = "pane_layout_left_bottom";
+   public final static String PANE_LAYOUT_RIGHT_TOP = "pane_layout_right_top";
+   public final static String PANE_LAYOUT_RIGHT_BOTTOM = "pane_layout_right_bottom";
+   public final static String PANE_LAYOUT_LEFT_TOP_SELECT = "pane_layout_left_top_select";
+   public final static String PANE_LAYOUT_LEFT_BOTTOM_SELECT = "pane_layout_left_bottom_select";
+   public final static String PANE_LAYOUT_RIGHT_TOP_SELECT = "pane_layout_right_top_select";
+   public final static String PANE_LAYOUT_RIGHT_BOTTOM_SELECT = "pane_layout_right_bottom_select";
+
    // TextEntryModalDialog
    public final static String TEXT_ENTRY = "text_entry";
 }

@@ -14,8 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
+import java.util.ArrayList;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.ScrollPanelWithClick;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.ui.PaneConfig;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
+
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -34,21 +51,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.ScrollPanelWithClick;
-import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
-
-import java.util.ArrayList;
 
 public class PaneLayoutPreferencesPane extends PreferencesPane
 {
@@ -245,12 +247,20 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       leftTop_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left panel");
+      ElementIds.assignElementId(leftTop_.getElement(), ElementIds.PANE_LAYOUT_LEFT_TOP_SELECT);
+
       leftBottom_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left panel");
+      ElementIds.assignElementId(leftBottom_.getElement(), ElementIds.PANE_LAYOUT_LEFT_BOTTOM_SELECT);
+
       rightTop_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right panel");
+      ElementIds.assignElementId(rightTop_.getElement(), ElementIds.PANE_LAYOUT_RIGHT_TOP_SELECT);
+
       rightBottom_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right panel");
+      ElementIds.assignElementId(rightBottom_.getElement(), ElementIds.PANE_LAYOUT_RIGHT_BOTTOM_SELECT);
+
       visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : visiblePanes_)
       {
@@ -393,17 +403,17 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             grid_.getColumnFormatter().setWidth(topColumn, columnWidth);
          }
 
-         grid_.setWidget(0, topColumn, leftTopPanel_ = createPane(leftTop_));
+         grid_.setWidget(0, topColumn, leftTopPanel_ = createPane(leftTop_, ElementIds.PANE_LAYOUT_LEFT_TOP));
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
 
-         grid_.setWidget(0, ++topColumn, rightTopPanel_ = createPane(rightTop_));
+         grid_.setWidget(0, ++topColumn, rightTopPanel_ = createPane(rightTop_, ElementIds.PANE_LAYOUT_RIGHT_TOP));
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
 
          int bottomColumn = 0;
-         grid_.setWidget(1, bottomColumn, leftBottomPanel_ = createPane(leftBottom_));
+         grid_.setWidget(1, bottomColumn, leftBottomPanel_ = createPane(leftBottom_, ElementIds.PANE_LAYOUT_LEFT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
 
-         grid_.setWidget(1, ++bottomColumn, rightBottomPanel_ = createPane(rightBottom_));
+         grid_.setWidget(1, ++bottomColumn, rightBottomPanel_ = createPane(rightBottom_, ElementIds.PANE_LAYOUT_RIGHT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
 
          add(grid_);
@@ -438,10 +448,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       return cellWidth;
    }
 
-   private VerticalPanel createPane(ListBox listBox)
+   private VerticalPanel createPane(ListBox listBox, String paneId)
    {
       VerticalPanel vp = new VerticalPanel();
       vp.add(listBox);
+      ElementIds.assignElementId(vp.getElement(), paneId);
       return vp;
    }
 
