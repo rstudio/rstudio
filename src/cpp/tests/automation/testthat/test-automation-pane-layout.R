@@ -109,10 +109,7 @@ withr::defer(.rs.automation.deleteRemote())
 }
 
 # Helper function to verify dropdown options for a quadrant
-.rs.verifyQuadrantDropdownOptions <- function(remote, selector) {
-   # Click the dropdown to open it
-   remote$dom.clickElement(selector = selector)
-   
+.rs.verifyQuadrantDropdownOptions <- function(remote, selector, expectedSelectedIndex = NULL) {
    # Get all options
    options <- remote$js.querySelector(selector)$options
    expect_equal(options$length, 4L)
@@ -127,45 +124,56 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(any(grepl("Console", optionTexts)))
    expect_true(any(grepl("Environment", optionTexts)))
    expect_true(any(grepl("Files", optionTexts)))
+   
+   # If expectedSelectedIndex is provided, verify the selected option
+   if (!is.null(expectedSelectedIndex)) {
+      expect_true(expectedSelectedIndex >= 1L && expectedSelectedIndex <= 4L, 
+                  info = "expectedSelectedIndex must be between 1 and 4")
+      
+      # Get the selected option (0-based index in JavaScript)
+      selectedOption <- options[[expectedSelectedIndex - 1L]]
+      expect_true(selectedOption$selected, 
+                  info = paste("Option at index", expectedSelectedIndex, "is not selected"))
+   }
 }
 
-# .rs.test("Pane Layout dialog displays with correct default quadrant configuration", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("Pane Layout dialog displays with correct default quadrant configuration", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Verify all four quadrants are displayed
-#    expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_TOP))
-#    expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_BOTTOM))
-#    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_TOP))
-#    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_BOTTOM))
+   # Verify all four quadrants are displayed
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_TOP))
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_BOTTOM))
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_TOP))
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_BOTTOM))
 
-#    # Verify default dropdown selections
-#    sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
-#    expect_equal(sourceText, "Source")
+   # Verify default dropdown selections
+   sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   expect_equal(sourceText, "Source")
 
-#    consoleText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
-#    expect_equal(consoleText, "Console")
+   consoleText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   expect_equal(consoleText, "Console")
 
-#    # Check that TabSet1 dropdown shows correct text. Note that RStudio Pro also has a "Databricks"
-#    # tab; the test will still pass if there are more tabs than expected.
-#    expectedTabSet1Tabs <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial")
-#    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, expectedTabSet1Tabs)
+   # Check that TabSet1 dropdown shows correct text. Note that RStudio Pro also has a "Databricks"
+   # tab; the test will still pass if there are more tabs than expected.
+   expectedTabSet1Tabs <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, expectedTabSet1Tabs)
 
-#    # # Check that TabSet2 dropdown shows correct text.
-#    expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
-#    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
+   # Check that TabSet2 dropdown shows correct text.
+   expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 .rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
    .rs.openPaneLayoutOptions(remote)
 
    # Test all four quadrant dropdowns
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_TOP_SELECT)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_TOP_SELECT, 1)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT, 2)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT, 3)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT, 4)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
