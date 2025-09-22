@@ -554,3 +554,35 @@ withr::defer(.rs.automation.deleteRemote())
       expect_equal(editor$session$getLine(4), "```{=latex}")
    })
 })
+
+# https://github.com/rstudio/rstudio/issues/16463
+.rs.test("empty quarto blocks don't break highlight in chunk", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Chunk Syntax Highlighting
+      ---
+      
+      ```{r}
+      #| echo: true
+      2 * 2
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".qmd", contents, function(editor) {
+      
+      editor$gotoLine(6, 13)
+      remote$keyboard.sendKeys("<Enter>")
+      remote$keyboard.sendKeys("<Enter>")
+      Sys.sleep(0.1)
+      tokens <- as.vector(editor$session$getTokens(8))
+
+      expect_equal(tokens[[1L]]$value, "2")
+      expect_equal(tokens[[2L]]$value, " ")
+      expect_equal(tokens[[3L]]$value, "*")
+      expect_equal(tokens[[4L]]$value, " ")
+      expect_equal(tokens[[5L]]$value, "2")
+
+   })
+   
+})
