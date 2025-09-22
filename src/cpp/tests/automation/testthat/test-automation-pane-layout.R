@@ -47,9 +47,11 @@ withr::defer(.rs.automation.deleteRemote())
       options <- dropdown$options
       for (i in seq_len(options$length)) {
          if (options[[i - 1L]]$text == optionText) {
-            dropdown$selectedIndex <- i - 1L
+            # Set the selectedIndex property directly on the DOM element
+            remote$js.eval(paste0("document.querySelector('", quadrantClass, " select').selectedIndex = ", i - 1L))
             # Trigger change event
             remote$js.eval(paste0("document.querySelector('", quadrantClass, " select').dispatchEvent(new Event('change'))"))
+            Sys.sleep(1) # Allow time for swap
             break
          }
       }
@@ -190,33 +192,51 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("Quadrant swapping works correctly when selecting different quadrant from dropdown", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("Quadrant swapping works correctly", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Get initial state
-#    sourceInitial <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-source")
-#    consoleInitial <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-console")
+   sourceInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   consoleInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   upperRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
+   lowerRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
 
-#    expect_equal(sourceInitial, "Source")
-#    expect_equal(consoleInitial, "Console")
+   # Swap Source and Console by selecting Console in Source dropdown
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_TOP, consoleInitial)
 
-#    # Swap Source and Console by selecting Console in Source dropdown
-#    .rs.selectDropdownOption(remote, ".rstudio-pane-layout-source", "Console")
-#    Sys.sleep(1) # Allow time for swap
+   # Verify the swap occurred
+   upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
 
-#    # Verify the swap occurred
-#    sourceAfter <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-source")
-#    consoleAfter <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-console")
+   expect_equal(upperLeftAfter, consoleInitial)
+   expect_equal(lowerLeftAfter, sourceInitial)
 
-#    expect_equal(sourceAfter, "Console")
-#    expect_equal(consoleAfter, "Source")
+   # Swap TabSet1 and TabSet2 by selecting TabSet2 in TabSet1 dropdown
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_TOP, lowerRightInitial)
 
-#    # Swap back to restore state
-#    .rs.selectDropdownOption(remote, ".rstudio-pane-layout-source", "Source")
+   # Verify the swap occurred
+   upperRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
+   lowerRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   expect_equal(upperRightAfter, lowerRightInitial)
+   expect_equal(lowerRightAfter, upperRightInitial)
+
+   # Swap lower-left with upper-right
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_BOTTOM, upperRightAfter)
+
+   # Verify the swap occurred and didn't affect the other swap quadrants
+   upperRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
+   lowerRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
+   upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+
+   expect_equal(upperRightAfter, sourceInitial)
+   expect_equal(lowerRightAfter, upperRightInitial)
+   expect_equal(upperLeftAfter, consoleInitial)
+   expect_equal(lowerLeftAfter, lowerRightInitial)
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 # .rs.test("TabSet1 displays correct default checked tabs", {
 #    .rs.openPaneLayoutOptions(remote)
