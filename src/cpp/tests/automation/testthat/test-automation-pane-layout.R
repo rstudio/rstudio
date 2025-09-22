@@ -25,6 +25,7 @@ withr::defer(.rs.automation.deleteRemote())
    # Wait for pane layout panel to be visible
    remote$dom.waitForElement("#rstudio_label_pane_layout_options_panel")
 }
+
 # Helper function to get dropdown element for a quadrant
 .rs.getQuadrantDropdown <- function(remote, quadrantClass) {
    return(remote$js.querySelector(paste0(quadrantClass, " select")))
@@ -109,10 +110,13 @@ withr::defer(.rs.automation.deleteRemote())
 }
 
 # Helper function to verify dropdown options for a quadrant
-.rs.verifyQuadrantDropdownOptions <- function(remote, selector, expectedSelectedIndex = NULL) {
+.rs.verifyQuadrantDropdownOptions <- function(remote, selector, expectedTexts, expectedSelectedIndex = NULL) {
    # Get all options
    options <- remote$js.querySelector(selector)$options
    expect_equal(options$length, 4L)
+   
+   # Verify we have 4 expected texts
+   expect_equal(length(expectedTexts), 4L, info = "expectedTexts must contain exactly 4 strings")
    
    # Verify option texts contain expected content
    optionTexts <- character(4)
@@ -120,10 +124,15 @@ withr::defer(.rs.automation.deleteRemote())
       optionTexts[i] <- options[[i - 1L]]$text
    }
    
-   expect_true(any(grepl("Source", optionTexts)))
-   expect_true(any(grepl("Console", optionTexts)))
-   expect_true(any(grepl("Environment", optionTexts)))
-   expect_true(any(grepl("Files", optionTexts)))
+   # Compare each option text against the corresponding expected text
+   expect_true(grepl(expectedTexts[1], optionTexts[1]), 
+               info = paste("Position 1: expected", expectedTexts[1], "but got", optionTexts[1]))
+   expect_true(grepl(expectedTexts[2], optionTexts[2]), 
+               info = paste("Position 2: expected", expectedTexts[2], "but got", optionTexts[2]))
+   expect_true(grepl(expectedTexts[3], optionTexts[3]), 
+               info = paste("Position 3: expected", expectedTexts[3], "but got", optionTexts[3]))
+   expect_true(grepl(expectedTexts[4], optionTexts[4]), 
+               info = paste("Position 4: expected", expectedTexts[4], "but got", optionTexts[4]))
    
    # If expectedSelectedIndex is provided, verify the selected option
    if (!is.null(expectedSelectedIndex)) {
@@ -169,11 +178,13 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
    .rs.openPaneLayoutOptions(remote)
 
+   expectedTexts <- c("Source", "Console", "Environment", "Files")
+
    # Test all four quadrant dropdowns
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_TOP_SELECT, 1)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT, 2)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT, 3)
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT, 4)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_TOP_SELECT, expectedTexts, 1)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT, expectedTexts, 2)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT, expectedTexts, 3)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT, expectedTexts, 4)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
