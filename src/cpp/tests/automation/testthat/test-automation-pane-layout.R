@@ -223,6 +223,9 @@ withr::defer(.rs.automation.deleteRemote())
    # Swap lower-left with upper-right
    .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_BOTTOM, upperRightAfter)
 
+   # Swap lower-right with upper-left
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_BOTTOM, consoleInitial)
+
    # Verify the swap occurred and didn't affect the other swap quadrants
    upperRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
    lowerRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
@@ -230,8 +233,8 @@ withr::defer(.rs.automation.deleteRemote())
    lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
 
    expect_equal(upperRightAfter, sourceInitial)
-   expect_equal(lowerRightAfter, upperRightInitial)
-   expect_equal(upperLeftAfter, consoleInitial)
+   expect_equal(lowerRightAfter, consoleInitial)
+   expect_equal(upperLeftAfter, upperRightInitial)
    expect_equal(lowerLeftAfter, lowerRightInitial)
 
    # Close dialog
