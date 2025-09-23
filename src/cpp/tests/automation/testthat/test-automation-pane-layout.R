@@ -61,11 +61,11 @@ withr::defer(.rs.automation.deleteRemote())
 # Helper function to check if a checkbox is checked
 .rs.isTabChecked <- function(remote, quadrantClass, tabName) {
    # Find checkbox with label matching tabName
-   checkboxes <- remote$js.querySelectorAll(paste0(quadrantClass, " input[type='checkbox']"))
+   # checkboxes <- remote$js.querySelectorAll(paste0(quadrantClass, " input[type='checkbox']"))
    labels <- remote$js.querySelectorAll(paste0(quadrantClass, " label"))
 
-   for (i in seq_len(labels$length)) {
-      label <- labels[[i - 1L]]
+   for (i in seq_len(length(labels))) {
+      label <- labels[[i]]
       if (grepl(tabName, label$innerText, fixed = TRUE)) {
          # Find corresponding checkbox
          forAttr <- label$getAttribute("for")
@@ -147,6 +147,10 @@ withr::defer(.rs.automation.deleteRemote())
                   info = paste("Option at index", expectedSelectedIndex, "is not selected"))
    }
 }
+
+# --------------------------------------------------------------------------------------------------
+# Tests follow...
+# --------------------------------------------------------------------------------------------------
 
 .rs.test("Pane Layout dialog displays with correct default quadrant configuration", {
    .rs.openPaneLayoutOptions(remote)
@@ -241,53 +245,53 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("TabSet1 displays correct default checked tabs", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("TabSet1 displays correct default checked tabs", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Default TabSet1 should have these tabs checked:
-#    # Environment, History, Connections, Build, VCS, Tutorial
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "History"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Connections"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Build"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "VCS"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Tutorial"))
+   # Default TabSet1 should have these tabs checked:
+   # Environment, History, Connections, Build, VCS, Tutorial
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "History"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Connections"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Build"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "VCS"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Tutorial"))
 
-#    # These should be unchecked in TabSet1
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Files"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Plots"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Packages"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Help"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Viewer"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Presentations"))
+   # These should be unchecked in TabSet1
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Plots"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Packages"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Help"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Viewer"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Presentations"))
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
-# .rs.test("TabSet2 displays correct default checked tabs", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("TabSet2 displays correct default checked tabs", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Default TabSet2 should have these tabs checked:
-#    # Files, Plots, Packages, Help, Viewer, Presentations
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Plots"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Packages"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Help"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Viewer"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Presentations"))
+   # Default TabSet2 should have these tabs checked:
+   # Files, Plots, Packages, Help, Viewer, Presentations
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Plots"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Packages"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Help"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Viewer"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Presentations"))
 
-#    # These should be unchecked in TabSet2
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Environment"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "History"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Connections"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Build"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "VCS"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Tutorial"))
+   # These should be unchecked in TabSet2
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "History"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Connections"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Build"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "VCS"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Tutorial"))
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 # .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
 #    .rs.openPaneLayoutOptions(remote)
