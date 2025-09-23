@@ -36,10 +36,10 @@ namespace {
 const std::string kCommand = "test-command";
 const std::string kEol = "\r\n";
 const std::string kPrompt = "$ ";
-const int kPrivate = 100; // milliseconds
-const int kUser = 200; // milliseconds
-const int kTimeout = 300; // milliseconds
-const int kPostTimeout = 50; // milliseconds
+const int kPrivate = 25; // min delay  in milliseconds between private commands
+const int kUser = 25; // min delay in milliseconds after user command
+const int kTimeout = 25; // private command timeout in milliseconds
+const int kPostTimeout = 25; // how long in milliseconds to suppress output after private command is done
 const bool kOncePerUserEnter = true;
 const bool kNotOncePerUserEnter = false;
 const bool kHasChildProcess = true;
