@@ -1,5 +1,7 @@
 library(testthat)
 
+SKIP_TESTS <- FALSE
+
 # ids of the 4 quadrants in the Pane Layout options panel
 PANE_LAYOUT_LEFT_TOP <- "#rstudio_pane_layout_left_top"
 PANE_LAYOUT_LEFT_BOTTOM <- "#rstudio_pane_layout_left_bottom"
@@ -116,7 +118,7 @@ withr::defer(.rs.automation.deleteRemote())
 # Helper function to toggle a tab checkbox
 .rs.toggleTab <- function(remote, quadrantClass, tabName) {
    checkboxes <- remote$js.querySelectorAll(paste0(quadrantClass, " input[type='checkbox']"))
-   
+
    for (i in seq_len(length(checkboxes))) {
       checkbox <- checkboxes[[i]]
       # Get the label associated with this checkbox
@@ -128,13 +130,15 @@ withr::defer(.rs.automation.deleteRemote())
             if (grepl(tabName, labelText, fixed = TRUE)) {
                currentState <- checkbox$checked
                newState <- !currentState
-               
+
                # Use setChecked with the ID selector
+               selector <- paste0("#", checkboxId)
                tryCatch({
-                  remote$dom.setChecked(paste0("#", checkboxId), checked = newState)
+                  remote$dom.setChecked(selector, checked = newState)
                   Sys.sleep(0.5)
                   return(TRUE)
                }, error = function(e) {
+                  print(e)
                   return(FALSE)
                })
             }
@@ -201,6 +205,7 @@ withr::defer(.rs.automation.deleteRemote())
 # --------------------------------------------------------------------------------------------------
 
 .rs.test("Pane Layout dialog displays with correct default quadrant configuration", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Verify all four quadrants are displayed
@@ -230,6 +235,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    expectedTexts <- c("Source", "Console", "Environment", "Files")
@@ -245,6 +251,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant swapping works correctly", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    sourceInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -294,6 +301,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet1 displays correct default checked tabs", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
@@ -322,6 +330,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet2 displays correct default checked tabs", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
@@ -350,6 +359,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1
@@ -374,30 +384,31 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
+   skip_if(SKIP_TESTS, "Skipping this test for now")
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Environment is checked in TabSet1 by default
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Environment"))
+   # Environment is checked in TabSet1 by default
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
 
-#    # Uncheck Environment in TabSet1
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset1", "Environment")
+   # Uncheck Environment in TabSet1
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
 
-#    # Verify Environment is now unchecked in both TabSets (hidden)
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Environment"))
+   # Verify Environment is now unchecked in both TabSets (hidden)
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
 
-#    # Check it again in TabSet1 to restore state
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset1", "Environment")
+   # Check it again in TabSet1 to restore state
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
 
-#    # Verify it's checked again
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Environment"))
+   # Verify it's checked again
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 # .rs.test("Tab can only be checked in one TabSet at a time", {
 #    .rs.openPaneLayoutOptions(remote)
