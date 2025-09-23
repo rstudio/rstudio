@@ -410,65 +410,41 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("Tab can only be checked in one TabSet at a time", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("All tabs can be moved to one TabSet leaving the other empty", {
+   # skip_if(SKIP_TESTS, "Skipping this test for now")
+   .rs.openPaneLayoutOptions(remote)
 
-#    # History is in TabSet1 by default
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "History"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "History"))
+   # Move all TabSet2 tabs to TabSet1
+   tabsToMove <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
 
-#    # Try to check History in TabSet2
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset2", "History")
+   for (tab in tabsToMove) {
+      if (.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab)) {
+         .rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, tab)
+      }
+   }
 
-#    # Verify History moved from TabSet1 to TabSet2
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "History"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "History"))
+   # Verify all tabs are now in TabSet1
+   allTabs <- c("Environment", "History", "Files", "Plots", "Connections",
+                "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
+                "Presentations")
 
-#    # Move it back to TabSet1
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset1", "History")
+   for (tab in allTabs) {
+      if (tab %in% c("Environment", "History", "Files", "Plots", "Connections",
+                     "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
+                     "Presentations")) {
+         expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, tab))
+         expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab))
+      }
+   }
 
-#    # Verify it's back in TabSet1
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "History"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "History"))
+   # Move tabs back to restore default state
+   for (tab in tabsToMove) {
+      .rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab)
+   }
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
-
-# .rs.test("All tabs can be moved to one TabSet leaving the other empty", {
-#    .rs.openPaneLayoutOptions(remote)
-
-#    # Move all TabSet2 tabs to TabSet1
-#    tabsToMove <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
-
-#    for (tab in tabsToMove) {
-#       if (.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", tab)) {
-#          .rs.toggleTab(remote, ".rstudio-pane-layout-tabset1", tab)
-#       }
-#    }
-
-#    # Verify all tabs are now in TabSet1
-#    allTabs <- c("Environment", "History", "Files", "Plots", "Connections",
-#                 "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-#                 "Presentations")
-
-#    for (tab in allTabs) {
-#       if (tab %in% c("Environment", "History", "Files", "Plots", "Connections",
-#                      "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-#                      "Presentations")) {
-#          expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", tab))
-#          expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", tab))
-#       }
-#    }
-
-#    # Move tabs back to restore default state
-#    for (tab in tabsToMove) {
-#       .rs.toggleTab(remote, ".rstudio-pane-layout-tabset2", tab)
-#    }
-
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 # .rs.test("TabSet quadrants can be swapped while maintaining their tab configurations", {
 #    .rs.openPaneLayoutOptions(remote)
