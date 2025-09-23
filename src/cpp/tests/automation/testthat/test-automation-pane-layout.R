@@ -131,11 +131,17 @@ withr::defer(.rs.automation.deleteRemote())
                currentState <- checkbox$checked
                newState <- !currentState
 
-               # Use setChecked with the ID selector
-               selector <- paste0("#", checkboxId)
+               # Scroll the checkbox into view before clicking
+               # This ensures checkboxes in scrollable containers are visible
                tryCatch({
+                  # First scroll the checkbox into view
+                  remote$js.eval(paste0("document.querySelector('#", checkboxId, "').scrollIntoView({block: 'center', inline: 'nearest'})"))
+                  Sys.sleep(0.1)  # Small wait for scroll to complete
+
+                  # Now click the checkbox
+                  selector <- paste0("#", checkboxId)
                   remote$dom.setChecked(selector, checked = newState)
-                  Sys.sleep(0.5)
+                  Sys.sleep(0.2)
                   return(TRUE)
                }, error = function(e) {
                   print(e)
@@ -411,36 +417,40 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("All tabs can be moved to one TabSet leaving the other empty", {
-   # skip_if(SKIP_TESTS, "Skipping this test for now")
+   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
+
+   # Check that TabSet1 and TabSet2 contain expected tabs at the start of the test
+   initialTabSet1Tabs <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, initialTabSet1Tabs)
+   initialTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, initialTabSet2Tabs)
 
    # Move all TabSet2 tabs to TabSet1
    tabsToMove <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
-
-   for (tab in tabsToMove) {
-      if (.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab)) {
-         .rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, tab)
-      }
+   for (i in seq_along(tabsToMove)) {
+      .rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, tabsToMove[i])
    }
 
-   # Verify all tabs are now in TabSet1
-   allTabs <- c("Environment", "History", "Files", "Plots", "Connections",
-                "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-                "Presentations")
-
-   for (tab in allTabs) {
-      if (tab %in% c("Environment", "History", "Files", "Plots", "Connections",
-                     "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-                     "Presentations")) {
-         expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, tab))
-         expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab))
-      }
+   # Verify the tabs that should have been moved
+   movedTabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   topState <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, movedTabs)
+   bottomState <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, movedTabs)
+   for (i in seq_along(movedTabs)) {
+      expect_true(topState[i],
+                  info = paste(movedTabs[i], "should be checked in TabSet1"))
+      expect_false(bottomState[i],
+                  info = paste(movedTabs[i], "should not be checked in TabSet2"))
    }
 
-   # Move tabs back to restore default state
+   # Move tabs back
    for (tab in tabsToMove) {
       .rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, tab)
    }
+
+   # Sanity check that the tabs are in the original positions
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, initialTabSet1Tabs)
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, initialTabSet2Tabs)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
