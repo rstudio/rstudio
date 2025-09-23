@@ -156,7 +156,7 @@ TEST_F(CleanupPeristTest, BufferIsNotTrimmedWithZeroMaxLines) {
 
 TEST_F(CleanupPeristTest, UnknownLogFilesAreDeleted) {
    std::string orig1("hello how are you?\nthat is good\nhave a nice day");
-   std::string orig2("æ of ferret");
+   std::string orig2("beware of ferret");
    std::string bogus1("doom");
    std::string bogus2("once upon a time");
 
