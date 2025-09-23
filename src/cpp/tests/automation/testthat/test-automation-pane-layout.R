@@ -80,6 +80,39 @@ withr::defer(.rs.automation.deleteRemote())
    return(FALSE)
 }
 
+# Fetch the checked state of a list of tabs
+.rs.getTabCheckedState <- function(remote, quadrantClass, tabNames) {
+   # Get all labels and checkboxes in one query
+   labels <- remote$js.querySelectorAll(paste0(quadrantClass, " label"))
+   
+   # Create a map of tab names to their checked state
+   result <- logical(length(tabNames))
+   names(result) <- tabNames
+   
+   # Process all labels once
+   for (i in seq_len(length(labels))) {
+      label <- labels[[i]]
+      labelText <- label$innerText
+      
+      # Check if this label matches any of the requested tab names
+      for (j in seq_along(tabNames)) {
+         if (grepl(tabNames[j], labelText, fixed = TRUE)) {
+            # Find corresponding checkbox
+            forAttr <- label$getAttribute("for")
+            if (!is.null(forAttr)) {
+               checkbox <- remote$js.querySelector(paste0("#", forAttr))
+               if (!is.null(checkbox)) {
+                  result[j] <- checkbox$checked
+                  break  # Found the checkbox for this tab
+               }
+            }
+         }
+      }
+   }
+   
+   return(result)
+}
+
 # Helper function to toggle a checkbox
 .rs.toggleTab <- function(remote, quadrantClass, tabName) {
    labels <- remote$js.querySelectorAll(paste0(quadrantClass, " label"))
@@ -248,22 +281,26 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("TabSet1 displays correct default checked tabs", {
    .rs.openPaneLayoutOptions(remote)
 
-   # Default TabSet1 should have these tabs checked:
-   # Environment, History, Connections, Build, VCS, Tutorial
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "History"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Connections"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Build"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "VCS"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Tutorial"))
+   allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   
+   tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, allTabNames)
+
+   # Default TabSet1 should have these tabs checked
+   expect_true(tabStates["Environment"], info = "Environment should be checked in TabSet1")
+   expect_true(tabStates["History"], info = "History should be checked in TabSet1")
+   expect_true(tabStates["Connections"], info = "Connections should be checked in TabSet1")
+   expect_true(tabStates["Build"], info = "Build should be checked in TabSet1")
+   expect_true(tabStates["VCS"], info = "VCS should be checked in TabSet1")
+   expect_true(tabStates["Tutorial"], info = "Tutorial should be checked in TabSet1")
 
    # These should be unchecked in TabSet1
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Plots"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Packages"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Help"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Viewer"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Presentations"))
+   expect_false(tabStates["Files"], info = "Files should be unchecked in TabSet1")
+   expect_false(tabStates["Plots"], info = "Plots should be unchecked in TabSet1")
+   expect_false(tabStates["Packages"], info = "Packages should be unchecked in TabSet1")
+   expect_false(tabStates["Help"], info = "Help should be unchecked in TabSet1")
+   expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in TabSet1")
+   expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in TabSet1")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -272,22 +309,26 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("TabSet2 displays correct default checked tabs", {
    .rs.openPaneLayoutOptions(remote)
 
-   # Default TabSet2 should have these tabs checked:
-   # Files, Plots, Packages, Help, Viewer, Presentations
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Plots"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Packages"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Help"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Viewer"))
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Presentations"))
+   allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   
+   tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, allTabNames)
+
+   # Default TabSet2 should have these tabs checked
+   expect_true(tabStates["Files"], info = "Files should be checked in TabSet2")
+   expect_true(tabStates["Plots"], info = "Plots should be checked in TabSet2")
+   expect_true(tabStates["Packages"], info = "Packages should be checked in TabSet2")
+   expect_true(tabStates["Help"], info = "Help should be checked in TabSet2")
+   expect_true(tabStates["Viewer"], info = "Viewer should be checked in TabSet2")
+   expect_true(tabStates["Presentations"], info = "Presentations should be checked in TabSet2")
 
    # These should be unchecked in TabSet2
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "History"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Connections"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Build"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "VCS"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Tutorial"))
+   expect_false(tabStates["Environment"], info = "Environment should be unchecked in TabSet2")
+   expect_false(tabStates["History"], info = "History should be unchecked in TabSet2")
+   expect_false(tabStates["Connections"], info = "Connections should be unchecked in TabSet2")
+   expect_false(tabStates["Build"], info = "Build should be unchecked in TabSet2")
+   expect_false(tabStates["VCS"], info = "VCS should be unchecked in TabSet2")
+   expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in TabSet2")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
