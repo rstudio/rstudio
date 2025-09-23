@@ -80,7 +80,7 @@ withr::defer(.rs.automation.deleteRemote())
    return(FALSE)
 }
 
-# Fetch the checked state of a list of tabs
+# Helper function to fetch the checked state of a list of tabs
 .rs.getTabCheckedState <- function(remote, quadrantClass, tabNames) {
    # Get all labels and checkboxes in one query
    labels <- remote$js.querySelectorAll(paste0(quadrantClass, " label"))
@@ -113,17 +113,32 @@ withr::defer(.rs.automation.deleteRemote())
    return(result)
 }
 
-# Helper function to toggle a checkbox
+# Helper function to toggle a tab checkbox
 .rs.toggleTab <- function(remote, quadrantClass, tabName) {
-   labels <- remote$js.querySelectorAll(paste0(quadrantClass, " label"))
-
-   for (i in seq_len(labels$length)) {
-      label <- labels[[i - 1L]]
-      if (grepl(tabName, label$innerText, fixed = TRUE)) {
-         # Click the label to toggle the checkbox
-         remote$dom.clickElement(nodeId = label$nodeId)
-         Sys.sleep(0.5) # Allow time for state change
-         return(TRUE)
+   checkboxes <- remote$js.querySelectorAll(paste0(quadrantClass, " input[type='checkbox']"))
+   
+   for (i in seq_len(length(checkboxes))) {
+      checkbox <- checkboxes[[i]]
+      # Get the label associated with this checkbox
+      checkboxId <- checkbox$id
+      if (!is.null(checkboxId) && checkboxId != "") {
+         label <- remote$js.querySelector(paste0("label[for='", checkboxId, "']"))
+         if (!is.null(label)) {
+            labelText <- label$innerText
+            if (grepl(tabName, labelText, fixed = TRUE)) {
+               currentState <- checkbox$checked
+               newState <- !currentState
+               
+               # Use setChecked with the ID selector
+               tryCatch({
+                  remote$dom.setChecked(paste0("#", checkboxId), checked = newState)
+                  Sys.sleep(0.5)
+                  return(TRUE)
+               }, error = function(e) {
+                  return(FALSE)
+               })
+            }
+         }
       }
    }
    return(FALSE)
@@ -334,30 +349,30 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Files is checked in TabSet2 by default, not in TabSet1
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Files"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files"))
+   # Files is checked in TabSet2 by default, not in TabSet1
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-#    # Check Files in TabSet1
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset1", "Files")
+   # Check Files in TabSet1 - try simple approach first
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
-#    # Verify Files is now checked in TabSet1 and unchecked in TabSet2
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Files"))
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files"))
+   # Verify Files is now checked in TabSet1 and unchecked in TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-#    # Move it back to TabSet2
-#    .rs.toggleTab(remote, ".rstudio-pane-layout-tabset2", "Files")
+   # Move it back to TabSet2
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-#    # Verify it's back to original state
-#    expect_false(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Files"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files"))
+   # Verify it's back to original state
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
 
 # .rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
 #    .rs.openPaneLayoutOptions(remote)
