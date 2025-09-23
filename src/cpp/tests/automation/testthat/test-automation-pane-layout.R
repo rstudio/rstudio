@@ -1,7 +1,5 @@
 library(testthat)
 
-SKIP_TESTS <- FALSE
-
 # ids of the 4 quadrants in the Pane Layout options panel
 PANE_LAYOUT_LEFT_TOP <- "#rstudio_pane_layout_left_top"
 PANE_LAYOUT_LEFT_BOTTOM <- "#rstudio_pane_layout_left_bottom"
@@ -211,7 +209,6 @@ withr::defer(.rs.automation.deleteRemote())
 # --------------------------------------------------------------------------------------------------
 
 .rs.test("Pane Layout dialog displays with correct default quadrant configuration", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Verify all four quadrants are displayed
@@ -241,7 +238,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    expectedTexts <- c("Source", "Console", "Environment", "Files")
@@ -257,7 +253,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant swapping works correctly", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    sourceInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -307,7 +302,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet1 displays correct default checked tabs", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
@@ -336,7 +330,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet2 displays correct default checked tabs", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
@@ -365,7 +358,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1
@@ -391,7 +383,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Environment is checked in TabSet1 by default
@@ -417,7 +408,6 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("All tabs can be moved to one TabSet leaving the other empty", {
-   skip_if(SKIP_TESTS, "Skipping this test for now")
    .rs.openPaneLayoutOptions(remote)
 
    # Check that TabSet1 and TabSet2 contain expected tabs at the start of the test
@@ -456,39 +446,36 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.insertText("<Escape>")
 })
 
-# .rs.test("TabSet quadrants can be swapped while maintaining their tab configurations", {
-#    .rs.openPaneLayoutOptions(remote)
+.rs.test("TabSet quadrants can be swapped while maintaining their tab configurations", {
+   .rs.openPaneLayoutOptions(remote)
 
-#    # Get initial TabSet positions
-#    tabset1Initial <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-tabset1")
-#    tabset2Initial <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-tabset2")
+   # Get initial TabSet positions
+   tabset1Initial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
+   tabset2Initial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
 
-#    # Remember which tabs are checked in each
-#    envInTabSet1 <- .rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment")
-#    filesInTabSet2 <- .rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files")
+   # Remember which tabs are checked in each
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-#    expect_true(envInTabSet1)
-#    expect_true(filesInTabSet2)
+   # Swap TabSet1 and TabSet2 positions via dropdown
+   # This swaps the quadrant positions but should maintain tab assignments
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_TOP, tabset2Initial)
+   Sys.sleep(0.5)
 
-#    # Swap TabSet1 and TabSet2 positions via dropdown
-#    # This swaps the quadrant positions but should maintain tab assignments
-#    .rs.selectDropdownOption(remote, ".rstudio-pane-layout-tabset1", tabset2Initial)
-#    Sys.sleep(1)
+   # Verify the swap occurred in dropdown
+   upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
+   lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
 
-#    # Verify the swap occurred in dropdown
-#    tabset1After <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-tabset1")
-#    tabset2After <- .rs.getQuadrantDropdownText(remote, ".rstudio-pane-layout-tabset2")
+   expect_equal(upperLeftAfter, tabset2Initial)
+   expect_equal(lowerLeftAfter, tabset1Initial)
 
-#    expect_equal(tabset1After, tabset2Initial)
-#    expect_equal(tabset2After, tabset1Initial)
+   # Tab configurations should remain with their TabSets
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
-#    # Tab configurations should remain with their TabSets
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset1", "Environment"))
-#    expect_true(.rs.isTabChecked(remote, ".rstudio-pane-layout-tabset2", "Files"))
+   # Swap back to restore
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_TOP, tabset1Initial)
 
-#    # Swap back to restore
-#    .rs.selectDropdownOption(remote, ".rstudio-pane-layout-tabset1", tabset1Initial)
-
-#    # Close dialog
-#    remote$keyboard.insertText("<Escape>")
-# })
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
