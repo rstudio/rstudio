@@ -9,17 +9,6 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## 2025.09.2 {#rstudio-2025.09.2}
-
-| **"Cucumberleaf Sunflower"** | Date: 2025-10-12
-
-### New
-
-#### RStudio
-
-- ([#6377](https://github.com/rstudio/rstudio-pro/issues/6377)): Extend CSRF protection to the export endpoint.
-
-
 ## 2025.09.0 {#rstudio-2025.09.0}
 
 | **"Cucumberleaf Sunflower"** | Date: 2025-09-12
