@@ -125,35 +125,30 @@
    # Wait for element to exist
    nodeId <- self$dom.waitForElement(selector)
 
-   # Try to get and set the state directly
-   tryCatch({
-      # Get current state
-      currentState <- self$dom.isChecked(selector)
-      if (checked != currentState) {
-         # Try clicking the element
-         self$dom.clickElement(nodeId = nodeId)
+   # Get current state
+   currentState <- self$dom.isChecked(selector)
+   if (checked != currentState) {
+      # Try clicking the element
+      self$dom.clickElement(nodeId = nodeId)
 
-         # Wait a bit for the state to change
-         Sys.sleep(0.2)
+      # Wait a bit for the state to change
+      Sys.sleep(0.2)
 
-         # Verify the state changed
-         newState <- self$dom.isChecked(selector)
+      # Verify the state changed
+      newState <- self$dom.isChecked(selector)
 
-         # If the state didn't change, try a different approach
-         if (newState == currentState) {
-            # Use JavaScript to directly set the checked property and trigger change event
-            jsCode <- sprintf("
-               var el = document.querySelector('%s');
-               el.checked = %s;
-               el.dispatchEvent(new Event('change', {bubbles: true}));
-               el.dispatchEvent(new Event('click', {bubbles: true}));
-            ", selector, ifelse(checked, "true", "false"))
-            self$js.eval(jsCode)
-         }
+      # If the state didn't change, try a different approach
+      if (newState == currentState) {
+         # Use JavaScript to directly set the checked property and trigger change event
+         jsCode <- sprintf("
+            var el = document.querySelector('%s');
+            el.checked = %s;
+            el.dispatchEvent(new Event('change', {bubbles: true}));
+            el.dispatchEvent(new Event('click', {bubbles: true}));
+         ", selector, ifelse(checked, "true", "false"))
+         self$js.eval(jsCode)
       }
-   }, error = function(e) {
-      stop(e)
-   })
+   }
 })
 
 #' Focus an element and enter text
