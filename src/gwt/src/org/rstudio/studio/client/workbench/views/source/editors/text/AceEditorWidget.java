@@ -1434,7 +1434,11 @@ public class AceEditorWidget extends Composite
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(() ->
       {
-         removeMarkersOnCursorLine();
+         Position cursorPos = editor_.getCursorPosition();
+         removeMarkers((annotation, marker) ->
+         {
+            return marker.getRange().contains(cursorPos);
+         });
       });
    }
 
