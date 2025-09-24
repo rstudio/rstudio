@@ -84,32 +84,71 @@
 })
 
 #' Get checked state of an element
-#' 
-#' Determine if an element has the "checked" attribute.
-#' 
-#' @param nodeId The nodeId of the element to check
+#'
+#' Determine if an element is checked.
+#'
+#' @param selector The CSS selector or nodeId of the element to check
 #' @return TRUE if element is checked, FALSE if not checked
 #'
-.rs.automation.addRemoteFunction("dom.isChecked", function(nodeId)
+.rs.automation.addRemoteFunction("dom.isChecked", function(selector)
 {
-   response <- self$client$DOM.getAttributes(nodeId)
-   attributes <- response$attributes
-   checkedIndex <- which(attributes == "checked")
-   length(checkedIndex) > 0
+   # If selector is numeric, it's a nodeId - convert to selector
+   if (is.numeric(selector)) {
+      # This is a nodeId, we need to use the old approach
+      resolveResponse <- self$client$DOM.resolveNode(selector)
+      objectId <- resolveResponse$object$objectId
+      result <- self$client$Runtime.callFunctionOn(
+         functionDeclaration = "function() { return this.checked; }",
+         objectId = objectId,
+         returnByValue = TRUE
+      )
+      return(result$result$value)
+   }
+
+   # Use js.eval with the selector
+   jsExpr <- sprintf("document.querySelector('%s').checked", selector)
+   result <- self$js.eval(jsExpr)
+
+   # js.eval returns the actual boolean value
+   return(result)
 })
 
 #' Set a checkbox to "checked" state by clicking it
-#' 
+#'
 #' Sets a checkbox to the checked state no matter which state it is currently in.
-#' 
+#'
 #' @param selector The css selector of the checkbox element
 #' @return None
-#' 
+#'
 .rs.automation.addRemoteFunction("dom.setChecked", function(selector, checked = TRUE)
 {
+   # Wait for element to exist
    nodeId <- self$dom.waitForElement(selector)
-   if (checked != self$dom.isChecked(nodeId))
+
+   # Get current state
+   currentState <- self$dom.isChecked(selector)
+   if (checked != currentState) {
+      # Try clicking the element
       self$dom.clickElement(nodeId = nodeId)
+
+      # Wait a bit for the state to change
+      Sys.sleep(0.2)
+
+      # Verify the state changed
+      newState <- self$dom.isChecked(selector)
+
+      # If the state didn't change, try a different approach
+      if (newState == currentState) {
+         # Use JavaScript to directly set the checked property and trigger change event
+         jsCode <- sprintf("
+            var el = document.querySelector('%s');
+            el.checked = %s;
+            el.dispatchEvent(new Event('change', {bubbles: true}));
+            el.dispatchEvent(new Event('click', {bubbles: true}));
+         ", selector, ifelse(checked, "true", "false"))
+         self$js.eval(jsCode)
+      }
+   }
 })
 
 #' Focus an element and enter text
