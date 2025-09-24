@@ -24,6 +24,7 @@
 - ([#16457](https://github.com/rstudio/rstudio/issues/16457)): Adjusted width of the standalone Accessibility Options dialog to fully display the pane
 - ([#16532](https://github.com/rstudio/rstudio/issues/16352)): Fixed an issue where ongoing R Markdown render output was lost when after a browser refresh
 - ([#14510](https://github.com/rstudio/rstudio/issues/14510)): Fixed issue where gutter icons were incorrectly presented for spellcheck issues
+- ([#16474](https://github.com/rstudio/rstudio/issues/16474)): Adjusted Pane Layout options UI to improve space utilization
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
