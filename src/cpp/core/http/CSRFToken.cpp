@@ -114,11 +114,6 @@ bool validateCSRFForm(const http::Request& request,
    std::string bodyToken = http::util::fieldValue<std::string>(fields,
          kCSRFTokenCookie, "");
 
-   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
-   // If the token is empty, extract the old version
-   if (bodyToken.empty())
-      bodyToken = http::util::fieldValue<std::string>(fields, kOldCSRFTokenCookie, "");
-   // ====================================================================================================
 
    // report an error if they don't match
    if (headerToken.empty() || bodyToken != headerToken)
