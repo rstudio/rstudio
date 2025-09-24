@@ -1212,7 +1212,10 @@ public class AceEditorWidget extends Composite
          markerId_ = markerId;
       }
 
-      public int getMarkerId() { return markerId_; }
+      public int getMarkerId()
+      {
+         return markerId_;
+      }
 
       public void detach()
       {
@@ -1343,8 +1346,9 @@ public class AceEditorWidget extends Composite
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();
-      removeMarkersInRange(range, gutterAnnotations_);
-      removeMarkersInRange(range, inlineAnnotations_);
+      removeMarkers((annotation, marker) -> {
+         return range.contains(annotation.row(), annotation.column());
+      });
    }
 
    public void clearAnnotations()
@@ -1394,12 +1398,15 @@ public class AceEditorWidget extends Composite
             int markerId = annotation.getMarkerId();
             Marker marker = editor_.getSession().getMarker(markerId);
             if (marker == null)
+            {
+               annotation.detach();
                return true;
+            }
 
             // otherwise, apply the supplied predicate
             if (predicate.test(annotation.annotation_, marker))
             {
-               editor_.getSession().removeMarker(markerId);
+               annotation.detach();
                return true;
             }
             else
