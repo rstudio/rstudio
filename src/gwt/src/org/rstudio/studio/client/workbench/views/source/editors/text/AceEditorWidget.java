@@ -1310,7 +1310,7 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.spelling();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         if (item.getType() == "spelling")
+         if (StringUtil.equals(item.getType(), "spelling"))
             inlineAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
          else
             gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
