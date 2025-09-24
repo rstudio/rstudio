@@ -1897,6 +1897,15 @@ public class TextEditingTarget implements
                @Override
                public void onCopilot(CopilotEvent event)
                {
+                  // If copilot is disabled, hide the status message as a catch-all for
+                  // this report of messages appearing when they shouldn't:
+                  // https://github.com/rstudio/rstudio/issues/16471
+                  if (!copilotHelper_.isCopilotEnabled())
+                  {
+                     view_.getStatusBar().hideStatus();
+                     return;
+                  }
+
                   switch (event.getType())
                   {
                   
