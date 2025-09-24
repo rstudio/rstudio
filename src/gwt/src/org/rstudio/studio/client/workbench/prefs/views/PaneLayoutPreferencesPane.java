@@ -123,6 +123,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          ScrollPanel scrollPanel = new ScrollPanelWithClick();
          scrollPanel.setStyleName(res_.styles().paneLayoutTable());
          scrollPanel.setWidth(width);
+         scrollPanel.setHeight(SCROLL_PANEL_HEIGHT + "px");
          scrollPanel.add(flowPanel);
          initWidget(scrollPanel);
       }
@@ -389,6 +390,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.addStyleName(res_.styles().paneLayoutTable());
          grid_.setCellSpacing(GRID_CELL_SPACING);
          grid_.setCellPadding(GRID_CELL_PADDING);
+         grid_.setWidth(TABLE_WIDTH + "px");
+         grid_.setHeight(TABLE_HEIGHT + "px");
          Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), constants_.createGridLabel());
 
          // the two rows have a different number of columns
@@ -444,6 +447,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.getCellFormatter().setWidth(0, i, columnWidth);
       tabSet1ModuleList_.setWidth(cellWidth);
       tabSet2ModuleList_.setWidth(cellWidth);
+      
+      // ensure grid maintains proper dimensions
+      grid_.setWidth(TABLE_WIDTH + "px");
+      grid_.setHeight(TABLE_HEIGHT + "px");
 
       return cellWidth;
    }
@@ -621,7 +628,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int GRID_CELL_SPACING = 8;
    private final static int GRID_CELL_PADDING = 6;
    private final static int MAX_COLUMN_WIDTH = 50 + GRID_CELL_PADDING + GRID_CELL_SPACING;
-   private final static int TABLE_WIDTH = 435;
+
+   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 342;
+   private final static int TABLE_WIDTH = PreferencesDialogConstants.PANE_CONTAINER_WIDTH - 8;
+   private final static int SCROLL_PANEL_HEIGHT = TABLE_HEIGHT - 40;
+
    private final static int GRID_PANE_COUNT = 2;
    private final static int GRID_SELECT_PADDING = 10; // must match CSS file
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
