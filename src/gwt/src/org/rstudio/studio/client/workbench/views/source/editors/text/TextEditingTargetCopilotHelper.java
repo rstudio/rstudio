@@ -495,6 +495,11 @@ public class TextEditingTargetCopilotHelper
    {
       copilotDisabledInThisDocument_ = false;
    }
+
+   public boolean isCopilotEnabled()
+   {
+      return copilot_.isEnabled();
+   }
    
    private String computeGhostText(String completionText)
    {
