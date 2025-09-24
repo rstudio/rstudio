@@ -102,6 +102,7 @@ public class DiagnosticsBackgroundPopup
          {
             if (event.getTypeInt() == Event.ONMOUSEMOVE)
             {
+               lastMouseMoveTime_ = System.currentTimeMillis();
                movedMouseMostRecently_ = true;
 
                EventTarget eventTarget = event.getNativeEvent().getEventTarget();
@@ -165,6 +166,9 @@ public class DiagnosticsBackgroundPopup
                if (lastMouseCoords_ == null)
                   return completeExecution();
 
+               if ((currentTime - lastMouseMoveTime_) < 500)
+                  return completeExecution();
+
                currentPos = editor_.toDocumentPosition(lastMouseCoords_);
             }
             else
@@ -187,7 +191,7 @@ public class DiagnosticsBackgroundPopup
             hidePopup();
             return completeExecution();
          }
-      }, 500);
+      }, 100);
    }
 
    private void displayMarkerDiagnostics(Marker marker)
@@ -310,9 +314,9 @@ public class DiagnosticsBackgroundPopup
 
    private ScreenCoordinates lastMouseCoords_;
    private HandlerRegistration handler_;
-   private static final Resources RES =
-         Resources.INSTANCE;
+   private static final Resources RES = Resources.INSTANCE;
 
+   private long lastMouseMoveTime_;
    private boolean movedMouseMostRecently_;
 
    static {
