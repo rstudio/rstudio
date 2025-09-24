@@ -1243,14 +1243,24 @@ public class AceEditorWidget extends Composite
 
    public JsArray<AceAnnotation> getAnnotations()
    {
-      JsArray<AceAnnotation> annotations =
-            JsArray.createArray().cast();
-      annotations.setLength(annotations_.size());
+      JsArray<AceAnnotation> annotations = JsArray.createArray().cast();
+      annotations.setLength(gutterAnnotations_.size());
 
-      for (int i = 0; i < annotations_.size(); i++)
-         annotations.set(i, annotations_.get(i).asAceAnnotation());
+      for (int i = 0; i < gutterAnnotations_.size(); i++)
+         annotations.set(i, gutterAnnotations_.get(i).asAceAnnotation());
 
       return annotations;
+   }
+
+   public void updateAnnotations(List<AnchoredAceAnnotation> annotations)
+   {
+      JsArray<AceAnnotation> aceAnnotations = JsArray.createArray().cast();
+      aceAnnotations.setLength(annotations.size());
+      for (int i = 0, n = annotations.size(); i < n; i++)
+         aceAnnotations.set(i, annotations.get(i).asAceAnnotation());
+
+      editor_.getSession().setAnnotations(aceAnnotations);
+      editor_.getRenderer().renderMarkers();
    }
 
    public void setAnnotations(JsArray<AceAnnotation> annotations)
@@ -1297,7 +1307,10 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.spelling();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         annotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
+         if (item.getType() == "spelling")
+            inlineAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
+         else
+            gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
       }
    }
 
@@ -1307,30 +1320,42 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setAnnotations(null);
    }
 
+   private void removeMarkersInRange(Range range, List<AnchoredAceAnnotation> annotations)
+   {
+      annotations.removeIf(new Predicate<AnchoredAceAnnotation>()
+      {
+         @Override
+         public boolean test(AnchoredAceAnnotation annotation)
+         {
+            if (range.contains(annotation.anchor_.getPosition()))
+            {
+               annotation.detach();
+               return true;
+            }
+            else
+            {
+               return false;
+            }
+         }
+      });
+   }
+
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();
-
-      ArrayList<AnchoredAceAnnotation> annotations = new ArrayList<>();
-
-      for (int i = 0; i < annotations_.size(); i++)
-      {
-         AnchoredAceAnnotation annotation = annotations_.get(i);
-         Position pos = annotation.anchor_.getPosition();
-
-         if (!range.contains(pos))
-            annotations.add(annotation);
-         else
-            annotation.detach();
-      }
-      annotations_ = annotations;
+      removeMarkersInRange(range, gutterAnnotations_);
+      removeMarkersInRange(range, inlineAnnotations_);
    }
 
    public void clearAnnotations()
    {
-      for (int i = 0; i < annotations_.size(); i++)
-         annotations_.get(i).detach();
-      annotations_.clear();
+      for (int i = 0; i < gutterAnnotations_.size(); i++)
+         gutterAnnotations_.get(i).detach();
+      gutterAnnotations_.clear();
+
+      for (int i = 0; i < inlineAnnotations_.size(); i++)
+         inlineAnnotations_.get(i).detach();
+      inlineAnnotations_.clear();
    }
    
    public JsMap<Marker> getMarkers(boolean inFront)
@@ -1345,7 +1370,7 @@ public class AceEditorWidget extends Composite
          Range range = marker.getRange();
          int rowStart = range.getStart().getRow();
          int rowEnd = range.getEnd().getRow();
-         return cursorRow < rowStart || cursorRow > rowEnd;
+         return cursorRow >= rowStart && cursorRow <= rowEnd;
       });
    }
 
@@ -1357,34 +1382,43 @@ public class AceEditorWidget extends Composite
       });
    }
 
+   private void removeMarkersImpl(List<AnchoredAceAnnotation> annotations,
+                                  BiPredicate<AceAnnotation, Marker> predicate)
+   {
+      annotations.removeIf(new Predicate<AnchoredAceAnnotation>()
+      {
+         @Override
+         public boolean test(AnchoredAceAnnotation annotation)
+         {
+            // check whether the marker has already been removed, or doesn't exist
+            int markerId = annotation.getMarkerId();
+            Marker marker = editor_.getSession().getMarker(markerId);
+            if (marker == null)
+               return true;
+
+            // otherwise, apply the supplied predicate
+            if (predicate.test(annotation.annotation_, marker))
+            {
+               editor_.getSession().removeMarker(markerId);
+               return true;
+            }
+            else
+            {
+               return false;
+            }
+         }
+         
+      });
+   }
+
    public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
    {
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(() ->
       {
-         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-
-         for (int i = 0; i < annotations_.size(); i++)
-         {
-            AnchoredAceAnnotation annotation = annotations_.get(i);
-            int markerId = annotation.getMarkerId();
-            Marker marker = editor_.getSession().getMarker(markerId);
-
-            // The marker may have already been removed in response to
-            // a previous action.
-            if (marker == null)
-               continue;
-
-            if (!predicate.test(annotation.asAceAnnotation(), marker))
-            {
-               newAnnotations.push(annotation.asAceAnnotation());
-            }
-            else
-               editor_.getSession().removeMarker(markerId);
-         }
-
-         editor_.getSession().setAnnotations(newAnnotations);
-         editor_.getRenderer().renderMarkers();
+         removeMarkersImpl(gutterAnnotations_, predicate);
+         removeMarkersImpl(inlineAnnotations_, predicate);
+         updateAnnotations(gutterAnnotations_);
       });
    }
 
@@ -1393,29 +1427,7 @@ public class AceEditorWidget extends Composite
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(() ->
       {
-         Position cursor = editor_.getCursorPosition();
-         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-
-         for (int i = 0; i < annotations_.size(); i++)
-         {
-            AnchoredAceAnnotation annotation = annotations_.get(i);
-            int markerId = annotation.getMarkerId();
-            Marker marker = editor_.getSession().getMarker(markerId);
-
-            // The marker may have already been removed in response to
-            // a previous action.
-            if (marker == null)
-               continue;
-
-            Range range = marker.getRange();
-            if (!range.contains(cursor))
-               newAnnotations.push(annotation.asAceAnnotation());
-            else
-               editor_.getSession().removeMarker(markerId);
-         }
-
-         editor_.getSession().setAnnotations(newAnnotations);
-         editor_.getRenderer().renderMarkers();
+         removeMarkersOnCursorLine();
       });
    }
 
@@ -1472,7 +1484,8 @@ public class AceEditorWidget extends Composite
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
    private final ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
-   private ArrayList<AnchoredAceAnnotation> annotations_ = new ArrayList<>();
+   private final List<AnchoredAceAnnotation> gutterAnnotations_ = new ArrayList<>();
+   private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private static boolean hasEditHandlers_ = false;
