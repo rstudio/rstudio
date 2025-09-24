@@ -122,8 +122,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
-         UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
-         UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2
       };
    }
 
