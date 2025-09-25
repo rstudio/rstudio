@@ -52,11 +52,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
@@ -71,14 +73,20 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import jsinterop.base.Js;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -104,11 +112,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler(true);
 
+      container_ = new DockLayoutPanel(Unit.PX);
+
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
+
+      findBar_ = new ShellWidgetFindBar(container_, Js.cast(output_.getElement()));
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -180,6 +192,32 @@ public class ShellWidget extends Composite implements ShellDisplay,
          {
             checkForResize();
             checkForPendingScroll();
+         }
+      });
+
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            if ((preview.getTypeInt() & Event.KEYEVENTS) == 0)
+               return;
+
+            NativeEvent event = preview.getNativeEvent();
+            EventTarget target = event.getEventTarget();
+            if (!DomUtils.contains(getElement(), Js.cast(target)))
+               return;
+            
+            if (event.getCtrlKey() || event.getMetaKey())
+            {
+               if (event.getKeyCode() == KeyCodes.KEY_F)
+               {
+                  preview.cancel();
+                  event.stopPropagation();
+                  event.preventDefault();
+                  showFind();
+               }
+            }
          }
       });
 
@@ -267,7 +305,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.addStyleName("ace_scroller");
       scrollPanel_.addClickHandler(secondaryInputHandler);
       scrollPanel_.addKeyDownHandler(secondaryInputHandler);
-
       secondaryInputHandler.setInput(editor);
 
       resizeCommand_ = new TimeBufferedCommand(5)
@@ -290,7 +327,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
       
-      initWidget(scrollPanel_);
+      container_.addNorth(findBar_, 30);
+      container_.setWidgetHidden(findBar_, true);
+      container_.add(scrollPanel_);
+      initWidget(container_);
+
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
       
       addCopyHook(getElement());
@@ -822,6 +863,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
             return;
          }
 
+         // Allow clicks into the search bar.
+         EventTarget target = event.getNativeEvent().getEventTarget();
+         if (Node.is(target))
+         {
+            Node targetNode = Node.as(target);
+            if (DomUtils.contains(findBar_.getElement(), targetNode))
+               return;
+         }
+
          if (prefs_ != null && prefs_.consoleDoubleClickSelect().getValue())
          {
             // Some clicks can result in selection (e.g. double clicks). We don't
@@ -1089,6 +1139,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.onContentSizeChanged();
    }
 
+   public void showFind()
+   {
+      container_.setWidgetHidden(findBar_, false);
+      container_.forceLayout();
+      findBar_.focusFindField(true);
+   }
+
    public Widget getOutputWidget()
    {
       return output_.getWidget();
@@ -1205,6 +1262,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
    private final ConsoleOutputWriter output_;
+   private final FindReplaceBar findBar_;
    private final PreWidget pendingInput_;
    private final HTML prompt_;
    private AriaLiveShellWidget liveRegion_ = null;
@@ -1212,6 +1270,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    protected final Renderer renderer_;
    private final DockPanel inputLine_;
    protected final ClickableScrollPanel scrollPanel_;
+   private final DockLayoutPanel container_;
    private final ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;

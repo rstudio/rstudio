@@ -212,6 +212,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
+         <cmd refid="consoleFind"/>
          <separator/>
          <cmd refid="macPreferences"/>
       </menu>
@@ -2746,6 +2747,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Cle_ar Console"
         windowMode="main"
         desc="Clear console"/>
+
+   <cmd id="consoleFind"
+        buttonLabel=""
+        label="Find in Console"
+        menuLabel="_Find in Console"
+        desc="Find in Console"
+        windowMode="main"/>
 
    <cmd id="clearBuild"
         buttonLabel=""

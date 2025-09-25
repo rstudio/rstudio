@@ -244,6 +244,7 @@ public abstract class
 
    // Console
    public abstract AppCommand consoleClear();
+   public abstract AppCommand consoleFind();
    public abstract AppCommand interruptR();
    public abstract AppCommand restartR();
    public abstract AppCommand restartRClearOutput();

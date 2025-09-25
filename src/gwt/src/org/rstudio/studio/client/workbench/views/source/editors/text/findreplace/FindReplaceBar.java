@@ -14,14 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.findreplace;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -36,6 +28,26 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace.Display;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasValue;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class FindReplaceBar extends Composite implements Display, RequiresResize
 {
@@ -62,11 +74,15 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       String closeButton();
    }
 
+   public boolean includeOptionsPanel()
+   {
+      return true;
+   }
+
    public FindReplaceBar(boolean showReplace, boolean defaultForward)
    {
       this(true, showReplace, true, true, defaultForward);
    }
-
 
    public FindReplaceBar(boolean showFindAll,
                          boolean showReplace,
@@ -76,7 +92,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    {
       defaultForward_ = defaultForward;
 
-      Shelf shelf = new Shelf(true);
+      Shelf shelf = new Shelf(includeOptionsPanel());
       shelf.setWidth("100%");
       shelf.addStyleName("rstudio-themes-background");
 
@@ -135,10 +151,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       wrapSearchLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(wrapSearchLabel);
 
-      panel.add(optionsPanel);
+      if (includeOptionsPanel())
+      {
+         panel.add(optionsPanel);
+      }
 
       shelf.addLeftWidget(panel);
-
 
       if (RStudioGinjector.INSTANCE.getUserPrefs().findPanelLegacyTabSequence().getValue())
       {
@@ -373,6 +391,16 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public Widget getUnderlyingWidget()
    {
       return getWidget();
+   }
+
+   public SmallButton getFindNextButton()
+   {
+      return btnFindNext_;
+   }
+
+   public SmallButton getFindPrevButton()
+   {
+      return btnFindPrev_;
    }
 
    private final FindTextBox txtFind_;
