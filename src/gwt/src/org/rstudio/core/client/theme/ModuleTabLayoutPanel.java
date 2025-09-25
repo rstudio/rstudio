@@ -14,23 +14,6 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TabLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
@@ -42,6 +25,23 @@ import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TabLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class ModuleTabLayoutPanel extends TabLayoutPanel
 {
@@ -165,6 +165,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       {
          if (!isWithinTopBand(mouseDownEvent.getNativeEvent()))
             return;
+
          // Stop click-drag selection from working in top band
          mouseDownEvent.preventDefault();
       };
@@ -187,8 +188,10 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
    private boolean isWithinTopBand(NativeEvent event)
    {
-      int absTop = getAbsoluteTop();
-      return absTop + BAR_HEIGHT > event.getClientY();
+      int clientPos = event.getClientY();
+      int topBounds = getAbsoluteTop();
+      int bottomBounds = topBounds + BAR_HEIGHT;
+      return clientPos >= topBounds && clientPos <= bottomBounds;
    }
 
    @Override

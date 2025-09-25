@@ -7,8 +7,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 
 import elemental2.dom.Document;
 import elemental2.dom.Element;
-import elemental2.dom.Event;
-import elemental2.dom.KeyboardEvent;
 import elemental2.dom.Node;
 import elemental2.dom.NodeFilter;
 import elemental2.dom.Selection;
@@ -45,11 +43,6 @@ public class ShellWidgetFindBar extends FindReplaceBar
       {
          findPrevious();
       });
-
-      Element el = Js.cast(getElement());
-      el.addEventListener("keydown",  this::handleKeyEvent, true);
-      el.addEventListener("keypress", this::handleKeyEvent, true);
-      el.addEventListener("keyup",    this::handleKeyEvent, true);
    }
 
    public void findNext()
@@ -163,16 +156,6 @@ public class ShellWidgetFindBar extends FindReplaceBar
             parentEl.scrollIntoView();
 
          break;
-      }
-   }
-
-   private void handleKeyEvent(Event event)
-   {
-      KeyboardEvent keyEvent = Js.cast(event);
-      if (keyEvent.key.equals("Enter"))
-      {
-         event.stopPropagation();
-         event.preventDefault();
       }
    }
 
