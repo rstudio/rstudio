@@ -1099,6 +1099,15 @@ public class PaneManager
       commands_.hideSidebar().setVisible(showSidebar);
    }
    
+   public void clearSidebarCache()
+   {
+      // Remove the cached sidebar window so it gets recreated with new tabs
+      panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      sidebarTabPanel_ = null;
+      sidebarMinPanel_ = null;
+      sidebarTabs_ = null;
+   }
+
    public void refreshSidebar()
    {
       // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)

@@ -643,6 +643,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_,
                sidebar, sidebarVisible, sidebarLocation));
 
+         // Clear sidebar cache and refresh it to show new tabs immediately
+         paneManager_.clearSidebarCache();
+         paneManager_.refreshSidebar();
+
          dirty_ = false;
       }
 
