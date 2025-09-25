@@ -108,6 +108,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       ModuleList(String width)
       {
+         this(width, SCROLL_PANEL_HEIGHT);
+      }
+
+      ModuleList(String width, int height)
+      {
          checkBoxes_ = new ArrayList<>();
          FlowPanel flowPanel = new FlowPanel();
          for (String module : PaneConfig.getAllTabs())
@@ -123,7 +128,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          ScrollPanel scrollPanel = new ScrollPanelWithClick();
          scrollPanel.setStyleName(res_.styles().paneLayoutTable());
          scrollPanel.setWidth(width);
-         scrollPanel.setHeight(SCROLL_PANEL_HEIGHT + "px");
+         scrollPanel.setHeight(height + "px");
          scrollPanel.add(flowPanel);
          initWidget(scrollPanel);
       }
@@ -292,18 +297,24 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       for (ListBox lb : visiblePanes_)
          lb.addChangeHandler(event -> dirty_ = true);
 
-      String paneWidth = updateTable(additionalColumnCount_);
+      // Create module lists first with a default width
+      String defaultPaneWidth = "200px";
+      tabSet1ModuleList_ = new ModuleList(defaultPaneWidth);
+      tabSet1ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet1()));
+      tabSet2ModuleList_ = new ModuleList(defaultPaneWidth);
+      tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
+      hiddenTabSetModuleList_ = new ModuleList(defaultPaneWidth);
+      hiddenTabSetModuleList_.setValue(toArrayList(
+               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
+      // Sidebar uses more height since it doesn't have a dropdown
+      sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 25);
+      sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
+
+      // Now update the table which will set the correct widths
+      updateTable(additionalColumnCount_);
 
       visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
                                             rightTopPanel_, rightBottomPanel_};
-
-      tabSet1ModuleList_ = new ModuleList(paneWidth);
-      tabSet1ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet1()));
-      tabSet2ModuleList_ = new ModuleList(paneWidth);
-      tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
-      hiddenTabSetModuleList_ = new ModuleList(paneWidth);
-      hiddenTabSetModuleList_.setValue(toArrayList(
-               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -320,12 +331,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             ArrayList<Boolean> indices = source.getSelectedIndices();
             ArrayList<Boolean> otherIndices = other.getSelectedIndices();
             ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
+            ArrayList<Boolean> sidebarIndices = sidebarModuleList_.getSelectedIndices();
             if (!PaneConfig.isValidConfig(source.getValue()))
             {
                // when the configuration is invalid, we must reset sources to the prior valid
-               // configuration based on the values of the other two lists
+               // configuration based on the values of the other lists
                for (int i = 0; i < indices.size(); i++)
-                  indices.set(i, !(otherIndices.get(i) || hiddenIndices.get(i)));
+                  indices.set(i, !(otherIndices.get(i) || hiddenIndices.get(i) || sidebarIndices.get(i)));
                source.setSelectedIndices(indices);
             }
             else
@@ -336,12 +348,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                   {
                      otherIndices.set(i, false);
                      hiddenIndices.set(i, false);
+                     sidebarIndices.set(i, false);
                   }
-                  else if (!otherIndices.get(i))
+                  else if (!otherIndices.get(i) && !sidebarIndices.get(i))
                      hiddenIndices.set(i, true);
                }
                other.setSelectedIndices(otherIndices);
                hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
+               sidebarModuleList_.setSelectedIndices(sidebarIndices);
 
                updateTabSetLabels();
             }
@@ -349,6 +363,35 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       };
       tabSet1ModuleList_.addValueChangeHandler(vch);
       tabSet2ModuleList_.addValueChangeHandler(vch);
+
+      // Add value change handler for sidebar
+      sidebarModuleList_.addValueChangeHandler(new ValueChangeHandler<ArrayList<Boolean>>() {
+         public void onValueChange(ValueChangeEvent<ArrayList<Boolean>> e) {
+            dirty_ = true;
+
+            ArrayList<Boolean> sidebarIndices = sidebarModuleList_.getSelectedIndices();
+            ArrayList<Boolean> tabSet1Indices = tabSet1ModuleList_.getSelectedIndices();
+            ArrayList<Boolean> tabSet2Indices = tabSet2ModuleList_.getSelectedIndices();
+            ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
+
+            // Ensure mutual exclusivity
+            for (int i = 0; i < sidebarIndices.size(); i++) {
+               if (sidebarIndices.get(i)) {
+                  tabSet1Indices.set(i, false);
+                  tabSet2Indices.set(i, false);
+                  hiddenIndices.set(i, false);
+               }
+               else if (!tabSet1Indices.get(i) && !tabSet2Indices.get(i))
+                  hiddenIndices.set(i, true);
+            }
+
+            tabSet1ModuleList_.setSelectedIndices(tabSet1Indices);
+            tabSet2ModuleList_.setSelectedIndices(tabSet2Indices);
+            hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
+
+            updateTabSetLabels();
+         }
+      });
 
       updateTabSetPositions();
       updateTabSetLabels();
@@ -360,10 +403,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       if (grid_ != null && displayColumnCount_ == newCount)
          return "";
 
-      // cells will be twice a wide as columns to preserve space
-      double columnCount = newCount + (2 * GRID_PANE_COUNT);
+      // Calculate total column units: source columns + 2 quadrant pairs + 1 sidebar (same size as quadrant pair)
+      // Each quadrant pair takes 2 units, sidebar takes 2 units
+      double columnCount = newCount + (2 * GRID_PANE_COUNT) + GRID_PANE_COUNT;
       double columnWidthValue = (double)TABLE_WIDTH / columnCount;
       double cellWidthValue = columnWidthValue * GRID_PANE_COUNT;
+      double sidebarWidthValue = cellWidthValue; // Sidebar same width as quadrants
 
       // If the column width is bigger than MAX_COLUMN_WIDTH, give space back to the panes
       if (newCount > 0 && Math.min(columnWidthValue, MAX_COLUMN_WIDTH) != columnWidthValue)
@@ -374,9 +419,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       }
       cellWidthValue -= (GRID_CELL_SPACING + GRID_CELL_PADDING);
       columnWidthValue -= (GRID_CELL_SPACING + GRID_CELL_PADDING);
+      sidebarWidthValue -= (GRID_CELL_SPACING + GRID_CELL_PADDING);
 
       final String columnWidth = columnWidthValue + "px";
       final String cellWidth = cellWidthValue + "px";
+      final String sidebarWidth = sidebarWidthValue + "px";
       final String selectWidth = (cellWidthValue - GRID_SELECT_PADDING) + "px";
       leftTop_.setWidth(selectWidth);
       leftBottom_.setWidth(selectWidth);
@@ -408,19 +455,35 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
          grid_.setWidget(0, topColumn, leftTopPanel_ = createPane(leftTop_, ElementIds.PANE_LAYOUT_LEFT_TOP));
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
+         grid_.getCellFormatter().setWidth(0, topColumn, cellWidth);
 
          grid_.setWidget(0, ++topColumn, rightTopPanel_ = createPane(rightTop_, ElementIds.PANE_LAYOUT_RIGHT_TOP));
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
+         grid_.getCellFormatter().setWidth(0, topColumn, cellWidth);
+
+         // Add sidebar column (spans both rows)
+         grid_.setWidget(0, ++topColumn, sidebarPanel_ = createSidebarPane());
+         grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
+         grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
+         grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
 
          int bottomColumn = 0;
          grid_.setWidget(1, bottomColumn, leftBottomPanel_ = createPane(leftBottom_, ElementIds.PANE_LAYOUT_LEFT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
+         grid_.getCellFormatter().setWidth(1, bottomColumn, cellWidth);
 
          grid_.setWidget(1, ++bottomColumn, rightBottomPanel_ = createPane(rightBottom_, ElementIds.PANE_LAYOUT_RIGHT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
+         grid_.getCellFormatter().setWidth(1, bottomColumn, cellWidth);
 
          add(grid_);
          displayColumnCount_ = newCount;
+
+         // Update module list widths and heights after grid creation
+         tabSet1ModuleList_.setWidth(cellWidth);
+         tabSet2ModuleList_.setWidth(cellWidth);
+         sidebarModuleList_.setWidth(sidebarWidth);
+
          return cellWidth;
       }
 
@@ -447,6 +510,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.getCellFormatter().setWidth(0, i, columnWidth);
       tabSet1ModuleList_.setWidth(cellWidth);
       tabSet2ModuleList_.setWidth(cellWidth);
+      sidebarModuleList_.setWidth(sidebarWidth);
+
+      // Update sidebar column width (last column)
+      int sidebarCol = newCount + 2; // newCount source columns + 2 quadrant columns
+      grid_.getCellFormatter().setWidth(0, sidebarCol, sidebarWidth);
       
       // ensure grid maintains proper dimensions
       grid_.setWidth(TABLE_WIDTH + "px");
@@ -476,6 +544,19 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       Roles.getTextboxRole().setAriaLabelProperty(sp.getElement(), constants_.createColumnLabel());
 
       return sp;
+   }
+
+   private VerticalPanel createSidebarPane()
+   {
+      VerticalPanel vp = new VerticalPanel();
+      FormLabel label = new FormLabel();
+      label.setText("Sidebar");
+      label.setStyleName(res_.styles().label());
+      vp.add(label);
+      if (sidebarModuleList_ != null)
+         vp.add(sidebarModuleList_);
+      ElementIds.assignElementId(vp.getElement(), "pane_layout_sidebar");
+      return vp;
    }
 
    private static boolean selectByValue(ListBox listBox, String value)
@@ -525,7 +606,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             tabSet2.push(tab);
 
          JsArrayString sidebar = JsArrayString.createArray().cast();
-         for (String tab : toArrayList(userPrefs_.panes().getGlobalValue().getSidebar()))
+         for (String tab : sidebarModuleList_.getValue())
             sidebar.push(tab);
    
          JsArrayString hiddenTabSet = JsArrayString.createArray().cast();
@@ -623,6 +704,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
+   private final ModuleList sidebarModuleList_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
 
@@ -630,6 +712,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private VerticalPanel leftBottomPanel_;
    private VerticalPanel rightTopPanel_;
    private VerticalPanel rightBottomPanel_;
+   private VerticalPanel sidebarPanel_;
 
    private int additionalColumnCount_ = 0;
    private int displayColumnCount_ = 0;
