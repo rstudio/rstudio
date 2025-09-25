@@ -52,6 +52,7 @@
 #include "../SessionHttpMethods.hpp"
 #include "../SessionRpc.hpp"
 #include "../SessionInit.hpp"
+#include <session/SessionMain.hpp>
 
 using namespace boost::placeholders;
 
@@ -247,6 +248,7 @@ private:
             // validate the connection
             if (validateConnection(ptrNextConnection_))
             {
+               consecutiveErrorCount_ = 0;
                // start reading from the connection
                ptrNextConnection_->startReading();
             }
@@ -261,7 +263,35 @@ private:
             // for errors, log and continue,but don't log errors caused
             // by normal course of socket shutdown
             if (!core::isShutdownError(ec))
-               LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+            {
+               consecutiveErrorCount_++;
+
+               // If we've run out of memory or open files these errors will keep coming in.
+               // To avoid filling up the file system, need to abort before it goes on too long.
+               if (consecutiveErrorCount_ > kMaxConsecutiveErrors)
+               {
+                    core::Error error = core::Error(ec, ERROR_LOCATION);
+                    error.addProperty("description", "RStudio HTTP: Session is exiting due to too many consecutive errors");
+                    LOG_ERROR(error);
+                    if (ec == boost::system::errc::too_many_files_open)
+                       exitEarly(SESSION_EXIT_TOO_MANY_OPEN_FILES);
+                    else if (ec == boost::system::errc::not_enough_memory)
+                       exitEarly(SESSION_EXIT_NOT_ENOUGH_MEMORY);
+                    else
+                       exitEarly(EXIT_FAILURE);
+               }
+               core::Error error = core::Error(ec, ERROR_LOCATION);
+               error.addProperty("description", "RStudio HTTP: error accepting new connection");
+               error.addProperty("consecutive-errors", consecutiveErrorCount_);
+               error.addProperty("error-code", ec.value());
+               error.addProperty("error-category", ec.category().name());
+
+               // Log at different levels based on severity
+               if (consecutiveErrorCount_ <= 10)
+                  LOG_ERROR(error);
+               else if (consecutiveErrorCount_ % 25 == 0)  // Log every 25th error
+                  LOG_ERROR(error);
+            }
          }
       }
       catch(const boost::system::system_error& e)
@@ -416,6 +446,12 @@ private:
 
    // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
    std::atomic<bool> eventsActive_;
+
+   // Keep track of how many errors we catch in handleAccept
+   int consecutiveErrorCount_ = 0;
+
+   // Configurable threshold for consecutive errors before exit
+   static const int kMaxConsecutiveErrors = 100;
 
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
 };
