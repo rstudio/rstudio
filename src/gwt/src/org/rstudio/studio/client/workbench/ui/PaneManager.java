@@ -341,7 +341,9 @@ public class PaneManager
          if (sidebarWindow != null)
          {
             // For sidebar, we use just the WindowFrame directly (no vertical split)
-            sidebarWindow.transitionToState(WindowState.NORMAL);
+            // State already set in initPanes, but ensure it's NORMAL if visible
+            if (sidebarWindow.getState() != WindowState.NORMAL)
+               sidebarWindow.transitionToState(WindowState.NORMAL);
             sidebarWidget = sidebarWindow.getNormal();
             sidebar_ = sidebarWidget;
          }
@@ -1516,6 +1518,10 @@ public class PaneManager
       panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
       sidebarTabPanel_ = sidebar.second;
       sidebarMinPanel_ = sidebar.third;
+
+      // Initialize the sidebar window state (HIDE if not visible, NORMAL if visible)
+      // This prevents null state_ in LogicalWindow.visible()
+      sidebar.first.transitionToState(config.getSidebarVisible() ? WindowState.NORMAL : WindowState.HIDE);
    }
 
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
@@ -1627,6 +1633,18 @@ public class PaneManager
       if (!parent.visible())
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
+
+      // If the tab is in the sidebar, ensure the sidebar is visible
+      if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      {
+         // Check if sidebar is currently hidden and show it
+         if (sidebar_ == null)
+         {
+            showSidebar(true);
+            // Update the preference to persist the visibility
+            setSidebarPref(true);
+         }
       }
 
       if (tabToIndex_.containsKey(tab))
@@ -2039,6 +2057,8 @@ public class PaneManager
          tabs2_ = tabs;
       else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
          hiddenTabs_ = tabs;
+      else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+         sidebarTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
