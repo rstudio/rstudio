@@ -1487,6 +1487,10 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
    if (!ensureAgentRunning())
       return;
 
+   // we didn't tell Copilot about this document, so skip this
+   if (!isIndexableDocument(pDoc))
+      return;
+
    docClosed(uriFromDocument(pDoc));
 }
 
