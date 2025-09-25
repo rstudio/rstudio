@@ -32,6 +32,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.core.client.widget.find.FindBar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -52,7 +53,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -119,8 +119,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
-
-      findBar_ = new ShellWidgetFindBar(container_, Js.cast(output_.getElement()));
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -327,6 +325,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
       
+      findBar_ = new ShellWidgetFindBar(container_, scrollPanel_, Js.cast(output_.getElement()));
       container_.addNorth(findBar_, 30);
       container_.setWidgetHidden(findBar_, true);
       container_.add(scrollPanel_);
@@ -1143,7 +1142,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       container_.setWidgetHidden(findBar_, false);
       container_.forceLayout();
-      findBar_.focusFindField(true);
+      // findBar_.focusFindField(true);
    }
 
    public Widget getOutputWidget()
@@ -1262,7 +1261,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
    private final ConsoleOutputWriter output_;
-   private final FindReplaceBar findBar_;
+   private final FindBar findBar_;
    private final PreWidget pendingInput_;
    private final HTML prompt_;
    private AriaLiveShellWidget liveRegion_ = null;

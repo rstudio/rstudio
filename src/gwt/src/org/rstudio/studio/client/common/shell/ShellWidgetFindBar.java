@@ -1,53 +1,62 @@
 package org.rstudio.studio.client.common.shell;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.core.client.widget.find.FindBar;
 
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 
+import elemental2.dom.DOMRect;
 import elemental2.dom.Document;
 import elemental2.dom.Element;
 import elemental2.dom.Node;
 import elemental2.dom.NodeFilter;
 import elemental2.dom.Selection;
 import elemental2.dom.TreeWalker;
+import elemental2.dom.Window;
 import jsinterop.base.Js;
 
-public class ShellWidgetFindBar extends FindReplaceBar
+public class ShellWidgetFindBar extends FindBar
 {
-   @Override
-   public boolean includeOptionsPanel()
+   public ShellWidgetFindBar(DockLayoutPanel container,
+                             ScrollPanel scroller,
+                             Element root)
    {
-      return false;
-   }
-
-   public ShellWidgetFindBar(DockLayoutPanel container, Node root)
-   {
-      super(false, false, false, false, true);
+      super();
 
       container_ = container;
+      scroller_ = scroller;
       root_ = root;
+   }
 
-      getCloseButton().addClickHandler(event ->
-      {
-         container_.setWidgetHidden(this, true);
-         container_.forceLayout();
-      });
+   @Override
+   public void show()
+   {
+      container_.setWidgetHidden(this, false);
+   }
 
-      getFindNextButton().addClickHandler(event ->
+   @Override
+   public void hide()
+   {
+      container_.setWidgetHidden(this, true);
+   }
+
+   @Override
+   public void find(Direction dir)
+   {
+      if (dir == Direction.NEXT)
       {
          findNext();
-      });
-
-      getFindPrevButton().addClickHandler(event ->
+      }
+      else
       {
-         findPrevious();
-      });
+         findPrev();
+      }
    }
 
    public void findNext()
    {
-      String searchText = getFindValue().getValue();
+      String searchText = getValue();
 
       Node node = root_;
       int index = 0;
@@ -66,11 +75,14 @@ public class ShellWidgetFindBar extends FindReplaceBar
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
          String text = StringUtil.notNull(node.textContent);
-         index = text.indexOf(searchText, index + searchText.length());
-         if (index != -1)
+         if (index + searchText.length() < text.length())
          {
-            setSelectedRange(node, index, index + searchText.length());
-            return;
+            index = text.indexOf(searchText, index + searchText.length());
+            if (index != -1)
+            {
+               setSelection(node, index, searchText.length());
+               return;
+            }
          }
       }
 
@@ -93,18 +105,14 @@ public class ShellWidgetFindBar extends FindReplaceBar
          if (index == -1)
             continue;
 
-         setSelectedRange(node, index, index + searchText.length());
-         Element parentEl = node.parentElement;
-         if (parentEl != null)
-            parentEl.scrollIntoView();
-
+         setSelection(node, index, searchText.length());
          break;
       }
    }
 
-   public void findPrevious()
+   public void findPrev()
    {
-      String searchText = getFindValue().getValue();
+      String searchText = getValue();
 
       Node node = root_;
       int index = 0;
@@ -123,11 +131,14 @@ public class ShellWidgetFindBar extends FindReplaceBar
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
          String text = StringUtil.notNull(node.textContent);
-         index = text.lastIndexOf(searchText, index - searchText.length());
-         if (index != -1)
+         if (index - searchText.length() >= 0)
          {
-            setSelectedRange(node, index, index + searchText.length());
-            return;
+            index = text.lastIndexOf(searchText, index - searchText.length());
+            if (index != -1)
+            {
+               setSelection(node, index, searchText.length());
+               return;
+            }
          }
       }
 
@@ -150,20 +161,37 @@ public class ShellWidgetFindBar extends FindReplaceBar
          if (index == -1)
             continue;
 
-         setSelectedRange(node, index, index + searchText.length());
-         Element parentEl = node.parentElement;
-         if (parentEl != null)
-            parentEl.scrollIntoView();
-
+         setSelection(node, index, searchText.length());
          break;
       }
    }
 
-   private static final native void setSelectedRange(Node node, int lhs, int rhs)
+   public void scrollSelectionIntoView()
+   {
+      Window wnd = getWindow();
+      Selection selection = wnd.getSelection();
+      if (selection.rangeCount == 0)
+         return;
+      
+      Element scrollerEl = Js.cast(scroller_.getElement());
+      DOMRect selectionRect = selection.getRangeAt(0).getBoundingClientRect();
+      DOMRect containerRect = scrollerEl.getBoundingClientRect();
+
+      double targetTop = selectionRect.top - containerRect.top + scroller_.getVerticalScrollPosition();
+      scrollerEl.scrollTop = targetTop - containerRect.height / 2.0;
+   }
+
+   private void setSelection(Node node, int offset, int size)
+   {
+      setSelectedRange(node, offset, size);
+      scrollSelectionIntoView();
+   }
+
+   private static final native void setSelectedRange(Node node, int offset, int size)
    /*-{
       var range = $doc.createRange();
-      range.setStart(node, lhs);
-      range.setEnd(node, rhs);
+      range.setStart(node, offset);
+      range.setEnd(node, offset + size);
 
       var selection = $wnd.getSelection();
       selection.removeAllRanges();
@@ -175,11 +203,17 @@ public class ShellWidgetFindBar extends FindReplaceBar
       return $wnd.getSelection();
    }-*/;
 
+   private static final native Window getWindow()
+   /*-{
+      return $wnd;
+   }-*/;
+
    private static final native Document getDocument()
    /*-{
       return $doc;
    }-*/;
 
    private final DockLayoutPanel container_;
-   private final Node root_;
+   private final ScrollPanel scroller_;
+   private final Element root_;
 }

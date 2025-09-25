@@ -1095,6 +1095,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand consoleFind() {
+        return null;
+    }
+
+    @Override
     public AppCommand interruptR() {
         return null;
     }
