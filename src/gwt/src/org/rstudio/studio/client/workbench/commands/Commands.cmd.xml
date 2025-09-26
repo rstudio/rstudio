@@ -2763,6 +2763,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Clear build"
         context="packageDevelopment"/>
 
+   <cmd id="findBuild"
+        buttonLabel=""
+        label="Search in Build Pane"
+        windowMode="main"
+        desc="Search in Build Pane"
+        context="packageDevelopment"/>
+
    <cmd id="interruptR"
         label="Interrupt R Session"
         buttonLabel=""

@@ -2258,6 +2258,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Clear build") // $NON-NLS-1$
     String clearBuildDesc();
     
+    // findBuild
+    @DefaultStringValue("Search in Build Pane") // $NON-NLS-1$
+    String findBuildLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String findBuildButtonLabel();
+    @DefaultStringValue("Search in Build Pane") // $NON-NLS-1$
+    String findBuildDesc();
+    
     // interruptR
     @DefaultStringValue("Interrupt R Session") // $NON-NLS-1$
     String interruptRLabel();

@@ -1,12 +1,25 @@
-package org.rstudio.studio.client.common.shell;
+/*
+ * BrowserSelectionFindBar.java
+ *
+ * Copyright (C) 2025 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package org.rstudio.core.client.widget.find;
 
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.find.FindBar;
 
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import elemental2.dom.DOMRect;
 import elemental2.dom.Document;
@@ -21,11 +34,17 @@ import elemental2.dom.TreeWalker;
 import elemental2.dom.Window;
 import jsinterop.base.Js;
 
-public class ShellWidgetFindBar extends FindBar
+public class BrowserSelectionFindBar extends FindBar
 {
-   public ShellWidgetFindBar(DockLayoutPanel container,
-                             ScrollPanel scroller,
-                             Element root)
+   public BrowserSelectionFindBar(DockLayoutPanel container,
+                                  Widget scroller)
+   {
+      this(container, scroller, Js.cast(scroller.getElement()));
+   }
+
+   public BrowserSelectionFindBar(DockLayoutPanel container,
+                                  Widget scroller,
+                                  Element root)
    {
       super();
 
@@ -218,7 +237,7 @@ public class ShellWidgetFindBar extends FindBar
       DOMRect selectionRect = selection.getRangeAt(0).getBoundingClientRect();
       DOMRect containerRect = scrollerEl.getBoundingClientRect();
 
-      double targetTop = selectionRect.top - containerRect.top + scroller_.getVerticalScrollPosition();
+      double targetTop = selectionRect.top - containerRect.top + scrollerEl.scrollTop;
       scrollerEl.scrollTop = targetTop - containerRect.height / 2.0;
    }
 
@@ -289,6 +308,6 @@ public class ShellWidgetFindBar extends FindBar
    private Pair<Integer, Integer> inputSelectionRange_;
 
    private final DockLayoutPanel container_;
-   private final ScrollPanel scroller_;
+   private final Widget scroller_;
    private final Element root_;
 }

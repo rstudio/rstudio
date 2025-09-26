@@ -32,6 +32,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.core.client.widget.find.BrowserSelectionFindBar;
 import org.rstudio.core.client.widget.find.FindBar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationAutomation;
@@ -296,7 +297,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
       
-      findBar_ = new ShellWidgetFindBar(container_, scrollPanel_, Js.cast(output_.getElement()));
+      findBar_ = new BrowserSelectionFindBar(container_, scrollPanel_, Js.cast(output_.getElement()));
       container_.addNorth(findBar_, findBar_.getHeightPx());
       container_.setWidgetHidden(findBar_, true);
       container_.add(scrollPanel_);
@@ -401,6 +402,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
 
       ElementIds.assignElementId(this.getElement(), ElementIds.SHELL_WIDGET);
+      getElement().addClassName("rstudio_shell_widget");
    }
 
    protected void doOnLoad()

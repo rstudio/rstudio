@@ -539,19 +539,30 @@ public class ShortcutManager implements NativePreviewHandler,
                }
             }
 
-            // As a somewhat gross hack, if the 'findReplace' command is being
-            // executed from a shortcut while the Console has focus, use a
-            // 'consoleFind' command instead.
+            // Redirect the 'findReplace' command depending on what component
+            // depending on which component of the IDE currently has focus
             if (binding.getId() == "findReplace")
             {
-               Element shellWidgetEl = DomUtils.querySelector(Document.get().getBody(), "#rstudio_shell_widget");
                Element activeEl = DomUtils.getActiveElement();
-               if (DomUtils.contains(shellWidgetEl, activeEl))
+               if (activeEl != null)
                {
-                  event.stopPropagation();
-                  commands_.consoleFind().executeFromShortcut();
-                  return true;
+                  Element shellWidgetEl = DomUtils.querySelector(Document.get().getBody(), ".rstudio_shell_widget");
+                  if (DomUtils.contains(shellWidgetEl, activeEl))
+                  {
+                     event.stopPropagation();
+                     commands_.consoleFind().executeFromShortcut();
+                     return true;
+                  }
+
+                  Element buildWidgetEl = DomUtils.querySelector(Document.get().getBody(), "#rstudio_workbench_panel_build");
+                  if (DomUtils.contains(buildWidgetEl, activeEl))
+                  {
+                     event.stopPropagation();
+                     commands_.findBuild().executeFromShortcut();
+                     return true;
+                  }
                }
+
             }
 
             event.stopPropagation();

@@ -597,6 +597,7 @@ public abstract class
 
    // Build
    public abstract AppCommand clearBuild();
+   public abstract AppCommand findBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand buildIncremental();
    public abstract AppCommand buildFull();

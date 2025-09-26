@@ -2560,6 +2560,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand findBuild() {
+        return null;
+    }
+
+    @Override
     public AppCommand buildAll() {
         return null;
     }
