@@ -213,6 +213,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   preview.cancel();
                   event.stopPropagation();
                   event.preventDefault();
+                  String text = DomUtils.getSelectionText(Document.get());
+                  findBar_.setValue(text);
                   findBar_.show(true);
                }
             }

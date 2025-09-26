@@ -1,6 +1,8 @@
 package org.rstudio.studio.client.common.shell;
 
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.find.FindBar;
 
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -9,8 +11,11 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import elemental2.dom.DOMRect;
 import elemental2.dom.Document;
 import elemental2.dom.Element;
+import elemental2.dom.HTMLInputElement;
+import elemental2.dom.KeyboardEvent;
 import elemental2.dom.Node;
 import elemental2.dom.NodeFilter;
+import elemental2.dom.Range;
 import elemental2.dom.Selection;
 import elemental2.dom.TreeWalker;
 import elemental2.dom.Window;
@@ -34,6 +39,34 @@ public class ShellWidgetFindBar extends FindBar
          }
       });
 
+      Element el;
+
+      el = Js.cast(getElement());
+      el.addEventListener("keydown", event ->
+      {
+         KeyboardEvent keyEvent = Js.cast(event);
+         String key = StringUtil.notNull(keyEvent.key);
+
+         if (key.equals("Enter"))
+         {
+            saveInputSelection();
+            return;
+         }
+         
+         if (key.length() == 1 ||
+             key.startsWith("Arrow") ||
+             key.startsWith("Backspace"))
+         {
+            restoreInputSelection();
+            return;
+         }
+      }, true);
+
+      el.addEventListener("blur", event ->
+      {
+         inputSelectionRange_ = null;
+      }, true);
+
       container_ = container;
       scroller_ = scroller;
       root_ = root;
@@ -53,6 +86,7 @@ public class ShellWidgetFindBar extends FindBar
    {
       node_ = null;
       offset_ = 0;
+      inputSelectionRange_ = null;
 
       container_.setWidgetHidden(this, true);
       container_.forceLayout();
@@ -196,16 +230,43 @@ public class ShellWidgetFindBar extends FindBar
       scrollSelectionIntoView();
    }
 
-   private static final native void setSelectedRange(Node node, int offset, int size)
-   /*-{
-      var range = $doc.createRange();
+   private HTMLInputElement getInputElement()
+   {
+      return Js.cast(DomUtils.querySelector(txtFind_.getElement(), "input"));
+   }
+
+   private void saveInputSelection()
+   {
+      if (inputSelectionRange_ == null)
+      {
+         HTMLInputElement inputEl = getInputElement();
+         inputSelectionRange_ = new Pair<>(
+            inputEl.selectionStart,
+            inputEl.selectionEnd);
+      }
+   }
+
+   private void restoreInputSelection()
+   {
+      if (inputSelectionRange_ != null)
+      {
+         getWindow().getSelection().removeAllRanges();
+         getInputElement().setSelectionRange(
+            inputSelectionRange_.first,
+            inputSelectionRange_.second);
+         inputSelectionRange_ = null;
+      }
+   }
+
+   private static final void setSelectedRange(Node node, int offset, int size)
+   {
+      Range range = new Range();
       range.setStart(node, offset);
       range.setEnd(node, offset + size);
 
-      var selection = $wnd.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-   }-*/;
+      getSelection().removeAllRanges();
+      getSelection().addRange(range);
+   }
 
    private static final native Selection getSelection()
    /*-{
@@ -224,6 +285,8 @@ public class ShellWidgetFindBar extends FindBar
 
    private Node node_;
    private int offset_;
+
+   private Pair<Integer, Integer> inputSelectionRange_;
 
    private final DockLayoutPanel container_;
    private final ScrollPanel scroller_;

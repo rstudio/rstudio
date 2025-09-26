@@ -105,12 +105,10 @@ public abstract class FindBar extends Composite
    {
       Element el;
 
-      // Escape should close the panel.
       el = Js.cast(getElement());
-      el.addEventListener("keydown",  event ->
+      el.addEventListener("keydown", event ->
       {
          KeyboardEvent keyEvent = Js.cast(event);
-         
          if (keyEvent.key.equals("Escape"))
          {
             event.stopPropagation();
@@ -120,12 +118,10 @@ public abstract class FindBar extends Composite
          }
       }, true);
 
-      // Enter in the Find box should search next.
       el = Js.cast(txtFind_.getElement());
       el.addEventListener("keydown",  event ->
       {
          KeyboardEvent keyEvent = Js.cast(event);
-         
          if (keyEvent.key.equals("Enter"))
          {
             event.stopPropagation();
@@ -133,7 +129,7 @@ public abstract class FindBar extends Composite
             find(keyEvent.shiftKey ? Direction.PREV : Direction.NEXT);
             return;
          }
-      }, true);
+      });
 
       btnFindNext_.addClickHandler(event -> find(Direction.NEXT));
       btnFindPrev_.addClickHandler(event -> find(Direction.PREV));
@@ -143,6 +139,11 @@ public abstract class FindBar extends Composite
    public String getValue()
    {
       return txtFind_.getValue();
+   }
+
+   public void setValue(String value)
+   {
+      txtFind_.setValue(value);
    }
 
    public double getHeightPx()
