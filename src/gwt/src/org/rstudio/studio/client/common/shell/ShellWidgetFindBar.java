@@ -30,15 +30,22 @@ public class ShellWidgetFindBar extends FindBar
    }
 
    @Override
-   public void show()
+   public void show(boolean focus)
    {
       container_.setWidgetHidden(this, false);
+      container_.forceLayout();
+      if (focus)
+         txtFind_.focus();
    }
 
    @Override
    public void hide()
    {
+      node_ = null;
+      offset_ = 0;
+
       container_.setWidgetHidden(this, true);
+      container_.forceLayout();
    }
 
    @Override
@@ -59,28 +66,23 @@ public class ShellWidgetFindBar extends FindBar
       String searchText = getValue();
 
       Node node = root_;
-      int index = 0;
+      int offset = 0;
 
-      Selection selection = getSelection();
-      if (selection != null)
+      if (node_ != null)
       {
-         Node anchorNode = Js.cast(selection.anchorNode);
-         if (root_.contains(anchorNode))
-         {
-            node = anchorNode;
-            index = selection.anchorOffset;
-         }
+         node = node_;
+         offset = offset_;
       }
 
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
          String text = StringUtil.notNull(node.textContent);
-         if (index + searchText.length() < text.length())
+         if (offset + searchText.length() < text.length())
          {
-            index = text.indexOf(searchText, index + searchText.length());
-            if (index != -1)
+            offset = text.indexOf(searchText, offset + searchText.length());
+            if (offset != -1)
             {
-               setSelection(node, index, searchText.length());
+               setSelection(node, offset, searchText.length());
                return;
             }
          }
@@ -101,11 +103,11 @@ public class ShellWidgetFindBar extends FindBar
             continue;
 
          String text = StringUtil.notNull(node.textContent);
-         index = text.indexOf(searchText);
-         if (index == -1)
+         offset = text.indexOf(searchText);
+         if (offset == -1)
             continue;
 
-         setSelection(node, index, searchText.length());
+         setSelection(node, offset, searchText.length());
          break;
       }
    }
@@ -115,28 +117,23 @@ public class ShellWidgetFindBar extends FindBar
       String searchText = getValue();
 
       Node node = root_;
-      int index = 0;
+      int offset = 0;
 
-      Selection selection = getSelection();
-      if (selection != null)
+      if (node_ != null)
       {
-         Node anchorNode = Js.cast(selection.anchorNode);
-         if (root_.contains(anchorNode))
-         {
-            node = anchorNode;
-            index = selection.anchorOffset;
-         }
+         node = node_;
+         offset = offset_;
       }
 
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
          String text = StringUtil.notNull(node.textContent);
-         if (index - searchText.length() >= 0)
+         if (offset - searchText.length() >= 0)
          {
-            index = text.lastIndexOf(searchText, index - searchText.length());
-            if (index != -1)
+            offset = text.lastIndexOf(searchText, offset - searchText.length());
+            if (offset != -1)
             {
-               setSelection(node, index, searchText.length());
+               setSelection(node, offset, searchText.length());
                return;
             }
          }
@@ -157,11 +154,11 @@ public class ShellWidgetFindBar extends FindBar
             continue;
 
          String text = StringUtil.notNull(node.textContent);
-         index = text.lastIndexOf(searchText);
-         if (index == -1)
+         offset = text.lastIndexOf(searchText);
+         if (offset == -1)
             continue;
 
-         setSelection(node, index, searchText.length());
+         setSelection(node, offset, searchText.length());
          break;
       }
    }
@@ -183,6 +180,8 @@ public class ShellWidgetFindBar extends FindBar
 
    private void setSelection(Node node, int offset, int size)
    {
+      node_ = node;
+      offset_ = offset;
       setSelectedRange(node, offset, size);
       scrollSelectionIntoView();
    }
@@ -212,6 +211,9 @@ public class ShellWidgetFindBar extends FindBar
    /*-{
       return $doc;
    }-*/;
+
+   private Node node_;
+   private int offset_;
 
    private final DockLayoutPanel container_;
    private final ScrollPanel scroller_;

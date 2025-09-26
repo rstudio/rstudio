@@ -42,7 +42,7 @@ public abstract class FindBar extends Composite
 {
    public enum Direction { NEXT, PREV };
 
-   public abstract void show();
+   public abstract void show(boolean focus);
    public abstract void find(Direction dir);
    public abstract void hide();
 
@@ -147,13 +147,13 @@ public abstract class FindBar extends Composite
 
    public double getHeightPx()
    {
-      return 28;
+      return 26;
    }
 
-   private final FindTextBox txtFind_;
-   private final SmallButton btnFindNext_;
-   private final SmallButton btnFindPrev_;
-   private final Button btnClose_;
+   protected final FindTextBox txtFind_;
+   protected final SmallButton btnFindNext_;
+   protected final SmallButton btnFindPrev_;
+   protected final Button btnClose_;
    private static final Resources RES = GWT.create(Resources.class);
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 

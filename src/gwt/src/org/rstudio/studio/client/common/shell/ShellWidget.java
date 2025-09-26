@@ -213,7 +213,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   preview.cancel();
                   event.stopPropagation();
                   event.preventDefault();
-                  showFind();
+                  findBar_.show(true);
                }
             }
          }
@@ -326,7 +326,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       };
       
       findBar_ = new ShellWidgetFindBar(container_, scrollPanel_, Js.cast(output_.getElement()));
-      container_.addNorth(findBar_, 30);
+      container_.addNorth(findBar_, findBar_.getHeightPx());
       container_.setWidgetHidden(findBar_, true);
       container_.add(scrollPanel_);
       initWidget(container_);
@@ -1140,9 +1140,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void showFind()
    {
-      container_.setWidgetHidden(findBar_, false);
-      container_.forceLayout();
-      // findBar_.focusFindField(true);
+      findBar_.show(true);
    }
 
    public Widget getOutputWidget()
