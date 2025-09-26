@@ -562,7 +562,6 @@ public class ShortcutManager implements NativePreviewHandler,
                      return true;
                   }
                }
-
             }
 
             event.stopPropagation();
