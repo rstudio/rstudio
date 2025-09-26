@@ -1664,6 +1664,7 @@ body.windows table.webGlobalToolbar {
    outline: none;
    font-size: 10px;
    background-color: transparent;
+   border-radius: 2px;
 }
 body.windows .searchBox {
    font-size: 11px;
@@ -1841,7 +1842,7 @@ td.environmentDataFrameCol {
 }
 
 .textBoxWithButton button {
-	padding-left: 6px;
+	margin-left: 6px;
 }
 
 .fullscreenCaptionIcon {
