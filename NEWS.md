@@ -34,7 +34,7 @@
 - (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
 
 ### Dependencies
-- Copilot Language Server 1.373.0
+- Copilot Language Server 1.376.0
 - Electron 38.1.2
 - Node.js 22.18.0
 - Quarto 1.8.24
