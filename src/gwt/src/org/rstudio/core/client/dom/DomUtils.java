@@ -1343,6 +1343,22 @@ public class DomUtils
       return element.querySelectorAll(query);
    }-*/;
 
+   public static final void fixFocusRectangle(Element containerEl,
+                                              Element inputEl,
+                                              int leftPadding,
+                                              int rightPadding)
+   {
+      DOMRect containerRect = DomUtils.getBoundingClientRect(containerEl);
+      DOMRect inputRect = DomUtils.getBoundingClientRect(inputEl);
+
+      int leftOffset = containerRect.getLeft() - inputRect.getLeft() - leftPadding;
+      inputEl.getStyle().setMarginLeft(leftOffset, Unit.PX);
+      inputEl.getStyle().setPaddingLeft(-leftOffset, Unit.PX);
+
+      int rightOffset = containerRect.getRight() - inputRect.getRight() + rightPadding;
+      inputEl.getStyle().setPaddingRight(rightOffset, Unit.PX);
+   }
+
    public static final void loadScript(TextResource resource)
    {
       ScriptElement scriptEl = Document.get().createScriptElement();
