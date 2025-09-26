@@ -27,6 +27,7 @@
 - ([#16474](https://github.com/rstudio/rstudio/issues/16474)): Adjusted Pane Layout options UI to improve space utilization
 - ([#16471](https://github.com/rstudio/rstudio/issues/16471)): Fixed issue where Copilot status messages appeared below editor when Copilot was disabled
 - ([#16423](https://github.com/rstudio/rstudio/issues/16423)): Fixed issue where Copilot gave a warning when closing a document it was told to ignore
+- ([#16485](https://github.com/rstudio/rstudio/issues/16485)): Removed inoperative min/max controls from Source Columns
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
