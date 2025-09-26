@@ -2046,7 +2046,9 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName);
+      // For sidebar, don't show minimize/maximize buttons as they don't apply to full-height columns
+      boolean showMinMaxButtons = !StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMinMaxButtons);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
