@@ -24,6 +24,16 @@ public class ShellWidgetFindBar extends FindBar
    {
       super();
 
+      txtFind_.addKeyUpHandler(event ->
+      {
+         String value = txtFind_.getValue();
+         if (StringUtil.isNullOrEmpty(value))
+         {
+            node_ = null;
+            offset_ = 0;
+         }
+      });
+
       container_ = container;
       scroller_ = scroller;
       root_ = root;
