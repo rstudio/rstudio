@@ -910,6 +910,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
+         <shortcut refid="consoleFind" value="Meta+Alt+F"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
