@@ -18,7 +18,7 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 
-#include <tests/TestMain.hpp>
+#include <gtest/gtest.h>
 
 using namespace rstudio::core;
 
@@ -87,3 +87,9 @@ boost::shared_ptr<http::AsyncServer> server()
 
 } // namespace server
 } // namespace rstudio
+
+int main(int argc, char* argv[])
+{
+   testing::InitGoogleTest(&argc, argv);
+   return RUN_ALL_TESTS();
+}
