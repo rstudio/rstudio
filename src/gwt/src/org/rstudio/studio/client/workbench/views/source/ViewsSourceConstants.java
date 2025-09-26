@@ -174,7 +174,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String wholeWord();
     String regexCapitalized();
     String wrapCapitalized();
-    String closeFind();
     String closeFindAndReplace();
     String chunkPendingExecution();
     String chunkPendingExecutionMessage();
