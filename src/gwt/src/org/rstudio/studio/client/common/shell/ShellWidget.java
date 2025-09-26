@@ -73,9 +73,6 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
@@ -190,36 +187,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          {
             checkForResize();
             checkForPendingScroll();
-         }
-      });
-
-      Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent preview)
-         {
-            if ((preview.getTypeInt() & Event.KEYEVENTS) == 0)
-               return;
-
-            NativeEvent event = preview.getNativeEvent();
-            EventTarget target = event.getEventTarget();
-            if (!DomUtils.contains(getElement(), Js.cast(target)))
-               return;
-            
-            if (event.getCtrlKey() || event.getMetaKey())
-            {
-               if (event.getKeyCode() == KeyCodes.KEY_F)
-               {
-                  preview.cancel();
-                  event.stopPropagation();
-                  event.preventDefault();
-
-                  findBar_.show(true);
-                  String text = DomUtils.getSelectionText(Document.get());
-                  if (!StringUtil.isNullOrEmpty(text))
-                     findBar_.setValue(text);
-               }
-            }
          }
       });
 
@@ -1144,7 +1111,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    public void onConsoleFind()
    {
-      String selection = DomUtils.getSelectionText(Document.get());
+      String selection = DomUtils.getSelectedText();
       findBar_.show(true);
       if (!StringUtil.isNullOrEmpty(selection))
          findBar_.setValue(selection);

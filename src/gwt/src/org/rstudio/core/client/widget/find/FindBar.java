@@ -129,7 +129,7 @@ public abstract class FindBar extends Composite
             find(keyEvent.shiftKey ? Direction.PREV : Direction.NEXT);
             return;
          }
-      });
+      }, true);
 
       btnFindNext_.addClickHandler(event -> find(Direction.NEXT));
       btnFindPrev_.addClickHandler(event -> find(Direction.PREV));

@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -538,9 +539,25 @@ public class ShortcutManager implements NativePreviewHandler,
                }
             }
 
+            // As a somewhat gross hack, if the 'findReplace' command is being
+            // executed from a shortcut while the Console has focus, use a
+            // 'consoleFind' command instead.
+            if (binding.getId() == "findReplace")
+            {
+               Element shellWidgetEl = DomUtils.querySelector(Document.get().getBody(), "#rstudio_shell_widget");
+               Element activeEl = DomUtils.getActiveElement();
+               if (DomUtils.contains(shellWidgetEl, activeEl))
+               {
+                  event.stopPropagation();
+                  commands_.consoleFind().executeFromShortcut();
+                  return true;
+               }
+            }
+
             event.stopPropagation();
             if (!reportShortcutBinding(binding.getId()))
                binding.execute();
+
             return true;
          }
          
