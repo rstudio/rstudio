@@ -69,6 +69,10 @@ public class BrowserSelectionFindBar extends FindBar
          if (key.equals("Enter"))
          {
             saveInputSelection();
+            if (keyEvent.shiftKey)
+               btnFindPrev_.setFocus(true);
+            else
+               btnFindNext_.setFocus(true);
             return;
          }
          
@@ -273,6 +277,7 @@ public class BrowserSelectionFindBar extends FindBar
          getInputElement().setSelectionRange(
             inputSelectionRange_.first,
             inputSelectionRange_.second);
+         txtFind_.focus();
          inputSelectionRange_ = null;
       }
    }
