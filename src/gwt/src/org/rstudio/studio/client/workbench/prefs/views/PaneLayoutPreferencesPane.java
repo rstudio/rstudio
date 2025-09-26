@@ -306,9 +306,24 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       hiddenTabSetModuleList_ = new ModuleList(defaultPaneWidth);
       hiddenTabSetModuleList_.setValue(toArrayList(
                userPrefs.panes().getGlobalValue().getHiddenTabSet()));
-      // Sidebar uses more height since it doesn't have a dropdown
-      sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 25);
+      sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 55);
       sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
+
+      // Create sidebar location dropdown
+      sidebarLocation_ = new ListBox();
+      sidebarLocation_.addItem(constants_.sidebarLocationLeft());
+      sidebarLocation_.addItem(constants_.sidebarLocationRight());
+
+      // Set initial selection based on current preference
+      PaneConfig currentConfig = userPrefs.panes().getGlobalValue().cast();
+      String currentLocation = currentConfig.getSidebarLocation();
+      if ("left".equals(currentLocation))
+         sidebarLocation_.setSelectedIndex(0);
+      else
+         sidebarLocation_.setSelectedIndex(1); // default to right
+
+      // Add change handler to track changes
+      sidebarLocation_.addChangeHandler(event -> dirty_ = true);
 
       // Now update the table which will set the correct widths
       updateTable(additionalColumnCount_);
@@ -484,6 +499,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          tabSet2ModuleList_.setWidth(cellWidth);
          sidebarModuleList_.setWidth(sidebarWidth);
 
+         // Update sidebar location dropdown width
+         if (sidebarLocation_ != null)
+         {
+            String dropdownWidth = (Double.parseDouble(sidebarWidth.replace("px", "")) - GRID_SELECT_PADDING) + "px";
+            sidebarLocation_.setWidth(dropdownWidth);
+         }
+
          return cellWidth;
       }
 
@@ -511,6 +533,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       tabSet1ModuleList_.setWidth(cellWidth);
       tabSet2ModuleList_.setWidth(cellWidth);
       sidebarModuleList_.setWidth(sidebarWidth);
+
+      // Update sidebar location dropdown width
+      if (sidebarLocation_ != null)
+      {
+         String dropdownWidth = (Double.parseDouble(sidebarWidth.replace("px", "")) - GRID_SELECT_PADDING) + "px";
+         sidebarLocation_.setWidth(dropdownWidth);
+      }
 
       // Update sidebar column width (last column)
       int sidebarCol = newCount + 2; // newCount source columns + 2 quadrant columns
@@ -549,12 +578,27 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private VerticalPanel createSidebarPane()
    {
       VerticalPanel vp = new VerticalPanel();
+
+      // Add the dropdown for sidebar location
+      if (sidebarLocation_ != null)
+      {
+         vp.add(sidebarLocation_);
+         // Set width to match other dropdowns
+         String selectWidth = (sidebarLocation_.getOffsetWidth() > 0) ?
+            sidebarLocation_.getOffsetWidth() + "px" : "100%";
+         sidebarLocation_.setWidth(selectWidth);
+      }
+
+      // Add the label
       FormLabel label = new FormLabel();
       label.setText("Sidebar");
       label.setStyleName(res_.styles().label());
       vp.add(label);
+
+      // Add the module list
       if (sidebarModuleList_ != null)
          vp.add(sidebarModuleList_);
+
       ElementIds.assignElementId(vp.getElement(), "pane_layout_sidebar");
       return vp;
    }
@@ -633,10 +677,17 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             additionalColumnCount_ =
                paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
 
-         // Get current sidebar visibility and location settings
+         // Get current sidebar visibility setting
          PaneConfig currentConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean sidebarVisible = currentConfig.getSidebarVisible();
-         String sidebarLocation = currentConfig.getSidebarLocation();
+
+         // Get the selected sidebar location from dropdown
+         String sidebarLocation = "right"; // default
+         if (sidebarLocation_ != null)
+         {
+            int selectedIndex = sidebarLocation_.getSelectedIndex();
+            sidebarLocation = (selectedIndex == 0) ? "left" : "right";
+         }
 
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,
@@ -709,6 +760,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
    private final ModuleList sidebarModuleList_;
+   private final ListBox sidebarLocation_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
 

@@ -599,4 +599,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String copilotNotSignedIn();
     String copilotUnknownResponse(String response);
     String gitSignCommitLabel();
+    String sidebarLocationLeft();
+    String sidebarLocationRight();
 }
