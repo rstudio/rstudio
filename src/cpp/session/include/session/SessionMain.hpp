@@ -23,6 +23,8 @@ void terminateAllChildProcesses();
 
 void controlledExit(int statusCode);
 
+void exitEarly(int statusCode);
+
 }
 }
 

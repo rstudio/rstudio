@@ -2031,7 +2031,8 @@ public class PaneManager
 
    private LogicalWindow createSource(String frameName, String accessibleName, Widget display)
    {
-      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName);
+      boolean showMinMaxButtons = StringUtil.equals(frameName, SourceColumnManager.MAIN_SOURCE_NAME);
+      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName, showMinMaxButtons);
       sourceFrame.setFillWidget(display);
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,

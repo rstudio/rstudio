@@ -524,15 +524,6 @@ Error runPreflightScript()
 void stopMonitorWorkerThread();
 Error ensureLibRSoValid();
 
-void exitEarly(int status)
-{
-   stopMonitorWorkerThread();
-   offlineService().stop();
-   FileLock::cleanUp();
-   FilePath(s_fallbackLibraryPath).removeIfExists();
-   ::exit(status);
-}
-
 namespace {
 
 void setPartnerEnvironmentVariables()
@@ -1748,6 +1739,15 @@ void loadCranRepos(const std::string& repos,
 // provide definition methods for rsession::module_context
 namespace rstudio {
 namespace session {
+
+void exitEarly(int status)
+{
+   stopMonitorWorkerThread();
+   offlineService().stop();
+   FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
+   ::exit(status);
+}
 
 void controlledExit(int status)
 {

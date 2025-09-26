@@ -44,6 +44,11 @@ public class WindowFrame extends Composite
 {
    public WindowFrame(String name, String accessibleName)
    {
+      this(name, accessibleName, true);
+   }
+
+   public WindowFrame(String name, String accessibleName, boolean showMinMaxButtons)
+   {
       name_ = name;
 
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -66,21 +71,24 @@ public class WindowFrame extends Composite
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 
-      frame_.add(minimizeButton_);
-      frame_.setWidgetTopHeight(minimizeButton_,
-            TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-            14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(minimizeButton_,
-            RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
-            14, Style.Unit.PX);
+      if (showMinMaxButtons)
+      {
+         frame_.add(minimizeButton_);
+         frame_.setWidgetTopHeight(minimizeButton_,
+               TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+               14, Style.Unit.PX);
+         frame_.setWidgetRightWidth(minimizeButton_,
+               RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
+               14, Style.Unit.PX);
 
-      frame_.add(maximizeButton_);
-      frame_.setWidgetTopHeight(maximizeButton_,
-                                TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(maximizeButton_,
-                                 RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
-                                 14, Style.Unit.PX);
+         frame_.add(maximizeButton_);
+         frame_.setWidgetTopHeight(maximizeButton_,
+                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+                                   14, Style.Unit.PX);
+         frame_.setWidgetRightWidth(maximizeButton_,
+                                    RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
+                                    14, Style.Unit.PX);
+      }
 
       buttonsArea_ = new FlowPanel();
       frame_.add(buttonsArea_);
