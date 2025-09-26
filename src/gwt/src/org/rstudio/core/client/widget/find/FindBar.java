@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget.find;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -22,7 +23,6 @@ import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
-import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -69,18 +69,18 @@ public abstract class FindBar extends Composite
       VerticalPanel panel = new VerticalPanel();
       ElementIds.assignElementId(panel.getElement(), ElementIds.FIND_REPLACE_BAR);
 
-      txtFind_ = new FindTextBox(constants_.findCapitalized());
+      txtFind_ = new FindTextBox(constants_.findButtonText());
       txtFind_.addStyleName(RES.styles().findTextBox());
       txtFind_.setIconVisible(true);
 
-      btnFindNext_ = new SmallButton("Next");
-      btnFindPrev_ = new SmallButton("Prev");
+      btnFindNext_ = new SmallButton(constants_.nextButtonText());
+      btnFindPrev_ = new SmallButton(constants_.prevButtonText());
 
       btnClose_ = new Button();
       btnClose_.addStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
-      Roles.getButtonRole().setAriaLabelProperty(btnClose_.getElement(), constants_.closeFind());
+      Roles.getButtonRole().setAriaLabelProperty(btnClose_.getElement(), constants_.closeText());
       btnClose_.getElement().appendChild(
             new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 
@@ -154,8 +154,9 @@ public abstract class FindBar extends Composite
    protected final SmallButton btnFindNext_;
    protected final SmallButton btnFindPrev_;
    protected final Button btnClose_;
+
    private static final Resources RES = GWT.create(Resources.class);
-   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 
    static {
       RES.styles().ensureInjected();
