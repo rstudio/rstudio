@@ -128,7 +128,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onBeforeUnselected();
       void onBeforeSelected();
       void onSelected();
-      void showFind();
+
+      void onConsoleFind();
    }
 
    @Inject
@@ -308,7 +309,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    @Handler
    void onConsoleFind()
    {
-      showFind();
+      view_.onConsoleFind();
    }
 
    @Handler
@@ -915,11 +916,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    public void onSelected()
    {
       view_.onSelected();
-   }
-
-   public void showFind()
-   {
-      view_.showFind();
    }
 
    private void configureLiveAnnouncements()

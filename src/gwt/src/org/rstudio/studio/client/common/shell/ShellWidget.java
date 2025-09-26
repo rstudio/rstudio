@@ -213,9 +213,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   preview.cancel();
                   event.stopPropagation();
                   event.preventDefault();
-                  String text = DomUtils.getSelectionText(Document.get());
-                  findBar_.setValue(text);
+
                   findBar_.show(true);
+                  String text = DomUtils.getSelectionText(Document.get());
+                  if (!StringUtil.isNullOrEmpty(text))
+                     findBar_.setValue(text);
                }
             }
          }
@@ -1140,9 +1142,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.onContentSizeChanged();
    }
 
-   public void showFind()
+   public void onConsoleFind()
    {
+      String selection = DomUtils.getSelectionText(Document.get());
       findBar_.show(true);
+      if (!StringUtil.isNullOrEmpty(selection))
+         findBar_.setValue(selection);
    }
 
    public Widget getOutputWidget()
