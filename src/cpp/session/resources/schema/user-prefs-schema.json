@@ -540,6 +540,12 @@
             "title": "Save R scripts before sourcing",
             "description": "Whether to automatically save scripts before executing them."
         },
+        "console_soft_wrap": {
+            "type": "boolean",
+            "default": true,
+            "title": "Enable soft-wrapping of console output",
+            "description": "When enabled, console output will be wrapped at the console width."
+        },
         "syntax_color_console": {
             "type": "boolean",
             "default": false,

@@ -1135,6 +1135,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   public PrefValue<Boolean> consoleSoftWrap()
+   {
+      return bool(
+         "console_soft_wrap",
+         _constants.consoleSoftWrapTitle(), 
+         _constants.consoleSoftWrapDescription(), 
+         true);
+   }
+
+   /**
     * Whether to use syntax highlighting in the R console.
     */
    public PrefValue<Boolean> syntaxColorConsole()
@@ -3986,6 +3998,8 @@ public class UserPrefsAccessor extends Prefs
          foldStyle().setValue(layer, source.getString("fold_style"));
       if (source.hasKey("save_before_sourcing"))
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
+      if (source.hasKey("console_soft_wrap"))
+         consoleSoftWrap().setValue(layer, source.getBool("console_soft_wrap"));
       if (source.hasKey("syntax_color_console"))
          syntaxColorConsole().setValue(layer, source.getBool("syntax_color_console"));
       if (source.hasKey("highlight_console_errors"))
@@ -4451,6 +4465,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(focusConsoleAfterExec());
       prefs.add(foldStyle());
       prefs.add(saveBeforeSourcing());
+      prefs.add(consoleSoftWrap());
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());

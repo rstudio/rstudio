@@ -153,6 +153,7 @@ namespace prefs {
 #define kFoldStyleBeginOnly "begin-only"
 #define kFoldStyleBeginAndEnd "begin-and-end"
 #define kSaveBeforeSourcing "save_before_sourcing"
+#define kConsoleSoftWrap "console_soft_wrap"
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
@@ -898,6 +899,12 @@ public:
     */
    bool saveBeforeSourcing();
    core::Error setSaveBeforeSourcing(bool val);
+
+   /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   bool consoleSoftWrap();
+   core::Error setConsoleSoftWrap(bool val);
 
    /**
     * Whether to use syntax highlighting in the R console.
