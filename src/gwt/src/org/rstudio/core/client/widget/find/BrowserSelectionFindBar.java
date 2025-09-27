@@ -143,7 +143,7 @@ public class BrowserSelectionFindBar extends FindBar
 
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
-         String text = StringUtil.notNull(node.textContent);
+         String text = getTextContent(node);
          if (offset + searchText.length() < text.length())
          {
             offset = text.indexOf(searchText, offset + searchText.length());
@@ -169,7 +169,7 @@ public class BrowserSelectionFindBar extends FindBar
          if (node.nodeType != Node.TEXT_NODE)
             continue;
 
-         String text = StringUtil.notNull(node.textContent);
+         String text = getTextContent(node);
          offset = text.indexOf(searchText);
          if (offset == -1)
             continue;
@@ -181,7 +181,7 @@ public class BrowserSelectionFindBar extends FindBar
 
    public void findPrev()
    {
-      String searchText = getValue();
+      String searchText = getSearchValue();
 
       Node node = root_;
       int offset = 0;
@@ -194,7 +194,7 @@ public class BrowserSelectionFindBar extends FindBar
 
       if (node != null && node.nodeType == Node.TEXT_NODE)
       {
-         String text = StringUtil.notNull(node.textContent);
+         String text = getTextContent(node);
          if (offset - searchText.length() >= 0)
          {
             offset = text.lastIndexOf(searchText, offset - searchText.length());
@@ -220,7 +220,7 @@ public class BrowserSelectionFindBar extends FindBar
          if (node.nodeType != Node.TEXT_NODE)
             continue;
 
-         String text = StringUtil.notNull(node.textContent);
+         String text = getTextContent(node);
          offset = text.lastIndexOf(searchText);
          if (offset == -1)
             continue;
@@ -251,6 +251,18 @@ public class BrowserSelectionFindBar extends FindBar
       offset_ = offset;
       setSelectedRange(node, offset, size);
       scrollSelectionIntoView();
+   }
+
+   private String getTextContent(Node node)
+   {
+      if (chkCaseSensitive_.getValue())
+      {
+         return StringUtil.notNull(node.textContent);
+      }
+      else
+      {
+         return StringUtil.notNull(node.textContent).toLowerCase();
+      }
    }
 
    private HTMLInputElement getInputElement()

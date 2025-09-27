@@ -29,6 +29,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -58,6 +59,7 @@ public abstract class FindBar extends Composite
       String findTextBox();
       String findPanel();
       String closeButton();
+      String checkbox();
    }
 
    public FindBar()
@@ -84,12 +86,16 @@ public abstract class FindBar extends Composite
       btnClose_.getElement().appendChild(
             new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 
-      HorizontalPanel findReplacePanel = new HorizontalPanel();
-      findReplacePanel.addStyleName(RES.styles().findPanel());
-      findReplacePanel.add(txtFind_);
-      findReplacePanel.add(btnFindNext_);
-      findReplacePanel.add(btnFindPrev_);
-      panel.add(findReplacePanel);
+      chkCaseSensitive_ = new CheckBox(constants_.caseSensitive());
+      chkCaseSensitive_.addStyleName(RES.styles().checkbox());
+
+      HorizontalPanel findPanel = new HorizontalPanel();
+      findPanel.addStyleName(RES.styles().findPanel());
+      findPanel.add(txtFind_);
+      findPanel.add(btnFindNext_);
+      findPanel.add(btnFindPrev_);
+      findPanel.add(chkCaseSensitive_);
+      panel.add(findPanel);
 
       shelf.addLeftWidget(panel);
       shelf.setRightVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
@@ -136,6 +142,18 @@ public abstract class FindBar extends Composite
       btnClose_.addClickHandler(event -> hide());
    }
 
+   public String getSearchValue()
+   {
+      if (chkCaseSensitive_.getValue())
+      {
+         return getValue();
+      }
+      else
+      {
+         return getValue().toLowerCase();
+      }
+   }
+
    public String getValue()
    {
       return txtFind_.getValue();
@@ -154,6 +172,7 @@ public abstract class FindBar extends Composite
    protected final FindTextBox txtFind_;
    protected final SmallButton btnFindNext_;
    protected final SmallButton btnFindPrev_;
+   protected final CheckBox chkCaseSensitive_;
    protected final Button btnClose_;
 
    private static final Resources RES = GWT.create(Resources.class);

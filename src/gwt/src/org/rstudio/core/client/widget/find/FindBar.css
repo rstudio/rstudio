@@ -15,3 +15,8 @@
    background: inherit !important;
    border: none !important;
 }
+
+.checkbox {
+   font-size: 10px;
+   margin-left: 6px;
+}
