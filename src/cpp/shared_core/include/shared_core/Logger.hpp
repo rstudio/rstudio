@@ -94,7 +94,8 @@ enum class LogLevel
    INFO = 3,       // Info, warning, and error messages will be logged.
    DEBUG = 4,      // All messages will be logged, except trace messages.
    DEBUG_LEVEL = 4,// Same as DEBUG. Preferred to avoid name conflict with core/Macros.hpp's DEBUG(..) macro used in rsession
-   TRACE = 5       // All messages will be logged, including trace messages.
+   TRACE = 5,      // All messages will be logged, including trace messages.
+   TRACE_LEVEL = 5,// Same as TRACE. Preferred to avoid name conflict with core/Macros.hpp's TRACE(..) macro used in rsession
 };
 
 /**
