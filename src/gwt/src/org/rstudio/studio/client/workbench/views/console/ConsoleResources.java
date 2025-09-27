@@ -33,6 +33,7 @@ public interface ConsoleResources extends ClientBundle
       String prompt();
       String output();
       String outputChunk();
+      String outputSoftWrap();
       String command();
       String completionPopup();
       String completionGrid();

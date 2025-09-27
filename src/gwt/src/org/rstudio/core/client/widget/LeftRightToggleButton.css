@@ -13,7 +13,7 @@
 
 .container {
    display: inline-block;
-   height: 20px;
+   height: 18px;
    margin-right: 3px;
 }
 
@@ -56,15 +56,17 @@ tr .rightRight {
 .rightOn {
    border: solid 1px #FFF;
    border-radius: 3px;
-   margin: 2px;
    overflow: hidden;
 }
 
-.rightOn,
-.leftOn {
+.leftOn, .rightOn {
+   cursor: pointer;
+   position: relative;
+   top: 1px;
+   margin-right: 6px;
+   margin-left: 6px;
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
-   margin: 2px;
    overflow: hidden;
 }
 

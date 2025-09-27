@@ -270,6 +270,16 @@ public class SearchWidget extends Composite implements SearchDisplay
          focus();
       });
 
+      focusHandler_ = addFocusHandler(event ->
+      {
+         focusHandler_.removeHandler();
+         DomUtils.fixFocusRectangle(
+            getElement().getFirstChildElement(),
+            getInputElement(),
+            0,
+            4);
+      });
+
       focusTracker_ = new FocusTracker(suggestBox_);
    }
 
@@ -410,16 +420,13 @@ public class SearchWidget extends Composite implements SearchDisplay
       return inputEl;
    }
 
-   @UiField(provided=true)
-   FocusSuggestBox suggestBox_;
-   @UiField
-   ImageButton clearFilter_;
-   @UiField
-   DecorativeImage icon_;
-   @UiField
-   LabelElement hiddenLabel_;
+   @UiField(provided=true) FocusSuggestBox suggestBox_;
+   @UiField ImageButton clearFilter_;
+   @UiField DecorativeImage icon_;
+   @UiField LabelElement hiddenLabel_;
 
    private String lastValueSent_ = null;
+   private HandlerRegistration focusHandler_;
    private final FocusTracker focusTracker_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

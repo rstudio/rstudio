@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -43,6 +38,11 @@ import org.rstudio.studio.client.workbench.views.environment.events.DebugModeCha
 import org.rstudio.studio.client.workbench.views.jobs.events.JobProgressEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.inject.Inject;
 
 public class Console
 {

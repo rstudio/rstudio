@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -538,9 +539,35 @@ public class ShortcutManager implements NativePreviewHandler,
                }
             }
 
+            // Redirect the 'findReplace' command depending on what component
+            // depending on which component of the IDE currently has focus
+            if (binding.getId() == "findReplace")
+            {
+               Element activeEl = DomUtils.getActiveElement();
+               if (activeEl != null)
+               {
+                  Element shellWidgetEl = DomUtils.querySelector(Document.get().getBody(), ".rstudio_shell_widget");
+                  if (DomUtils.contains(shellWidgetEl, activeEl))
+                  {
+                     event.stopPropagation();
+                     commands_.consoleFind().executeFromShortcut();
+                     return true;
+                  }
+
+                  Element buildWidgetEl = DomUtils.querySelector(Document.get().getBody(), "#rstudio_workbench_panel_build");
+                  if (DomUtils.contains(buildWidgetEl, activeEl))
+                  {
+                     event.stopPropagation();
+                     commands_.findBuild().executeFromShortcut();
+                     return true;
+                  }
+               }
+            }
+
             event.stopPropagation();
             if (!reportShortcutBinding(binding.getId()))
                binding.execute();
+
             return true;
          }
          

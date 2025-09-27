@@ -452,6 +452,11 @@ public class DomUtils
       return impl.getSelectionOffsets(container);
    }
 
+   public static final native String getSelectedText()
+   /*-{
+      return $wnd.getSelection().toString();
+   }-*/;
+
    public static void setSelectionOffsets(Element container,
                                           int start,
                                           int end)
@@ -1318,15 +1323,41 @@ public class DomUtils
      return ele.pathname;
    }-*/;
 
+   public static final native Element querySelector(String query)
+   /*-{
+      $doc.querySelector(query);
+   }-*/;
+
    public static final native Element querySelector(Element element, String query)
    /*-{
       return element.querySelector(query);
    }-*/;
    
+   public static final native NodeList<Element> querySelectorAll(String query)
+   /*-{
+      return $doc.querySelectorAll(query);
+   }-*/;
+
    public static final native NodeList<Element> querySelectorAll(Element element, String query)
    /*-{
       return element.querySelectorAll(query);
    }-*/;
+
+   public static final void fixFocusRectangle(Element containerEl,
+                                              Element inputEl,
+                                              int leftPadding,
+                                              int rightPadding)
+   {
+      DOMRect containerRect = DomUtils.getBoundingClientRect(containerEl);
+      DOMRect inputRect = DomUtils.getBoundingClientRect(inputEl);
+
+      int leftOffset = containerRect.getLeft() - inputRect.getLeft() - leftPadding;
+      inputEl.getStyle().setMarginLeft(leftOffset, Unit.PX);
+      inputEl.getStyle().setPaddingLeft(-leftOffset, Unit.PX);
+
+      int rightOffset = containerRect.getRight() - inputRect.getRight() + rightPadding;
+      inputEl.getStyle().setPaddingRight(rightOffset, Unit.PX);
+   }
 
    public static final void loadScript(TextResource resource)
    {

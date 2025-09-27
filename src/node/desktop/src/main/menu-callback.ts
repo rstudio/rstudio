@@ -407,6 +407,11 @@ export class MenuCallback extends EventEmitter {
       },
     };
 
+    // handle Ctrl + F in GWT instead of via desktop callback
+    if (cmdId === 'findReplace') {
+      menuItemOpts.registerAccelerator = false;
+    }
+
     if (isRadio) {
       // Having true radio menus really only benefits screen-reader users, so avoid the visual
       // difference unless screen-reader mode is on.

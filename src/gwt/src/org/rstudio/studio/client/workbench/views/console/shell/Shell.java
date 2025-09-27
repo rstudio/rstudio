@@ -128,6 +128,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       void onBeforeUnselected();
       void onBeforeSelected();
       void onSelected();
+
+      void onConsoleFind();
    }
 
    @Inject
@@ -302,7 +304,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
       // if we don't bounce setFocus the menu retains focus
       Scheduler.get().scheduleDeferred(() -> view_.getInputEditorDisplay().setFocus(true));
+   }
 
+   @Handler
+   void onConsoleFind()
+   {
+      view_.onConsoleFind();
    }
 
    @Handler
@@ -921,7 +928,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       }
    }
    
-
    private final ConsoleServerOperations server_;
    private final EventBus eventBus_;
    private final Session session_;

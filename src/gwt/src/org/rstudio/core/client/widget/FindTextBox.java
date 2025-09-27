@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.LabelElement;
@@ -32,7 +34,6 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.dom.DomUtils;
 
 public class FindTextBox extends Composite implements HasValue<String>,
                                                       CanFocus
@@ -53,6 +54,12 @@ public class FindTextBox extends Composite implements HasValue<String>,
 
       Style style = getElement().getStyle();
       style.setPosition(Position.RELATIVE);
+
+      focusHandler_ = addFocusHandler(event ->
+      {
+         DomUtils.fixFocusRectangle(getElement(), textBox_.getElement(), 0, 2);
+         focusHandler_.removeHandler();
+      });
    }
 
    public HandlerRegistration addValueChangeHandler(
@@ -102,11 +109,10 @@ public class FindTextBox extends Composite implements HasValue<String>,
       textBox_.addKeyUpHandler(keyUpHandler);
    }
    
-   public void addFocusHandler(FocusHandler handler)
+   public HandlerRegistration addFocusHandler(FocusHandler handler)
    {
-      textBox_.addFocusHandler(handler);
+      return textBox_.addFocusHandler(handler);
    }
-
    
    public void setOverrideWidth(int pixels)
    {
@@ -118,14 +124,11 @@ public class FindTextBox extends Composite implements HasValue<String>,
       textBox_.selectAll();
    }
 
-   @UiField
-   LabelElement hiddenLabel_;
-   @UiField(provided=true)
-   TextBox textBox_;
-   @UiField
-   DivElement searchDiv_;
-   @UiField
-   Image icon_;
-   @UiField
-   DivElement textBoxDiv_;
+   @UiField LabelElement hiddenLabel_;
+   @UiField(provided=true) TextBox textBox_;
+   @UiField DivElement searchDiv_;
+   @UiField Image icon_;
+   @UiField DivElement textBoxDiv_;
+
+   private HandlerRegistration focusHandler_;
 }

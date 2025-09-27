@@ -14,9 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.DomUtils;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.TextBox;
-import org.rstudio.core.client.dom.DomUtils;
 
 public class TextBoxWithCue extends TextBox
                             implements CanSetControlId

@@ -32,6 +32,8 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.core.client.widget.find.BrowserSelectionFindBar;
+import org.rstudio.core.client.widget.find.FindBar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -57,6 +59,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
@@ -73,12 +76,15 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import jsinterop.base.Js;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -104,11 +110,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler(true);
 
+      container_ = new DockLayoutPanel(Unit.PX);
+
       output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
+      syncOutputStyles();
+      prefs_.consoleSoftWrap().addValueChangeHandler(event -> syncOutputStyles());
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -267,7 +277,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.addStyleName("ace_scroller");
       scrollPanel_.addClickHandler(secondaryInputHandler);
       scrollPanel_.addKeyDownHandler(secondaryInputHandler);
-
       secondaryInputHandler.setInput(editor);
 
       resizeCommand_ = new TimeBufferedCommand(5)
@@ -290,7 +299,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
       
-      initWidget(scrollPanel_);
+      findBar_ = new BrowserSelectionFindBar(container_, scrollPanel_, Js.cast(output_.getElement()));
+      container_.addNorth(findBar_, findBar_.getHeightPx());
+      container_.setWidgetHidden(findBar_, true);
+      container_.add(scrollPanel_);
+      initWidget(container_);
+
       addDomHandler(secondaryInputHandler, ClickEvent.getType());
       
       addCopyHook(getElement());
@@ -300,11 +314,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Inject
    private void initialize(ApplicationAutomation automation,
                            Session session,
-                           UserState userState)
+                           UserState userState,
+                           UserPrefs userPrefs)
    {
       automation_ = automation;
       session_ = session;
       userState_ = userState;
+      userPrefs_ = userPrefs;
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -390,6 +406,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
 
       ElementIds.assignElementId(this.getElement(), ElementIds.SHELL_WIDGET);
+      getElement().addClassName("rstudio_shell_widget");
    }
 
    protected void doOnLoad()
@@ -822,6 +839,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
             return;
          }
 
+         // Allow clicks into the search bar.
+         EventTarget target = event.getNativeEvent().getEventTarget();
+         if (Node.is(target))
+         {
+            Node targetNode = Node.as(target);
+            if (DomUtils.contains(findBar_.getElement(), targetNode))
+               return;
+         }
+
          if (prefs_ != null && prefs_.consoleDoubleClickSelect().getValue())
          {
             // Some clicks can result in selection (e.g. double clicks). We don't
@@ -1089,6 +1115,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.onContentSizeChanged();
    }
 
+   public void onConsoleFind()
+   {
+      String selection = DomUtils.getSelectedText();
+      findBar_.show(true);
+      if (!StringUtil.isNullOrEmpty(selection))
+         findBar_.setValue(selection);
+   }
+
    public Widget getOutputWidget()
    {
       return output_.getWidget();
@@ -1202,9 +1236,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return ConsoleOutputWriter.OUTPUT_ERROR_CLASS;
    }
 
+   private void syncOutputStyles()
+   {
+      boolean softWrap = userPrefs_.consoleSoftWrap().getValue();
+      if (softWrap)
+         output_.getElement().addClassName(styles_.outputSoftWrap());
+      else
+         output_.getElement().removeClassName(styles_.outputSoftWrap());
+   }
+
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
    private final ConsoleOutputWriter output_;
+   private final FindBar findBar_;
    private final PreWidget pendingInput_;
    private final HTML prompt_;
    private AriaLiveShellWidget liveRegion_ = null;
@@ -1212,6 +1256,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    protected final Renderer renderer_;
    private final DockPanel inputLine_;
    protected final ClickableScrollPanel scrollPanel_;
+   private final DockLayoutPanel container_;
    private final ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
@@ -1234,6 +1279,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private ApplicationAutomation automation_;
    private Session session_;
    private UserState userState_;
+   private UserPrefs userPrefs_;
    
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";

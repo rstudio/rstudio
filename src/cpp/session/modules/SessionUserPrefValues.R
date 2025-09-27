@@ -694,6 +694,15 @@
    clear = function() { .rs.clearUserPref("save_before_sourcing") }
 )
 
+# Enable soft-wrapping of console output
+#
+# When enabled, console output will be wrapped at the console width.
+.rs.uiPrefs$consoleSoftWrap <- list(
+   get = function() { .rs.getUserPref("console_soft_wrap") },
+   set = function(value) { .rs.setUserPref("console_soft_wrap", value) },
+   clear = function() { .rs.clearUserPref("console_soft_wrap") }
+)
+
 # Syntax highlighting in R console
 #
 # Whether to use syntax highlighting in the R console.

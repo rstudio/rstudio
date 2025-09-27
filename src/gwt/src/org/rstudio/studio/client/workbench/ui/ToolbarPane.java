@@ -67,7 +67,7 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
          addToolbar(mainToolbar_);
 
       secondaryToolbar_ = createSecondaryToolbar();
-      if (secondaryToolbar_ !=null)
+      if (secondaryToolbar_ != null)
          addToolbar(secondaryToolbar_);
 
       mainWidget_ = createMainWidget();
@@ -198,7 +198,7 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
                                                 : 0);
    }
 
-   private DockLayoutPanel dockPanel_;
+   protected DockLayoutPanel dockPanel_;
    protected Toolbar mainToolbar_;
    protected Toolbar secondaryToolbar_;
    private Widget mainWidget_;
