@@ -1,0 +1,22 @@
+
+.findBar {
+
+}
+
+.findPanel {
+   margin-top: 4px;
+}
+
+.findTextBox {
+
+}
+
+.closeButton {
+   background: inherit !important;
+   border: none !important;
+}
+
+.checkbox {
+   font-size: 10px;
+   margin-left: 6px;
+}

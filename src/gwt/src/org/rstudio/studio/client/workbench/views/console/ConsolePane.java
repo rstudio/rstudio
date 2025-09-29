@@ -14,17 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.IsWidget;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import java.util.Stack;
 
 import org.rstudio.core.client.ElementIds;
@@ -45,6 +34,17 @@ import org.rstudio.studio.client.workbench.views.console.Console.Language;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
@@ -194,7 +194,7 @@ public class ConsolePane extends WorkbenchPane
       consoleClearButton_ = commands_.consoleClear().createToolbarButton();
       consoleClearButton_.addStyleName(ThemeStyles.INSTANCE.consoleClearButton());
       consoleClearButton_.setVisible(true);
-
+      findButton_ = commands_.consoleFind().createToolbarButton();
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
 
@@ -209,6 +209,7 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addRightWidget(consoleSuspendBlockedIcon_);
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
+      toolbar.addRightWidget(findButton_);
       toolbar.addRightWidget(consoleClearButton_);
 
       return toolbar;
@@ -335,7 +336,7 @@ public class ConsolePane extends WorkbenchPane
          consoleInterruptButton_.setTitle(constants_.interruptPythonTitle());
       }
    }
-   
+
    private void syncSecondaryToolbar()
    {      
       // show the toolbar if we're not in normal mode
@@ -409,6 +410,7 @@ public class ConsolePane extends WorkbenchPane
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
+   private ToolbarButton findButton_;
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
    private Image consoleSuspendBlockedIcon_;

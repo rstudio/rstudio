@@ -212,6 +212,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
+         <cmd refid="consoleFind"/>
          <separator/>
          <cmd refid="macPreferences"/>
       </menu>
@@ -697,7 +698,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F"/>
-         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
+         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="emacs"/>
          <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs,sublime"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
@@ -909,6 +910,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
+         <shortcut refid="consoleFind" value="Meta+Alt+F"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
@@ -2747,11 +2749,25 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"
         desc="Clear console"/>
 
+   <cmd id="consoleFind"
+        buttonLabel=""
+        label="Find in Console"
+        menuLabel="_Find in Console"
+        desc="Find in Console"
+        windowMode="main"/>
+
    <cmd id="clearBuild"
         buttonLabel=""
         label="Clear Build Pane Output"
         windowMode="main"
         desc="Clear build"
+        context="packageDevelopment"/>
+
+   <cmd id="findBuild"
+        buttonLabel=""
+        label="Search in Build Pane"
+        windowMode="main"
+        desc="Search in Build Pane"
         context="packageDevelopment"/>
 
    <cmd id="interruptR"

@@ -648,6 +648,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveBeforeSourcingDescription();
 
    /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   @DefaultStringValue("Enable soft-wrapping of console output")
+   String consoleSoftWrapTitle();
+   @DefaultStringValue("When enabled, console output will be wrapped at the console width.")
+   String consoleSoftWrapDescription();
+
+   /**
     * Whether to use syntax highlighting in the R console.
     */
    @DefaultStringValue("Syntax highlighting in R console")
