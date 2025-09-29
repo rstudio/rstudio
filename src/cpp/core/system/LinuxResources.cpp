@@ -745,7 +745,7 @@ bool isSharedCgroup(const std::string& path, uid_t uid)
    }
 
    // Kubernetes pod - this is the cgroup
-   if (path == "0://")
+   if (path == "/")
       return false;
 
    LOG_DEBUG_MESSAGE("Unrecognized cgroup pattern, assuming a shared group and using /proc/meminfo for memory usage: " + path);
