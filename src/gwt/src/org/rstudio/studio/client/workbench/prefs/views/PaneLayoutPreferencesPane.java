@@ -249,6 +249,15 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       columnToolbar_.addLeftSeparator();
       add(columnToolbar_);
 
+      // Create sidebar visible checkbox on its own line (will be positioned later)
+      sidebarVisibleCheckbox_ = new CheckBox(constants_.sidebarVisible());
+      // Pull checkbox up to same line as toolbar using negative margin
+      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginTop", "-20px");
+      // Ensure checkbox is above other elements for click handling
+      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "relative");
+      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("zIndex", "10");
+      add(sidebarVisibleCheckbox_);
+
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
@@ -309,13 +318,19 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 55);
       sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
 
+      // Get current config for initializing sidebar preferences
+      PaneConfig currentConfig = userPrefs.panes().getGlobalValue().cast();
+
+      // Initialize sidebar visible checkbox with preference value
+      sidebarVisibleCheckbox_.setValue(currentConfig.getSidebarVisible());
+      sidebarVisibleCheckbox_.addValueChangeHandler(event -> dirty_ = true);
+
       // Create sidebar location dropdown
       sidebarLocation_ = new ListBox();
       sidebarLocation_.addItem(constants_.sidebarLocationLeft());
       sidebarLocation_.addItem(constants_.sidebarLocationRight());
 
       // Set initial selection based on current preference
-      PaneConfig currentConfig = userPrefs.panes().getGlobalValue().cast();
       String currentLocation = currentConfig.getSidebarLocation();
       if ("left".equals(currentLocation))
          sidebarLocation_.setSelectedIndex(0);
@@ -551,6 +566,24 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
          }
 
+         // Position checkbox to align with sidebar column
+         if (sidebarVisibleCheckbox_ != null)
+         {
+            double checkboxMargin = 0;
+            if (sidebarOnLeft)
+            {
+               // Sidebar is on left, checkbox should be at the start
+               checkboxMargin = 0;
+            }
+            else
+            {
+               // Sidebar is on right, shift checkbox to start after source columns and quadrants
+               checkboxMargin = (newCount * columnWidthValue) + (2 * cellWidthValue) +
+                                ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+            }
+            sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginLeft", checkboxMargin + "px");
+         }
+
          return cellWidth;
       }
 
@@ -607,6 +640,26 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             leftMargin = Double.parseDouble(sidebarWidth.replace("px", "")) + GRID_CELL_SPACING + GRID_CELL_PADDING;
          }
          columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
+      }
+
+      // Position checkbox to align with sidebar column
+      if (sidebarVisibleCheckbox_ != null)
+      {
+         double checkboxMargin = 0;
+         if (sidebarOnLeft)
+         {
+            // Sidebar is on left, checkbox should be at the start
+            checkboxMargin = 0;
+         }
+         else
+         {
+            // Sidebar is on right, shift checkbox to start after source columns and quadrants
+            double colWidth = Double.parseDouble(columnWidth.replace("px", ""));
+            double cellW = Double.parseDouble(cellWidth.replace("px", ""));
+            checkboxMargin = (newCount * colWidth) + (2 * cellW) +
+                             ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+         }
+         sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginLeft", checkboxMargin + "px");
       }
 
       return cellWidth;
@@ -731,9 +784,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             additionalColumnCount_ =
                paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
 
-         // Get current sidebar visibility setting
-         PaneConfig currentConfig = userPrefs_.panes().getGlobalValue().cast();
-         boolean sidebarVisible = currentConfig.getSidebarVisible();
+         // Get sidebar visibility from checkbox
+         boolean sidebarVisible = sidebarVisibleCheckbox_.getValue();
 
          // Get the selected sidebar location from dropdown
          String sidebarLocation = "right"; // default
@@ -815,6 +867,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList hiddenTabSetModuleList_;
    private final ModuleList sidebarModuleList_;
    private final ListBox sidebarLocation_;
+   private final CheckBox sidebarVisibleCheckbox_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
    private Toolbar columnToolbar_;
