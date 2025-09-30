@@ -322,8 +322,17 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       else
          sidebarLocation_.setSelectedIndex(1); // default to right
 
-      // Add change handler to track changes
-      sidebarLocation_.addChangeHandler(event -> dirty_ = true);
+      // Add change handler to track changes and rebuild grid
+      sidebarLocation_.addChangeHandler(event -> {
+         dirty_ = true;
+         // Force complete grid rebuild to reposition sidebar
+         if (grid_ != null)
+         {
+            remove(grid_);
+            grid_ = null;
+         }
+         updateTable(displayColumnCount_);
+      });
 
       // Now update the table which will set the correct widths
       updateTable(additionalColumnCount_);
@@ -418,6 +427,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       if (grid_ != null && displayColumnCount_ == newCount)
          return "";
 
+      // Check if sidebar should be on the left
+      boolean sidebarOnLeft = (sidebarLocation_ != null && sidebarLocation_.getSelectedIndex() == 0);
+
       // Calculate total column units: source columns + 2 quadrant pairs + 1 sidebar (same size as quadrant pair)
       // Each quadrant pair takes 2 units, sidebar takes 2 units
       double columnCount = newCount + (2 * GRID_PANE_COUNT) + GRID_PANE_COUNT;
@@ -456,10 +468,20 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.setHeight(TABLE_HEIGHT + "px");
          Roles.getGridRole().setAriaLabelProperty(grid_.getElement(), constants_.createGridLabel());
 
-         // the two rows have a different number of columns
-         // because the source columns only use one
-         int topColumn;
-         for (topColumn = 0; topColumn < newCount; topColumn++)
+         int topColumn = 0;
+
+         // If sidebar is on the left, add it first
+         if (sidebarOnLeft)
+         {
+            grid_.setWidget(0, topColumn, sidebarPanel_ = createSidebarPane());
+            grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
+            grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
+            grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
+            topColumn++;
+         }
+
+         // Add source columns
+         for (int i = 0; i < newCount; i++, topColumn++)
          {
             ScrollPanel sp = createColumn();
             grid_.setWidget(0, topColumn, sp);
@@ -468,6 +490,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             grid_.getColumnFormatter().setWidth(topColumn, columnWidth);
          }
 
+         // Add quadrants
          grid_.setWidget(0, topColumn, leftTopPanel_ = createPane(leftTop_, ElementIds.PANE_LAYOUT_LEFT_TOP));
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
          grid_.getCellFormatter().setWidth(0, topColumn, cellWidth);
@@ -476,11 +499,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
          grid_.getCellFormatter().setWidth(0, topColumn, cellWidth);
 
-         // Add sidebar column (spans both rows)
-         grid_.setWidget(0, ++topColumn, sidebarPanel_ = createSidebarPane());
-         grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
-         grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
-         grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
+         // If sidebar is on the right, add it after the quadrants
+         if (!sidebarOnLeft)
+         {
+            grid_.setWidget(0, ++topColumn, sidebarPanel_ = createSidebarPane());
+            grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
+            grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
+            grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
+         }
 
          int bottomColumn = 0;
          grid_.setWidget(1, bottomColumn, leftBottomPanel_ = createPane(leftBottom_, ElementIds.PANE_LAYOUT_LEFT_BOTTOM));
@@ -513,23 +539,26 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       int difference = newCount - displayColumnCount_;
       displayColumnCount_ = newCount;
 
+      // Source columns start at position 1 if sidebar is on left, 0 if on right
+      int sourceColumnStart = sidebarOnLeft ? 1 : 0;
+
       // when the number of columns has decreased, remove columns
       for (int i = 0; i > difference; i--)
-         grid_.removeCell(0, i);
+         grid_.removeCell(0, sourceColumnStart);
 
       // when the number of columns has increased, add columns
       for (int i = 0; i < difference; i++)
       {
          ScrollPanel sp = createColumn();
-         grid_.insertCell(0, 0);
-         grid_.setWidget(0, 0, sp);
-         grid_.getFlexCellFormatter().setRowSpan(0, 0, 2);
-         grid_.getCellFormatter().setStyleName(0, 0, res_.styles().paneLayoutTable());
+         grid_.insertCell(0, sourceColumnStart);
+         grid_.setWidget(0, sourceColumnStart, sp);
+         grid_.getFlexCellFormatter().setRowSpan(0, sourceColumnStart, 2);
+         grid_.getCellFormatter().setStyleName(0, sourceColumnStart, res_.styles().paneLayoutTable());
       }
 
-      // update the widths
+      // update the widths for source columns
       for (int i = 0; i < newCount; i++)
-         grid_.getCellFormatter().setWidth(0, i, columnWidth);
+         grid_.getCellFormatter().setWidth(0, sourceColumnStart + i, columnWidth);
       tabSet1ModuleList_.setWidth(cellWidth);
       tabSet2ModuleList_.setWidth(cellWidth);
       sidebarModuleList_.setWidth(sidebarWidth);
@@ -541,8 +570,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          sidebarLocation_.setWidth(dropdownWidth);
       }
 
-      // Update sidebar column width (last column)
-      int sidebarCol = newCount + 2; // newCount source columns + 2 quadrant columns
+      // Update sidebar column width
+      int sidebarCol = sidebarOnLeft ? 0 : (newCount + 2); // If left: first column, if right: after source columns + quadrants
       grid_.getCellFormatter().setWidth(0, sidebarCol, sidebarWidth);
       
       // ensure grid maintains proper dimensions
