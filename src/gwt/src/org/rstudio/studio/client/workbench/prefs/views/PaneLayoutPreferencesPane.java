@@ -204,9 +204,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       add(new Label(constants_.paneLayoutText(),
          true));
 
-      Toolbar columnToolbar = new Toolbar(constants_.columnToolbarLabel());
-      columnToolbar.setStyleName(res_.styles().newSection());
-      columnToolbar.setHeight("20px");
+      columnToolbar_ = new Toolbar(constants_.columnToolbarLabel());
+      columnToolbar_.setStyleName(res_.styles().newSection());
+      columnToolbar_.setHeight("20px");
 
       ToolbarButton addButton = new ToolbarButton(
          constants_.addButtonText(),
@@ -243,11 +243,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             addButton.setEnabled(true);
       });
 
-      columnToolbar.addLeftWidget(addButton);
-      columnToolbar.addLeftSeparator();
-      columnToolbar.addLeftWidget(removeButton);
-      columnToolbar.addLeftSeparator();
-      add(columnToolbar);
+      columnToolbar_.addLeftWidget(addButton);
+      columnToolbar_.addLeftSeparator();
+      columnToolbar_.addLeftWidget(removeButton);
+      columnToolbar_.addLeftSeparator();
+      add(columnToolbar_);
 
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
@@ -539,6 +539,18 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             sidebarLocation_.setWidth(dropdownWidth);
          }
 
+         // Position toolbar to align with source columns or first quadrant
+         if (columnToolbar_ != null)
+         {
+            double leftMargin = 0;
+            if (sidebarOnLeft)
+            {
+               // If sidebar is on left, shift toolbar to start after it
+               leftMargin = sidebarWidthValue + GRID_CELL_SPACING + GRID_CELL_PADDING;
+            }
+            columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
+         }
+
          return cellWidth;
       }
 
@@ -580,10 +592,22 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Update sidebar column width
       int sidebarCol = sidebarOnLeft ? 0 : (newCount + 2); // If left: first column, if right: after source columns + quadrants
       grid_.getCellFormatter().setWidth(0, sidebarCol, sidebarWidth);
-      
+
       // ensure grid maintains proper dimensions
       grid_.setWidth(TABLE_WIDTH + "px");
       grid_.setHeight(TABLE_HEIGHT + "px");
+
+      // Position toolbar to align with source columns or first quadrant
+      if (columnToolbar_ != null)
+      {
+         double leftMargin = 0;
+         if (sidebarOnLeft)
+         {
+            // If sidebar is on left, shift toolbar to start after it
+            leftMargin = Double.parseDouble(sidebarWidth.replace("px", "")) + GRID_CELL_SPACING + GRID_CELL_PADDING;
+         }
+         columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
+      }
 
       return cellWidth;
    }
@@ -793,6 +817,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ListBox sidebarLocation_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
+   private Toolbar columnToolbar_;
 
    private VerticalPanel leftTopPanel_;
    private VerticalPanel leftBottomPanel_;
