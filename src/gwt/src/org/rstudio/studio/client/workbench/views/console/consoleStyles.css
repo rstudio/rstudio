@@ -33,14 +33,18 @@
 .output {
    outline: none;
    border: none;
-   white-space: pre-wrap !important;
-   word-break: break-all;
    margin: 0;
    -ms-user-select: text;
    -moz-user-select: text;
    -webkit-user-select: text;
    user-select: text
 }
+
+.outputSoftWrap {
+   white-space: pre-wrap !important;
+   word-break: break-all;
+}
+
 .output .command, .input {
 }
 

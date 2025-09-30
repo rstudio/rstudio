@@ -2,6 +2,7 @@
 
 ### New
 #### RStudio
+- ([#10567](https://github.com/rstudio/rstudio/issues/10567)): RStudio now provides tools for searching within Console output and Build output
 - ([#15928](https://github.com/rstudio/rstudio/issues/15928)): RStudio now uses Air for formatting R code in projects configured to use Air
 - ([#16127](https://github.com/rstudio/rstudio/issues/16127)): ESC key now dismisses Copilot ghost text in source editor
 - ([#16415](https://github.com/rstudio/rstudio/issues/16415)): RStudio now provides completions for the `_` placeholer in piped expressions
@@ -35,6 +36,6 @@
 
 ### Dependencies
 - Copilot Language Server 1.376.0
-- Electron 38.1.2
+- Electron 38.2.0
 - Node.js 22.18.0
 - Quarto 1.8.24

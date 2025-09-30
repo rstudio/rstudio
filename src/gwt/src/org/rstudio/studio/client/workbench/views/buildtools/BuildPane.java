@@ -14,19 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.AppCommand;
@@ -40,6 +27,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.find.BrowserSelectionFindBar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -61,6 +49,19 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSu
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class BuildPane extends WorkbenchPane
       implements BuildPresenter.Display
@@ -84,7 +85,8 @@ public class BuildPane extends WorkbenchPane
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
-      compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
+      buffer_ = new CompileOutputBufferWithHighlight();
+      compilePanel_ = new CompilePanel(buffer_);
       projServer_ = projServer;
       ensureWidget();
    }
@@ -241,8 +243,14 @@ public class BuildPane extends WorkbenchPane
       clearBuildButton_.addStyleName(ThemeStyles.INSTANCE.clearBuildButton());
       clearBuildButton_.setVisible(true);
 
+      // find in build output button
+      findBuildButton_ = commands_.findBuild().createToolbarButton();
+      findBuildButton_.addStyleName(ThemeStyles.INSTANCE.findBuildButton());
+      findBuildButton_.setVisible(true);
+
       // connect compile panel
       compilePanel_.connectToolbar(toolbar);
+      toolbar.addRightWidget(findBuildButton_);
       toolbar.addRightWidget(clearBuildButton_);
 
       return toolbar;
@@ -252,6 +260,12 @@ public class BuildPane extends WorkbenchPane
    void onClearBuild()
    {
        compilePanel_.clearAll();
+   }
+
+   @Handler
+   void onFindBuild()
+   {
+      findBar_.show(true);
    }
    
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
@@ -393,12 +407,12 @@ public class BuildPane extends WorkbenchPane
       } 
    }
    
-
-
-
    @Override
    protected Widget createMainWidget()
    {
+      findBar_ = new BrowserSelectionFindBar(dockPanel_, buffer_);
+      dockPanel_.addNorth(findBar_, findBar_.getHeightPx());
+      dockPanel_.setWidgetHidden(findBar_, true);
       return compilePanel_;
    }
 
@@ -527,6 +541,7 @@ public class BuildPane extends WorkbenchPane
 
 
    private ToolbarButton clearBuildButton_;
+   private ToolbarButton findBuildButton_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
@@ -537,6 +552,8 @@ public class BuildPane extends WorkbenchPane
    private MenuItem buildFullMenuItem_;
    private MenuItem buildIncrementalMenuItem_;
 
+   private BrowserSelectionFindBar findBar_;
+   private final CompileOutputBufferWithHighlight buffer_;
    private final CompilePanel compilePanel_;
 
    private final HandlerManager handlers_ = new HandlerManager(this);

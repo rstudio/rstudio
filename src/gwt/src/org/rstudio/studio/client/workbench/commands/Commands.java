@@ -244,6 +244,7 @@ public abstract class
 
    // Console
    public abstract AppCommand consoleClear();
+   public abstract AppCommand consoleFind();
    public abstract AppCommand interruptR();
    public abstract AppCommand restartR();
    public abstract AppCommand restartRClearOutput();
@@ -601,6 +602,7 @@ public abstract class
 
    // Build
    public abstract AppCommand clearBuild();
+   public abstract AppCommand findBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand buildIncremental();
    public abstract AppCommand buildFull();

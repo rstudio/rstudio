@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -26,6 +22,11 @@ import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class ShellPane extends ShellWidget implements Shell.Display
 {
@@ -84,5 +85,6 @@ public class ShellPane extends ShellWidget implements Shell.Display
          input_.focus();
       });
    }
+
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

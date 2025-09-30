@@ -973,6 +973,19 @@ core::Error UserPrefValues::setSaveBeforeSourcing(bool val)
 }
 
 /**
+ * When enabled, console output will be wrapped at the console width.
+ */
+bool UserPrefValues::consoleSoftWrap()
+{
+   return readPref<bool>("console_soft_wrap");
+}
+
+core::Error UserPrefValues::setConsoleSoftWrap(bool val)
+{
+   return writePref("console_soft_wrap", val);
+}
+
+/**
  * Whether to use syntax highlighting in the R console.
  */
 bool UserPrefValues::syntaxColorConsole()
@@ -3570,6 +3583,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFocusConsoleAfterExec,
       kFoldStyle,
       kSaveBeforeSourcing,
+      kConsoleSoftWrap,
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,

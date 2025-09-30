@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Messages{
+public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Messages {
     String noDocumentsParentheses();
     String noOutlineAvailable();
     String title();

@@ -56,6 +56,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
       add(displayLabel);
       add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
+      add(checkboxPref(prefs_.consoleSoftWrap()));
+
       if (Version.compare(version, "4.0.0") >= 0)
       {
          add(consoleHighlightConditions_);
