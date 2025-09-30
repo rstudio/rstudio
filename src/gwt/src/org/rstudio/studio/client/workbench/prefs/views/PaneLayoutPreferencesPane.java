@@ -520,6 +520,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          add(grid_);
          displayColumnCount_ = newCount;
 
+         // Update the array to reference the new panels
+         visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
+                                                   rightTopPanel_, rightBottomPanel_};
+
+         // Re-attach module lists to the new panels
+         updateTabSetPositions();
+
          // Update module list widths and heights after grid creation
          tabSet1ModuleList_.setWidth(cellWidth);
          tabSet2ModuleList_.setWidth(cellWidth);
@@ -778,7 +785,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ListBox rightTop_;
    private final ListBox rightBottom_;
    private final ListBox[] visiblePanes_;
-   private final VerticalPanel[] visiblePanePanels_;
+   private VerticalPanel[] visiblePanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
