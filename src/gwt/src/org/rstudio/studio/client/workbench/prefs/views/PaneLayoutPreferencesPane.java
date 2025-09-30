@@ -618,12 +618,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          sidebarLocation_.setWidth(selectWidth);
       }
 
-      // Add the label
-      FormLabel label = new FormLabel();
-      label.setText("Sidebar");
-      label.setStyleName(res_.styles().label());
-      vp.add(label);
-
       // Add the module list
       if (sidebarModuleList_ != null)
          vp.add(sidebarModuleList_);
