@@ -1342,6 +1342,14 @@ void docClosed(const std::string& uri)
 {
    if (s_knownDocuments.count(uri) == 0)
    {
+      // Check if this is an untitled (unsaved) document; if so then it's likely an empty unsaved
+      // file that was never edited (Copilot isn't told about a new file until it gets modified)
+      // so the warning is unnecessary
+      if (uri.find("rstudio-document://") == 0)
+      {
+         return;
+      }
+      
       WLOG("Tried to close unknown document '{}'.", uri);
       return;
    }
