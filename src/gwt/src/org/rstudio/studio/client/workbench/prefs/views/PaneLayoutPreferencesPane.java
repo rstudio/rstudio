@@ -247,16 +247,21 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       columnToolbar_.addLeftSeparator();
       columnToolbar_.addLeftWidget(removeButton);
       columnToolbar_.addLeftSeparator();
-      add(columnToolbar_);
 
-      // Create sidebar visible checkbox on its own line (will be positioned later)
+      // Create a wrapper panel with relative positioning for the toolbar row
+      FlowPanel toolbarWrapper = new FlowPanel();
+      toolbarWrapper.getElement().getStyle().setProperty("position", "relative");
+      toolbarWrapper.getElement().getStyle().setProperty("height", "20px");
+
+      toolbarWrapper.add(columnToolbar_);
+
+      // Create sidebar visible checkbox and position it absolutely
       sidebarVisibleCheckbox_ = new CheckBox(constants_.sidebarVisible());
-      // Pull checkbox up to same line as toolbar using negative margin
-      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginTop", "-20px");
-      // Ensure checkbox is above other elements for click handling
-      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "relative");
-      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("zIndex", "10");
-      add(sidebarVisibleCheckbox_);
+      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "absolute");
+      sidebarVisibleCheckbox_.getElement().getStyle().setProperty("top", "0");
+      toolbarWrapper.add(sidebarVisibleCheckbox_);
+
+      add(toolbarWrapper);
 
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
@@ -566,22 +571,22 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
          }
 
-         // Position checkbox to align with sidebar column
+         // Position checkbox to align with sidebar column (using absolute positioning)
          if (sidebarVisibleCheckbox_ != null)
          {
-            double checkboxMargin = 0;
+            double checkboxLeft = 0;
             if (sidebarOnLeft)
             {
                // Sidebar is on left, checkbox should be at the start
-               checkboxMargin = 0;
+               checkboxLeft = 0;
             }
             else
             {
                // Sidebar is on right, shift checkbox to start after source columns and quadrants
-               checkboxMargin = (newCount * columnWidthValue) + (2 * cellWidthValue) +
-                                ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+               checkboxLeft = (newCount * columnWidthValue) + (2 * cellWidthValue) +
+                              ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
             }
-            sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginLeft", checkboxMargin + "px");
+            sidebarVisibleCheckbox_.getElement().getStyle().setProperty("left", checkboxLeft + "px");
          }
 
          return cellWidth;
@@ -642,24 +647,24 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          columnToolbar_.getElement().getStyle().setProperty("marginLeft", leftMargin + "px");
       }
 
-      // Position checkbox to align with sidebar column
+      // Position checkbox to align with sidebar column (using absolute positioning)
       if (sidebarVisibleCheckbox_ != null)
       {
-         double checkboxMargin = 0;
+         double checkboxLeft = 0;
          if (sidebarOnLeft)
          {
             // Sidebar is on left, checkbox should be at the start
-            checkboxMargin = 0;
+            checkboxLeft = 0;
          }
          else
          {
             // Sidebar is on right, shift checkbox to start after source columns and quadrants
             double colWidth = Double.parseDouble(columnWidth.replace("px", ""));
             double cellW = Double.parseDouble(cellWidth.replace("px", ""));
-            checkboxMargin = (newCount * colWidth) + (2 * cellW) +
-                             ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+            checkboxLeft = (newCount * colWidth) + (2 * cellW) +
+                           ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
          }
-         sidebarVisibleCheckbox_.getElement().getStyle().setProperty("marginLeft", checkboxMargin + "px");
+         sidebarVisibleCheckbox_.getElement().getStyle().setProperty("left", checkboxLeft + "px");
       }
 
       return cellWidth;
