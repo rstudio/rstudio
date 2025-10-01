@@ -9,11 +9,10 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
-## RStudio 2025.09.1
 
-**"Cucumberleaf Sunflower"**
+## 2025.09.1 {#rstudio-2025.09.1}
 
->Date: 2025-10-01
+| **"Cucumberleaf Sunflower"** | Date: 2025-10-01
 
 ### New
 
