@@ -36,7 +36,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop,
-                                          int additionalSources) /*-{
+                                          int additionalSources,
+                                          JsArrayString sidebarTabs,
+                                          boolean sidebarVisible,
+                                          String sidebarLocation) /*-{
       return {
          quadrants: panes,
          tabSet1: tabSet1,
@@ -44,7 +47,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop,
-         additional_source_columns: additionalSources
+         additional_source_columns: additionalSources,
+         sidebar: sidebarTabs,
+         sidebar_visible: sidebarVisible,
+         sidebar_location: sidebarLocation
       };
    }-*/;
 
@@ -62,6 +68,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push(PaneManager.ENVIRONMENT_PANE);
@@ -82,7 +89,19 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push(PaneManager.PRESENTATIONS_PANE);
 
       JsArrayString hiddenTabSet = createArray().cast();
-      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
+
+      JsArrayString sidebarTabs = createArray().cast();
+      sidebarTabs.push(PaneManager.CHAT_PANE);
+      String sidebarLocation = "right";
+      boolean sidebarVisible = false;
+      boolean consoleLeftOnTop = false;
+      boolean consoleRightOnTop = true;
+      int additionalSources = 0;
+
+      return create(
+         panes, tabSet1, tabSet2, hiddenTabSet,
+         consoleLeftOnTop, consoleRightOnTop, additionalSources,
+         sidebarTabs, sidebarVisible, sidebarLocation);
    }
 
    public static String[] getAllPanes()
@@ -92,7 +111,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
          UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
-         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET
+         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET,
+         UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR
       };
    }
 
@@ -114,7 +134,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                            PaneManager.PLOTS_PANE, PaneManager.CONNECTIONS_PANE,
                            PaneManager.PACKAGES_PANE, PaneManager.HELP_PANE, PaneManager.BUILD_PANE,
                            PaneManager.VCS_PANE, PaneManager.TUTORIAL_PANE, PaneManager.VIEWER_PANE,
-                           /* CHAT-WIP PaneManager.CHAT_PANE, */
+                           PaneManager.CHAT_PANE,
                            PaneManager.PRESENTATIONS_PANE, PaneManager.PRESENTATION_PANE};
    }
 
@@ -284,7 +304,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop(),
-                    getAdditionalSourceColumns());
+                    getAdditionalSourceColumns(),
+                    copy(getSidebar()),
+                    getSidebarVisible(),
+                    getSidebarLocation());
    }
 
    public final native boolean isEqualTo(PaneConfig other)  /*-{
@@ -292,7 +315,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
              this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
              this.tabSet2.toString() == other.tabSet2.toString() &&
-             this.hiddenTabSet.toString() == other.hiddenTabSet.toString();
+             this.hiddenTabSet.toString() == other.hiddenTabSet.toString() &&
+             this.sidebar.toString() == other.sidebar.toString();
    }-*/;
 
    private boolean sameElements(JsArrayString a, String[] b)

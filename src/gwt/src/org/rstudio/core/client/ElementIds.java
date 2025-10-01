@@ -779,10 +779,12 @@ public class ElementIds
    public final static String PANE_LAYOUT_LEFT_BOTTOM = "pane_layout_left_bottom";
    public final static String PANE_LAYOUT_RIGHT_TOP = "pane_layout_right_top";
    public final static String PANE_LAYOUT_RIGHT_BOTTOM = "pane_layout_right_bottom";
+   public final static String PANE_LAYOUT_SIDEBAR = "pane_layout_sidebar";
    public final static String PANE_LAYOUT_LEFT_TOP_SELECT = "pane_layout_left_top_select";
    public final static String PANE_LAYOUT_LEFT_BOTTOM_SELECT = "pane_layout_left_bottom_select";
    public final static String PANE_LAYOUT_RIGHT_TOP_SELECT = "pane_layout_right_top_select";
    public final static String PANE_LAYOUT_RIGHT_BOTTOM_SELECT = "pane_layout_right_bottom_select";
+   public final static String PANE_LAYOUT_SIDEBAR_SELECT = "pane_layout_sidebar_select";
 
    // TextEntryModalDialog
    public final static String TEXT_ENTRY = "text_entry";

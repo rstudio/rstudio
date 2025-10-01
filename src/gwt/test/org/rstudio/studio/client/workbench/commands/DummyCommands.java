@@ -1570,6 +1570,31 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand showSidebar() {
+        return null;
+    }
+
+    @Override
+    public AppCommand hideSidebar() {
+        return null;
+    }
+
+    @Override
+    public AppCommand toggleSidebar() {
+        return null;
+    }
+
+    @Override
+    public AppCommand moveSidebarLeft() {
+        return null;
+    }
+
+    @Override
+    public AppCommand moveSidebarRight() {
+        return null;
+    }
+
+    @Override
     public AppCommand zoomActualSize() {
         return null;
     }
@@ -3066,6 +3091,11 @@ public class DummyCommands extends Commands {
 
     @Override
     public AppCommand focusSourceColumnSeparator() {
+        return null;
+    }
+
+    @Override
+    public AppCommand focusSidebarSeparator() {
         return null;
     }
 

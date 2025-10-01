@@ -536,6 +536,30 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("") // $NON-NLS-1$
     String projectSweaveOptionsDesc();
     
+    // showSidebar
+    @DefaultStringValue("Show Si_debar") // $NON-NLS-1$
+    String showSidebarMenuLabel();
+    
+    // hideSidebar
+    @DefaultStringValue("Hide Sideb_ar") // $NON-NLS-1$
+    String hideSidebarMenuLabel();
+    
+    // toggleSidebar
+    @DefaultStringValue("Toggle Visibility of Sidebar") // $NON-NLS-1$
+    String toggleSidebarLabel();
+    
+    // moveSidebarLeft
+    @DefaultStringValue("Show Sidebar on Left") // $NON-NLS-1$
+    String moveSidebarLeftLabel();
+    @DefaultStringValue("Show Sidebar on Le_ft") // $NON-NLS-1$
+    String moveSidebarLeftMenuLabel();
+    
+    // moveSidebarRight
+    @DefaultStringValue("Show Sidebar on Right") // $NON-NLS-1$
+    String moveSidebarRightLabel();
+    @DefaultStringValue("Show Sidebar on Ri_ght") // $NON-NLS-1$
+    String moveSidebarRightMenuLabel();
+    
     // showToolbar
     @DefaultStringValue("Show _Toolbar") // $NON-NLS-1$
     String showToolbarMenuLabel();
@@ -785,7 +809,7 @@ public interface CmdConstants extends Constants {
     // layoutZoomPackages
     @DefaultStringValue("Zoom Packages") // $NON-NLS-1$
     String layoutZoomPackagesLabel();
-    @DefaultStringValue("Zoom P_ackages") // $NON-NLS-1$
+    @DefaultStringValue("Zoom Pac_kages") // $NON-NLS-1$
     String layoutZoomPackagesMenuLabel();
     
     // layoutZoomHelp
@@ -4045,6 +4069,10 @@ public interface CmdConstants extends Constants {
     // focusSourceColumnSeparator
     @DefaultStringValue("Adjust Source Column Spli_tter") // $NON-NLS-1$
     String focusSourceColumnSeparatorMenuLabel();
+    
+    // focusSidebarSeparator
+    @DefaultStringValue("Adjust _Sidebar Splitter") // $NON-NLS-1$
+    String focusSidebarSeparatorMenuLabel();
     
     // showShortcutCommand
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$

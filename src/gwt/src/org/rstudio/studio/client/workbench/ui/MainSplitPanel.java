@@ -133,11 +133,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       addSplitterResizedHandler(this);
    }
 
-   public void initialize(ArrayList<Widget> leftList, Widget center, Widget right)
+   public void initialize(ArrayList<Widget> leftList, Widget center, Widget right, Widget sidebar, String sidebarLocation)
    {
       leftList_ = leftList;
       center_ = center;
       right_ = right;
+      sidebar_ = sidebar;
+      sidebarLocation_ = sidebarLocation;
 
       new JSObjectStateValue(GROUP_WORKBENCH,
                              KEY_RIGHTPANESIZE,
@@ -150,31 +152,114 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          {
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
+            int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
-                state.getSplitterCount() == leftList_.size() + 1)
+                state.getSplitterCount() == expectedCount)
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
                {
                   int delta = state.getWindowWidth() - state.getPanelWidth();
                   int offsetWidth = Window.getClientWidth() - delta;
-                  double pct = (double)state.getSplitterPos()[0]
-                               / state.getPanelWidth();
-                  addEast(right_, pct * offsetWidth);
+                  int idx = 0;
+                  double pct;
+                  // Add sidebar if on left
+                  if (sidebar_ != null && "left".equals(sidebarLocation_))
+                  {
+                     pct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
+                     addWest(sidebar_, pct * offsetWidth);
+                  }
+                  // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
                   {
-                     pct = (double)state.getSplitterPos()[i + 1]
+                     pct = (double)state.getSplitterPos()[idx++]
                             / state.getPanelWidth();
                      addWest(leftList_.get(i), pct * offsetWidth);
+                  }
+                  // Handle right-side sidebar case differently for proper resizing
+                  if (sidebar_ != null && !"left".equals(sidebarLocation_))
+                  {
+                     // Add sidebar first using addEast (rightmost position)
+                     double sidebarPct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
+                     addEast(sidebar_, sidebarPct * offsetWidth);
+                     
+                     // Get right widget width
+                     double rightPct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
+                     
+                     // Calculate center width: total - left widgets - sidebar - right
+                     double centerWidth = offsetWidth;
+                     // Subtract all left widget widths that were already added
+                     int leftStartIdx = sidebar_ != null && "left".equals(sidebarLocation_) ? 1 : 0;
+                     for (int i = 0; i < leftList_.size(); i++)
+                     {
+                        double leftPct = (double)state.getSplitterPos()[leftStartIdx + i] / state.getPanelWidth();
+                        centerWidth -= leftPct * offsetWidth;
+                     }
+                     // Subtract sidebar and right widths
+                     centerWidth -= sidebarPct * offsetWidth;
+                     centerWidth -= rightPct * offsetWidth;
+                     
+                     // Add center using addWest (last addWest call)
+                     addWest(center_, centerWidth);
+                     
+                     // Add right using add() (last thing added)
+                     add(right_);
+                  }
+                  else
+                  {
+                     // No sidebar on right - use original logic
+                     pct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
+                     addEast(right_, pct * offsetWidth);
+                     add(center_);
                   }
                }
                else
                {
-                  addEast(right_, state.getSplitterPos()[0]);
+                  int idx = 0;
+                  // Add sidebar if on left
+                  if (sidebar_ != null && "left".equals(sidebarLocation_))
+                     addWest(sidebar_, state.getSplitterPos()[idx++]);
+                  // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
-                     addWest(leftList_.get(i), state.getSplitterPos()[i + 1]);
+                     addWest(leftList_.get(i), state.getSplitterPos()[idx++]);
+                  // Handle right-side sidebar case differently for proper resizing
+                  if (sidebar_ != null && !"left".equals(sidebarLocation_))
+                  {
+                     // Add sidebar first using addEast (rightmost position)
+                     int sidebarWidth = state.getSplitterPos()[idx++];
+                     addEast(sidebar_, sidebarWidth);
+                     
+                     // Get right widget width
+                     int rightWidth = state.getSplitterPos()[idx++];
+                     
+                     // Calculate remaining width for center (total - left widgets - sidebar - right)
+                     int centerWidth = state.getPanelWidth();
+                     // Subtract all left widget widths that were already added
+                     int leftStartIdx = sidebar_ != null && "left".equals(sidebarLocation_) ? 1 : 0;
+                     for (int i = 0; i < leftList_.size(); i++)
+                        centerWidth -= state.getSplitterPos()[leftStartIdx + i];
+                     // Subtract sidebar and right widths
+                     centerWidth -= sidebarWidth;
+                     centerWidth -= rightWidth;
+                     
+                     // Add center using addWest (last addWest call)  
+                     addWest(center_, centerWidth);
+                     
+                     // Add right using add() (last thing added)  
+                     add(right_);
+                  }
+                  else
+                  {
+                     // No sidebar on right - use original logic
+                     addEast(right_, state.getSplitterPos()[idx++]);
+                     add(center_);
+                  }
                }
             }
             else
@@ -182,10 +267,33 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                // When there are only two panels, make the left side slightly larger than the right,
                // otherwise divide the space equally.
                double splitWidth = getDefaultSplitterWidth();
-               addEast(right_, splitWidth);
-
+               
+               // Add sidebar if on left
+               if (sidebar_ != null && "left".equals(sidebarLocation_))
+                  addWest(sidebar_, splitWidth * 0.8); // Sidebar slightly narrower
+               
+               // Add left widgets
                for (Widget w : leftList_)
                   addWest(w, splitWidth);
+               
+               // Handle right-side sidebar case differently for proper resizing
+               if (sidebar_ != null && !"left".equals(sidebarLocation_))
+               {
+                  // Add sidebar first using addEast (rightmost position)
+                  addEast(sidebar_, splitWidth * 0.8); // Sidebar slightly narrower
+                  
+                  // Add center using addWest (last addWest call)
+                  addWest(center_, splitWidth);
+                  
+                  // Add right using add() (last thing added)
+                  add(right_);
+               }
+               else
+               {
+                  // No sidebar on right - use original logic
+                  addEast(right_, splitWidth);
+                  add(center_);
+               }
             }
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -207,13 +315,27 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             // The widget's code determines the splitter positions from the width of each widget
             // so these value represent that width rather than the actual coordinates of the
             // splitter.
-            int[] splitterArray = new int[leftList_.size() + 1];
-            splitterArray[0] = right_.getOffsetWidth();
+            int sidebarCount = sidebar_ != null ? 1 : 0;
+            int[] splitterArray = new int[leftList_.size() + 1 + sidebarCount];
+            int idx = 0;
+            
+            // Store sidebar width if on left
+            if (sidebar_ != null && "left".equals(sidebarLocation_))
+               splitterArray[idx++] = sidebar_.getOffsetWidth();
+            
+            // Store left widget widths
             if (!leftList_.isEmpty())
             {
                for (int i = 0; i < leftList_.size(); i++)
-                  splitterArray[i + 1] = leftList_.get(i).getOffsetWidth();
+                  splitterArray[idx++] = leftList_.get(i).getOffsetWidth();
             }
+            
+            // Store sidebar width if on right (before right widget in the array)
+            if (sidebar_ != null && !"left".equals(sidebarLocation_))
+               splitterArray[idx++] = sidebar_.getOffsetWidth();
+            
+            // Store right widget width
+            splitterArray[idx++] = right_.getOffsetWidth();
             state.setSplitterPos(splitterArray);
             return state.cast();
          }
@@ -233,7 +355,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          private State lastKnownValue_;
       };
 
-      add(center_);
       setWidgetMinSize(right_, 0);
    }
 
@@ -248,14 +369,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       clearForRefresh();
       leftList_.add(0, widget);
-      initialize(leftList_, center_, right_);
+      initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
    }
 
    public double getDefaultSplitterWidth()
    {
-      return leftList_.isEmpty() ?
+      int columnCount = 2 + leftList_.size() + (sidebar_ != null ? 1 : 0);
+      return leftList_.isEmpty() && sidebar_ == null ?
          Window.getClientWidth() * 0.45 :
-         Window.getClientWidth() / (2 + leftList_.size());
+         Window.getClientWidth() / columnCount;
    }
    
    public double getLeftSize()
@@ -278,7 +400,32 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       clearForRefresh();
       leftList_.remove(widget);
-      initialize(leftList_, center_, right_);
+      initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
+   }
+   
+   public void setSidebarWidget(Widget widget)
+   {
+      setSidebarWidget(widget, "right");
+   }
+   
+   public void setSidebarWidget(Widget widget, String location)
+   {
+      clearForRefresh();
+      sidebar_ = widget;
+      sidebarLocation_ = location;
+      initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
+   }
+   
+   public void removeSidebarWidget()
+   {
+      clearForRefresh();
+      sidebar_ = null;
+      initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
+   }
+   
+   public boolean hasSidebarWidget()
+   {
+      return sidebar_ != null;
    }
 
    public void onSplitterResized(SplitterResizedEvent event)
@@ -298,6 +445,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       remove(center_);
       remove(right_);
+      if (sidebar_ != null)
+         remove(sidebar_);
       for (Widget w : leftList_)
          remove(w);
    }
@@ -368,6 +517,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private ArrayList<Widget> leftList_;
    private Widget center_;
    private Widget right_;
+   private Widget sidebar_;
+   private String sidebarLocation_ = "right";
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
    private Command layoutCommand_;

@@ -355,7 +355,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      paneConfig.getHiddenTabSet(),
                      paneConfig.getConsoleLeftOnTop(),
                      paneConfig.getConsoleRightOnTop(),
-                     0).cast());
+                     0,
+                     paneConfig.getSidebar(),
+                     paneConfig.getSidebarVisible(),
+                     paneConfig.getSidebarLocation()).cast());
                   consolidateColumns(1);
                }
                return;

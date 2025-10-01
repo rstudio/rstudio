@@ -389,9 +389,10 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_TABSET1 = "TabSet1";
       public final static String QUADRANTS_TABSET2 = "TabSet2";
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
+      public final static String QUADRANTS_SIDEBAR = "Sidebar";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
+         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet","Sidebar"];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
@@ -406,6 +407,10 @@ public class UserPrefsAccessor extends Prefs
          return this && this.hiddenTabSet || [];
       }-*/;
 
+      public final native JsArrayString getSidebar() /*-{
+         return this && this.sidebar || ["Chat"];
+      }-*/;
+
       public final native boolean getConsoleLeftOnTop() /*-{
          return this && this.console_left_on_top || false;
       }-*/;
@@ -416,6 +421,14 @@ public class UserPrefsAccessor extends Prefs
 
       public final native int getAdditionalSourceColumns() /*-{
          return this && this.additional_source_columns || 0;
+      }-*/;
+
+      public final native boolean getSidebarVisible() /*-{
+         return this && this.sidebar_visible || false;
+      }-*/;
+
+      public final native String getSidebarLocation() /*-{
+         return this && this.sidebar_location || "right";
       }-*/;
 
    }

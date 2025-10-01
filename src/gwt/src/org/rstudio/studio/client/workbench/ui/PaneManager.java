@@ -87,10 +87,6 @@ import com.google.inject.name.Named;
 
 import elemental2.dom.DomGlobal;
 
-/*
- * TODO: Push client state when selected tab or layout changes
- */
-
 @Singleton
 public class PaneManager
 {
@@ -103,6 +99,7 @@ public class PaneManager
 
    public static final String LEFT_COLUMN = "left";
    public static final String RIGHT_COLUMN = "right";
+   public static final String SIDEBAR_COLUMN = "sidebar";
 
    class SelectedTabStateValue extends IntStateValue
    {
@@ -329,10 +326,33 @@ public class PaneManager
                paneConfig.getHiddenTabSet(),
                paneConfig.getConsoleLeftOnTop(),
                paneConfig.getConsoleRightOnTop(),
-               0).cast());
+               0,
+               paneConfig.getSidebar(),
+               paneConfig.getSidebarVisible(),
+               paneConfig.getSidebarLocation()).cast());
          }
       }
-      panel_.initialize(leftList_, center_, right_);
+      // Initialize sidebar if configured
+      Widget sidebarWidget = null;
+      String sidebarLocation = config.getSidebarLocation();
+      if (config.getSidebarVisible())
+      {
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            // State already set in initPanes, but ensure it's NORMAL if visible
+            if (sidebarWindow.getState() != WindowState.NORMAL)
+               sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebarWidget = sidebarWindow.getNormal();
+            sidebar_ = sidebarWidget;
+         }
+         showSidebar(true);
+      } else {
+         showSidebar(false);
+      }
+      
+      panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
 
       for (LogicalWindow window : sourceLogicalWindows_)
       {
@@ -378,6 +398,7 @@ public class PaneManager
       }
 
       source_.loadDisplay();
+      
       userPrefs.panes().addValueChangeHandler(evt ->
       {
          ArrayList<LogicalWindow> newPanes = createPanes(
@@ -420,6 +441,9 @@ public class PaneManager
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
+
+         // manage sidebar
+         showSidebar(evt.getValue().getSidebarVisible());
 
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
@@ -696,6 +720,12 @@ public class PaneManager
    }
 
    @Handler
+   public void onFocusSidebarSeparator()
+   {
+      panel_.focusSplitter(sidebar_);
+   }
+
+   @Handler
    public void onFocusNextPane()
    {
       LogicalWindow currentFocus = getActiveLogicalWindow();
@@ -929,7 +959,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            sourceColumnManager_.getSize() - 1).cast());
+            sourceColumnManager_.getSize() - 1,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -939,7 +972,181 @@ public class PaneManager
    {
       optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
+   
+   private void setSidebarPref(boolean showSidebar)
+   {
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      if (showSidebar == paneConfig.getSidebarVisible())
+         return;
 
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         showSidebar,
+         paneConfig.getSidebarLocation()));
+
+      userPrefs_.writeUserPrefs();
+   }
+
+   @Handler
+   public void onShowSidebar()
+   {
+      setSidebarPref(true);
+   }
+
+   @Handler
+   public void onHideSidebar()
+   {
+      setSidebarPref(false);
+   }
+
+   @Handler
+   public void onToggleSidebar()
+   {
+      // Toggle the preference value and update UI
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      boolean newVisibility = !paneConfig.getSidebarVisible();
+     
+      setSidebarPref(newVisibility);
+   }
+
+   @Handler
+   public void onMoveSidebarLeft()
+   {
+      toggleSidebarLocation();
+   }
+
+   @Handler
+   public void onMoveSidebarRight()
+   {
+      toggleSidebarLocation();
+   }
+
+   public void toggleSidebarLocation()
+   {
+      // Toggle the sidebar location between left and right
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      String currentLocation = paneConfig.getSidebarLocation();
+      String newLocation = "left".equals(currentLocation) ? "right" : "left";
+      
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         newLocation));
+      
+      // Persist the preference change
+      userPrefs_.writeUserPrefs();
+      
+      // Update the UI by hiding and re-showing the sidebar in the new location
+      refreshSidebar();
+      
+      // Update command visibility based on new location
+      manageLayoutCommands();
+   }
+
+   public void showSidebar(boolean showSidebar)
+   {
+      if (showSidebar && sidebar_ == null)
+      {
+         // Create sidebar configuration
+         PaneConfig config = userPrefs_.panes().getValue().cast();
+         JsArrayString sidebarTabs = config.getSidebar();
+         
+         // Create sidebar tabset if not already created
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow == null)
+         {
+            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+                  tabNamesToTabs(sidebarTabs));
+            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+            sidebarTabPanel_ = sidebar.second;
+            sidebarMinPanel_ = sidebar.third;
+            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
+            sidebarWindow = sidebar.first;
+         }
+         
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebar_ = sidebarWindow.getNormal();
+            String location = config.getSidebarLocation();
+            panel_.setSidebarWidget(sidebar_, location);
+         }
+      }
+      else if (!showSidebar && sidebar_ != null)
+      {
+         panel_.removeSidebarWidget();
+         sidebar_ = null;
+      }
+
+      // manage commands
+      commands_.showSidebar().setVisible(!showSidebar);
+      commands_.hideSidebar().setVisible(showSidebar);
+   }
+   
+   public void clearSidebarCache()
+   {
+      // Remove the cached sidebar window so it gets recreated with new tabs
+      panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      sidebarTabPanel_ = null;
+      sidebarMinPanel_ = null;
+      sidebarTabs_ = null;
+   }
+
+   public void refreshSidebar()
+   {
+      // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
+      if (sidebar_ != null)
+      {
+         showSidebar(false);
+         showSidebar(true);
+      }
+   }
+
+   public void setSidebarLocation(String location)
+   {
+      // Update preference and refresh the sidebar if visible
+      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      
+      // Only update if location has changed
+      if (!location.equals(paneConfig.getSidebarLocation()))
+      {
+         userPrefs_.panes().setGlobalValue(PaneConfig.create(
+            JsArrayUtil.copy(paneConfig.getQuadrants()),
+            paneConfig.getTabSet1(),
+            paneConfig.getTabSet2(),
+            paneConfig.getHiddenTabSet(),
+            paneConfig.getConsoleLeftOnTop(),
+            paneConfig.getConsoleRightOnTop(),
+            paneConfig.getAdditionalSourceColumns(),
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            location));
+         
+         userPrefs_.writeUserPrefs();
+         
+         // If sidebar is visible, refresh it in the new location
+         refreshSidebar();
+      }
+   }
+   
    private <T> boolean equals(T lhs, T rhs)
    {
       if (lhs == null)
@@ -1018,6 +1225,8 @@ public class PaneManager
             DomUtils.contains(right_.getElement(), window.getActiveWidget().getElement());
       boolean isCenterWidget =
             DomUtils.contains(center_.getElement(), window.getActiveWidget().getElement());
+      boolean isSidebarWidget = sidebar_ != null &&
+            DomUtils.contains(sidebar_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
 
@@ -1301,6 +1510,18 @@ public class PaneManager
       hiddenTabSetTabPanel_ = tsHide.second;
       hiddenTabSetTabPanel_.setNeverVisible(true);
       hiddenTabSetMinPanel_ = tsHide.third;
+      
+      // Initialize sidebar (always create it, even if not initially visible)
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+            UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+            tabNamesToTabs(config.getSidebar()));
+      panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+      sidebarTabPanel_ = sidebar.second;
+      sidebarMinPanel_ = sidebar.third;
+
+      // Initialize the sidebar window state (HIDE if not visible, NORMAL if visible)
+      // This prevents null state_ in LogicalWindow.visible()
+      sidebar.first.transitionToState(config.getSidebarVisible() ? WindowState.NORMAL : WindowState.HIDE);
    }
 
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
@@ -1378,7 +1599,7 @@ public class PaneManager
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, tutorialTab_, buildTab_, 
                                   presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_, /* CHAT-WIP chatTab_, */
+                                  environmentTab_, viewerTab_, chatTab_,
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
 
@@ -1412,6 +1633,18 @@ public class PaneManager
       if (!parent.visible())
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
+
+      // If the tab is in the sidebar, ensure the sidebar is visible
+      if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      {
+         // Check if sidebar is currently hidden and show it
+         if (sidebar_ == null)
+         {
+            showSidebar(true);
+            // Update the preference to persist the visibility
+            setSidebarPref(true);
+         }
       }
 
       if (tabToIndex_.containsKey(tab))
@@ -1484,7 +1717,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1500,7 +1736,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1684,7 +1923,10 @@ public class PaneManager
          paneConfig.getHiddenTabSet(),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
+         additionalSourceCount_,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
 
       return panesByName_.get(name).getNormal();
@@ -1724,7 +1966,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            additionalSourceCount_).cast());
+            additionalSourceCount_,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -1801,7 +2046,9 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName);
+      // For sidebar, don't show minimize/maximize buttons as they don't apply to full-height columns
+      boolean showMinMaxButtons = !StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMinMaxButtons);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
@@ -1813,6 +2060,8 @@ public class PaneManager
          tabs2_ = tabs;
       else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
          hiddenTabs_ = tabs;
+      else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+         sidebarTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -1987,6 +2236,7 @@ public class PaneManager
          commands_.layoutConsoleOnRight().setVisible(false);
       }
 
+      manageSidebarCommands();
       manageZoomColumnCommands();
    }
 
@@ -2003,6 +2253,19 @@ public class PaneManager
 
       commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
       commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
+   }
+
+   private void manageSidebarCommands()
+   {
+      PaneConfig config = getCurrentConfig();
+      String currentLocation = config.getSidebarLocation();
+      boolean isSidebarVisible = config.getSidebarVisible();
+
+      commands_.moveSidebarLeft().setEnabled(isSidebarVisible);
+      commands_.moveSidebarRight().setEnabled(isSidebarVisible);
+      commands_.moveSidebarLeft().setVisible("right".equals(currentLocation));
+      commands_.moveSidebarRight().setVisible("left".equals(currentLocation));
+      commands_.focusSidebarSeparator().setEnabled(isSidebarVisible);
    }
 
    private List<AppCommand> getLayoutCommands()
@@ -2106,6 +2369,10 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
+   private WorkbenchTabPanel sidebarTabPanel_;
+   private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
+   private Widget sidebar_;
+   private ArrayList<Tab> sidebarTabs_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
