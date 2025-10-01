@@ -248,14 +248,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       columnToolbar_.addLeftWidget(removeButton);
       columnToolbar_.addLeftSeparator();
 
-      // Create a wrapper panel with relative positioning for the toolbar row
+      // Create a wrapper panel for the toolbar row
       FlowPanel toolbarWrapper = new FlowPanel();
       toolbarWrapper.getElement().getStyle().setProperty("position", "relative");
       toolbarWrapper.getElement().getStyle().setProperty("height", "20px");
 
       toolbarWrapper.add(columnToolbar_);
 
-      // Create sidebar visible checkbox and position it absolutely
+      // Create and position Sidebar Visible checkbox
       sidebarVisibleCheckbox_ = new CheckBox(constants_.sidebarVisible());
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "absolute");
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("top", "0");
@@ -332,6 +332,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       // Create sidebar location dropdown
       sidebarLocation_ = new ListBox();
+      ElementIds.assignElementId(sidebarLocation_.getElement(), ElementIds.PANE_LAYOUT_SIDEBAR_SELECT);
       sidebarLocation_.addItem(constants_.sidebarLocationLeft());
       sidebarLocation_.addItem(constants_.sidebarLocationRight());
 
@@ -711,7 +712,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       if (sidebarModuleList_ != null)
          vp.add(sidebarModuleList_);
 
-      ElementIds.assignElementId(vp.getElement(), "pane_layout_sidebar");
+      ElementIds.assignElementId(vp.getElement(), ElementIds.PANE_LAYOUT_SIDEBAR);
       return vp;
    }
 
