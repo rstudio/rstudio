@@ -29,12 +29,14 @@ This page provides the release notes associated with each release of RStudio and
 - ([#16346](https://github.com/rstudio/rstudio/issues/16436)): Fixed an issue where certain ALTREP objects could cause RStudio to crash while populating the Environment pane
 - ([#16446](https://github.com/rstudio/rstudio/issues/16446)): Fixed a regression that could cause file downloads to fail on Windows
 - ([#16449](https://github.com/rstudio/rstudio/issues/16449)): Fixed a regression that could cause package installation to fail when installing packages from local sources
-- ([#16463](https://github.com/rstudio/rstudio/issues/16463)): Fixed an issue where syntax highlighting was broken in certain Quarto documents
+- ([#16445](https://github.com/rstudio/rstudio/issues/16445)): Fixed an issue that cased an R session crashes when assigning the return value of HiResTEC::getMultipleBPC() to a variable
 
 #### Posit Workbench
 
 - (rstudio-pro#9163): Fixed the Open Project command to stop throwing an exception
 - (rstudio-pro#9219): Fixed a regression that caused the image selection dropdown in the new session dialog to display the wrong image
+- (rstudio-pro#9078): Fixed API error when username and posixuser do not match
+- (rstudio-pro#9107): Fixed config out of range error
 
 ## 2025.09.0 {#rstudio-2025.09.0}
 
