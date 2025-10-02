@@ -2,7 +2,6 @@
 @external editor_dark, ace_editor_theme;
 
 .icon {
-   display: inline-block;
    width: 16px;
    height: 16px;
    margin-right: 4px;
@@ -14,7 +13,6 @@
 }
 
 .iconPlaceholder {
-   display: inline-block;
    width: 16px;
    height: 16px;
    margin-right: 4px;
@@ -25,6 +23,7 @@
 }
 
 .link {
+   flex: 1;
    overflow: hidden;
    text-overflow: ellipsis;
    color: #0000AA;
