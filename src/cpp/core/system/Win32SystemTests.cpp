@@ -230,20 +230,6 @@ TEST_F(Win32ProcessTest, EmptySubprocListWhenNoChildProcesses)
    ASSERT_TRUE(children.empty());
 }
 
-   // Disabling for now, tracked here: https://github.com/rstudio/rstudio/issues/13165
-   // TEST(Win32SystemTest, WeCanFindProgramsOnThePath)
-   // {
-   //    FilePath cmdPath;
-   //    Error error;
-
-   //    error = core::system::findProgramOnPath("cmd", &cmdPath);
-   //    ASSERT_TRUE(error == Success());
-
-   //    error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
-   //    ASSERT_TRUE(error == Success());
-   // }
-}
-
 } // end namespace tests
 } // end namespace system
 } // end namespace core

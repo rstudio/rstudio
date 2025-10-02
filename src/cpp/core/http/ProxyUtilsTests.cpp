@@ -24,6 +24,9 @@ namespace core {
 namespace http {
 namespace tests {
 
+// Environment variables are not case sensitive on Windows.
+#ifndef _WIN32
+
 TEST(HttpTest, HttpProxyUrlPrefersLowerCase)
 {
    system::setenv("http_proxy", "http://proxy.example.com:8080");
@@ -35,6 +38,8 @@ TEST(HttpTest, HttpProxyUrlPrefersLowerCase)
    EXPECT_EQ("proxy.example.com", url->hostname());
    EXPECT_EQ(8080, url->port());
 }
+
+#endif
 
 TEST(HttpTest, HttpProxyUrlFallsBackToUpperCase)
 {
@@ -58,6 +63,9 @@ TEST(HttpTest, HttpProxyUrlReturnsNoneWhenNotSet)
    EXPECT_FALSE(url.has_value());
 }
 
+// Environment variables are not case sensitive on Windows.
+#ifndef _WIN32
+
 TEST(HttpTest, HttpsProxyUrlPrefersLowerCase)
 {
    system::setenv("https_proxy", "http://proxy.example.com:8080");
@@ -69,6 +77,8 @@ TEST(HttpTest, HttpsProxyUrlPrefersLowerCase)
    EXPECT_EQ("proxy.example.com", url->hostname());
    EXPECT_EQ(8080, url->port());
 }
+
+#endif
 
 TEST(HttpTest, HttpsProxyUrlFallsBackToUpperCase)
 {

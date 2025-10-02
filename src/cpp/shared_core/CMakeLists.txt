@@ -123,8 +123,11 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core
       ${Boost_LIBRARIES}
       gtest
-      pthread
    )
+
+   if(NOT WIN32)
+      target_link_libraries(rstudio-shared-core-tests pthread)
+   endif()
    
    enable_testing()
    include(GoogleTest)

@@ -379,8 +379,11 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
       gtest
-      pthread
    )
+
+   if(NOT WIN32)
+      target_link_libraries(rstudio-core-tests pthread)
+   endif()
 
    if(WIN32)
       target_link_libraries(rstudio-core-tests zlibstatic)
