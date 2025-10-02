@@ -27,7 +27,6 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioDataGrid;
 import org.rstudio.core.client.widget.SearchWidget;
@@ -35,6 +34,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -467,26 +467,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addRightWidget(refreshButton);
 
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-      CheckableMenuItem srcMenuItem = new CheckableMenuItem()
-      {
-         @Override
-         public String getLabel()
-         {
-            return constants_.displaySourceColumn();
-         }
-
-         @Override
-         public boolean isChecked()
-         {
-            return prefs_.packagesSourceColumnEnabled().getValue();
-         }
-
-         @Override
-         public void onInvoked()
-         {
-            prefs_.packagesSourceColumnEnabled().setGlobalValue(!isChecked());
-         }
-      };
+      UserPrefMenuItem<Boolean> srcMenuItem = new UserPrefMenuItem<>(
+         prefs_.packagesSourceColumnEnabled(),
+         true,
+         constants_.displaySourceColumn(),
+         prefs_);
       moreMenu.addItem(srcMenuItem);
 
       ToolbarMenuButton moreButton = new ToolbarMenuButton(
@@ -496,7 +481,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          false);
       
       toolbar.addRightWidget(moreButton);
-
 
       return toolbar;
    }
