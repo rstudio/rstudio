@@ -631,3 +631,42 @@ withr::defer(.rs.automation.deleteRemote())
    })
    
 })
+
+# https://github.com/rstudio/rstudio/issues/16483
+.rs.test("paged-table representation only used for auto-printed objects", {
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Paged Table; Auto-Printing
+      ---
+      
+      ```{r}
+      mtcars
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      Sys.sleep(1)
+      expect_no_error(remote$dom.querySelector(".pagedtable"))
+   })
+   
+   contents <- .rs.heredoc('
+      ---
+      title: Paged Table; Explicit Printing
+      ---
+      
+      ```{r}
+      print(mtcars)
+      ```
+   ')
+   
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+      editor$gotoLine(6)
+      remote$commands.execute(.rs.appCommands$executeCurrentChunk)
+      Sys.sleep(1)
+      expect_error(remote$dom.querySelector(".pagedtable"))
+   })
+   
+})

@@ -123,15 +123,11 @@
           overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
       } else {
         # appears to be an explicit invocation of 'print';
-        # use the saved print method if available, or the next
-        # method if not
+        # use the saved print method if available, or the next method if not
         methods <- paste("print", class(x), sep = ".")
-        for (method in methods) {
-           if (exists(method, envir = .rs.S3Originals)) {
+        for (method in methods)
+           if (exists(method, envir = .rs.S3Originals))
               return(.rs.S3Originals[[method]](x, ...))
-           }
-        }
-        
         NextMethod()
       }
       
