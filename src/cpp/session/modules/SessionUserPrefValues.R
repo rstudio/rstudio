@@ -1087,6 +1087,15 @@
    clear = function() { .rs.clearUserPref("packages_pane_enabled") }
 )
 
+# Display the Source column in the Packages pane
+#
+# Whether to display the Source column in the Package's pane.
+.rs.uiPrefs$packagesSourceColumnEnabled <- list(
+   get = function() { .rs.getUserPref("packages_source_column_enabled") },
+   set = function(value) { .rs.setUserPref("packages_source_column_enabled", value) },
+   clear = function() { .rs.clearUserPref("packages_source_column_enabled") }
+)
+
 # C++ template
 #
 # C++ template.

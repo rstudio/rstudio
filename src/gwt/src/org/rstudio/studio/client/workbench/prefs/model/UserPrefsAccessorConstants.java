@@ -998,6 +998,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String packagesPaneEnabledDescription();
 
    /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   @DefaultStringValue("Display the Source column in the Packages pane")
+   String packagesSourceColumnEnabledTitle();
+   @DefaultStringValue("Whether to display the Source column in the Package's pane.")
+   String packagesSourceColumnEnabledDescription();
+
+   /**
     * C++ template.
     */
    @DefaultStringValue("C++ template")
