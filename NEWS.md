@@ -9,6 +9,7 @@
 - ([#16281](https://github.com/rstudio/rstudio/issues/16281)): RStudio will no longer perform type inference on the completion results provided by .DollarNames methods for values where `attr(*, "suppressTypeInference")` is `TRUE`
 - ([#16375](https://github.com/rstudio/rstudio/issues/16375)): Copilot Language Server (completions) is now launched via node.js instead of as a standalone binary
 - ([#16427](https://github.com/rstudio/rstudio/issues/16427)): RStudio now provided a diagnostic warning for invocations of `paste()` with unexpected named arguments
+- ([#16483](https://github.com/rstudio/rstudio/issues/16483)): In R Markdown / Quarto documents, RStudio now only used a paged-table view for auto-printed data objects; explicit invocations of `print()` will use the existing print method
 - ([#16480](https://github.com/rstudio/rstudio/issues/16480)): RStudio now has a full-height "Sidebar" pane
 
 #### Posit Workbench
