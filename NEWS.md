@@ -5,11 +5,12 @@
 - ([#10567](https://github.com/rstudio/rstudio/issues/10567)): RStudio now provides tools for searching within Console output and Build output
 - ([#15928](https://github.com/rstudio/rstudio/issues/15928)): RStudio now uses Air for formatting R code in projects configured to use Air
 - ([#16127](https://github.com/rstudio/rstudio/issues/16127)): ESC key now dismisses Copilot ghost text in source editor
-- ([#16415](https://github.com/rstudio/rstudio/issues/16415)): RStudio now provides completions for the `_` placeholer in piped expressions
+- ([#16415](https://github.com/rstudio/rstudio/issues/16415)): RStudio now provides completions for the `_` placeholder in piped expressions
 - ([#16281](https://github.com/rstudio/rstudio/issues/16281)): RStudio will no longer perform type inference on the completion results provided by .DollarNames methods for values where `attr(*, "suppressTypeInference")` is `TRUE`
 - ([#16375](https://github.com/rstudio/rstudio/issues/16375)): Copilot Language Server (completions) is now launched via node.js instead of as a standalone binary
 - ([#16427](https://github.com/rstudio/rstudio/issues/16427)): RStudio now provided a diagnostic warning for invocations of `paste()` with unexpected named arguments
 - ([#16483](https://github.com/rstudio/rstudio/issues/16483)): In R Markdown / Quarto documents, RStudio now only used a paged-table view for auto-printed data objects; explicit invocations of `print()` will use the existing print method
+- ([#16480](https://github.com/rstudio/rstudio/issues/16480)): RStudio now has a full-height "Sidebar" pane
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
@@ -29,6 +30,7 @@
 - ([#16474](https://github.com/rstudio/rstudio/issues/16474)): Adjusted Pane Layout options UI to improve space utilization
 - ([#16471](https://github.com/rstudio/rstudio/issues/16471)): Fixed issue where Copilot status messages appeared below editor when Copilot was disabled
 - ([#16423](https://github.com/rstudio/rstudio/issues/16423)): Fixed issue where Copilot gave a warning when closing a document it was told to ignore
+- ([#16509](https://github.com/rstudio/rstudio/issues/16509)): Fixed issue where Copilot gave a warning when closing an unmodified empty new document
 - ([#16485](https://github.com/rstudio/rstudio/issues/16485)): Removed inoperative min/max controls from Source Columns
 
 #### Posit Workbench
