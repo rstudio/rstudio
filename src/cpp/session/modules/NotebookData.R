@@ -107,14 +107,38 @@
 
   overrides <- .rs.dataCaptureOverrides()
   lapply(names(overrides), function(overrideName) {
+    
     overrideMap <- overrides[[overrideName]]
     overrideFun <- function(x, ...) {
+      
+      # differentiate between 'auto-printed' objects and explicit invocations
+      # of the 'print()' function here. when auto-printing an object, R will
+      # synthesize a print call, but with the definition of `base::print`
+      # inlined into the call as opposed to a typical `print` symbol.
+      call <- sys.calls()[[1L]]
+      if (identical(call[[1L]], base::print)) {
+        # appears to be an auto-printed object; apply our override
         o <- overrideMap(x, options)
-        if (!is.null(o)) {
+        if (!is.null(o))
           overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
+      } else {
+        # appears to be an explicit invocation of 'print';
+        # use the saved print method if available, or the next
+        # method if not
+        methods <- paste("print", class(x), sep = ".")
+        for (method in methods) {
+           if (exists(method, envir = .rs.S3Originals)) {
+              return(.rs.S3Originals[[method]](x, ...))
+           }
         }
+        
+        NextMethod()
       }
-     .rs.addS3Override(overrideName, overrideFun)
+      
+   }
+
+   .rs.addS3Override(overrideName, overrideFun)
+
   })
 
   assign(
