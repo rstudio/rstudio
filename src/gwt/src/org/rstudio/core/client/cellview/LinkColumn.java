@@ -98,7 +98,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
 
    interface NameTemplate extends SafeHtmlTemplates
    {
-      @Template("<span class=\"{0}\" title=\"{1}\">{1}</span>")
+      @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml render(String className, String title);
    }
 
