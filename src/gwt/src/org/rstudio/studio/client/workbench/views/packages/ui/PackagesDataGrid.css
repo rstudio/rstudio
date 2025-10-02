@@ -8,7 +8,7 @@
 @eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
 
 .packageColumn {
-   display: block;
+   display: flex;
    white-space: nowrap;
    text-overflow: ellipsis;
    overflow: hidden;
