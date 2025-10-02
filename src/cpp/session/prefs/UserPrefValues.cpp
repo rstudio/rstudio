@@ -1532,6 +1532,19 @@ core::Error UserPrefValues::setPackagesPaneEnabled(bool val)
 }
 
 /**
+ * Whether to display the Source column in the Package's pane.
+ */
+bool UserPrefValues::packagesSourceColumnEnabled()
+{
+   return readPref<bool>("packages_source_column_enabled");
+}
+
+core::Error UserPrefValues::setPackagesSourceColumnEnabled(bool val)
+{
+   return writePref("packages_source_column_enabled", val);
+}
+
+/**
  * C++ template.
  */
 std::string UserPrefValues::cppTemplate()
@@ -3626,6 +3639,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
+      kPackagesSourceColumnEnabled,
       kCppTemplate,
       kRestoreSourceDocuments,
       kHandleErrorsInUserCodeOnly,

@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -120,6 +122,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        Session session,
                        GlobalDisplay display,
                        EventBus events,
+                       UserPrefs prefs,
                        PackagesServerOperations server)
    {
       super(constants_.packagesTitle(), events);
@@ -127,6 +130,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       commands_ = commands;
       session_ = session;
       display_ = display;
+      prefs_ = prefs;
       server_ = server;
       
       dataGridRes_ = GWT.create(PackagesDataGridResources.class);
@@ -461,7 +465,23 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       ToolbarButton refreshButton = commands_.refreshPackages().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton);
+
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      UserPrefMenuItem<Boolean> srcMenuItem = new UserPrefMenuItem<>(
+         prefs_.packagesSourceColumnEnabled(),
+         true,
+         constants_.displaySourceColumn(),
+         prefs_);
+      moreMenu.addItem(srcMenuItem);
+
+      ToolbarMenuButton moreButton = new ToolbarMenuButton(
+         ToolbarMenuButton.NoText,
+         ToolbarMenuButton.NoTitle,
+         moreMenu,
+         false);
       
+      toolbar.addRightWidget(moreButton);
+
       return toolbar;
    }
    
@@ -771,10 +791,35 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       packagesTable_.setColumnWidth(sourceColumn_, 180, Unit.PX);
       packagesTable_.setColumnWidth(versionColumn_, 100, Unit.PX);
 
+      // adjust source column availability
+      boolean sourceColumnEnabled = prefs_.packagesSourceColumnEnabled().getValue();
+      if (!sourceColumnEnabled)
+         packagesTable_.removeColumn(sourceColumn_);
+
+      prefs_.packagesSourceColumnEnabled().addValueChangeHandler(event ->
+      {
+         boolean enabled = prefs_.packagesSourceColumnEnabled().getValue();
+         if (enabled)
+         {
+            int index = packagesTable_.getColumnIndex(sourceColumn_);
+            if (index == -1)
+            {
+               int columnIndex = packagesTable_.getColumnIndex(descColumn_) + 1;
+               packagesTable_.insertColumn(columnIndex, sourceColumn_, new TextHeader(constants_.sourceText()));
+            }
+         }
+         else
+         {
+            int index = packagesTable_.getColumnIndex(sourceColumn_);
+            if (index != -1)
+               packagesTable_.removeColumn(index);
+         }
+      });
+
       // add metadata column if enabled
       if (session_.getSessionInfo().isPpmMetadataColumnEnabled())
       {
-         int index = packagesTable_.getColumnIndex(sourceColumn_);
+         int index = packagesTable_.getColumnIndex(descColumn_);
          packagesTable_.insertColumn(index, metadataColumn_, new TextHeader(getMetadataColumnLabel()));
          packagesTable_.setColumnWidth(metadataColumn_, 80, Unit.PX);
       }
@@ -1054,6 +1099,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Commands commands_;
    private final Session session_;
    private final GlobalDisplay display_;
+   private final UserPrefs prefs_;
    private final PackagesServerOperations server_;
 
    private final PackagesDataGridResources dataGridRes_;

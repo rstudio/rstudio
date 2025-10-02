@@ -207,6 +207,7 @@ namespace prefs {
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
+#define kPackagesSourceColumnEnabled "packages_source_column_enabled"
 #define kCppTemplate "cpp_template"
 #define kRestoreSourceDocuments "restore_source_documents"
 #define kHandleErrorsInUserCodeOnly "handle_errors_in_user_code_only"
@@ -1160,6 +1161,12 @@ public:
     */
    bool packagesPaneEnabled();
    core::Error setPackagesPaneEnabled(bool val);
+
+   /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   bool packagesSourceColumnEnabled();
+   core::Error setPackagesSourceColumnEnabled(bool val);
 
    /**
     * C++ template.

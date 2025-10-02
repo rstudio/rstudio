@@ -822,6 +822,12 @@
             "title": "Enable the Packages pane",
             "description": "Whether to enable RStudio's Packages pane."
         },
+        "packages_source_column_enabled": {
+            "type": "boolean",
+            "default": true,
+            "title": "Display the Source column in the Packages pane",
+            "description": "Whether to display the Source column in the Package's pane."
+        },
         "cpp_template": {
             "type": "string",
             "default": "Rcpp",

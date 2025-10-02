@@ -1691,6 +1691,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   public PrefValue<Boolean> packagesSourceColumnEnabled()
+   {
+      return bool(
+         "packages_source_column_enabled",
+         _constants.packagesSourceColumnEnabledTitle(), 
+         _constants.packagesSourceColumnEnabledDescription(), 
+         true);
+   }
+
+   /**
     * C++ template.
     */
    public PrefValue<String> cppTemplate()
@@ -4097,6 +4109,8 @@ public class UserPrefsAccessor extends Prefs
          navigateToBuildError().setValue(layer, source.getBool("navigate_to_build_error"));
       if (source.hasKey("packages_pane_enabled"))
          packagesPaneEnabled().setValue(layer, source.getBool("packages_pane_enabled"));
+      if (source.hasKey("packages_source_column_enabled"))
+         packagesSourceColumnEnabled().setValue(layer, source.getBool("packages_source_column_enabled"));
       if (source.hasKey("cpp_template"))
          cppTemplate().setValue(layer, source.getString("cpp_template"));
       if (source.hasKey("restore_source_documents"))
@@ -4521,6 +4535,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
+      prefs.add(packagesSourceColumnEnabled());
       prefs.add(cppTemplate());
       prefs.add(restoreSourceDocuments());
       prefs.add(handleErrorsInUserCodeOnly());
