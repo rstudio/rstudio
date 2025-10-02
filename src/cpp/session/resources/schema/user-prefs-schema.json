@@ -825,7 +825,7 @@
         "packages_source_column_enabled": {
             "type": "boolean",
             "default": true,
-            "title": "Display Source column",
+            "title": "Display the Source column in the Packages pane",
             "description": "Whether to display the Source column in the Package's pane."
         },
         "cpp_template": {
