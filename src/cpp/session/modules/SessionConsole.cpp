@@ -15,16 +15,14 @@
 
 
 #include "SessionConsole.hpp"
-#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/Exec.hpp>
 #include <core/system/OutputCapture.hpp>
-
 #include <core/text/AnsiCodeParser.hpp>
 
 #include <r/RExec.hpp>
@@ -32,8 +30,9 @@
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
+
+#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #define kMinConsoleLines 10
 

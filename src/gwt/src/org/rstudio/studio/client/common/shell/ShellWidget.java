@@ -117,8 +117,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
-      syncOutputStyles();
-      prefs_.consoleSoftWrap().addValueChangeHandler(event -> syncOutputStyles());
+
+      if (prefs_ != null)
+      {
+         syncOutputStyles();
+         prefs_.consoleSoftWrap().addValueChangeHandler(event -> syncOutputStyles());
+      }
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -314,13 +318,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Inject
    private void initialize(ApplicationAutomation automation,
                            Session session,
-                           UserState userState,
-                           UserPrefs userPrefs)
+                           UserState userState)
    {
       automation_ = automation;
       session_ = session;
       userState_ = userState;
-      userPrefs_ = userPrefs;
    }
 
    private native void addCopyHook(Element element) /*-{
@@ -1238,11 +1240,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    private void syncOutputStyles()
    {
-      boolean softWrap = userPrefs_.consoleSoftWrap().getValue();
-      if (softWrap)
-         output_.getElement().addClassName(styles_.outputSoftWrap());
-      else
-         output_.getElement().removeClassName(styles_.outputSoftWrap());
+      if (prefs_ != null)
+      {
+         boolean softWrap = prefs_.consoleSoftWrap().getValue();
+         if (softWrap)
+            output_.getElement().addClassName(styles_.outputSoftWrap());
+         else
+            output_.getElement().removeClassName(styles_.outputSoftWrap());
+      }
    }
 
    private boolean cleared_ = false;
@@ -1279,7 +1284,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private ApplicationAutomation automation_;
    private Session session_;
    private UserState userState_;
-   private UserPrefs userPrefs_;
    
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
