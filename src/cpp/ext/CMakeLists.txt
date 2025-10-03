@@ -151,6 +151,12 @@ dependency(YAML_CPP
    REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
 )
 
+# help yaml-cpp 0.8.0 find <cstdint> during compilation
+if(NOT MSVC)
+   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
+   set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
+endif()
+
 
 # zlib
 dependency(ZLIB
