@@ -25,11 +25,16 @@
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace session {
 namespace console_process {
+namespace tests {
+
+// Test constants
+const std::string handle1("unit-test01");
+const std::string msgString1("Sample message text");
 
 using namespace console_process;
 using namespace boost::placeholders;
@@ -229,7 +234,8 @@ public:
    {
       using websocketpp::lib::bind;
 
-      try {
+      try 
+      {
          std::string uri = "http://localhost:" +
                boost::lexical_cast<std::string>(port_) +
                "/terminal/" + handle_ + "/";
@@ -306,8 +312,8 @@ public:
          blockingwait(50);
       }
       blockingwait(10);
-      expect_true(gotOpened());
-      expect_false(gotFailed());
+      EXPECT_TRUE(gotOpened());
+      EXPECT_FALSE(gotFailed());
    }
 
    std::string getInput() { blockingwait(50); return input_; }
@@ -338,144 +344,121 @@ private:
 
 } // anonymous namespace
 
-test_context("websocket for interactive terminals")
-{
-   const std::string handle1 = "abcd";
-   const std::string handle2 = "defg";
-   const std::string msgString1 = "Hello World Howya Doing?";
-   const std::string msgString2 = "Here's another message I sent.";
-   using boost::make_shared;
-   using boost::shared_ptr;
-
-   test_that("port for new socket object is zero")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->port() == 0);
-   }
-
-   test_that("ok to stop a non-running server")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("server port returned correctly when started")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-      expect_true(pSocket->port() > 0);
-
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("can start and stop listening to a handle")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-
-      shared_ptr<SocketConnection> pConnection =
-            boost::make_shared<SocketConnection>(handle1, pSocket);
-      expect_true(pConnection->listen());
-
-      expect_true(pConnection->stopListening());
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("client can connect to server then disconnect")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-
-      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
-      expect_true(pConnection->listen());
-      expect_true(pClient->connectToServer());
-
-      pClient->waitForConnectionOrError();
-
-      expect_true(pClient->disconnectFromServer());
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("client can send text to server and server receives it")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-
-      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
-      expect_true(pConnection->listen());
-      expect_true(pClient->connectToServer());
-
-      pClient->waitForConnectionOrError();
-
-      expect_true(pClient->sendText(msgString1));
-      expect_true(pConnection->getReceived().compare(msgString1) == 0);
-
-      expect_true(pClient->disconnectFromServer());
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("server can send text to client and client receives it")
-   {
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-
-      shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
-      shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
-      expect_true(pConnection->listen());
-      expect_true(pClient->connectToServer());
-
-      pClient->waitForConnectionOrError();
-
-      expect_true(pConnection->sendRawMessage(msgString1));
-      expect_true(pClient->getInput().compare(msgString1) == 0);
-
-      expect_true(pClient->disconnectFromServer());
-      expect_true(pSocket->stopServer());
-   }
-
-   test_that("client can make multiple connections to server")
-   {
-      // ---- one socket on server ----
-      shared_ptr<SocketHarness> pSocket = make_shared<SocketHarness>();
-      expect_true(pSocket->ensureServerRunning());
-
-      // ---- first connection ----
-      shared_ptr<SocketConnection> pConnection1 =
-            boost::make_shared<SocketConnection>(handle1, pSocket);
-
-      shared_ptr<SocketClient> pClient1 = boost::make_shared<SocketClient>(handle1, pSocket->port());
-      expect_true(pConnection1->listen());
-      expect_true(pClient1->connectToServer());
-
-      pClient1->waitForConnectionOrError();
-
-      // ---- second connection ----
-      shared_ptr<SocketConnection> pConnection2 =
-            boost::make_shared<SocketConnection>(handle2, pSocket);
-
-      shared_ptr<SocketClient> pClient2 = boost::make_shared<SocketClient>(handle2, pSocket->port());
-      expect_true(pConnection2->listen());
-      expect_true(pClient2->connectToServer());
-
-      pClient2->waitForConnectionOrError();
-
-      // ---- send message to first connection ----
-      expect_true(pConnection1->sendRawMessage(msgString1));
-      expect_true(pClient1->getInput().compare(msgString1) == 0);
-
-      // ---- send message to second connection ----
-      expect_true(pConnection2->sendRawMessage(msgString2));
-      expect_true(pClient2->getInput().compare(msgString2) == 0);
-
-      // ---- cleanup ----
-      expect_true(pClient1->disconnectFromServer());
-      expect_true(pClient2->disconnectFromServer());
-      expect_true(pSocket->stopServer());
-   }
+TEST(ConsoleProcessSocketTest, NewSocketHasZeroPort) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->port() == 0);
 }
 
+TEST(ConsoleProcessSocketTest, StoppingNonRunningServerSucceeds) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, StartedServerReturnsValidPort) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+   EXPECT_TRUE(pSocket->port() > 0);
+
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, CanStartAndStopListeningToHandle) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   boost::shared_ptr<SocketConnection> pConnection =
+         boost::make_shared<SocketConnection>(handle1, pSocket);
+   EXPECT_TRUE(pConnection->listen());
+
+   EXPECT_TRUE(pConnection->stopListening());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ClientCanConnectAndDisconnect) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   boost::shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+   boost::shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
+   EXPECT_TRUE(pConnection->listen());
+   EXPECT_TRUE(pClient->connectToServer());
+
+   pClient->waitForConnectionOrError();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ClientCanSendTextToServer) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   boost::shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+   boost::shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
+   EXPECT_TRUE(pConnection->listen());
+   EXPECT_TRUE(pClient->connectToServer());
+
+   pClient->waitForConnectionOrError();
+
+   EXPECT_TRUE(pClient->sendText(msgString1));
+   EXPECT_EQ(msgString1, pConnection->getReceived());
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ServerCanSendTextToClient) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   boost::shared_ptr<SocketConnection> pConnection = boost::make_shared<SocketConnection>(handle1, pSocket);
+   boost::shared_ptr<SocketClient> pClient = boost::make_shared<SocketClient>(handle1, pSocket->port());
+   EXPECT_TRUE(pConnection->listen());
+   EXPECT_TRUE(pClient->connectToServer());
+
+   pClient->waitForConnectionOrError();
+
+   EXPECT_TRUE(pConnection->sendRawMessage(msgString1));
+   EXPECT_EQ(msgString1, pClient->getInput());
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ClientCanMakeMultipleConnectionsToServer) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // Create first connection
+   boost::shared_ptr<SocketConnection> pConnection1 = boost::make_shared<SocketConnection>(handle1, pSocket);
+   boost::shared_ptr<SocketClient> pClient1 = boost::make_shared<SocketClient>(handle1, pSocket->port());
+   EXPECT_TRUE(pConnection1->listen());
+   EXPECT_TRUE(pClient1->connectToServer());
+
+   pClient1->waitForConnectionOrError();
+   
+   // Create second connection with a different handle
+   const std::string handle2 = "unit-test02";
+   boost::shared_ptr<SocketConnection> pConnection2 = boost::make_shared<SocketConnection>(handle2, pSocket);
+   boost::shared_ptr<SocketClient> pClient2 = boost::make_shared<SocketClient>(handle2, pSocket->port());
+   EXPECT_TRUE(pConnection2->listen());
+   EXPECT_TRUE(pClient2->connectToServer());
+
+   pClient2->waitForConnectionOrError();
+   
+   // Test that both connections work independently
+   EXPECT_TRUE(pConnection1->sendRawMessage("Message to client 1"));
+   EXPECT_TRUE(pConnection2->sendRawMessage("Message to client 2"));
+   
+   EXPECT_EQ("Message to client 1", pClient1->getInput());
+   EXPECT_EQ("Message to client 2", pClient2->getInput());
+
+   EXPECT_TRUE(pClient1->disconnectFromServer());
+   EXPECT_TRUE(pClient2->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+} // namespace tests
 } // namespace console_process
 } // namespace session
 } // namespace rstudio

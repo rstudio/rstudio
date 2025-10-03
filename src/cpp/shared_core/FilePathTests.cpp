@@ -21,7 +21,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <shared_core/FilePath.hpp>
 
@@ -66,190 +66,190 @@ FilePath createPath(const std::string& path = "/")
 
 } // end anonymous namespace
 
-TEST_CASE("Empty File Path tests")
+TEST(SharedCoreTest, EmptyFilePathTests)
 {
-   SECTION("Construction")
+   // Construction section
    {
       FilePath f;
-      CHECK(f.isEmpty());
-      CHECK(f.getAbsolutePath().empty());
+      EXPECT_TRUE(f.isEmpty());
+      EXPECT_TRUE(f.getAbsolutePath().empty());
    }
 
-   SECTION("Empty string constructor")
+   // Empty string constructor section
    {
       std::string empty;
       FilePath filePath(empty);
 
-      CHECK(filePath.isEmpty());
-      CHECK(filePath.getAbsolutePath().empty());
+      EXPECT_TRUE(filePath.isEmpty());
+      EXPECT_TRUE(filePath.getAbsolutePath().empty());
    }
 
-   SECTION("Empty string literal constructor")
+   // Empty string literal constructor section
    {
       FilePath filePath("");
 
-      CHECK(filePath.isEmpty());
-      CHECK(filePath.getAbsolutePath().empty());
+      EXPECT_TRUE(filePath.isEmpty());
+      EXPECT_TRUE(filePath.getAbsolutePath().empty());
    }
 
-   SECTION("relative path construction")
+   // relative path construction section
    {
       FilePath rootPath = createPath();
       FilePath pPath = createPath("/path/to");
       FilePath aPath = createPath("/path/to/a");
       FilePath bPath = createPath("/path/to/b");
 
-      CHECK(aPath.isWithin(pPath));
-      CHECK(bPath.isWithin(pPath));
-      CHECK(!aPath.isWithin(bPath));
+      EXPECT_TRUE(aPath.isWithin(pPath));
+      EXPECT_TRUE(bPath.isWithin(pPath));
+      EXPECT_FALSE(aPath.isWithin(bPath));
 
-      CHECK(aPath.getRelativePath(pPath) == "a");
+      EXPECT_EQ("a", aPath.getRelativePath(pPath));
    }
 
-   SECTION("Raw string construction")
+   // Raw string construction section
    {
       const char* path = "/a/path";
       FilePath f1(path);
-      CHECK(f1.getAbsolutePath() == std::string(path));
+      EXPECT_TRUE(f1.getAbsolutePath() == std::string(path));
 
       const char* empty = NULL;
       FilePath f2(empty);
-      CHECK(f2.isEmpty());
+      EXPECT_TRUE(f2.isEmpty());
    }
 
-   SECTION("Comparison (equal, true)")
+   // Comparison (equal, true) section
    {
       FilePath f1, f2;
 
-      CHECK(f1 == f2);
-      CHECK(f2 == f1);
-      CHECK(f1 == f1);
+      EXPECT_EQ(f2, f1);
+      EXPECT_EQ(f1, f2);
+      EXPECT_EQ(f1, f1);
    }
 
-   SECTION("Comparison (equal, false)")
+   // Comparison (equal, false) section
    {
       FilePath f1, f2("/a/different/path");
 
-      CHECK_FALSE(f1 == f2);
-      CHECK_FALSE(f2 == f1);
+      EXPECT_NE(f1, f2);
+      EXPECT_NE(f2, f1);
    }
 
-   SECTION("Comparison (inequal, false)")
+   // Comparison (inequal, false) section
    {
       FilePath f1, f2;
 
-      CHECK_FALSE(f1 != f2);
-      CHECK_FALSE(f2 != f1);
-      CHECK_FALSE(f1 != f1);
+      EXPECT_EQ(f1, f2);
+      EXPECT_EQ(f2, f1);
+      EXPECT_EQ(f1, f1);
    }
 
-   SECTION("Comparison (inequal, true)")
+   // Comparison (inequal, true) section
    {
       FilePath f1, f2("/a/different/path");
 
-      CHECK(f1 != f2);
-      CHECK(f2 != f1);
+      EXPECT_NE(f2, f1);
+      EXPECT_NE(f1, f2);
    }
 
-   SECTION("Comparison (lt)")
+   // Comparison (lt) section
    {
       FilePath f1, f2("/a/different/path");
 
-      CHECK(f1 < f2);
-      CHECK_FALSE(f2 < f1);
+      EXPECT_LT(f1, f2);
+      EXPECT_FALSE(f2 < f1);
    }
 
-   SECTION("Retrieval methods")
+   // Retrieval methods section
    {
       FilePath f;
       std::vector<FilePath> children;
 
-      CHECK_FALSE(f.exists());
-      CHECK(f.getAbsolutePath().empty());
-      CHECK(f.getAbsolutePathNative().empty());
+      EXPECT_FALSE(f.exists());
+      EXPECT_TRUE(f.getAbsolutePath().empty());
+      EXPECT_TRUE(f.getAbsolutePathNative().empty());
 #ifdef _WIN32
-      CHECK(f.getAbsolutePathW().empty());
+      EXPECT_TRUE(f.getAbsolutePathW().empty());
 #endif
-      CHECK(f.getCanonicalPath().empty());
-      CHECK(f.getChildren(children)); // Returns error.
-      CHECK(children.empty());
-      CHECK(f.getExtension().empty());
-      CHECK(f.getExtensionLowerCase().empty());
-      CHECK(f.getFilename().empty());
-      CHECK(f.getLastWriteTime() == 0);
-      CHECK(f.getLexicallyNormalPath().empty());
-      CHECK(f.getMimeContentType() == "text/plain"); // text/plain is the default.
-      CHECK(f.getParent() == f); // Error on getting the parent, so self should be returned.
-      CHECK(f.getRelativePath(FilePath("/a/parent/path")).empty());
-      CHECK(f.getSize() == 0);
-      CHECK(f.getSizeRecursive() == 0);
-      CHECK(f.getStem().empty());
-      CHECK_FALSE(f.hasExtension("ext"));
-      CHECK_FALSE(f.hasTextMimeType()); // has text mime type sets the default mime type as "application/octet-stream"
-      CHECK_FALSE(f.isDirectory());
-      CHECK(f.isEmpty());
-      CHECK_FALSE(f.isHidden());
-      CHECK_FALSE(f.isJunction());
-      CHECK_FALSE(f.isRegularFile());
-      CHECK_FALSE(f.isSymlink());
-      CHECK(f.isWithin(f));
-      CHECK_FALSE(f.isWithin(FilePath("/some/path")));
+      EXPECT_TRUE(f.getCanonicalPath().empty());
+      EXPECT_TRUE(f.getChildren(children)); // Returns error.
+      EXPECT_TRUE(children.empty());
+      EXPECT_TRUE(f.getExtension().empty());
+      EXPECT_TRUE(f.getExtensionLowerCase().empty());
+      EXPECT_TRUE(f.getFilename().empty());
+      EXPECT_TRUE(f.getLastWriteTime() == 0);
+      EXPECT_TRUE(f.getLexicallyNormalPath().empty());
+      EXPECT_TRUE(f.getMimeContentType() == "text/plain"); // text/plain is the default.
+      EXPECT_TRUE(f.getParent() == f); // Error on getting the parent, so self should be returned.
+      EXPECT_TRUE(f.getRelativePath(FilePath("/a/parent/path")).empty());
+      EXPECT_TRUE(f.getSize() == 0);
+      EXPECT_TRUE(f.getSizeRecursive() == 0);
+      EXPECT_TRUE(f.getStem().empty());
+      EXPECT_FALSE(f.hasExtension("ext"));
+      EXPECT_FALSE(f.hasTextMimeType()); // has text mime type sets the default mime type as "application/octet-stream"
+      EXPECT_FALSE(f.isDirectory());
+      EXPECT_TRUE(f.isEmpty());
+      EXPECT_FALSE(f.isHidden());
+      EXPECT_FALSE(f.isJunction());
+      EXPECT_FALSE(f.isRegularFile());
+      EXPECT_FALSE(f.isSymlink());
+      EXPECT_TRUE(f.isWithin(f));
+      EXPECT_FALSE(f.isWithin(FilePath("/some/path")));
    }
 
-   SECTION("Complete path methods")
+   // Complete path methods section
    {
       FilePath f1, f2;
       FilePath fExpected = FilePath::safeCurrentPath(
          FilePath("/this/shouldn't/be/used")).completeChildPath("some/path");
 
-      CHECK(f1.completeChildPath("some/path") == fExpected);
-      CHECK_FALSE(f1.completeChildPath("some/path", f2));
-      CHECK(f2 == fExpected);
-      CHECK(f1.completePath("some/path") == fExpected);
-      CHECK(f1.completeChildPath("/some/absolute/path") == f1);
-      CHECK(f1.completeChildPath("/some/absolute/path", f2)); // Error here.
-      CHECK(f2 == f1); // f2 should have been set to f1.
+      EXPECT_TRUE(f1.completeChildPath("some/path") == fExpected);
+      EXPECT_FALSE(f1.completeChildPath("some/path", f2));
+      EXPECT_TRUE(f2 == fExpected);
+      EXPECT_TRUE(f1.completePath("some/path") == fExpected);
+      EXPECT_TRUE(f1.completeChildPath("/some/absolute/path") == f1);
+      EXPECT_TRUE(f1.completeChildPath("/some/absolute/path", f2)); // Error here.
+      EXPECT_TRUE(f2 == f1); // f2 should have been set to f1.
    }
 
-   SECTION("child path completion")
+   // child path completion section
    {
       // simple path completion should do what's expected
       FilePath aPath = createPath("/path/to/a");
       FilePath bPath = createPath("/path/to/a/b");
-      CHECK(aPath.completeChildPath("b") == bPath);
+      EXPECT_TRUE(aPath.completeChildPath("b") == bPath);
 
       // trying to complete to a path outside should fail and return the original path
       FilePath cPath = createPath("/path/to/foo");
-      CHECK(cPath.completeChildPath("../bar") == cPath);
-      CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
+      EXPECT_TRUE(cPath.completeChildPath("../bar") == cPath);
+      EXPECT_TRUE(cPath.completeChildPath("/path/to/quux") == cPath);
 
       // trailing slashes are okay
       FilePath dPath = createPath("/path/to/");
       FilePath ePath = createPath("/path/to/e");
-      CHECK(dPath.completeChildPath("e") == ePath);
+      EXPECT_TRUE(dPath.completeChildPath("e") == ePath);
    }
 
-   SECTION("general path completion")
+   // general path completion section
    {
       // simple path completion should do what's expected
       FilePath aPath = createPath("/path/to/a");
       FilePath bPath = createPath("/path/to/a/b");
-      CHECK(aPath.completePath("b") == bPath);
+      EXPECT_TRUE(aPath.completePath("b") == bPath);
 
       // absolute paths are allowed
       FilePath cPath = createPath("/path/to/c");
       FilePath dPath = createPath("/path/to/d");
-      CHECK(cPath.completePath("/path/to/d") == dPath);
+      EXPECT_TRUE(cPath.completePath("/path/to/d") == dPath);
 
       // directory traversal is allowed
       FilePath ePath = createPath("/path/to/e");
       FilePath fPath = createPath("/path/to/f");
-      CHECK(ePath.completePath("../f").getLexicallyNormalPath() == fPath.getAbsolutePath());
+      EXPECT_TRUE(ePath.completePath("../f").getLexicallyNormalPath() == fPath.getAbsolutePath());
    }
 
 #ifdef _WIN32
 
-   SECTION("relative paths for UNC shares")
+   // relative paths for UNC shares section
    {
       // NOTE: need to be robust against mixed separators as these can
       // leak in depending on the API used to request the file path.
@@ -257,24 +257,24 @@ TEST_CASE("Empty File Path tests")
       // https://github.com/rstudio/rstudio/issues/6587
       FilePath pPath(R"(//LOCALHOST/c$/p)");
       FilePath aPath(R"(\\LOCALHOST\c$\p\a)");
-      CHECK(aPath.getRelativePath(pPath) == "a");
+      EXPECT_TRUE(aPath.getRelativePath(pPath) == "a");
    }
 
-   SECTION("directory write testing for Win32")
+   // directory write testing for Win32 section
    {
       // create temporary directory
       FilePath tempDir;
       Error error = FilePath::tempFilePath(tempDir);
-      CHECK(!error);
+      EXPECT_TRUE(!error);
 
       error = tempDir.ensureDirectory();
-      CHECK(!error);
+      EXPECT_TRUE(!error);
 
       // it should now report as writeable
       bool writeable = false;
       error = tempDir.isWriteable(writeable);
-      CHECK(!error);
-      CHECK(writeable);
+      EXPECT_TRUE(!error);
+      EXPECT_TRUE(writeable);
 
       // clean up
       tempDir.remove();
@@ -284,29 +284,29 @@ TEST_CASE("Empty File Path tests")
 
    // Non-Windows tests
 
-   SECTION("directory write testing")
+   // directory write testing section
    {
       // create temporary directory
       FilePath tempDir;
       Error error = FilePath::tempFilePath(tempDir);
-      CHECK(!error);
+      EXPECT_TRUE(!error);
 
       error = tempDir.ensureDirectory();
-      CHECK(!error);
+      EXPECT_TRUE(!error);
 
       // ensure it's writeable
       error = tempDir.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
-      CHECK(!error);
+      EXPECT_TRUE(!error);
 
       // it should now report as writeable
       bool writeable = false;
       error = tempDir.isWriteable(writeable);
-      CHECK(!error);
-      CHECK(writeable);
+      EXPECT_TRUE(!error);
+      EXPECT_TRUE(writeable);
 
       // however, it should be an error to test write permissions (that's only for files)
       error = tempDir.testWritePermissions();
-      CHECK(error);
+      EXPECT_TRUE(error);
 
       // clean up
       tempDir.remove();
@@ -317,28 +317,28 @@ TEST_CASE("Empty File Path tests")
 
 #ifndef _WIN32
 
-TEST_CASE("Get File Owner Test")
+TEST(SharedCoreTest, GetFileOwnerTest)
 {
    // create temporary file
    FilePath tempFile;
    Error error = FilePath::tempFilePath(tempFile);
-   CHECK(!error);
+   EXPECT_TRUE(!error);
 
    // ensure it exists
    error = tempFile.ensureFile();
-   CHECK(!error);
+   EXPECT_TRUE(!error);
 
    // get the current user
    system::User currentUser;
    error = system::User::getCurrentUser(currentUser);
-   CHECK(!error);
+   EXPECT_TRUE(!error);
 
    // ensure we can get the owner
    std::string username;
    error = tempFile.getFileOwner(&username);
-   CHECK(!error);
-   //CHECK(username == currentUser.getUsername());
-   CHECK(username == currentUser.getUsername());
+   EXPECT_TRUE(!error);
+   //EXPECT_TRUE(username == currentUser.getUsername());
+   EXPECT_TRUE(username == currentUser.getUsername());
 
    // clean up
    tempFile.remove();
@@ -346,53 +346,53 @@ TEST_CASE("Get File Owner Test")
 
 #endif
 
-TEST_CASE("Copy FilePath Tests")
+TEST(SharedCoreTest, CopyFilePathTests)
 {
    FilePath f1("/a/path");
 
-   CHECK(f1.getAbsolutePath() == "/a/path");
+   EXPECT_TRUE(f1.getAbsolutePath() == "/a/path");
 
    FilePath f2 = f1;
 
-   CHECK(f1.getAbsolutePath() == "/a/path");
-   CHECK(f2 == f1);
-   CHECK(f2.getAbsolutePath() == "/a/path");
+   EXPECT_TRUE(f1.getAbsolutePath() == "/a/path");
+   EXPECT_TRUE(f2 == f1);
+   EXPECT_TRUE(f2.getAbsolutePath() == "/a/path");
 }
 
 #ifdef _WIN32
 
-TEST_CASE("Windows: FilePath.isWithin")
+TEST(SharedCoreTest, WindowsFilePathIsWithin)
 {
-   CHECK(FilePath("C:/tmp/dir").isWithin(FilePath("C:/tmp")));
-   CHECK(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:/tmp")));
-   CHECK(FilePath("C:/tmp/dir").isWithin(FilePath("C:\\tmp")));
-   CHECK(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:\\tmp")));
+   EXPECT_TRUE(FilePath("C:/tmp/dir").isWithin(FilePath("C:/tmp")));
+   EXPECT_TRUE(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:/tmp")));
+   EXPECT_TRUE(FilePath("C:/tmp/dir").isWithin(FilePath("C:\\tmp")));
+   EXPECT_TRUE(FilePath("C:\\tmp\\dir").isWithin(FilePath("C:\\tmp")));
 }
 
 #endif
 
 #ifndef _WIN32
 
-TEST_CASE("Symlinks")
+TEST(SharedCoreTest, SymlinksTests)
 {
-   SECTION("Directories")
+   // Directories section
    {
       FilePath src("/tmp/rstudio-symlinks-a");
       FilePath dst("/tmp/rstudio-symlinks-b");
 
       src.ensureDirectory();
-      CHECK(src.isDirectory());
+      EXPECT_TRUE(src.isDirectory());
 
       int status = ::symlink(src.getAbsolutePath().c_str(), dst.getAbsolutePath().c_str());
-      CHECK(status == 0);
-      CHECK(dst.isSymlink());
-      CHECK(dst.isDirectory());
+      EXPECT_TRUE(status == 0);
+      EXPECT_TRUE(dst.isSymlink());
+      EXPECT_TRUE(dst.isDirectory());
 
       dst.remove();
-      CHECK(!dst.exists());
+      EXPECT_TRUE(!dst.exists());
 
       src.remove();
-      CHECK(!src.exists());
+      EXPECT_TRUE(!src.exists());
    }
 }
 

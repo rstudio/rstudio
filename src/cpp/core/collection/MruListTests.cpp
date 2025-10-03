@@ -14,11 +14,13 @@
  */
 
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <core/collection/MruList.hpp>
 #include <shared_core/FilePath.hpp>
 #include <vector>
+#include <list>
+#include <string>
 
 using namespace rstudio::core;
 
@@ -27,922 +29,919 @@ namespace core {
 namespace collection {
 namespace tests {
 
-test_context("MruList Tests")
+TEST(MruListTest, CanCreateEmptyFile)
 {
-   test_that("Can create empty file")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-
-      MruList list(listFilePath, 10);
-
-      REQUIRE_FALSE(list.initialize());
-      REQUIRE(listFilePath.exists());
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item with leading and trailing whitespace")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("  item1    ");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "  item1    ");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Leading and trailing whitespace is stripped when items are read from disk")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("  item1    ");
-
-      MruList list2(listFilePath, 10);
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 1);
-      REQUIRE(list2.contents().size() == 1);
-      REQUIRE(list2.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access multiple items")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-
-      REQUIRE(list.size() == 3);
-      REQUIRE(list.contents().size() == 3);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE(list.contents().back() == "item3");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item2");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend and access an item")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend and access multiple items")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-      list.prepend("item2");
-      list.prepend("item3");
-      list.prepend("item4");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      REQUIRE(list.contents().front() == "item4");
-      REQUIRE(list.contents().back() == "item1");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item4");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item2");
-      REQUIRE(vectorContents[3] == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can use mixture of append and prepend")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.prepend("item2");
-      list.append("item3");
-      list.append("item4");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      REQUIRE(list.contents().front() == "item2");
-      REQUIRE(list.contents().back() == "item4");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2");
-      REQUIRE(vectorContents[1] == "item1");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE(vectorContents[3] == "item4");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can use another mixture of append and prepend")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.prepend("item2");
-      list.prepend("item3");
-      list.append("item4");
-      list.prepend("item5");
-      list.append("item6");
-
-      REQUIRE(list.size() == 6);
-      REQUIRE(list.contents().size() == 6);
-      REQUIRE(list.contents().front() == "item5");
-      REQUIRE(list.contents().back() == "item6");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item5");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item2");
-      REQUIRE(vectorContents[3] == "item1");
-      REQUIRE(vectorContents[4] == "item4");
-      REQUIRE(vectorContents[5] == "item6");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can clear empty list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-      REQUIRE(list.contents().size() == 0);
-
-      list.clear();
-
-      REQUIRE(list.contents().size() == 0);
-      MruList list2(listFilePath, 10);
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.contents().size() == 0);
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can clear non-empty list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      REQUIRE(list.size() == 3);
-
-      list.clear();
-
-      REQUIRE(list.size() == 0);
-      MruList list2(listFilePath, 10);
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.contents().size() == 0);
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can add and store the number of items indicated in constructor")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.prepend("item2");
-      list.append("item3");
-      list.prepend("item4");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item4");
-      REQUIRE(vectorContents[1] == "item2");
-      REQUIRE(vectorContents[2] == "item1");
-      REQUIRE(vectorContents[3] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append more items than list size and items from opposite end of list are removed")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      list.append("item4");
-      list.append("item5");
-      list.append("item6");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item3");
-      REQUIRE(vectorContents[1] == "item4");
-      REQUIRE(vectorContents[2] == "item5");
-      REQUIRE(vectorContents[3] == "item6");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend more items than list size and items from opposite end of list are removed")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4);
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-      list.prepend("item2");
-      list.prepend("item3");
-      list.prepend("item4");
-      list.prepend("item5");
-      list.prepend("item6");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item6");
-      REQUIRE(vectorContents[1] == "item5");
-      REQUIRE(vectorContents[2] == "item4");
-      REQUIRE(vectorContents[3] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append an existing item and it moves to the end of the list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      list.append("item1");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend an existing item and it moves to the front of the list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      list.prepend("item2");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2");
-      REQUIRE(vectorContents[1] == "item1");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can remove an item and it is no longer in the list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      list.remove("item2");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can remove an item that doesn't exist and the list is unchanged")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10);
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      list.remove("item4");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item2");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-   
-   // ***************************************************************************
-   //   tests for extra data mode
-   // ***************************************************************************
-
-   test_that("Can create empty file with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-
-      MruList list(listFilePath, 10, '\t');
-
-      REQUIRE_FALSE(list.initialize());
-      REQUIRE(listFilePath.exists());
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item with no extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item with separator but no extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1\t");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1\tHello World!");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1\tHello World!");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access an item with leading and trailing whitespace in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("  item1    ");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "  item1    ");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Whitespace is stripped when items are read from disk in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("  item1    ");
-
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 1);
-      REQUIRE(list2.contents().size() == 1);
-      REQUIRE(list2.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Whitespace is stripped when items are read from disk in extra data mode with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("  item1 \t Hello World!   ");
-      list.append("   item2   ");
-
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 2);
-      REQUIRE(list2.contents().size() == 2);
-      REQUIRE(list2.contents().front() == "item1 \t Hello World!");
-      REQUIRE(list2.contents().back() == "item2");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append and access multiple items in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2\tThe Second Item");
-      list.append("item3");
-      list.append("item4\tThe Fourth Item");
-
-      REQUIRE(list.size() == 4);
-      auto contents = list.contents();
-      REQUIRE(contents.size() == 4);
-      REQUIRE(contents.front() == "item1");
-      REQUIRE(contents.back() == "item4\tThe Fourth Item");
-      std::vector<std::string> vectorContents(contents.begin(), contents.end());
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item2\tThe Second Item");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE(vectorContents[3] == "item4\tThe Fourth Item");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can read multiple items from file in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1\tThe First Item");
-      list.append("item2\tThe Second Item");
-      list.append("item3");
-      list.append("item4\tThe Fourth Item");
-
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 4);
-      auto contents = list2.contents();
-      REQUIRE(contents.size() == 4);
-      REQUIRE(contents.front() == "item1\tThe First Item");
-      REQUIRE(contents.back() == "item4\tThe Fourth Item");
-      std::list<std::string> listContents = list2.contents();
-      std::vector<std::string> vectorContents(contents.begin(), contents.end());
-      REQUIRE(vectorContents[0] == "item1\tThe First Item");
-      REQUIRE(vectorContents[1] == "item2\tThe Second Item");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE(vectorContents[3] == "item4\tThe Fourth Item");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend and access an item in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '|');
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend and access an item in extra data mode with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '|');
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1|Hello World!");
-
-      REQUIRE(list.size() == 1);
-      REQUIRE(list.contents().size() == 1);
-      REQUIRE(list.contents().front() == "item1|Hello World!");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend and access multiple items in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '|');
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-      list.prepend("item2|Hello");
-      list.prepend("item3");
-      list.prepend("item4|World");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      REQUIRE(list.contents().front() == "item4|World");
-      REQUIRE(list.contents().back() == "item1");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item4|World");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item2|Hello");
-      REQUIRE(vectorContents[3] == "item1");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can use mixture of append and prepend in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '@');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1@once");
-      list.prepend("item2@upon");
-      list.append("item3@a time");
-      list.append("item4@there was a");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      REQUIRE(list.contents().front() == "item2@upon");
-      REQUIRE(list.contents().back() == "item4@there was a");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2@upon");
-      REQUIRE(vectorContents[1] == "item1@once");
-      REQUIRE(vectorContents[2] == "item3@a time");
-      REQUIRE(vectorContents[3] == "item4@there was a");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can use another mixture of append and prepend in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.prepend("item2");
-      list.prepend("item3");
-      list.append("item4");
-      list.prepend("item5\tThe best item ever!!!");
-      list.append("item6\t");
-      list.prepend("item5\tBack and even better than before");
-
-      REQUIRE(list.size() == 6);
-      REQUIRE(list.contents().size() == 6);
-      REQUIRE(list.contents().front() == "item5\tBack and even better than before");
-      REQUIRE(list.contents().back() == "item6");
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item5\tBack and even better than before");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item2");
-      REQUIRE(vectorContents[3] == "item1");
-      REQUIRE(vectorContents[4] == "item4");
-      REQUIRE(vectorContents[5] == "item6");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can clear empty list in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      REQUIRE(list.contents().size() == 0);
-
-      list.clear();
-
-      REQUIRE(list.contents().size() == 0);
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.contents().size() == 0);
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can clear non-empty list in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-      REQUIRE(list.size() == 3);
-
-      list.clear();
-
-      REQUIRE(list.size() == 0);
-      MruList list2(listFilePath, 10);
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.contents().size() == 0);
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can add and store the number of items indicated in constructor in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1\tOnce");
-      list.prepend("item2\tMore");
-      list.append("item3\tInto");
-      list.prepend("item4");
-
-      REQUIRE(list.size() == 4);
-      REQUIRE(list.contents().size() == 4);
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item4");
-      REQUIRE(vectorContents[1] == "item2\tMore");
-      REQUIRE(vectorContents[2] == "item1\tOnce");
-      REQUIRE(vectorContents[3] == "item3\tInto");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append more items than list size and items from opposite end are removed in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.append("item1");
-      list.append("item2\tPlease don't delete me!");
-      list.append("item3");
-      list.append("item4");
-      list.append("item5");
-      list.append("item6\tLast but not least.");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item3");
-      REQUIRE(vectorContents[1] == "item4");
-      REQUIRE(vectorContents[2] == "item5");
-      REQUIRE(vectorContents[3] == "item6\tLast but not least.");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Extra data for a deleted entry doesn't come back if same entry is added again without extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1");
-      list.append("item2\tPlease don't delete me!");
-
-      list.remove("item2");
-      list.append("item2");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 2);
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item2");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend more items than list size and items from opposite end of list are removed in extra data mode")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 4, '\t');
-      REQUIRE_FALSE(list.initialize());
-
-      list.prepend("item1");
-      list.prepend("item2");
-      list.prepend("item3\tThree is ok");
-      list.prepend("item4");
-      list.prepend("item5\tFive is great");
-      list.prepend("item6\tSix is the best");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents.size() == 4);
-      REQUIRE(vectorContents[0] == "item6\tSix is the best");
-      REQUIRE(vectorContents[1] == "item5\tFive is great");
-      REQUIRE(vectorContents[2] == "item4");
-      REQUIRE(vectorContents[3] == "item3\tThree is ok");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can append an existing item and it moves to the end of the list and updates its extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1\tFirst Try");
-      list.append("item2");
-      list.append("item3");
-
-      list.append("item1\tNew and improved?");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2");
-      REQUIRE(vectorContents[1] == "item3");
-      REQUIRE(vectorContents[2] == "item1\tNew and improved?");
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 3);
-      auto list2Contents = list2.contents();
-      std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
-      REQUIRE(vectorContents2[0] == "item2");
-      REQUIRE(vectorContents2[1] == "item3");
-      REQUIRE(vectorContents2[2] == "item1\tNew and improved?");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can prepend an existing item and it moves to the front of the list with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1");
-      list.append("item2");
-      list.append("item3");
-
-      list.prepend("item2");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item2");
-      REQUIRE(vectorContents[1] == "item1");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can remove an item and it is no longer in the list with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1\tItem 1");
-      list.append("item2\tItem 2");
-      list.append("item3\tItem 3");
-
-      list.remove("item2\tAnything goes here for item 2");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1\tItem 1");
-      REQUIRE(vectorContents[1] == "item3\tItem 3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can remove an item that doesn't exist and the list is unchanged with extra data")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1");
-      list.append("item2\tTwo");
-      list.append("item3");
-
-      list.remove("item4\tFour");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1");
-      REQUIRE(vectorContents[1] == "item2\tTwo");
-      REQUIRE(vectorContents[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-   test_that("Can update an item's extra data without changing its position in the list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1\tFirst Try");
-      list.append("item2\tSo Great");
-      list.append("item3\tThree is better");
-
-      list.updateExtraData("item2", "Now two is ultra great!");
-      list.updateExtraData("item1\tSecond Try!");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1\tSecond Try!");
-      REQUIRE(vectorContents[1] == "item2\tNow two is ultra great!");
-      REQUIRE(vectorContents[2] == "item3\tThree is better");
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 3);
-      auto list2Contents = list2.contents();
-      std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
-      REQUIRE(vectorContents2[0] == "item1\tSecond Try!");
-      REQUIRE(vectorContents2[1] == "item2\tNow two is ultra great!");
-      REQUIRE(vectorContents2[2] == "item3\tThree is better");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-  test_that("Updating an item's extra text to empty string removes the extra text from the list")
-   {
-      FilePath listFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".list", listFilePath));
-      MruList list(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list.initialize());
-      list.append("item1\tFirst Try");
-      list.append("item2\tSo Great");
-      list.append("item3\tThree is better");
-
-      list.updateExtraData("item2");
-      list.updateExtraData("item3", "");
-
-      auto listContents = list.contents();
-      std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
-      REQUIRE(vectorContents[0] == "item1\tFirst Try");
-      REQUIRE(vectorContents[1] == "item2");
-      REQUIRE(vectorContents[2] == "item3");
-      MruList list2(listFilePath, 10, '\t');
-      REQUIRE_FALSE(list2.initialize());
-      REQUIRE(list2.size() == 3);
-      auto list2Contents = list2.contents();
-      std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
-      REQUIRE(vectorContents2[0] == "item1\tFirst Try");
-      REQUIRE(vectorContents2[1] == "item2");
-      REQUIRE(vectorContents2[2] == "item3");
-      REQUIRE_FALSE(listFilePath.remove());
-   }
-
-} // test_context
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+
+   MruList list(listFilePath, 10);
+
+   ASSERT_FALSE(list.initialize());
+   EXPECT_TRUE(listFilePath.exists());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItem)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItemWithLeadingAndTrailingWhitespace)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("  item1    ");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("  item1    "), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, LeadingAndTrailingWhitespaceIsStrippedWhenItemsAreReadFromDisk)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("  item1    ");
+
+   MruList list2(listFilePath, 10);
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(1u, list2.size());
+   EXPECT_EQ(1u, list2.contents().size());
+   EXPECT_EQ(std::string("item1"), list2.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessMultipleItems)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+
+   EXPECT_EQ(3u, list.size());
+   EXPECT_EQ(3u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   EXPECT_EQ(std::string("item3"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAndAccessAnItem)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAndAccessMultipleItems)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+   list.prepend("item2");
+   list.prepend("item3");
+   list.prepend("item4");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   EXPECT_EQ(std::string("item4"), list.contents().front());
+   EXPECT_EQ(std::string("item1"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item4"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item2"), vectorContents[2]);
+   EXPECT_EQ(std::string("item1"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanUseMixtureOfAppendAndPrepend)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.prepend("item2");
+   list.append("item3");
+   list.append("item4");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   EXPECT_EQ(std::string("item2"), list.contents().front());
+   EXPECT_EQ(std::string("item4"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents[0]);
+   EXPECT_EQ(std::string("item1"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   EXPECT_EQ(std::string("item4"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanUseAnotherMixtureOfAppendAndPrepend)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.prepend("item2");
+   list.prepend("item3");
+   list.append("item4");
+   list.prepend("item5");
+   list.append("item6");
+
+   EXPECT_EQ(6u, list.size());
+   EXPECT_EQ(6u, list.contents().size());
+   EXPECT_EQ(std::string("item5"), list.contents().front());
+   EXPECT_EQ(std::string("item6"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item5"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item2"), vectorContents[2]);
+   EXPECT_EQ(std::string("item1"), vectorContents[3]);
+   EXPECT_EQ(std::string("item4"), vectorContents[4]);
+   EXPECT_EQ(std::string("item6"), vectorContents[5]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanClearEmptyList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+   EXPECT_EQ(0u, list.contents().size());
+
+   list.clear();
+
+   EXPECT_EQ(0u, list.contents().size());
+   MruList list2(listFilePath, 10);
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(0u, list2.contents().size());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanClearNonEmptyList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   EXPECT_EQ(3u, list.size());
+
+   list.clear();
+
+   EXPECT_EQ(0u, list.size());
+   MruList list2(listFilePath, 10);
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(0u, list2.contents().size());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAddAndStoreTheNumberOfItemsIndicatedInConstructor)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.prepend("item2");
+   list.append("item3");
+   list.prepend("item4");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item4"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents[1]);
+   EXPECT_EQ(std::string("item1"), vectorContents[2]);
+   EXPECT_EQ(std::string("item3"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendMoreItemsThanListSizeAndItemsFromOppositeEndOfListAreRemoved)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   list.append("item4");
+   list.append("item5");
+   list.append("item6");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item3"), vectorContents[0]);
+   EXPECT_EQ(std::string("item4"), vectorContents[1]);
+   EXPECT_EQ(std::string("item5"), vectorContents[2]);
+   EXPECT_EQ(std::string("item6"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependMoreItemsThanListSizeAndItemsFromOppositeEndOfListAreRemoved)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4);
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+   list.prepend("item2");
+   list.prepend("item3");
+   list.prepend("item4");
+   list.prepend("item5");
+   list.prepend("item6");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item6"), vectorContents[0]);
+   EXPECT_EQ(std::string("item5"), vectorContents[1]);
+   EXPECT_EQ(std::string("item4"), vectorContents[2]);
+   EXPECT_EQ(std::string("item3"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAnExistingItemAndItMovesToTheEndOfTheList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   list.append("item1");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item1"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAnExistingItemAndItMovesToTheFrontOfTheList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   list.prepend("item2");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents[0]);
+   EXPECT_EQ(std::string("item1"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanRemoveAnItemAndItIsNoLongerInTheList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   list.remove("item2");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanRemoveAnItemThatDoesntExistAndTheListIsUnchanged)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10);
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   list.remove("item4");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+// ***************************************************************************
+//   tests for extra data mode
+// ***************************************************************************
+
+TEST(MruListTest, CanCreateEmptyFileWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+
+   MruList list(listFilePath, 10, '\t');
+
+   ASSERT_FALSE(list.initialize());
+   EXPECT_TRUE(listFilePath.exists());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItemWithNoExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItemWithSeparatorButNoExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1\t");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItemWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1\tHello World!");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1\tHello World!"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessAnItemWithLeadingAndTrailingWhitespaceInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("  item1    ");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("  item1    "), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, WhitespaceIsStrippedWhenItemsAreReadFromDiskInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("  item1    ");
+
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(1u, list2.size());
+   EXPECT_EQ(1u, list2.contents().size());
+   EXPECT_EQ(std::string("item1"), list2.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, WhitespaceIsStrippedWhenItemsAreReadFromDiskInExtraDataModeWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("  item1 \t Hello World!   ");
+   list.append("   item2   ");
+
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(2u, list2.size());
+   EXPECT_EQ(2u, list2.contents().size());
+   EXPECT_EQ(std::string("item1 \t Hello World!"), list2.contents().front());
+   EXPECT_EQ(std::string("item2"), list2.contents().back());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAndAccessMultipleItemsInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2\tThe Second Item");
+   list.append("item3");
+   list.append("item4\tThe Fourth Item");
+
+   EXPECT_EQ(4u, list.size());
+   auto contents = list.contents();
+   EXPECT_EQ(4u, contents.size());
+   EXPECT_EQ(std::string("item1"), contents.front());
+   EXPECT_EQ(std::string("item4\tThe Fourth Item"), contents.back());
+   std::vector<std::string> vectorContents(contents.begin(), contents.end());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2\tThe Second Item"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   EXPECT_EQ(std::string("item4\tThe Fourth Item"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanReadMultipleItemsFromFileInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1\tThe First Item");
+   list.append("item2\tThe Second Item");
+   list.append("item3");
+   list.append("item4\tThe Fourth Item");
+
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(4u, list2.size());
+   auto contents = list2.contents();
+   EXPECT_EQ(4u, contents.size());
+   EXPECT_EQ(std::string("item1\tThe First Item"), contents.front());
+   EXPECT_EQ(std::string("item4\tThe Fourth Item"), contents.back());
+   std::list<std::string> listContents = list2.contents();
+   std::vector<std::string> vectorContents(contents.begin(), contents.end());
+   EXPECT_EQ(std::string("item1\tThe First Item"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2\tThe Second Item"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   EXPECT_EQ(std::string("item4\tThe Fourth Item"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAndAccessAnItemInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '|');
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAndAccessAnItemInExtraDataModeWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '|');
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1|Hello World!");
+
+   EXPECT_EQ(1u, list.size());
+   EXPECT_EQ(1u, list.contents().size());
+   EXPECT_EQ(std::string("item1|Hello World!"), list.contents().front());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAndAccessMultipleItemsInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '|');
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+   list.prepend("item2|Hello");
+   list.prepend("item3");
+   list.prepend("item4|World");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   EXPECT_EQ(std::string("item4|World"), list.contents().front());
+   EXPECT_EQ(std::string("item1"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item4|World"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item2|Hello"), vectorContents[2]);
+   EXPECT_EQ(std::string("item1"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanUseMixtureOfAppendAndPrependInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '@');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1@once");
+   list.prepend("item2@upon");
+   list.append("item3@a time");
+   list.append("item4@there was a");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   EXPECT_EQ(std::string("item2@upon"), list.contents().front());
+   EXPECT_EQ(std::string("item4@there was a"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2@upon"), vectorContents[0]);
+   EXPECT_EQ(std::string("item1@once"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3@a time"), vectorContents[2]);
+   EXPECT_EQ(std::string("item4@there was a"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanUseAnotherMixtureOfAppendAndPrependInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.prepend("item2");
+   list.prepend("item3");
+   list.append("item4");
+   list.prepend("item5\tThe best item ever!!!");
+   list.append("item6\t");
+   list.prepend("item5\tBack and even better than before");
+
+   EXPECT_EQ(6u, list.size());
+   EXPECT_EQ(6u, list.contents().size());
+   EXPECT_EQ(std::string("item5\tBack and even better than before"), list.contents().front());
+   EXPECT_EQ(std::string("item6"), list.contents().back());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item5\tBack and even better than before"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item2"), vectorContents[2]);
+   EXPECT_EQ(std::string("item1"), vectorContents[3]);
+   EXPECT_EQ(std::string("item4"), vectorContents[4]);
+   EXPECT_EQ(std::string("item6"), vectorContents[5]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanClearEmptyListInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   EXPECT_EQ(0u, list.contents().size());
+
+   list.clear();
+
+   EXPECT_EQ(0u, list.contents().size());
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(0u, list2.contents().size());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanClearNonEmptyListInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+   EXPECT_EQ(3u, list.size());
+
+   list.clear();
+
+   EXPECT_EQ(0u, list.size());
+   MruList list2(listFilePath, 10);
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(0u, list2.contents().size());
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAddAndStoreTheNumberOfItemsIndicatedInConstructorInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1\tOnce");
+   list.prepend("item2\tMore");
+   list.append("item3\tInto");
+   list.prepend("item4");
+
+   EXPECT_EQ(4u, list.size());
+   EXPECT_EQ(4u, list.contents().size());
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item4"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2\tMore"), vectorContents[1]);
+   EXPECT_EQ(std::string("item1\tOnce"), vectorContents[2]);
+   EXPECT_EQ(std::string("item3\tInto"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendMoreItemsThanListSizeAndItemsFromOppositeEndAreRemovedInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.append("item1");
+   list.append("item2\tPlease don't delete me!");
+   list.append("item3");
+   list.append("item4");
+   list.append("item5");
+   list.append("item6\tLast but not least.");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item3"), vectorContents[0]);
+   EXPECT_EQ(std::string("item4"), vectorContents[1]);
+   EXPECT_EQ(std::string("item5"), vectorContents[2]);
+   EXPECT_EQ(std::string("item6\tLast but not least."), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, ExtraDataForADeletedEntryDoesntComeBackIfSameEntryIsAddedAgainWithoutExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1");
+   list.append("item2\tPlease don't delete me!");
+
+   list.remove("item2");
+   list.append("item2");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(2u, vectorContents.size());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents[1]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependMoreItemsThanListSizeAndItemsFromOppositeEndOfListAreRemovedInExtraDataMode)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 4, '\t');
+   ASSERT_FALSE(list.initialize());
+
+   list.prepend("item1");
+   list.prepend("item2");
+   list.prepend("item3\tThree is ok");
+   list.prepend("item4");
+   list.prepend("item5\tFive is great");
+   list.prepend("item6\tSix is the best");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(4u, vectorContents.size());
+   EXPECT_EQ(std::string("item6\tSix is the best"), vectorContents[0]);
+   EXPECT_EQ(std::string("item5\tFive is great"), vectorContents[1]);
+   EXPECT_EQ(std::string("item4"), vectorContents[2]);
+   EXPECT_EQ(std::string("item3\tThree is ok"), vectorContents[3]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanAppendAnExistingItemAndItMovesToTheEndOfTheListAndUpdatesItsExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1\tFirst Try");
+   list.append("item2");
+   list.append("item3");
+
+   list.append("item1\tNew and improved?");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents[1]);
+   EXPECT_EQ(std::string("item1\tNew and improved?"), vectorContents[2]);
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(3u, list2.size());
+   auto list2Contents = list2.contents();
+   std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents2[0]);
+   EXPECT_EQ(std::string("item3"), vectorContents2[1]);
+   EXPECT_EQ(std::string("item1\tNew and improved?"), vectorContents2[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanPrependAnExistingItemAndItMovesToTheFrontOfTheListWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1");
+   list.append("item2");
+   list.append("item3");
+
+   list.prepend("item2");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item2"), vectorContents[0]);
+   EXPECT_EQ(std::string("item1"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanRemoveAnItemAndItIsNoLongerInTheListWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1\tItem 1");
+   list.append("item2\tItem 2");
+   list.append("item3\tItem 3");
+
+   list.remove("item2\tAnything goes here for item 2");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1\tItem 1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item3\tItem 3"), vectorContents[1]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanRemoveAnItemThatDoesntExistAndTheListIsUnchangedWithExtraData)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1");
+   list.append("item2\tTwo");
+   list.append("item3");
+
+   list.remove("item4\tFour");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2\tTwo"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, CanUpdateAnItemsExtraDataWithoutChangingItsPositionInTheList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1\tFirst Try");
+   list.append("item2\tSo Great");
+   list.append("item3\tThree is better");
+
+   list.updateExtraData("item2", "Now two is ultra great!");
+   list.updateExtraData("item1\tSecond Try!");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1\tSecond Try!"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2\tNow two is ultra great!"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3\tThree is better"), vectorContents[2]);
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(3u, list2.size());
+   auto list2Contents = list2.contents();
+   std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
+   EXPECT_EQ(std::string("item1\tSecond Try!"), vectorContents2[0]);
+   EXPECT_EQ(std::string("item2\tNow two is ultra great!"), vectorContents2[1]);
+   EXPECT_EQ(std::string("item3\tThree is better"), vectorContents2[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
+TEST(MruListTest, UpdatingAnItemsExtraTextToEmptyStringRemovesTheExtraTextFromTheList)
+{
+   FilePath listFilePath;
+   ASSERT_FALSE(FilePath::tempFilePath(".list", listFilePath));
+   MruList list(listFilePath, 10, '\t');
+   ASSERT_FALSE(list.initialize());
+   list.append("item1\tFirst Try");
+   list.append("item2\tSo Great");
+   list.append("item3\tThree is better");
+
+   list.updateExtraData("item2");
+   list.updateExtraData("item3", "");
+
+   auto listContents = list.contents();
+   std::vector<std::string> vectorContents(listContents.begin(), listContents.end());
+   EXPECT_EQ(std::string("item1\tFirst Try"), vectorContents[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents[2]);
+   MruList list2(listFilePath, 10, '\t');
+   ASSERT_FALSE(list2.initialize());
+   EXPECT_EQ(3u, list2.size());
+   auto list2Contents = list2.contents();
+   std::vector<std::string> vectorContents2(list2Contents.begin(), list2Contents.end());
+   EXPECT_EQ(std::string("item1\tFirst Try"), vectorContents2[0]);
+   EXPECT_EQ(std::string("item2"), vectorContents2[1]);
+   EXPECT_EQ(std::string("item3"), vectorContents2[2]);
+   ASSERT_FALSE(listFilePath.remove());
+}
+
 } // namespace tests
 } // namespace collection
 } // namespace core
