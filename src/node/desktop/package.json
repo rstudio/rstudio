@@ -54,7 +54,7 @@
     "json": "11.0.0",
     "json-schema-to-typescript": "15.0.4",
     "lint-staged": "15.5.1",
-    "mocha": "11.2.2",
+    "mocha": "11.7.1",
     "nan": "2.22.2",
     "node-loader": "2.1.0",
     "nyc": "17.1.0",
