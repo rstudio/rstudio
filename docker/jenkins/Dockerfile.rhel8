@@ -4,7 +4,7 @@ FROM --platform=linux/$ARCH rockylinux:8
 ENV OPERATING_SYSTEM=rockylinux_8
 
 RUN set -x \
-      && yum update -y \
+      && yum update --refresh -y \
       && yum install epel-release -y \
       && yum install dnf-plugins-core -y \
       && yum config-manager --set-enabled powertools \
