@@ -44,6 +44,13 @@
    .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("logInfoMessage", function(message)
+{
+   if (inherits(message, "condition"))
+      message <- paste(conditionMessage(message), collapse = "\n")
+   .Call("rs_logInfoMessage", message, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("format", function(object, ...)
 {
    if (is.symbol(object))

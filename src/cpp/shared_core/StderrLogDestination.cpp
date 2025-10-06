@@ -32,8 +32,8 @@ namespace log {
 StderrLogDestination::StderrLogDestination(const std::string& in_id,
                                            LogLevel in_logLevel,
                                            LogMessageFormatType in_formatType,
-                                           bool in_reloadable) :
-   ILogDestination(in_id, in_logLevel, in_formatType, in_reloadable)
+                                           bool in_reloadable)
+   : ILogDestination(in_id, in_logLevel, in_formatType, in_reloadable)
 {
 }
 
