@@ -151,6 +151,12 @@ dependency(YAML_CPP
    REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
 )
 
+# help yaml-cpp 0.8.0 find <cstdint> during compilation
+if(NOT MSVC)
+   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
+   set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
+endif()
+
 
 # zlib
 dependency(ZLIB
@@ -208,7 +214,10 @@ function(fetch)
 
       if(${_PREFIX}_FETCHED)
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
+         set(_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+         set(CMAKE_CXX_FLAGS "${${_PREFIX}_CXXFLAGS} ${CMAKE_CXX_FLAGS}")
          FetchContent_MakeAvailable("${_NAME}")
+         set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
          message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
          set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
          set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
