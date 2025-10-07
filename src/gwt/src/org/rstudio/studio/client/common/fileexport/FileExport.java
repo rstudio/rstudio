@@ -17,15 +17,19 @@ package org.rstudio.studio.client.common.fileexport;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationCsrfToken;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.FormElement;
+import com.google.gwt.dom.client.InputElement;
 import com.google.inject.Inject;
 
 public class FileExport
@@ -77,10 +81,9 @@ public class FileExport
             {
                // progress complete
                progress.onCompleted();
-               
-               // execute the download (open in a new window)
-               globalDisplay_.openWindow(server_.getFileExportUrl(name, file));
-               
+
+               // Create a form for POST submission
+               exportFile(name, file);
             }
          });
       }
@@ -107,20 +110,18 @@ public class FileExport
             {
                // progress complete
                progress.onCompleted();
-               
+
                // force zip extension in case the user deleted it
                if (!archiveName.endsWith(ZIP))
                   archiveName += ZIP;
-               
+
                // build list of filenames
                ArrayList<String> filenames = new ArrayList<>();
                for (FileSystemItem file : files)
                   filenames.add(file.getName());
-               
-               // execute the download (open in a new window)
-               globalDisplay_.openWindow(server_.getFileExportUrl(archiveName, 
-                                                                  parentDir, 
-                                                                  filenames));
+
+               // execute the download via POST form
+               exportFiles(archiveName, parentDir, filenames);
             }
          });
          
@@ -142,6 +143,59 @@ public class FileExport
              operation);
    }
    
+   public void exportFile(String name, FileSystemItem file)
+   {
+      // Create a form for POST submission
+      FormElement form = Document.get().createFormElement();
+      form.setMethod("post");
+      form.setAction(server_.getFileExportUrl(name, file));
+      form.setTarget("_blank");
+
+      // Add parameters
+      addHiddenField(form, "name", name);
+      addHiddenField(form, "file", file.getPath());
+      addHiddenField(form, "rs-csrf-token", ApplicationCsrfToken.getCsrfToken());
+
+      // Submit form
+      Document.get().getBody().appendChild(form);
+      form.submit();
+      form.removeFromParent();
+   }
+
+   public void exportFiles(String archiveName,
+                           FileSystemItem parentDirectory,
+                           ArrayList<String> filenames)
+   {
+      // Create a form for POST submission
+      FormElement form = Document.get().createFormElement();
+      form.setMethod("post");
+      form.setAction(server_.getFileExportUrl(archiveName, parentDirectory, filenames));
+      form.setTarget("_blank");
+
+      // Add parameters
+      addHiddenField(form, "name", archiveName);
+      addHiddenField(form, "parent", parentDirectory.getPath());
+      addHiddenField(form, "rs-csrf-token", ApplicationCsrfToken.getCsrfToken());
+
+      for (int i = 0; i < filenames.size(); i++)
+      {
+         addHiddenField(form, "file" + i, filenames.get(i));
+      }
+
+      // Submit form
+      Document.get().getBody().appendChild(form);
+      form.submit();
+      form.removeFromParent();
+   }
+
+   private void addHiddenField(FormElement form, String name, String value)
+   {
+      InputElement field = Document.get().createHiddenInputElement();
+      field.setName(name);
+      field.setValue(value);
+      form.appendChild(field);
+   }
+
    private GlobalDisplay globalDisplay_;
    private FilesServerOperations server_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
