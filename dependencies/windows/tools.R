@@ -122,7 +122,7 @@ exec <- function(command, ..., output = NULL, dir = NULL) {
 
 run <- function(...) {
 
-   command <- paste(c(...), "2>&1", collapse = " ")
+   command <- paste(c(..., "2>&1"), collapse = " ")
    writeLines(paste(">", command))
 
    conn <- pipe(command, open = "rb")
