@@ -5,12 +5,17 @@ PANE_LAYOUT_LEFT_TOP <- "#rstudio_pane_layout_left_top"
 PANE_LAYOUT_LEFT_BOTTOM <- "#rstudio_pane_layout_left_bottom"
 PANE_LAYOUT_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
 PANE_LAYOUT_RIGHT_BOTTOM <- "#rstudio_pane_layout_right_bottom"
+PANE_LAYOUT_SIDEBAR <- "#rstudio_pane_layout_sidebar"
 
 # ids of the 4 dropdowns in the Pane Layout options panel
 PANE_LAYOUT_LEFT_TOP_SELECT <- "#rstudio_pane_layout_left_top_select"
 PANE_LAYOUT_LEFT_BOTTOM_SELECT <- "#rstudio_pane_layout_left_bottom_select"
 PANE_LAYOUT_RIGHT_TOP_SELECT <- "#rstudio_pane_layout_right_top_select"
 PANE_LAYOUT_RIGHT_BOTTOM_SELECT <- "#rstudio_pane_layout_right_bottom_select"
+PANE_LAYOUT_SIDEBAR_SELECT <- "#rstudio_pane_layout_sidebar_select"
+
+# sidebar visible checkbox
+PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
@@ -171,31 +176,30 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.verifyQuadrantDropdownOptions <- function(remote, selector, expectedTexts, expectedSelectedIndex = NULL) {
    # Get all options
    options <- remote$js.querySelector(selector)$options
-   expect_equal(options$length, 4L)
    
-   # Verify we have 4 expected texts
-   expect_equal(length(expectedTexts), 4L, info = "expectedTexts must contain exactly 4 strings")
+   # Verify we have at least 1 expected text (fail if 0)
+   expect_true(length(expectedTexts) > 0L, info = "expectedTexts must contain at least 1 string")
+   
+   # Verify the number of options matches the number of expected texts
+   expect_equal(options$length, length(expectedTexts), 
+                info = paste("Expected", length(expectedTexts), "options but found", options$length))
    
    # Verify option texts contain expected content
-   optionTexts <- character(4)
-   for (i in seq_len(4)) {
+   optionTexts <- character(length(expectedTexts))
+   for (i in seq_len(length(expectedTexts))) {
       optionTexts[i] <- options[[i - 1L]]$text
    }
    
    # Compare each option text against the corresponding expected text
-   expect_true(grepl(expectedTexts[1], optionTexts[1]), 
-               info = paste("Position 1: expected", expectedTexts[1], "but got", optionTexts[1]))
-   expect_true(grepl(expectedTexts[2], optionTexts[2]), 
-               info = paste("Position 2: expected", expectedTexts[2], "but got", optionTexts[2]))
-   expect_true(grepl(expectedTexts[3], optionTexts[3]), 
-               info = paste("Position 3: expected", expectedTexts[3], "but got", optionTexts[3]))
-   expect_true(grepl(expectedTexts[4], optionTexts[4]), 
-               info = paste("Position 4: expected", expectedTexts[4], "but got", optionTexts[4]))
+   for (i in seq_along(expectedTexts)) {
+      expect_true(grepl(expectedTexts[i], optionTexts[i]), 
+                  info = paste("Position", i, ": expected", expectedTexts[i], "but got", optionTexts[i]))
+   }
    
    # If expectedSelectedIndex is provided, verify the selected option
    if (!is.null(expectedSelectedIndex)) {
-      expect_true(expectedSelectedIndex >= 1L && expectedSelectedIndex <= 4L, 
-                  info = "expectedSelectedIndex must be between 1 and 4")
+      expect_true(expectedSelectedIndex >= 1L && expectedSelectedIndex <= length(expectedTexts), 
+                  info = paste("expectedSelectedIndex must be between 1 and", length(expectedTexts)))
       
       # Get the selected option (0-based index in JavaScript)
       selectedOption <- options[[expectedSelectedIndex - 1L]]
@@ -216,6 +220,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_BOTTOM))
    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_TOP))
    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_BOTTOM))
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_SIDEBAR))
 
    # Verify default dropdown selections
    sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -233,11 +238,18 @@ withr::defer(.rs.automation.deleteRemote())
    expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
 
+   # Check that Sidebar dropdown shows correct text
+   expectedSidebarTabs <- c("Sidebar on Right")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_SIDEBAR, expectedSidebarTabs)
+
+   # Check that Sidebar visible checkbox is unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)))
+
    # Close dialog
    remote$keyboard.insertText("<Escape>")
 })
 
-.rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
+.rs.test("Quadrant dropdown shows all options with correct checkmarks", {
    .rs.openPaneLayoutOptions(remote)
 
    expectedTexts <- c("Source", "Console", "Environment", "Files")
@@ -247,6 +259,10 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT, expectedTexts, 2)
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT, expectedTexts, 3)
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT, expectedTexts, 4)
+   
+   # Test sidebar dropdown
+   expectedTexts <- c("Sidebar on Left", "Sidebar on Right")
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_SIDEBAR_SELECT, expectedTexts, 2)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -259,6 +275,7 @@ withr::defer(.rs.automation.deleteRemote())
    consoleInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
    upperRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
    lowerRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
+   sidebarInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
 
    # Swap Source and Console by selecting Console in Source dropdown
    .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_TOP, consoleInitial)
@@ -291,11 +308,13 @@ withr::defer(.rs.automation.deleteRemote())
    lowerRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
    upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
    lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   sidebarAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
 
    expect_equal(upperRightAfter, sourceInitial)
    expect_equal(lowerRightAfter, consoleInitial)
    expect_equal(upperLeftAfter, upperRightInitial)
    expect_equal(lowerLeftAfter, lowerRightInitial)
+   expect_equal(sidebarAfter, sidebarInitial)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -305,7 +324,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, allTabNames)
 
@@ -324,6 +343,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Help"], info = "Help should be unchecked in TabSet1")
    expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in TabSet1")
    expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in TabSet1")
+   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet1")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -333,7 +353,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, allTabNames)
 
@@ -352,6 +372,36 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Build"], info = "Build should be unchecked in TabSet2")
    expect_false(tabStates["VCS"], info = "VCS should be unchecked in TabSet2")
    expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in TabSet2")
+   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet2")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Sidebar displays correct default checked tabs", {
+   .rs.openPaneLayoutOptions(remote)
+
+   allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+
+   tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_SIDEBAR, allTabNames)
+
+   # Default Sidebar should have these tabs checked
+   expect_true(tabStates["Chat"], info = "Chat should be checked in Sidebar")
+
+   # These should be unchecked in Sidebar
+   expect_false(tabStates["Files"], info = "Files should be unchecked in Sidebar")
+   expect_false(tabStates["Plots"], info = "Plots should be unchecked in Sidebar")
+   expect_false(tabStates["Packages"], info = "Packages should be unchecked in TabSet2")
+   expect_false(tabStates["Help"], info = "Help should be unchecked in Sidebar")
+   expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in Sidebar")
+   expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in Sidebar")
+   expect_false(tabStates["Environment"], info = "Environment should be unchecked in Sidebar")
+   expect_false(tabStates["History"], info = "History should be unchecked in TabSet2")
+   expect_false(tabStates["Connections"], info = "Connections should be unchecked in Sidebar")
+   expect_false(tabStates["Build"], info = "Build should be unchecked in Sidebar")
+   expect_false(tabStates["VCS"], info = "VCS should be unchecked in Sidebar")
+   expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in Sidebar")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -362,13 +412,15 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Files is checked in TabSet2 by default, not in TabSet1
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Check Files in TabSet1 - try simple approach first
+   # Check Files in TabSet1
    expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
    # Verify Files is now checked in TabSet1 and unchecked in TabSet2
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
    # Move it back to TabSet2
@@ -377,6 +429,43 @@ withr::defer(.rs.automation.deleteRemote())
    # Verify it's back to original state
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Clicking unchecked tab in TabSet1 unchecks it in the Sidebar", {
+   .rs.openPaneLayoutOptions(remote)
+
+   # Chat is checked in Sidebar by default, not in TabSet1 or TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Check Chat in TabSet1
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+
+   # Verify Chat is now checked in TabSet1 and unchecked in Sidebar and TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Move it to TabSet2
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Verify Chat is now checked in TabSet2 and unchecked in Sidebar and TabSet1
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+
+   # Move it back to Sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+
+   # Verify it's back to original state
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
