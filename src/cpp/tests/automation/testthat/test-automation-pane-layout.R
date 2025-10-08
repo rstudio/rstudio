@@ -275,6 +275,7 @@ withr::defer(.rs.automation.deleteRemote())
    consoleInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
    upperRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_TOP)
    lowerRightInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
+   sidebarInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
 
    # Swap Source and Console by selecting Console in Source dropdown
    .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_TOP, consoleInitial)
@@ -307,11 +308,13 @@ withr::defer(.rs.automation.deleteRemote())
    lowerRightAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_RIGHT_BOTTOM)
    upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
    lowerLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   sidebarAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
 
    expect_equal(upperRightAfter, sourceInitial)
    expect_equal(lowerRightAfter, consoleInitial)
    expect_equal(upperLeftAfter, upperRightInitial)
    expect_equal(lowerLeftAfter, lowerRightInitial)
+   expect_equal(sidebarAfter, sidebarInitial)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -321,7 +324,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, allTabNames)
 
@@ -340,6 +343,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Help"], info = "Help should be unchecked in TabSet1")
    expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in TabSet1")
    expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in TabSet1")
+   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet1")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -349,7 +353,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, allTabNames)
 
@@ -368,6 +372,36 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Build"], info = "Build should be unchecked in TabSet2")
    expect_false(tabStates["VCS"], info = "VCS should be unchecked in TabSet2")
    expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in TabSet2")
+   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet2")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Sidebar displays correct default checked tabs", {
+   .rs.openPaneLayoutOptions(remote)
+
+   allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+
+   tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_SIDEBAR, allTabNames)
+
+   # Default Sidebar should have these tabs checked
+   expect_true(tabStates["Chat"], info = "Chat should be checked in Sidebar")
+
+   # These should be unchecked in Sidebar
+   expect_false(tabStates["Files"], info = "Files should be unchecked in Sidebar")
+   expect_false(tabStates["Plots"], info = "Plots should be unchecked in Sidebar")
+   expect_false(tabStates["Packages"], info = "Packages should be unchecked in TabSet2")
+   expect_false(tabStates["Help"], info = "Help should be unchecked in Sidebar")
+   expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in Sidebar")
+   expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in Sidebar")
+   expect_false(tabStates["Environment"], info = "Environment should be unchecked in Sidebar")
+   expect_false(tabStates["History"], info = "History should be unchecked in TabSet2")
+   expect_false(tabStates["Connections"], info = "Connections should be unchecked in Sidebar")
+   expect_false(tabStates["Build"], info = "Build should be unchecked in Sidebar")
+   expect_false(tabStates["VCS"], info = "VCS should be unchecked in Sidebar")
+   expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in Sidebar")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -378,13 +412,15 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Files is checked in TabSet2 by default, not in TabSet1
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Check Files in TabSet1 - try simple approach first
+   # Check Files in TabSet1
    expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
    # Verify Files is now checked in TabSet1 and unchecked in TabSet2
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
    # Move it back to TabSet2
@@ -393,6 +429,43 @@ withr::defer(.rs.automation.deleteRemote())
    # Verify it's back to original state
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Clicking unchecked tab in TabSet1 unchecks it in the Sidebar", {
+   .rs.openPaneLayoutOptions(remote)
+
+   # Chat is checked in Sidebar by default, not in TabSet1 or TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Check Chat in TabSet1
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+
+   # Verify Chat is now checked in TabSet1 and unchecked in Sidebar and TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Move it to TabSet2
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+
+   # Verify Chat is now checked in TabSet2 and unchecked in Sidebar and TabSet1
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+
+   # Move it back to Sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+
+   # Verify it's back to original state
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
