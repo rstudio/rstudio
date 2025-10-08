@@ -1,5 +1,5 @@
 /*
- * SessionSuspendFilterTests.hpp
+ * SessionSuspendFilterTests.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -15,7 +15,7 @@
 
 #include <session/SessionSuspendFilter.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace session {
@@ -47,34 +47,31 @@ public:
    core::http::Request m_request;
 };
 
-test_context("Session Suspend Filters")
-{
-   SessionSuspendFilters filters = SessionSuspendFilters();
-   boost::shared_ptr<HttpConnection> notYourEvent = boost::make_shared<TestConnection>("This is not the event you are looking for");
-
+TEST(SuspendFilterTest, DistributedEventConnectionsDoNotResetTimeout) {
+   SessionSuspendFilters filters;
    boost::shared_ptr<HttpConnection> distEvent = boost::make_shared<TestConnection>("/distributed_events");
-   test_that("Connections with /distributed_event URI should not reset a session's suspend timeout")
-   {
-      expect_false(filters.shouldResetSuspendTimer(distEvent));
-   }
-   test_that("Connections without /distributed_event URI can reset a session's suspend timeout")
-   {
-      expect_true(filters.shouldResetSuspendTimer(notYourEvent));
-   }
+   EXPECT_FALSE(filters.shouldResetSuspendTimer(distEvent));
+}
 
+TEST(SuspendFilterTest, NonDistributedEventConnectionsResetTimeout) {
+   SessionSuspendFilters filters;
+   boost::shared_ptr<HttpConnection> notYourEvent = boost::make_shared<TestConnection>("/not_your_event");
+   EXPECT_TRUE(filters.shouldResetSuspendTimer(notYourEvent));
+}
+
+TEST(SuspendFilterTest, CurrentlyEditingConnectionsDoNotResetTimeout) {
+   SessionSuspendFilters filters;
    boost::shared_ptr<HttpConnection> currentlyEditing = boost::make_shared<TestConnection>("/rpc/set_currently_editing");
-   test_that("Connections with /rpc/set_currently_editing URI should not reset a session's suspend timeout")
-   {
-      expect_false(filters.shouldResetSuspendTimer(currentlyEditing));
-   }
-   test_that("Connections without /rpc/set_currently_editing URI can reset a session's suspend timeout")
-   {
-      expect_true(filters.shouldResetSuspendTimer(notYourEvent));
-   }
+   EXPECT_FALSE(filters.shouldResetSuspendTimer(currentlyEditing));
+}
+
+TEST(SuspendFilterTest, NonCurrentlyEditingConnectionsResetTimeout) {
+   SessionSuspendFilters filters;
+   boost::shared_ptr<HttpConnection> notCurrentlyEditing = boost::make_shared<TestConnection>("/not_your_event");
+   EXPECT_TRUE(filters.shouldResetSuspendTimer(notCurrentlyEditing));
 }
 
 } // namespace tests
 } // namespace suspend
 } // namespace session
 } // namespace rstudio
-

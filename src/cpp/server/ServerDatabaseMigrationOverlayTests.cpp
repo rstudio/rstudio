@@ -1,6 +1,7 @@
 #include <map>
 #include <string>
 #include "ServerDatabaseDataset.hpp"
+
 namespace rstudio {
 namespace server {
 namespace db {
@@ -11,7 +12,7 @@ namespace overlay {
         return;
     }
 
-}
-}
-}
-}
+} // namespace overlay
+} // namespace db
+} // namespace server
+} // namespace rstudio
