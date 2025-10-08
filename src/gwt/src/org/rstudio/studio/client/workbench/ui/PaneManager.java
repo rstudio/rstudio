@@ -1802,22 +1802,38 @@ public class PaneManager
       if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
       {
          // If right column size is 0, check if we're in a transitional layout state.
-         // When sidebar is being shown/hidden, widgets are temporarily at width 0
-         // even though the panel has width. Don't report zoom state in this case.
-         if (panel_.getOffsetWidth() > 0 && center_.getOffsetWidth() == 0)
+         // When sidebar is being shown/hidden, or during initial layout, widgets are
+         // temporarily at width 0. Don't report zoom state in this case.
+         if (panel_.getOffsetWidth() == 0 || center_.getOffsetWidth() == 0)
             return null;
          return LEFT_COLUMN;
       }
 
-      // If MainSplitPanel.enforceBoundaries has been called then the rightZoomPosition is the
-      // offsetWidth - 3. When sidebar is on right, subtract its width.
-      double rightZoomPosition = panel_.getOffsetWidth();
-      if (sidebarOnRight)
-         rightZoomPosition -= sidebar_.getOffsetWidth();
+      // Check if right column is zoomed by seeing if left/center are collapsed.
+      // When sidebar is on right, we can't reliably check right column size due to splitters,
+      // so instead check if all other columns are at 0.
+      double centerSize = center_.getOffsetWidth();
+      double leftSize = 0;
+      for (Widget w : leftList_)
+         leftSize += w.getOffsetWidth();
 
-      if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
-          MathUtil.isEqual(currentColumnSize, rightZoomPosition - 3, 0.0001))
-         return RIGHT_COLUMN;
+      boolean leftAndCenterCollapsed = MathUtil.isEqual(centerSize, 0.0, 0.0001) &&
+                                       MathUtil.isEqual(leftSize, 0.0, 0.0001);
+
+      if (sidebarOnRight)
+      {
+         // When sidebar is on right, check if left/center are collapsed
+         if (leftAndCenterCollapsed)
+            return RIGHT_COLUMN;
+      }
+      else
+      {
+         // When no sidebar on right, use the original size-based check
+         double rightZoomPosition = panel_.getOffsetWidth();
+         if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
+             MathUtil.isEqual(currentColumnSize, rightZoomPosition - 3, 0.0001))
+            return RIGHT_COLUMN;
+      }
 
       return null;
    }
