@@ -21,6 +21,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormCheckBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.Toolbar;
@@ -256,7 +257,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       toolbarWrapper.add(columnToolbar_);
 
       // Create and position Sidebar Visible checkbox
-      sidebarVisibleCheckbox_ = new CheckBox(constants_.sidebarVisible());
+      sidebarVisibleCheckbox_ = new FormCheckBox(
+         constants_.sidebarVisible(),
+         ElementIds.getUniqueElementId(ElementIds.PANE_LAYOUT_SIDEBAR_VISIBLE));
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "absolute");
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("top", "0");
       toolbarWrapper.add(sidebarVisibleCheckbox_);

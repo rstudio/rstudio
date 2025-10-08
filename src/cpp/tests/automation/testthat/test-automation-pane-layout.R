@@ -5,12 +5,17 @@ PANE_LAYOUT_LEFT_TOP <- "#rstudio_pane_layout_left_top"
 PANE_LAYOUT_LEFT_BOTTOM <- "#rstudio_pane_layout_left_bottom"
 PANE_LAYOUT_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
 PANE_LAYOUT_RIGHT_BOTTOM <- "#rstudio_pane_layout_right_bottom"
+PANE_LAYOUT_SIDEBAR <- "#rstudio_pane_layout_sidebar"
 
 # ids of the 4 dropdowns in the Pane Layout options panel
 PANE_LAYOUT_LEFT_TOP_SELECT <- "#rstudio_pane_layout_left_top_select"
 PANE_LAYOUT_LEFT_BOTTOM_SELECT <- "#rstudio_pane_layout_left_bottom_select"
 PANE_LAYOUT_RIGHT_TOP_SELECT <- "#rstudio_pane_layout_right_top_select"
 PANE_LAYOUT_RIGHT_BOTTOM_SELECT <- "#rstudio_pane_layout_right_bottom_select"
+PANE_LAYOUT_SIDEBAR_SELECT <- "#rstudio_pane_layout_sidebar_select"
+
+# sidebar visible checkbox
+PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
@@ -171,31 +176,30 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.verifyQuadrantDropdownOptions <- function(remote, selector, expectedTexts, expectedSelectedIndex = NULL) {
    # Get all options
    options <- remote$js.querySelector(selector)$options
-   expect_equal(options$length, 4L)
    
-   # Verify we have 4 expected texts
-   expect_equal(length(expectedTexts), 4L, info = "expectedTexts must contain exactly 4 strings")
+   # Verify we have at least 1 expected text (fail if 0)
+   expect_true(length(expectedTexts) > 0L, info = "expectedTexts must contain at least 1 string")
+   
+   # Verify the number of options matches the number of expected texts
+   expect_equal(options$length, length(expectedTexts), 
+                info = paste("Expected", length(expectedTexts), "options but found", options$length))
    
    # Verify option texts contain expected content
-   optionTexts <- character(4)
-   for (i in seq_len(4)) {
+   optionTexts <- character(length(expectedTexts))
+   for (i in seq_len(length(expectedTexts))) {
       optionTexts[i] <- options[[i - 1L]]$text
    }
    
    # Compare each option text against the corresponding expected text
-   expect_true(grepl(expectedTexts[1], optionTexts[1]), 
-               info = paste("Position 1: expected", expectedTexts[1], "but got", optionTexts[1]))
-   expect_true(grepl(expectedTexts[2], optionTexts[2]), 
-               info = paste("Position 2: expected", expectedTexts[2], "but got", optionTexts[2]))
-   expect_true(grepl(expectedTexts[3], optionTexts[3]), 
-               info = paste("Position 3: expected", expectedTexts[3], "but got", optionTexts[3]))
-   expect_true(grepl(expectedTexts[4], optionTexts[4]), 
-               info = paste("Position 4: expected", expectedTexts[4], "but got", optionTexts[4]))
+   for (i in seq_along(expectedTexts)) {
+      expect_true(grepl(expectedTexts[i], optionTexts[i]), 
+                  info = paste("Position", i, ": expected", expectedTexts[i], "but got", optionTexts[i]))
+   }
    
    # If expectedSelectedIndex is provided, verify the selected option
    if (!is.null(expectedSelectedIndex)) {
-      expect_true(expectedSelectedIndex >= 1L && expectedSelectedIndex <= 4L, 
-                  info = "expectedSelectedIndex must be between 1 and 4")
+      expect_true(expectedSelectedIndex >= 1L && expectedSelectedIndex <= length(expectedTexts), 
+                  info = paste("expectedSelectedIndex must be between 1 and", length(expectedTexts)))
       
       # Get the selected option (0-based index in JavaScript)
       selectedOption <- options[[expectedSelectedIndex - 1L]]
@@ -216,6 +220,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(remote$dom.elementExists(PANE_LAYOUT_LEFT_BOTTOM))
    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_TOP))
    expect_true(remote$dom.elementExists(PANE_LAYOUT_RIGHT_BOTTOM))
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_SIDEBAR))
 
    # Verify default dropdown selections
    sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -233,11 +238,18 @@ withr::defer(.rs.automation.deleteRemote())
    expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
 
+   # Check that Sidebar dropdown shows correct text
+   expectedSidebarTabs <- c("Sidebar on Right")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_SIDEBAR, expectedSidebarTabs)
+
+   # Check that Sidebar visible checkbox is unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)))
+
    # Close dialog
    remote$keyboard.insertText("<Escape>")
 })
 
-.rs.test("Quadrant dropdown shows all four options with correct checkmarks", {
+.rs.test("Quadrant dropdown shows all options with correct checkmarks", {
    .rs.openPaneLayoutOptions(remote)
 
    expectedTexts <- c("Source", "Console", "Environment", "Files")
@@ -247,6 +259,10 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_LEFT_BOTTOM_SELECT, expectedTexts, 2)
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_TOP_SELECT, expectedTexts, 3)
    .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_RIGHT_BOTTOM_SELECT, expectedTexts, 4)
+   
+   # Test sidebar dropdown
+   expectedTexts <- c("Sidebar on Left", "Sidebar on Right")
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_SIDEBAR_SELECT, expectedTexts, 2)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
