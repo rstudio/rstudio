@@ -135,3 +135,34 @@ withr::defer(.rs.automation.deleteRemote())
    rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
    expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked by default")
 })
+
+.rs.test("Sidebar can be shown and hidden with toggleSidebar command", {
+   # Show the sidebar
+   remote$commands.execute("toggleSidebar")
+   
+   # Wait for the sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   
+   # Verify the sidebar exists
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after toggling sidebar on")
+   
+   # Verify the sidebar is visible
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
+   
+   # Hide the sidebar
+   remote$commands.execute("toggleSidebar")
+   
+   # Wait for the sidebar to be removed
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   
+   # Verify the sidebar no longer exists
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling sidebar off")
+})
