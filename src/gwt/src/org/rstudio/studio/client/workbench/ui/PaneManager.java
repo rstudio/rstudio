@@ -1292,9 +1292,9 @@ public class PaneManager
    }
 
    private void resizeHorizontallyWithSidebarOnRight(final double rightTarget,
-                                                      final ArrayList<Double> leftTargets,
-                                                      final double sidebarTarget,
-                                                      final Command afterComplete)
+                                                     final ArrayList<Double> leftTargets,
+                                                     final double sidebarTarget,
+                                                     final Command afterComplete)
    {
       // When sidebar is on right, right_ is added with add() so setWidgetSize() doesn't work.
       // Control right_ size indirectly by setting center_ size.
