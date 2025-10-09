@@ -575,7 +575,7 @@ if(WIN32)
          $<TARGET_OBJECTS:rsession-objects>)
    endif()
 
-else()
+elseif(APPLE)
 
    add_library(
       rsession SHARED
@@ -585,6 +585,13 @@ else()
    add_executable(rsession-launcher rsession-launcher.cpp)
    target_link_libraries(rsession-launcher ${SESSION_LIBRARIES})
    set_target_properties(rsession-launcher PROPERTIES OUTPUT_NAME rsession)
+
+else()
+
+   add_executable(
+      rsession
+      ${SESSION_SOURCE_FILES}
+      ${SESSION_HEADER_FILES})
 
 endif()
 
