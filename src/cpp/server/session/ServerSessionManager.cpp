@@ -393,14 +393,14 @@ Error SessionManager::launchAndTrackSession(
    // retrieve profile config
    auto config = profile.config;
    
-   // on macOS, we need to forward DYLD_INSERT_LIBRARIES
+   // on macOS, we need to forward the R library path
 #if __APPLE__
    auto rVersion = server::r_environment::rVersion();
    auto rLibPath = rVersion.homeDir().completeChildPath("lib/libR.dylib");
 
    core::system::setenv(
             &config.environment,
-            "DYLD_INSERT_LIBRARIES",
+            "R_LIBRARY_PATH",
             rLibPath.getAbsolutePath());
 #endif
 

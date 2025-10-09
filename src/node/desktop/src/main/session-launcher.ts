@@ -80,14 +80,11 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // and ensure it's placed on the fallback library path
     const dyldFallbackLibraryPath = `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
 
-    // on macOS with the hardened runtime, we can no longer rely on dyld
-    // to lazy-load symbols from libR.dylib; to resolve this, we use
-    // DYLD_INSERT_LIBRARIES to inject the library we wish to use
     const rHome = new FilePath(getenv('R_HOME'));
     const rLib = rHome.completePath('lib/libR.dylib');
     const dyldArgs = [
       '-e',
-      `DYLD_INSERT_LIBRARIES=${rLib.getAbsolutePath()}`,
+      `R_LIBRARY_PATH=${rLib.getAbsolutePath()}`,
       '-e',
       `DYLD_FALLBACK_LIBRARY_PATH=${dyldFallbackLibraryPath}`,
     ];
