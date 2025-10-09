@@ -125,3 +125,13 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(source2Exists, "rstudio_Source2_pane should NOT exist after closing all source docs")
    expect_false(source3Exists, "rstudio_Source3_pane should NOT exist after closing all source docs")
 })
+
+.rs.test("Layout zoom commands are unchecked by default", {
+   # Check that layoutZoomLeftColumn command is unchecked
+   leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
+   expect_false(leftZoomChecked, "layoutZoomLeftColumn should be unchecked by default")
+   
+   # Check that layoutZoomRightColumn command is unchecked
+   rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
+   expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked by default")
+})
