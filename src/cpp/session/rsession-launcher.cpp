@@ -22,7 +22,11 @@
 #include <core/system/System.hpp>
 
 #ifdef __APPLE__
-# define kSessionLibraryName "librsession.dylib"
+# if defined(RSTUDIO_PACKAGE_BUILD) && defined(__arm64__)
+#  define kSessionLibraryName "librsession-arm64.dylib"
+# else
+#  define kSessionLibraryName "librsession.dylib"
+# endif
 #else
 # define kSessionLibraryName "rsession.so"
 #endif

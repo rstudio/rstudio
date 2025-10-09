@@ -27,9 +27,9 @@ set(FIX_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/fix-librar
 
 # NOTE: This part of CMake will be run by the x86 branch of the build,
 # so we don't want to filter based on the architecture here.
-if(EXISTS "@RSESSION_ARM64_PATH@")
+if(EXISTS "@RSESSION_ARM64_BUILD_DIR@")
 
-   echo("Found arm64 rsession binary: '@RSESSION_ARM64_PATH@'")
+   echo("Found arm64 rsession build: '@RSESSION_ARM64_BUILD_DIR@'")
 
    # find out where arm64 homebrew lives
    set(HOMEBREW_ARM64_PREFIX "/opt/homebrew")
@@ -37,8 +37,13 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
 
    # copy arm64 rsession binary
    configure_file(
-      "@RSESSION_ARM64_PATH@"
+      "@RSESSION_ARM64_BUILD_DIR@/rsession"
       "${RSESSION_BINARY_DIR}/rsession-arm64"
+      COPYONLY)
+
+   configure_file(
+      "@RSESSION_ARM64_BUILD_DIR@/librsession.dylib"
+      "${RSESSION_BINARY_DIR}/librsession-arm64.dylib"
       COPYONLY)
 
    # copy arm64 node installation
@@ -97,7 +102,7 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
 
 else()
 
-   echo("No arm64 rsession binary available at '@RSESSION_ARM64_PATH@'")
+   echo("No arm64 rsession binary available at '@RSESSION_ARM64_BUILD_DIR@'")
 
 endif()
 
