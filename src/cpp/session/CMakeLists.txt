@@ -588,7 +588,7 @@ elseif(APPLE)
 
 else()
 
-   add_executable(
+   add_stripped_executable(
       rsession
       ${SESSION_SOURCE_FILES}
       ${SESSION_HEADER_FILES})
