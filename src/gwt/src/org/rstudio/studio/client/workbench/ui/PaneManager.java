@@ -1334,6 +1334,41 @@ public class PaneManager
       });
    }
 
+   private void resizeHorizontallyWithSidebarOnLeft(final double rightTarget,
+                                                     final ArrayList<Double> leftTargets,
+                                                     final double sidebarTarget,
+                                                     final Command afterComplete)
+   {
+      // When sidebar is on left, it's added with addWest() so setWidgetSize() works.
+      // Layout: Sidebar + Left widgets + Center + Right = Panel width
+      // Sidebar, left widgets, and right can be sized directly; center auto-fills.
+
+      // Use sidebar target if provided (when zooming), otherwise use current width
+      double sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+      if (sidebar_ != null)
+         panel_.setWidgetSize(sidebar_, sidebarWidth);
+
+      for (int i = 0; i < leftList_.size(); i++)
+         panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
+
+      panel_.setWidgetSize(right_, rightTarget);
+
+      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
+      panel_.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            panel_.onSplitterResized(new SplitterResizedEvent());
+            if (afterComplete != null)
+               afterComplete.execute();
+         }
+
+         public void onLayout(Layer layer, double progress)
+         {
+         }
+      });
+   }
+
    private void restoreLayout()
    {
       // If we're currently zoomed, then use that to provide the previous
@@ -1854,6 +1889,8 @@ public class PaneManager
       PaneConfig config = getCurrentConfig();
       boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
                                !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
 
       double rightTargetSize;
       double sidebarTargetSize = -1;
@@ -1874,14 +1911,14 @@ public class PaneManager
          rightTargetSize = widgetSizePriorToZoom_;
          for (Double s : leftWidgetSizePriorToZoom_)
             leftTargetSize.add(s);
-         if (sidebarOnRight && sidebarSizePriorToZoom_ >= 0)
+         if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
             sidebarTargetSize = sidebarSizePriorToZoom_;
          unZooming = true;
       }
       else if (StringUtil.equals(columnId, LEFT_COLUMN))
       {
          rightTargetSize = 0.0;
-         if (sidebarOnRight)
+         if (sidebarOnRight || sidebarOnLeft)
             sidebarTargetSize = 0.0;
       }
       else if (StringUtil.equals(columnId, RIGHT_COLUMN))
@@ -1893,6 +1930,11 @@ public class PaneManager
             // and use 0 in the calculation (not the old sidebar width)
             sidebarTargetSize = 0.0;
             rightTargetSize -= sidebarTargetSize;  // Subtract 0, so full width
+         }
+         else if (sidebarOnLeft)
+         {
+            // When zooming right with sidebar on left, collapse sidebar to 0
+            sidebarTargetSize = 0.0;
          }
       }
       else
@@ -1930,7 +1972,7 @@ public class PaneManager
             else
                widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
          }
-         if (sidebarOnRight && sidebarSizePriorToZoom_ < 0)
+         if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ < 0)
             sidebarSizePriorToZoom_ = sidebar_.getOffsetWidth();
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
          {
@@ -1941,6 +1983,8 @@ public class PaneManager
 
       if (sidebarOnRight)
          resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
+      else if (sidebarOnLeft)
+         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
       else
          resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
    }
