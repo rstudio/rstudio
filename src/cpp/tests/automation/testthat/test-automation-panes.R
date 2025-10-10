@@ -258,3 +258,113 @@ withr::defer(.rs.automation.deleteRemote())
    })
 })
 
+.rs.test("Zoomed left column with sidebar hidden works as expected", {
+   # Verify sidebar is hidden (default state)
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
+
+   # Get initial dimensions of console pane (left column) and right column panes
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
+   tabSet2Element <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   initialConsoleWidth <- consoleElement$offsetWidth
+   initialTabSet1Width <- tabSet1Element$offsetWidth
+   initialTabSet2Width <- tabSet2Element$offsetWidth
+
+   expect_true(initialConsoleWidth > 0, "Console pane should be visible initially")
+   expect_true(initialTabSet1Width > 0, "TabSet1 pane should be visible initially")
+   expect_true(initialTabSet2Width > 0, "TabSet2 pane should be visible initially")
+
+   # Execute layoutZoomLeftColumn command to zoom the left column
+   remote$commands.execute("layoutZoomLeftColumn")
+
+   # Calculate expected width: console should expand to fill the space previously occupied by both columns
+   expectedZoomedWidth <- initialConsoleWidth + initialTabSet1Width
+
+   # Wait for layout to change - console should expand to fill the right column space
+   .rs.waitUntil("left column zoomed", function() {
+      consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+      # Allow some tolerance for dividers/borders (within 30px)
+      abs(consoleElement$offsetWidth - expectedZoomedWidth) < 30
+   })
+
+   # Add a small delay to ensure layout is fully settled
+   Sys.sleep(0.2)
+
+   # Check that layoutZoomLeftColumn command is checked
+   leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
+   expect_true(leftZoomChecked, "layoutZoomLeftColumn should be checked after layoutZoomLeftColumn")
+   
+   # Check that layoutZoomRightColumn command is unchecked
+   rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
+   expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked after layoutZoomLeftColumn")
+
+   # Get new dimensions after zooming
+   consoleElementZoomed <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1ElementZoomed <- remote$js.querySelector("#rstudio_TabSet1_pane")
+   tabSet2ElementZoomed <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   zoomedConsoleWidth <- consoleElementZoomed$offsetWidth
+   zoomedTabSet1Width <- tabSet1ElementZoomed$offsetWidth
+   zoomedTabSet2Width <- tabSet2ElementZoomed$offsetWidth
+
+   # Verify left column (Console) expanded to fill the space of the right column
+   expect_true(abs(zoomedConsoleWidth - expectedZoomedWidth) < 30,
+               paste0("Console pane should expand to fill right column space. ",
+                      "Expected: ", expectedZoomedWidth, ", Actual: ", zoomedConsoleWidth))
+
+   # Verify right column panes collapsed to minimum width (just the divider, typically < 50px)
+   expect_true(zoomedTabSet1Width < 50,
+               paste0("TabSet1 pane should collapse to minimum width when left column zoomed. ",
+                      "Width: ", zoomedTabSet1Width))
+   expect_true(zoomedTabSet2Width < 50,
+               paste0("TabSet2 pane should collapse to minimum width when left column zoomed. ",
+                      "Width: ", zoomedTabSet2Width))
+
+   # Execute layoutZoomLeftColumn command again to restore the layout
+   remote$commands.execute("layoutZoomLeftColumn")
+
+   # Wait for layout to be restored - console should return to original size
+   .rs.waitUntil("left column unzoomed", function() {
+      consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+      tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
+      # Check if both console is smaller and TabSet1 is visible again
+      consoleElement$offsetWidth < zoomedConsoleWidth * 0.75 &&
+         tabSet1Element$offsetWidth > 50
+   })
+
+   # Add a small delay to ensure layout is fully settled
+   Sys.sleep(0.2)
+
+   # Check that layoutZoomLeftColumn command is unchecked
+   leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
+   expect_false(leftZoomChecked, "layoutZoomLeftColumn should be unchecked after undoing layoutZoomLeftColumn")
+   
+   # Check that layoutZoomRightColumn command is unchecked
+   rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
+   expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked after undoing layoutZoomLeftColumn")
+
+   # Get dimensions after restoring
+   consoleElementRestored <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1ElementRestored <- remote$js.querySelector("#rstudio_TabSet1_pane")
+   tabSet2ElementRestored <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   restoredConsoleWidth <- consoleElementRestored$offsetWidth
+   restoredTabSet1Width <- tabSet1ElementRestored$offsetWidth
+   restoredTabSet2Width <- tabSet2ElementRestored$offsetWidth
+
+   # Verify layout restored to approximately original sizes (within 10% tolerance)
+   expect_true(abs(restoredConsoleWidth - initialConsoleWidth) / initialConsoleWidth < 0.1,
+               paste0("Console pane should return to original width after un-zooming. ",
+                      "Initial: ", initialConsoleWidth, ", Restored: ", restoredConsoleWidth))
+
+   expect_true(abs(restoredTabSet1Width - initialTabSet1Width) / initialTabSet1Width < 0.1,
+               paste0("TabSet1 pane should return to original width after un-zooming. ",
+                      "Initial: ", initialTabSet1Width, ", Restored: ", restoredTabSet1Width))
+
+   expect_true(abs(restoredTabSet2Width - initialTabSet2Width) / initialTabSet2Width < 0.1,
+               paste0("TabSet2 pane should return to original width after un-zooming. ",
+                      "Initial: ", initialTabSet2Width, ", Restored: ", restoredTabSet2Width))
+})
+ 
