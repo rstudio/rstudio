@@ -785,6 +785,7 @@ public class ElementIds
    public final static String PANE_LAYOUT_RIGHT_TOP_SELECT = "pane_layout_right_top_select";
    public final static String PANE_LAYOUT_RIGHT_BOTTOM_SELECT = "pane_layout_right_bottom_select";
    public final static String PANE_LAYOUT_SIDEBAR_SELECT = "pane_layout_sidebar_select";
+   public final static String PANE_LAYOUT_SIDEBAR_VISIBLE = "pane_layout_sidebar_visible";
 
    // TextEntryModalDialog
    public final static String TEXT_ENTRY = "text_entry";
