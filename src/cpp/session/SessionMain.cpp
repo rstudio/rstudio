@@ -2085,6 +2085,7 @@ void mainThreadWorkaround()
 #endif
 }
 
+
 } // anonymous namespace
 
 // run session
@@ -2707,3 +2708,14 @@ int main(int argc, char * const argv[])
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE;
 }
+
+#ifdef __APPLE__
+
+__attribute__((visibility("default")))
+extern "C" int rsession_main(int argc, char * const argv[])
+{
+   return main(argc, argv);
+}
+
+#endif
+

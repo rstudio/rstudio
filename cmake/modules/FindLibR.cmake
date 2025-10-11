@@ -20,26 +20,35 @@
 # detection for OSX (look for R framework)
 if(APPLE)
 
-   find_library(LIBR_LIBRARIES R)
-   
-   if(LIBR_LIBRARIES MATCHES ".*\\.framework")
-      set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")
+   if(EXISTS "${HOMEBREW_PREFIX}/opt/R/lib")
+      set(LIBR_LIBRARIES "${HOMEBREW_PREFIX}/opt/R/lib" CACHE INTERNAL "")
+      set(LIBR_HOME "${HOMEBREW_PREFIX}/opt/R" CACHE PATH "R home directory")
       set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
+      set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
       set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
       set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
    else()
-      get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
-      get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
-      set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
-      execute_process(
-         COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
-                   OUTPUT_VARIABLE LIBR_HOME
-      )
-      set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
-      set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
-      set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
-      set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
-      set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
+      find_library(LIBR_LIBRARIES R HINTS "${HOMEBREW_PREFIX}/opt/R/lib")
+      if(LIBR_LIBRARIES MATCHES ".*\\.framework")
+         set(LIBR_HOME "${LIBR_LIBRARIES}/Resources" CACHE PATH "R home directory")
+         set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
+         set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
+         set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
+         set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
+      else()
+         get_filename_component(_LIBR_LIBRARIES "${LIBR_LIBRARIES}" REALPATH)
+         get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
+         set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
+         execute_process(
+            COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
+                      OUTPUT_VARIABLE LIBR_HOME
+         )
+         set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
+         set(LIBR_INCLUDE_DIRS "${LIBR_HOME}/include" CACHE PATH "R include directory")
+         set(LIBR_DOC_DIR "${LIBR_HOME}/doc" CACHE PATH "R doc directory")
+         set(LIBR_LIB_DIR "${LIBR_HOME}/lib" CACHE PATH "R lib directory")
+         set(LIBR_EXECUTABLE "${LIBR_HOME}/bin/R" CACHE PATH "R executable")
+      endif()
    endif()
 
 # detection for UNIX & Win32
@@ -238,7 +247,7 @@ find_package_handle_standard_args(LibR DEFAULT_MSG
 
 if(LIBR_FOUND)
    message(STATUS "Found R: ${LIBR_HOME}")
-   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE)
+   get_filename_component(LIBR_BIN_DIR "${LIBR_EXECUTABLE}" PATH CACHE "R bin directory")
 endif()
 
 # mark low-level variables from FIND_* calls as advanced

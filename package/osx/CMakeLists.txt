@@ -26,9 +26,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
 endif()
 
 # help install script find arm64 components
-set(
-   RSESSION_ARM64_PATH
-   "${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session/rsession"
+set(RSESSION_ARM64_BUILD_DIR
+   "${CMAKE_CURRENT_SOURCE_DIR}/build-arm64/src/cpp/session"
    CACHE INTERNAL "")
 
 # developer-id code signing
