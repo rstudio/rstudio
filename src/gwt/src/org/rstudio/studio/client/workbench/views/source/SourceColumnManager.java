@@ -435,7 +435,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public ColumnName add(Source.Display display, boolean activate, boolean updateState)
    {
-      return add(COLUMN_PREFIX + StringUtil.makeRandomId(12),
+      return add(COLUMN_PREFIX + sourceColumnCounter_++,
                   computeAccessibleName(),
                   display,
                   activate,
@@ -2987,7 +2987,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private String computeAccessibleName()
    {
-      return constants_.sourceColumn(sourceColumnCounter_++);
+      return constants_.sourceColumn(sourceColumnCounter_);
    }
 
    private State columnState_;

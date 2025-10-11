@@ -14,18 +14,17 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Float;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-
 import java.util.HashMap;
 
 import org.rstudio.core.client.ClassIds;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
+import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
+import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -34,6 +33,19 @@ import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Float;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
@@ -66,6 +78,7 @@ public class WindowFrame extends Composite
       minimizeButton_.setClickHandler(() -> minimize());
 
       frame_ = new LayoutPanel();
+      frame_.getElement().setId(ElementIds.getUniqueElementId(name + "_pane"));
       Roles.getRegionRole().set(frame_.getElement());
       Roles.getRegionRole().setAriaLabelProperty(frame_.getElement(), accessibleName);
       frame_.setStylePrimaryName(styles.windowframe());
