@@ -3075,6 +3075,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand layoutZoomSidebar() {
+        return null;
+    }
+
+    @Override
     public AppCommand focusLeftSeparator() {
         return null;
     }

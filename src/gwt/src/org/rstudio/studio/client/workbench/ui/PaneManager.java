@@ -1833,6 +1833,8 @@ public class PaneManager
       PaneConfig config = getCurrentConfig();
       boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
                                !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
 
       double currentColumnSize;
       if (sidebarOnRight)
@@ -1840,14 +1842,17 @@ public class PaneManager
       else
          currentColumnSize = panel_.getWidgetSize(right_);
 
-      if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
+      // Check if sidebar is zoomed by seeing if it takes up (almost) the entire panel width
+      if (sidebarOnRight || sidebarOnLeft)
       {
-         // If right column size is 0, check if we're in a transitional layout state.
-         // When sidebar is being shown/hidden, or during initial layout, widgets are
-         // temporarily at width 0. Don't report zoom state in this case.
-         if (panel_.getOffsetWidth() == 0 || center_.getOffsetWidth() == 0)
-            return null;
-         return LEFT_COLUMN;
+         double sidebarWidth = sidebar_.getOffsetWidth();
+         double panelWidth = panel_.getOffsetWidth();
+         // Allow for small rounding differences and splitter widths
+         if (MathUtil.isEqual(sidebarWidth, panelWidth, 5.0) ||
+             sidebarWidth > panelWidth - 5.0)
+         {
+            return SIDEBAR_COLUMN;
+         }
       }
 
       // Check if right column is zoomed by seeing if left/center are collapsed.
@@ -1860,6 +1865,16 @@ public class PaneManager
 
       boolean leftAndCenterCollapsed = MathUtil.isEqual(centerSize, 0.0, 0.0001) &&
                                        MathUtil.isEqual(leftSize, 0.0, 0.0001);
+
+      if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
+      {
+         // If right column size is 0, check if we're in a transitional layout state.
+         // When sidebar is being shown/hidden, or during initial layout, widgets are
+         // temporarily at width 0. Don't report zoom state in this case.
+         if (panel_.getOffsetWidth() == 0 || center_.getOffsetWidth() == 0)
+            return null;
+         return LEFT_COLUMN;
+      }
 
       if (sidebarOnRight)
       {
@@ -1935,6 +1950,22 @@ public class PaneManager
          {
             // When zooming right with sidebar on left, collapse sidebar to 0
             sidebarTargetSize = 0.0;
+         }
+      }
+      else if (StringUtil.equals(columnId, SIDEBAR_COLUMN))
+      {
+         // When zooming sidebar, collapse all other columns
+         rightTargetSize = 0.0;
+         if (sidebarOnRight || sidebarOnLeft)
+         {
+            // Expand sidebar to full width
+            sidebarTargetSize = panel_.getOffsetWidth();
+         }
+         else
+         {
+            // No sidebar visible, cannot zoom it
+            Debug.logWarning("Cannot zoom sidebar when it is not visible");
+            return;
          }
       }
       else
@@ -2396,15 +2427,19 @@ public class PaneManager
    {
       boolean zoomLeftChecked = false;
       boolean zoomRightChecked = false;
+      boolean zoomSidebarChecked = false;
 
       String column = getZoomedColumn();
       if (StringUtil.equals(column, LEFT_COLUMN))
          zoomLeftChecked = true;
       else if (StringUtil.equals(column, RIGHT_COLUMN))
          zoomRightChecked = true;
+      else if (StringUtil.equals(column, SIDEBAR_COLUMN))
+         zoomSidebarChecked = true;
 
       commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
       commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
+      commands_.layoutZoomSidebar().setChecked(zoomSidebarChecked);
    }
 
    private void manageSidebarCommands()

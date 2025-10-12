@@ -299,6 +299,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="layoutZoomLeftColumn"/>
             <cmd refid="layoutZoomRightColumn"/>
+            <cmd refid="layoutZoomSidebar"/>
             <separator/>
             <cmd refid="layoutZoomSource"/>
             <cmd refid="layoutZoomConsole"/>
@@ -1702,6 +1703,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         checkable="true"
         label="Zoom Right Column"
         menuLabel="Zoo_m Right Column"/>
+
+   <cmd id="layoutZoomSidebar"
+        checkable="true"
+        label="Zoom Sidebar"
+        menuLabel="Zoom Si_debar"/>
 
    <cmd id="jumpTo"
         label="Jump To..."
