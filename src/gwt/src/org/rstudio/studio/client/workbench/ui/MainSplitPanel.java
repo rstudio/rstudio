@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
@@ -452,7 +453,21 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       {
          Element splitterElem = getAssociatedSplitterElement(sidebar_);
          if (splitterElem != null)
+         {
+            splitterElem.setId(ElementIds.getElementId(ElementIds.SIDEBAR_COLUMN_SPLITTER));
             splitterElem.setAttribute("aria-label", "sidebar column splitter");
+         }
+      }
+
+      // Set labels for source column splitters
+      for (int i = 0; i < leftList_.size(); i++)
+      {
+         Element splitterElem = getAssociatedSplitterElement(leftList_.get(i));
+         if (splitterElem != null)
+         {
+            splitterElem.setId(ElementIds.getElementId(ElementIds.SOURCE_COLUMN_SPLITTER + (i + 1)));
+            splitterElem.setAttribute("aria-label", "source column " + (i + 1) + " splitter");
+         }
       }
 
       // Set label for the middle splitter (between center and right columns)
@@ -471,7 +486,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
       Element splitterElem = getAssociatedSplitterElement(middleSplitterWidget);
       if (splitterElem != null)
+      {
+         splitterElem.setId(ElementIds.getElementId(ElementIds.MIDDLE_COLUMN_SPLITTER));
          splitterElem.setAttribute("aria-label", "middle column splitter");
+      }
    }
 
    private void clearForRefresh()
