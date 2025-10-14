@@ -44,6 +44,7 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
+#include <core/http/CSRFToken.hpp>
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
@@ -82,6 +83,8 @@
 #endif
 
 using namespace rstudio::core;
+using namespace http;
+using namespace http::util;
 
 extern "C" {
 void Rf_sortVector(SEXP s, Rboolean decreasing);
@@ -1317,19 +1320,23 @@ void setAttachmentResponse(const http::Request& request,
    pResponse->setStreamFile(attachmentPath, request);
 }
    
-void handleMultipleFileExportRequest(const http::Request& request, 
+void handleMultipleFileExportRequest(const http::Request& request,
                                      http::Response* pResponse)
 {
+   // Parse the form fields
+   http::Fields fields;
+   parseForm(request.body(), &fields);
+
    // name parameter
-   std::string name = request.queryParamValue("name");
+   std::string name = fieldValue<std::string>(fields, "name", "");
    if (name.empty())
    {
       pResponse->setError(http::status::BadRequest, "name not specified");
       return;
    }
-   
+
    // parent parameter
-   std::string parent = request.queryParamValue("parent");
+   std::string parent = fieldValue<std::string>(fields, "parent", "");
    if (parent.empty())
    {
       pResponse->setError(http::status::BadRequest, "parent not specified");
@@ -1348,7 +1355,7 @@ void handleMultipleFileExportRequest(const http::Request& request,
    {
       // get next file (terminate when we stop finding files)
       std::string fileParam = "file" + safe_convert::numberToString(i);
-      std::string file = request.queryParamValue(fileParam);
+      std::string file = fieldValue<std::string>(fields, fileParam, "");
       if (file.empty())
          break;
       
@@ -1389,11 +1396,29 @@ void handleMultipleFileExportRequest(const http::Request& request,
    setAttachmentResponse(request, name, tempZipFilePath, pResponse);
 }
    
-void handleFileExportRequest(const http::Request& request, 
-                             http::Response* pResponse) 
+void handleFileExportRequest(const http::Request& request,
+                             http::Response* pResponse)
 {
+   // Enforce POST method
+   if (request.method() != "POST")
+   {
+      pResponse->setError(http::status::MethodNotAllowed, "Method not allowed");
+      pResponse->setHeader("Allow", "POST");
+      return;
+   }
+
+   if (!http::validateCSRFForm(request, pResponse))
+   {
+      // Error response is set by validateCSRFForm
+      return;
+   }
+
+   // Parse the form fields
+   Fields fields;
+   parseForm(request.body(), &fields);
+
    // see if this is a single or multiple file request
-   std::string file = request.queryParamValue("file");
+   std::string file = fieldValue<std::string>(fields, "file", "");
    if (!file.empty())
    {
       // resolve alias and ensure that it exists
@@ -1405,7 +1430,7 @@ void handleFileExportRequest(const http::Request& request,
       }
       
       // get the name
-      std::string name = request.queryParamValue("name");
+      std::string name = fieldValue<std::string>(fields, "name", "");
       if (name.empty())
       {
          pResponse->setError(http::status::BadRequest, "name not specified");
