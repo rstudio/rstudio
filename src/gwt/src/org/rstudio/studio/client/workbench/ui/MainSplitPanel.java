@@ -302,7 +302,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                public void execute()
                {
                   enforceBoundaries();
-                  setSplitterAriaLabels();
+                  setSplitterAttributes();
                }
             });
          }
@@ -444,9 +444,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    }
 
    /**
-    * Set appropriate aria-labels on all splitters based on their position.
+    * Set appropriate aria-labels and elementIds on all splitters based on their position.
     */
-   private void setSplitterAriaLabels()
+   private void setSplitterAttributes()
    {
       // Set label for sidebar splitter if sidebar exists
       if (sidebar_ != null)
