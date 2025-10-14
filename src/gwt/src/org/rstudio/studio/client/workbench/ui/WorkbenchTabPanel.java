@@ -100,6 +100,7 @@ class WorkbenchTabPanel
          ThemedButton configureButton = new ThemedButton(constants_.configurePanesButtonText(), event -> {
             commands.paneLayout().execute();
          });
+         ElementIds.assignElementId(configureButton, ElementIds.CUSTOMIZE_PANES_BUTTON);
          emptyStateContent.add(configureButton);
 
          emptyStateContainer.add(emptyStateContent);

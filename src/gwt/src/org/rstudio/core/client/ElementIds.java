@@ -204,6 +204,7 @@ public class ElementIds
    public final static String SIDEBAR_COLUMN_SPLITTER = "sidebar_column_splitter";
    public final static String SOURCE_COLUMN_SPLITTER = "source_column_splitter";
    public final static String MIDDLE_COLUMN_SPLITTER = "middle_column_splitter";
+   public final static String CUSTOMIZE_PANES_BUTTON = "customize_panes";
 
    // AskSecretDialog
    public final static String ASK_SECRET_TEXT = "ask_secret_text";
