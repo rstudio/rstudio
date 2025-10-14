@@ -33,7 +33,9 @@ shopt -s dotglob
 codesign_args=("$@")
 
 codesign-file () {
-	codesign "${codesign_args[@]}" "$1"
+
+	codesign "${codesign_args[@]}" "$@"
+
 }
 
 codesign-directory () {
@@ -57,8 +59,18 @@ codesign-directory () {
 echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 
+for executable in rsession rsession-arm64; do
+	path="${package}/Contents/Resources/app/bin/${executable}"
+	if [ -e "${path}" ]; then
+		entype="${RSESSION_ENTITLEMENTS_TYPE-adhoc}"
+		entitlements=entitlements/rsession-${entype}.plist
+		echo "[i] Re-signing ${executable} with entitlements -- ${entype}"
+		codesign-file --entitlements "${entitlements}" "${path}"
+	fi
+done
+
 echo "[i] Re-signing RStudio binary"
-codesign-file "${package}/Contents/MacOS/RStudio"
+codesign-file --entitlements entitlements/rstudio.plist "${package}/Contents/MacOS/RStudio"
 
 echo "[i] Validating signatures"
 codesign -vvv --deep --strict "${package}"
