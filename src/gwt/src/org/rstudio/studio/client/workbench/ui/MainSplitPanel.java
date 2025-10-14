@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
@@ -301,6 +302,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                public void execute()
                {
                   enforceBoundaries();
+                  setSplitterAttributes();
                }
             });
          }
@@ -439,6 +441,55 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       Element splitter = getAssociatedSplitterElement(widget);
       if (splitter != null)
          splitter.focus();
+   }
+
+   /**
+    * Set appropriate aria-labels and elementIds on all splitters based on their position.
+    */
+   private void setSplitterAttributes()
+   {
+      // Set label for sidebar splitter if sidebar exists
+      if (sidebar_ != null)
+      {
+         Element splitterElem = getAssociatedSplitterElement(sidebar_);
+         if (splitterElem != null)
+         {
+            splitterElem.setId(ElementIds.getElementId(ElementIds.SIDEBAR_COLUMN_SPLITTER));
+            splitterElem.setAttribute("aria-label", "sidebar column splitter");
+         }
+      }
+
+      // Set labels for source column splitters
+      for (int i = 0; i < leftList_.size(); i++)
+      {
+         Element splitterElem = getAssociatedSplitterElement(leftList_.get(i));
+         if (splitterElem != null)
+         {
+            splitterElem.setId(ElementIds.getElementId(ElementIds.SOURCE_COLUMN_SPLITTER + (i + 1)));
+            splitterElem.setAttribute("aria-label", "source column " + (i + 1) + " splitter");
+         }
+      }
+
+      // Set label for the middle splitter (between center and right columns)
+      // Which widget has the splitter depends on layout:
+      // - If sidebar is on right: center_ has the splitter (right_ is CENTER with add())
+      // - If sidebar is not on right: right_ has the splitter (center_ is CENTER with add())
+      Widget middleSplitterWidget;
+      if (sidebar_ != null && !"left".equals(sidebarLocation_))
+      {
+         middleSplitterWidget = center_;
+      }
+      else
+      {
+         middleSplitterWidget = right_;
+      }
+
+      Element splitterElem = getAssociatedSplitterElement(middleSplitterWidget);
+      if (splitterElem != null)
+      {
+         splitterElem.setId(ElementIds.getElementId(ElementIds.MIDDLE_COLUMN_SPLITTER));
+         splitterElem.setAttribute("aria-label", "middle column splitter");
+      }
    }
 
    private void clearForRefresh()
