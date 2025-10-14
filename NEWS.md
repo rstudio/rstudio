@@ -35,6 +35,8 @@
 - ([#16485](https://github.com/rstudio/rstudio/issues/16485)): Removed inoperative min/max controls from Source Columns
 - ([#16516](https://github.com/rstudio/rstudio/issues/16516)): Fixed issue with extraneous space in object size for large objects in Environment pane
 - ([#16542](https://github.com/rstudio/rstudio/issues/16542)): Improved accessibility of column splitters by adding accessible labels for screen readers
+- ([#14683](https://github.com/rstudio/rstudio/issues/14683)): Changed RStudio Desktop on Linux to default to using native file and message dialog boxes
+- ([#15340](https://github.com/rstudio/rstudio/issues/15340)): Fixed issue where native file dialogs on RStudio Desktop on Linux wouldn't show .Rproj files
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
