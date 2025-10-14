@@ -2,6 +2,9 @@
 
 library(testthat)
 
+# element identifiers
+CUSTOMIZE_PANES_BUTTON <- "#rstudio_customize_panes"
+
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
@@ -38,6 +41,9 @@ withr::defer(.rs.automation.deleteRemote())
    # Check that rstudio_Source3_pane does NOT exist
    source3Exists <- remote$dom.elementExists("#rstudio_Source3_pane")
    expect_false(source3Exists, "rstudio_Source3_pane element should NOT exist")
+
+   # Check that Customize Panes button does NOT exist
+   expect_false(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON),"rstudio_customize_panes element should NOT exist")
 
    # Wait for elements to be visible and check their visibility
    tabSet1NodeId <- remote$dom.waitForElement("#rstudio_TabSet1_pane")
@@ -154,6 +160,12 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
    expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
    
+   # Check that Customize Panes button exists and is hidden
+   expect_true(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON), "rstudio_customize_panes element should exist")
+   customizePanesButtonElement <- remote$js.querySelector("#rstudio_customize_panes")
+   expect_false(customizePanesButtonElement$offsetWidth > 0, "rstudio_customize_panes should be visible (width > 0)")
+   expect_false(customizePanesButtonElement$offsetHeight > 0, "rstudio_customize_panes should be visible (height > 0)")
+
    # Hide the sidebar
    remote$commands.execute("toggleSidebar")
    
@@ -165,6 +177,9 @@ withr::defer(.rs.automation.deleteRemote())
    # Verify the sidebar no longer exists
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling sidebar off")
+
+   # Check that Customize Panes button no longer exists
+   expect_false(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON), "rstudio_customize_panes element should NOT exist")
 })
 
 .rs.test("Sidebar can be moved left and right with moveSidebar commands", {
