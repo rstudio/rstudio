@@ -2204,7 +2204,9 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
+      // Only pass commands to sidebar for the empty state feature
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
+         StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR) ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;

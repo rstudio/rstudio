@@ -28,11 +28,14 @@ import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -40,6 +43,7 @@ import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -55,7 +59,7 @@ class WorkbenchTabPanel
                  HasEnsureVisibleHandlers,
                  HasEnsureHeightHandlers
 {
-   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName)
+   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName, Commands commands)
    {
       final int UTILITY_AREA_SIZE = 52;
       panel_ = new LayoutPanel();
@@ -79,7 +83,35 @@ class WorkbenchTabPanel
                                  UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
+      // Create empty state widget for when there are no tabs
+      if (commands != null)
+      {
+         // Outer container that fills the entire space
+         FlowPanel emptyStateContainer = new FlowPanel();
+
+         // Inner content with just the button
+         FlowPanel emptyStateContent = new FlowPanel();
+         Style contentStyle = emptyStateContent.getElement().getStyle();
+         contentStyle.setProperty("display", "flex");
+         contentStyle.setProperty("flexDirection", "column");
+         contentStyle.setProperty("alignItems", "center");
+         contentStyle.setTextAlign(Style.TextAlign.CENTER);
+
+         ThemedButton configureButton = new ThemedButton(constants_.configurePanesButtonText(), event -> {
+            commands.paneLayout().execute();
+         });
+         emptyStateContent.add(configureButton);
+
+         emptyStateContainer.add(emptyStateContent);
+
+         emptyStatePanel_ = emptyStateContainer;
+         panel_.add(emptyStatePanel_);
+         panel_.setWidgetTopBottom(emptyStatePanel_, 0, Unit.PX, 0, Unit.PX);
+         panel_.setWidgetLeftRight(emptyStatePanel_, 0, Unit.PX, 0, Unit.PX);
+      }
+
       initWidget(panel_);
+      updateEmptyStateVisibility();
    }
 
    @Override
@@ -145,6 +177,8 @@ class WorkbenchTabPanel
 
       for (WorkbenchTab tab : tabs)
          add(tab);
+
+      updateEmptyStateVisibility();
    }
 
    private boolean areTabsIdentical(ArrayList<WorkbenchTab> tabs)
@@ -341,6 +375,7 @@ class WorkbenchTabPanel
       tabPanel_.clear();
       tabs_.clear();
       clearing_ = false;
+      updateEmptyStateVisibility();
    }
 
    public LogicalWindow getParentWindow()
@@ -353,6 +388,48 @@ class WorkbenchTabPanel
       neverVisible_ = value;
    }
 
+   private void updateEmptyStateVisibility()
+   {
+      if (emptyStatePanel_ != null)
+      {
+         // Get the wrapper element created by LayoutPanel
+         com.google.gwt.dom.client.Element wrapper = panel_.getWidgetContainerElement(emptyStatePanel_);
+
+         if (tabs_.isEmpty())
+         {
+            // Show the empty state with flex layout and allow pointer events for the button
+            setStyleProperty(emptyStatePanel_.getElement(), "display", "flex", "important");
+            setStyleProperty(emptyStatePanel_.getElement(), "align-items", "center", "");
+            setStyleProperty(emptyStatePanel_.getElement(), "justify-content", "center", "");
+            emptyStatePanel_.getElement().getStyle().clearProperty("pointerEvents");
+            emptyStatePanel_.getElement().getStyle().clearZIndex();
+
+            // Also clear pointer-events on the wrapper
+            if (wrapper != null)
+            {
+               wrapper.getStyle().clearProperty("pointerEvents");
+            }
+         }
+         else
+         {
+            // Hide the empty state behind the tab panel to prevent blocking clicks
+            setStyleProperty(emptyStatePanel_.getElement(), "display", "none", "important");
+            setStyleProperty(emptyStatePanel_.getElement(), "pointer-events", "none", "important");
+            setStyleProperty(emptyStatePanel_.getElement(), "z-index", "-1", "");
+
+            // Also set pointer-events: none on the wrapper to prevent it from blocking clicks
+            if (wrapper != null)
+            {
+               setStyleProperty(wrapper, "pointer-events", "none", "important");
+            }
+         }
+      }
+   }
+
+   private native void setStyleProperty(com.google.gwt.dom.client.Element element, String property, String value, String priority) /*-{
+      element.style.setProperty(property, value, priority);
+   }-*/;
+
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<>();
    private final LogicalWindow parentWindow_;
@@ -361,5 +438,6 @@ class WorkbenchTabPanel
    private boolean neverVisible_ = false;
    private LayoutPanel panel_;
    private HTML utilPanel_;
+   private Widget emptyStatePanel_;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }
