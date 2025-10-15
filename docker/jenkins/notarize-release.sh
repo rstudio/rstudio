@@ -34,33 +34,66 @@ if [[ "$#" -lt 1 ]]; then
 fi
 
 # Validate environment vars
-if [ -z "$APPLE_ID_USR" ]; then
+if [ -z "${APPLE_ID_USR}" ]; then
     echo "Please set the environment variable APPLE_ID_USR to the AppleID under which to submit the notarization request."
     exit 1
 fi
-if [ -z "$APPLE_ID_PSW" ]; then
+if [ -z "${APPLE_ID_PSW}" ]; then
     echo "Please set the environment variable APPLE_ID_PSW to the password to the account named in the APPLE_ID_USR environment variable."
     exit 1
 fi
 
 # Submit the notarization request to Apple
-echo "Submitting notarization request using account $APPLE_ID_USR..."
+echo "Submitting notarization request using account ${APPLE_ID_USR} ..."
+
+log=/tmp/rstudio-notarization-$$.log
+mkfifo "${log}"
+trap 'rm -f ${log}' EXIT
 
 # The team-id uniquely identifies the organization with Apple. It does not need to be generated again and is found in the Apple developer account.
-xcrun notarytool submit --wait \
-    --apple-id $APPLE_ID_USR \
-    --password $APPLE_ID_PSW \
-    --team-id FYF2F5GFX4 \
-    --progress \
-    $1
+xcrun notarytool submit --wait   \
+    --apple-id "${APPLE_ID_USR}" \
+    --password "${APPLE_ID_PSW}" \
+    --team-id FYF2F5GFX4         \
+    --progress                   \
+    "$1" > "${log}" 2>&1 &
 
-# Check result
-if [ $? -eq 0 ]; then
-    echo "Notarization completed successfully."
-else
+# Stream logs, and collect the UUID used for the submission.
+while IFS= read -r line < "${log}"; do
+    
+    echo "${line}"
+    
+    if [[ "${line}" =~ "id:" ]]; then
+        uuid=$(echo "${line}" | cut -d: -f2 | xargs)
+    fi
+
+    if [[ "${line}" =~ "Current status: Invalid" ]]; then
+        status="invalid"
+    fi
+
+    if [[ "${line}" =~ "Processing complete" ]]; then
+        break
+    fi
+
+done
+
+# Check for success.
+if [[ "${status}" = "invalid" ]]; then
+
+    echo
+    echo ----------------------------------------
+    xcrun notarytool log             \
+        --apple-id "${APPLE_ID_USR}" \
+        --password "${APPLE_ID_PSW}" \
+        --team-id FYF2F5GFX4         \
+        "${uuid}"
+    echo ----------------------------------------
+    echo
+
     echo "Notarization failed."
     exit 1
+
 fi
 
 # Staple the result to DMG file (allows offline verification of notarization)
-xcrun stapler staple $1
+xcrun stapler staple "$1"
