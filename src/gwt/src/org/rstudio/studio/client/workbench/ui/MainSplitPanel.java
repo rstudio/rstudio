@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsObject;
@@ -303,6 +305,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                {
                   enforceBoundaries();
                   setSplitterAttributes();
+                  deferredSaveWidthPercent();
                }
             });
          }
@@ -500,6 +503,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          remove(sidebar_);
       for (Widget w : leftList_)
          remove(w);
+      widgetPercentages_.clear();
    }
 
    private void enforceBoundaries()
@@ -520,12 +524,27 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       {
          public void execute()
          {
-            splitPercent_ = null;
+            widgetPercentages_.clear();
             int panelWidth = getOffsetWidth();
             assert panelWidth > 0;
             assert isVisible() && isAttached();
             if (panelWidth > 0)
-               splitPercent_ = (double)right_.getOffsetWidth() / panelWidth;
+            {
+               // Store percentage for sidebar if present
+               if (sidebar_ != null)
+                  widgetPercentages_.put(sidebar_, (double)sidebar_.getOffsetWidth() / panelWidth);
+
+               // Store percentages for all left widgets
+               for (Widget w : leftList_)
+                  widgetPercentages_.put(w, (double)w.getOffsetWidth() / panelWidth);
+
+               // When sidebar is on right, center is a WEST widget and needs proportional resizing
+               // When sidebar is not on right, center is CENTER widget and fills remaining space
+               if (sidebar_ != null && !"left".equals(sidebarLocation_))
+                  widgetPercentages_.put(center_, (double)center_.getOffsetWidth() / panelWidth);
+               else
+                  widgetPercentages_.put(right_, (double)right_.getOffsetWidth() / panelWidth);
+            }
             previousOffsetWidth_ = panelWidth;
          }
       });
@@ -538,12 +557,19 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
       int offsetWidth = getOffsetWidth();
       if ((previousOffsetWidth_ == null || offsetWidth != previousOffsetWidth_.intValue())
-          && splitPercent_ != null)
+          && !widgetPercentages_.isEmpty())
       {
-         LayoutData layoutData = (LayoutData) right_.getLayoutData();
-         if (layoutData == null)
-            return;
-         layoutData.size = splitPercent_ * offsetWidth;
+         // Apply proportional resizing to all widgets
+         for (Map.Entry<Widget, Double> entry : widgetPercentages_.entrySet())
+         {
+            Widget widget = entry.getKey();
+            Double percentage = entry.getValue();
+            LayoutData layoutData = (LayoutData) widget.getLayoutData();
+            if (layoutData != null)
+            {
+               layoutData.size = percentage * offsetWidth;
+            }
+         }
 
          previousOffsetWidth_ = offsetWidth;
 
@@ -561,7 +587,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       }
    }
    
-   private Double splitPercent_ = null;
+   private Map<Widget, Double> widgetPercentages_ = new HashMap<>();
    private Integer previousOffsetWidth_ = null;
 
    private final Session session_;
