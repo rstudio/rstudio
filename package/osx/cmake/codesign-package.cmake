@@ -24,7 +24,6 @@ endfunction()
 set(CODESIGN_FLAGS
    --options runtime
    --timestamp
-   --entitlements "@CMAKE_CURRENT_SOURCE_DIR@/entitlements-electron.plist"
    --force
    --deep)
 
@@ -35,12 +34,14 @@ set(CODESIGN_FLAGS
 # with the older invalid signature
 if(@RSTUDIO_CODESIGN_USE_CREDENTIALS@)
    echo("codesign: using RStudio's credentials")
+   set(ENV{RSESSION_ENTITLEMENTS_TYPE} "ci")
    list(APPEND CODESIGN_FLAGS
-      -s 4D663D999011E80361D8848C8487D70E4C41DB60
-      -i org.rstudio.RStudio)
+      --sign 4D663D999011E80361D8848C8487D70E4C41DB60
+      --prefix org.rstudio.)
 else()
    echo("codesign: using ad-hoc signature")
-   list(APPEND CODESIGN_FLAGS -s -)
+   set(ENV{RSESSION_ENTITLEMENTS_TYPE} "adhoc")
+   list(APPEND CODESIGN_FLAGS --sign -)
 endif()
 
 execute_process(
@@ -49,7 +50,7 @@ execute_process(
       "@CMAKE_INSTALL_PREFIX@/RStudio.app"
       ${CODESIGN_FLAGS}
    WORKING_DIRECTORY
-      "@CMAKE_INSTALL_PREFIX@"
+      "@CMAKE_CURRENT_SOURCE_DIR@"
    OUTPUT_VARIABLE CODESIGN_OUTPUT ECHO_OUTPUT_VARIABLE
    ERROR_VARIABLE CODESIGN_ERROR ECHO_ERROR_VARIABLE
    COMMAND_ERROR_IS_FATAL ANY

@@ -167,7 +167,7 @@ dependency(YAML_CPP
 )
 
 # help yaml-cpp 0.8.0 find <cstdint> during compilation
-if(NOT MSVC)
+if(NOT MSVC AND NOT APPLE)
    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
    set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
 endif()
