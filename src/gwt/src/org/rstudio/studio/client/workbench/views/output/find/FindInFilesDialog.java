@@ -14,19 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -41,8 +31,19 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 {
@@ -261,7 +262,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    private void manageExcludeFilePattern()
    {
-      // disable custom exclude text box when 'Exclude these files:' is unchecked
+      // disable custom exclude text box when 'Exclude files' is unchecked
       showDivIf(divExcludeCustomFilter_, checkboxExcludeCustom_.getValue());
       
       // disable 'Files matched by .gitignore' when directory is not a git repository or git is not installed
@@ -364,7 +365,22 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxWholeWord_.setValue(dialogState.isWholeWord());
       checkboxRegex_.setValue(dialogState.isRegex());
-      dirChooser_.setText(dialogState.getPath());
+
+      String path = dialogState.getPath();
+      if (StringUtil.isNullOrEmpty(path))
+      {
+         FileSystemItem projectDir =
+            RStudioGinjector.INSTANCE.getSession().getSessionInfo().getActiveProjectDir();
+         if (projectDir != null)
+         {
+            path = projectDir.getPath();
+         }
+         else
+         {
+            path = "~";
+         }
+      }
+      dirChooser_.setText(path);
 
       String includeFilePatterns = StringUtil.join(
             Arrays.asList(dialogState.getFilePatterns()), ", ");
