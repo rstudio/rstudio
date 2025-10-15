@@ -124,6 +124,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             flowPanel.add(checkBox);
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
+            // Hide Chat pane if show_chat_ui preference is false
+            if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
+                !userPrefs_.showChatUi().getGlobalValue())
+              checkBox.setVisible(false);
          }
 
          ScrollPanel scrollPanel = new ScrollPanelWithClick();

@@ -552,6 +552,7 @@ public class PaneManager
       });
 
       manageLayoutCommands();
+      manageChatCommands();
       new ZoomedTabStateValue();
    }
 
@@ -1610,7 +1611,13 @@ public class PaneManager
       if (tabNames != null)
       {
          for (int j = 0; j < tabNames.length(); j++)
-            tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+         {
+            Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
+            // Filter out Chat tab if show_chat_ui preference is false
+            if (tab == Tab.Chat && !userPrefs_.showChatUi().getGlobalValue())
+               continue;
+            tabList.add(tab);
+         }
       }
       return tabList;
    }
@@ -1674,12 +1681,26 @@ public class PaneManager
 
    public WorkbenchTab[] getAllTabs()
    {
-      return new WorkbenchTab[] { historyTab_, filesTab_,
-                                  plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, tutorialTab_, buildTab_, 
-                                  presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_, chatTab_,
-                                  connectionsTab_, jobsTab_, launcherJobsTab_ };
+      // Build list of tabs, conditionally including Chat based on preference
+      ArrayList<WorkbenchTab> tabs = new ArrayList<>();
+      tabs.add(historyTab_);
+      tabs.add(filesTab_);
+      tabs.add(plotsTab_);
+      tabs.add(packagesTab_);
+      tabs.add(helpTab_);
+      tabs.add(vcsTab_);
+      tabs.add(tutorialTab_);
+      tabs.add(buildTab_);
+      tabs.add(presentationTab_);
+      tabs.add(presentation2Tab_);
+      tabs.add(environmentTab_);
+      tabs.add(viewerTab_);
+      if (userPrefs_.showChatUi().getGlobalValue())
+         tabs.add(chatTab_);
+      tabs.add(connectionsTab_);
+      tabs.add(jobsTab_);
+      tabs.add(launcherJobsTab_);
+      return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
    public void activateTab(Tab tab)
@@ -2422,6 +2443,13 @@ public class PaneManager
       commands_.focusSidebarSeparator().setEnabled(isSidebarVisible);
    }
 
+   private void manageChatCommands()
+   {
+      boolean showChatUi = userPrefs_.showChatUi().getGlobalValue();
+      commands_.activateChat().setVisible(showChatUi);
+      commands_.layoutZoomChat().setVisible(showChatUi);
+   }
+
    private List<AppCommand> getLayoutCommands()
    {
       List<AppCommand> commands = new ArrayList<>();
@@ -2441,7 +2469,9 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      commands.add(commands_.layoutZoomChat());
+      // Only add layoutZoomChat if show_chat_ui preference is enabled
+      if (userPrefs_.showChatUi().getGlobalValue())
+         commands.add(commands_.layoutZoomChat());
 
       return commands;
    }

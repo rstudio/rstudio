@@ -2506,3 +2506,12 @@
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },
    clear = function() { .rs.clearUserPref("console_highlight_conditions") }
 )
+
+# Show Chat UI
+#
+# Whether to show the experimental Chat UI
+.rs.uiPrefs$showChatUi <- list(
+   get = function() { .rs.getUserPref("show_chat_ui") },
+   set = function(value) { .rs.setUserPref("show_chat_ui", value) },
+   clear = function() { .rs.clearUserPref("show_chat_ui") }
+)
