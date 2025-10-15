@@ -83,19 +83,36 @@ class WorkbenchTabPanel
                                  UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
+      // Create sidebar title for when there are no tabs
+      sidebarTitlePanel_ = new HTML(constants_.sidebarTitleText());
+      sidebarTitlePanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
+      Style titleStyle = sidebarTitlePanel_.getElement().getStyle();
+      titleStyle.setLineHeight(22, Unit.PX);
+      titleStyle.setPaddingLeft(8, Unit.PX);
+      titleStyle.setProperty("display", "flex");
+      titleStyle.setProperty("alignItems", "center");
+      panel_.add(sidebarTitlePanel_);
+      panel_.setWidgetLeftRight(sidebarTitlePanel_, 0, Unit.PX, UTILITY_AREA_SIZE, Unit.PX);
+      panel_.setWidgetTopHeight(sidebarTitlePanel_, 0, Unit.PX, 22, Unit.PX);
+
       // Create empty state widget for when there are no tabs
       if (commands != null)
       {
          // Outer container that fills the entire space
          FlowPanel emptyStateContainer = new FlowPanel();
 
-         // Inner content with just the button
+         // Inner content with text and button
          FlowPanel emptyStateContent = new FlowPanel();
          Style contentStyle = emptyStateContent.getElement().getStyle();
          contentStyle.setProperty("display", "flex");
          contentStyle.setProperty("flexDirection", "column");
          contentStyle.setProperty("alignItems", "center");
          contentStyle.setTextAlign(Style.TextAlign.CENTER);
+
+         // Add explanatory text
+         HTML noTabsText = new HTML(constants_.noTabsAssignedText());
+         noTabsText.getElement().getStyle().setMarginBottom(12, Unit.PX);
+         emptyStateContent.add(noTabsText);
 
          ThemedButton configureButton = new ThemedButton(constants_.configurePanesButtonText(), event -> {
             commands.paneLayout().execute();
@@ -391,6 +408,12 @@ class WorkbenchTabPanel
 
    private void updateEmptyStateVisibility()
    {
+      // Control visibility of sidebar title
+      if (sidebarTitlePanel_ != null)
+      {
+         sidebarTitlePanel_.setVisible(tabs_.isEmpty());
+      }
+
       if (emptyStatePanel_ != null)
       {
          // Get the wrapper element created by LayoutPanel
@@ -439,6 +462,7 @@ class WorkbenchTabPanel
    private boolean neverVisible_ = false;
    private LayoutPanel panel_;
    private HTML utilPanel_;
+   private HTML sidebarTitlePanel_;
    private Widget emptyStatePanel_;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

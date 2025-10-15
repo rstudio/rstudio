@@ -27,4 +27,6 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
     String cannotAddMoreColumnsText(int maxColumnCount);
     String closeText();
     String configurePanesButtonText();
+    String noTabsAssignedText();
+    String sidebarTitleText();
 }
