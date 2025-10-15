@@ -115,23 +115,39 @@
       # of the 'print()' function here. when auto-printing an object, R will
       # synthesize a print call, but with the definition of `base::print`
       # inlined into the call as opposed to a typical `print` symbol.
+      
+      # check for an 'auto-print'; if we find it, use our override
       call <- sys.calls()[[1L]]
       if (identical(call[[1L]], base::print)) {
-        # appears to be an auto-printed object; apply our override
         o <- overrideMap(x, options)
         if (!is.null(o))
-          overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
-      } else {
-        # appears to be an explicit invocation of 'print';
-        # use the saved print method if available, or the next method if not
-        methods <- paste("print", class(x), sep = ".")
-        for (method in methods)
-           if (exists(method, envir = .rs.S3Originals))
-              return(.rs.S3Originals[[method]](x, ...))
-        NextMethod()
+          return(overridePrint(o$x, o$options, o$className, o$nRow, o$nCol))
       }
       
-   }
+      # otherwise, call the original S3 method. we need to manually manage the
+      # lookup here since we inject overrides into the base namespace, which
+      # could mask the visibility of certain S3 overrides
+      for (class in class(x)) {
+        
+        # check for an explicit S3 method, and invoke it if it's
+        # not one of our overrides
+        f <- getS3method("print", class, optional = TRUE)
+        if (!is.null(f))
+          if (is.null(attr(f, ".rs.S3Override")))
+            return(f(x, ...))
+        
+        # check and see if we kept the original definition for this function;
+        # if so, use it
+        method <- paste("print", class, sep = ".")
+        f <- .rs.S3Originals[[method]]
+        if (!is.null(f))
+          return(f(x, ...))
+        
+      }
+      
+      NextMethod()
+      
+    }
 
    .rs.addS3Override(overrideName, overrideFun)
 
