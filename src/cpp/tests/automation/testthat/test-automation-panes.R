@@ -160,11 +160,11 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
    expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
    
-   # Check that Customize Panes button exists and is hidden
+   # Check that Customize Panes button exists and is visible (no tabs assigned to sidebar by default)
    expect_true(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON), "rstudio_customize_panes element should exist")
    customizePanesButtonElement <- remote$js.querySelector("#rstudio_customize_panes")
-   expect_false(customizePanesButtonElement$offsetWidth > 0, "rstudio_customize_panes should be visible (width > 0)")
-   expect_false(customizePanesButtonElement$offsetHeight > 0, "rstudio_customize_panes should be visible (height > 0)")
+   expect_true(customizePanesButtonElement$offsetWidth > 0, "rstudio_customize_panes should be visible (width > 0)")
+   expect_true(customizePanesButtonElement$offsetHeight > 0, "rstudio_customize_panes should be visible (height > 0)")
 
    # Hide the sidebar
    remote$commands.execute("toggleSidebar")

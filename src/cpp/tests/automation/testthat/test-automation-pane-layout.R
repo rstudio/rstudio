@@ -438,34 +438,34 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("Clicking unchecked tab in TabSet1 unchecks it in the Sidebar", {
    .rs.openPaneLayoutOptions(remote)
 
-   # Chat is checked in Sidebar by default, not in TabSet1 or TabSet2
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   # Files is checked in TabSet2 by default, not in TabSet1 or Sidebar
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Check Chat in TabSet1
-   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   # Check Files in Sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
 
-   # Verify Chat is now checked in TabSet1 and unchecked in Sidebar and TabSet2
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   # Verify Files is now checked in Sidebar and unchecked in TabSet1 and TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Move it to TabSet2
-   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   # Check Files in TabSet1
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
-   # Verify Chat is now checked in TabSet2 and unchecked in Sidebar and TabSet1
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
+   # Verify Files is now checked in TabSet1 and unchecked in Sidebar and TabSet2
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Move it back to Sidebar
-   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
+   # Move it back to TabSet2
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
 
-   # Verify it's back to original state
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Chat"))
-   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Chat"))
+   # Verify Files is now checked in TabSet2 and unchecked in Sidebar and TabSet1
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_BOTTOM, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_RIGHT_TOP, "Files"))
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
