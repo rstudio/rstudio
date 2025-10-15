@@ -553,6 +553,22 @@ public class PaneManager
 
       manageLayoutCommands();
       manageChatCommands();
+
+      // Monitor changes to show_chat_ui preference and reload when it changes
+      userPrefs_.showChatUi().addValueChangeHandler(event ->
+      {
+         // Write preferences to server before reloading to ensure they persist
+         userPrefs_.writeUserPrefs(succeeded ->
+         {
+            if (succeeded)
+            {
+               // Preference saved successfully - reload the page to apply changes
+               com.google.gwt.user.client.Window.Location.reload();
+            }
+            // If write failed, don't reload to avoid losing user's change
+         });
+      });
+
       new ZoomedTabStateValue();
    }
 
