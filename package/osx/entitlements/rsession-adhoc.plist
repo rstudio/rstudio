@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
   
-  <!-- We use DYLD_INSERT_LIBRARIES to load the libR.dylib dynamically. -->
+  <!-- We use DYLD_INSERT_LIBRARIES to load libR.dylib dynamically. -->
   <key>com.apple.security.cs.allow-dyld-environment-variables</key>
   <true/>
 
