@@ -2263,6 +2263,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("(None)")
    String consoleHighlightConditionsEnum_none();
 
+   /**
+    * Whether to show the experimental Chat UI
+    */
+   @DefaultStringValue("Show Chat UI")
+   String showChatUiTitle();
+   @DefaultStringValue("Whether to show the experimental Chat UI")
+   String showChatUiDescription();
+
 
 
 }
