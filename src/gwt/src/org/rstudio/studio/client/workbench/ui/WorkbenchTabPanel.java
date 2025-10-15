@@ -411,7 +411,37 @@ class WorkbenchTabPanel
       // Control visibility of sidebar title
       if (sidebarTitlePanel_ != null)
       {
-         sidebarTitlePanel_.setVisible(tabs_.isEmpty());
+         // Get the wrapper element created by LayoutPanel
+         com.google.gwt.dom.client.Element wrapper = panel_.getWidgetContainerElement(sidebarTitlePanel_);
+
+         if (tabs_.isEmpty())
+         {
+            // Show the sidebar title and allow it to be visible
+            sidebarTitlePanel_.setVisible(true);
+            sidebarTitlePanel_.getElement().getStyle().clearProperty("pointerEvents");
+            sidebarTitlePanel_.getElement().getStyle().clearProperty("display");
+            sidebarTitlePanel_.getElement().getStyle().clearZIndex();
+
+            // Also clear pointer-events on the wrapper
+            if (wrapper != null)
+            {
+               wrapper.getStyle().clearProperty("pointerEvents");
+            }
+         }
+         else
+         {
+            // Hide the sidebar title and prevent it from blocking clicks
+            sidebarTitlePanel_.setVisible(false);
+            setStyleProperty(sidebarTitlePanel_.getElement(), "pointer-events", "none", "important");
+            setStyleProperty(sidebarTitlePanel_.getElement(), "display", "none", "important");
+            setStyleProperty(sidebarTitlePanel_.getElement(), "z-index", "-1", "");
+
+            // Also set pointer-events: none on the wrapper to prevent it from blocking clicks
+            if (wrapper != null)
+            {
+               setStyleProperty(wrapper, "pointer-events", "none", "important");
+            }
+         }
       }
 
       if (emptyStatePanel_ != null)
