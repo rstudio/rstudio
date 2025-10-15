@@ -3,11 +3,7 @@
 <plist version="1.0">
 <dict>
   
-  <!-- Required by Qt / Chromium. -->
-  <key>com.apple.security.cs.disable-library-validation</key>
-  <true/>
-
-  <!-- Required for Electron WebAssembly compilation -->
+  <!-- Required for Electron WebAssembly compilation. -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
 

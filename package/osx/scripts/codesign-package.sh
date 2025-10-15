@@ -59,18 +59,18 @@ codesign-directory () {
 echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 
+entype="${RSESSION_ENTITLEMENTS_TYPE-adhoc}"
 for executable in rsession rsession-arm64; do
 	path="${package}/Contents/Resources/app/bin/${executable}"
 	if [ -e "${path}" ]; then
-		entype="${RSESSION_ENTITLEMENTS_TYPE-adhoc}"
 		entitlements=entitlements/rsession-${entype}.plist
 		echo "[i] Re-signing ${executable} with entitlements -- ${entype}"
 		codesign-file --entitlements "${entitlements}" "${path}"
 	fi
 done
 
-echo "[i] Re-signing RStudio binary"
-codesign-file --entitlements entitlements/rstudio.plist "${package}/Contents/MacOS/RStudio"
+echo "[i] Re-signing RStudio binary with entitlements -- ${entype}"
+codesign-file --entitlements "entitlements/rstudio-${entype}.plist" "${package}/Contents/MacOS/RStudio"
 
 echo "[i] Validating signatures"
 codesign -vvv --deep --strict "${package}"
