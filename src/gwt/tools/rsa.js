@@ -1,4 +1,4 @@
-// Downloaded from http://www-cs-students.stanford.edu/~tjw/ at Tue Nov 30 00:42:57 PST 2010
+// Downloaded from http://www-cs-students.stanford.edu/~tjw/ at Wed Oct 15 07:23:51 PM CDT 2025
 // ==== File: jsbn.js
 // Copyright (c) 2005  Tom Wu
 // All Rights Reserved.
@@ -120,7 +120,7 @@ function bnpFromInt(x) {
   this.t = 1;
   this.s = (x<0)?-1:0;
   if(x > 0) this[0] = x;
-  else if(x < -1) this[0] = x+DV;
+  else if(x < -1) this[0] = x+this.DV;
   else this.t = 0;
 }
 
@@ -214,7 +214,7 @@ function bnCompareTo(a) {
   if(r != 0) return r;
   var i = this.t;
   r = i-a.t;
-  if(r != 0) return r;
+  if(r != 0) return (this.s<0)?-r:r;
   while(--i >= 0) if((r=this[i]-a[i]) != 0) return r;
   return 0;
 }
@@ -635,6 +635,13 @@ if(rng_pool == null) {
   rng_pool = new Array();
   rng_pptr = 0;
   var t;
+  if(window.crypto && window.crypto.getRandomValues) {
+    // Use webcrypto if available
+    var ua = new Uint8Array(32);
+    window.crypto.getRandomValues(ua);
+    for(t = 0; t < 32; ++t)
+      rng_pool[rng_pptr++] = ua[t];
+  }
   if(navigator.appName == "Netscape" && navigator.appVersion < "5" && window.crypto) {
     // Extract entropy (256 bits) from NS4 RNG if available
     var z = window.crypto.random(32);
@@ -789,7 +796,7 @@ RSAKey.prototype.encrypt = RSAEncrypt;
 //RSAKey.prototype.encrypt_b64 = RSAEncryptB64;
 // ==== File: base64.js
 var b64map="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-var b64pad="=";
+var b64padchar="=";
 
 function hex2b64(h) {
   var i;
@@ -807,7 +814,7 @@ function hex2b64(h) {
     c = parseInt(h.substring(i,i+2),16);
     ret += b64map.charAt(c >> 2) + b64map.charAt((c & 3) << 4);
   }
-  while((ret.length & 3) > 0) ret += b64pad;
+  while((ret.length & 3) > 0) ret += b64padchar;
   return ret;
 }
 
@@ -818,8 +825,8 @@ function b64tohex(s) {
   var k = 0; // b64 state, 0-3
   var slop;
   for(i = 0; i < s.length; ++i) {
-    if(s.charAt(i) == b64pad) break;
-    v = b64map.indexOf(s.charAt(i));
+    if(s.charAt(i) == b64padchar) break;
+    var v = b64map.indexOf(s.charAt(i));
     if(v < 0) continue;
     if(k == 0) {
       ret += int2char(v >> 2);

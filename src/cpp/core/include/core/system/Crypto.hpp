@@ -16,6 +16,8 @@
 #ifndef CORE_SYSTEM_CRYPTO_HPP
 #define CORE_SYSTEM_CRYPTO_HPP
 
+#include <openssl/evp.h>
+
 #include <string>
 #include <vector>
 
@@ -29,7 +31,7 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
-      
+
 void initialize();
 
 core::Error HMAC_SHA2(const std::string& data,
@@ -72,8 +74,10 @@ core::Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
 
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 
-core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);
-         
+core::Error rsaPrivateDecrypt(const std::string& cipherText,
+                              std::string* pPlainText,
+                              EVP_PKEY* pKey = nullptr);
+
 } // namespace crypto
 } // namespace system
 } // namespace core
