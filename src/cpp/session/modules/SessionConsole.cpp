@@ -46,20 +46,10 @@ namespace console {
 
 namespace {   
 
-bool suppressOutput(const std::string& output)
+boost::regex suppressOutputRegex()
 {
-   if (options().getBoolOverlayOption(kLauncherSessionOption))
-   {
-      // in launcher session mode, we log normal program errors to stderr so they
-      // can be recorded in the launcher job's logs, but we don't want them to show
-      // up in the RStudio console, so we filter them out here
-      // note: all log messages will contain a tag like [rsession-username]
-      if (boost::algorithm::contains(output, "[rsession"))
-         return true;
-   }
-
    // tokens to suppress
-   auto tokens = {
+   std::vector<std::string> tokenList = {
        "GLib-WARNING **:",
        "GLib-CRITICAL **:",
        "GLib-GObject-WARNING **:",
@@ -71,12 +61,27 @@ bool suppressOutput(const std::string& output)
        "\"service\":\"rsession-",
    };
 
-   for (auto&& token : tokens)
-      if (boost::algorithm::contains(output, token))
-         return true;
-   
-   return false;
+   if (options().getBoolOverlayOption(kLauncherSessionOption))
+   {
+      // in launcher session mode, we log normal program errors to stderr so they
+      // can be recorded in the launcher job's logs, but we don't want them to show
+      // up in the RStudio console, so we filter them out here
+      // note: all log messages will contain a tag like [rsession-username]
+      tokenList.insert(tokenList.cbegin(), "[rsession");
+   }
 
+   std::string tokensPattern = fmt::format(
+      "(\\Q{}\\E)",
+      boost::algorithm::join(tokenList, "\\E|\\Q")
+   );
+
+   return boost::regex(tokensPattern);
+}
+
+bool suppressOutput(const std::string& output)
+{
+   static boost::regex reTokens = suppressOutputRegex();
+   return boost::regex_search(output, reTokens);
 }
 
 void writeStandardOutput(const std::string& output)
