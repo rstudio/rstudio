@@ -7,6 +7,14 @@
   <key>com.apple.security.cs.allow-dyld-environment-variables</key>
   <true/>
 
+  <!-- Loading libR.dylib dynamically seems to require this entitlement. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!--- Allow debugging compiled code in R and R packages. -->
+  <key>com.apple.security.get-task-allow</key>
+  <true/>
+
   <!-- Required by R packages which want to access the camera. -->
   <key>com.apple.security.device.camera</key>
   <true/>
