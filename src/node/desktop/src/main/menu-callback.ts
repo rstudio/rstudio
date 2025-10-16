@@ -144,6 +144,7 @@ export class MenuCallback extends EventEmitter {
     // GWT redefines and rebuilds the entire menu in some cases
     this.mainMenu = new Menu();
     this.mainMenuTemplate = new Array<MenuItemConstructorOptions>();
+    appState().modalTracker.resetGwtModals();
 
     if (process.platform === 'darwin') {
       const appMenu: MenuItemConstructorOptions = { role: 'appMenu', visible: true };
