@@ -1844,6 +1844,12 @@
             "default": "errors_warnings_messages",
             "title": "Use extended display for",
             "description": "When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied."
+        },
+        "show_chat_ui": {
+            "description": "Whether to show the experimental Chat UI",
+            "title": "Show Chat UI",
+            "type": "boolean",
+            "default": false
         }
       }
 }

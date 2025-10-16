@@ -83,7 +83,8 @@ Error UserPrefsComputedLayer::readPrefs()
    layer[kDefaultRVersion] = defaultRVersionJson;
 
    #ifdef __linux__
-   layer[kNativeFileDialogs] = false;
+   // uncomment this to default to web-based file dialogs on Linux Desktop
+   // layer[kNativeFileDialogs] = false;
    #endif
 
    // Synctex viewer ----------------------------------------------------------

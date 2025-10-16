@@ -34,13 +34,17 @@
 - ([#16509](https://github.com/rstudio/rstudio/issues/16509)): Fixed issue where Copilot gave a warning when closing an unmodified empty new document
 - ([#16485](https://github.com/rstudio/rstudio/issues/16485)): Removed inoperative min/max controls from Source Columns
 - ([#16516](https://github.com/rstudio/rstudio/issues/16516)): Fixed issue with extraneous space in object size for large objects in Environment pane
+- ([#16542](https://github.com/rstudio/rstudio/issues/16542)): Improved accessibility of column splitters by adding accessible labels for screen readers
+- ([#14683](https://github.com/rstudio/rstudio/issues/14683)): Changed RStudio Desktop on Linux to default to using native file and message dialog boxes
+- ([#15340](https://github.com/rstudio/rstudio/issues/15340)): Fixed issue where native file dialogs on RStudio Desktop on Linux wouldn't show .Rproj files
+- ([#16561](https://github.com/rstudio/rstudio/issues/16561)): Fixed issues with pane layout when resizing the RStudio window when one or more source columns are displayed
 
 #### Posit Workbench
 - (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
 - (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
 
 ### Dependencies
-- Copilot Language Server 1.378.0
-- Electron 38.2.1
+- Copilot Language Server 1.381.0
+- Electron 38.3.0
 - Node.js 22.18.0
-- Quarto 1.8.24
+- Quarto 1.8.25

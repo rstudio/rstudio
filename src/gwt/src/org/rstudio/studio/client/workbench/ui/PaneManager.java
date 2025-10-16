@@ -72,6 +72,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -552,6 +554,23 @@ public class PaneManager
       });
 
       manageLayoutCommands();
+      manageChatCommands();
+
+      // Monitor changes to show_chat_ui preference and reload when it changes
+      userPrefs_.showChatUi().addValueChangeHandler(event ->
+      {
+         // Write preferences to server before reloading to ensure they persist
+         userPrefs_.writeUserPrefs(succeeded ->
+         {
+            if (succeeded)
+            {
+               // Preference saved successfully - reload the page to apply changes
+               com.google.gwt.user.client.Window.Location.reload();
+            }
+            // If write failed, don't reload to avoid losing user's change
+         });
+      });
+
       new ZoomedTabStateValue();
    }
 
@@ -1115,8 +1134,24 @@ public class PaneManager
       // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
       if (sidebar_ != null)
       {
+         // Preserve the current sidebar width before destroying
+         int sidebarWidth = panel_.getSidebarWidth();
+
          showSidebar(false);
          showSidebar(true);
+
+         // Restore the preserved width after recreation
+         if (sidebarWidth > 0)
+         {
+            // Use a deferred command to ensure the sidebar is fully initialized
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  panel_.setSidebarWidth(sidebarWidth);
+               }
+            });
+         }
       }
    }
 
@@ -1610,7 +1645,13 @@ public class PaneManager
       if (tabNames != null)
       {
          for (int j = 0; j < tabNames.length(); j++)
-            tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+         {
+            Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
+            // Filter out Chat tab if show_chat_ui preference is false
+            if (tab == Tab.Chat && !userPrefs_.showChatUi().getGlobalValue())
+               continue;
+            tabList.add(tab);
+         }
       }
       return tabList;
    }
@@ -1674,12 +1715,26 @@ public class PaneManager
 
    public WorkbenchTab[] getAllTabs()
    {
-      return new WorkbenchTab[] { historyTab_, filesTab_,
-                                  plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, tutorialTab_, buildTab_, 
-                                  presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_, chatTab_,
-                                  connectionsTab_, jobsTab_, launcherJobsTab_ };
+      // Build list of tabs, conditionally including Chat based on preference
+      ArrayList<WorkbenchTab> tabs = new ArrayList<>();
+      tabs.add(historyTab_);
+      tabs.add(filesTab_);
+      tabs.add(plotsTab_);
+      tabs.add(packagesTab_);
+      tabs.add(helpTab_);
+      tabs.add(vcsTab_);
+      tabs.add(tutorialTab_);
+      tabs.add(buildTab_);
+      tabs.add(presentationTab_);
+      tabs.add(presentation2Tab_);
+      tabs.add(environmentTab_);
+      tabs.add(viewerTab_);
+      if (userPrefs_.showChatUi().getGlobalValue())
+         tabs.add(chatTab_);
+      tabs.add(connectionsTab_);
+      tabs.add(jobsTab_);
+      tabs.add(launcherJobsTab_);
+      return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
    public void activateTab(Tab tab)
@@ -2235,7 +2290,9 @@ public class PaneManager
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
+      // Only pass commands to sidebar for the empty state feature
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
+         StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR) ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;
@@ -2455,6 +2512,13 @@ public class PaneManager
       commands_.focusSidebarSeparator().setEnabled(isSidebarVisible);
    }
 
+   private void manageChatCommands()
+   {
+      boolean showChatUi = userPrefs_.showChatUi().getGlobalValue();
+      commands_.activateChat().setVisible(showChatUi);
+      commands_.layoutZoomChat().setVisible(showChatUi);
+   }
+
    private List<AppCommand> getLayoutCommands()
    {
       List<AppCommand> commands = new ArrayList<>();
@@ -2474,7 +2538,9 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      commands.add(commands_.layoutZoomChat());
+      // Only add layoutZoomChat if show_chat_ui preference is enabled
+      if (userPrefs_.showChatUi().getGlobalValue())
+         commands.add(commands_.layoutZoomChat());
 
       return commands;
    }

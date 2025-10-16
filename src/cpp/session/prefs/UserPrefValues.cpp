@@ -3520,6 +3520,19 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
    return writePref("console_highlight_conditions", val);
 }
 
+/**
+ * Whether to show the experimental Chat UI
+ */
+bool UserPrefValues::showChatUi()
+{
+   return readPref<bool>("show_chat_ui");
+}
+
+core::Error UserPrefValues::setShowChatUi(bool val)
+{
+   return writePref("show_chat_ui", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3792,6 +3805,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
+      kShowChatUi,
    });
 }
    
