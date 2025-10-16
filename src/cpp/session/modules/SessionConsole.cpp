@@ -59,31 +59,24 @@ bool suppressOutput(const std::string& output)
    }
 
    // tokens to suppress
-   const char * const kGlibWarningToken = "GLib-WARNING **:";
-   const char * const kGlibCriticalToken = "GLib-CRITICAL **:";
-   const char * const kGlibGObjectWarningToken = "GLib-GObject-WARNING **:";
-   const char * const kAutoreleaseNoPool = "utoreleaseNoPool";
-   const char * const kSelectInterrupted = "select: Interrupted system call";
-   const char * const kNotAGitRepo = "Not a git repository";
-   const char * const kIsOutsideRepo = "is outside repository";
-   const char * const kCGContextError = "<Error>: CGContext";
+   auto tokens = {
+       "GLib-WARNING **:",
+       "GLib-CRITICAL **:",
+       "GLib-GObject-WARNING **:",
+       "utoreleaseNoPool",
+       "select: Interrupted system call",
+       "Not a git repository",
+       "is outside repository",
+       "<Error>: CGContext",
+       "\"service\":\"rsession-",
+   };
 
-   // check tokens
-   if (boost::algorithm::contains(output, kGlibWarningToken) ||
-       boost::algorithm::contains(output, kGlibCriticalToken) ||
-       boost::algorithm::contains(output, kGlibGObjectWarningToken) ||
-       boost::algorithm::contains(output, kAutoreleaseNoPool) ||
-       boost::algorithm::contains(output, kSelectInterrupted) ||
-       boost::algorithm::contains(output, kNotAGitRepo) ||
-       boost::algorithm::contains(output, kIsOutsideRepo) ||
-       boost::algorithm::contains(output, kCGContextError))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+   for (auto&& token : tokens)
+      if (boost::algorithm::contains(output, token))
+         return true;
+   
+   return false;
+
 }
 
 void writeStandardOutput(const std::string& output)
