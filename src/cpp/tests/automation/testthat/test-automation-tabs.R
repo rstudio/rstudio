@@ -90,3 +90,236 @@ isElementSelected <- function(selector) {
    Sys.sleep(0.2)
 })
 
+.rs.test("Sidebar width is preserved when adding tabs via pane layout options", {
+   # Show the sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Focus the splitter element and resize the sidebar using the left-arrow key
+   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
+   splitter$focus()
+   for (i in 1:6) {
+      remote$keyboard.insertText("<Left>")
+   }
+   Sys.sleep(0.1)
+
+   # Get the sidebar width
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   initialWidth <- sidebarElement$offsetWidth
+   expect_true(initialWidth > 0, "Sidebar should be visible initially")
+
+   # Open pane layout options
+   remote$commands.execute("paneLayout")
+   remote$dom.waitForElement(".gwt-DialogBox")
+   remote$dom.waitForElement("#rstudio_label_pane_layout_options_panel")
+
+   # Add a tab to the sidebar (e.g., "Files")
+   # First verify Files is not in the sidebar
+   PANE_LAYOUT_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+
+   # Check if "Files" is already in the sidebar (it shouldn't be by default)
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+
+   # Add "Files" to the sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               "Should successfully toggle Files into sidebar")
+
+   # Verify Files is now checked in the sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               "Files should be checked in sidebar after toggling")
+
+   # Apply changes by clicking OK button
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("pane layout dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+
+   # Wait a bit for the sidebar to be refreshed
+   Sys.sleep(0.3)
+
+   # Verify sidebar still exists
+   expect_true(remote$dom.elementExists("#rstudio_Sidebar_pane"),
+               "Sidebar should still exist after adding tab")
+
+   # Verify the width is preserved (within 5% tolerance)
+   # The fix ensures that the sidebar width doesn't change when tabs are added
+   sidebarElementAfter <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   finalWidth <- sidebarElementAfter$offsetWidth
+   widthDifference <- abs(finalWidth - initialWidth)
+   percentageDifference <- widthDifference / initialWidth
+
+   expect_true(percentageDifference < 0.05,
+               paste0("Sidebar width should be preserved when adding tabs. ",
+                      "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
+                      "Difference: ", round(percentageDifference * 100, 2), "%"))
+
+   # Cleanup: remove the Files tab from the sidebar
+   remote$commands.execute("paneLayout")
+   remote$dom.waitForElement(".gwt-DialogBox")
+   remote$dom.waitForElement("#rstudio_label_pane_layout_options_panel")
+
+   # Remove "Files" from the sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               "Should successfully toggle Files off sidebar")
+
+   # Verify Files is now unchecked in the sidebar
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               "Files should be unchecked in sidebar after toggling")
+
+   # Apply changes by clicking OK button
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("pane layout dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+
+   # Verify the width is preserved (within 5% tolerance)
+   # The fix ensures that the sidebar width doesn't change when tabs are removed
+   sidebarElementAfter <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   finalWidth <- sidebarElementAfter$offsetWidth
+   widthDifference <- abs(finalWidth - initialWidth)
+   percentageDifference <- widthDifference / initialWidth
+
+   expect_true(percentageDifference < 0.05,
+               paste0("Sidebar width should be preserved when removingtabs. ",
+                      "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
+                      "Difference: ", round(percentageDifference * 100, 2), "%"))
+
+   # Clean up: move sidebar back to the original width
+   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
+   splitter$focus()
+   for (i in 1:6) {
+      remote$keyboard.insertText("<Right>")
+   }
+   Sys.sleep(0.1)
+
+   # Clean up: hide the sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+})
+
+.rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
+   # Show the sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Move sidebar to the left
+   remote$commands.execute("moveSidebarLeft")
+   .rs.waitUntil("sidebar moved left", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Focus the splitter element and resize the sidebar using the right-arrow key
+   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
+   splitter$focus()
+   for (i in 1:6) {
+      remote$keyboard.insertText("<Right>")
+   }
+   Sys.sleep(0.1)
+
+   # Get the initial sidebar width
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   initialWidth <- sidebarElement$offsetWidth
+   expect_true(initialWidth > 0, "Sidebar should be visible initially")
+
+   # Open pane layout options
+   remote$commands.execute("paneLayout")
+   remote$dom.waitForElement(".gwt-DialogBox")
+   remote$dom.waitForElement("#rstudio_label_pane_layout_options_panel")
+
+   # Add a tab to the sidebar (e.g., "Environment")
+   # First verify Environment is not in the sidebar
+   PANE_LAYOUT_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+
+   # Check if "Environment" is already in the sidebar
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+
+   # Add "Files" to the sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               "Should successfully toggle Environment into sidebar")
+
+   # Verify Environment is now checked in the sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               "Environment should be checked in sidebar after toggling")
+
+   # Apply changes by clicking OK button
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("pane layout dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+
+   # Wait a bit for the sidebar to be refreshed
+   Sys.sleep(0.3)
+
+   # Verify sidebar still exists
+   expect_true(remote$dom.elementExists("#rstudio_Sidebar_pane"),
+               "Sidebar should still exist after adding tab")
+
+   # Verify the width is preserved (within 5% tolerance)
+   # The fix ensures that the sidebar width doesn't change when tabs are added
+   sidebarElementAfter <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   finalWidth <- sidebarElementAfter$offsetWidth
+   widthDifference <- abs(finalWidth - initialWidth)
+   percentageDifference <- widthDifference / initialWidth
+
+   expect_true(percentageDifference < 0.05,
+               paste0("Sidebar width should be preserved when adding tabs. ",
+                      "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
+                      "Difference: ", round(percentageDifference * 100, 2), "%"))
+
+   # Cleanup: remove the Environment tab from the sidebar
+   remote$commands.execute("paneLayout")
+   remote$dom.waitForElement(".gwt-DialogBox")
+   remote$dom.waitForElement("#rstudio_label_pane_layout_options_panel")
+
+   # Remove "Environment" from the sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               "Should successfully toggle Environment off sidebar")
+
+   # Verify Files is now unchecked in the sidebar
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               "Environment should be unchecked in sidebar after toggling")
+
+   # Apply changes by clicking OK button
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("pane layout dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+
+   # Verify the width is preserved (within 5% tolerance)
+   # The fix ensures that the sidebar width doesn't change when tabs are removed
+   sidebarElementAfter <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   finalWidth <- sidebarElementAfter$offsetWidth
+   widthDifference <- abs(finalWidth - initialWidth)
+   percentageDifference <- widthDifference / initialWidth
+
+   expect_true(percentageDifference < 0.05,
+               paste0("Sidebar width should be preserved when removingtabs. ",
+                      "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
+                      "Difference: ", round(percentageDifference * 100, 2), "%"))
+
+   # Clean up: move sidebar back to the original width
+   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
+   splitter$focus()
+   for (i in 1:6) {
+      remote$keyboard.insertText("<Left>")
+   }
+   Sys.sleep(0.1)
+
+   # Clean up: move sidebar back to the right
+   remote$commands.execute("moveSidebarRight")
+   .rs.waitUntil("sidebar moved right", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Clean up: hide the sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+})

@@ -433,6 +433,27 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       return sidebar_ != null;
    }
 
+   public int getSidebarWidth()
+   {
+      if (sidebar_ != null && sidebar_.getOffsetWidth() > 0)
+         return sidebar_.getOffsetWidth();
+      return -1; // No sidebar or not yet rendered
+   }
+
+   public void setSidebarWidth(int width)
+   {
+      if (sidebar_ != null && width > 0)
+      {
+         LayoutData layoutData = (LayoutData) sidebar_.getLayoutData();
+         if (layoutData != null)
+         {
+            layoutData.size = width;
+            forceLayout();
+            deferredSaveWidthPercent();
+         }
+      }
+   }
+
    public void onSplitterResized(SplitterResizedEvent event)
    {
       enforceBoundaries();

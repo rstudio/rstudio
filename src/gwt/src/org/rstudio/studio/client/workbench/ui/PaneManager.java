@@ -72,6 +72,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -1132,8 +1134,24 @@ public class PaneManager
       // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
       if (sidebar_ != null)
       {
+         // Preserve the current sidebar width before destroying
+         int sidebarWidth = panel_.getSidebarWidth();
+
          showSidebar(false);
          showSidebar(true);
+
+         // Restore the preserved width after recreation
+         if (sidebarWidth > 0)
+         {
+            // Use a deferred command to ensure the sidebar is fully initialized
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  panel_.setSidebarWidth(sidebarWidth);
+               }
+            });
+         }
       }
    }
 
