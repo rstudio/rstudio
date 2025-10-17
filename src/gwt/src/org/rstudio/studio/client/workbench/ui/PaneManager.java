@@ -2553,6 +2553,10 @@ public class PaneManager
       commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
       commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
       commands_.layoutZoomSidebar().setChecked(zoomSidebarChecked);
+
+      PaneConfig config = getCurrentConfig();
+      boolean isSidebarVisible = config.getSidebarVisible();
+      commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
    }
 
    private void manageSidebarCommands()
