@@ -183,7 +183,7 @@
    )
    
    # use netrc if available
-   netrcFile <- getOption("netrc", default = Sys.getenv("NETRC", unset = "~/.netrc"))
+   netrcFile <- .rs.netrcPath()
    if (file.exists(netrcFile))
    {
       curl::handle_setopt(
