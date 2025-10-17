@@ -998,6 +998,9 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    if (error)
       return error;
 
+   // notify others we re-opened a document
+   events().onDocReopened(pDoc);
+
    json::Object resultObj;
    writeDocToJson(pDoc, &resultObj);
    pResponse->setResult(resultObj);
