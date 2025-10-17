@@ -15,85 +15,85 @@
 
 #include <core/ZlibUtil.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <iterator>
 
 namespace rstudio {
 namespace core {
 namespace zlib {
 
-test_context("zlib")
+TEST(ZlibTest, CanCompressAndDecompressDifficultStrings)
 {
-   test_that("can compress & decompress difficult strings")
-   {
-      const std::string hardToCompress = "The quick brown fox jumps over the lazy dog.";
+   const std::string hardToCompress = "The quick brown fox jumps over the lazy dog.";
 
-      std::vector<unsigned char> compressed;
-      std::string uncompressed;
-      Error error = compressString(hardToCompress, &compressed);
-      REQUIRE(!error);
+   std::vector<unsigned char> compressed;
+   std::string uncompressed;
+   Error error = compressString(hardToCompress, &compressed);
+   ASSERT_FALSE(error);
 
-      error = decompressString(compressed, &uncompressed);
-      REQUIRE(!error);
+   error = decompressString(compressed, &uncompressed);
+   ASSERT_FALSE(error);
 
-      CHECK(hardToCompress == uncompressed);
-   }
+   EXPECT_EQ(hardToCompress, uncompressed);
+}
 
-   test_that("can compress & decompress easy strings")
-   {
-      const std::string easyToCompress = "easy easy easy easy easy easy easy easy easy easy";
+TEST(ZlibTest, CanCompressAndDecompressEasyStrings)
+{
+   const std::string easyToCompress = "easy easy easy easy easy easy easy easy easy easy";
 
-      std::vector<unsigned char> compressed;
-      std::string uncompressed;
-      Error error = compressString(easyToCompress, &compressed);
-      REQUIRE(!error);
+   std::vector<unsigned char> compressed;
+   std::string uncompressed;
+   Error error = compressString(easyToCompress, &compressed);
+   ASSERT_FALSE(error);
 
-      error = decompressString(compressed, &uncompressed);
-      REQUIRE(!error);
+   error = decompressString(compressed, &uncompressed);
+   ASSERT_FALSE(error);
 
-      CHECK(easyToCompress == uncompressed);
-   }
+   EXPECT_EQ(easyToCompress, uncompressed);
+}
 
-   test_that("can compress & decompress normal strings")
-   {
-      const std::string launcherJobName = "rsl-RStudio s12345678904321 (slurmUser1) - postman test-command=cat-args=-E-stdin=test\nsubmit\njob-us=e53ccc2ab4d74c8595596a90f3d2831a-tags=s12345678904321,rstudio-ide,s12345,rstudio-r-session,rstudio-r-session-name:postman test,rstudio-r-session-id:s12345678904321";
+TEST(ZlibTest, CanCompressAndDecompressNormalStrings)
+{
+   const std::string launcherJobName = "rsl-RStudio s12345678904321 (slurmUser1) - postman test-command=cat-args=-E-stdin=test\nsubmit\njob-us=e53ccc2ab4d74c8595596a90f3d2831a-tags=s12345678904321,rstudio-ide,s12345,rstudio-r-session,rstudio-r-session-name:postman test,rstudio-r-session-id:s12345678904321";
 
-      std::vector<unsigned char> compressed;
-      std::string uncompressed;
-      Error error = compressString(launcherJobName, &compressed);
-      REQUIRE(!error);
+   std::vector<unsigned char> compressed;
+   std::string uncompressed;
+   Error error = compressString(launcherJobName, &compressed);
+   ASSERT_FALSE(error);
 
-      error = decompressString(compressed, &uncompressed);
-      REQUIRE(!error);
+   error = decompressString(compressed, &uncompressed);
+   ASSERT_FALSE(error);
 
-      CHECK(launcherJobName == uncompressed);
-   }
+   EXPECT_EQ(launcherJobName, uncompressed);
+}
 
-   test_that("can compress & decompress empty string")
-   {
-      const std::string empty = "";
+TEST(ZlibTest, CanCompressAndDecompressEmptyString)
+{
+   const std::string empty = "";
 
-      std::vector<unsigned char> compressed;
-      std::string uncompressed;
-      Error error = compressString(empty, &compressed);
-      REQUIRE(!error);
+   std::vector<unsigned char> compressed;
+   std::string uncompressed;
+   Error error = compressString(empty, &compressed);
+   ASSERT_FALSE(error);
 
-      error = decompressString(compressed, &uncompressed);
-      REQUIRE(!error);
+   error = decompressString(compressed, &uncompressed);
+   ASSERT_FALSE(error);
 
-      CHECK(empty == uncompressed);
-   }
+   EXPECT_EQ(empty, uncompressed);
+}
 
+TEST(ZlibTest, InvalidCompressedStringFailsToDecompress)
+{
+   const std::string invalidCompressed = "H\r:ßÓø";
 
-   test_that("invalid compressed string fails to decompress")
-   {
-      const std::string invalidCompressed = "H\r:ßÓø";
+   std::vector<unsigned char> compressed;
+   std::copy(invalidCompressed.begin(), invalidCompressed.end(), std::back_inserter(compressed));
 
-      std::vector<unsigned char> compressed;
-      std::copy(invalidCompressed.begin(), invalidCompressed.end(), std::back_inserter(compressed));
-
-      std::string uncompressed;
-      REQUIRE(decompressString(compressed, &uncompressed));
-   }
+   std::string uncompressed;
+   Error error = decompressString(compressed, &uncompressed);
+   ASSERT_TRUE(error);
 }
 
 } // namespace zlib

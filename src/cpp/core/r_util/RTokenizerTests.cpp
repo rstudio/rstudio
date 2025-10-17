@@ -19,7 +19,7 @@
 
 #include <iostream>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
@@ -57,9 +57,9 @@ public:
             {
                std::wcerr << value << L" : " << t.content() << std::endl;
             }
-            expect_true(tokenType == t.type());
-            expect_true(value.length() == t.length());
-            expect_true(value == t.content());
+            ASSERT_EQ(tokenType, t.type());
+            ASSERT_EQ(value.length(), t.length());
+            ASSERT_EQ(value, t.content());
             return;
          }
       }
@@ -88,7 +88,7 @@ private:
 void testVoid()
 {
    RTokenizer rt(L"");
-   expect_true(!rt.nextToken());
+   ASSERT_TRUE(!rt.nextToken());
 }
 
 void testSimple()
@@ -239,112 +239,106 @@ void testWhitespace()
 } // anonymous namespace
 
 
-test_context("RTokenizer")
+TEST(RutilTest, TokenizeVariousStrings)
 {
-   test_that("We tokenize various strings correctly")
-   {
-      testVoid();
-      testComment();
-      testSimple();
-      testError();
-      testNumbers();
-      testOperators();
-      testUOperators();
-      testStrings();
-      testIdentifiers();
-      testWhitespace();
-   }
+   testVoid();
+   testComment();
+   testSimple();
+   testError();
+   testNumbers();
+   testOperators();
+   testUOperators();
+   testStrings();
+   testIdentifiers();
+   testWhitespace();
+}
+
+TEST(RutilTest, CommentsTokenizedWithoutTrailingNewline)
+{
+   RTokens rTokens(L"## this is a comment\n1");
+   EXPECT_EQ(3u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::COMMENT));
+   ASSERT_TRUE(rTokens.at(1).isType(RToken::WHITESPACE));
+   ASSERT_TRUE(rTokens.at(1).contentEquals(L"\n"));
+   ASSERT_TRUE(rTokens.at(2).isType(RToken::NUMBER));
+}
+
+TEST(RutilTest, DoubleStarAsSingleOperator)
+{
+   RTokens rTokens(L"1 ** 2");
+   EXPECT_EQ(5u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::NUMBER));
+   ASSERT_TRUE(rTokens.at(1).isType(RToken::WHITESPACE));
+   ASSERT_TRUE(rTokens.at(2).isType(RToken::OPER));
+   ASSERT_TRUE(rTokens.at(2).contentEquals(L"**"));
+}
+
+TEST(RutilTest, PlainRawStringTokenization)
+{
+   auto lines = {
+      L"r\"(abc)\"",
+      L"R\"(abc)\"",
+      L"r\"{abc}\"",
+      L"r'[abc]'",
+      L"R'{abc}'"
+   };
    
-   test_that("Comments are tokenized without a trailing newline")
+   for (auto line : lines)
    {
-      RTokens rTokens(L"## this is a comment\n1");
-      expect_true(rTokens.size() == 3);
-      expect_true(rTokens.at(0).isType(RToken::COMMENT));
-      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
-      expect_true(rTokens.at(1).contentEquals(L"\n"));
-      expect_true(rTokens.at(2).isType(RToken::NUMBER));
+      RTokens rTokens(line);
+   EXPECT_EQ(1u, rTokens.size());
+      EXPECT_TRUE(rTokens.at(0).isType(RToken::STRING));
    }
-   
-   test_that("'**' is properly tokenized as a single operator")
-   {
-      RTokens rTokens(L"1 ** 2");
-      expect_true(rTokens.size() == 5);
-      expect_true(rTokens.at(0).isType(RToken::NUMBER));
-      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
-      expect_true(rTokens.at(2).isType(RToken::OPER));
-      expect_true(rTokens.at(2).contentEquals(L"**"));
-   }
-   
-   test_that("plain raw strings are tokenized properly")
-   {
-      auto lines = {
-         L"r\"(abc)\"",
-         L"R\"(abc)\"",
-         L"r\"{abc}\"",
-         L"r'[abc]'",
-         L"R'{abc}'"
-      };
-      
-      for (auto line : lines)
-      {
-         RTokens rTokens(line);
-         expect_true(rTokens.size() == 1);
-         expect_true(rTokens.at(0).isType(RToken::STRING));
-      }
-   }
-   
-   test_that("unclosed raw strings are tokenized as errors")
-   {
-      RTokens rTokens(L"r'(abc");
-      expect_true(rTokens.size() == 1);
-      expect_true(rTokens.at(0).isType(RToken::ERR));
-   }
-   
-   test_that("the raw string tokenizer restores iterator state if no raw string consumed")
-   {
-      RTokens rTokens(L"rep('.')");
-      expect_true(rTokens.size() == 4);
-      expect_true(rTokens.at(0).isType(RToken::ID));
-      expect_true(rTokens.at(1).isType(RToken::LPAREN));
-      expect_true(rTokens.at(2).isType(RToken::STRING));
-      expect_true(rTokens.at(3).isType(RToken::RPAREN));
-   }
-   
-   test_that("multiline strings are tokenized as strings")
-   {
-      RTokens rTokens(L"'abc\ndef'");
-      expect_true(rTokens.size() == 1);
-      expect_true(rTokens.at(0).isType(RToken::STRING));
-   }
-   
-   test_that("escapes within symbol names are handled")
-   {
-      RTokens rTokens(L"`a \\` b`");
-      expect_true(rTokens.size() == 1);
-      expect_true(rTokens.at(0).isType(RToken::ID));
-   }
-   
-   test_that("knitr chunk embeds are handled")
-   {
-      RTokens rTokens(L"<<chunk>>");
-      expect_true(rTokens.size() == 1);
-   }
-   
-   test_that("unicode letters are identified properly")
-   {
-      RTokens rTokens(L"区 <- 42");
-      expect_true(rTokens.size() == 5);
-      expect_true(rTokens.at(0).isType(RToken::ID));
-      expect_true(rTokens.at(1).isType(RToken::WHITESPACE));
-      expect_true(rTokens.at(2).isType(RToken::OPER));
-      expect_true(rTokens.at(3).isType(RToken::WHITESPACE));
-      expect_true(rTokens.at(4).isType(RToken::NUMBER));
-   }
-   
+}
+
+TEST(RutilTest, UnclosedRawStringsAsErrors)
+{
+   RTokens rTokens(L"r'(abc");
+   EXPECT_EQ(1u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::ERR));
+}
+
+TEST(RutilTest, RawStringTokenizerRestoresState)
+{
+   RTokens rTokens(L"rep('.')");
+   EXPECT_EQ(4u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::ID));
+   ASSERT_TRUE(rTokens.at(1).isType(RToken::LPAREN));
+   ASSERT_TRUE(rTokens.at(2).isType(RToken::STRING));
+   ASSERT_TRUE(rTokens.at(3).isType(RToken::RPAREN));
+}
+
+TEST(RutilTest, MultilineStringsAsStrings)
+{
+   RTokens rTokens(L"'abc\ndef'");
+   EXPECT_EQ(1u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::STRING));
+}
+
+TEST(RutilTest, EscapesInSymbolNames)
+{
+   RTokens rTokens(L"`a \\` b`");
+   EXPECT_EQ(1u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::ID));
+}
+
+TEST(RutilTest, KnitrChunkEmbeds)
+{
+   RTokens rTokens(L"<<chunk>>");
+   EXPECT_EQ(1u, rTokens.size());
+}
+
+TEST(RutilTest, UnicodeLetterIdentification)
+{
+   RTokens rTokens(L"区 <- 42");
+   EXPECT_EQ(5u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::ID));
+   EXPECT_TRUE(rTokens.at(1).isType(RToken::WHITESPACE));
+   EXPECT_TRUE(rTokens.at(2).isType(RToken::OPER));
+   EXPECT_TRUE(rTokens.at(3).isType(RToken::WHITESPACE));
+   EXPECT_TRUE(rTokens.at(4).isType(RToken::NUMBER));
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
-
-
