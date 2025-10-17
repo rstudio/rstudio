@@ -1849,14 +1849,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    strings[.rs.endsWith(strings, string)]
 })
 
+.rs.addFunction("netrcPath", function(overridePath = NULL)
+{
+   .rs.nullCoalesce(
+      overridePath,
+      getOption("netrc", default = Sys.getenv("NETRC", unset = "~/.netrc"))
+   )
+})
+
 .rs.addFunction("readNetrc", function(netrcPath = NULL)
 {
    # Resolve the path to the .netrc file.
-   netrcPath <- .rs.nullCoalesce(netrcPath,
-   {
-      Sys.getenv("NETRC", unset = "~/.netrc")
-   })
-
+   netrcPath <- .rs.netrcPath(netrcPath)
+   
    info <- file.info(netrcPath, extra_cols = FALSE)
    if (is.na(info$mode))
       return(NULL)
