@@ -2110,10 +2110,10 @@ public class TextEditingTargetWidget
          return;
       
       String gutterWidth = gutterEl.getStyle().getProperty("width");
-      gutterWidth = gutterWidth.replaceAll("px;?", "");
+      gutterWidth = gutterWidth.replaceAll("px$", "");
       
       String printMarginWidth = printMarginEl.getStyle().getProperty("left");
-      printMarginWidth = printMarginWidth.replaceAll("px;?", "");
+      printMarginWidth = printMarginWidth.replaceAll("px$", "");
 
       int editorWidth =
          StringUtil.parseInt(gutterWidth, 0) +
