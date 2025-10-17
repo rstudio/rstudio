@@ -323,27 +323,6 @@ pipeline {
                       }
                     }
                   }
-
-                  stage("Sentry Upload") {
-                    when { expression { return params.DAILY } }
-
-                    environment {
-                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
-                    }
-                    
-                    steps {
-                      // Upload Sentry
-                      dir("package/linux/${BUILD_LOCATION}/src/cpp") {
-                        retry(5) {
-                          timeout(activity: true, time: 15) {
-                            script {
-                              utils.sentryUpload 'elf'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
                   
                   stage("Publish") {
                     environment {
