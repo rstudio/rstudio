@@ -1924,9 +1924,10 @@ public class PaneManager
       {
          double sidebarWidth = sidebar_.getOffsetWidth();
          double panelWidth = panel_.getOffsetWidth();
-         // Allow for small rounding differences and splitter widths
-         if (MathUtil.isEqual(sidebarWidth, panelWidth, 5.0) ||
-             sidebarWidth > panelWidth - 5.0)
+         // Allow for small rounding differences and splitter widths (2 splitters = 14px)
+         // When zoomed, sidebar width should be approximately panelWidth - 14px
+         if (MathUtil.isEqual(sidebarWidth, panelWidth, 20.0) ||
+             sidebarWidth > panelWidth - 20.0)
          {
             return SIDEBAR_COLUMN;
          }
