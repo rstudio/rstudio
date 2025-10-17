@@ -271,6 +271,25 @@
    clear = function() { .rs.clearUserPref("margin_column") }
 )
 
+# Soft-wrap at margin column
+#
+# When set and soft-wrapping is enabled, soft-wrap at the margin column instead
+# of editor width.
+.rs.uiPrefs$marginColumnSoftWrap <- list(
+   get = function() { .rs.getUserPref("margin_column_soft_wrap") },
+   set = function(value) { .rs.setUserPref("margin_column_soft_wrap", value) },
+   clear = function() { .rs.clearUserPref("margin_column_soft_wrap") }
+)
+
+# Clamp editor width to margin column
+#
+# When set, the editor width will be clamped to the size of the margin column.
+.rs.uiPrefs$marginColumnEditorWidth <- list(
+   get = function() { .rs.getUserPref("margin_column_editor_width") },
+   set = function(value) { .rs.setUserPref("margin_column_editor_width", value) },
+   clear = function() { .rs.clearUserPref("margin_column_editor_width") }
+)
+
 # Show invisible characters in editor
 #
 # Whether to show invisible characters, such as spaces and tabs, in the RStudio

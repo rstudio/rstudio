@@ -248,6 +248,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String marginColumnDescription();
 
    /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   @DefaultStringValue("Soft-wrap at margin column")
+   String marginColumnSoftWrapTitle();
+   @DefaultStringValue("When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.")
+   String marginColumnSoftWrapDescription();
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   @DefaultStringValue("Clamp editor width to margin column")
+   String marginColumnEditorWidthTitle();
+   @DefaultStringValue("When set, the editor width will be clamped to the size of the margin column.")
+   String marginColumnEditorWidthDescription();
+
+   /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
     */
    @DefaultStringValue("Show invisible characters in editor")
