@@ -5,6 +5,12 @@ pipeline {
     label 'linux-4x && x86_64'
   }
 
+  options {
+    timestamps()
+    disableConcurrentBuilds(abortPrevious: true)
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
   environment {
     GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
     JENKINS_CREDENTIALS = credentials('jenkins-api-creds')
