@@ -408,6 +408,9 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomRightColumn() { paneManager_.zoomColumn(PaneManager.RIGHT_COLUMN); }
 
    @Handler
+   void onLayoutZoomSidebar() { paneManager_.zoomColumn(PaneManager.SIDEBAR_COLUMN); }
+
+   @Handler
    void onMacPreferences()
    {
       onShowOptions();

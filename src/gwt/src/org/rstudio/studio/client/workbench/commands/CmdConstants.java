@@ -900,6 +900,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Zoo_m Right Column") // $NON-NLS-1$
     String layoutZoomRightColumnMenuLabel();
     
+    // layoutZoomSidebar
+    @DefaultStringValue("Zoom Sidebar") // $NON-NLS-1$
+    String layoutZoomSidebarLabel();
+    @DefaultStringValue("Zoom Si_debar") // $NON-NLS-1$
+    String layoutZoomSidebarMenuLabel();
+    
     // jumpTo
     @DefaultStringValue("Jump To...") // $NON-NLS-1$
     String jumpToLabel();
