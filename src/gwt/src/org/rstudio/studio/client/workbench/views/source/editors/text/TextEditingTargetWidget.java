@@ -238,6 +238,10 @@ public class TextEditingTargetWidget
                   int marginColumn = userPrefs_.marginColumn().getValue();
                   editor_.setWrapLimitRange(marginColumn, marginColumn);
                }
+               else
+               {
+                  editor_.setWrapLimitRange(null, null);
+               }
             });
 
       docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -2097,8 +2101,6 @@ public class TextEditingTargetWidget
       boolean enabled = userPrefs_.marginColumnEditorWidth().getValue();
       if (!enabled)
          return;
-      
-      resetEditorWidth();
       
       Element editorEl = editor_.asWidget().getElement();
       Element gutterEl = DomUtils.querySelector(editorEl, ".ace_gutter");
