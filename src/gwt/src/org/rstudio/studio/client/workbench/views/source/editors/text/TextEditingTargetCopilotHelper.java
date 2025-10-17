@@ -366,7 +366,8 @@ public class TextEditingTargetCopilotHelper
                            activeCompletion_ = null;
                         }
                      }
-                     else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
+                     else if (display_.hasGhostText() &&
+                              event.getKeyCode() == KeyCodes.KEY_RIGHT &&
                               (event.getCtrlKey() || event.getMetaKey()))
                      {
                         event.stopPropagation();

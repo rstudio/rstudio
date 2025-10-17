@@ -1490,6 +1490,21 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
              contentsFromDocument(pDoc));
 }
 
+void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   if (!isIndexableDocument(pDoc))
+      return;
+
+   docClosed(uriFromDocument(pDoc));
+
+   docOpened(uriFromDocument(pDoc),
+             languageIdFromDocument(pDoc),
+             contentsFromDocument(pDoc));
+}
+
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
@@ -1760,6 +1775,7 @@ void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
+   source_database::events().onDocReopened.connect(onDocReopened);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 

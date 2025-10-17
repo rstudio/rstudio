@@ -18,6 +18,7 @@
 
 ### Fixed
 #### RStudio
+
 - ([#16398](https://github.com/rstudio/rstudio/issues/16398)): Fixed issue with malformed ANSI codes being presented in warning messages captured while rendering plots
 - ([#16320](https://github.com/rstudio/rstudio/issues/16320)): Fixed message shown when ssh keyphrases don't match
 - ([#16331](https://github.com/rstudio/rstudio/issues/16331)): RStudio no longer removes previously-registered global calling handlers on startup
@@ -38,6 +39,7 @@
 - ([#14683](https://github.com/rstudio/rstudio/issues/14683)): Changed RStudio Desktop on Linux to default to using native file and message dialog boxes
 - ([#15340](https://github.com/rstudio/rstudio/issues/15340)): Fixed issue where native file dialogs on RStudio Desktop on Linux wouldn't show .Rproj files
 - ([#16561](https://github.com/rstudio/rstudio/issues/16561)): Fixed issues with pane layout when resizing the RStudio window when one or more source columns are displayed
+- ([#16519](https://github.com/rstudio/rstudio/issues/16519)): Fixed an issue where Copilot completions would degrade in quality if external edits were applied to an open document
 
 #### Posit Workbench
 
