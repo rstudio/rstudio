@@ -1335,6 +1335,10 @@ public class PaneManager
       // Control right_ size indirectly by setting center_ size.
       // Layout: Left widgets + Center + Right + Sidebar = Panel width
       // So: Center = Panel width - Left widgets - Right target - Sidebar target
+
+      // Splitter width constant (each splitter is 7px wide)
+      final double SPLITTER_WIDTH = 7.0;
+
       double leftTotal = 0.0;
       for (int i = 0; i < leftList_.size(); i++)
       {
@@ -1342,14 +1346,32 @@ public class PaneManager
          leftTotal += leftTargets.get(i);
       }
 
-      // Use sidebar target if provided (when zooming), otherwise use current width
-      double sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+      // When zooming sidebar to full width, we need special handling
+      boolean isZoomingSidebar = sidebarTarget > 0 && rightTarget == 0.0 && leftTotal == 0.0;
+
+      double sidebarWidth;
+      double centerTarget;
+
+      if (isZoomingSidebar)
+      {
+         // When zooming sidebar, collapse center and right to minimum
+         // Reserve space for two splitters (middle and sidebar)
+         sidebarWidth = panel_.getOffsetWidth() - (2 * SPLITTER_WIDTH);
+         // Center gets 0 width (console collapses)
+         centerTarget = 0;
+      }
+      else
+      {
+         // Use sidebar target if provided, otherwise use current width
+         sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+         // Calculate center size normally: total - left widgets - right - sidebar
+         centerTarget = panel_.getOffsetWidth() - leftTotal - rightTarget - sidebarWidth;
+         if (centerTarget < 0)
+            centerTarget = 0;
+      }
+
       if (sidebar_ != null)
          panel_.setWidgetSize(sidebar_, sidebarWidth);
-
-      double centerTarget = panel_.getOffsetWidth() - leftTotal - rightTarget - sidebarWidth;
-      if (centerTarget < 0)
-         centerTarget = 0;
 
       panel_.setWidgetSize(center_, centerTarget);
 
