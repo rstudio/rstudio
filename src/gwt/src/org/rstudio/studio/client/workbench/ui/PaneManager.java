@@ -1400,15 +1400,48 @@ public class PaneManager
       // Layout: Sidebar + Left widgets + Center + Right = Panel width
       // Sidebar, left widgets, and right can be sized directly; center auto-fills.
 
-      // Use sidebar target if provided (when zooming), otherwise use current width
-      double sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+      // Splitter width constant (each splitter is 7px wide)
+      final double SPLITTER_WIDTH = 7.0;
+
+      // Check if we're zooming the sidebar
+      double leftTotal = 0.0;
+      for (Double target : leftTargets)
+         leftTotal += target;
+      boolean isZoomingSidebar = sidebarTarget > 0 && rightTarget == 0.0 && leftTotal == 0.0;
+
+      double sidebarWidth;
+      double actualRightTarget = rightTarget;
+      ArrayList<Double> actualLeftTargets = new ArrayList<>(leftTargets);
+
+      if (isZoomingSidebar)
+      {
+         // When zooming sidebar on left, we need special handling for splitters
+         // Count total number of splitters (sidebar + left widgets + middle column)
+         int numSplitters = 1 + actualLeftTargets.size() + 1;
+         // Calculate space needed for splitters and minimal widget widths
+         double splitterSpace = numSplitters * SPLITTER_WIDTH;
+         double minimalWidgetSpace = actualLeftTargets.size() * 1.0 + 1.0; // 1px per widget
+         // Sidebar gets remaining space
+         sidebarWidth = panel_.getOffsetWidth() - splitterSpace - minimalWidgetSpace;
+         // Give each collapsed widget 1px to maintain splitter separation
+         for (int i = 0; i < actualLeftTargets.size(); i++)
+            actualLeftTargets.set(i, 1.0);
+         // Right widget gets 1px to maintain splitter visibility
+         actualRightTarget = 1.0;
+      }
+      else
+      {
+         // Use sidebar target if provided, otherwise use current width
+         sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+      }
+
       if (sidebar_ != null)
          panel_.setWidgetSize(sidebar_, sidebarWidth);
 
       for (int i = 0; i < leftList_.size(); i++)
-         panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
+         panel_.setWidgetSize(leftList_.get(i), actualLeftTargets.get(i));
 
-      panel_.setWidgetSize(right_, rightTarget);
+      panel_.setWidgetSize(right_, actualRightTarget);
 
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
