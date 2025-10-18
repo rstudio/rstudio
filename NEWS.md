@@ -15,6 +15,7 @@
 - ([#16435](https://github.com/rstudio/rstudio/issues/16435)): The visibility of the Source column in the Packages pane can now be toggled via user preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): Editor code can now be wrapped to the print margin width via the 'Soft-wrap at margin column' preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): The editor width can now be clamped to the print margin column via the 'Clamp editor width to margin column' preference
+- ([#16580](https://github.com/rstudio/rstudio/issues/16580)): The pane and tab layout can be reset to the defaults with the 'Restore default pane and tab layout' command
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
@@ -43,6 +44,7 @@
 - ([#15340](https://github.com/rstudio/rstudio/issues/15340)): Fixed issue where native file dialogs on RStudio Desktop on Linux wouldn't show .Rproj files
 - ([#16561](https://github.com/rstudio/rstudio/issues/16561)): Fixed issues with pane layout when resizing the RStudio window when one or more source columns are displayed
 - ([#16519](https://github.com/rstudio/rstudio/issues/16519)): Fixed an issue where Copilot completions would degrade in quality if external edits were applied to an open document
+- ([#16576](https://github.com/rstudio/rstudio/issues/16576)): Fixed column zoom state tracking getting out of sync when dragging column splitters to leave zoomed state
 
 #### Posit Workbench
 

@@ -187,6 +187,37 @@ public class UserPrefs extends UserPrefsComputed
    }
 
    @Handler
+   public void onRestoreDefaultPaneAndTabLayout()
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+         constants_.restoreDefaultPaneAndTabLayoutCaption(),
+         constants_.restoreDefaultPaneAndTabLayoutMessage(),
+         false,
+         () -> onRestoreDefaultPaneAndTabLayoutNoPrompt(),
+         null,
+         false);
+   }
+
+   @Handler
+   public void onRestoreDefaultPaneAndTabLayoutNoPrompt()
+   {
+      // Remove the panes preference from the user layer, which will cause it to
+      // fall back to the default value
+      panes().removeGlobalValue(true);
+
+      // Write the updated preferences to the server
+      writeUserPrefs(succeeded ->
+      {
+         if (succeeded)
+         {
+            // Reload the UI to apply the default pane layout
+            WindowEx.get().reload();
+         }
+         // not worth showing an error message here
+      });
+   }
+
+   @Handler
    public void onClearUserPrefs()
    {
       display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,

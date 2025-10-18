@@ -3040,6 +3040,15 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand restoreDefaultPaneAndTabLayout() {
+        return null;
+    }
+    @Override
+    public AppCommand restoreDefaultPaneAndTabLayoutNoPrompt() {
+        return null;
+    }
+
+    @Override
     public AppCommand maximizeConsole() {
         return null;
     }

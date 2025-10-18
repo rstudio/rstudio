@@ -715,6 +715,8 @@ public abstract class
    public abstract AppCommand layoutConsoleOnLeft();
    public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
+   public abstract AppCommand restoreDefaultPaneAndTabLayout();
+   public abstract AppCommand restoreDefaultPaneAndTabLayoutNoPrompt();
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand maximizeSource();
    public abstract AppCommand maximizeTabSet1();
