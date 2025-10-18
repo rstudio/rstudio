@@ -2,6 +2,7 @@
 
 ### New
 #### RStudio
+
 - ([#10567](https://github.com/rstudio/rstudio/issues/10567)): RStudio now provides tools for searching within Console output and Build output
 - ([#15928](https://github.com/rstudio/rstudio/issues/15928)): RStudio now uses Air for formatting R code in projects configured to use Air
 - ([#16127](https://github.com/rstudio/rstudio/issues/16127)): ESC key now dismisses Copilot ghost text in source editor
@@ -12,6 +13,8 @@
 - ([#16483](https://github.com/rstudio/rstudio/issues/16483)): In R Markdown / Quarto documents, RStudio now only used a paged-table view for auto-printed data objects; explicit invocations of `print()` will use the existing print method
 - ([#16480](https://github.com/rstudio/rstudio/issues/16480)): RStudio now has a full-height "Sidebar" pane
 - ([#16435](https://github.com/rstudio/rstudio/issues/16435)): The visibility of the Source column in the Packages pane can now be toggled via user preference
+- ([#16466](https://github.com/rstudio/rstudio/issues/16466)): Editor code can now be wrapped to the print margin width via the 'Soft-wrap at margin column' preference
+- ([#16466](https://github.com/rstudio/rstudio/issues/16466)): The editor width can now be clamped to the print margin column via the 'Clamp editor width to margin column' preference
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps

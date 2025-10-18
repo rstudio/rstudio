@@ -388,6 +388,32 @@ core::Error UserPrefValues::setMarginColumn(int val)
 }
 
 /**
+ * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+ */
+bool UserPrefValues::marginColumnSoftWrap()
+{
+   return readPref<bool>("margin_column_soft_wrap");
+}
+
+core::Error UserPrefValues::setMarginColumnSoftWrap(bool val)
+{
+   return writePref("margin_column_soft_wrap", val);
+}
+
+/**
+ * When set, the editor width will be clamped to the size of the margin column.
+ */
+bool UserPrefValues::marginColumnEditorWidth()
+{
+   return readPref<bool>("margin_column_editor_width");
+}
+
+core::Error UserPrefValues::setMarginColumnEditorWidth(bool val)
+{
+   return writePref("margin_column_editor_width", val);
+}
+
+/**
  * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
  */
 bool UserPrefValues::showInvisibles()
@@ -3564,6 +3590,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowMargin,
       kBlinkingCursor,
       kMarginColumn,
+      kMarginColumnSoftWrap,
+      kMarginColumnEditorWidth,
       kShowInvisibles,
       kIndentGuides,
       kContinueCommentsOnNewline,
