@@ -91,6 +91,8 @@ namespace prefs {
 #define kShowMargin "show_margin"
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
+#define kMarginColumnSoftWrap "margin_column_soft_wrap"
+#define kMarginColumnEditorWidth "margin_column_editor_width"
 #define kShowInvisibles "show_invisibles"
 #define kIndentGuides "indent_guides"
 #define kIndentGuidesNone "none"
@@ -634,6 +636,18 @@ public:
     */
    int marginColumn();
    core::Error setMarginColumn(int val);
+
+   /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   bool marginColumnSoftWrap();
+   core::Error setMarginColumnSoftWrap(bool val);
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   bool marginColumnEditorWidth();
+   core::Error setMarginColumnEditorWidth(bool val);
 
    /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.

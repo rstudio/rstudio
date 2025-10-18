@@ -518,6 +518,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   public PrefValue<Boolean> marginColumnSoftWrap()
+   {
+      return bool(
+         "margin_column_soft_wrap",
+         _constants.marginColumnSoftWrapTitle(), 
+         _constants.marginColumnSoftWrapDescription(), 
+         false);
+   }
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   public PrefValue<Boolean> marginColumnEditorWidth()
+   {
+      return bool(
+         "margin_column_editor_width",
+         _constants.marginColumnEditorWidthTitle(), 
+         _constants.marginColumnEditorWidthDescription(), 
+         false);
+   }
+
+   /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
     */
    public PrefValue<Boolean> showInvisibles()
@@ -3945,6 +3969,10 @@ public class UserPrefsAccessor extends Prefs
          blinkingCursor().setValue(layer, source.getBool("blinking_cursor"));
       if (source.hasKey("margin_column"))
          marginColumn().setValue(layer, source.getInteger("margin_column"));
+      if (source.hasKey("margin_column_soft_wrap"))
+         marginColumnSoftWrap().setValue(layer, source.getBool("margin_column_soft_wrap"));
+      if (source.hasKey("margin_column_editor_width"))
+         marginColumnEditorWidth().setValue(layer, source.getBool("margin_column_editor_width"));
       if (source.hasKey("show_invisibles"))
          showInvisibles().setValue(layer, source.getBool("show_invisibles"));
       if (source.hasKey("indent_guides"))
@@ -4461,6 +4489,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showMargin());
       prefs.add(blinkingCursor());
       prefs.add(marginColumn());
+      prefs.add(marginColumnSoftWrap());
+      prefs.add(marginColumnEditorWidth());
       prefs.add(showInvisibles());
       prefs.add(indentGuides());
       prefs.add(continueCommentsOnNewline());

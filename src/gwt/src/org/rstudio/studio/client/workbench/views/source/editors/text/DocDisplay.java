@@ -202,6 +202,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
    boolean getUseWrapMode();
+   void setWrapLimitRange(Integer min, Integer max);
    void setTabSize(int tabSize);
    void autoDetectIndentation(boolean on);
    void setShowPrintMargin(boolean on);

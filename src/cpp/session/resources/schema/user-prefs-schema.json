@@ -279,6 +279,18 @@
             "title": "Margin column",
             "description": "The number of columns of text after which the margin is shown."
         },
+        "margin_column_soft_wrap": {
+            "type": "boolean",
+            "default": false,
+            "title": "Soft-wrap at margin column",
+            "description": "When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width."
+        },
+        "margin_column_editor_width": {
+            "type": "boolean",
+            "default": false,
+            "title": "Clamp editor width to margin column",
+            "description": "When set, the editor width will be clamped to the size of the margin column."
+        },
         "show_invisibles": {
             "type": "boolean",
             "default": false,
