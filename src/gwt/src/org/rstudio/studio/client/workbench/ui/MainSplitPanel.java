@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
@@ -131,7 +132,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                          Session session)
    {
       super(7, events);
-      
+
+      events_ = events;
       session_ = session;
       addSplitterResizedHandler(this);
    }
@@ -458,6 +460,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       enforceBoundaries();
       deferredSaveWidthPercent();
+      events_.fireEvent(new ManageLayoutCommandsEvent());
    }
 
    public void focusSplitter(Widget widget)
@@ -611,6 +614,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Map<Widget, Double> widgetPercentages_ = new HashMap<>();
    private Integer previousOffsetWidth_ = null;
 
+   private final EventBus events_;
    private final Session session_;
    private ArrayList<Widget> leftList_;
    private Widget center_;
