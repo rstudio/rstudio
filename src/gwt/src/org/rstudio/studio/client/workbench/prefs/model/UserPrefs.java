@@ -187,6 +187,24 @@ public class UserPrefs extends UserPrefsComputed
    }
 
    @Handler
+   public void onRestoreDefaultPaneAndTabLayout()
+   {
+      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+         constants_.restoreDefaultPaneAndTabLayoutCaption(),
+         constants_.restoreDefaultPaneAndTabLayoutMessage(),
+         false,
+         () -> onRestoreDefaultPaneAndTabLayoutNoPrompt(),
+         null,
+         false);
+   }
+
+   @Handler
+   public void onRestoreDefaultPaneAndTabLayoutNoPrompt()
+   {
+      // TODO
+   }
+
+   @Handler
    public void onClearUserPrefs()
    {
       display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
