@@ -201,7 +201,20 @@ public class UserPrefs extends UserPrefsComputed
    @Handler
    public void onRestoreDefaultPaneAndTabLayoutNoPrompt()
    {
-      // TODO
+      // Remove the panes preference from the user layer, which will cause it to
+      // fall back to the default value
+      panes().removeGlobalValue(true);
+
+      // Write the updated preferences to the server
+      writeUserPrefs(succeeded ->
+      {
+         if (succeeded)
+         {
+            // Reload the UI to apply the default pane layout
+            WindowEx.get().reload();
+         }
+         // not worth showing an error message here
+      });
    }
 
    @Handler
