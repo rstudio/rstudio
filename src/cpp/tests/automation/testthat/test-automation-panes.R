@@ -1140,12 +1140,11 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
-   # NOTE: This test currently fails due to a GWT bug where keyboard-based splitter
-   # dragging doesn't fire the SplitterResizedEvent. Once that bug is fixed, this
-   # test should pass and verify that the zoom checkmarks are properly updated
-   # when the user resizes splitters with the keyboard.
+   # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
+   # get mouse-based resizing to work in the test environment.
+   # https://github.com/rstudio/rstudio/issues/16578
 
-   skip_if(TRUE, "Skipping test that fails due to known GWT bug")
+   skip_if(TRUE, "Skipping test that fails due to GWT bug")
 
    # Execute layoutZoomLeftColumn command to zoom the left column
    remote$commands.execute("layoutZoomLeftColumn")
