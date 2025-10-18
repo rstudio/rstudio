@@ -15,6 +15,7 @@
 - ([#16435](https://github.com/rstudio/rstudio/issues/16435)): The visibility of the Source column in the Packages pane can now be toggled via user preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): Editor code can now be wrapped to the print margin width via the 'Soft-wrap at margin column' preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): The editor width can now be clamped to the print margin column via the 'Clamp editor width to margin column' preference
+- ([#16580](https://github.com/rstudio/rstudio/issues/16580)): The pane and tab layout can be reset to the defaults with the 'Restore default pane and tab layout' command
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps

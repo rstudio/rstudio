@@ -611,6 +611,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="editUserPrefs"/>
             <cmd refid="clearUserPrefs"/>
             <cmd refid="viewAllPrefs"/>
+            <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -3363,6 +3364,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="paneLayout"
         menuLabel="Pane Layo_ut..."
         label="Pane Layout Options..."
+        windowMode="main"/>
+
+   <cmd id="restoreDefaultPaneAndTabLayout"
+        menuLabel="Restore De_fault Pane and Tab Layout..."
+        label="Restore Default Pane and Tab Layout..."
+        windowMode="main"/>
+
+   <cmd id="restoreDefaultPaneAndTabLayoutNoPrompt"
+        label="Restore Default Pane and Tab Layout (no prompt)"
+        visible="false"
         windowMode="main"/>
 
    <cmd id="showPackagesOptions"

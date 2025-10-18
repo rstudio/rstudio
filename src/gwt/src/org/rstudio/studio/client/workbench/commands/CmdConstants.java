@@ -2984,6 +2984,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Pane Layo_ut...") // $NON-NLS-1$
     String paneLayoutMenuLabel();
     
+    // restoreDefaultPaneAndTabLayout
+    @DefaultStringValue("Restore Default Pane and Tab Layout...") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutLabel();
+    @DefaultStringValue("Restore De_fault Pane and Tab Layout...") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutMenuLabel();
+    
+    // restoreDefaultPaneAndTabLayoutNoPrompt
+    @DefaultStringValue("Restore Default Pane and Tab Layout (no prompt)") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutNoPromptLabel();
+    
     // showPackagesOptions
     @DefaultStringValue("Packages Options...") // $NON-NLS-1$
     String showPackagesOptionsLabel();
