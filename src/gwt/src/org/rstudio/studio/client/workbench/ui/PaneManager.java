@@ -477,7 +477,6 @@ public class PaneManager
          // a separate window is visible (e.g. a pane raising itself),
          // then transfer zoom to that window.
          // BUT: don't transfer zoom to an empty source window, as that corrupts the zoom state
-         // and triggers unwanted document creation.
          if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
          {
             // Check if the target window is an empty source window
