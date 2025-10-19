@@ -186,19 +186,7 @@ isElementSelected <- function(selector) {
                       "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
                       "Difference: ", round(percentageDifference * 100, 2), "%"))
 
-   # Clean up: move sidebar back to the original width
-   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
-   splitter$focus()
-   for (i in 1:6) {
-      remote$keyboard.insertText("<Right>")
-   }
-   Sys.sleep(0.1)
-
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
@@ -303,23 +291,5 @@ isElementSelected <- function(selector) {
                       "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
                       "Difference: ", round(percentageDifference * 100, 2), "%"))
 
-   # Clean up: move sidebar back to the original width
-   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
-   splitter$focus()
-   for (i in 1:6) {
-      remote$keyboard.insertText("<Left>")
-   }
-   Sys.sleep(0.1)
-
-   # Clean up: move sidebar back to the right
-   remote$commands.execute("moveSidebarRight")
-   .rs.waitUntil("sidebar moved right", function() {
-      remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
-
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })

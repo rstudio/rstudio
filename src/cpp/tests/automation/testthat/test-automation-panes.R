@@ -130,6 +130,8 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(source1Exists, "rstudio_Source1_pane should NOT exist after closing all source docs")
    expect_false(source2Exists, "rstudio_Source2_pane should NOT exist after closing all source docs")
    expect_false(source3Exists, "rstudio_Source3_pane should NOT exist after closing all source docs")
+
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Layout zoom commands are unchecked by default", {
@@ -264,13 +266,7 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar should be to the right of the console pane. ",
                       "Sidebar position: ", rightPosition, ", Console position: ", consolePositionRight))
    
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-   
-   # Wait for the sidebar to be removed
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed left column with sidebar hidden works as expected", {
@@ -381,6 +377,8 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(abs(restoredTabSet2Width - initialTabSet2Width) / initialTabSet2Width < 0.1,
                paste0("TabSet2 pane should return to original width after un-zooming. ",
                       "Initial: ", initialTabSet2Width, ", Restored: ", restoredTabSet2Width))
+
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed left column with sidebar visible works as expected", {
@@ -519,13 +517,7 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-
-   # Wait for the sidebar to be removed
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed right column with sidebar hidden works as expected", {
@@ -638,6 +630,8 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(abs(restoredTabSet2Width - initialTabSet2Width) / initialTabSet2Width < 0.1,
                paste0("TabSet2 pane should return to original width after un-zooming. ",
                       "Initial: ", initialTabSet2Width, ", Restored: ", restoredTabSet2Width))
+
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed right column with sidebar visible works as expected", {
@@ -778,13 +772,7 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-
-   # Wait for the sidebar to be removed
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed left column with sidebar on left works as expected", {
@@ -949,17 +937,7 @@ withr::defer(.rs.automation.deleteRemote())
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
 
-   # Hide the sidebar
-   remote$commands.execute("toggleSidebar")
-
-   # Wait for the sidebar to be removed
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
-
-   # Verify the sidebar is now hidden
-   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling off")
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Zoomed right column with sidebar on left works as expected", {
@@ -1126,17 +1104,7 @@ withr::defer(.rs.automation.deleteRemote())
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
 
-   # Hide the sidebar
-   remote$commands.execute("toggleSidebar")
-
-   # Wait for the sidebar to be removed
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
-
-   # Verify the sidebar is now hidden
-   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling off")
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
@@ -1195,17 +1163,5 @@ withr::defer(.rs.automation.deleteRemote())
    rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
    expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked after keyboard resizing splitter")
 
-   # Resize the splitter back to the zoomed position then restore the layout
-   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
-   splitter$focus()
-   for (i in 1:10) {
-      remote$keyboard.insertText("<Right>")
-   }
-
-   # Small delay to let the resize process
-   Sys.sleep(0.2)
-
-   # Restore the layout
-   remote$commands.execute("layoutZoomLeftColumn")
-   Sys.sleep(0.2)
+   .rs.resetUILayout(remote)
 })
