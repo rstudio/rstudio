@@ -476,8 +476,21 @@ public class PaneManager
          // If we're currently zooming a pane, and we're now ensuring
          // a separate window is visible (e.g. a pane raising itself),
          // then transfer zoom to that window.
+         // BUT: don't transfer zoom to an empty source window, as that corrupts the zoom state
+         // and triggers unwanted document creation.
          if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
          {
+            // Check if the target window is an empty source window
+            if (sourceLogicalWindows_.contains(window))
+            {
+               int sourceIndex = sourceLogicalWindows_.indexOf(window);
+               int tabCount = sourceColumnManager_.get(sourceIndex).getTabCount();
+               if (tabCount == 0)
+               {
+                  return;
+               }
+            }
+
             fullyMaximizeWindow(window, lastSelectedTab_);
             return;
          }
@@ -1663,8 +1676,16 @@ public class PaneManager
       // TabSet Panes without any tabs should remain minimized.
       for (LogicalWindow window : panes_)
       {
+         boolean shouldMinimize = false;
+
+         // Check if this is an empty TabSet
          if ((window == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1) && tabSet1TabPanel_.isEmpty()) ||
              (window == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2) && tabSet2TabPanel_.isEmpty()))
+         {
+            shouldMinimize = true;
+         }
+
+         if (shouldMinimize)
          {
             if (window.getState() != WindowState.MINIMIZE)
                window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
