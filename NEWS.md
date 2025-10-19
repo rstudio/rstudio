@@ -45,6 +45,7 @@
 - ([#16561](https://github.com/rstudio/rstudio/issues/16561)): Fixed issues with pane layout when resizing the RStudio window when one or more source columns are displayed
 - ([#16519](https://github.com/rstudio/rstudio/issues/16519)): Fixed an issue where Copilot completions would degrade in quality if external edits were applied to an open document
 - ([#16576](https://github.com/rstudio/rstudio/issues/16576)): Fixed column zoom state tracking getting out of sync when dragging column splitters to leave zoomed state
+- ([#16583](https://github.com/rstudio/rstudio/issues/16583)): Fixed an issue where a pane wouldn't unzoom if no source files were open when it was zoomed
 
 #### Posit Workbench
 
