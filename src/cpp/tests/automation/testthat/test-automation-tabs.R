@@ -186,19 +186,7 @@ isElementSelected <- function(selector) {
                       "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
                       "Difference: ", round(percentageDifference * 100, 2), "%"))
 
-   # Clean up: move sidebar back to the original width
-   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
-   splitter$focus()
-   for (i in 1:6) {
-      remote$keyboard.insertText("<Right>")
-   }
-   Sys.sleep(0.1)
-
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
+   .rs.resetUILayout(remote)
 })
 
 .rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
@@ -303,23 +291,136 @@ isElementSelected <- function(selector) {
                       "Initial: ", initialWidth, "px, Final: ", finalWidth, "px, ",
                       "Difference: ", round(percentageDifference * 100, 2), "%"))
 
-   # Clean up: move sidebar back to the original width
-   splitter <- remote$js.querySelector("#rstudio_sidebar_column_splitter")
-   splitter$focus()
-   for (i in 1:6) {
-      remote$keyboard.insertText("<Left>")
-   }
-   Sys.sleep(0.1)
+   .rs.resetUILayout(remote)
+})
 
-   # Clean up: move sidebar back to the right
-   remote$commands.execute("moveSidebarRight")
-   .rs.waitUntil("sidebar moved right", function() {
-      remote$dom.elementExists("#rstudio_Sidebar_pane")
+.rs.test("layoutZoomEnvironment zooms environment pane and toggles back", {
+   # Verify Environment panel exists and is visible
+   expect_true(remote$dom.elementExists("#rstudio_workbench_panel_environment"),
+               "Environment panel should exist")
+
+   # Get initial dimensions of Environment panel, Console, and TabSet2
+   environmentPanel <- remote$js.querySelector("#rstudio_workbench_panel_environment")
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet2Element <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   initialEnvWidth <- environmentPanel$offsetWidth
+   initialEnvHeight <- environmentPanel$offsetHeight
+   initialConsoleWidth <- consoleElement$offsetWidth
+   initialTabSet2Width <- tabSet2Element$offsetWidth
+   initialTabSet2Height <- tabSet2Element$offsetHeight
+
+   expect_true(initialEnvWidth > 0, "Environment panel should be visible initially")
+   expect_true(initialEnvHeight > 0, "Environment panel should be visible initially")
+   expect_true(initialConsoleWidth > 0, "Console should be visible initially")
+   expect_true(initialTabSet2Width > 0, "TabSet2 should be visible initially")
+   expect_true(initialTabSet2Height > 0, "TabSet2 should be visible initially")
+
+   # Execute layoutZoomEnvironment command to zoom the environment pane
+   remote$commands.execute("layoutZoomEnvironment")
+
+   # Wait for layout to change - environment should expand significantly
+   .rs.waitUntil("environment zoomed", function() {
+      envPanel <- remote$js.querySelector("#rstudio_workbench_panel_environment")
+      consoleElem <- remote$js.querySelector("#rstudio_Console_pane")
+      # Environment should expand significantly and console should collapse
+      envPanel$offsetWidth > initialEnvWidth * 1.5 &&
+         consoleElem$offsetWidth < 50
    })
 
-   # Clean up: hide the sidebar
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar removed", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   # Add a small delay to ensure layout is fully settled
+   Sys.sleep(0.2)
+
+   # Check that layoutZoomEnvironment command is checked
+   envZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomEnvironment')")
+   expect_true(envZoomChecked, "layoutZoomEnvironment should be checked after zooming")
+
+   # Get zoomed dimensions
+   environmentPanelZoomed <- remote$js.querySelector("#rstudio_workbench_panel_environment")
+   consoleElementZoomed <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet2ElementZoomed <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   zoomedEnvWidth <- environmentPanelZoomed$offsetWidth
+   zoomedEnvHeight <- environmentPanelZoomed$offsetHeight
+   zoomedConsoleWidth <- consoleElementZoomed$offsetWidth
+   zoomedTabSet2Width <- tabSet2ElementZoomed$offsetWidth
+   zoomedTabSet2Height <- tabSet2ElementZoomed$offsetHeight
+
+   # Verify environment panel expanded to fill the UI
+   expect_true(zoomedEnvWidth > initialEnvWidth * 1.5,
+               paste0("Environment panel should expand significantly in width. ",
+                      "Initial: ", initialEnvWidth, ", Zoomed: ", zoomedEnvWidth))
+
+   expect_true(zoomedEnvHeight > initialEnvHeight * 1.5,
+               paste0("Environment panel should expand significantly in height. ",
+                      "Initial: ", initialEnvHeight, ", Zoomed: ", zoomedEnvHeight))
+
+   # Verify Console (left column) collapsed to minimum width
+   expect_true(zoomedConsoleWidth < 50,
+               paste0("Console should collapse to minimum width when environment zoomed. ",
+                      "Width: ", zoomedConsoleWidth))
+
+   # Verify TabSet2 collapsed to minimum (check both width and height as it could collapse either way)
+   expect_true(zoomedTabSet2Width < 50 || zoomedTabSet2Height < 50,
+               paste0("TabSet2 should collapse to minimum size when environment zoomed. ",
+                      "Width: ", zoomedTabSet2Width, ", Height: ", zoomedTabSet2Height))
+
+   # Execute layoutZoomEnvironment command again to toggle back to previous state
+   remote$commands.execute("layoutZoomEnvironment")
+
+   # Wait for layout to be restored
+   .rs.waitUntil("environment unzoomed", function() {
+      envPanel <- remote$js.querySelector("#rstudio_workbench_panel_environment")
+      consoleElem <- remote$js.querySelector("#rstudio_Console_pane")
+      tabSet2Elem <- remote$js.querySelector("#rstudio_TabSet2_pane")
+      # Environment should shrink back, Console should expand, TabSet2 should expand
+      envPanel$offsetWidth < zoomedEnvWidth * 0.75 &&
+         consoleElem$offsetWidth > 50 &&
+         (tabSet2Elem$offsetWidth > 50 || tabSet2Elem$offsetHeight > 50)
    })
+
+   # Add a small delay to ensure layout is fully settled
+   Sys.sleep(0.2)
+
+   # Check that layoutZoomEnvironment command is unchecked after toggling back
+   envZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomEnvironment')")
+   expect_false(envZoomChecked, "layoutZoomEnvironment should be unchecked after toggling back")
+
+   # Get restored dimensions
+   environmentPanelRestored <- remote$js.querySelector("#rstudio_workbench_panel_environment")
+   consoleElementRestored <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet2ElementRestored <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   restoredEnvWidth <- environmentPanelRestored$offsetWidth
+   restoredEnvHeight <- environmentPanelRestored$offsetHeight
+   restoredConsoleWidth <- consoleElementRestored$offsetWidth
+   restoredTabSet2Width <- tabSet2ElementRestored$offsetWidth
+   restoredTabSet2Height <- tabSet2ElementRestored$offsetHeight
+
+   # Verify layout restored to approximately original sizes (within 10% tolerance)
+   expect_true(abs(restoredEnvWidth - initialEnvWidth) / initialEnvWidth < 0.1,
+               paste0("Environment panel width should be restored. ",
+                      "Initial: ", initialEnvWidth, ", Restored: ", restoredEnvWidth))
+
+   expect_true(abs(restoredEnvHeight - initialEnvHeight) / initialEnvHeight < 0.1,
+               paste0("Environment panel height should be restored. ",
+                      "Initial: ", initialEnvHeight, ", Restored: ", restoredEnvHeight))
+
+   expect_true(abs(restoredConsoleWidth - initialConsoleWidth) / initialConsoleWidth < 0.1,
+               paste0("Console width should be restored. ",
+                      "Initial: ", initialConsoleWidth, ", Restored: ", restoredConsoleWidth))
+
+   expect_true(abs(restoredTabSet2Width - initialTabSet2Width) / initialTabSet2Width < 0.1,
+               paste0("TabSet2 width should be restored. ",
+                      "Initial: ", initialTabSet2Width, ", Restored: ", restoredTabSet2Width))
+
+   expect_true(abs(restoredTabSet2Height - initialTabSet2Height) / initialTabSet2Height < 0.1,
+               paste0("TabSet2 height should be restored. ",
+                      "Initial: ", initialTabSet2Height, ", Restored: ", restoredTabSet2Height))
+
+   # Close the untitled source document that is created in this scenario
+   remote$commands.execute("closeAllSourceDocs")
+   Sys.sleep(0.5)
+
+   .rs.resetUILayout(remote)
 })

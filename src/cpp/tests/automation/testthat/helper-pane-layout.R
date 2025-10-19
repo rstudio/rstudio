@@ -189,3 +189,9 @@
                   info = paste("Option at index", expectedSelectedIndex, "is not selected"))
    }
 }
+
+# Helper function to reset UI layout to default state
+.rs.resetUILayout <- function(remote) {
+   remote$commands.execute("restoreDefaultPaneAndTabLayoutNoPrompt")
+   Sys.sleep(1)
+}
