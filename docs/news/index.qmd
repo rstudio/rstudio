@@ -177,6 +177,12 @@ During package upgrade, the following files will be backed up if they exist:
 
 After completing the package upgrade, carefully review the backed up files and the new default configuration files and merge any customizations as needed.
 
+Since Positron Pro is now enabled by default, the following default configuration value has changed in the `positron.conf` configuration file:<i class="bi bi-info-circle-fill" title="Documentation change since last release/patch."></i>
+
+   | Configuration entry | Previous default value | New default value | Reference |
+   |-------------------- | ---------------------- | ------------------ | -----------|
+   | `enabled` | `0` (disabled) | `1` (enabled)| (rstudio-pro#9376) |
+
 ### Dependencies
 
 - (rstudio-pro#9080): rserver-saml 0.9.1
