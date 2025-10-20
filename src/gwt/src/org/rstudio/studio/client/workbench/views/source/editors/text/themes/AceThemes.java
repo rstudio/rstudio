@@ -294,6 +294,11 @@ public class AceThemes
       if (StringUtil.isNullOrEmpty(fontName))
          return;
 
+      // Remove a pre-existing font element, if any.
+      Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + RSTUDIO_FONTELEMENT_ID);
+      if (fontStylesEl != null)
+         fontStylesEl.removeFromParent();
+
       // Apply the font CSS. Use alternate code paths depending on whether this
       // appears to be a client-side font, versus a server font.
       if (FontDetector.isFontSupported(fontName))
@@ -308,31 +313,19 @@ public class AceThemes
 
    private void applyBrowserFont(Document document, String fontName)
    {
-      final String fontId = "rstudio-fontelement";
-
-      Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + fontId);
-      if (fontStylesEl != null)
-         fontStylesEl.removeFromParent();
-
       String fontCss = getFontCss(fontName);
       StyleElement fontStyles = document.createStyleElement();
-      fontStyles.setId(fontId);
+      fontStyles.setId(RSTUDIO_FONTELEMENT_ID);
       fontStyles.setPropertyString("textContent", fontCss);
       document.getHead().appendChild(fontStyles);
    }
 
    private void applyServerFont(Document document, String fontName)
    {
-      final String fontId = "rstudio-fontelement";
-
-      Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + fontId);
-      if (fontStylesEl != null)
-         fontStylesEl.removeFromParent();
-
       LinkElement fontEl = document.createLinkElement();
       fontEl.setType("text/css");
       fontEl.setRel("stylesheet");
-      fontEl.setId(fontId);
+      fontEl.setId(RSTUDIO_FONTELEMENT_ID);
       fontEl.setHref(GWT.getHostPageBaseURL() + "fonts/css/" + fontName + ".css");
       document.getBody().appendChild(fontEl);
    }
@@ -356,6 +349,7 @@ public class AceThemes
    private final Provider<UserPrefs> prefs_;
    private HashMap<String, AceTheme> themes_;
 
+   private static final String RSTUDIO_FONTELEMENT_ID = "rstudio-fontelement";
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public static final Resources RES = GWT.create(Resources.class);
    
