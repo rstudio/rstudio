@@ -1107,61 +1107,127 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.resetUILayout(remote)
 })
 
-.rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
-   # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
-   # get mouse-based resizing to work in the test environment.
-   # https://github.com/rstudio/rstudio/issues/16578
+.rs.test("layoutZoomSidebar command state depends on sidebar visibility and persists across UI reload", {
+   # 1. Confirm sidebar is hidden (default state)
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
 
-   skip_if(TRUE, "Skipping test that fails due to GWT bug")
+   # 2. Confirm layoutZoomSidebar command is disabled and unchecked when sidebar is hidden
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_false(zoomSidebarEnabled, "layoutZoomSidebar should be disabled when sidebar is hidden")
 
-   # Execute layoutZoomLeftColumn command to zoom the left column
-   remote$commands.execute("layoutZoomLeftColumn")
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should be unchecked when sidebar is hidden")
 
-   # Wait for layout to change - console should expand
-   .rs.waitUntil("left column zoomed", function() {
-      consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
-      tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
-      # Console should be large and TabSet1 should be collapsed
-      consoleElement$offsetWidth > 300 && tabSet1Element$offsetWidth < 50
+   # 3. Show sidebar with showSidebar command
+   remote$commands.execute("showSidebar")
+
+   # 4. Wait for sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Add a small delay to ensure layout is fully settled
-   Sys.sleep(0.2)
+   # 5. Confirm sidebar is visible
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after showSidebar")
 
-   # Check that layoutZoomLeftColumn command is checked
-   leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
-   expect_true(leftZoomChecked, "layoutZoomLeftColumn should be checked after zooming")
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
 
-   # Focus the middle column splitter and resize using keyboard
-   # Arrow keys should drag the splitter and trigger onSplitterResized
-   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
-   splitter$focus()
+   # 6. Confirm layoutZoomSidebar command is now enabled but still unchecked
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_true(zoomSidebarEnabled, "layoutZoomSidebar should be enabled when sidebar is visible")
 
-   # Press Right arrow multiple times to drag the splitter right (revealing right column)
-   for (i in 1:10) {
-      remote$keyboard.insertText("<Left>")
-   }
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should be unchecked initially")
 
-   # Small delay to let the resize process
-   Sys.sleep(0.2)
+   # 7. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
 
-   # Wait for the layout to update after keyboard resizing
-   .rs.waitUntil("right column revealed after keyboard resize", function() {
-      tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
-      # TabSet1 should now be visible (width > 50px)
-      tabSet1Element$offsetWidth > 50
+   # 8. Wait for page to reload and sidebar to be present again
+   .rs.waitUntil("page reloaded and sidebar visible", function() {
+      # Check if the page has reloaded by waiting for the sidebar to exist again
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Add a small delay to ensure command state is updated
-   Sys.sleep(0.2)
+   # Add a small delay to ensure layout is fully settled after reload
+   Sys.sleep(0.5)
 
-   # Check that layoutZoomLeftColumn command is now unchecked
-   leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
-   expect_false(leftZoomChecked, "layoutZoomLeftColumn should be unchecked after keyboard resizing splitter")
+   # 9. Check again that sidebar is still visible after reload
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should still exist after UI reload")
 
-   # Verify that layoutZoomRightColumn command is also unchecked
-   rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
-   expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked after keyboard resizing splitter")
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should still be visible after reload (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should still be visible after reload (height > 0)")
 
+   # 10. Confirm layoutZoomSidebar is still enabled and unchecked after reload
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_true(zoomSidebarEnabled, "layoutZoomSidebar should still be enabled after UI reload")
+
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should still be unchecked after UI reload")
+
+   # 11. Reset UI back to defaults
    .rs.resetUILayout(remote)
 })
+
+# .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
+#    # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
+#    # get mouse-based resizing to work in the test environment.
+#    # https://github.com/rstudio/rstudio/issues/16578
+
+#    skip_if(TRUE, "Skipping test that fails due to GWT bug")
+
+#    # Execute layoutZoomLeftColumn command to zoom the left column
+#    remote$commands.execute("layoutZoomLeftColumn")
+
+#    # Wait for layout to change - console should expand
+#    .rs.waitUntil("left column zoomed", function() {
+#       consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+#       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
+#       # Console should be large and TabSet1 should be collapsed
+#       consoleElement$offsetWidth > 300 && tabSet1Element$offsetWidth < 50
+#    })
+
+#    # Add a small delay to ensure layout is fully settled
+#    Sys.sleep(0.2)
+
+#    # Check that layoutZoomLeftColumn command is checked
+#    leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
+#    expect_true(leftZoomChecked, "layoutZoomLeftColumn should be checked after zooming")
+
+#    # Focus the middle column splitter and resize using keyboard
+#    # Arrow keys should drag the splitter and trigger onSplitterResized
+#    splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+#    splitter$focus()
+
+#    # Press Right arrow multiple times to drag the splitter right (revealing right column)
+#    for (i in 1:10) {
+#       remote$keyboard.insertText("<Left>")
+#    }
+
+#    # Small delay to let the resize process
+#    Sys.sleep(0.2)
+
+#    # Wait for the layout to update after keyboard resizing
+#    .rs.waitUntil("right column revealed after keyboard resize", function() {
+#       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
+#       # TabSet1 should now be visible (width > 50px)
+#       tabSet1Element$offsetWidth > 50
+#    })
+
+#    # Add a small delay to ensure command state is updated
+#    Sys.sleep(0.2)
+
+#    # Check that layoutZoomLeftColumn command is now unchecked
+#    leftZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomLeftColumn')")
+#    expect_false(leftZoomChecked, "layoutZoomLeftColumn should be unchecked after keyboard resizing splitter")
+
+#    # Verify that layoutZoomRightColumn command is also unchecked
+#    rightZoomChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomRightColumn')")
+#    expect_false(rightZoomChecked, "layoutZoomRightColumn should be unchecked after keyboard resizing splitter")
+
+#    .rs.resetUILayout(remote)
+# })
