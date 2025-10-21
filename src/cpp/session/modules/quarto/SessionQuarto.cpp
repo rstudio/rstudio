@@ -65,6 +65,8 @@ const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
 
 #ifdef __aarch64__
 # define kArchDir "aarch64"
+#elif defined(__loongarch64) // Add LoongArch64 support
+# define kArchDir "loongarch64" // Or the appropriate directory name
 #else
 # define kArchDir "x86_64"
 #endif
