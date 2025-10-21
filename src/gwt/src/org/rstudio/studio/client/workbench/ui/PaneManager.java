@@ -2051,6 +2051,13 @@ public class PaneManager
       {
          double sidebarWidth = sidebar_.getOffsetWidth();
          double panelWidth = panel_.getOffsetWidth();
+
+         // Check if we're in a transitional layout state (during initial layout or
+         // sidebar show/hide). Don't report zoom state during transitions as widget
+         // sizes may not be accurately calculated yet.
+         if (panelWidth == 0)
+            return null;
+
          // Allow for small rounding differences and splitter widths (2 splitters = 14px)
          // When zoomed, sidebar width should be approximately panelWidth - 14px
          if (MathUtil.isEqual(sidebarWidth, panelWidth, 20.0) ||

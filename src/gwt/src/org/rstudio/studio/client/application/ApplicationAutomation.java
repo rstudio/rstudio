@@ -95,6 +95,16 @@ public class ApplicationAutomation
             return command.isChecked();
          }
       });
+
+      exportCallback("commandIsEnabled", new UnaryCallback<Boolean, String>()
+      {
+         @Override
+         public Boolean execute(String commandId)
+         {
+            AppCommand command = commands_.getCommandById(commandId);
+            return command.isEnabled();
+         }
+      });
    }
    
    private native final void initializeCallbacks()

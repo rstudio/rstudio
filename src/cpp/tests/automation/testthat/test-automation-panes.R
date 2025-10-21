@@ -1107,6 +1107,72 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.resetUILayout(remote)
 })
 
+.rs.test("layoutZoomSidebar command state depends on sidebar visibility and persists across UI reload", {
+   # 1. Confirm sidebar is hidden (default state)
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
+
+   # 2. Confirm layoutZoomSidebar command is disabled and unchecked when sidebar is hidden
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_false(zoomSidebarEnabled, "layoutZoomSidebar should be disabled when sidebar is hidden")
+
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should be unchecked when sidebar is hidden")
+
+   # 3. Show sidebar with showSidebar command
+   remote$commands.execute("showSidebar")
+
+   # 4. Wait for sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 5. Confirm sidebar is visible
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after showSidebar")
+
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
+
+   # 6. Confirm layoutZoomSidebar command is now enabled but still unchecked
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_true(zoomSidebarEnabled, "layoutZoomSidebar should be enabled when sidebar is visible")
+
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should be unchecked initially")
+
+   # 7. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
+
+   # 8. Wait for page to reload and sidebar to be present again
+   .rs.waitUntil("page reloaded and sidebar visible", function() {
+      # Check if the page has reloaded by waiting for the sidebar to exist again
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Add a small delay to ensure layout is fully settled after reload
+   Sys.sleep(0.5)
+
+   # 9. Check again that sidebar is still visible after reload
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should still exist after UI reload")
+
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should still be visible after reload (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should still be visible after reload (height > 0)")
+
+   # 10. Confirm layoutZoomSidebar is still enabled and unchecked after reload
+   zoomSidebarEnabled <- remote$js.eval("window.rstudioCallbacks.commandIsEnabled('layoutZoomSidebar')")
+   expect_true(zoomSidebarEnabled, "layoutZoomSidebar should still be enabled after UI reload")
+
+   zoomSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('layoutZoomSidebar')")
+   expect_false(zoomSidebarChecked, "layoutZoomSidebar should still be unchecked after UI reload")
+
+   # 11. Reset UI back to defaults
+   .rs.resetUILayout(remote)
+})
+
 .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
    # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
    # get mouse-based resizing to work in the test environment.
