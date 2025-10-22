@@ -1,0 +1,49 @@
+
+/* OS-neutral styles */
+
+pre {
+   font-family: "#!font#", monospace;
+}
+
+.ace_editor, 
+.ace_text-layer,
+.rstudio-fixed-width-font {
+   font-family: "#!font#", monospace !important;
+}
+
+/* macOS styles (fall back to Monaco/Menlo) */
+
+.macintosh pre {
+   font-family: "#!font#", "Monaco", "Menlo", monospace;
+}
+
+.macintosh .ace_editor, 
+.macintosh .ace_text-layer,
+.macintosh .rstudio-fixed-width-font {
+   font-family: "#!font#", "Monaco", "Menlo", monospace !important;
+}
+
+/* Linux styles */
+
+.linux pre {
+   font-family: "#!font#", "Ubuntu Mono", "Droid Sans Mono", "DejaVu Sans Mono", monospace;
+}
+
+.linux .ace_editor, 
+.linux .ace_text-layer,
+.linux .rstudio-fixed-width-font {
+   font-family: "#!font#", "Ubuntu Mono", "Droid Sans Mono", "DejaVu Sans Mono", monospace !important;
+}
+
+/* Windows styles */
+
+.windows pre {
+   font-family: "#!font#", "Consolas", "Lucida Console", monospace;
+}
+
+.windows .ace_editor, 
+.windows .ace_text-layer,
+.windows .rstudio-fixed-width-font {
+   font-family: "#!font#", "Consolas", "Lucida Console", monospace !important;
+}
+
