@@ -309,14 +309,12 @@ public abstract class RowTable<T> extends ScrollPanel
       buffer_.setLength(0);
       bufferTimer_.cancel();
       
-      int n = Math.min(MAX_VISIBLE_ROWS, data_.size());
-      
       drawColumnGroups();
       
       topPaddingRowEl_ = drawPaddingRow(getTopPaddingHeight());
       topPaddingRowEl_.setAttribute("aria-hidden", "true");
       
-      for (int i = 0; i < n; i++)
+      for (int i = 0, n = getVirtualTableRowCount(); i < n; i++)
       {
          TableRowElement rowEl = Document.get().createTRElement();
          rowEl.addClassName(RES.styles().row());
@@ -402,6 +400,11 @@ public abstract class RowTable<T> extends ScrollPanel
          return (int) (pseudoRowCount * getRowHeight());
       }
    }
+
+   private int getVirtualTableRowCount()
+   {
+      return Math.min(data_.size(), MAX_VISIBLE_ROWS);
+   }
    
    private void updateOffset()
    {
@@ -413,13 +416,15 @@ public abstract class RowTable<T> extends ScrollPanel
       // determine the number of rows that have been scrolled
       // (this is, approximately, the first visible row)
       int numRowsScrolled = (int) (scrollAmount / rowHeight);
+
+      // compute number of rows in virtual table
+      int n = getVirtualTableRowCount();
       
       // set our view offset
-      int offset = numRowsScrolled - (MAX_VISIBLE_ROWS / 2);
+      int offset = numRowsScrolled - (n / 2);
       
       // clamp to boundaries of view
-      offset_ = MathUtil.clamp(offset, 0, data_.size() - MAX_VISIBLE_ROWS);
-      
+      offset_ = MathUtil.clamp(offset, 0, data_.size() - n);
    }
    
    public void clear()

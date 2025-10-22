@@ -46,6 +46,7 @@
 - ([#16519](https://github.com/rstudio/rstudio/issues/16519)): Fixed an issue where Copilot completions would degrade in quality if external edits were applied to an open document
 - ([#16576](https://github.com/rstudio/rstudio/issues/16576)): Fixed column zoom state tracking getting out of sync when dragging column splitters to leave zoomed state
 - ([#16583](https://github.com/rstudio/rstudio/issues/16583)): Fixed an issue where a pane wouldn't unzoom if no source files were open when it was zoomed
+- ([#16595](https://github.com/rstudio/rstudio/issues/16596)): Fixed an issue where Open File dialog could malfunction in rare cases
 
 #### Posit Workbench
 
