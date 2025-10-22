@@ -24,6 +24,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
+
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
@@ -404,6 +405,11 @@ void onDetectChanges(module_context::ChangeSource source)
    }
 }
 
+void onInitComplete()
+{
+   s_reposSEXP.set(r::options::getOption("repos"));
+}
+
 void onDeferredInit(bool /* newSession */)
 {
    // Ensure we have a writeable user library
@@ -446,6 +452,7 @@ void enquePackageStateChanged()
 Error initialize()
 {
    // register deferred init
+   module_context::events().onInitComplete.connect(onInitComplete);
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onConsoleInput.connect(onConsoleInput);
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
