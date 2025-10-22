@@ -86,6 +86,7 @@ class WorkbenchTabPanel
       // Create sidebar title for when there are no tabs
       sidebarTitlePanel_ = new HTML(constants_.sidebarTitleText());
       sidebarTitlePanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
+      sidebarTitlePanel_.addStyleName(ThemeStyles.INSTANCE.title());
       Style titleStyle = sidebarTitlePanel_.getElement().getStyle();
       titleStyle.setLineHeight(22, Unit.PX);
       titleStyle.setPaddingLeft(8, Unit.PX);
@@ -112,6 +113,7 @@ class WorkbenchTabPanel
          // Add explanatory text
          HTML noTabsText = new HTML(constants_.noTabsAssignedText());
          noTabsText.getElement().getStyle().setMarginBottom(12, Unit.PX);
+         noTabsText.addStyleName(ThemeStyles.INSTANCE.subtitle());
          emptyStateContent.add(noTabsText);
 
          ThemedButton configureButton = new ThemedButton(constants_.configurePanesButtonText(), event -> {
