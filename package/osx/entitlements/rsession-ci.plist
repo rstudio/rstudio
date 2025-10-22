@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
   
+  <!-- Required for the PCRE jit with R regular expressions. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+
   <!-- We use DYLD_INSERT_LIBRARIES to load libR.dylib dynamically. -->
   <key>com.apple.security.cs.allow-dyld-environment-variables</key>
   <true/>
