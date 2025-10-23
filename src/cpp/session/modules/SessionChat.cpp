@@ -29,8 +29,8 @@
       std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);        \
       std::string __formatted__ =                                           \
           fmt::format("[{}]: {}", __func__, __message__);                   \
-      __LOGGER__("copilot", __formatted__);                                 \
-      if (chatLogLevel() >= 1)                                           \
+      __LOGGER__("chat", __formatted__);                                    \
+      if (chatLogLevel() >= 1)                                              \
          std::cerr << __formatted__ << std::endl;                           \
    } while (0)
 
