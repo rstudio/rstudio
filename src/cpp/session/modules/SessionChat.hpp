@@ -1,5 +1,5 @@
 /*
- * ChatConstants.java
+ * SessionChat.hpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -12,14 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.chat;
 
-public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
-    String chatTitle();
-    String chatPaneTitle();
-    String chatTabLabel();
-    String errorDetectingInstallationCaption();
-    String errorDetectingInstallationMessage();
-    String checkingInstallationMessage();
-    String aiChatNotInstalledMessage();
-}
+#ifndef RSTUDIO_SESSION_MODULES_CHAT_HPP
+#define RSTUDIO_SESSION_MODULES_CHAT_HPP
+
+namespace rstudio {
+namespace core {
+class Error;
+} // namespace core
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace chat {
+
+core::Error initialize();
+
+} // end namespace chat
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio
+
+#endif /* RSTUDIO_SESSION_MODULES_CHAT_HPP */

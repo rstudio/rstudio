@@ -6932,6 +6932,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "copilot_register_open_files", params, requestCallback);
    };
 
+   @Override
+   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_verify_installed", requestCallback);
+   };
+
    private boolean isAuthStatusRequest(RpcRequest request)
    {
       return request.getMethod().equals(AUTH_STATUS);
@@ -7508,6 +7514,6 @@ public class RemoteServer implements Server
       public RpcRequest request;
       public RpcResponseHandler responseHandler;
       public RetryHandler retryHandler;
-   };
+   }
 
 }

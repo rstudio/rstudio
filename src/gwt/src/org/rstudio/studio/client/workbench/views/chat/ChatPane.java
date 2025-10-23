@@ -12,19 +12,21 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -54,19 +56,107 @@ public class ChatPane
    {
       mainPanel_ = new LayoutPanel();
       mainPanel_.addStyleName("ace_editor_theme");
-      VerticalPanel vpanel = new VerticalPanel();
-      vpanel.setSize("100%", "100%");
-      mainPanel_.add(vpanel);
 
-      Label label = new Label("Chat coming soon!");
-      vpanel.add(label);
-      vpanel.setCellHorizontalAlignment(label, VerticalPanel.ALIGN_CENTER);
-      vpanel.setCellVerticalAlignment(label, VerticalPanel.ALIGN_MIDDLE);
-      mainPanel_.setWidgetTopHeight(vpanel, 0, Unit.PCT, 100, Unit.PCT);
-      mainPanel_.setWidgetLeftWidth(vpanel, 0, Unit.PCT, 100, Unit.PCT);
+      frame_ = new RStudioThemedFrame(constants_.chatTitle());
+      frame_.setSize("100%", "100%");
+
+      // Show initial "checking..." message
+      setFrameContent(frame_, generateMessageHTML(constants_.checkingInstallationMessage()));
+
+      // Check if AI features are installed
+      server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean result)
+         {
+            if (!result)
+            {
+               // AI Chat is not installed
+               setFrameContent(frame_, generateMessageHTML(constants_.aiChatNotInstalledMessage()));
+            }
+            else
+            {
+               // TODO: AI Chat is installed - load the actual chat interface
+               setFrameContent(frame_, generateMessageHTML("Coming Soon!"));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            setFrameContent(frame_, generateMessageHTML(constants_.errorDetectingInstallationMessage()));
+         }
+      });
+
+      mainPanel_.add(frame_);
+      mainPanel_.setWidgetTopHeight(frame_, 0, Unit.PCT, 100, Unit.PCT);
+      mainPanel_.setWidgetLeftWidth(frame_, 0, Unit.PCT, 100, Unit.PCT);
 
       return mainPanel_;
    }
+
+   /**
+    * Generates centered HTML content for display in the iframe.
+    *
+    * @param message The message text to display
+    * @return HTML string with proper styling for centered content
+    */
+   private String generateMessageHTML(String message)
+   {
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;");
+      html.append("  font-size: 14px;");
+      html.append("  color: var(--rstudio-foreground, #000);");
+      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 20px;");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append(message);
+      html.append("</div>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   /**
+    * Sets the HTML content of the iframe dynamically.
+    *
+    * @param frame The RStudioThemedFrame to update
+    * @param html The HTML content to write to the iframe
+    */
+   private native void setFrameContent(RStudioThemedFrame frame, String html) /*-{
+      try {
+         var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+         doc.open();
+         doc.write(html);
+         doc.close();
+      } catch (e) {
+         console.error("Error setting frame content:", e);
+      }
+   }-*/;
 
    @Override
    protected Toolbar createMainToolbar()
@@ -85,6 +175,7 @@ public class ChatPane
 
 
    private LayoutPanel mainPanel_;
+   private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
 
    // Injected ----
