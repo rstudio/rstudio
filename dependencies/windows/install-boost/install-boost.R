@@ -1,5 +1,5 @@
 
-BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
+BOOST_VERSION <- Sys.getenv("BOOST_VERSION", unset = "1.89.0")
 BOOST_TOOLSET <- Sys.getenv("BOOST_TOOLSET", unset = "msvc-14.3")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 
