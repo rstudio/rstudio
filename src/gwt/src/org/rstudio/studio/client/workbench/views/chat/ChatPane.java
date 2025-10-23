@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -120,8 +121,10 @@ public class ChatPane
       html.append("  display: flex;");
       html.append("  align-items: center;");
       html.append("  justify-content: center;");
-      html.append("  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;");
-      html.append("  font-size: 14px;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  font-size: 12px;");
       html.append("  color: var(--rstudio-foreground, #000);");
       html.append("  background-color: var(--rstudio-background, #fff);");
       html.append("}");

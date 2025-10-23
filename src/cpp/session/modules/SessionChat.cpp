@@ -74,8 +74,6 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 {
    json::Object responseJson;
    pResponse->setResult(false); // TODO: Implement actual check for chat feature installation
-   // sleep for 5 seconds
-   boost::this_thread::sleep(boost::posix_time::seconds(5));
    return Success();
 }
 
