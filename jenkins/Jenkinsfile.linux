@@ -345,7 +345,7 @@ pipeline {
                       }
                     }
                   }
-
+                  
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
