@@ -7514,6 +7514,6 @@ public class RemoteServer implements Server
       public RpcRequest request;
       public RpcResponseHandler responseHandler;
       public RetryHandler retryHandler;
-   }
+   };
 
 }
