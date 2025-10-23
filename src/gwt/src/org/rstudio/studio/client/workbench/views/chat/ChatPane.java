@@ -21,6 +21,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
@@ -106,7 +107,9 @@ public class ChatPane
    {
       StringBuilder html = new StringBuilder();
       html.append("<!DOCTYPE html>");
-      html.append("<html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
       html.append("<head>");
       html.append("<meta charset='UTF-8'>");
       html.append("<style>");
