@@ -63,32 +63,7 @@ public class ChatPane
       frame_.setSize("100%", "100%");
 
       // Show initial "checking..." message
-      setFrameContent(frame_, generateMessageHTML(constants_.checkingInstallationMessage()));
-
-      // Check if AI features are installed
-      server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
-      {
-         @Override
-         public void onResponseReceived(Boolean result)
-         {
-            if (!result)
-            {
-               // AI Chat is not installed
-               setFrameContent(frame_, generateMessageHTML(constants_.aiChatNotInstalledMessage()));
-            }
-            else
-            {
-               // TODO: AI Chat is installed - load the actual chat interface
-               setFrameContent(frame_, generateMessageHTML("Coming Soon!"));
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            setFrameContent(frame_, generateMessageHTML(constants_.errorDetectingInstallationMessage()));
-         }
-      });
+      updateFrameContent(generateMessageHTML(constants_.checkingInstallationMessage()));
 
       mainPanel_.add(frame_);
       mainPanel_.setWidgetTopHeight(frame_, 0, Unit.PCT, 100, Unit.PCT);
@@ -164,12 +139,69 @@ public class ChatPane
       }
    }-*/;
 
+   /**
+    * Updates the iframe content and stores it for later refresh.
+    *
+    * @param html The HTML content to display
+    */
+   private void updateFrameContent(String html)
+   {
+      currentContent_ = html;
+      setFrameContent(frame_, html);
+   }
+
    @Override
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar(constants_.chatTabLabel());
 
       return toolbar_;
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      if (!initialized_)
+      {
+         initialized_ = true;
+
+         // Check if AI features are installed
+         server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
+         {
+            @Override
+            public void onResponseReceived(Boolean result)
+            {
+               if (!result)
+               {
+                  // AI Chat is not installed
+                  updateFrameContent(generateMessageHTML(constants_.aiChatNotInstalledMessage()));
+               }
+               else
+               {
+                  // TODO: AI Chat is installed - load the actual chat interface
+                  updateFrameContent(generateMessageHTML("Coming Soon!"));
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               updateFrameContent(generateMessageHTML(constants_.errorDetectingInstallationMessage()));
+            }
+         });
+      }
+   }
+
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      // Refresh iframe content when pane becomes visible
+      if (currentContent_ != null)
+      {
+         setFrameContent(frame_, currentContent_);
+      }
    }
 
    // Resources ----
@@ -183,6 +215,8 @@ public class ChatPane
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
+   private boolean initialized_ = false;
+   private String currentContent_ = null;
 
    // Injected ----
    @SuppressWarnings("unused")
