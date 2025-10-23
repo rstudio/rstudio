@@ -2136,6 +2136,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("installPackagesRequiresRestart", function(pkgs)
 {
+   # only required on Windows; on other operating systems,
+   # we can install an already-loaded package without issue
+   if (!.rs.platform.isWindows)
+      return(FALSE)
+
    # if we're in an renv project, no need
    if ("renv" %in% loadedNamespaces())
    {
