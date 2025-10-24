@@ -47,6 +47,7 @@
 - ([#16576](https://github.com/rstudio/rstudio/issues/16576)): Fixed column zoom state tracking getting out of sync when dragging column splitters to leave zoomed state
 - ([#16583](https://github.com/rstudio/rstudio/issues/16583)): Fixed an issue where a pane wouldn't unzoom if no source files were open when it was zoomed
 - ([#16595](https://github.com/rstudio/rstudio/issues/16596)): Fixed an issue where Open File dialog could malfunction in rare cases
+- ([#16607](https://github.com/rstudio/rstudio/issues/16607)): Fixed an issue where warning hyperlinks were malformed in some cases
 
 #### Posit Workbench
 
