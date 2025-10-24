@@ -25,7 +25,8 @@ Timer::Timer(boost::asio::io_context& ioContext) :
 
 void Timer::setExpiration(const boost::posix_time::time_duration& timeDuration)
 {
-   timer_.expires_from_now(timeDuration);
+   timer_.expires_after(
+      std::chrono::milliseconds(timeDuration.total_milliseconds()));
 }
 
 void Timer::cancel()

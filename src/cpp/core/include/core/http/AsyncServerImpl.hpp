@@ -26,7 +26,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/placeholders.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
 
 #include <core/BoostThread.hpp>
 #include <shared_core/Error.hpp>
@@ -831,23 +831,18 @@ private:
    void waitForScheduledCommandTimer()
    {
       // set expiration time for 3 seconds from now
-      boost::system::error_code ec;
-      scheduledCommandTimer_.expires_from_now(scheduledCommandInterval_, ec);
-
-      // attempt to schedule timer (should always succeed but
-      // include error check to be paranoid/robust)
-      if (!ec)
+      // should always succeed but include error check to be paranoid/robust
+      try
       {
+         scheduledCommandTimer_.expires_after(
+            std::chrono::milliseconds(scheduledCommandInterval_.total_milliseconds()));
+
          scheduledCommandTimer_.async_wait(boost::bind(
                &AsyncServerImpl<ProtocolType>::handleScheduledCommandTimer,
                this,
                boost::asio::placeholders::error));
       }
-      else
-      {
-         // unexpected error setting timer. log it
-         LOG_ERROR(Error(ec, ERROR_LOCATION));
-      }
+      CATCH_UNEXPECTED_EXCEPTION;
    }
 
    void handleScheduledCommandTimer(const boost::system::error_code& ec)
@@ -975,7 +970,7 @@ private:
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    boost::posix_time::time_duration scheduledCommandInterval_;
-   boost::asio::deadline_timer scheduledCommandTimer_;
+   boost::asio::system_timer scheduledCommandTimer_;
 
    boost::mutex scheduledCommandMutex_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;

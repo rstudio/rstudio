@@ -15,19 +15,19 @@
 
 #include <core/FileLock.hpp>
 
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
-#include <core/Macros.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/bind/bind.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
+
+#include <shared_core/Error.hpp>
 
 #include <core/Settings.hpp>
-#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/bind/bind.hpp>
 
 // borrowed from SessionConstants.hpp
 #define kRStudioSessionRoute "RSTUDIO_SESSION_ROUTE"
@@ -278,7 +278,7 @@ namespace {
 
 void schedulePeriodicExecution(
       const boost::system::error_code& ec,
-      boost::asio::deadline_timer& timer,
+      boost::asio::system_timer& timer,
       boost::posix_time::seconds interval,
       boost::function<void()> callback)
 {
@@ -296,13 +296,11 @@ void schedulePeriodicExecution(
       callback();
 
       // reschedule
-      boost::system::error_code errc;
-      timer.expires_at(timer.expires_at() + interval, errc);
-      if (errc)
+      try
       {
-         LOG_ERROR(Error(errc, ERROR_LOCATION));
-         return;
+         timer.expires_after(std::chrono::milliseconds(interval.total_milliseconds()));
       }
+      CATCH_UNEXPECTED_EXCEPTION;
       
       timer.async_wait(boost::bind(
                           schedulePeriodicExecution,
@@ -330,7 +328,7 @@ void FileLock::refreshPeriodically(boost::asio::io_context& service,
    
    verifyInitialized();
    
-   static boost::asio::deadline_timer timer(service, interval);
+   static boost::asio::system_timer timer(service, std::chrono::milliseconds(interval.total_milliseconds()));
    timer.async_wait(boost::bind(
                        schedulePeriodicExecution,
                        boost::asio::placeholders::error,

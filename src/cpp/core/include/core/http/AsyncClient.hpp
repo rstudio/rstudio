@@ -28,7 +28,7 @@
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -422,9 +422,13 @@ private:
    {
       // set expiration
       boost::system::error_code ec;
-      connectionRetryContext_.retryTimer.expires_from_now(
-                  connectionRetryContext_.profile.retryInterval,
-                  ec);
+      try
+      {
+         auto interval = std::chrono::milliseconds(
+            connectionRetryContext_.profile.retryInterval.total_milliseconds());
+         connectionRetryContext_.retryTimer.expires_after(interval);
+      }
+      CATCH_UNEXPECTED_EXCEPTION;
 
       // attempt to schedule retry timer (should always succeed but
       // include error check to be paranoid/robust)
@@ -792,7 +796,7 @@ private:
 
       http::ConnectionRetryProfile profile;
       boost::posix_time::ptime stopTryingTime;
-      boost::asio::deadline_timer retryTimer;
+      boost::asio::system_timer retryTimer;
    };
 
    struct ChunkState
