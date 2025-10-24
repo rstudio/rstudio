@@ -36,6 +36,12 @@ public class ChatPane
       extends WorkbenchPane
       implements ChatPresenter.Display
 {
+   private enum ContentType
+   {
+      HTML,
+      URL
+   }
+
    @Inject
    protected ChatPane(GlobalDisplay globalDisplay,
                       EventBus events,
@@ -146,8 +152,23 @@ public class ChatPane
     */
    private void updateFrameContent(String html)
    {
+      contentType_ = ContentType.HTML;
       currentContent_ = html;
+      currentUrl_ = null;
       setFrameContent(frame_, html);
+   }
+
+   /**
+    * Loads a URL in the iframe and stores it for later refresh.
+    *
+    * @param url The URL to load
+    */
+   private void loadUrl(String url)
+   {
+      contentType_ = ContentType.URL;
+      currentUrl_ = url;
+      currentContent_ = null;
+      frame_.setUrl(url);
    }
 
    @Override
@@ -198,9 +219,13 @@ public class ChatPane
    {
       super.onSelected();
       // Refresh iframe content when pane becomes visible
-      if (currentContent_ != null)
+      if (contentType_ == ContentType.HTML && currentContent_ != null)
       {
          setFrameContent(frame_, currentContent_);
+      }
+      else if (contentType_ == ContentType.URL && currentUrl_ != null)
+      {
+         frame_.setUrl(currentUrl_);
       }
    }
 
@@ -216,7 +241,9 @@ public class ChatPane
    private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
    private boolean initialized_ = false;
+   private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
+   private String currentUrl_ = null;
 
    // Injected ----
    @SuppressWarnings("unused")
