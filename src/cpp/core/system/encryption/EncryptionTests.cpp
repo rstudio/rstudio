@@ -19,7 +19,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/system/encryption/EncryptionConfiguration.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
@@ -34,67 +34,66 @@ void setToDefaults()
    crypto::setMaximumEncryptionVersion(0);
 }
 
-test_context("EncryptionConfigurationTests")
+TEST(EncryptionTest, CanGetSetEncryptionMinMaxVersions)
 {
-   test_that("Can get/set encryption min/max versions")
-   {
-      // Set to defaults
-      setToDefaults();
-      REQUIRE(crypto::getMinimumEncryptionVersion() == 0);
-      REQUIRE(crypto::getMaximumEncryptionVersion() == 0);
+   // Set to defaults
+   setToDefaults();
+   ASSERT_EQ(0, crypto::getMinimumEncryptionVersion());
+   ASSERT_EQ(0, crypto::getMaximumEncryptionVersion());
 
-      // Set to some value
-      crypto::setMinimumEncryptionVersion(1);
-      crypto::setMaximumEncryptionVersion(2);
-      REQUIRE(crypto::getMinimumEncryptionVersion() == 1);
-      REQUIRE(crypto::getMaximumEncryptionVersion() == 2);
+   // Set to some value
+   crypto::setMinimumEncryptionVersion(1);
+   crypto::setMaximumEncryptionVersion(2);
+   ASSERT_EQ(1, crypto::getMinimumEncryptionVersion());
+   ASSERT_EQ(2, crypto::getMaximumEncryptionVersion());
 
-      setToDefaults();
-   }
-
-   test_that("Env vars control encryption min/max versions")
-   {
-      // Unset any environment variable values
-      core::system::setenv(kEncryptionMinimumVersionEnvVar, std::string());
-      core::system::setenv(kEncryptionMaximumVersionEnvVar, std::string());
-
-      // Set to defaults
-      setToDefaults();
-      REQUIRE(crypto::getMinimumEncryptionVersion() == 0);
-      REQUIRE(crypto::getMaximumEncryptionVersion() == 0);
-
-      // Set environment variable values
-      core::system::setenv(kEncryptionMinimumVersionEnvVar, "1");
-      core::system::setenv(kEncryptionMaximumVersionEnvVar, "2");
-
-      // Load env vars into config
-      crypto::encryption::initialize();
-      REQUIRE(crypto::getMinimumEncryptionVersion() == 1);
-      REQUIRE(crypto::getMaximumEncryptionVersion() == 2);
-
-      // Set back to defaults
-      setToDefaults();
-   }
-
-   test_that("isDecryptionAllowed respects min encryption version")
-   {
-      // Set to defaults
-      setToDefaults();
-
-      crypto::setMinimumEncryptionVersion(1);
-
-      REQUIRE(crypto::isDecryptionVersionAllowed(0) != Success());
-      REQUIRE(crypto::isDecryptionVersionAllowed(1) == Success());
-      REQUIRE(crypto::isDecryptionVersionAllowed(2) == Success());
-
-      // Set back to defaults
-      setToDefaults();
-   }
+   setToDefaults();
 }
 
-} // end namespace tests
-} // end namespace encryption
-} // end namespace crypto
-} // end namespace system
-} // end namespace core
-} // end namespace rstudio
+
+
+TEST(EncryptionTest, EnvVarsControlEncryptionMinMaxVersions)
+{
+   // Unset any environment variable values
+   core::system::setenv(kEncryptionMinimumVersionEnvVar, std::string());
+   core::system::setenv(kEncryptionMaximumVersionEnvVar, std::string());
+
+   // Set to defaults
+   setToDefaults();
+   ASSERT_EQ(0, crypto::getMinimumEncryptionVersion());
+   ASSERT_EQ(0, crypto::getMaximumEncryptionVersion());
+
+   // Set environment variable values
+   core::system::setenv(kEncryptionMinimumVersionEnvVar, "1");
+   core::system::setenv(kEncryptionMaximumVersionEnvVar, "2");
+
+   // Load env vars into config
+   crypto::encryption::initialize();
+   ASSERT_EQ(1, crypto::getMinimumEncryptionVersion());
+   ASSERT_EQ(2, crypto::getMaximumEncryptionVersion());
+
+   // Set back to defaults
+   setToDefaults();
+}
+
+TEST(EncryptionTest, IsDecryptionAllowedRespectsMinEncryptionVersion)
+{
+   // Set to defaults
+   setToDefaults();
+
+   crypto::setMinimumEncryptionVersion(1);
+
+   ASSERT_NE(crypto::isDecryptionVersionAllowed(0), Success());
+   ASSERT_EQ(crypto::isDecryptionVersionAllowed(1), Success());
+   ASSERT_EQ(crypto::isDecryptionVersionAllowed(2), Success());
+
+   // Set back to defaults
+   setToDefaults();
+}
+
+} // namespace tests
+} // namespace encryption
+} // namespace crypto
+} // namespace system
+} // namespace core
+} // namespace rstudio

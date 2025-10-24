@@ -13,58 +13,55 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 #include <server_core/UrlPorts.hpp>
 
 namespace rstudio {
 namespace server_core {
 
-test_context("URL Port Transformation")
+TEST(UrlPortsTest, PortsAreTransformed)
 {
-   test_that("ports are transformed")
-   {
-      std::string token("fb7559983669");
-      expect_equal(transformPort(token, 4991), "1235cc15");
-      expect_equal(transformPort(token, 5990), "1a2be938");
-      expect_equal(transformPort(token, 5252), "d4167a28");
-      expect_equal(transformPort(token, 6600), "f2094b4e");
-      expect_equal(transformPort(token, 6600, true), "9f2094b4e");
-   }
+   std::string token("fb7559983669");
+   EXPECT_EQ(transformPort(token, 4991), "1235cc15");
+   EXPECT_EQ(transformPort(token, 5990), "1a2be938");
+   EXPECT_EQ(transformPort(token, 5252), "d4167a28");
+   EXPECT_EQ(transformPort(token, 6600), "f2094b4e");
+   EXPECT_EQ(transformPort(token, 6600, true), "9f2094b4e");
+}
 
-   test_that("ports are detransformed")
-   {
-      std::string token("fb7559983669");
-      bool server;
-      expect_equal(detransformPort(token, "1235cc15", server), 4991);
-      expect_equal(server, false);
-      expect_equal(detransformPort(token, "1a2be938", server), 5990);
-      expect_equal(server, false);
-      expect_equal(detransformPort(token, "d4167a28", server), 5252);
-      expect_equal(server, false);
-      expect_equal(detransformPort(token, "f2094b4e", server), 6600);
-      expect_equal(server, false);
-      expect_equal(detransformPort(token, "9f2094b4e", server), 6600);
-      expect_equal(server, true);
-      expect_equal(detransformPort(token, "1f2094b4e", server), -1);
-      expect_equal(detransformPort(token, "nonsense", server), -1);
-   }
+TEST(UrlPortsTest, PortsAreDetransformed)
+{
+   std::string token("fb7559983669");
+   bool server;
+   EXPECT_EQ(4991, detransformPort(token, "1235cc15", server));
+   EXPECT_FALSE(server);
+   EXPECT_EQ(5990, detransformPort(token, "1a2be938", server));
+   EXPECT_FALSE(server);
+   EXPECT_EQ(5252, detransformPort(token, "d4167a28", server));
+   EXPECT_FALSE(server);
+   EXPECT_EQ(6600, detransformPort(token, "f2094b4e", server));
+   EXPECT_FALSE(server);
+   EXPECT_EQ(6600, detransformPort(token, "9f2094b4e", server));
+   EXPECT_TRUE(server);
+   EXPECT_EQ(-1, detransformPort(token, "1f2094b4e", server));
+   EXPECT_EQ(-1, detransformPort(token, "nonsense", server));
+}
 
-   test_that("unique tokens are generated")
-   {
-      std::string token1 = generateNewPortToken();
-      std::string token2 = generateNewPortToken();
-      expect_true(token1.length() == 12);
-      expect_true(token2.length() == 12);
-      expect_false(token1 == token2);
-   }
+TEST(UrlPortsTest, UniqueTokensAreGenerated)
+{
+   std::string token1 = generateNewPortToken();
+   std::string token2 = generateNewPortToken();
+   EXPECT_EQ(12, token1.length());
+   EXPECT_EQ(12, token2.length());
+   EXPECT_NE(token1, token2);
+}
 
-   test_that("urls are transformed")
-   {
-      std::string token("f670d35125b1");
-      std::string path;
-      portmapPathForLocalhostUrl("http://localhost:4991/foo", token, &path);
-      expect_equal(path, "p/997a18f1/foo");
-   }
+TEST(UrlPortsTest, UrlsAreTransformed)
+{
+   std::string token("f670d35125b1");
+   std::string path;
+   portmapPathForLocalhostUrl("http://localhost:4991/foo", token, &path);
+   EXPECT_EQ("p/997a18f1/foo", path);
 }
 
 } // namespace server_core
