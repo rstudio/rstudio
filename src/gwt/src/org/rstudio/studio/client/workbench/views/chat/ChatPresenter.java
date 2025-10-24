@@ -17,6 +17,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.inject.Inject;
 

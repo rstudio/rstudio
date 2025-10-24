@@ -145,6 +145,7 @@
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionCopilot.hpp"
+#include "modules/SessionChat.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionDebugging.hpp"
@@ -727,6 +728,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
       (modules::copilot::initialize)
+      (modules::chat::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)
 

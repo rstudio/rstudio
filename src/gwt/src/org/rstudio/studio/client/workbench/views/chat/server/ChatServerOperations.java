@@ -10,9 +10,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.chat;
+package org.rstudio.studio.client.workbench.views.chat.server;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface ChatServerOperations
 {
+   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
 }
