@@ -17,6 +17,8 @@ PANE_LAYOUT_SIDEBAR_SELECT <- "#rstudio_pane_layout_sidebar_select"
 # sidebar visible checkbox
 PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
+PANE_LAYOUT_RESET_LINK <- "#rstudio_pane_layout_reset_link"
+
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
@@ -376,6 +378,81 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Swap back to restore
    .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_TOP, tabset1Initial)
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Reset link restores all pane layout settings to defaults", {
+   .rs.openPaneLayoutOptions(remote)
+
+   # Make sidebar visible
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar should be initially unchecked")
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar should now be checked")
+
+   # Move sidebar to left
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_SIDEBAR, "Sidebar on Left")
+   sidebarPosition <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
+   expect_equal(sidebarPosition, "Sidebar on Left", info = "Sidebar should be on left")
+
+   # Add some tabs to the sidebar (Files, Environment, History)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "History"))
+
+   # Verify tabs were added to sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "History"))
+
+   # Swap some quadrants
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_TOP, "Console")
+   upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   expect_equal(upperLeftAfter, "Console", info = "Upper left should be Console after swap")
+
+   # Now click the reset link
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_RESET_LINK), info = "Reset link should exist")
+   remote$dom.clickElement(PANE_LAYOUT_RESET_LINK)
+   Sys.sleep(0.5)
+
+   # Verify all settings are back to defaults
+
+   # 1. Sidebar should be unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar visible checkbox should be unchecked after reset")
+
+   # 2. Sidebar should be on right
+   sidebarPositionAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
+   expect_equal(sidebarPositionAfter, "Sidebar on Right",
+                info = "Sidebar should be on right after reset")
+
+   # 3. Only Chat should be checked in Sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"),
+               info = "Chat should be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should not be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should not be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "History"),
+                info = "History should not be checked in Sidebar after reset")
+
+   # 4. Quadrants should be back to defaults
+   sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   expect_equal(sourceText, "Source", info = "Upper left should be Source after reset")
+
+   consoleText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   expect_equal(consoleText, "Console", info = "Lower left should be Console after reset")
+
+   # 5. Verify TabSet1 tabs are back to defaults
+   expectedTabSet1Tabs <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, expectedTabSet1Tabs)
+
+   # 6. Verify TabSet2 tabs are back to defaults
+   expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
