@@ -78,15 +78,18 @@ Next, you can try building GWT using:
 If the build succeeds, you can push your newly-created branch. You can now also
 begin committing GWT patches to this branch as necessary.
 
-Once you are ready to use this build of GWT with RStudio, you can copy the built
-artifacts into the dependency tree:
+Once you are ready to use this build of GWT with RStudio, you can copy the
+built artifacts into the dependency tree. Note that we're assuming you've
+already downloaded and installed a previous version of RStudio's GWT tools;
+this includes auxiliary libraries used by GWT like 'elemental2'.
 
+	# using this script's directory as the working directory
 	rm -rf ../../../dependencies/common/gwtproject/gwt/gwt-rstudio
 	cp -R "gwtproject/gwt/build/staging/gwt-${GWT_VERSION}" "../../../dependencies/common/gwtproject/gwt/gwt-rstudio"
 
-Finally, once you're ready to ensure this version of GWT is downloaded and
-used by RStudio during the dependency installation process, you can do
-something like:
+Finally, once you're ready to ensure this version of GWT is downloaded and used
+by RStudio during the dependency installation process, you can do something
+like:
 
 	cd ../../../dependencies/common/gwtproject
 	rm -f gwt-*
@@ -95,7 +98,6 @@ something like:
 	rm gwt.tar.gz
 
 and then update the GWT versions used in our various dependency files.
-Easiest way to find these is to just use grep / rg as they're scattered around.
 
 You may also need to update the files at:
 
