@@ -42,6 +42,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -360,6 +361,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             grid_ = null;
          }
          updateTable(displayColumnCount_);
+
+         // Ensure reset panel stays at the bottom after grid rebuild
+         if (resetPanel_ != null)
+         {
+            remove(resetPanel_);
+            add(resetPanel_);
+         }
       });
 
       // Now update the table which will set the correct widths
@@ -447,6 +455,67 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       updateTabSetPositions();
       updateTabSetLabels();
+
+      // Add reset link below the grid, right-justified
+      resetPanel_ = new FlowPanel();
+      resetPanel_.getElement().getStyle().setProperty("textAlign", "right");
+      resetPanel_.getElement().getStyle().setProperty("marginRight", "4px");
+
+      Anchor resetLink = new Anchor(constants_.resetPaneLayoutToDefaults());
+      ElementIds.assignElementId(resetLink.getElement(), ElementIds.PANE_LAYOUT_RESET_LINK);
+      resetLink.addStyleName("rstudio-themes-flat");
+      resetLink.addClickHandler(event -> {
+         event.preventDefault();
+         resetToDefaults();
+      });
+
+      resetPanel_.add(resetLink);
+      add(resetPanel_);
+   }
+
+   private void resetToDefaults()
+   {
+      // Get default configuration
+      PaneConfig defaultConfig = PaneConfig.createDefault();
+
+      // Reset quadrant selections
+      JsArrayString defaultPanes = defaultConfig.getQuadrants();
+      for (int i = 0; i < 4; i++)
+         selectByValue(visiblePanes_[i], defaultPanes.get(i));
+
+      // Reset tab assignments
+      tabSet1ModuleList_.setValue(toArrayList(defaultConfig.getTabSet1()));
+      tabSet2ModuleList_.setValue(toArrayList(defaultConfig.getTabSet2()));
+      hiddenTabSetModuleList_.setValue(toArrayList(defaultConfig.getHiddenTabSet()));
+      sidebarModuleList_.setValue(toArrayList(defaultConfig.getSidebar()));
+
+      // Reset sidebar preferences
+      sidebarVisibleCheckbox_.setValue(defaultConfig.getSidebarVisible());
+      sidebarLocation_.setSelectedIndex("left".equals(defaultConfig.getSidebarLocation()) ? 0 : 1);
+
+      // Force complete grid rebuild to reposition sidebar if needed
+      if (grid_ != null)
+      {
+         remove(grid_);
+         grid_ = null;
+      }
+
+      // Reset column count to 0 (default has no additional columns)
+      updateTable(0);
+
+      // Update labels to reflect new configuration
+      updateTabSetPositions();
+      updateTabSetLabels();
+
+      // Ensure reset panel stays at the bottom after grid rebuild
+      if (resetPanel_ != null)
+      {
+         remove(resetPanel_);
+         add(resetPanel_);
+      }
+
+      // Mark as dirty so changes apply on OK/Apply
+      dirty_ = true;
    }
 
    private String updateTable(int newCount)
@@ -501,7 +570,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          // If sidebar is on the left, add it first
          if (sidebarOnLeft)
          {
-            grid_.setWidget(0, topColumn, sidebarPanel_ = createSidebarPane());
+            grid_.setWidget(0, topColumn, createSidebarPane());
             grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
             grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
             grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
@@ -530,7 +599,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          // If sidebar is on the right, add it after the quadrants
          if (!sidebarOnLeft)
          {
-            grid_.setWidget(0, ++topColumn, sidebarPanel_ = createSidebarPane());
+            grid_.setWidget(0, ++topColumn, createSidebarPane());
             grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
             grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
             grid_.getCellFormatter().setWidth(0, topColumn, sidebarWidth);
@@ -889,7 +958,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private VerticalPanel leftBottomPanel_;
    private VerticalPanel rightTopPanel_;
    private VerticalPanel rightBottomPanel_;
-   private VerticalPanel sidebarPanel_;
+   private FlowPanel resetPanel_;
 
    private int additionalColumnCount_ = 0;
    private int displayColumnCount_ = 0;
@@ -899,7 +968,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int GRID_CELL_PADDING = 6;
    private final static int MAX_COLUMN_WIDTH = 50 + GRID_CELL_PADDING + GRID_CELL_SPACING;
 
-   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 342;
+   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 355;
    private final static int TABLE_WIDTH = PreferencesDialogConstants.PANE_CONTAINER_WIDTH - 8;
    private final static int SCROLL_PANEL_HEIGHT = TABLE_HEIGHT - 40;
 
