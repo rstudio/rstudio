@@ -69,7 +69,7 @@ Next, you can try building GWT using:
 	export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 
 	# execute build; use GWT version appropriate for release of RStudio
-	GWT_VERSION="2.12.2 (Apple Blossom)"
+	GWT_VERSION=2.12.2
 	ant clean dist-dev "-Dgwt.version=${GWT_VERSION}"
 
 	# go home
