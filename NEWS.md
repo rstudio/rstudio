@@ -48,6 +48,7 @@
 - ([#16583](https://github.com/rstudio/rstudio/issues/16583)): Fixed an issue where a pane wouldn't unzoom if no source files were open when it was zoomed
 - ([#16595](https://github.com/rstudio/rstudio/issues/16596)): Fixed an issue where Open File dialog could malfunction in rare cases
 - ([#16607](https://github.com/rstudio/rstudio/issues/16607)): Fixed an issue where warning hyperlinks were malformed in some cases
+- ([#16329](https://github.com/rstudio/rstudio/issues/16329)): Fixed an issue where RStudio's autosave could update a file's mtime even if it had no changes
 
 #### Posit Workbench
 
