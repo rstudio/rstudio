@@ -18,7 +18,7 @@
 set -e
 
 # The version of Boost to be downloaded and built.
-GWT_VERSION=2.12.2
+GWT_VERSION=2.12.2-apple-blossom
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing GWT ${GWT_VERSION}"
