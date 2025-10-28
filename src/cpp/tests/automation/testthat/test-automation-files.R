@@ -81,3 +81,63 @@ withr::defer(.rs.automation.deleteRemote())
       unlink(files)
    })
 })
+
+# https://github.com/rstudio/rstudio/issues/16329
+.rs.test("we don't autosave unchanged documents", {
+   
+   # make sure we've enabled autosave
+   remote$console.executeExpr({
+      .rs.uiPrefs$autoSaveOnBlur$set(TRUE)
+   })
+   
+   # create a document on disk
+   remote$console.executeExpr({
+      con <- tempfile(fileext = ".R")
+      writeLines("# hello world", con = con)
+      file.edit(con)
+   })
+   
+   # wait for file to open
+   Sys.sleep(1)
+   
+   # get file mtime
+   remote$console.executeExpr({
+      old <- file.info(con)$mtime
+      print(old)
+   })
+   
+   # send focus to the console, source pane, and back again
+   remote$commands.execute(.rs.appCommands$activateConsole)
+   remote$commands.execute(.rs.appCommands$activateSource)
+   remote$commands.execute(.rs.appCommands$activateConsole)
+   
+   remote$console.executeExpr({
+      new <- file.info(con)$mtime
+      print(new)
+   })
+   
+   remote$console.executeExpr(old == new)
+   output <- remote$console.getOutput(n = 1L)
+   expect_equal(output, "[1] TRUE")
+   
+   # now try editing the document, changing focus, and then
+   # checking that the file was properly autosaved
+   remote$commands.execute(.rs.appCommands$activateSource)
+   editor <- remote$editor.getInstance()
+   editor$gotoLine(2L)
+   editor$insert("# this is some text")
+   remote$commands.execute(.rs.appCommands$activateConsole)
+   
+   # check that the file was autosaved and the mtime has changed
+   remote$console.executeExpr({
+      new <- file.info(con)$mtime
+      print(new)
+   })
+   
+   remote$console.executeExpr({
+      old == new
+   })
+   
+   output <- remote$console.getOutput(1L)
+   expect_equal(output, "[1] FALSE")
+})

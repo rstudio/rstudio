@@ -3606,9 +3606,10 @@ public class TextEditingTarget implements
    {
       boolean canAutosave =
             !isSaving_ &&
-            ModalDialogTracker.numModalsShowing() == 0 &&
             prefs_.autoSaveOnBlur().getValue() &&
+            ModalDialogTracker.numModalsShowing() == 0 &&
             getPath() != null &&
+            dirtyState_.getValue() &&
             !docDisplay_.hasActiveCollabSession();
             
       if (!canAutosave)
