@@ -85,19 +85,19 @@
       x <- x[,c(1:cols.max.print)]
     }
 
-    x <- as.data.frame(head(x, max.print))
-    x <- .rs.formatDataCapture(x, options)
-    saveRDS(x, file = output)
-
     # standard metadata
     metadata <- list(classes = className, nrow = nRow, ncol = nCol, summary = list())
 
     # if tibble is loaded, use it to create a summary of the object
     if ("tibble" %in% loadedNamespaces())
-    {
        metadata$summary <- as.list(tibble::tbl_sum(original))
-    }
 
+    # format and save object representation, for later printing
+    data <- as.data.frame(head(x, max.print))
+    result <- .rs.formatDataCapture(data, options)
+    saveRDS(result, file = output)
+
+    # report output and metadata to caller
     .Call("rs_recordData", output, metadata, PACKAGE = "(embedding)")
     invisible(original)
   }
