@@ -102,7 +102,7 @@ pipeline {
       environment {
         AWS_ACCOUNT_ID = '749683154838'
         KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
-        BUILD_AGENT_TEMP = "${env.HOME}/tmp"
+        KEYCHAIN_PATH = "${pwd()}/buildagent.keychain"
         MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
         MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
       }
@@ -116,21 +116,25 @@ pipeline {
             set -e
 
             # Create a keychain to hold the Developer ID certificate for signing
-            if [ ! -f "${BUILD_AGENT_TEMP}/buildagent.keychain" ]; then
-              security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
+            if [ ! -f "${KEYCHAIN_PATH}" ]; then
+              echo "Creating new keychain: ${KEYCHAIN_PATH}"
+              security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
             else
-              echo "Using keychain: ${BUILD_AGENT_TEMP}/buildagent.keychain"
+              echo "Using existing keychain: ${KEYCHAIN_PATH}"
             fi
 
             # Set a default keychain, and unlock it
-            security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain
-            security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
+            security default-keychain -s "${KEYCHAIN_PATH}"
+            security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
 
             # Turn off timeout
-            security set-keychain-settings
+            security set-keychain-settings "${KEYCHAIN_PATH}"
 
             # Import the developer ID from Jenkins secrets
-            security import "${MACOS_DEVELOPER_CERTIFICATE}" -k ${BUILD_AGENT_TEMP}/buildagent.keychain -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}" -T /usr/bin/codesign
+            security import "${MACOS_DEVELOPER_CERTIFICATE}" \
+              -k "${KEYCHAIN_PATH}"                          \
+              -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}"        \
+              -T /usr/bin/codesign
           '''
         }
         // Import the Developer ID certificate from Jenkins Secrets.

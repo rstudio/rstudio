@@ -27,6 +27,11 @@ set(CODESIGN_FLAGS
    --force
    --deep)
 
+# include keychain path if provided
+if(ENV{KEYCHAIN_PATH})
+   list(APPEND CODESIGN_FLAGS --keychain "$ENV{KEYCHAIN_PATH}")
+endif()
+
 # NOTE: we always attempt to sign a package build of RStudio
 # (even if it's just a development build) as our usages of
 # install_name_tool will invalidate existing signatures on
