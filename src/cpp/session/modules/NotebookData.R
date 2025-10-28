@@ -86,11 +86,8 @@
     }
 
     x <- as.data.frame(head(x, max.print))
-
-    save(
-      x,
-      options,
-      file = output)
+    x <- .rs.formatDataCapture(x, options)
+    saveRDS(x, file = output)
 
     # standard metadata
     metadata <- list(classes = className, nrow = nRow, ncol = nCol, summary = list())
@@ -194,6 +191,11 @@
 
 .rs.addFunction("readDataCapture", function(path)
 {
+  readRDS(path)
+})
+
+.rs.addFunction("formatDataCapture", function(data, options)
+{
   type_sum <- function(x) {
     format_sum <- switch (class(x)[[1]],
                           ordered = "ord",
@@ -278,17 +280,6 @@
     )
   }
 
-  e <- new.env(parent = emptyenv())
-  load(file = path, envir = e)
-  
-  # this works around a strange bug in R 3.5.1 on Windows
-  # where output can be mis-encoded after a save / load
-  cat(NULL, sep = "")
-
-  data <- head(e$x, getOption("max.print", 1000))
-  data <- if (is.null(data)) as.data.frame(list()) else data
-  options <- e$options
-
   columnNames <- names(data)
   columnSequence <- seq_len(ncol(data))
   
@@ -333,9 +324,9 @@
   is_list_not_vctrs <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
   is_list <- vapply(data, is_list_not_vctrs, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
-        summary <- obj_sum(x)
-        paste0("<", summary, ">")
-      })
+    summary <- obj_sum(x)
+    paste0("<", summary, ">")
+  })
 
   # R 3.6.0 on Windows has an issue where RGui escapes can 'leak'
   # into encoded strings; detect and remove those post-hoc.
@@ -346,37 +337,34 @@
     .Platform$OS.type == "windows" &&
     getRversion() == "3.6.0"
   
-  data <- as.data.frame(
-    lapply(
-      data,
-      function (y) {
-        
-        # some objects, e.g. 'hms', might produce an unexpected
-        # value when an empty vector of that class is formatted,
-        # so only format non-empty vectors
-        #
-        # https://github.com/rstudio/rstudio/issues/15459
-        if (length(y) == 0)
-          return(character())
-         
-        # escape NAs from character columns
-        if (typeof(y) == "character") {
-          y[y == "NA"] <- "__NA__"
-        }
+  values <- lapply(data, function(y) {
+    
+    # some objects, e.g. 'hms', might produce an unexpected
+    # value when an empty vector of that class is formatted,
+    # so only format non-empty vectors
+    #
+    # https://github.com/rstudio/rstudio/issues/15459
+    if (length(y) == 0)
+      return(character())
+     
+    # escape NAs from character columns
+    if (typeof(y) == "character") {
+      y[y == "NA"] <- "__NA__"
+    }
 
-        # encode string (ensure control characters are escaped)
-        y <- encodeString(format(y))
-        if (needsEncodeFix) {
-          y <- gsub("^\002\377\376", "", y)
-          y <- gsub("\003\377\376$", "", y)
-        }
+    # encode string (ensure control characters are escaped)
+    y <- encodeString(format(y))
+    if (needsEncodeFix) {
+      y <- gsub("^\002\377\376", "", y)
+      y <- gsub("\003\377\376$", "", y)
+    }
 
-        # trim spaces
-        gsub("^\\s+|\\s+$", "", y)
-      }
-    ),
-    stringsAsFactors = FALSE,
-    optional = TRUE)
+    # trim spaces
+    gsub("^\\s+|\\s+$", "", y)
+
+  })
+
+  data <- as.data.frame(values, stringsAsFactors = FALSE, optional = TRUE)
   
   pagedTableOptions <- list(
     columns = list(
@@ -486,13 +474,9 @@
   # assign varname if requested, otherwise print
   if (!is.null(varname)) {
     assign(varname, data, envir = globalenv())
-  }
-  else if(!is.null(data)) {
+  } else if (!is.null(data)) {
     x <- data
-    save(
-      x, 
-      file = outputFile
-    )
+    save(x, file = outputFile)
   }
 })
 
