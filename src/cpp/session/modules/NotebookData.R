@@ -95,7 +95,7 @@
     # format and save object representation, for later printing
     data <- as.data.frame(head(x, max.print))
     result <- .rs.formatDataCapture(data, options)
-    saveRDS(result, file = output)
+    save(result, file = output)
 
     # report output and metadata to caller
     .Call("rs_recordData", output, metadata, PACKAGE = "(embedding)")
@@ -191,7 +191,21 @@
 
 .rs.addFunction("readDataCapture", function(path)
 {
-  readRDS(path)
+  # load the saved data object
+  envir <- new.env(parent = emptyenv())
+  load(path, envir = envir)
+
+  # check the format of the saved object -- older versions of RStudio saved both
+  # the original data 'x' plus options 'options', with the expectation that the
+  # formatted representation would be generated on demand, whereas now we will
+  # pre-generate the formatted data representation saved as a variable 'result'
+  result <- envir[["result"]]
+  if (!is.null(result))
+    return(result)
+
+  data <- envir[["x"]]
+  options <- envir[["options"]]
+  .rs.formatDataCapture(data, options)
 })
 
 .rs.addFunction("formatDataCapture", function(data, options)
