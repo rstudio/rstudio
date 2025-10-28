@@ -49,6 +49,7 @@
 - ([#16595](https://github.com/rstudio/rstudio/issues/16596)): Fixed an issue where Open File dialog could malfunction in rare cases
 - ([#16607](https://github.com/rstudio/rstudio/issues/16607)): Fixed an issue where warning hyperlinks were malformed in some cases
 - ([#16329](https://github.com/rstudio/rstudio/issues/16329)): Fixed an issue where RStudio's autosave could update a file's mtime even if it had no changes
+- ([#16355](https://github.com/rstudio/rstudio/issues/16355)): Fixed an issue where rendering large, nested tables in R Markdown / Quarto documents could be prohibitively slow
 
 #### Posit Workbench
 
