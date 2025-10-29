@@ -6,7 +6,7 @@ description: "Revision {{< var revision >}}"
 date-format: iso
 ---
 
-RStudio is available in open source and commercial editions and runs on the desktop (Windows 10+, macOS 13+, and Linux) or in a browser connected to RStudio Server or Posit Workbench. Development of the open source and commercial RStudio IDE variants is supported by Posit Software, PBC (formerly named RStudio, PBC). Please review our [Blog post/FAQ](https://pos.it/rebrand-faq/) for additional information about the rebrand.
+RStudio is available in open source and commercial editions and runs on the desktop (Windows 10+, macOS 14+, and Linux) or in a browser connected to RStudio Server or Posit Workbench. Development of the open source and commercial RStudio IDE variants is supported by Posit Software, PBC (formerly named RStudio, PBC). Please review our [Blog post/FAQ](https://pos.it/rebrand-faq/) for additional information about the rebrand.
 
 RStudio includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace. 
 
