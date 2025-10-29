@@ -2219,7 +2219,7 @@ public class UserPrefsAccessor extends Prefs
             RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT,
             RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL
          },
-         "",
+         "all",
          new String[] {
             _constants.rmdRenameInScopeBehaviorEnum_current(),
             _constants.rmdRenameInScopeBehaviorEnum_all()

@@ -1057,6 +1057,7 @@
             "type": "string",
             "enum": ["current", "all"],
             "enumReadable": ["Current chunk", "All chunks"],
+            "default": "all",
             "title": "Rename in scope operates on:",
             "description": "Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types."
         },
