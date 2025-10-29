@@ -1300,6 +1300,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showRmdRenderCommandDescription();
 
    /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   @DefaultStringValue("Rename in scope operates on:")
+   String rmdRenameInScopeBehaviorTitle();
+   @DefaultStringValue("Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.")
+   String rmdRenameInScopeBehaviorDescription();
+   @DefaultStringValue("Current chunk")
+   String rmdRenameInScopeBehaviorEnum_current();
+   @DefaultStringValue("All chunks")
+   String rmdRenameInScopeBehaviorEnum_all();
+
+   /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    @DefaultStringValue("Enable dragging text in code editor")

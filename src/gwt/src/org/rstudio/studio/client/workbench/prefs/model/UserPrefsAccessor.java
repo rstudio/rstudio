@@ -2207,6 +2207,29 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   public PrefValue<String> rmdRenameInScopeBehavior()
+   {
+      return enumeration(
+         "rmd_rename_in_scope_behavior",
+         _constants.rmdRenameInScopeBehaviorTitle(), 
+         _constants.rmdRenameInScopeBehaviorDescription(), 
+         new String[] {
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT,
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL
+         },
+         "",
+         new String[] {
+            _constants.rmdRenameInScopeBehaviorEnum_current(),
+            _constants.rmdRenameInScopeBehaviorEnum_all()
+         });
+   }
+
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT = "current";
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL = "all";
+
+   /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    public PrefValue<Boolean> enableTextDrag()
@@ -4219,6 +4242,8 @@ public class UserPrefsAccessor extends Prefs
          terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
+      if (source.hasKey("rmd_rename_in_scope_behavior"))
+         rmdRenameInScopeBehavior().setValue(layer, source.getString("rmd_rename_in_scope_behavior"));
       if (source.hasKey("enable_text_drag"))
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
@@ -4614,6 +4639,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
       prefs.add(showRmdRenderCommand());
+      prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
       prefs.add(alwaysShownFiles());

@@ -2013,6 +2013,19 @@ core::Error UserPrefValues::setShowRmdRenderCommand(bool val)
 }
 
 /**
+ * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+ */
+std::string UserPrefValues::rmdRenameInScopeBehavior()
+{
+   return readPref<std::string>("rmd_rename_in_scope_behavior");
+}
+
+core::Error UserPrefValues::setRmdRenameInScopeBehavior(std::string val)
+{
+   return writePref("rmd_rename_in_scope_behavior", val);
+}
+
+/**
  * Whether to enable moving text on the editing surface by clicking and dragging it.
  */
 bool UserPrefValues::enableTextDrag()
@@ -3715,6 +3728,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalRenderer,
       kTerminalWeblinks,
       kShowRmdRenderCommand,
+      kRmdRenameInScopeBehavior,
       kEnableTextDrag,
       kShowHiddenFiles,
       kAlwaysShownFiles,

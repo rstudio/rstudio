@@ -1432,6 +1432,17 @@
    clear = function() { .rs.clearUserPref("show_rmd_render_command") }
 )
 
+# Rename in scope operates on:
+#
+# Controls whether the Rename in Scope command acts only upon the current chunk,
+# or upon all chunks in the document. Multiple executions of the command will
+# toggle between the two selection types.
+.rs.uiPrefs$rmdRenameInScopeBehavior <- list(
+   get = function() { .rs.getUserPref("rmd_rename_in_scope_behavior") },
+   set = function(value) { .rs.setUserPref("rmd_rename_in_scope_behavior", value) },
+   clear = function() { .rs.clearUserPref("rmd_rename_in_scope_behavior") }
+)
+
 # Enable dragging text in code editor
 #
 # Whether to enable moving text on the editing surface by clicking and dragging

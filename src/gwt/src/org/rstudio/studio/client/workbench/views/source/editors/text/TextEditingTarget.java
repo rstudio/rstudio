@@ -597,6 +597,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
       presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_, prefs_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -3981,9 +3982,9 @@ public class TextEditingTarget implements
    @Handler
    void onRenameInScope()
    {
-      withActiveEditor((disp) ->
+      withActiveEditor((editor) ->
       {
-         renameInScope(disp);
+         renameInScope(editor);
       });
    }
 
@@ -3995,7 +3996,7 @@ public class TextEditingTarget implements
       final JsArray<AceFold> folds = display.getFolds();
       display.unfoldAll();
 
-      int matches = (new TextEditingTargetRenameHelper(display)).renameInScope();
+      int matches = renameHelper_.renameInScope();
       if (matches <= 0)
       {
          if (!display.getSelectionValue().isEmpty())
@@ -9507,6 +9508,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
+   private final TextEditingTargetRenameHelper renameHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;

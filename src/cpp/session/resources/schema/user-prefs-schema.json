@@ -1047,11 +1047,18 @@
             "title": "Make links in Terminal clickable",
             "description": "Whether web links displayed in the Terminal tab are made clickable."
         },
-       "show_rmd_render_command": {
+        "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
             "title": "Show R Markdown render command",
             "description": "Whether to print the render command use to knit R Markdown documents in the R Markdown tab."
+        },
+        "rmd_rename_in_scope_behavior": {
+            "type": "string",
+            "enum": ["current", "all"],
+            "enumReadable": ["Current chunk", "All chunks"],
+            "title": "Rename in scope operates on:",
+            "description": "Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types."
         },
         "enable_text_drag": {
             "type": "boolean",
