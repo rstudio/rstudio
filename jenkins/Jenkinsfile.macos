@@ -115,19 +115,9 @@ pipeline {
           sh '''
             set -e
 
-            # Create a keychain to hold the Developer ID certificate for signing
-            if [ ! -f "${KEYCHAIN_PATH}" ]; then
-              echo "Creating new keychain: ${KEYCHAIN_PATH}"
-              security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
-            else
-              echo "Using existing keychain: ${KEYCHAIN_PATH}"
-            fi
-
-            # Set a default keychain, and unlock it
-            security default-keychain -s "${KEYCHAIN_PATH}"
+            # Set up a keychain to hold our credentials
+            security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
             security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
-
-            # Turn off timeout
             security set-keychain-settings "${KEYCHAIN_PATH}"
 
             # Import the developer ID from Jenkins secrets
@@ -135,6 +125,9 @@ pipeline {
               -k "${KEYCHAIN_PATH}"                          \
               -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}"        \
               -T /usr/bin/codesign
+            
+            # Validate the available identity
+            security list-keychains -s "${KEYCHAIN_PATH}"
           '''
         }
         // Import the Developer ID certificate from Jenkins Secrets.
