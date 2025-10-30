@@ -101,8 +101,8 @@ pipeline {
 
       environment {
         AWS_ACCOUNT_ID = '749683154838'
-        KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
         KEYCHAIN_PATH = "${WORKSPACE}/buildagent.keychain"
+        KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
         MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
         MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
       }
@@ -113,8 +113,6 @@ pipeline {
         }
         script {
           sh '''
-            set -e
-
             # Set up a keychain to hold our credentials
             security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
             security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
@@ -126,8 +124,16 @@ pipeline {
               -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}"        \
               -T /usr/bin/codesign
             
-            # Validate the available identity
+            # Allow access to keychain without prompting
+            security set-key-partition-list -S apple-tool:,apple: -s -k "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
+
+            # Try to set this as the default keychain
             security list-keychains -s "${KEYCHAIN_PATH}"
+            security default-keychain -s "${KEYCHAIN_PATH}"
+
+            # Validate the available identities
+            security find-identity
+            security find-identity "${KEYCHAIN_PATH}"
           '''
         }
         // Import the Developer ID certificate from Jenkins Secrets.
