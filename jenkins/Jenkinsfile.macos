@@ -132,6 +132,8 @@ pipeline {
             security default-keychain -s "${KEYCHAIN_PATH}"
 
             # Validate the available identities
+            security list-keychains
+            security default-keychain
             security find-identity
             security find-identity "${KEYCHAIN_PATH}"
           '''
