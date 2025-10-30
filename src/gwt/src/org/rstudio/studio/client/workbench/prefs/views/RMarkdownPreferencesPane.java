@@ -141,6 +141,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       {
          knitWorkingDir_ = null;
       }
+
+      renameInScopeBehavior_ = new SelectWidget(prefs_.rmdRenameInScopeBehavior(), false, true, false);
+      basic.add(renameInScopeBehavior_);
       
       basic.add(spacedBefore(headerLabel(constants_.documentOutlineHeaderLabel())));
       basic.add(checkboxPref(constants_.rMarkdownShowLabel(), prefs_.showDocOutlineRmd()));
@@ -524,6 +527,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       latexPreviewWidget_.setValue(prefs_.latexPreviewOnCursorIdle().getValue());
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
+      renameInScopeBehavior_.setValue(prefs_.rmdRenameInScopeBehavior().getValue());
       
       visualModeWrap_.setValue(prefs.visualMarkdownEditingWrap().getGlobalValue());
       visualModeReferences_.setValue(prefs.visualMarkdownEditingReferencesLocation().getGlobalValue());
@@ -573,6 +577,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          prefs_.knitWorkingDir().setGlobalValue(
                knitWorkingDir_.getValue());
       }
+
+      prefs_.rmdRenameInScopeBehavior().setGlobalValue(
+            renameInScopeBehavior_.getValue());
       
       if (zoteroIsAuto_)
       {
@@ -616,6 +623,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget docOutlineDisplay_;
    private final SelectWidget latexPreviewWidget_;
    private final SelectWidget knitWorkingDir_;
+   private final SelectWidget renameInScopeBehavior_;
 
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;

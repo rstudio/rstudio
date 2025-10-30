@@ -267,6 +267,9 @@ namespace prefs {
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
 #define kShowRmdRenderCommand "show_rmd_render_command"
+#define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
+#define kRmdRenameInScopeBehaviorCurrent "current"
+#define kRmdRenameInScopeBehaviorAll "all"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
 #define kAlwaysShownFiles "always_shown_files"
@@ -1386,6 +1389,12 @@ public:
     */
    bool showRmdRenderCommand();
    core::Error setShowRmdRenderCommand(bool val);
+
+   /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   std::string rmdRenameInScopeBehavior();
+   core::Error setRmdRenameInScopeBehavior(std::string val);
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
