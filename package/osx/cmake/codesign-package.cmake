@@ -37,9 +37,11 @@ else()
 endif()
 
 # include keychain path if provided
-if(ENV{KEYCHAIN_PATH})
-   echo("codesign: using keychain '$ENV{KEYCHAIN_PATH}'")
-   list(APPEND CODESIGN_FLAGS --keychain "$ENV{KEYCHAIN_PATH}")
+if(@RSTUDIO_CODESIGN_KEYCHAIN_PATH@)
+   echo("codesign: using keychain at @RSTUDIO_CODESIGN_KEYCHAIN_PATH@")
+   list(APPEND CODESIGN_FLAGS --keychain "@RSTUDIO_CODESIGN_KEYCHAIN_PATH@")
+else()
+   echo("codesign: using default keychain search list")
 endif()
 
 # add other flags -- codesign can be picky about argument order

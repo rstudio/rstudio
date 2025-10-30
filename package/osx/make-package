@@ -332,6 +332,7 @@ if [ -n "${build_x86_64}" ]; then
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
       -DRSTUDIO_CODESIGN_USE_CREDENTIALS="${use_creds}"      \
+      -DRSTUDIO_CODESIGN_KEYCHAIN_PATH="${KEYCHAIN_PATH}"    \
       -DGWT_BUILD="${build_gwt}"                             \
       -DGWT_COPY="${copy_gwt}"                               \
       -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"            \
