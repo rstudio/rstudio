@@ -113,6 +113,20 @@ pipeline {
         }
         script {
           sh '''
+
+            #
+            # The keychain search list for the user is stored in:
+            #
+            #   ~/Library/Preferences/com.apple.security.plist
+            #
+            # If that directory does not exist, then the invocation of
+            #
+            #   security list-keychains -s <keychain>
+            #
+            # will silently fail. Ensure this directory exists.
+            #
+            mkdir -p ~/Library/Preferences
+
             # Set up a keychain to hold our credentials
             security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
             security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
