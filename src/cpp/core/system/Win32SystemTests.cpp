@@ -19,251 +19,215 @@
 #include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#define RSTUDIO_NO_TESTTHAT_ALIASES
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace system {
 namespace tests {
 
-TEST_CASE("Win32SystemTests")
+// Test fixture for process creation and cleanup
+class Win32ProcessTest : public ::testing::Test
 {
-   SECTION("Test Win7 or Later")
+protected:
+   STARTUPINFO si;
+   PROCESS_INFORMATION pi;
+   std::string cmd;
+   std::vector<char> cmdBuf;
+
+   void SetUp() override
    {
-      CHECK(isWin7OrLater());
-   }
-
-   SECTION("Expand Empty Environment Variable")
-   {
-      std::string orig;
-      std::string result;
-      Error err = expandEnvironmentVariables(orig, &result);
-      CHECK(!err);
-      CHECK(result.empty());
-   }
-
-   SECTION("Expand Bogus Env Variable")
-   {
-      std::string orig = "%oncetherewasafakevariable374732%";
-      std::string result;
-      Error err = expandEnvironmentVariables(orig, &result);
-      CHECK(!err);
-      CHECK_FALSE(result.compare(orig));
-   }
-
-   SECTION("Expand Real Environment Variable")
-   {
-      std::string first = "RoadOftenTravelled=";
-      std::string orig = first + "%path%";
-      std::string result;
-      Error err = expandEnvironmentVariables(orig, &result);
-      CHECK(!err);
-      CHECK(boost::algorithm::starts_with(result, first));
-      // assume non-empty path, seems safe
-      CHECK(result.length() > first.length());
-   }
-
-   SECTION("ComSpec")
-   {
-      FilePath command = expandComSpec();
-      CHECK_FALSE(command.isEmpty());
-      CHECK(command.exists());
-   }
-
-   SECTION("Windows architecture bitness assumptions")
-   {
-      std::string windir;
-      Error err = expandEnvironmentVariables("%windir%", &windir);
-      FilePath windirPath(windir);
-      CHECK(windirPath.exists());
-
-      core::FilePath sysWowPath(windir + "\\" + "syswow64");
-      core::FilePath sys32Path(windir + "\\" + "system32");
-
-      CHECK(sys32Path.exists());
-      CHECK(sysWowPath.exists());
-   }
-
-   SECTION("Correct detection of no child processes")
-   {
-      STARTUPINFO si;
-      PROCESS_INFORMATION pi;
-
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
-
-      std::string cmd = "ping -n 8 posit.co";
-      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
-      cmd.copy(&(cmdBuf[0]), cmd.size());
-
-      // Start the child process.
-      CHECK(CreateProcess(
-               nullptr,       // No module name (use command line)
-               &(cmdBuf[0]),  // Command
-               nullptr,       // Process handle not inheritable
-               nullptr,       // Thread handle not inheritable
-               FALSE,         // Set handle inheritance to FALSE
-               0,             // No creation flags
-               nullptr,       // Use parent's environment block
-               nullptr,       // Use parent's starting directory
-               &si,           // Pointer to STARTUPINFO structure
-               &pi));         // Pointer to PROCESS_INFORMATION structure
-
-      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-      CHECK(children.empty());
-
-      CHECK(TerminateProcess(pi.hProcess, 1));
-
-      WaitForSingleObject(pi.hProcess, INFINITE);
-      CloseHandle(pi.hProcess);
-      CloseHandle(pi.hThread);
    }
 
-   SECTION("Correct detection of child processes")
+   void PrepareCommand(const std::string& command)
    {
-      STARTUPINFO si;
-      PROCESS_INFORMATION pi;
-
-      ZeroMemory(&si, sizeof(si));
-      si.cb = sizeof(si);
-      ZeroMemory(&pi, sizeof(pi));
-
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
-      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
+      cmd = command;
+      cmdBuf.resize(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
+   }
 
-      // Start the child process.
-      CHECK(CreateProcess(
-               nullptr,       // No module name (use command line)
-               &(cmdBuf[0]),  // Command
-               nullptr,       // Process handle not inheritable
-               nullptr,       // Thread handle not inheritable
-               FALSE,         // Set handle inheritance to FALSE
-               0,             // No creation flags
-               nullptr,       // Use parent's environment block
-               nullptr,       // Use parent's starting directory
-               &si,           // Pointer to STARTUPINFO structure
-               &pi));         // Pointer to PROCESS_INFORMATION structure
-
-      ::Sleep(100); // give child time to start
-
-      std::string exe = "PING.EXE";
-      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-      CHECK(children.size() >= 1);
-      if (children.size() >= 1)
+   void CleanupProcess()
+   {
+      if (pi.hProcess)
       {
-         bool found = false;
-         for (SubprocInfo info : children)
-         {
-            if (info.exe.compare(exe) == 0)
-            {
-               found = true;
-               break;
-            }
-         }
-         CHECK(found);
+         TerminateProcess(pi.hProcess, 1);
+         WaitForSingleObject(pi.hProcess, INFINITE);
+         CloseHandle(pi.hProcess);
+         CloseHandle(pi.hThread);
       }
-
-      CHECK(TerminateProcess(pi.hProcess, 1));
-
-      WaitForSingleObject(pi.hProcess, INFINITE);
-      CloseHandle(pi.hProcess);
-      CloseHandle(pi.hThread);
    }
 
-   SECTION("Determine current-working-directory of another process")
+   ~Win32ProcessTest()
    {
-      FilePath emptyPath;
-      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
-
-      STARTUPINFO si;
-      PROCESS_INFORMATION pi;
-
-      ZeroMemory(&si, sizeof(si));
-      si.cb = sizeof(si);
-      ZeroMemory(&pi, sizeof(pi));
-
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
-      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
-      cmd.copy(&(cmdBuf[0]), cmd.size());
-
-      // Start the child process.
-      CHECK(CreateProcess(
-               nullptr,       // No module name (use command line)
-               &(cmdBuf[0]),  // Command
-               nullptr,       // Process handle not inheritable
-               nullptr,       // Thread handle not inheritable
-               FALSE,         // Set handle inheritance to FALSE
-               0,             // No creation flags
-               nullptr,       // Use parent's environment block
-               nullptr,       // Use parent's starting directory
-               &si,           // Pointer to STARTUPINFO structure
-               &pi));         // Pointer to PROCESS_INFORMATION structure
-
-      ::Sleep(100); // give child time to start
-
-      FilePath cwd = currentWorkingDir(pi.dwProcessId);
-
-      // API is not implemented on Windows and should always return an empty
-      // FilePath. See currentWorkingDir in Win32System.cpp for more info.
-      CHECK(cwd.isEmpty());
-
-      TerminateProcess(pi.hProcess, 1);
-      WaitForSingleObject(pi.hProcess, INFINITE);
-      CloseHandle(pi.hProcess);
-      CloseHandle(pi.hThread);
+      CleanupProcess();
    }
+};
 
-   SECTION("Empty subproc list when no child processes")
+TEST(Win32SystemTest, TestWin7OrLater)
+{
+   ASSERT_TRUE(isWin7OrLater());
+}
+
+TEST(Win32SystemTest, ExpandEmptyEnvironmentVariable)
+{
+   std::string orig;
+   std::string result;
+   Error err = expandEnvironmentVariables(orig, &result);
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(result.empty());
+}
+
+TEST(Win32SystemTest, ExpandBogusEnvVariable)
+{
+   std::string orig = "%oncetherewasafakevariable374732%";
+   std::string result;
+   Error err = expandEnvironmentVariables(orig, &result);
+   ASSERT_FALSE(err);
+   ASSERT_EQ(orig, result);
+}
+
+TEST(Win32SystemTest, ExpandRealEnvironmentVariable)
+{
+   std::string first = "RoadOftenTravelled=";
+   std::string orig = first + "%path%";
+   std::string result;
+   Error err = expandEnvironmentVariables(orig, &result);
+   ASSERT_FALSE(err);
+   ASSERT_TRUE(boost::algorithm::starts_with(result, first));
+   // assume non-empty path, seems safe
+   ASSERT_TRUE(result.length() > first.length());
+}
+
+TEST(Win32SystemTest, ComSpec)
+{
+   FilePath command = expandComSpec();
+   ASSERT_FALSE(command.isEmpty());
+   ASSERT_TRUE(command.exists());
+}
+
+TEST(Win32SystemTest, WindowsArchitectureBitnessAssumptions)
+{
+   std::string windir;
+   Error err = expandEnvironmentVariables("%windir%", &windir);
+   FilePath windirPath(windir);
+   ASSERT_TRUE(windirPath.exists());
+
+   core::FilePath sysWowPath(windir + "\\" + "syswow64");
+   core::FilePath sys32Path(windir + "\\" + "system32");
+
+   ASSERT_TRUE(sys32Path.exists());
+   ASSERT_TRUE(sysWowPath.exists());
+}
+
+TEST_F(Win32ProcessTest, CorrectDetectionOfNoChildProcesses)
+{
+   PrepareCommand("ping -n 8 posit.co");
+
+   // Start the child process.
+   ASSERT_TRUE(CreateProcess(
+            nullptr,       // No module name (use command line)
+            &(cmdBuf[0]),  // Command
+            nullptr,       // Process handle not inheritable
+            nullptr,       // Thread handle not inheritable
+            FALSE,         // Set handle inheritance to FALSE
+            0,             // No creation flags
+            nullptr,       // Use parent's environment block
+            nullptr,       // Use parent's starting directory
+            &si,           // Pointer to STARTUPINFO structure
+            &pi));         // Pointer to PROCESS_INFORMATION structure
+
+   std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+   ASSERT_TRUE(children.empty());
+}
+
+TEST_F(Win32ProcessTest, CorrectDetectionOfChildProcesses)
+{
+   PrepareCommand("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul");
+
+   // Start the child process.
+   ASSERT_TRUE(CreateProcess(
+            nullptr,       // No module name (use command line)
+            &(cmdBuf[0]),  // Command
+            nullptr,       // Process handle not inheritable
+            nullptr,       // Thread handle not inheritable
+            FALSE,         // Set handle inheritance to FALSE
+            0,             // No creation flags
+            nullptr,       // Use parent's environment block
+            nullptr,       // Use parent's starting directory
+            &si,           // Pointer to STARTUPINFO structure
+            &pi));         // Pointer to PROCESS_INFORMATION structure
+
+   ::Sleep(100); // give child time to start
+
+   std::string exe = "PING.EXE";
+   std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+   ASSERT_TRUE(children.size() >= 1);
+   if (children.size() >= 1)
    {
-      STARTUPINFO si;
-      PROCESS_INFORMATION pi;
-
-      ZeroMemory(&si, sizeof(si));
-      si.cb = sizeof(si);
-      ZeroMemory(&pi, sizeof(pi));
-
-      std::string cmd = "ping -n 8 posit.co";
-      std::vector<char> cmdBuf(cmd.size() + 1, '\0');
-      cmd.copy(&(cmdBuf[0]), cmd.size());
-
-      // Start the child process.
-      CHECK(CreateProcess(
-               nullptr,       // No module name (use command line)
-               &(cmdBuf[0]),  // Command
-               nullptr,       // Process handle not inheritable
-               nullptr,       // Thread handle not inheritable
-               FALSE,         // Set handle inheritance to FALSE
-               0,             // No creation flags
-               nullptr,       // Use parent's environment block
-               nullptr,       // Use parent's starting directory
-               &si,           // Pointer to STARTUPINFO structure
-               &pi));         // Pointer to PROCESS_INFORMATION structure
-
-      std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
-      CHECK(children.empty());
-
-      CHECK(TerminateProcess(pi.hProcess, 1));
-
-      WaitForSingleObject(pi.hProcess, INFINITE);
-      CloseHandle(pi.hProcess);
-      CloseHandle(pi.hThread);
+      bool found = false;
+      for (SubprocInfo info : children)
+      {
+         if (info.exe.compare(exe) == 0)
+         {
+            found = true;
+            break;
+         }
+      }
+      ASSERT_TRUE(found);
    }
+}
 
-   // Disabling for now, tracked here: https://github.com/rstudio/rstudio/issues/13165
-   // SECTION("We can find programs on the PATH")
-   // {
-   //    FilePath cmdPath;
-   //    Error error;
+TEST_F(Win32ProcessTest, DetermineCurrentWorkingDirectoryOfAnotherProcess)
+{
+   FilePath emptyPath;
+   FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
 
-   //    error = core::system::findProgramOnPath("cmd", &cmdPath);
-   //    CHECK(error == Success());
+   PrepareCommand("cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul");
 
-   //    error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
-   //    CHECK(error == Success());
-   // }
+   // Start the child process.
+   ASSERT_TRUE(CreateProcess(
+            nullptr,       // No module name (use command line)
+            &(cmdBuf[0]),  // Command
+            nullptr,       // Process handle not inheritable
+            nullptr,       // Thread handle not inheritable
+            FALSE,         // Set handle inheritance to FALSE
+            0,             // No creation flags
+            nullptr,       // Use parent's environment block
+            nullptr,       // Use parent's starting directory
+            &si,           // Pointer to STARTUPINFO structure
+            &pi));         // Pointer to PROCESS_INFORMATION structure
+
+   ::Sleep(100); // give child time to start
+
+   FilePath cwd = currentWorkingDir(pi.dwProcessId);
+
+   // API is not implemented on Windows and should always return an empty
+   // FilePath. See currentWorkingDir in Win32System.cpp for more info.
+   ASSERT_TRUE(cwd.isEmpty());
+}
+
+TEST_F(Win32ProcessTest, EmptySubprocListWhenNoChildProcesses)
+{
+   PrepareCommand("ping -n 8 posit.co");
+
+   // Start the child process.
+   ASSERT_TRUE(CreateProcess(
+            nullptr,       // No module name (use command line)
+            &(cmdBuf[0]),  // Command
+            nullptr,       // Process handle not inheritable
+            nullptr,       // Thread handle not inheritable
+            FALSE,         // Set handle inheritance to FALSE
+            0,             // No creation flags
+            nullptr,       // Use parent's environment block
+            nullptr,       // Use parent's starting directory
+            &si,           // Pointer to STARTUPINFO structure
+            &pi));         // Pointer to PROCESS_INFORMATION structure
+
+   std::vector<SubprocInfo> children = getSubprocesses(pi.dwProcessId);
+   ASSERT_TRUE(children.empty());
 }
 
 } // end namespace tests

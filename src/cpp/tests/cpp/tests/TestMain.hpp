@@ -13,15 +13,14 @@
  *
  */
 
-// Include this to build a Catch test executable.
+// Include this to build a Google Test executable.
 // See TestRunner.hpp if you want to embed the test runner
 // in your own executable.
 
 #ifndef TESTS_TESTMAIN_HPP
 #define TESTS_TESTMAIN_HPP
 
-#define CATCH_CONFIG_RUNNER
-#include "vendor/catch.hpp"
+#include <gtest/gtest.h>
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/StderrLogDestination.hpp>
@@ -32,7 +31,7 @@
 #include <core/system/Xdg.hpp>
 #include <core/system/System.hpp>
 
-int main(int argc, const char* argv[])
+int main(int argc, char* argv[])
 {
    using namespace rstudio;
    using namespace rstudio::core;
@@ -41,8 +40,10 @@ int main(int argc, const char* argv[])
    std::string programId = "rstudio-tests-" + core::system::username();
    core::log::setProgramId(programId);
    core::system::initializeStderrLog(programId, LogLevel::WARN, false);
-   
-   return Catch::Session().run(argc, const_cast<char**>(argv));
+
+   ::testing::InitGoogleTest(&argc, argv);
+   int result = RUN_ALL_TESTS();
+   return result;
 }
 
 #endif
