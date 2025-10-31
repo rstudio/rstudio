@@ -27,6 +27,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>

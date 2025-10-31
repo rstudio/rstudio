@@ -17,8 +17,11 @@
 #define CORE_TIMER_HPP
 
 #include <functional>
+
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rstudio {
 namespace core {
@@ -46,7 +49,7 @@ public:
    virtual void wait(const std::function<void(const boost::system::error_code& ec)>& callback) override;
 
 private:
-   boost::asio::deadline_timer timer_;
+   boost::asio::system_timer timer_;
 };
 
 using TimerPtr = boost::shared_ptr<ITimer>;
