@@ -320,7 +320,7 @@ public class PaneManager
          else
          {
             sourceColumnManager_.consolidateColumns(0);
-            PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+            PaneConfig paneConfig = getCurrentConfig();
             userPrefs_.panes().setGlobalValue(PaneConfig.create(
                JsArrayUtil.copy(paneConfig.getQuadrants()),
                paneConfig.getTabSet1(),
@@ -1006,7 +1006,7 @@ public class PaneManager
    
    private void setSidebarPref(boolean showSidebar)
    {
-      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      PaneConfig paneConfig = getCurrentConfig();
       if (showSidebar == paneConfig.getSidebarVisible())
          return;
 
@@ -1042,7 +1042,7 @@ public class PaneManager
    public void onToggleSidebar()
    {
       // Toggle the preference value and update UI
-      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      PaneConfig paneConfig = getCurrentConfig();
       boolean newVisibility = !paneConfig.getSidebarVisible();
      
       setSidebarPref(newVisibility);
@@ -1063,7 +1063,7 @@ public class PaneManager
    public void toggleSidebarLocation()
    {
       // Toggle the sidebar location between left and right
-      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+      PaneConfig paneConfig = getCurrentConfig();
       String currentLocation = paneConfig.getSidebarLocation();
       String newLocation = "left".equals(currentLocation) ? "right" : "left";
       
@@ -1095,7 +1095,7 @@ public class PaneManager
       if (showSidebar && sidebar_ == null)
       {
          // Create sidebar configuration
-         PaneConfig config = userPrefs_.panes().getValue().cast();
+         PaneConfig config = getCurrentConfig();
          JsArrayString sidebarTabs = config.getSidebar();
          
          // Create sidebar tabset if not already created
@@ -1170,8 +1170,8 @@ public class PaneManager
    public void setSidebarLocation(String location)
    {
       // Update preference and refresh the sidebar if visible
-      PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
-      
+      PaneConfig paneConfig = getCurrentConfig();
+
       // Only update if location has changed
       if (!location.equals(paneConfig.getSidebarLocation()))
       {
