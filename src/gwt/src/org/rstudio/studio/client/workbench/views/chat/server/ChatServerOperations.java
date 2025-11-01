@@ -12,9 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.chat.server;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface ChatServerOperations
 {
    public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
+   public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
+   public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);
+   public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback);
 }

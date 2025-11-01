@@ -163,12 +163,58 @@ public class ChatPane
     *
     * @param url The URL to load
     */
-   private void loadUrl(String url)
+   @Override
+   public void loadUrl(String url)
    {
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
       frame_.setUrl(url);
+   }
+
+   @Override
+   public void setObserver(ChatPresenter.Display.Observer observer)
+   {
+      observer_ = observer;
+   }
+
+   @Override
+   public void setStatus(String status)
+   {
+      currentStatus_ = status;
+
+      switch (status)
+      {
+         case "starting":
+            showMessage(constants_.startingPositAIMessage());
+            break;
+         case "not_installed":
+            showMessage(constants_.aiChatNotInstalledMessage());
+            break;
+         case "error":
+            // Error message will be shown via showError()
+            break;
+         case "ready":
+            // UI is loaded, hide messages
+            hideMessage();
+            break;
+      }
+   }
+
+   @Override
+   public void showError(String errorMessage)
+   {
+      showMessage("Error: " + errorMessage);
+   }
+
+   private void showMessage(String message)
+   {
+      updateFrameContent(generateMessageHTML(message));
+   }
+
+   private void hideMessage()
+   {
+      // Content will be replaced by iframe loading
    }
 
    @Override
@@ -196,12 +242,15 @@ public class ChatPane
                if (!result)
                {
                   // AI Chat is not installed
-                  updateFrameContent(generateMessageHTML(constants_.aiChatNotInstalledMessage()));
+                  setStatus("not_installed");
                }
                else
                {
-                  // TODO: AI Chat is installed - load the actual chat interface
-                  updateFrameContent(generateMessageHTML("Coming Soon!"));
+                  // AI Chat is installed - start backend and load UI
+                  if (observer_ != null)
+                  {
+                     observer_.onPaneReady();
+                  }
                }
             }
 
@@ -244,6 +293,8 @@ public class ChatPane
    private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
    private String currentUrl_ = null;
+   private String currentStatus_ = "idle";
+   private ChatPresenter.Display.Observer observer_;
 
    // Injected ----
    @SuppressWarnings("unused")
@@ -252,7 +303,6 @@ public class ChatPane
    private final Commands commands_;
    @SuppressWarnings("unused")
    private final Session session_;
-   @SuppressWarnings("unused")
    private final ChatServerOperations server_;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
