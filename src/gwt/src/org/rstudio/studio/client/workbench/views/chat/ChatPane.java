@@ -68,8 +68,8 @@ public class ChatPane
       frame_ = new RStudioThemedFrame(constants_.chatTitle());
       frame_.setSize("100%", "100%");
 
-      // Show initial "checking..." message
-      updateFrameContent(generateMessageHTML(constants_.checkingInstallationMessage()));
+      // Store initial message to show after frame loads
+      pendingMessage_ = generateMessageHTML(constants_.checkingInstallationMessage());
 
       mainPanel_.add(frame_);
       mainPanel_.setWidgetTopHeight(frame_, 0, Unit.PCT, 100, Unit.PCT);
@@ -233,6 +233,13 @@ public class ChatPane
       {
          initialized_ = true;
 
+         // Show pending message now that frame is loaded
+         if (pendingMessage_ != null)
+         {
+            updateFrameContent(pendingMessage_);
+            pendingMessage_ = null;
+         }
+
          // Check if AI features are installed
          server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
          {
@@ -290,6 +297,7 @@ public class ChatPane
    private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
    private boolean initialized_ = false;
+   private String pendingMessage_ = null;
    private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
    private String currentUrl_ = null;

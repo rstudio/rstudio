@@ -280,6 +280,7 @@ void httpServerAddHandlers()
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
+   uri_handlers::add("/ai-chat", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/help", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/files", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/show", secureAsyncHttpHandler(proxyContentRequest, true));

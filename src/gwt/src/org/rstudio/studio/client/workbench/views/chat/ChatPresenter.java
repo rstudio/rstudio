@@ -19,7 +19,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
@@ -60,8 +59,7 @@ public class ChatPresenter extends BasePresenter
       EventBus events,
       Commands commands,
       Binder binder,
-      ChatServerOperations server,
-      Session session)
+      ChatServerOperations server)
    {
       super(display);
       binder.bind(commands, this);
@@ -69,7 +67,6 @@ public class ChatPresenter extends BasePresenter
       events_ = events;
       commands_ = commands;
       server_ = server;
-      session_ = session;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -172,11 +169,15 @@ public class ChatPresenter extends BasePresenter
 
    private void loadChatUI(String wsUrl)
    {
-      String sessionId = session_.getSessionInfo().getSessionId();
-      String baseUrl = "/s/" + sessionId + "/ai-chat/index.html";
+      // In dev mode, GWT.getHostPageBaseURL() may not include session prefix
+      // Try relative URL first, which should work in both dev and production
+      String baseUrl = "ai-chat/index.html";
 
       // Append WebSocket URL as query parameter
       String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl);
+
+      com.google.gwt.core.client.GWT.log("ChatPresenter: Loading chat UI from: " + urlWithWsParam);
+      com.google.gwt.core.client.GWT.log("ChatPresenter: WebSocket URL: " + wsUrl);
 
       display_.loadUrl(urlWithWsParam);
       display_.setStatus("ready");
@@ -188,5 +189,4 @@ public class ChatPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Commands commands_;
    private final ChatServerOperations server_;
-   private final Session session_;
 }

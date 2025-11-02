@@ -293,7 +293,7 @@ std::string buildWebSocketUrl(int port)
       std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
 
       // Build complete WebSocket URL as string
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath;
+      std::string wsUrl = wsScheme + "://" + parsedBase.host() + "/" + portmappedPath;
 
       return wsUrl;
    }
@@ -375,8 +375,9 @@ Error startChatBackend()
    s_chatBackendUrl = buildWebSocketUrl(s_chatBackendPort);
 
    // Build command arguments
+   // Use relative path so Node.js resolves modules from working directory
    std::vector<std::string> args;
-   args.push_back(serverScript.getAbsolutePath());
+   args.push_back(kServerScriptPath);
    args.push_back("-p");
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
 
@@ -577,12 +578,9 @@ Error handleAIChatRequest(const http::Request& request,
 Error chatVerifyInstalled(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   json::Object result;
    FilePath installation = locateDatabotInstallation();
-   result["installed"] = !installation.isEmpty();
-   if (!installation.isEmpty())
-      result["path"] = installation.getAbsolutePath();
-   pResponse->setResult(result);
+   bool installed = !installation.isEmpty();
+   pResponse->setResult(installed);
    return Success();
 }
 
@@ -693,7 +691,15 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionChat.R"))
       ;
 
-   return initBlock.execute();
+   Error error = initBlock.execute();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   DLOG("SessionChat module initialized successfully, URI handler registered for /ai-chat");
+   return Success();
 }
 
 } // end namespace chat
