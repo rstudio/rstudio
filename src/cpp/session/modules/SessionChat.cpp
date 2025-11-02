@@ -280,11 +280,24 @@ std::string buildWebSocketUrl(int port)
       std::string localhostUrl = "http://127.0.0.1:" +
                                  boost::lexical_cast<std::string>(port);
 
-      // Transform to portmapped path (returns relative path like "/p/58fab3e4")
+      DLOG("Building WebSocket URL for port {}, localhost URL: {}", port, localhostUrl);
+
+      // Transform to portmapped path (returns relative path like "p/58fab3e4" or "/p/58fab3e4")
       std::string portmappedPath = url_ports::mapUrlPorts(localhostUrl);
+
+      // Ensure portmapped path starts with /
+      if (!portmappedPath.empty() && portmappedPath[0] != '/')
+         portmappedPath = "/" + portmappedPath;
+
+      // Remove trailing slash from portmapped path if present
+      if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
+         portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
+
+      DLOG("Normalized portmapped path: {}", portmappedPath);
 
       // Get base URL from session
       std::string baseUrl = persistentState().activeClientUrl();
+      DLOG("Base URL: {}", baseUrl);
 
       // Parse base URL to get scheme and host
       http::URL parsedBase(baseUrl);
@@ -293,14 +306,17 @@ std::string buildWebSocketUrl(int port)
       std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
 
       // Build complete WebSocket URL as string
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + "/" + portmappedPath;
+      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath;
+      DLOG("Final WebSocket URL: {}", wsUrl);
 
       return wsUrl;
    }
 #endif
 
    // Desktop mode: use localhost directly
-   return "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port);
+   std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port);
+   DLOG("Desktop WebSocket URL: {}", desktopUrl);
+   return desktopUrl;
 }
 
 // ============================================================================
@@ -554,14 +570,16 @@ Error handleAIChatRequest(const http::Request& request,
    pResponse->setContentType(getContentType(extension));
 
    // Set caching headers
-   if (boost::ends_with(requestPath, kIndexFileName))
+   if (boost::ends_with(requestPath, kIndexFileName) ||
+       boost::ends_with(requestPath, ".js") ||
+       boost::ends_with(requestPath, ".css"))
    {
-      // Don't cache index.html
+      // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
       pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
    }
    else if (requestPath.find(".") != std::string::npos)
    {
-      // Cache other assets (especially with content hashes)
+      // Cache other assets like images, fonts, etc.
       pResponse->setHeader("Cache-Control", "public, max-age=31536000");
    }
 
