@@ -99,7 +99,7 @@ public class ChatPresenter extends BasePresenter
             {
                String error = response.getString("error");
                display_.setStatus("error");
-               display_.showError("Failed to start Posit AI backend: " + error);
+               display_.showError("Failed to start Chat backend: " + error);
             }
          }
 

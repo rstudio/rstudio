@@ -29,6 +29,7 @@
 #include <core/http/Util.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
@@ -90,7 +91,7 @@ const int kMaxRestartAttempts = 1;
 // ============================================================================
 // Installation paths
 // ============================================================================
-const char* const kDatabotDirName = "databot-rstudio";
+const char* const kPositAiDirName = "ai";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
@@ -121,22 +122,65 @@ Error startChatBackend();
 // Installation Detection
 // ============================================================================
 
-FilePath locateDatabotInstallation()
+/**
+ * Verify that an AI installation at the given path contains all required files.
+ */
+bool verifyPositAiInstallation(const FilePath& positAiPath)
 {
-   // Check ~/databot-rstudio/
-   FilePath userHome = core::system::userHomePath();
-   FilePath databotPath = userHome.completeChildPath(kDatabotDirName);
+   if (!positAiPath.exists())
+      return false;
 
-   if (databotPath.exists())
+   FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
+   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
+   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+
+   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
+}
+
+FilePath locatePositAiInstallation()
+{
+   // 1. Check environment variable override (for development/testing)
+   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+   if (!rstudioPositAiPath.empty())
    {
-      // Verify required files exist
-      FilePath clientDir = databotPath.completeChildPath(kClientDirPath);
-      FilePath serverScript = databotPath.completeChildPath(kServerScriptPath);
-      FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
-
-      if (clientDir.exists() && serverScript.exists() && indexHtml.exists())
-         return databotPath;
+      FilePath positAiPath(rstudioPositAiPath);
+      if (verifyPositAiInstallation(positAiPath))
+      {
+         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
+         return positAiPath;
+      }
+      else
+      {
+         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
+      }
    }
+
+   // 2. Check user data directory (XDG-based, platform-appropriate)
+   // Linux: ~/.local/share/rstudio/ai
+   // macOS: ~/Library/Application Support/RStudio/ai
+   // Windows: %LOCALAPPDATA%/RStudio/ai
+   FilePath userPositAiPath = xdg::userDataDir().completePath(kPositAiDirName);
+   if (verifyPositAiInstallation(userPositAiPath))
+   {
+      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
+      return userPositAiPath;
+   }
+
+   // 3. Check system-wide installation (XDG config directory)
+   // Linux: /etc/rstudio/ai
+   // Windows: C:/ProgramData/RStudio/ai
+   FilePath systemPositAiPath = xdg::systemConfigDir().completePath(kPositAiDirName);
+   if (verifyPositAiInstallation(systemPositAiPath))
+   {
+      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
+      return systemPositAiPath;
+   }
+
+   DLOG("No valid AI installation found. Checked locations:");
+   if (!rstudioPositAiPath.empty())
+      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
+   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
+   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
 
    return FilePath(); // Not found
 }
@@ -181,7 +225,7 @@ bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
 Error findNode(FilePath* pNodePath)
 {
    // Check R option override
-   SEXP nodePathSEXP = r::options::getOption("rstudio.databot.nodeBinaryPath");
+   SEXP nodePathSEXP = r::options::getOption("rstudio.positAi.nodeBinaryPath");
    if (nodePathSEXP != R_NilValue)
    {
       std::string nodePath = r::sexp::asString(nodePathSEXP);
@@ -361,11 +405,18 @@ Error startChatBackend()
       return Success();
 
    // Locate installation
-   FilePath databotPath = locateDatabotInstallation();
-   if (databotPath.isEmpty())
+   FilePath positAiPath = locatePositAiInstallation();
+   if (positAiPath.isEmpty())
+   {
+      std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
+      std::string systemPath = xdg::systemConfigDir().completePath(kPositAiDirName).getAbsolutePath();
+      std::string errorMsg = fmt::format(
+         "Posit AI installation not found. Install to: {} (user) or {} (system)",
+         userPath, systemPath);
       return systemError(boost::system::errc::no_such_file_or_directory,
-                        "Databot installation not found",
+                        errorMsg,
                         ERROR_LOCATION);
+   }
 
    // Find Node.js
    FilePath nodePath;
@@ -374,7 +425,7 @@ Error startChatBackend()
       return error;
 
    // Locate backend script
-   FilePath serverScript = databotPath.completeChildPath(kServerScriptPath);
+   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
    if (!serverScript.exists())
       return systemError(boost::system::errc::no_such_file_or_directory,
                         "Backend script not found: " + serverScript.getAbsolutePath(),
@@ -418,7 +469,7 @@ Error startChatBackend()
    processOpts.callbacksRequireMainThread = true;
    processOpts.reportHasSubprocs = false;
    processOpts.detachSession = true;
-   processOpts.workingDir = databotPath;
+   processOpts.workingDir = positAiPath;
    processOpts.environment = environment;
 
    // Launch via ProcessSupervisor
@@ -514,15 +565,15 @@ Error handleAIChatRequest(const http::Request& request,
                           http::Response* pResponse)
 {
    // Locate installation
-   FilePath databotPath = locateDatabotInstallation();
-   if (databotPath.isEmpty())
+   FilePath positAiPath = locatePositAiInstallation();
+   if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);
-      pResponse->setBody("Posit AI not installed");
+      pResponse->setBody("Posit AI not installed. Install to: " + positAiPath.getAbsolutePath());
       return Success();
    }
 
-   FilePath clientRoot = databotPath.completeChildPath(kClientDirPath);
+   FilePath clientRoot = positAiPath.completeChildPath(kClientDirPath);
 
    // Parse requested path from URI
    // URI format: /ai-chat/<path>
@@ -596,7 +647,7 @@ Error handleAIChatRequest(const http::Request& request,
 Error chatVerifyInstalled(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   FilePath installation = locateDatabotInstallation();
+   FilePath installation = locatePositAiInstallation();
    bool installed = !installation.isEmpty();
    pResponse->setResult(installed);
    return Success();
@@ -633,10 +684,11 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
 {
    json::Object result;
 
-   FilePath installation = locateDatabotInstallation();
+   FilePath installation = locatePositAiInstallation();
    if (installation.isEmpty())
    {
       result["status"] = "not_installed";
+      result["error"] = "Posit AI not installed. Install to: " + installation.getAbsolutePath();
    }
    else if (s_chatBackendPid == -1)
    {

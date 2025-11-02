@@ -186,10 +186,10 @@ public class ChatPane
       switch (status)
       {
          case "starting":
-            showMessage(constants_.startingPositAIMessage());
+            showMessage(constants_.startingChatMessage());
             break;
          case "not_installed":
-            showMessage(constants_.aiChatNotInstalledMessage());
+            showMessage(constants_.chatNotInstalledMessage());
             break;
          case "error":
             // Error message will be shown via showError()
@@ -240,7 +240,7 @@ public class ChatPane
             pendingMessage_ = null;
          }
 
-         // Check if AI features are installed
+         // Check if Chat features are installed
          server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
          {
             @Override
@@ -248,12 +248,12 @@ public class ChatPane
             {
                if (!result)
                {
-                  // AI Chat is not installed
+                  // Chat is not installed
                   setStatus("not_installed");
                }
                else
                {
-                  // AI Chat is installed - start backend and load UI
+                  // Chat is installed - start backend and load UI
                   if (observer_ != null)
                   {
                      observer_.onPaneReady();
