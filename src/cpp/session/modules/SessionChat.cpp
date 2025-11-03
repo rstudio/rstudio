@@ -582,7 +582,7 @@ Error handleAIChatRequest(const http::Request& request,
    if (positAiPath.isEmpty())
    {
       pResponse->setStatusCode(http::status::NotFound);
-      pResponse->setBody("Posit AI not installed. Install to: " + positAiPath.getAbsolutePath());
+      pResponse->setBody("Posit AI not installed.");
       return Success();
    }
 
@@ -701,7 +701,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    if (installation.isEmpty())
    {
       result["status"] = "not_installed";
-      result["error"] = "Posit AI not installed. Install to: " + installation.getAbsolutePath();
+      result["error"] = "Posit AI not installed.";
    }
    else if (s_chatBackendPid == -1)
    {
