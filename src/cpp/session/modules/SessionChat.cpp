@@ -349,16 +349,18 @@ std::string buildWebSocketUrl(int port)
       // Determine WebSocket scheme based on HTTP scheme
       std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
 
-      // Build complete WebSocket URL as string
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath;
+      // Build complete WebSocket URL as string with /ai-chat base path
+      // The proxy will route {portmappedPath}/ai-chat/ws to http://127.0.0.1:{port}/ai-chat/ws
+      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath + "/ai-chat";
       DLOG("Final WebSocket URL: {}", wsUrl);
 
       return wsUrl;
    }
 #endif
 
-   // Desktop mode: use localhost directly
-   std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port);
+   // Desktop mode: include /ai-chat base path for DatabotServer routing
+   // The client will append /ws to get ws://127.0.0.1:{port}/ai-chat/ws
+   std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port) + "/ai-chat";
    DLOG("Desktop WebSocket URL: {}", desktopUrl);
    return desktopUrl;
 }
@@ -445,6 +447,8 @@ Error startChatBackend()
    // Use relative path so Node.js resolves modules from working directory
    std::vector<std::string> args;
    args.push_back(kServerScriptPath);
+   args.push_back("-h");
+   args.push_back("127.0.0.1");  // Explicitly bind to IPv4 to match client connection
    args.push_back("-p");
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
 
@@ -471,6 +475,15 @@ Error startChatBackend()
    processOpts.detachSession = true;
    processOpts.workingDir = positAiPath;
    processOpts.environment = environment;
+
+   // Log execution details
+   std::string argsStr = boost::algorithm::join(args, " ");
+   DLOG("Launching chat backend: nodePath={}, args=[{}], workingDir={}, exitWithParent={}, detachSession={}",
+        nodePath.getAbsolutePath(),
+        argsStr,
+        processOpts.workingDir.getAbsolutePath(),
+        processOpts.exitWithParent,
+        processOpts.detachSession);
 
    // Launch via ProcessSupervisor
    error = processSupervisor().runProgram(
