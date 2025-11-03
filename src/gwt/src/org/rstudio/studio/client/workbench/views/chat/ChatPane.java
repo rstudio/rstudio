@@ -68,8 +68,8 @@ public class ChatPane
       frame_ = new RStudioThemedFrame(constants_.chatTitle());
       frame_.setSize("100%", "100%");
 
-      // Show initial "checking..." message
-      updateFrameContent(generateMessageHTML(constants_.checkingInstallationMessage()));
+      // Store initial message to show after frame loads
+      pendingMessage_ = generateMessageHTML(constants_.checkingInstallationMessage());
 
       mainPanel_.add(frame_);
       mainPanel_.setWidgetTopHeight(frame_, 0, Unit.PCT, 100, Unit.PCT);
@@ -163,12 +163,58 @@ public class ChatPane
     *
     * @param url The URL to load
     */
-   private void loadUrl(String url)
+   @Override
+   public void loadUrl(String url)
    {
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
       frame_.setUrl(url);
+   }
+
+   @Override
+   public void setObserver(ChatPresenter.Display.Observer observer)
+   {
+      observer_ = observer;
+   }
+
+   @Override
+   public void setStatus(String status)
+   {
+      currentStatus_ = status;
+
+      switch (status)
+      {
+         case "starting":
+            showMessage(constants_.startingChatMessage());
+            break;
+         case "not_installed":
+            showMessage(constants_.chatNotInstalledMessage());
+            break;
+         case "error":
+            // Error message will be shown via showError()
+            break;
+         case "ready":
+            // UI is loaded, hide messages
+            hideMessage();
+            break;
+      }
+   }
+
+   @Override
+   public void showError(String errorMessage)
+   {
+      showMessage("Error: " + errorMessage);
+   }
+
+   private void showMessage(String message)
+   {
+      updateFrameContent(generateMessageHTML(message));
+   }
+
+   private void hideMessage()
+   {
+      // Content will be replaced by iframe loading
    }
 
    @Override
@@ -187,7 +233,14 @@ public class ChatPane
       {
          initialized_ = true;
 
-         // Check if AI features are installed
+         // Show pending message now that frame is loaded
+         if (pendingMessage_ != null)
+         {
+            updateFrameContent(pendingMessage_);
+            pendingMessage_ = null;
+         }
+
+         // Check if Chat features are installed
          server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
          {
             @Override
@@ -195,13 +248,16 @@ public class ChatPane
             {
                if (!result)
                {
-                  // AI Chat is not installed
-                  updateFrameContent(generateMessageHTML(constants_.aiChatNotInstalledMessage()));
+                  // Chat is not installed
+                  setStatus("not_installed");
                }
                else
                {
-                  // TODO: AI Chat is installed - load the actual chat interface
-                  updateFrameContent(generateMessageHTML("Coming Soon!"));
+                  // Chat is installed - start backend and load UI
+                  if (observer_ != null)
+                  {
+                     observer_.onPaneReady();
+                  }
                }
             }
 
@@ -241,9 +297,12 @@ public class ChatPane
    private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
    private boolean initialized_ = false;
+   private String pendingMessage_ = null;
    private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
    private String currentUrl_ = null;
+   private String currentStatus_ = "idle";
+   private ChatPresenter.Display.Observer observer_;
 
    // Injected ----
    @SuppressWarnings("unused")
@@ -252,7 +311,6 @@ public class ChatPane
    private final Commands commands_;
    @SuppressWarnings("unused")
    private final Session session_;
-   @SuppressWarnings("unused")
    private final ChatServerOperations server_;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);

@@ -15,13 +15,37 @@
 
 #include "SessionChat.hpp"
 
-#include <core/Exec.hpp>
+#include <map>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
+#include <core/http/URL.hpp>
+#include <core/http/Util.hpp>
+#include <core/system/Process.hpp>
+#include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
+
+#include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionOptions.hpp>
+#include <session/SessionPersistentState.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "session-config.h"
+
+#ifndef _WIN32
+# define kNodeExe "node"
+#else
+# define kNodeExe "node.exe"
+#endif
 
 #define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                       \
@@ -46,6 +70,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::core::system;
+using namespace rstudio::session::module_context;
 
 namespace rstudio {
 namespace session {
@@ -54,7 +79,26 @@ namespace chat {
 
 namespace {
 
-// The log level for Chat-specific logs. Primarily for developer use.
+// ============================================================================
+// Process management
+// ============================================================================
+PidType s_chatBackendPid = -1;
+int s_chatBackendPort = -1;
+std::string s_chatBackendUrl;
+int s_chatBackendRestartCount = 0;
+const int kMaxRestartAttempts = 1;
+
+// ============================================================================
+// Installation paths
+// ============================================================================
+const char* const kPositAiDirName = "ai";
+const char* const kClientDirPath = "dist/client";
+const char* const kServerScriptPath = "dist/server/main.js";
+const char* const kIndexFileName = "index.html";
+
+// ============================================================================
+// Logging
+// ============================================================================
 int s_chatLogLevel = 0;
 
 int chatLogLevel()
@@ -69,15 +113,640 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
    return logLevelSEXP;
 }
 
-Error chatVerifyInstalled(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+// ============================================================================
+// Forward Declarations
+// ============================================================================
+Error startChatBackend();
+
+// ============================================================================
+// Installation Detection
+// ============================================================================
+
+/**
+ * Verify that an AI installation at the given path contains all required files.
+ */
+bool verifyPositAiInstallation(const FilePath& positAiPath)
 {
-   json::Object responseJson;
-   pResponse->setResult(false); // TODO: Implement actual check for chat feature installation
+   if (!positAiPath.exists())
+      return false;
+
+   FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
+   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
+   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+
+   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
+}
+
+FilePath locatePositAiInstallation()
+{
+   // 1. Check environment variable override (for development/testing)
+   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
+   if (!rstudioPositAiPath.empty())
+   {
+      FilePath positAiPath(rstudioPositAiPath);
+      if (verifyPositAiInstallation(positAiPath))
+      {
+         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
+         return positAiPath;
+      }
+      else
+      {
+         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
+      }
+   }
+
+   // 2. Check user data directory (XDG-based, platform-appropriate)
+   // Linux: ~/.local/share/rstudio/ai
+   // macOS: ~/Library/Application Support/RStudio/ai
+   // Windows: %LOCALAPPDATA%/RStudio/ai
+   FilePath userPositAiPath = xdg::userDataDir().completePath(kPositAiDirName);
+   if (verifyPositAiInstallation(userPositAiPath))
+   {
+      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
+      return userPositAiPath;
+   }
+
+   // 3. Check system-wide installation (XDG config directory)
+   // Linux: /etc/rstudio/ai
+   // Windows: C:/ProgramData/RStudio/ai
+   FilePath systemPositAiPath = xdg::systemConfigDir().completePath(kPositAiDirName);
+   if (verifyPositAiInstallation(systemPositAiPath))
+   {
+      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
+      return systemPositAiPath;
+   }
+
+   DLOG("No valid AI installation found. Checked locations:");
+   if (!rstudioPositAiPath.empty())
+      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
+   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
+   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
+
+   return FilePath(); // Not found
+}
+
+// ============================================================================
+// Node.js Detection
+// ============================================================================
+
+/**
+ * If running on arm64 Mac, substitute the arm64-specific node binary; returns true if this was
+ * done, false otherwise.
+ */
+bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
+{
+#if defined(__APPLE__)
+   if (isAppleSilicon())
+   {
+      FilePath nodeExePath;
+      if (inputPath.isRegularFile())
+      {
+         // change /node/bin/node to /node-arm64/bin/node
+         nodeExePath = inputPath.getParent().getParent().completeChildPath("node-arm64/bin/" kNodeExe);
+      }
+      else if (inputPath.isDirectory())
+      {
+         // change /node to /node-arm64
+         nodeExePath = inputPath.getParent().completeChildPath("node-arm64");
+      }
+      else
+         return false;
+
+      if (nodeExePath.exists())
+      {
+         *pOutputNodePath = nodeExePath;
+         return true;
+      }
+   }
+#endif
+   return false;
+}
+
+Error findNode(FilePath* pNodePath)
+{
+   // Check R option override
+   SEXP nodePathSEXP = r::options::getOption("rstudio.positAi.nodeBinaryPath");
+   if (nodePathSEXP != R_NilValue)
+   {
+      std::string nodePath = r::sexp::asString(nodePathSEXP);
+      if (!nodePath.empty())
+      {
+         *pNodePath = FilePath(nodePath);
+         if (pNodePath->exists())
+            return Success();
+      }
+   }
+
+   // Check admin-configured path
+   if (!options().nodePath().isEmpty())
+   {
+      FilePath nodePath = options().nodePath();
+      FilePath arm64NodePath;
+
+      // on arm64 Mac, substitute the arm64-specific node binary
+      if (findNodeMacArm64(nodePath, &arm64NodePath))
+      {
+         nodePath = arm64NodePath;
+      }
+
+      // Allow both directories containing a 'node' binary, and the path
+      // to a 'node' binary directly.
+      if (nodePath.isDirectory())
+      {
+         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
+         {
+            FilePath nodeExePath = nodePath.completeChildPath(suffix);
+            if (nodeExePath.exists())
+            {
+               *pNodePath = nodeExePath;
+               return Success();
+            }
+         }
+
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
+      }
+      else if (nodePath.isRegularFile())
+      {
+         *pNodePath = nodePath;
+         return Success();
+      }
+      else
+      {
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
+      }
+   }
+
+   // Search PATH
+   Error error = core::system::findProgramOnPath(kNodeExe, pNodePath);
+   if (error)
+      return error;
+
    return Success();
 }
 
+// ============================================================================
+// Port Allocation
+// ============================================================================
+
+Error allocatePort(int* pPort)
+{
+   // Use bind to port 0 and let OS assign
+   using boost::asio::ip::tcp;
+   boost::asio::io_context ioContext;
+   tcp::acceptor acceptor(ioContext);
+
+   tcp::endpoint endpoint(tcp::v4(), 0); // Port 0 = OS assigns
+   boost::system::error_code ec;
+   acceptor.open(endpoint.protocol(), ec);
+   if (ec)
+      return systemError(ec, ERROR_LOCATION);
+
+   acceptor.bind(endpoint, ec);
+   if (ec)
+      return systemError(ec, ERROR_LOCATION);
+
+   *pPort = acceptor.local_endpoint().port();
+   acceptor.close();
+
+   return Success();
+}
+
+// ============================================================================
+// WebSocket URL Construction
+// ============================================================================
+
+std::string buildWebSocketUrl(int port)
+{
+#ifdef RSTUDIO_SERVER
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      // Build localhost URL
+      std::string localhostUrl = "http://127.0.0.1:" +
+                                 boost::lexical_cast<std::string>(port);
+
+      DLOG("Building WebSocket URL for port {}, localhost URL: {}", port, localhostUrl);
+
+      // Transform to portmapped path (returns relative path like "p/58fab3e4" or "/p/58fab3e4")
+      std::string portmappedPath = url_ports::mapUrlPorts(localhostUrl);
+
+      // Ensure portmapped path starts with /
+      if (!portmappedPath.empty() && portmappedPath[0] != '/')
+         portmappedPath = "/" + portmappedPath;
+
+      // Remove trailing slash from portmapped path if present
+      if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
+         portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
+
+      DLOG("Normalized portmapped path: {}", portmappedPath);
+
+      // Get base URL from session
+      std::string baseUrl = persistentState().activeClientUrl();
+      DLOG("Base URL: {}", baseUrl);
+
+      // Parse base URL to get scheme and host
+      http::URL parsedBase(baseUrl);
+
+      // Determine WebSocket scheme based on HTTP scheme
+      std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
+
+      // Build complete WebSocket URL as string with /ai-chat base path
+      // The proxy will route {portmappedPath}/ai-chat/ws to http://127.0.0.1:{port}/ai-chat/ws
+      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath + "/ai-chat";
+      DLOG("Final WebSocket URL: {}", wsUrl);
+
+      return wsUrl;
+   }
+#endif
+
+   // Desktop mode: include /ai-chat base path for DatabotServer routing
+   // The client will append /ws to get ws://127.0.0.1:{port}/ai-chat/ws
+   std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port) + "/ai-chat";
+   DLOG("Desktop WebSocket URL: {}", desktopUrl);
+   return desktopUrl;
+}
+
+// ============================================================================
+// Process Management
+// ============================================================================
+
+void onBackendStdout(core::system::ProcessOperations& ops, const std::string& output)
+{
+   // Just log stdout for debugging
+   DLOG("Chat backend stdout: {}", output);
+}
+
+void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
+{
+   WLOG("Chat backend stderr: {}", output);
+}
+
+void onBackendExit(int exitCode)
+{
+   WLOG("Chat backend exited with code: {}", exitCode);
+
+   s_chatBackendPid = -1;
+   s_chatBackendPort = -1;
+   s_chatBackendUrl.clear();
+
+   // Auto-restart once
+   if (s_chatBackendRestartCount < kMaxRestartAttempts)
+   {
+      s_chatBackendRestartCount++;
+      DLOG("Attempting to restart chat backend (attempt {})", s_chatBackendRestartCount);
+
+      Error error = startChatBackend();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+Error startChatBackend()
+{
+   // Check if already running
+   if (s_chatBackendPid != -1)
+      return Success();
+
+   // Locate installation
+   FilePath positAiPath = locatePositAiInstallation();
+   if (positAiPath.isEmpty())
+   {
+      std::string userPath = xdg::userDataDir().completePath(kPositAiDirName).getAbsolutePath();
+      std::string systemPath = xdg::systemConfigDir().completePath(kPositAiDirName).getAbsolutePath();
+      std::string errorMsg = fmt::format(
+         "Posit AI installation not found. Install to: {} (user) or {} (system)",
+         userPath, systemPath);
+      return systemError(boost::system::errc::no_such_file_or_directory,
+                        errorMsg,
+                        ERROR_LOCATION);
+   }
+
+   // Find Node.js
+   FilePath nodePath;
+   Error error = findNode(&nodePath);
+   if (error)
+      return error;
+
+   // Locate backend script
+   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
+   if (!serverScript.exists())
+      return systemError(boost::system::errc::no_such_file_or_directory,
+                        "Backend script not found: " + serverScript.getAbsolutePath(),
+                        ERROR_LOCATION);
+
+   // Allocate a free port
+   error = allocatePort(&s_chatBackendPort);
+   if (error)
+      return error;
+
+   DLOG("Allocated port {} for chat backend", s_chatBackendPort);
+
+   // Build WebSocket URL BEFORE launching (so it's ready when needed)
+   s_chatBackendUrl = buildWebSocketUrl(s_chatBackendPort);
+
+   // Build command arguments
+   // Use relative path so Node.js resolves modules from working directory
+   std::vector<std::string> args;
+   args.push_back(kServerScriptPath);
+   args.push_back("-h");
+   args.push_back("127.0.0.1");  // Explicitly bind to IPv4 to match client connection
+   args.push_back("-p");
+   args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
+
+   // Set up environment
+   core::system::Options environment;
+   core::system::environment(&environment);
+
+   // Set up callbacks
+   core::system::ProcessCallbacks callbacks;
+   callbacks.onStarted = [](core::system::ProcessOperations& ops) {
+      s_chatBackendPid = ops.getPid();
+      DLOG("Chat backend started with PID: {}", s_chatBackendPid);
+   };
+   callbacks.onStdout = onBackendStdout;
+   callbacks.onStderr = onBackendStderr;
+   callbacks.onExit = onBackendExit;
+
+   // Process options
+   core::system::ProcessOptions processOpts;
+   processOpts.allowParentSuspend = true;
+   processOpts.exitWithParent = true;
+   processOpts.callbacksRequireMainThread = true;
+   processOpts.reportHasSubprocs = false;
+   processOpts.detachSession = true;
+   processOpts.workingDir = positAiPath;
+   processOpts.environment = environment;
+
+   // Log execution details
+   std::string argsStr = boost::algorithm::join(args, " ");
+   DLOG("Launching chat backend: nodePath={}, args=[{}], workingDir={}, exitWithParent={}, detachSession={}",
+        nodePath.getAbsolutePath(),
+        argsStr,
+        processOpts.workingDir.getAbsolutePath(),
+        processOpts.exitWithParent,
+        processOpts.detachSession);
+
+   // Launch via ProcessSupervisor
+   error = processSupervisor().runProgram(
+       nodePath.getAbsolutePath(),
+       args,
+       processOpts,
+       callbacks);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      s_chatBackendPort = -1;
+      s_chatBackendUrl.clear();
+      return error;
+   }
+
+   return Success();
+}
+
+// ============================================================================
+// Static File Serving
+// ============================================================================
+
+std::string getContentType(const std::string& extension)
+{
+   static std::map<std::string, std::string> contentTypes = {
+      {".html", "text/html; charset=utf-8"},
+      {".js", "application/javascript; charset=utf-8"},
+      {".mjs", "application/javascript; charset=utf-8"},
+      {".css", "text/css; charset=utf-8"},
+      {".json", "application/json; charset=utf-8"},
+      {".svg", "image/svg+xml"},
+      {".png", "image/png"},
+      {".jpg", "image/jpeg"},
+      {".jpeg", "image/jpeg"},
+      {".gif", "image/gif"},
+      {".ico", "image/x-icon"},
+      {".woff", "font/woff"},
+      {".woff2", "font/woff2"},
+      {".ttf", "font/ttf"},
+      {".eot", "application/vnd.ms-fontobject"}
+   };
+
+   auto it = contentTypes.find(extension);
+   if (it != contentTypes.end())
+      return it->second;
+
+   return "application/octet-stream";
+}
+
+Error validateAndResolvePath(const FilePath& clientRoot,
+                             const std::string& requestPath,
+                             FilePath* pResolvedPath)
+{
+   // Remove query string and fragment
+   std::string cleanPath = requestPath;
+   size_t queryPos = cleanPath.find('?');
+   if (queryPos != std::string::npos)
+      cleanPath = cleanPath.substr(0, queryPos);
+
+   size_t fragmentPos = cleanPath.find('#');
+   if (fragmentPos != std::string::npos)
+      cleanPath = cleanPath.substr(0, fragmentPos);
+
+   // URL decode
+   cleanPath = http::util::urlDecode(cleanPath);
+
+   // Build full path
+   FilePath resolved = clientRoot.completeChildPath(cleanPath);
+
+   // CRITICAL: Canonicalize to resolve symlinks and ".." before security check
+   Error error = core::system::realPath(resolved, &resolved);
+   if (error)
+      return error;
+
+   // Security: Ensure resolved path is within clientRoot
+   std::string resolvedStr = resolved.getAbsolutePath();
+   std::string rootStr = clientRoot.getAbsolutePath();
+
+   if (!boost::starts_with(resolvedStr, rootStr))
+   {
+      return systemError(boost::system::errc::permission_denied,
+                        "Path traversal attempt detected",
+                        ERROR_LOCATION);
+   }
+
+   *pResolvedPath = resolved;
+   return Success();
+}
+
+Error handleAIChatRequest(const http::Request& request,
+                          http::Response* pResponse)
+{
+   // Locate installation
+   FilePath positAiPath = locatePositAiInstallation();
+   if (positAiPath.isEmpty())
+   {
+      pResponse->setStatusCode(http::status::NotFound);
+      pResponse->setBody("Posit AI not installed.");
+      return Success();
+   }
+
+   FilePath clientRoot = positAiPath.completeChildPath(kClientDirPath);
+
+   // Parse requested path from URI
+   // URI format: /ai-chat/<path>
+   std::string uri = request.uri();
+   size_t pos = uri.find("/ai-chat/");
+   if (pos == std::string::npos)
+   {
+      pResponse->setStatusCode(http::status::BadRequest);
+      return Success();
+   }
+
+   std::string requestPath = uri.substr(pos + 9); // Length of "/ai-chat/"
+
+   // Default to index.html
+   if (requestPath.empty() || requestPath == "/")
+      requestPath = kIndexFileName;
+
+   // Validate and resolve path
+   FilePath resolvedPath;
+   Error error = validateAndResolvePath(clientRoot, requestPath, &resolvedPath);
+   if (error)
+   {
+      pResponse->setStatusCode(http::status::Forbidden);
+      return Success();
+   }
+
+   // Check if file exists
+   if (!resolvedPath.exists())
+   {
+      pResponse->setStatusCode(http::status::NotFound);
+      return Success();
+   }
+
+   // Read file BYTE-FOR-BYTE (no modifications)
+   std::string content;
+   error = core::readStringFromFile(resolvedPath, &content);
+   if (error)
+   {
+      pResponse->setStatusCode(http::status::InternalServerError);
+      return error;
+   }
+
+   // Set content type
+   std::string extension = resolvedPath.getExtension();
+   pResponse->setContentType(getContentType(extension));
+
+   // Set caching headers
+   if (boost::ends_with(requestPath, kIndexFileName) ||
+       boost::ends_with(requestPath, ".js") ||
+       boost::ends_with(requestPath, ".css"))
+   {
+      // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
+      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+   }
+   else if (requestPath.find(".") != std::string::npos)
+   {
+      // Cache other assets like images, fonts, etc.
+      pResponse->setHeader("Cache-Control", "public, max-age=31536000");
+   }
+
+   pResponse->setStatusCode(http::status::Ok);
+   pResponse->setBody(content);
+
+   return Success();
+}
+
+// ============================================================================
+// RPC Methods
+// ============================================================================
+
+Error chatVerifyInstalled(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   FilePath installation = locatePositAiInstallation();
+   bool installed = !installation.isEmpty();
+   pResponse->setResult(installed);
+   return Success();
+}
+
+Error chatStartBackend(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   Error error = startChatBackend();
+
+   json::Object result;
+   result["success"] = !error;
+   if (error)
+      result["error"] = error.getMessage();
+
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error chatGetBackendUrl(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+   result["url"] = s_chatBackendUrl;
+   result["port"] = s_chatBackendPort;
+   result["ready"] = (s_chatBackendPid != -1 && !s_chatBackendUrl.empty());
+
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error chatGetBackendStatus(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+
+   FilePath installation = locatePositAiInstallation();
+   if (installation.isEmpty())
+   {
+      result["status"] = "not_installed";
+      result["error"] = "Posit AI not installed.";
+   }
+   else if (s_chatBackendPid == -1)
+   {
+      result["status"] = "stopped";
+   }
+   else if (s_chatBackendUrl.empty())
+   {
+      result["status"] = "starting";
+   }
+   else
+   {
+      result["status"] = "ready";
+      result["url"] = s_chatBackendUrl;
+   }
+
+   pResponse->setResult(result);
+   return Success();
+}
+
+// ============================================================================
+// Module Lifecycle
+// ============================================================================
+
+void onShutdown(bool terminatedNormally)
+{
+   // Terminate backend process
+   if (s_chatBackendPid != -1)
+   {
+      DLOG("Terminating chat backend process");
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+      s_chatBackendPid = -1;
+   }
+
+   // Clear port and URL
+   s_chatBackendPort = -1;
+   s_chatBackendUrl.clear();
+}
+
 } // end anonymous namespace
+
+// ============================================================================
+// Module Initialization
+// ============================================================================
 
 Error initialize()
 {
@@ -85,18 +754,35 @@ Error initialize()
    using namespace module_context;
 
    // Read default log level
-   std::string chatLogLevel = core::system::getenv("CHAT_LOG_LEVEL");
-   if (!chatLogLevel.empty())
-      s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevel, 0);
+   std::string chatLogLevelStr = core::system::getenv("CHAT_LOG_LEVEL");
+   if (!chatLogLevelStr.empty())
+      s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevelStr, 0);
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
 
+   // Register shutdown handler
+   events().onShutdown.connect(onShutdown);
+
+   // Register RPC methods
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(registerRpcMethod, "chat_verify_installed", chatVerifyInstalled))
-         (bind(sourceModuleRFile, "SessionChat.R"))
-         ;
-   return initBlock.execute();
+      (bind(registerRpcMethod, "chat_verify_installed", chatVerifyInstalled))
+      (bind(registerRpcMethod, "chat_start_backend", chatStartBackend))
+      (bind(registerRpcMethod, "chat_get_backend_url", chatGetBackendUrl))
+      (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
+      (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))
+      (bind(sourceModuleRFile, "SessionChat.R"))
+      ;
+
+   Error error = initBlock.execute();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   DLOG("SessionChat module initialized successfully, URI handler registered for /ai-chat");
+   return Success();
 }
 
 } // end namespace chat
