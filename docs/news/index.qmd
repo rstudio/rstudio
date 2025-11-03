@@ -252,7 +252,7 @@ Since Positron Pro is now enabled by default, the following default configuratio
 - Fixed an issue where audited jobs would fail if the user's Workbench username differs from their posix username (rstudio-pro#8129)
 - Fixed an issue where the session init container was being added to containerized sessions and jobs on clusters that did not support them (rstudio-pro#8009)
 - Fixed an issue where Shiny for Python and other applications would reguarly experience websocket failures in VS Code and Positron sessions (rstudio-pro#7368)
-- Fixed an issue where the positron-settings.json example in the Admin guide had an extra comma (rstudio-pro#8853) 
+- Fixed an issue where the positron-settings.json example in the Admin guide had an extra comma (rstudio-pro#8853)
 
 ### Dependencies
 
@@ -472,6 +472,7 @@ Since Positron Pro is now enabled by default, the following default configuratio
 - Added support for reloading the Launcher through systemd (rstudio-pro#3749)
 - Added support for a configurable auth (SAML/OpenID) username re-write rule (rstudio-pro#6987)
 - Migrated Snowflake Native App documentation from Posit Workbench Administration Guide to the [Posit Partnerships](https://docs.posit.co/partnerships/snowflake/) site.
+- Made Workbench API generally available and removed Preview status
 
 ### Fixed
 #### RStudio
