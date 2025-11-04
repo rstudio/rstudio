@@ -472,18 +472,21 @@ Error startChatBackend()
    processOpts.exitWithParent = true;
    processOpts.callbacksRequireMainThread = true;
    processOpts.reportHasSubprocs = false;
+#ifndef _WIN32
    processOpts.detachSession = true;
+#else
+   processOpts.detachProcess = true;
+#endif
    processOpts.workingDir = positAiPath;
    processOpts.environment = environment;
 
    // Log execution details
    std::string argsStr = boost::algorithm::join(args, " ");
-   DLOG("Launching chat backend: nodePath={}, args=[{}], workingDir={}, exitWithParent={}, detachSession={}",
+   DLOG("Launching chat backend: nodePath={}, args=[{}], workingDir={}, exitWithParent={}",
         nodePath.getAbsolutePath(),
         argsStr,
         processOpts.workingDir.getAbsolutePath(),
-        processOpts.exitWithParent,
-        processOpts.detachSession);
+        processOpts.exitWithParent);
 
    // Launch via ProcessSupervisor
    error = processSupervisor().runProgram(
