@@ -536,29 +536,17 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("") // $NON-NLS-1$
     String projectSweaveOptionsDesc();
     
-    // showSidebar
-    @DefaultStringValue("Show Si_debar") // $NON-NLS-1$
-    String showSidebarMenuLabel();
-    
-    // hideSidebar
-    @DefaultStringValue("Hide Sideb_ar") // $NON-NLS-1$
-    String hideSidebarMenuLabel();
-    
     // toggleSidebar
     @DefaultStringValue("Toggle Visibility of Sidebar") // $NON-NLS-1$
     String toggleSidebarLabel();
+    @DefaultStringValue("To_ggle Sidebar Visibility") // $NON-NLS-1$
+    String toggleSidebarMenuLabel();
     
-    // moveSidebarLeft
-    @DefaultStringValue("Show Sidebar on Left") // $NON-NLS-1$
-    String moveSidebarLeftLabel();
-    @DefaultStringValue("Show Sidebar on Le_ft") // $NON-NLS-1$
-    String moveSidebarLeftMenuLabel();
-    
-    // moveSidebarRight
-    @DefaultStringValue("Show Sidebar on Right") // $NON-NLS-1$
-    String moveSidebarRightLabel();
-    @DefaultStringValue("Show Sidebar on Ri_ght") // $NON-NLS-1$
-    String moveSidebarRightMenuLabel();
+    // toggleSidebarLocation
+    @DefaultStringValue("Toggle Sidebar Location Left/Right") // $NON-NLS-1$
+    String toggleSidebarLocationLabel();
+    @DefaultStringValue("Toggle Sidebar Location") // $NON-NLS-1$
+    String toggleSidebarLocationMenuLabel();
     
     // showToolbar
     @DefaultStringValue("Show _Toolbar") // $NON-NLS-1$

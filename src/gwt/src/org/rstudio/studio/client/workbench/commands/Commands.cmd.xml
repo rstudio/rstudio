@@ -281,9 +281,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </menu>
 
       <menu label="_View">
-         <cmd refid="showSidebar"/>
-         <cmd refid="hideSidebar"/>
-         <cmd refid="showToolbar"/>
+         <cmd refid="toggleSidebar"/>
          <cmd refid="hideToolbar"/>
 
          <separator/>
@@ -291,8 +289,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
-            <cmd refid="moveSidebarLeft"/>
-            <cmd refid="moveSidebarRight"/>
             <separator/>
             <cmd refid="layoutConsoleOnLeft"/>
             <cmd refid="layoutConsoleOnRight"/>
@@ -1387,24 +1383,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc=""/>
 
-   <cmd id="showSidebar"
-        menuLabel="Show Si_debar"
-        rebindable="false"/>
-
-   <cmd id="hideSidebar"
-        menuLabel="Hide Sideb_ar"
-        rebindable="false"/>
-
    <cmd id="toggleSidebar"
+        menuLabel="To_ggle Sidebar Visibility"
         label="Toggle Visibility of Sidebar"/>
 
-   <cmd id="moveSidebarLeft"
-        label="Show Sidebar on Left"
-        menuLabel="Show Sidebar on Le_ft"/>
-
-   <cmd id="moveSidebarRight"
-        label="Show Sidebar on Right"
-        menuLabel="Show Sidebar on Ri_ght"/>
+   <cmd id="toggleSidebarLocation"
+        menuLabel="Toggle Sidebar Location"
+        label="Toggle Sidebar Location Left/Right"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
