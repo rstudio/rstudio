@@ -246,7 +246,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // An iframe might try to force navigation to occur in the main frame;
       // for example, via target="_top". Detect these scenarios and open the
       // requested URL in an external window instead.
-      if (event.frame != event.initiator) {
+      if (event.frame?.origin != event.initiator?.origin) {
         event.preventDefault();
         void shell.openExternal(url);
         return;
