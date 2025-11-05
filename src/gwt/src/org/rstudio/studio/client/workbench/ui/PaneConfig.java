@@ -40,15 +40,16 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString sidebarTabs,
                                           boolean sidebarVisible,
                                           String sidebarLocation) /*-{
+      // Make defensive copies of all arrays to prevent shared reference issues
       return {
-         quadrants: panes,
-         tabSet1: tabSet1,
-         tabSet2: tabSet2,
-         hiddenTabSet: hiddenTabSet,
+         quadrants: panes.slice(),
+         tabSet1: tabSet1.slice(),
+         tabSet2: tabSet2.slice(),
+         hiddenTabSet: hiddenTabSet.slice(),
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop,
          additional_source_columns: additionalSources,
-         sidebar: sidebarTabs,
+         sidebar: sidebarTabs.slice(),
          sidebar_visible: sidebarVisible,
          sidebar_location: sidebarLocation
       };
@@ -223,7 +224,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       JsArrayString panes = getQuadrants();
       if (panes == null)
+      {
+         Debug.log("validateAndAutoCorrect: PaneConfig is null");
          return false;
+      }
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
@@ -249,7 +253,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          }
          else
          {
-            Debug.logToConsole("Invaliding tabset config (Presentation index)"); //$NON-NLS-1$
+            Debug.log("validateAndAutoCorrect: Invalid tabset config (Presentation index)"); //$NON-NLS-1$
             return false;
          }
       }
@@ -265,7 +269,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       Set<String> allTabs = makeSet(getAllTabs());
       if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
             isSubset(allTabs, JsUtil.asIterable(ts2))))
+      {
+         Debug.log("validateAndAutoCorrect: Invalid tabset config (Unknown tabs)");
          return false;
+      }
 
       return true;
    }
