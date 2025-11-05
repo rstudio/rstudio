@@ -51,6 +51,7 @@
 - ([#16607](https://github.com/rstudio/rstudio/issues/16607)): Fixed an issue where warning hyperlinks were malformed in some cases
 - ([#16329](https://github.com/rstudio/rstudio/issues/16329)): Fixed an issue where RStudio's autosave could update a file's mtime even if it had no changes
 - ([#16355](https://github.com/rstudio/rstudio/issues/16355)): Fixed an issue where rendering large, nested tables in R Markdown / Quarto documents could be prohibitively slow
+- ([#16624](https://github.com/rstudio/rstudio/issues/16624)): Fixed an issue where links in a PDF document presented in the Viewer pane could cause navigation to occur in the main RStudio window
 
 #### Posit Workbench
 
