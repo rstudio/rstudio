@@ -246,6 +246,8 @@ export class DesktopBrowserWindow extends EventEmitter {
       // An iframe might try to force navigation to occur in the main frame;
       // for example, via target="_top". Detect these scenarios and open the
       // requested URL in an external window instead.
+      //
+      // https://github.com/rstudio/rstudio/issues/16624
       if (event.frame?.origin != event.initiator?.origin) {
         event.preventDefault();
         void shell.openExternal(url);
