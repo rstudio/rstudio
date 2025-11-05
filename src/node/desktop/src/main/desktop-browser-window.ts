@@ -248,7 +248,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // requested URL in an external window instead.
       //
       // https://github.com/rstudio/rstudio/issues/16624
-      if (event.frame?.origin != event.initiator?.origin) {
+      if (event.frame?.origin !== event.initiator?.origin) {
         event.preventDefault();
         void shell.openExternal(url);
         return;
