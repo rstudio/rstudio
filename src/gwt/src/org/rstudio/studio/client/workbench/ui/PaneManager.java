@@ -403,11 +403,7 @@ public class PaneManager
       
       userPrefs.panes().addValueChangeHandler(evt ->
       {
-         PaneConfig newConfig = evt.getValue().cast();
-         Debug.log("ValueChangeHandler: Panes preference changed - sidebar_visible=" +
-            newConfig.getSidebarVisible());
-
-         ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(newConfig));
+         ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue().cast()));
          panes_ = newPanes;
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
@@ -1011,28 +1007,8 @@ public class PaneManager
    {
       PaneConfig paneConfig = getCurrentConfig();
 
-      Debug.log("setSidebarPref called: showSidebar=" + showSidebar +
-         ", current config sidebar_visible=" + paneConfig.getSidebarVisible());
-
       if (showSidebar == paneConfig.getSidebarVisible())
-      {
-         Debug.log("setSidebarPref: Early return - value unchanged");
          return;
-      }
-
-      // Capture array lengths before creating new config to detect corruption
-      int quadLen = paneConfig.getQuadrants().length();
-      int ts1Len = paneConfig.getTabSet1().length();
-      int ts2Len = paneConfig.getTabSet2().length();
-      int hiddenLen = paneConfig.getHiddenTabSet().length();
-      int sidebarLen = paneConfig.getSidebar().length();
-
-      Debug.log("setSidebarPref: Config before create - quadrants: " + quadLen +
-         ", tabSet1: " + ts1Len +
-         ", tabSet2: " + ts2Len +
-         ", hiddenTabSet: " + hiddenLen +
-         ", sidebar: " + sidebarLen +
-         ", setting sidebar_visible to: " + showSidebar);
 
       // Update the preference
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -1046,26 +1022,6 @@ public class PaneManager
          paneConfig.getSidebar(),
          showSidebar,
          paneConfig.getSidebarLocation()));
-
-      // Verify the original config's arrays weren't corrupted by shared references
-      if (paneConfig.getQuadrants().length() != quadLen ||
-          paneConfig.getTabSet1().length() != ts1Len ||
-          paneConfig.getTabSet2().length() != ts2Len ||
-          paneConfig.getHiddenTabSet().length() != hiddenLen ||
-          paneConfig.getSidebar().length() != sidebarLen)
-      {
-         Debug.log("ERROR: setSidebarPref: Array corruption detected! Original config modified. " +
-            "Before: q=" + quadLen + " ts1=" + ts1Len + " ts2=" + ts2Len + " h=" + hiddenLen + " s=" + sidebarLen +
-            " After: q=" + paneConfig.getQuadrants().length() +
-            " ts1=" + paneConfig.getTabSet1().length() +
-            " ts2=" + paneConfig.getTabSet2().length() +
-            " h=" + paneConfig.getHiddenTabSet().length() +
-            " s=" + paneConfig.getSidebar().length());
-      }
-      else
-      {
-         Debug.log("setSidebarPref: Config arrays verified - no corruption detected");
-      }
 
       userPrefs_.writeUserPrefs();
    }
@@ -1113,12 +1069,8 @@ public class PaneManager
 
    public void showSidebar(boolean showSidebar)
    {
-      Debug.log("showSidebar called: showSidebar=" + showSidebar + ", sidebar_=" +
-         (sidebar_ == null ? "null" : "not null"));
-
       if (showSidebar && sidebar_ == null)
       {
-         Debug.log("showSidebar: Creating and showing sidebar");
          // Create sidebar configuration
          PaneConfig config = getCurrentConfig();
          JsArrayString sidebarTabs = config.getSidebar();
@@ -1148,7 +1100,6 @@ public class PaneManager
       }
       else if (!showSidebar && sidebar_ != null)
       {
-         Debug.log("showSidebar: Hiding sidebar");
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
@@ -1910,18 +1861,9 @@ public class PaneManager
 
    public void activateTab(Tab tab)
    {
-      Debug.log("activateTab called for tab: " + tab);
-
       lastSelectedTab_ = tab;
       WorkbenchTabPanel panel = getOwnerTabPanel(tab);
       LogicalWindow parent = panel.getParentWindow();
-
-      Debug.log("activateTab: tab=" + tab + ", parent=" +
-         (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR) ? "SIDEBAR" :
-          parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1) ? "TABSET1" :
-          parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2) ? "TABSET2" :
-          parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET) ? "HIDDEN" : "OTHER") +
-         ", sidebar_=" + (sidebar_ == null ? "null" : "not null"));
 
       // If the tab belongs to the hidden tabset, add it to one being displayed
       if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))

@@ -206,14 +206,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       PaneConfig paneConfig = userPrefs.panes().getGlobalValue().cast();
 
-      Debug.log("Pane Layout Dialog opening - config null: " + (paneConfig == null) +
-         ", quadrants: " + (paneConfig != null ? paneConfig.getQuadrants().length() : "null") +
-         ", tabSet1: " + (paneConfig != null ? paneConfig.getTabSet1().length() : "null") +
-         ", tabSet2: " + (paneConfig != null ? paneConfig.getTabSet2().length() : "null") +
-         ", hiddenTabSet: " + (paneConfig != null ? paneConfig.getHiddenTabSet().length() : "null") +
-         ", sidebar: " + (paneConfig != null ? paneConfig.getSidebar().length() : "null") +
-         ", sidebar_visible: " + (paneConfig != null ? paneConfig.getSidebarVisible() : "null"));
-
       additionalColumnCount_ = paneConfig.getAdditionalSourceColumns();
 
       add(new Label(constants_.paneLayoutText(),
@@ -304,9 +296,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          for (String value : visiblePanes)
             lb.addItem(value);
       }
-
-      boolean isValid = paneConfig != null && paneConfig.validateAndAutoCorrect();
-      Debug.log("Pane Layout DialogConfig validation: " + isValid + ", was null: " + (paneConfig == null));
 
       if (paneConfig == null || !paneConfig.validateAndAutoCorrect())
          userPrefs.panes().setGlobalValue(PaneConfig.createDefault(), false);
