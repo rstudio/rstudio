@@ -62,6 +62,7 @@ If (-Not (Test-Administrator)) {
 }
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "Error: Requires PowerShell 5.0 or newer"
+    exit
 }
 
 # install build tools
@@ -98,7 +99,7 @@ $installArgs = @(
     '--wait',
     '--norestart',
     '--nocache',
-    '--installPath', 'C:/Program Files/Microsoft Visual Studio/2022/BuildTools',
+    '--installPath', '"C:/Program Files/Microsoft Visual Studio/2022/BuildTools"',
     '--add', 'Microsoft.VisualStudio.Workload.CoreEditor',
     '--add', 'Microsoft.VisualStudio.Workload.NativeDesktop',
     '--add', 'Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core',
@@ -108,7 +109,11 @@ $installArgs = @(
     '--add', 'Microsoft.VisualStudio.Component.Windows10SDK',
     "--add", "Microsoft.VisualStudio.Component.Windows10SDK.$_WIN32_SDK_VERSION"
 )
-Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow
+$vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
+if ($vsProcess.ExitCode -ne 0) {
+    Write-Error "Visual Studio Build Tools installation failed with exit code $($vsProcess.ExitCode)"
+    exit
+}
 
 # Try testing the build tools. You might see some telemetry errors here;
 # they can apparently be ignored.
@@ -124,7 +129,9 @@ if (Test-Path $vsDevCmdPath) {
 }
 
 # Clean up.
-Remove-Item vs_buildtools.exe
+if ($DeleteDownloads -and (Test-Path "vs_buildtools.exe")) {
+    Remove-Item vs_buildtools.exe -Force -ErrorAction SilentlyContinue
+}
 
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
@@ -135,10 +142,18 @@ if (-Not (Test-Path -Path "C:\R")) {
         Write-Host "Using previously downloaded R installer"
     }
     Write-Host "Installing R..."
-    Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"'
-    if ($DeleteDownloads) { Remove-Item $RSetupPackage -Force }
-    $env:path += ';C:\R\R-3.6.3\bin\i386\'
-    [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
+    $rProcess = Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"' -PassThru
+    if ($rProcess.ExitCode -ne 0) {
+        Write-Error "R installation failed with exit code $($rProcess.ExitCode)"
+        exit
+    }
+    if ($DeleteDownloads) { Remove-Item $RSetupPackage -Force -ErrorAction SilentlyContinue }
+    $rBinPath = 'C:\R\R-3.6.3\bin\x64\'
+    $env:path += ";$rBinPath"
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine)
+    if ($machinePath -notlike "*$rBinPath*") {
+        [Environment]::SetEnvironmentVariable('Path', "$machinePath;$rBinPath", [System.EnvironmentVariableTarget]::Machine)
+    }
 } else {
     Write-Host "C:\R already exists, skipping R installation"
 }
