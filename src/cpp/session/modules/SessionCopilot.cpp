@@ -15,8 +15,6 @@
 
 #include "SessionCopilot.hpp"
 
-#include <unordered_set>
-
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -51,12 +49,12 @@
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);               \
-      std::string __formatted__ =                                                  \
-          fmt::format("[{}]: {}", __func__, __message__);                          \
-      __LOGGER__("copilot", __formatted__);                                        \
+      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);           \
+      std::string __formatted__ =                                              \
+          fmt::format("[{}]: {}", __func__, __message__);                      \
+      __LOGGER__("copilot", __formatted__);                                    \
       if (copilotLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                                  \
+         std::cerr << __formatted__ << std::endl;                              \
    } while (0)
 
 #define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
@@ -307,6 +305,16 @@ std::map<std::string, CopilotContinuation> s_pendingContinuations;
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
 
+// Whether we're about to shut down.
+bool s_isSessionShuttingDown = false;
+
+// Project-specific Copilot options.
+projects::RProjectCopilotOptions s_copilotProjectOptions;
+
+// A queue of pending files to be indexed.
+std::vector<FileInfo> s_indexQueue;
+std::size_t s_indexBatchSize = 200;
+
 // The language server protocol states:
 //
 // ...open notification must not be sent more than once without a corresponding close notification 
@@ -347,16 +355,6 @@ int currentVersionForDocument(const std::string& uri)
    // Otherwise, return the default version.
    return kCopilotDefaultDocumentVersion;
 }
-
-// Whether we're about to shut down.
-bool s_isSessionShuttingDown = false;
-
-// Project-specific Copilot options.
-projects::RProjectCopilotOptions s_copilotProjectOptions;
-
-// A queue of pending files to be indexed.
-std::vector<FileInfo> s_indexQueue;
-std::size_t s_indexBatchSize = 200;
 
 int copilotLogLevel()
 {
@@ -895,6 +893,9 @@ void onStarted(ProcessOperations& operations)
 
 bool onContinue(ProcessOperations& operations)
 {
+   if (s_isSessionShuttingDown)
+      return false;
+
    auto debugCallback = [](const std::string& htmlRequest)
    {
       if (copilotLogLevel() >= 2)
@@ -946,6 +947,9 @@ bool onContinue(ProcessOperations& operations)
 
 void onStdout(ProcessOperations& operations, const std::string& stdOut)
 {
+   if (s_isSessionShuttingDown)
+      return;
+
    // Discard empty lines.
    static const boost::regex reWhitespace("^\\s*$");
    if (regex_utils::match(stdOut, reWhitespace))
@@ -1030,6 +1034,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
 {
+   if (s_isSessionShuttingDown)
+      return;
+
    LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
    if (copilotLogLevel() >= 1)
       std::cerr << stdErr << std::endl;
@@ -1072,9 +1079,9 @@ void onExit(int status)
 void stopAgent()
 {
    s_knownDocuments.clear();
+
    if (s_agentPid == -1)
    {
-      //DLOG("No agent running; nothing to do.");
       setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
       return;
    }
@@ -1082,6 +1089,15 @@ void stopAgent()
    Error error = core::system::terminateProcess(s_agentPid);
    if (error)
       LOG_ERROR(error);
+}
+
+bool stopAgentSync()
+{
+   if (s_agentPid == -1)
+      return true;
+
+   stopAgent();
+   return waitFor([]() { return s_agentPid == -1; });
 }
 
 Error startAgent()
@@ -1261,23 +1277,16 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
       return true;
    }
 
+   // bail if we're shutting down
+   if (s_isSessionShuttingDown)
+      return false;
+
    // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
    {
       if (!s_copilotInitialized)
       {
          DLOG("Copilot is not enabled; not starting agent.");
-         s_copilotInitialized = true;
-      }
-      return false;
-   }
-
-   // bail if we're shutting down
-   if (s_isSessionShuttingDown)
-   {
-      if (!s_copilotInitialized)
-      {
-         DLOG("Session is shutting down; not starting agent.");
          s_copilotInitialized = true;
       }
       return false;
@@ -1723,6 +1732,10 @@ bool subscribeToFileMonitor()
 
 void synchronize()
 {
+   // Bail if we're shutting down.
+   if (s_isSessionShuttingDown)
+      return;
+
    // Update flags
    s_copilotEnabled = isCopilotEnabled();
    s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
@@ -1785,12 +1798,7 @@ void onShutdown(bool)
    s_isSessionShuttingDown = true;
 
    // Shut down the agent.
-   stopAgent();
-
-   // Unset the agent PID. It should already be shutting down,
-   // but this will make sure we don't try to make any more
-   // requests while we're shutting down.
-   s_agentPid = -1;
+   stopAgentSync();
 }
 
 void onSourceFileDiff(module_context::DocumentDiff diff)
@@ -1884,10 +1892,7 @@ SEXP rs_copilotVersion()
 SEXP rs_copilotStopAgent()
 {
    // stop the copilot agent
-   stopAgent();
-   
-   // wait until the process is gone
-   bool stopped = waitFor([]() { return s_agentPid == -1; });
+   bool stopped = stopAgentSync();
  
    // return status
    return Rf_ScalarLogical(stopped);
@@ -2044,7 +2049,6 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    if (!ensureAgentRunning(&launchError))
    {
       json::JsonRpcResponse response;
-      
       json::Object resultJson;
       
       if (launchError)
