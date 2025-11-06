@@ -1892,10 +1892,10 @@ SEXP rs_copilotVersion()
 SEXP rs_copilotStopAgent()
 {
    // stop the copilot agent
-   stopAgentSync();
+   bool stopped = stopAgentSync();
  
    // return status
-   return Rf_ScalarLogical(true);
+   return Rf_ScalarLogical(stopped);
 }
 
 Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
