@@ -37,12 +37,6 @@ namespace node_tools {
 #endif
 
 /**
- * If running on arm64 Mac, substitute the arm64-specific node binary; returns true if this was
- * done, false otherwise.
- */
-bool findNodeMacArm64(const core::FilePath& inputPath, core::FilePath* pOutputNodePath);
-
-/**
  * Find the node.js binary on the system.
  *
  * @param pNodePath Output parameter for the path to node.js

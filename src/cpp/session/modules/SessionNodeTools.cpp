@@ -32,6 +32,12 @@ namespace session {
 namespace modules {
 namespace node_tools {
 
+namespace {
+
+/**
+ * If running on arm64 Mac, substitute the arm64-specific node binary; returns true if this was
+ * done, false otherwise.
+ */
 bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
 {
 #if defined(__APPLE__)
@@ -60,6 +66,8 @@ bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
 #endif
    return false;
 }
+
+} // end anonymous namespace
 
 Error findNode(FilePath* pNodePath, const std::string& rOptionName)
 {
