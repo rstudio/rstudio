@@ -34,6 +34,12 @@ namespace node_tools {
 
 namespace {
 
+#ifndef _WIN32
+# define kNodeExe "node"
+#else
+# define kNodeExe "node.exe"
+#endif
+
 /**
  * If running on arm64 Mac, substitute the arm64-specific node binary; returns true if this was
  * done, false otherwise.

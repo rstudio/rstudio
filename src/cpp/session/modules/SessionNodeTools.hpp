@@ -30,12 +30,6 @@ namespace session {
 namespace modules {
 namespace node_tools {
 
-#ifndef _WIN32
-# define kNodeExe "node"
-#else
-# define kNodeExe "node.exe"
-#endif
-
 /**
  * Find the node.js binary on the system.
  *
