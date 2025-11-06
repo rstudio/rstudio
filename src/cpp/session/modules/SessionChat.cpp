@@ -14,6 +14,7 @@
  */
 
 #include "SessionChat.hpp"
+#include "SessionNodeTools.hpp"
 
 #include <map>
 
@@ -40,12 +41,6 @@
 #include <session/SessionUrlPorts.hpp>
 
 #include "session-config.h"
-
-#ifndef _WIN32
-# define kNodeExe "node"
-#else
-# define kNodeExe "node.exe"
-#endif
 
 #define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                       \
@@ -186,105 +181,6 @@ FilePath locatePositAiInstallation()
 }
 
 // ============================================================================
-// Node.js Detection
-// ============================================================================
-
-/**
- * If running on arm64 Mac, substitute the arm64-specific node binary; returns true if this was
- * done, false otherwise.
- */
-bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
-{
-#if defined(__APPLE__)
-   if (isAppleSilicon())
-   {
-      FilePath nodeExePath;
-      if (inputPath.isRegularFile())
-      {
-         // change /node/bin/node to /node-arm64/bin/node
-         nodeExePath = inputPath.getParent().getParent().completeChildPath("node-arm64/bin/" kNodeExe);
-      }
-      else if (inputPath.isDirectory())
-      {
-         // change /node to /node-arm64
-         nodeExePath = inputPath.getParent().completeChildPath("node-arm64");
-      }
-      else
-         return false;
-
-      if (nodeExePath.exists())
-      {
-         *pOutputNodePath = nodeExePath;
-         return true;
-      }
-   }
-#endif
-   return false;
-}
-
-Error findNode(FilePath* pNodePath)
-{
-   // Check R option override
-   SEXP nodePathSEXP = r::options::getOption("rstudio.positAi.nodeBinaryPath");
-   if (nodePathSEXP != R_NilValue)
-   {
-      std::string nodePath = r::sexp::asString(nodePathSEXP);
-      if (!nodePath.empty())
-      {
-         *pNodePath = FilePath(nodePath);
-         if (pNodePath->exists())
-            return Success();
-      }
-   }
-
-   // Check admin-configured path
-   if (!options().nodePath().isEmpty())
-   {
-      FilePath nodePath = options().nodePath();
-      FilePath arm64NodePath;
-
-      // on arm64 Mac, substitute the arm64-specific node binary
-      if (findNodeMacArm64(nodePath, &arm64NodePath))
-      {
-         nodePath = arm64NodePath;
-      }
-
-      // Allow both directories containing a 'node' binary, and the path
-      // to a 'node' binary directly.
-      if (nodePath.isDirectory())
-      {
-         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
-         {
-            FilePath nodeExePath = nodePath.completeChildPath(suffix);
-            if (nodeExePath.exists())
-            {
-               *pNodePath = nodeExePath;
-               return Success();
-            }
-         }
-
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-      else if (nodePath.isRegularFile())
-      {
-         *pNodePath = nodePath;
-         return Success();
-      }
-      else
-      {
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Search PATH
-   Error error = core::system::findProgramOnPath(kNodeExe, pNodePath);
-   if (error)
-      return error;
-
-   return Success();
-}
-
-// ============================================================================
 // Port Allocation
 // ============================================================================
 
@@ -422,7 +318,7 @@ Error startChatBackend()
 
    // Find Node.js
    FilePath nodePath;
-   Error error = findNode(&nodePath);
+   Error error = node_tools::findNode(&nodePath, "rstudio.positAi.nodeBinaryPath");
    if (error)
       return error;
 

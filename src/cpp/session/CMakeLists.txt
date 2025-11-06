@@ -212,6 +212,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
+   modules/SessionNodeTools.cpp
    modules/SessionObjectExplorer.cpp
    modules/SessionPackageProvidedExtension.cpp
    modules/SessionPackages.cpp
