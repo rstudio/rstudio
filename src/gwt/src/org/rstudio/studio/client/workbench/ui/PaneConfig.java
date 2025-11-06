@@ -227,11 +227,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
+      JsArrayString sidebar = getSidebar();
 
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
-      
+      replaceObsoleteTabs(sidebar);
+
       // Presentation tab must always be at the end of the ts1 tabset (this
       // is so that activating it works even in the presence of optionally
       // visible tabs). This is normally an invariant but for a time during
@@ -270,6 +272,11 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             unknownTabs.add(tab);
       }
       for (String tab : JsUtil.asIterable(ts2))
+      {
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      for (String tab : JsUtil.asIterable(sidebar))
       {
          if (!allTabs.contains(tab))
             unknownTabs.add(tab);
