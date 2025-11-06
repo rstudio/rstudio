@@ -40,16 +40,15 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString sidebarTabs,
                                           boolean sidebarVisible,
                                           String sidebarLocation) /*-{
-      // Make defensive copies of all arrays to prevent shared reference issues
       return {
-         quadrants: panes.slice(),
-         tabSet1: tabSet1.slice(),
-         tabSet2: tabSet2.slice(),
-         hiddenTabSet: hiddenTabSet.slice(),
+         quadrants: panes,
+         tabSet1: tabSet1,
+         tabSet2: tabSet2,
+         hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop,
          additional_source_columns: additionalSources,
-         sidebar: sidebarTabs.slice(),
+         sidebar: sidebarTabs,
          sidebar_visible: sidebarVisible,
          sidebar_location: sidebarLocation
       };
@@ -224,10 +223,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       JsArrayString panes = getQuadrants();
       if (panes == null)
-      {
-         Debug.log("validateAndAutoCorrect: PaneConfig is null");
          return false;
-      }
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
@@ -267,10 +263,21 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
-      if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
-            isSubset(allTabs, JsUtil.asIterable(ts2))))
+      ArrayList<String> unknownTabs = new ArrayList<>();
+      for (String tab : JsUtil.asIterable(ts1))
       {
-         Debug.log("validateAndAutoCorrect: Invalid tabset config (Unknown tabs)");
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      for (String tab : JsUtil.asIterable(ts2))
+      {
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      if (!unknownTabs.isEmpty())
+      {
+         Debug.log("validateAndAutoCorrect: Invalid tabset config (Unknown tabs: " + 
+                   StringUtil.joinStrings(unknownTabs, ", ") + ")");
          return false;
       }
 
