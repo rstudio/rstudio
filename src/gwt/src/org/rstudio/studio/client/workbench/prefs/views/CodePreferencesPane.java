@@ -80,13 +80,6 @@ public class CodePreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      
-      // Extra UI shown when a project is open makes the pane overflow on some
-      // browsers, so don't display initial "General" section title to regain
-      // some vertical space.
-      if (!hasProject)
-         editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
-
       editingPanel.add(headerLabel("Editing"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
