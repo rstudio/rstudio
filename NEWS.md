@@ -20,7 +20,7 @@
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
-- (#rstudio-pro/9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
+- (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
 
 ### Fixed
 #### RStudio
