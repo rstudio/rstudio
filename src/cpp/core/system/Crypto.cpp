@@ -590,7 +590,7 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
       if (status <= 0)
          return getLastCryptoError(ERROR_LOCATION);
 
-      status = EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx.get(), "SHA256", "");
+      status = EVP_PKEY_CTX_set_rsa_oaep_md(ctx.get(), EVP_sha256());
       if (status <= 0)
          return getLastCryptoError(ERROR_LOCATION);
    }
