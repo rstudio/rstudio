@@ -46,6 +46,7 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -7387,20 +7388,26 @@ public class TextEditingTarget implements
             
                          
             // see if we should be using quarto preview
-            if (useQuartoPreview())
+            if (useQuarto())
             {    
                // command to execute quarto preview
-               Command quartoPreviewCmd = new Command() {
+               Command quartoPreviewCmd = new Command()
+               {
                   @Override
                   public void execute()
                   {
                      // quarto preview can reject the preview (e.g. if it turns
                      // out this file is part of a website or book project)
                      String format = quartoFormat();
+                     JsObject editorState = isQuartoRevealJs(format)
+                        ? presentationEditorLocation().cast()
+                        : JsObject.createJsObject();
+
+                     editorState.setBoolean("is_shiny_doc", isShinyDoc());
                      server_.quartoPreview(
                         docUpdateSentinel_.getPath(), 
                         format, 
-                        isQuartoRevealJs(format) ? presentationEditorLocation() : null,
+                        editorState,
                         new SimpleRequestCallback<Boolean>() {
                            @Override
                            public void onResponseReceived(Boolean previewed)
@@ -7543,11 +7550,11 @@ public class TextEditingTarget implements
    }
    
    
-   private boolean useQuartoPreview()
+   private boolean useQuarto()
    {
-      return (session_.getSessionInfo().getQuartoConfig().enabled &&
-            (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) &&
-            !isShinyDoc() && !isRmdNotebook());
+      return
+         session_.getSessionInfo().getQuartoConfig().enabled &&
+         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT;
    }
     
    

@@ -19,6 +19,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
 #include <core/Exec.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -30,6 +31,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionQuarto.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 
@@ -49,7 +51,7 @@ namespace preview {
 
 namespace {
 
-// for 'quarto preview' jobs
+// for 'quarto preview' and 'quarto serve' jobs
 class QuartoPreview : public QuartoJob
 
 {
@@ -161,14 +163,27 @@ protected:
    
    virtual std::vector<std::string> args()
    {
+      bool isShinyDoc = false;
+      if (editorState_.isObject())
+      {
+         Error error = core::json::readObject(
+            editorState_.getObject(),
+            "is_shiny_doc", isShinyDoc);
+         if (error)
+            LOG_ERROR(error);
+      }
+
       // preview target file
-      std::vector<std::string> args = { "preview" };
+      std::vector<std::string> args = { isShinyDoc ? "serve" : "preview" };
       if (!previewTarget_.isDirectory())
       {
          args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
 
-         args.push_back("--to");
-         args.push_back(!format_.empty() ? format_ : "default");
+         if (!isShinyDoc)
+         {
+            args.push_back("--to");
+            args.push_back(!format_.empty() ? format_ : "default");
+         }
       }
       else
       {
@@ -181,8 +196,11 @@ protected:
          args.push_back("--presentation");
 
       // no watching inputs and no browser
-      args.push_back("--no-watch-inputs");
-      args.push_back("--no-browse");
+      if (!isShinyDoc)
+      {
+         args.push_back("--no-watch-inputs");
+         args.push_back("--no-browse");
+      }
 
       return args;
    }
@@ -197,6 +215,20 @@ protected:
          Error error = r::exec::RFunction(".rs.python.activeInterpreterPath").call(&pythonPath);
          if (error)
             LOG_ERROR(error);
+
+         if (pythonPath.empty())
+         {
+            std::string projectPath;
+            if (projects::projectContext().hasProject())
+               projectPath = projects::projectContext().directory().getAbsolutePath();
+
+            Error error = r::exec::RFunction(".rs.python.configuredInterpreterPath")
+               .addUtf8Param(projectPath)
+               .addParam(true)
+               .call(&pythonPath);
+            if (error)
+               LOG_ERROR(error);
+         }
 
          if (!pythonPath.empty())
             core::system::setenv(pEnv, "QUARTO_PYTHON", pythonPath);
@@ -559,11 +591,13 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    // read params
+   std::string previewFile;
+   std::string format;
    json::Value editorState;
-   std::string previewFile, format;
    Error error = json::readParams(request.params, &previewFile, &format, &editorState);
    if (error)
       return error;
+
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
    // we can always preview
