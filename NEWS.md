@@ -58,9 +58,9 @@
 #### Posit Workbench
 
 - ([#16521](https://github.com/rstudio/rstudio/issues/16521)): RStudio no longer emits rsession logs to the console when log-message-format=json is set
-- (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
-- (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
-- (#rstudio-pro/9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
+- (rstudio-pro#8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
+- (rstudio-pro#8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
+- (rstudio-pro#9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
 
 ### Dependencies
 - Copilot Language Server 1.389.0
