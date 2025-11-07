@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -446,7 +447,9 @@ public class StringUtil
    {
       if (skipWhitespaceOnlyLines)
       {
-         lines.removeIf((line) -> line.trim().isEmpty());
+         lines = lines.stream()
+            .filter(line -> !line.trim().isEmpty())
+            .collect(Collectors.toList());
       }
 
       if (lines.size() == 0)
@@ -456,7 +459,7 @@ public class StringUtil
          return lines.get(0);
 
       int offset = 0;
-      String prefix = "";
+      StringBuilder prefix = new StringBuilder();
 
       while (true)
       {
@@ -502,19 +505,19 @@ public class StringUtil
             // If the characters do not match, then we bail.
             if (lhs != rhs)
             {
-               return prefix;
+               return prefix.toString();
             }
          }
 
          // If the offset computed was out-of-bounds for all
          // of the provided lines, then we're done.
          if (!inBounds)
-            return prefix;
+            return prefix.toString();
 
          // If we got here, all the characters at this offset matched.
          // Add it to the computed prefix, and keep looking.
          offset++;
-         prefix += lhs;
+         prefix.append(lhs);
       }
    }
 
