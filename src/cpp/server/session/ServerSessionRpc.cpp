@@ -117,12 +117,8 @@ void validationHandler(
 {
    std::string username;
 
-   // validate that the secret matches what we expect
-   std::string secret =
-         pConnection->request().headerValue(kServerRpcSecretHeader);
-
    // if there is no secret, check for a message signature instead
-   if (secret.empty())
+   if (!pConnection->request().containsHeader(kServerRpcSecretHeader))
    {
       if (!validateSecureCookie(pConnection, &username, fallbackAllowed))
       {
@@ -134,6 +130,8 @@ void validationHandler(
    else
    {
       // used for traditional unix socket mode
+      // validate that the secret matches what we expect
+      std::string secret = pConnection->request().headerValue(kServerRpcSecretHeader);
       if (secret != s_sessionSharedSecret)
       {
          if (!fallbackAllowed)
