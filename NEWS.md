@@ -69,3 +69,4 @@
 - Node.js 22.18.0
 - Quarto 1.8.25
 - Launcher 2.21.0
+- rserver-saml 0.9.2
