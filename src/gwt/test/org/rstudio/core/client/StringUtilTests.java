@@ -360,7 +360,7 @@ public class StringUtilTests extends GWTTestCase
    public void testCommonPrefix()
    {
       String[] lines = new String[] {
-         "#' @param paramter",
+         "#' @param parameter",
          "#'",
          "#'   This is a line."
       };
