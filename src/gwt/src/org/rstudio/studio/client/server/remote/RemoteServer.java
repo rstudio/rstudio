@@ -72,7 +72,6 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
@@ -6884,13 +6883,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, String format, PresentationEditorLocation editorState,
-                            ServerRequestCallback<Boolean> requestCallback)
+   public void quartoPreview(String file,
+                             String format,
+                             JavaScriptObject editorState,
+                             ServerRequestCallback<Boolean> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      params.set(1, new JSONString(StringUtil.notNull(format)));
-      params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
+      JSONArray params = new JSONArrayBuilder()
+         .add(file)
+         .add(format)
+         .add(editorState)
+         .get();
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
    
