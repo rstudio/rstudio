@@ -16,7 +16,8 @@
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): Editor code can now be wrapped to the print margin width via the 'Soft-wrap at margin column' preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): The editor width can now be clamped to the print margin column via the 'Clamp editor width to margin column' preference
 - ([#16580](https://github.com/rstudio/rstudio/issues/16580)): The pane and tab layout can be reset to the defaults with the 'Restore default pane and tab layout' command
-- ([#16322](https://github.com/rstudio/rstudio/issues/16322)): The behavior of "Rename in Scope" in R Markdown / Quarto documents can now be configured, controlling whether the operating acts only upon the current chunk, or on all chunks in the document.
+- ([#16322](https://github.com/rstudio/rstudio/issues/16322)): The behavior of "Rename in Scope" in R Markdown / Quarto documents can now be configured, controlling whether the operating acts only upon the current chunk, or on all chunks in the document
+- ([#16383](https://github.com/rstudio/rstudio/issues/16383)): Quarto documents with `server: shiny` are now executed via `quarto serve` when clicking Run Document
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
