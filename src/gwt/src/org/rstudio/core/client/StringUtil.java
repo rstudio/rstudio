@@ -437,75 +437,70 @@ public class StringUtil
       if (lines.length == 0)
          return "";
 
-      /*
-       * allowPhantomWhitespace demands some explanation. Assuming these lines:
-       *
-       * {
-       *    "#",
-       *    "#  hello",
-       *    "#",
-       *    "#  goodbye",
-       *    "#    hello again"
-       * }
-       *
-       * The result with allowPhantomWhitespace = false would be "#", but with
-       * allowPhantomWhiteSpace = true it would be "#  ". Basically phantom
-       * whitespace refers to spots at the end of a line where additional
-       * whitespace would lead to a longer overall prefix but would not change
-       * the visible appearance of the document.
-       */
+      if (lines.length == 1)
+         return lines[0];
 
-      String prefix = notNull(lines[0]);
+      int offset = 0;
+      String prefix = "";
 
-      // Usually the prefix gradually gets shorter and shorter.
-      // whitespaceExpansionAllowed means that the prefix might get longer,
-      // because the prefix as it stands is eligible for phantom whitespace
-      // insertion. This is true iff the prefix is the same length as, or longer
-      // than, all of the lines we have processed.
-      boolean whitespaceExpansionAllowed = allowPhantomWhitespace;
-
-      for (int i = 1; i < lines.length && prefix.length() > 0; i++)
+      while (true)
       {
-         String line = notNull(lines[i]);
-         if (line.trim().isEmpty() && skipWhitespaceOnlyLines)
-            continue;
+         // Track whether the offset remained in-bounds
+         // for some string in the provided list.
+         boolean inBounds = false;
 
-         int len = whitespaceExpansionAllowed ? Math.max(prefix.length(), line.length()) :
-                   allowPhantomWhitespace ? prefix.length() :
-                   Math.min(prefix.length(), line.length());
-         int j;
-         for (j = 0; j < len; j++)
+         // Get the first character at the current offset.
+         char lhs;
+         if (offset < lines[0].length())
          {
-            if (j >= prefix.length())
+            inBounds = true;
+            lhs = lines[0].charAt(offset);
+         }
+         else if (allowPhantomWhitespace)
+         {
+            lhs = ' ';
+         }
+         else
+         {
+            lhs = '\0';
+         }
+
+         // Now, iterate over the rest of the characters in each line,
+         // and check if they match at the current offset.
+         for (int i = 1, n = lines.length; i < n; i++)
+         {
+            char rhs;
+            if (offset < lines[i].length())
             {
-               assert whitespaceExpansionAllowed;
-               if (!isWhitespace(line.charAt(j)))
-                  break;
-               continue;
+               inBounds = true;
+               rhs = lines[i].charAt(offset);
+            }
+            else if (allowPhantomWhitespace)
+            {
+               rhs = ' ';
+            }
+            else
+            {
+               rhs = '\0';
             }
 
-            if (j >= line.length())
+            // If the characters do not match, then we bail.
+            if (lhs != rhs)
             {
-               assert allowPhantomWhitespace;
-               if (!isWhitespace(prefix.charAt(j)))
-                  break;
-               continue;
-            }
-
-            if (prefix.charAt(j) != line.charAt(j))
-            {
-               break;
+               return prefix;
             }
          }
 
-         prefix = j <= prefix.length() ? StringUtil.substring(prefix, 0, j)
-                                       : StringUtil.substring(line, 0, j);
+         // If the offset computed was out-of-bounds for all
+         // of the provided lines, then we're done.
+         if (!inBounds)
+            return prefix;
 
-         whitespaceExpansionAllowed =
-               whitespaceExpansionAllowed && (prefix.length() >= line.length());
+         // If we got here, all the characters at this offset matched.
+         // Add it to the computed prefix, and keep looking.
+         offset++;
+         prefix += lhs;
       }
-
-      return prefix;
    }
 
    public static boolean isWhitespace(char c)
