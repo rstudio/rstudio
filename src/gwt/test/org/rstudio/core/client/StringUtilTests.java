@@ -14,11 +14,11 @@
  */
 package org.rstudio.core.client;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -355,5 +355,26 @@ public class StringUtilTests extends GWTTestCase
         String expected = ">> key1 :-: value1\n>> key2 :-: value2\n>> key3 :-: value3\n>> key4 :-: value4\n>> key5 :-: value5";
         String result = StringUtil.collapse(testData, ">> ", " :-: ", "\n");
         assertEquals(expected, result);
+   }
+
+   public void testCommonPrefix()
+   {
+      String[] lines = new String[] {
+         "#' @param paramter",
+         "#'",
+         "#'   This is a line."
+      };
+
+      // With phantom whitespace
+      assertEquals(
+         StringUtil.getCommonPrefix(lines, true, false),
+         "#' "
+      );
+
+      // Without phantom whitespace
+      assertEquals(
+         StringUtil.getCommonPrefix(lines, false, false),
+         "#'"
+      );
    }
 }

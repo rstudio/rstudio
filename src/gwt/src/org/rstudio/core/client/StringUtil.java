@@ -423,6 +423,16 @@ public class StringUtil
       return RE_TRAILING_WHITESPACE.replaceAll(string, "");
    }
 
+   public static String getCommonPrefix(String[] lines,
+                                        boolean allowPhantomWhitespace,
+                                        boolean skipWhitespaceOnlyLines)
+   {
+      return getCommonPrefix(
+         Arrays.asList(lines),
+         allowPhantomWhitespace,
+         skipWhitespaceOnlyLines);
+   }
+
    /**
     * Returns the zero or more characters that prefix all of the lines (but see
     * allowPhantomWhitespace).
@@ -430,15 +440,20 @@ public class StringUtil
     * @param allowPhantomWhitespace See comment in function body
     * @return
     */
-   public static String getCommonPrefix(String[] lines,
+   public static String getCommonPrefix(List<String> lines,
                                         boolean allowPhantomWhitespace,
                                         boolean skipWhitespaceOnlyLines)
    {
-      if (lines.length == 0)
+      if (skipWhitespaceOnlyLines)
+      {
+         lines.removeIf((line) -> line.trim().isEmpty());
+      }
+
+      if (lines.size() == 0)
          return "";
 
-      if (lines.length == 1)
-         return lines[0];
+      if (lines.size() == 1)
+         return lines.get(0);
 
       int offset = 0;
       String prefix = "";
@@ -451,10 +466,10 @@ public class StringUtil
 
          // Get the first character at the current offset.
          char lhs;
-         if (offset < lines[0].length())
+         if (offset < lines.get(0).length())
          {
             inBounds = true;
-            lhs = lines[0].charAt(offset);
+            lhs = lines.get(0).charAt(offset);
          }
          else if (allowPhantomWhitespace)
          {
@@ -467,13 +482,13 @@ public class StringUtil
 
          // Now, iterate over the rest of the characters in each line,
          // and check if they match at the current offset.
-         for (int i = 1, n = lines.length; i < n; i++)
+         for (int i = 1, n = lines.size(); i < n; i++)
          {
             char rhs;
-            if (offset < lines[i].length())
+            if (offset < lines.get(i).length())
             {
                inBounds = true;
-               rhs = lines[i].charAt(offset);
+               rhs = lines.get(i).charAt(offset);
             }
             else if (allowPhantomWhitespace)
             {
