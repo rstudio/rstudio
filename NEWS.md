@@ -21,6 +21,7 @@
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
+- (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
 
 ### Fixed
 #### RStudio
@@ -58,9 +59,9 @@
 #### Posit Workbench
 
 - ([#16521](https://github.com/rstudio/rstudio/issues/16521)): RStudio no longer emits rsession logs to the console when log-message-format=json is set
-- (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
-- (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
-- (#rstudio-pro/9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
+- (rstudio-pro#8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
+- (rstudio-pro#8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
+- (rstudio-pro#9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
 
 ### Dependencies
 - Copilot Language Server 1.393.0
