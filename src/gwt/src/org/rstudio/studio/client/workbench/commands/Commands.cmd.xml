@@ -1390,8 +1390,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Toggle Visibility of Sidebar"/>
 
    <cmd id="toggleSidebarLocation"
-        menuLabel="Toggle Sidebar Location"
-        label="Toggle Sidebar Location Left/Right"/>
+        menuLabel="Move Sidebar Left/Right"
+        label="Move Sidebar Location Left/Right"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
