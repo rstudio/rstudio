@@ -15,16 +15,17 @@
 package org.rstudio.studio.client.quarto.model;
 
 import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 public interface QuartoServerOperations 
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
    void quartoPreview(String file, 
                       String format, 
-                      PresentationEditorLocation editorState,
+                      JavaScriptObject editorState,
                       ServerRequestCallback<Boolean> requestCallback);
    void quartoCreateProject(String projectFile, 
                             QuartoNewProjectOptions options, 

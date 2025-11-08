@@ -41,6 +41,7 @@
 #include <boost/utility.hpp>
 
 #include <shared_core/Error.hpp>
+#include <core/Thread.hpp>
 
 #include <core/Log.hpp>
 
@@ -54,6 +55,8 @@ namespace system {
 namespace crypto {
 
 namespace {
+
+std::recursive_mutex s_openssl_mutex;
 
 template <typename T, typename Deleter>
 std::unique_ptr<T, Deleter> make_unique_ptr(T* ptr, Deleter deleter) {
@@ -188,6 +191,8 @@ Error rsaSign(const std::string& message,
               const std::string& pemPrivateKey,
               std::string* pOutSignature)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
+
    // create a sha256 hash of the message first which is what we will sign
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
@@ -210,8 +215,7 @@ Error rsaSign(const std::string& message,
             EVP_PKEY_free);
 
    if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, "RSA private key", ERROR_LOCATION);
-
+      return getLastCryptoError(ERROR_LOCATION);
 
    // sign the message hash
    std::vector<unsigned char> pSignature(EVP_PKEY_size(pRsa.get()));
@@ -248,6 +252,8 @@ Error rsaVerify(const std::string& message,
                 const std::string& signature,
                 const std::string& pemPublicKey)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
+
    // create a sha256 hash of the message first which is what we will verify
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
@@ -590,7 +596,7 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
       if (status <= 0)
          return getLastCryptoError(ERROR_LOCATION);
 
-      status = EVP_PKEY_CTX_set_rsa_oaep_md_name(ctx.get(), "SHA256", "");
+      status = EVP_PKEY_CTX_set_rsa_oaep_md(ctx.get(), EVP_sha256());
       if (status <= 0)
          return getLastCryptoError(ERROR_LOCATION);
    }
@@ -629,4 +635,3 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

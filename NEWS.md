@@ -16,10 +16,12 @@
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): Editor code can now be wrapped to the print margin width via the 'Soft-wrap at margin column' preference
 - ([#16466](https://github.com/rstudio/rstudio/issues/16466)): The editor width can now be clamped to the print margin column via the 'Clamp editor width to margin column' preference
 - ([#16580](https://github.com/rstudio/rstudio/issues/16580)): The pane and tab layout can be reset to the defaults with the 'Restore default pane and tab layout' command
-- ([#16322](https://github.com/rstudio/rstudio/issues/16322)): The behavior of "Rename in Scope" in R Markdown / Quarto documents can now be configured, controlling whether the operating acts only upon the current chunk, or on all chunks in the document.
+- ([#16322](https://github.com/rstudio/rstudio/issues/16322)): The behavior of "Rename in Scope" in R Markdown / Quarto documents can now be configured, controlling whether the operating acts only upon the current chunk, or on all chunks in the document
+- ([#16383](https://github.com/rstudio/rstudio/issues/16383)): Quarto documents with `server: shiny` are now executed via `quarto serve` when clicking Run Document
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
+- (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
 
 ### Fixed
 #### RStudio
@@ -57,15 +59,14 @@
 #### Posit Workbench
 
 - ([#16521](https://github.com/rstudio/rstudio/issues/16521)): RStudio no longer emits rsession logs to the console when log-message-format=json is set
-- (#rstudio-pro/8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
-- (#rstudio-pro/8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
-- (#rstudio-pro/9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
+- (rstudio-pro#8919): Fixed an issue where duplicate project entries within a user's recent project list could cause their home page to fail to load
+- (rstudio-pro#8846): Improved contrast of check boxes on Workbench homepage to meet 3:1 minimum contrast (AA)
+- (rstudio-pro#9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
 
 ### Dependencies
-- Copilot Language Server 1.389.0
-- Electron 38.3.0
-- Copilot Language Server 1.381.0
-- Electron 38.5.0
+- Copilot Language Server 1.393.0
+- Electron 38.6.0
 - Node.js 22.18.0
 - Quarto 1.8.25
 - Launcher 2.21.0
+- rserver-saml 0.9.2
