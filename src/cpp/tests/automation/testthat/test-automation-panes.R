@@ -1231,3 +1231,49 @@ withr::defer(.rs.automation.deleteRemote())
 
    .rs.resetUILayout(remote)
 })
+
+.rs.test("toggleSidebar command is checked when sidebar is visible, unchecked when hidden", {
+   # 1. Confirm sidebar is hidden (default state)
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
+
+   # 2. Confirm toggleSidebar command is unchecked when sidebar is hidden
+   toggleSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('toggleSidebar')")
+   expect_false(toggleSidebarChecked, "toggleSidebar should be unchecked when sidebar is hidden")
+
+   # 3. Show sidebar with toggleSidebar command
+   remote$commands.execute("toggleSidebar")
+
+   # 4. Wait for sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 5. Confirm sidebar is visible
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after toggleSidebar")
+
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
+   expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
+
+   # 6. Confirm toggleSidebar command is now checked
+   toggleSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('toggleSidebar')")
+   expect_true(toggleSidebarChecked, "toggleSidebar should be checked when sidebar is visible")
+
+   # 7. Hide sidebar with toggleSidebar command
+   remote$commands.execute("toggleSidebar")
+
+   # 8. Wait for sidebar to be removed
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 9. Confirm sidebar is hidden
+   sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling sidebar off")
+
+   # 10. Confirm toggleSidebar command is unchecked again
+   toggleSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('toggleSidebar')")
+   expect_false(toggleSidebarChecked, "toggleSidebar should be unchecked when sidebar is hidden again")
+})

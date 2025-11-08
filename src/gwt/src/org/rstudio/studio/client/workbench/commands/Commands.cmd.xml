@@ -282,6 +282,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
       <menu label="_View">
          <cmd refid="toggleSidebar"/>
+         <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
 
          <separator/>
@@ -1384,12 +1385,13 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc=""/>
 
    <cmd id="toggleSidebar"
-        menuLabel="To_ggle Sidebar Visibility"
-        label="Toggle Visibility of Sidebar"/>
+        menuLabel="Show/Hide Sideb_ar"
+        checkable="true"
+        label="Show/Hide Sidebar"/>
 
    <cmd id="toggleSidebarLocation"
-        menuLabel="Toggle Sidebar Location"
-        label="Toggle Sidebar Location Left/Right"/>
+        menuLabel="Move Sidebar Left/Right"
+        label="Move Sidebar Location Left/Right"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
