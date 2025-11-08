@@ -1103,6 +1103,8 @@ public class PaneManager
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
+
+      commands_.toggleSidebar().setChecked(showSidebar);
    }
    
    public void clearSidebarCache()

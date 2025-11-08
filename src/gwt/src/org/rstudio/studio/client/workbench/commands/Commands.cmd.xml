@@ -1386,6 +1386,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="toggleSidebar"
         menuLabel="To_ggle Sidebar Visibility"
+        checkable="true"
         label="Toggle Visibility of Sidebar"/>
 
    <cmd id="toggleSidebarLocation"
