@@ -39,6 +39,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -56,10 +57,15 @@ public class WindowFrame extends Composite
 {
    public WindowFrame(String name, String accessibleName)
    {
-      this(name, accessibleName, true);
+      this(name, accessibleName, true, true);
    }
 
    public WindowFrame(String name, String accessibleName, boolean showMinMaxButtons)
+   {
+      this(name, accessibleName, showMinMaxButtons, showMinMaxButtons);
+   }
+
+   public WindowFrame(String name, String accessibleName, boolean showMaximizeButton, boolean showMinimizeButton)
    {
       name_ = name;
 
@@ -84,7 +90,7 @@ public class WindowFrame extends Composite
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 
-      if (showMinMaxButtons)
+      if (showMinimizeButton)
       {
          frame_.add(minimizeButton_);
          frame_.setWidgetTopHeight(minimizeButton_,
@@ -93,7 +99,10 @@ public class WindowFrame extends Composite
          frame_.setWidgetRightWidth(minimizeButton_,
                RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
                14, Style.Unit.PX);
+      }
 
+      if (showMaximizeButton)
+      {
          frame_.add(maximizeButton_);
          frame_.setWidgetTopHeight(maximizeButton_,
                                    TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
@@ -112,6 +121,11 @@ public class WindowFrame extends Composite
    public String getName()
    {
       return name_;
+   }
+
+   public void setMaximizeClickHandler(Command handler)
+   {
+      maximizeButton_.setClickHandler(handler);
    }
 
    @Inject

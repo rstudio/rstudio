@@ -2416,15 +2416,23 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      // For sidebar, don't show minimize/maximize buttons as they don't apply to full-height columns
-      boolean showMinMaxButtons = !StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMinMaxButtons);
+      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      boolean showMaximizeButton = true;  // All tabsets get maximize button
+      boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
+      // Wire sidebar maximize button to layoutZoomSidebar command
+      if (isSidebar)
+      {
+         frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
+      }
+
       // Only pass commands to sidebar for the empty state feature
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
-         StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR) ? commands_ : null);
+         isSidebar ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;
@@ -2633,6 +2641,18 @@ public class PaneManager
       PaneConfig config = getCurrentConfig();
       boolean isSidebarVisible = config.getSidebarVisible();
       commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
+
+      // Update sidebar maximize button state to reflect zoom state
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebarWindow != null)
+      {
+         WindowFrame sidebarFrame = sidebarWindow.getNormal();
+         if (sidebarFrame != null)
+         {
+            sidebarFrame.setMaximizedDependentState(
+               zoomSidebarChecked ? WindowState.MAXIMIZE : WindowState.NORMAL);
+         }
+      }
    }
 
    private void manageSidebarCommands()
