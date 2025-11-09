@@ -469,7 +469,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       updateTabSetPositions();
       updateTabSetLabels();
-      updateSidebarVisibilityCheckbox();
 
       // Add reset link below the grid, right-justified
       resetPanel_ = new FlowPanel();
