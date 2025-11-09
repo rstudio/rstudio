@@ -169,6 +169,17 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          return value;
       }
 
+      public ArrayList<String> getVisibleValue()
+      {
+         ArrayList<String> value = new ArrayList<>();
+         for (CheckBox checkBox : checkBoxes_)
+         {
+            if (checkBox.getValue() && checkBox.isVisible())
+               value.add(checkBox.getText());
+         }
+         return value;
+      }
+
       public void setValue(ArrayList<String> tabs)
       {
          for (CheckBox checkBox : checkBoxes_)
@@ -419,6 +430,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                sidebarModuleList_.setSelectedIndices(sidebarIndices);
 
                updateTabSetLabels();
+               updateSidebarVisibilityCheckbox();
             }
          }
       };
@@ -451,11 +463,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
 
             updateTabSetLabels();
+            updateSidebarVisibilityCheckbox();
          }
       });
 
       updateTabSetPositions();
       updateTabSetLabels();
+      updateSidebarVisibilityCheckbox();
 
       // Add reset link below the grid, right-justified
       resetPanel_ = new FlowPanel();
@@ -507,6 +521,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Update labels to reflect new configuration
       updateTabSetPositions();
       updateTabSetLabels();
+      updateSidebarVisibilityCheckbox();
 
       // Ensure reset panel stays at the bottom after grid rebuild
       if (resetPanel_ != null)
@@ -926,6 +941,28 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       {
          pane.setItemText(2, itemText1);
          pane.setItemText(3, itemText2);
+      }
+   }
+
+   private boolean hasSidebarTabs()
+   {
+      return !sidebarModuleList_.getVisibleValue().isEmpty();
+   }
+
+   private void updateSidebarVisibilityCheckbox()
+   {
+      boolean hasTabs = hasSidebarTabs();
+      boolean currentlyVisible = sidebarVisibleCheckbox_.getValue();
+
+      // Auto-check when adding first tab to hidden sidebar
+      if (hasTabs && !currentlyVisible)
+      {
+         sidebarVisibleCheckbox_.setValue(true, false);
+      }
+      // Auto-uncheck when removing last tab from visible sidebar
+      else if (!hasTabs && currentlyVisible)
+      {
+         sidebarVisibleCheckbox_.setValue(false, false);
       }
    }
 

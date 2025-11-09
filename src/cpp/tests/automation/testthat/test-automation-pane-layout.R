@@ -457,3 +457,70 @@ withr::defer(.rs.automation.deleteRemote())
    # Close dialog
    remote$keyboard.insertText("<Escape>")
 })
+
+.rs.test("Sidebar visibility checkbox auto-updates based on tab assignments", {
+   .rs.openPaneLayoutOptions(remote)
+
+   # Verify sidebar visibility checkbox is initially unchecked (default state)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar should be initially unchecked")
+
+   # Verify sidebar has no visible tabs initially (Chat is checked but hidden by default)
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should not be in sidebar initially")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should not be in sidebar initially")
+
+   # Check a tab in the sidebar (add Files to sidebar)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+
+   # Verify Files is now checked in sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               info = "Files should now be checked in sidebar")
+
+   # Verify sidebar visibility checkbox was automatically checked
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility checkbox should auto-check when adding first visible tab")
+
+   # Add another tab to the sidebar (Environment)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               info = "Environment should now be checked in sidebar")
+
+   # Sidebar visibility should still be checked
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility should remain checked with multiple tabs")
+
+   # Uncheck one tab (Files) - sidebar should still be visible because Environment remains
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should no longer be checked in sidebar")
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               info = "Environment should still be checked in sidebar")
+
+   # Sidebar visibility should still be checked (still has Environment)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility should remain checked when tabs remain")
+
+   # Uncheck the last visible tab (Environment)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should no longer be checked in sidebar")
+
+   # Verify sidebar visibility checkbox was automatically unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility checkbox should auto-uncheck when removing last visible tab")
+
+   # User can still manually check the visibility checkbox to show empty sidebar
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "User should be able to manually check sidebar visibility for empty sidebar")
+
+   # User can manually uncheck it again
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "User should be able to manually uncheck sidebar visibility")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
