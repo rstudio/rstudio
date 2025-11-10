@@ -72,15 +72,18 @@ std::string errorAsLogEntry(const Error& error);
                                                                                              boost::none, \
                                                                                              ERROR_LOCATION)
 
-#define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message)
+#define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message, \
+                                                                     ERROR_LOCATION)
 
 #define LOG_INFO_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logInfoMessage(message, \
                                                                                        std::string(), \
                                                                                        props, \
-                                                                                       ErrorLocation())
+                                                                                       ERROR_LOCATION)
 
 #define LOG_INFO_MESSAGE_NAMED(logSection, message) rstudio::core::log::logInfoMessage(message, \
-                                                                                       logSection)
+                                                                                       logSection, \
+                                                                                       boost::none, \
+                                                                                       ERROR_LOCATION)
 
 
 #define LOG_DEBUG_MESSAGE(message) \
