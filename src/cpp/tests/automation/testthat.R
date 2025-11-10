@@ -7,6 +7,14 @@ library(testthat)
 owd <- getwd()
 on.exit(setwd(owd), add = TRUE)
 
+# Disable ANSI colors in Jenkins.
+jenkinsUrl <- Sys.getenv("JENKINS_URL", unset = NA)
+if (!is.na(jenkinsUrl)) {
+   options(crayon.enabled = FALSE)
+   Sys.setenv(NO_COLOR = "1")
+}
+   
+
 # Find the test directory.
 testDir <- "testthat"
 if (!file.exists(testDir)) {
