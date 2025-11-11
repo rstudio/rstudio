@@ -99,4 +99,7 @@ public interface StandardIcons extends ClientBundle
    
    @Source("visual_mode_2x.png")
    ImageResource visual_mode2x();
+
+   @Source("toggleSidebar_2x.png")
+   ImageResource toggleSidebar2x();
 }
