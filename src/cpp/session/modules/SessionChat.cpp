@@ -347,6 +347,7 @@ Error startChatBackend()
    args.push_back("127.0.0.1");  // Explicitly bind to IPv4 to match client connection
    args.push_back("-p");
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
+   args.push_back("--json"); // Enable JSON-RPC mode
 
    // Set up environment
    core::system::Options environment;
