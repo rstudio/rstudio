@@ -281,8 +281,13 @@ public class GlobalToolbar extends Toolbar
       {
          sidebarToggleButton_.setLatched(sidebarVisible);
          sidebarToggleButton_.setTitle(sidebarVisible ? constants_.hideSidebarTitle() : constants_.showSidebarTitle());
-         //sidebarToggleButton_.setImageResource(sidebarLocationRight ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRight2x()) : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeft2x()));
+         sidebarToggleButton_.setLeftImage(getSidebarToggleIcon(sidebarVisible, sidebarLocationRight));
       }
+   }
+
+   private ImageResource getSidebarToggleIcon(boolean isVisible,boolean sidebarLocationRight)
+   {
+      return new ImageResource2x(StandardIcons.INSTANCE.toggleSidebar2x());
    }
 
    @Override
