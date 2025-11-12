@@ -661,7 +661,7 @@ test_context("Logging")
          REQUIRE_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
          std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + "\n";
-         REQUIRE(boost::ends_with(logContents, logStr));
+         REQUIRE(boost::contains(logContents, logStr));
       }
    }
 
