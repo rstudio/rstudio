@@ -6889,8 +6889,8 @@ public class RemoteServer implements Server
                              ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
-         .add(file)
-         .add(format)
+         .add(StringUtil.notNull(file))
+         .add(StringUtil.notNull(format))
          .add(editorState)
          .get();
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
