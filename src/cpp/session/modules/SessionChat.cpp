@@ -17,10 +17,12 @@
 #include "SessionNodeTools.hpp"
 
 #include <map>
+#include <functional>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -111,9 +113,146 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 }
 
 // ============================================================================
+// JSON-RPC Message Handling
+// ============================================================================
+
+// Buffer for accumulating stdout data from backend
+std::string s_backendOutputBuffer;
+
+// Queue of parsed JSON-RPC messages from backend
+std::vector<json::Value> s_pendingResponses;
+
+// Regex for parsing Content-Length header (case-insensitive per HTTP spec)
+boost::regex s_contentLengthRegex("Content-Length:\\s*(\\d+)", boost::regex::icase);
+
+// Map of notification method names to handler functions
+using NotificationHandler = std::function<void(const json::Object&)>;
+std::map<std::string, NotificationHandler> s_notificationHandlers;
+
+// ============================================================================
 // Forward Declarations
 // ============================================================================
 Error startChatBackend();
+
+// ============================================================================
+// JSON-RPC Notification Handling
+// ============================================================================
+
+void registerNotificationHandler(const std::string& method, NotificationHandler handler)
+{
+   s_notificationHandlers[method] = handler;
+}
+
+void handleNotification(const std::string& method, const json::Object& params)
+{
+   auto it = s_notificationHandlers.find(method);
+   if (it != s_notificationHandlers.end())
+   {
+      it->second(params);
+   }
+   else
+   {
+      WLOG("Unhandled notification method: {}", method);
+   }
+}
+
+void processBackendMessage(const json::Value& message)
+{
+   if (!message.isObject())
+   {
+      WLOG("Invalid JSON-RPC message: not an object");
+      return;
+   }
+
+   json::Object messageObj = message.getObject();
+
+   // Check for method field (indicates notification or request)
+   std::string method;
+   Error error = json::readObject(messageObj, "method", method);
+   if (!error)  // Success - method field is present
+   {
+      // This is a notification (no 'id' field) or request from backend
+      json::Object params;
+      json::readObject(messageObj, "params", params);
+
+      // For now, we only handle notifications
+      handleNotification(method, params);
+   }
+   else
+   {
+      // No method field - this would be a response to a request we sent (future implementation)
+      if (chatLogLevel() >= 2)
+         DLOG("Received response from backend (not yet handled)");
+   }
+}
+
+void handleLoggerLog(const json::Object& params)
+{
+   std::string level;
+   std::string message;
+
+   if (json::readObject(params, "level", level))  // Returns error if missing
+   {
+      WLOG("logger/log notification missing 'level' field");
+      return;
+   }
+
+   if (json::readObject(params, "message", message))  // Returns error if missing
+   {
+      WLOG("logger/log notification missing 'message' field");
+      return;
+   }
+
+   // Map backend log levels to RStudio logging macros
+   // Use "databot" prefix to distinguish backend logs
+   std::string prefixedMessage = fmt::format("[databot] {}", message);
+
+   if (level == "trace")
+   {
+      TLOG("{}", prefixedMessage);
+   }
+   else if (level == "debug")
+   {
+      DLOG("{}", prefixedMessage);
+   }
+   else if (level == "info")
+   {
+      ILOG("{}", prefixedMessage);
+   }
+   else if (level == "warn")
+   {
+      WLOG("{}", prefixedMessage);
+   }
+   else if (level == "error")
+   {
+      ELOG("{}", prefixedMessage);
+   }
+   else
+   {
+      DLOG("[databot] [{}] {}", level, message);
+   }
+}
+
+void processPendingMessages()
+{
+   // Process all pending messages from the backend
+   while (!s_pendingResponses.empty())
+   {
+      json::Value message = s_pendingResponses.front();
+      s_pendingResponses.erase(s_pendingResponses.begin());
+
+      processBackendMessage(message);
+   }
+}
+
+void onBackgroundProcessing(bool isIdle)
+{
+   // Process pending messages from backend on main thread
+   processPendingMessages();
+
+   // Future: Add timeout handling for request/response pattern
+   // (similar to SessionCopilot.cpp lines 1448-1462)
+}
 
 // ============================================================================
 // Installation Detection
@@ -269,8 +408,76 @@ std::string buildWebSocketUrl(int port)
 
 void onBackendStdout(core::system::ProcessOperations& ops, const std::string& output)
 {
-   // Just log stdout for debugging
-   DLOG("Chat backend stdout: {}", output);
+   // Append new output to buffer
+   s_backendOutputBuffer.append(output);
+
+   // Process all complete messages in the buffer
+   while (true)
+   {
+      // Look for Content-Length header
+      boost::smatch matches;
+      if (!boost::regex_search(s_backendOutputBuffer, matches, s_contentLengthRegex))
+      {
+         // No complete header found yet
+         break;
+      }
+
+      // Extract content length
+      std::string lengthStr = matches[1].str();
+      int contentLength = safe_convert::stringTo<int>(lengthStr, -1);
+      if (contentLength <= 0)
+      {
+         WLOG("Invalid Content-Length in backend message: {}", lengthStr);
+         // Skip past this header and continue
+         s_backendOutputBuffer = s_backendOutputBuffer.substr(matches.position() + matches.length());
+         continue;
+      }
+
+      // Find the end of headers (blank line: \r\n\r\n)
+      size_t headerEnd = s_backendOutputBuffer.find("\r\n\r\n");
+      if (headerEnd == std::string::npos)
+      {
+         // Headers not complete yet
+         break;
+      }
+
+      // Calculate where the body starts and ends
+      size_t bodyStart = headerEnd + 4; // Skip past \r\n\r\n
+      size_t bodyEnd = bodyStart + contentLength;
+
+      // Check if we have the complete body
+      if (s_backendOutputBuffer.size() < bodyEnd)
+      {
+         // Body not complete yet
+         break;
+      }
+
+      // Extract the message body (IMPORTANT: byte-based, not character-based)
+      std::string messageBody = s_backendOutputBuffer.substr(bodyStart, contentLength);
+
+      // Verbose logging
+      if (chatLogLevel() >= 2)
+      {
+         DLOG("Received message from backend: {}", messageBody);
+      }
+
+      // Parse JSON
+      json::Value messageValue;
+      if (messageValue.parse(messageBody))
+      {
+         WLOG("Failed to parse JSON from backend: {}", messageBody);
+      }
+      else
+      {
+         // Queue the parsed message for processing
+         s_pendingResponses.push_back(messageValue);
+      }
+
+      // Remove the processed message from buffer
+      s_backendOutputBuffer = s_backendOutputBuffer.substr(bodyEnd);
+   }
+
+   // Messages will be processed by onBackgroundProcessing on the main thread
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
@@ -285,6 +492,10 @@ void onBackendExit(int exitCode)
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
+
+   // Clear JSON-RPC state
+   s_backendOutputBuffer.clear();
+   s_pendingResponses.clear();
 
    // Auto-restart once
    if (s_chatBackendRestartCount < kMaxRestartAttempts)
@@ -642,6 +853,10 @@ void onShutdown(bool terminatedNormally)
    // Clear port and URL
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
+
+   // Clear JSON-RPC state
+   s_backendOutputBuffer.clear();
+   s_pendingResponses.clear();
 }
 
 } // end anonymous namespace
@@ -662,7 +877,11 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
 
-   // Register shutdown handler
+   // Register JSON-RPC notification handlers
+   registerNotificationHandler("logger/log", handleLoggerLog);
+
+   // Register event handlers
+   events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
 
    // Register RPC methods
