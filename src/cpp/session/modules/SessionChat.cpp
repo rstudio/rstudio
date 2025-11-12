@@ -123,7 +123,8 @@ std::string s_backendOutputBuffer;
 std::vector<json::Value> s_pendingResponses;
 
 // Regex for parsing Content-Length header (case-insensitive per HTTP spec)
-boost::regex s_contentLengthRegex("Content-Length:\\s*(\\d+)", boost::regex::icase);
+// Matches only at start of line to avoid false matches in log output
+boost::regex s_contentLengthRegex("(?:^|\r\n)Content-Length:\\s*(\\d+)", boost::regex::icase);
 
 // Map of notification method names to handler functions
 using NotificationHandler = std::function<void(const json::Object&)>;
