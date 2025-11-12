@@ -272,6 +272,9 @@ CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningRea
 // The current runtime status of the Copilot agent process.
 CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
 
+// Is there a next-edit request pending?
+bool s_copilotNextEditSuggestionsPending = false;
+
 void setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus status)
 {
    if (s_agentRuntimeStatus != status)
@@ -1916,6 +1919,86 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
+                                 const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
+   // Read params
+   std::string documentId;
+   std::string documentPath;
+   bool isUntitled;
+   int cursorRow, cursorColumn;
+
+   Error error = core::json::readParams(
+            request.params,
+            &documentId,
+            &documentPath,
+            &isUntitled,
+            &cursorRow,
+            &cursorColumn);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   // Disallow completion request in hidden files, since this might trigger
+   // the copilot agent to attempt to read the contents of that file
+   if (!isIndexableDocument(pDoc))
+   {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+      
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+      
+      continuation(Success(), &response);
+      return Success();
+   }
+
+   // Build completion request
+   json::Object positionJson;
+   positionJson["line"] = cursorRow;
+   positionJson["character"] = cursorColumn;
+
+   json::Object docJson;
+   auto uri = uriFromDocument(pDoc);
+   docJson["uri"] = uri;
+   docJson["version"] = currentVersionForDocument(uri);
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kCopilotCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Send the request
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, CopilotContinuation(continuation));
+
+   return Success();
+}
+
+
 Error copilotSignIn(const json::JsonRpcRequest& request,
                     const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -2165,6 +2248,7 @@ Error initialize()
    initBlock.addFunctions()
          (bind(registerAsyncRpcMethod, "copilot_diagnostics", copilotDiagnostics))
          (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
+         (bind(registerAsyncRpcMethod, "copilot_next_edit_suggestions", copilotNextEditSuggestions))
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))

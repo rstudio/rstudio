@@ -502,6 +502,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    AceGhostText getGhostText();
    void setGhostText(String text);
+   void setGhostText(String text, Position position);
    boolean hasGhostText();
    void applyGhostText();
    void removeGhostText();

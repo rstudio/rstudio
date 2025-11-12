@@ -20,6 +20,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
@@ -51,6 +52,14 @@ public interface CopilotServerOperations
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback);
+
+   public void copilotNextEditSuggestions(
+      String documentId,
+      String documentPath,
+      boolean isUntitled,
+      int cursorRow,
+      int cursorColumn,
+      ServerRequestCallback<CopilotNextEditSuggestionsResponse> requestCallback);
 
    public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
                                           ServerRequestCallback<Void> requestCallback);

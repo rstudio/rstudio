@@ -4682,7 +4682,12 @@ public class AceEditor implements DocDisplay
    
    public void setGhostText(String text)
    {
-      widget_.getEditor().setGhostText(text);
+      setGhostText(text, null);
+   }
+
+   public void setGhostText(String text, Position position)
+   {
+      widget_.getEditor().setGhostText(text, position);
    }
    
    public void applyGhostText()

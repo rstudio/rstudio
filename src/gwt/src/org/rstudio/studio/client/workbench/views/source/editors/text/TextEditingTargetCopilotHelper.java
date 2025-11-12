@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
@@ -38,6 +39,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResultEntry;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
@@ -67,12 +70,11 @@ public class TextEditingTargetCopilotHelper
    
    class Completion
    {
-      public Completion(CopilotCompletion originalCompletion, String displayText)
+      public Completion(CopilotCompletion originalCompletion)
       {
          // Copilot includes trailing '```' for some reason in some cases,
          // remove those if we're inserting in an R document.
          this.insertText = postProcessCompletion(originalCompletion.insertText);
-         this.displayText = postProcessCompletion(displayText);
 
          this.startLine = originalCompletion.range.start.line;
          this.startCharacter = originalCompletion.range.start.character;
@@ -208,7 +210,6 @@ public class TextEditingTargetCopilotHelper
                            JsArrayLike<CopilotCompletion> completions =
                                  Js.cast(result.asPropertyMap().get("items"));
                            
-                           
                            events_.fireEvent(new CopilotEvent(
                                  completions.getLength() == 0
                                     ? CopilotEventType.COMPLETION_RECEIVED_NONE
@@ -224,7 +225,8 @@ public class TextEditingTargetCopilotHelper
                               // The completion data gets modified when doing partial (word-by-word)
                               // completions, so we need to use a copy and preserve the original
                               // (which we need to send back to the server as-is in some language-server methods).
-                              activeCompletion_ = new Completion(completion, computeGhostText(completion.insertText));
+                              normalizeCompletion(completion);
+                              activeCompletion_ = new Completion(completion);
 
                               display_.setGhostText(activeCompletion_.displayText);
                               server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
@@ -347,8 +349,23 @@ public class TextEditingTargetCopilotHelper
                               activeCompletion_.endLine,
                               activeCompletion_.endCharacter);
                         display_.replaceRange(aceRange, activeCompletion_.insertText);
-                        server_.copilotDidAcceptCompletion(activeCompletion_.originalCompletion.command,
-                                                           new VoidServerRequestCallback());
+                        completionTimer_.cancel();
+                        server_.copilotDidAcceptCompletion(
+                           activeCompletion_.originalCompletion.command,
+                           new ServerRequestCallback<Void>()
+                           {
+                              @Override
+                              public void onResponseReceived(Void response)
+                              {
+                                 onCopilotDidAcceptCompletion();
+                              }
+
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 Debug.logError(error);
+                              }
+                           });
 
                         activeCompletion_ = null;
                      }
@@ -382,7 +399,60 @@ public class TextEditingTargetCopilotHelper
          );
 
       }
-      
+   }
+
+   private void onCopilotDidAcceptCompletion()
+   {
+      target_.withSavedDoc(() ->
+      {
+         server_.copilotNextEditSuggestions(
+            target_.getId(),
+            StringUtil.notNull(target_.getPath()),
+            StringUtil.isNullOrEmpty(target_.getPath()),
+            display_.getCursorRow(),
+            display_.getCursorColumn(),
+            new ServerRequestCallback<CopilotNextEditSuggestionsResponse>()
+            {
+               @Override
+               public void onResponseReceived(CopilotNextEditSuggestionsResponse response)
+               {
+                  // Check for edits
+                  boolean hasEdits =
+                     response.result != null &&
+                     response.result.edits != null &&
+                     response.result.edits.getLength() > 0;
+
+                  if (!hasEdits)
+                     return;
+
+                  CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
+
+                  // Construct a Copilot completion object from the response
+                  CopilotCompletion completion = new CopilotCompletion();
+                  completion.insertText = entry.text;
+                  completion.range = entry.range;
+                  completion.command = entry.command;
+
+                  // The completion data gets modified when doing partial (word-by-word)
+                  // completions, so we need to use a copy and preserve the original
+                  // (which we need to send back to the server as-is in some language-server methods).
+                  normalizeCompletion(completion);
+                  activeCompletion_ = new Completion(completion);
+
+                  Position position = Position.create(
+                     completion.range.start.line,
+                     completion.range.start.character);
+                  display_.setGhostText(activeCompletion_.displayText, position);
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+      });
    }
    
    @Handler
@@ -502,24 +572,48 @@ public class TextEditingTargetCopilotHelper
       return copilot_.isEnabled();
    }
    
-   private String computeGhostText(String completionText)
+   // A Copilot completion will often overlap region(s) of the document.
+   // Try to avoid presenting this overlap, so that only the relevant
+   // portion of the completed text is presented to the user.
+   private void normalizeCompletion(CopilotCompletion completion)
    {
+      // Remove any overlap from the start of the completion.
+      completion.
+
       // If the completion includes existing text (i.e. at the beginning of the completion) 
       // remove that duplicated prefix from the ghost text.
-      String currentLine = display_.getLine(display_.getCursorRow());
-      String currentLineBeforeCursor = StringUtil.substring(currentLine, 0, display_.getCursorColumn());
+      String currentLine = display_.getLine(position.getRow());
 
       // find the common prefix between the current line and the completion text
       int commonPrefixLength = 0;
-      for (int i = 0; i < Math.min(currentLineBeforeCursor.length(), completionText.length()); i++)
+      for (int i = 0; i < Math.min(currentLine.length(), completionText.length()); i++)
       {
-         if (currentLineBeforeCursor.charAt(i) != completionText.charAt(i))
+         if (currentLine.charAt(i) != completionText.charAt(i))
             break;
          commonPrefixLength++;
       }
 
-      // remove the common prefix from the completion text and return it as the ghost text
-      return completionText.substring(commonPrefixLength);
+      // Update the completion insertion position based on what was trimmed
+      position.setColumn(position.getColumn() + commonPrefixLength);
+
+      // similarly, find the common suffix between the current line and the completion text
+      int offset = 1;
+      while (true)
+      {
+         if (offset > completionText.length() || offset > currentLine.length())
+            break;
+         
+         char lhs = completionText.charAt(completionText.length() - offset);
+         char rhs = currentLine.charAt(currentLine.length() - offset);
+         if (lhs != rhs)
+            break;
+
+         offset += 1;
+      }
+
+      // remove overlapping parts of the completion ghost text
+      int endIndex = completionText.length() - offset + 1;
+      return completionText.substring(commonPrefixLength, endIndex);
    }
 
    @Inject
