@@ -414,12 +414,28 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
    // Process all complete messages in the buffer
    while (true)
    {
-      // Look for Content-Length header
-      boost::smatch matches;
-      if (!boost::regex_search(s_backendOutputBuffer, matches, s_contentLengthRegex))
+      // Find the end of headers (blank line: \r\n\r\n) first
+      // This ensures we only parse Content-Length from a valid header block
+      size_t headerEnd = s_backendOutputBuffer.find("\r\n\r\n");
+      if (headerEnd == std::string::npos)
       {
-         // No complete header found yet
+         // Headers not complete yet
          break;
+      }
+
+      // Extract header block (everything before \r\n\r\n)
+      std::string headerBlock = s_backendOutputBuffer.substr(0, headerEnd);
+
+      // Look for Content-Length header within this header block only
+      // This prevents matching stray "Content-Length:" text in non-protocol stdout
+      boost::smatch matches;
+      if (!boost::regex_search(headerBlock, matches, s_contentLengthRegex))
+      {
+         // No Content-Length in this header block - malformed JSON-RPC message
+         WLOG("JSON-RPC message missing Content-Length header, skipping malformed message");
+         // Skip past this malformed message (discard up to and including \r\n\r\n)
+         s_backendOutputBuffer = s_backendOutputBuffer.substr(headerEnd + 4);
+         continue;
       }
 
       // Extract content length
@@ -427,18 +443,10 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       int contentLength = safe_convert::stringTo<int>(lengthStr, -1);
       if (contentLength <= 0)
       {
-         WLOG("Invalid Content-Length in backend message: {}", lengthStr);
-         // Skip past this header and continue
-         s_backendOutputBuffer = s_backendOutputBuffer.substr(matches.position() + matches.length());
+         WLOG("Invalid Content-Length value in backend message: {}", lengthStr);
+         // Skip past this malformed message
+         s_backendOutputBuffer = s_backendOutputBuffer.substr(headerEnd + 4);
          continue;
-      }
-
-      // Find the end of headers (blank line: \r\n\r\n)
-      size_t headerEnd = s_backendOutputBuffer.find("\r\n\r\n");
-      if (headerEnd == std::string::npos)
-      {
-         // Headers not complete yet
-         break;
       }
 
       // Calculate where the body starts and ends
