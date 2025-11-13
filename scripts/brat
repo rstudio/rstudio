@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# Check if minimum arguments are provided
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <rstudio-repo-path> <test-name> [<test-name2> ...]"
+    echo
+    echo "Temporarily renames all BRAT test-automation-*.R files to test-automation-*.R.save"
+    echo "except for the ones specified as arguments. Then runs the remaining automation tests"
+    echo "using RStudio Desktop. Restores files when done."
+    echo
+    echo "Example: $0 ~/rstudio build-pane"
+    echo "Example: $0 ~/rstudio build-pane source-window"
+    exit 1
+fi
+
+REPO_PATH="$1"
+shift  # Remove first argument, leaving test names
+TEST_NAMES=("$@")
+TEST_DIR="$REPO_PATH/src/cpp/tests/automation/testthat"
+DESKTOP_DIR="$REPO_PATH/src/node/desktop"
+
+# Check if repo path exists
+if [ ! -d "$REPO_PATH" ]; then
+    echo "Error: Repository path '$REPO_PATH' does not exist"
+    exit 1
+fi
+
+# Check if test directory exists
+if [ ! -d "$TEST_DIR" ]; then
+    echo "Error: Test directory '$TEST_DIR' does not exist"
+    exit 1
+fi
+
+# Check if desktop directory exists
+if [ ! -d "$DESKTOP_DIR" ]; then
+    echo "Error: Desktop directory '$DESKTOP_DIR' does not exist"
+    exit 1
+fi
+
+# Check if all target test files exist
+declare -a TARGET_FILES
+for TEST_NAME in "${TEST_NAMES[@]}"; do
+    TARGET_FILE="$TEST_DIR/test-automation-${TEST_NAME}.R"
+    if [ ! -f "$TARGET_FILE" ]; then
+        echo "Error: Test file 'test-automation-${TEST_NAME}.R' not found in $TEST_DIR"
+        exit 1
+    fi
+    TARGET_FILES+=("$TARGET_FILE")
+done
+
+# Array to track renamed files for restoration
+declare -a RENAMED_FILES
+
+# Function to restore renamed files
+restore_files() {
+    echo "Restoring renamed test files..."
+    for file in "${RENAMED_FILES[@]}"; do
+        if [ -f "${file}.save" ]; then
+            mv "${file}.save" "$file"
+            # echo "  Restored: $(basename "$file")"
+        fi
+    done
+}
+
+# Set up trap to restore files on exit (including interrupts)
+trap restore_files EXIT INT TERM
+
+# Rename all test files except the target ones
+echo "Preparing to run tests:"
+for TEST_NAME in "${TEST_NAMES[@]}"; do
+    echo "  - test-automation-${TEST_NAME}.R"
+done
+echo "Renaming other test files..."
+
+for file in "$TEST_DIR"/test-automation-*.R; do
+    # Skip if it's one of our target files
+    SKIP_FILE=false
+    for target in "${TARGET_FILES[@]}"; do
+        if [ "$file" = "$target" ]; then
+            SKIP_FILE=true
+            break
+        fi
+    done
+
+    if [ "$SKIP_FILE" = false ]; then
+        # Only rename if it doesn't already have .save extension
+        if [[ ! "$file" =~ \.save$ ]]; then
+            mv "$file" "${file}.save"
+            RENAMED_FILES+=("$file")
+            # echo "  Renamed: $(basename "$file") -> $(basename "$file").save"
+        fi
+    fi
+done
+
+# Change to desktop directory and run automation tests
+echo "Running automation tests..."
+cd "$DESKTOP_DIR" || exit 1
+npm run automation
+
+# The trap will handle restoring files
+echo "Test run completed."
