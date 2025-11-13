@@ -15,6 +15,45 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.AppMenuBar;
+import org.rstudio.core.client.command.CommandHandler;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.impl.WebMenuCallback;
+import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.BannerWidget;
+import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.MessageDialogLabel;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarSeparator;
+import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
+import org.rstudio.studio.client.application.ui.ApplicationHeader;
+import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
+import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
+import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ImageElement;
@@ -39,44 +78,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.AppMenuBar;
-import org.rstudio.core.client.command.CommandHandler;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.impl.WebMenuCallback;
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.BannerWidget;
-import org.rstudio.core.client.widget.HyperlinkLabel;
-import org.rstudio.core.client.widget.MessageDialogLabel;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarLabel;
-import org.rstudio.core.client.widget.ToolbarSeparator;
-import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.StudioClientApplicationConstants;
-import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
-import org.rstudio.studio.client.application.ui.ApplicationHeader;
-import org.rstudio.studio.client.application.ui.GlobalToolbar;
-import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
-import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
-import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-
 public class WebApplicationHeader extends Composite
                                   implements ApplicationHeader,
                                   WebApplicationHeaderOverlay.Context
@@ -93,7 +94,8 @@ public class WebApplicationHeader extends Composite
                   GlobalDisplay globalDisplay,
                   final ThemeResources themeResources,
                   final Session session,
-                  Provider<CodeSearch> pCodeSearch)
+                  Provider<CodeSearch> pCodeSearch,
+                  UserPrefs userPrefs)
    {
       commands_ = commands;
       eventBus_ = eventBus;
@@ -223,7 +225,7 @@ public class WebApplicationHeader extends Composite
       });
 
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch, userPrefs);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
 
