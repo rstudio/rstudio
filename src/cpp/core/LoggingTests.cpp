@@ -608,8 +608,8 @@ test_context("Logging")
          std::string logContents;
          REQUIRE_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-         std::string logStr = "Log line " + safe_convert::numberToString(49 - i) + "\n";
-         REQUIRE(boost::ends_with(logContents, logStr));
+         std::string logStr = "Log line " + safe_convert::numberToString(49 - i) + ";";
+         REQUIRE(boost::contains(logContents, logStr));
       }
 
       // No more log files should exist because we capped number of rotations at 15
@@ -660,7 +660,7 @@ test_context("Logging")
          std::string logContents;
          REQUIRE_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-         std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + "\n";
+         std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + ";";
          REQUIRE(boost::contains(logContents, logStr));
       }
    }
