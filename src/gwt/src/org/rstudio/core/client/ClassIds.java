@@ -108,7 +108,4 @@ public class ClassIds
    // Document outline toggle button
    public final static String VISUAL_OUTLINE_TOGGLE = "visual_md_outline_toggle";
    public final static String SOURCE_OUTLINE_TOGGLE = "source_outline_toggle";
-
-   // Sidebar toggle button
-   public final static String SIDEBAR_TOGGLE_BUTTON = "sidebar_toggle_button";
 }

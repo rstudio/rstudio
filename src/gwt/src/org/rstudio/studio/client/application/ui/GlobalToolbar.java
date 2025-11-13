@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -22,7 +21,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -244,27 +242,18 @@ public class GlobalToolbar extends Toolbar
 
       // sidebar toggle button
       addLeftSeparator();
-      sidebarToggleButton_ = new LatchingToolbarButton(
-            ToolbarButton.NoText,
-            constants_.showSidebarTitle(),
-            false,
-            ClassIds.SIDEBAR_TOGGLE_BUTTON,
-            new ImageResource2x(StandardIcons.INSTANCE.toggleSidebar2x()),
-            event -> commands_.toggleSidebar().execute());
-      sidebarToggleButton_.addStyleName("rstudio-themes-inverts");
+      sidebarToggleButton_ = new ToolbarButton(ToolbarButton.NoText,
+                                               constants_.showSidebarTitle(),
+                                               new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightHidden2x()),
+                                               event -> commands_.toggleSidebar().execute());
+      ElementIds.assignElementId(sidebarToggleButton_, ElementIds.SIDEBAR_TOGGLE_BUTTON);
       addLeftWidget(sidebarToggleButton_);
 
       // Set initial button state from current preference
-      boolean initialSidebarVisible = userPrefs_.panes().getValue().getSidebarVisible();
-      boolean initialSidebarLocationRight = userPrefs_.panes().getValue().getSidebarLocation().equals("right");
-      updateSidebarToggleButton(initialSidebarVisible, initialSidebarLocationRight);
+      updateSidebarToggleButton();
 
-      // Monitor preference changes to keep button in sync
-      userPrefs_.panes().addValueChangeHandler(evt -> {
-         boolean sidebarVisible = evt.getValue().getSidebarVisible();
-         boolean sidebarLocationRight = evt.getValue().getSidebarLocation().equals("right");
-         updateSidebarToggleButton(sidebarVisible, sidebarLocationRight);
-      });
+      // Keep button in sync with Sidebar location and visibility
+      userPrefs_.panes().addValueChangeHandler(evt -> updateSidebarToggleButton());
 
       // project popup menu
       if (sessionInfo.getAllowFullUI())
@@ -275,19 +264,30 @@ public class GlobalToolbar extends Toolbar
       }
    }
 
-   private void updateSidebarToggleButton(boolean sidebarVisible, boolean sidebarLocationRight)
+   private void updateSidebarToggleButton()
    {
       if (sidebarToggleButton_ != null)
       {
-         sidebarToggleButton_.setLatched(sidebarVisible);
+         boolean sidebarVisible = userPrefs_.panes().getValue().getSidebarVisible();
+         boolean sidebarLocationRight = userPrefs_.panes().getValue().getSidebarLocation().equals("right");
          sidebarToggleButton_.setTitle(sidebarVisible ? constants_.hideSidebarTitle() : constants_.showSidebarTitle());
          sidebarToggleButton_.setLeftImage(getSidebarToggleIcon(sidebarVisible, sidebarLocationRight));
       }
    }
 
-   private ImageResource getSidebarToggleIcon(boolean isVisible,boolean sidebarLocationRight)
+   private ImageResource getSidebarToggleIcon(boolean isVisible, boolean sidebarLocationRight)
    {
-      return new ImageResource2x(StandardIcons.INSTANCE.toggleSidebar2x());
+      if (sidebarLocationRight)
+      {
+         return isVisible
+            ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightVisible2x())
+            : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightHidden2x());
+      }
+      else
+      {
+         return isVisible ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
+            : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftHidden2x());
+      }
    }
 
    @Override
@@ -317,6 +317,6 @@ public class GlobalToolbar extends Toolbar
    private final Widget searchWidget_;
    private final UserPrefs userPrefs_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
-   private LatchingToolbarButton sidebarToggleButton_;
+   private ToolbarButton sidebarToggleButton_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
