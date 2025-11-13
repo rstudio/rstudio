@@ -133,6 +133,7 @@
 
 #include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
+#include "modules/SessionAir.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -144,6 +145,7 @@
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionCopilot.hpp"
+#include "modules/SessionChat.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionDebugging.hpp"
@@ -523,15 +525,6 @@ Error runPreflightScript()
 void stopMonitorWorkerThread();
 Error ensureLibRSoValid();
 
-void exitEarly(int status)
-{
-   stopMonitorWorkerThread();
-   offlineService().stop();
-   FileLock::cleanUp();
-   FilePath(s_fallbackLibraryPath).removeIfExists();
-   ::exit(status);
-}
-
 namespace {
 
 void setPartnerEnvironmentVariables()
@@ -735,13 +728,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
       (modules::copilot::initialize)
+      (modules::chat::initialize)
       (modules::automation::initialize)
+      (modules::air::initialize)
 
       // workers
       (workers::web_request::initialize)
 
       // R code
-      (bind(sourceModuleRFile, "SessionAir.R"))
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
 
@@ -1747,6 +1741,15 @@ void loadCranRepos(const std::string& repos,
 // provide definition methods for rsession::module_context
 namespace rstudio {
 namespace session {
+
+void exitEarly(int status)
+{
+   stopMonitorWorkerThread();
+   offlineService().stop();
+   FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
+   ::exit(status);
+}
 
 void controlledExit(int status)
 {

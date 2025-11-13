@@ -86,7 +86,7 @@
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
       download.file(url, destfile = destfile)
-      unzip(destfile, exdir = binDir)
+      unzip(destfile)
    }
    else if (.rs.platform.isMacos)
    {
@@ -94,7 +94,7 @@
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
       download.file(url, destfile = destfile)
-      untar(destfile, exdir = binDir)
+      untar(destfile)
    }
    else
    {
@@ -102,8 +102,13 @@
       url <- sprintf(fmt, version, R.version$arch)
       destfile <- basename(url)
       download.file(url, destfile = destfile)
-      untar(destfile, exdir = binDir)
+      untar(destfile)
    }
+   
+   # Copy air to the resulting binary directory.
+   exePattern <- if (.rs.platform.isWindows) "^air\\.exe$" else "^air$"
+   airPath <- list.files(pattern = exePattern, full.names = TRUE, recursive = TRUE)
+   file.copy(airPath, file.path(binDir, "air"), overwrite = TRUE)
    
    fmt <- "Air %s has been installed to %s."
    msg <- sprintf(fmt, version, binDir)

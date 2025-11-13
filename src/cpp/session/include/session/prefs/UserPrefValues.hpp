@@ -78,9 +78,12 @@ namespace prefs {
 #define kPanesTabSet1 "tabSet1"
 #define kPanesTabSet2 "tabSet2"
 #define kPanesHiddenTabSet "hiddenTabSet"
+#define kPanesSidebar "sidebar"
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kPanesAdditionalSourceColumns "additional_source_columns"
+#define kPanesSidebarVisible "sidebar_visible"
+#define kPanesSidebarLocation "sidebar_location"
 #define kAllowSourceColumns "allow_source_columns"
 #define kUseSpacesForTab "use_spaces_for_tab"
 #define kNumSpacesForTab "num_spaces_for_tab"
@@ -88,6 +91,8 @@ namespace prefs {
 #define kShowMargin "show_margin"
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
+#define kMarginColumnSoftWrap "margin_column_soft_wrap"
+#define kMarginColumnEditorWidth "margin_column_editor_width"
 #define kShowInvisibles "show_invisibles"
 #define kIndentGuides "indent_guides"
 #define kIndentGuidesNone "none"
@@ -153,6 +158,7 @@ namespace prefs {
 #define kFoldStyleBeginOnly "begin-only"
 #define kFoldStyleBeginAndEnd "begin-and-end"
 #define kSaveBeforeSourcing "save_before_sourcing"
+#define kConsoleSoftWrap "console_soft_wrap"
 #define kSyntaxColorConsole "syntax_color_console"
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
@@ -203,6 +209,7 @@ namespace prefs {
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
+#define kPackagesSourceColumnEnabled "packages_source_column_enabled"
 #define kCppTemplate "cpp_template"
 #define kRestoreSourceDocuments "restore_source_documents"
 #define kHandleErrorsInUserCodeOnly "handle_errors_in_user_code_only"
@@ -260,6 +267,9 @@ namespace prefs {
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
 #define kShowRmdRenderCommand "show_rmd_render_command"
+#define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
+#define kRmdRenameInScopeBehaviorCurrent "current"
+#define kRmdRenameInScopeBehaviorAll "all"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
 #define kAlwaysShownFiles "always_shown_files"
@@ -456,6 +466,7 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
+#define kShowChatUi "show_chat_ui"
 
 class UserPrefValues: public Preferences
 {
@@ -628,6 +639,18 @@ public:
     */
    int marginColumn();
    core::Error setMarginColumn(int val);
+
+   /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   bool marginColumnSoftWrap();
+   core::Error setMarginColumnSoftWrap(bool val);
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   bool marginColumnEditorWidth();
+   core::Error setMarginColumnEditorWidth(bool val);
 
    /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
@@ -900,6 +923,12 @@ public:
    core::Error setSaveBeforeSourcing(bool val);
 
    /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   bool consoleSoftWrap();
+   core::Error setConsoleSoftWrap(bool val);
+
+   /**
     * Whether to use syntax highlighting in the R console.
     */
    bool syntaxColorConsole();
@@ -1152,6 +1181,12 @@ public:
    core::Error setPackagesPaneEnabled(bool val);
 
    /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   bool packagesSourceColumnEnabled();
+   core::Error setPackagesSourceColumnEnabled(bool val);
+
+   /**
     * C++ template.
     */
    std::string cppTemplate();
@@ -1354,6 +1389,12 @@ public:
     */
    bool showRmdRenderCommand();
    core::Error setShowRmdRenderCommand(bool val);
+
+   /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   std::string rmdRenameInScopeBehavior();
+   core::Error setRmdRenameInScopeBehavior(std::string val);
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
@@ -2062,6 +2103,12 @@ public:
     */
    std::string consoleHighlightConditions();
    core::Error setConsoleHighlightConditions(std::string val);
+
+   /**
+    * Whether to show the experimental Chat UI
+    */
+   bool showChatUi();
+   core::Error setShowChatUi(bool val);
 
 };
 

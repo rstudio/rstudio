@@ -162,7 +162,7 @@
                     "description": "Allocation of panes to quadrants.",
                     "items": {
                         "type": "string",
-                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet"]
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet", "Sidebar"]
                     }
                 },
                 "tabSet1": {
@@ -186,6 +186,13 @@
                         "type": "string"
                     }
                 },
+                "sidebar": {
+                    "type": "array",
+                    "description": "The panes included in the sidebar.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "console_left_on_top": {
                     "type": "boolean",
                     "description": "Whether the console is on top when it is on the left side of the workbench."
@@ -198,6 +205,16 @@
                    "type": "integer",
                    "default": 0,
                    "description": "The number of columns of full source columns."
+                },
+                "sidebar_visible": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether the sidebar is visible."
+                },
+                "sidebar_location": {
+                    "type": "string",
+                    "enum": ["left", "right", "satellite"],
+                    "description": "The location of the sidebar."
                 }
             },
             "default": {
@@ -206,13 +223,17 @@
                     "Console",
                     "TabSet1",
                     "TabSet2",
-                    "HiddenTabSet"],
+                    "HiddenTabSet",
+                    "Sidebar"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer", "Presentations"],
                 "hiddenTabSet": [],
+                "sidebar": ["Chat"],
                 "console_left_on_top": false,
                 "console_right_on_top": true,
-                "additional_source_columns": 0
+                "additional_source_columns": 0,
+                "sidebar_visible": false,
+                "sidebar_location": "right"
             },
             "description": "Layout of panes in the RStudio workbench."
         },
@@ -257,6 +278,18 @@
             "default": 80,
             "title": "Margin column",
             "description": "The number of columns of text after which the margin is shown."
+        },
+        "margin_column_soft_wrap": {
+            "type": "boolean",
+            "default": false,
+            "title": "Soft-wrap at margin column",
+            "description": "When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width."
+        },
+        "margin_column_editor_width": {
+            "type": "boolean",
+            "default": false,
+            "title": "Clamp editor width to margin column",
+            "description": "When set, the editor width will be clamped to the size of the margin column."
         },
         "show_invisibles": {
             "type": "boolean",
@@ -540,6 +573,12 @@
             "title": "Save R scripts before sourcing",
             "description": "Whether to automatically save scripts before executing them."
         },
+        "console_soft_wrap": {
+            "type": "boolean",
+            "default": true,
+            "title": "Enable soft-wrapping of console output",
+            "description": "When enabled, console output will be wrapped at the console width."
+        },
         "syntax_color_console": {
             "type": "boolean",
             "default": false,
@@ -795,6 +834,12 @@
             "title": "Enable the Packages pane",
             "description": "Whether to enable RStudio's Packages pane."
         },
+        "packages_source_column_enabled": {
+            "type": "boolean",
+            "default": true,
+            "title": "Display the Source column in the Packages pane",
+            "description": "Whether to display the Source column in the Package's pane."
+        },
         "cpp_template": {
             "type": "string",
             "default": "Rcpp",
@@ -1002,11 +1047,19 @@
             "title": "Make links in Terminal clickable",
             "description": "Whether web links displayed in the Terminal tab are made clickable."
         },
-       "show_rmd_render_command": {
+        "show_rmd_render_command": {
             "type": "boolean",
             "default": false,
             "title": "Show R Markdown render command",
             "description": "Whether to print the render command use to knit R Markdown documents in the R Markdown tab."
+        },
+        "rmd_rename_in_scope_behavior": {
+            "type": "string",
+            "enum": ["current", "all"],
+            "enumReadable": ["Current chunk", "All chunks"],
+            "default": "all",
+            "title": "Rename in scope operates on:",
+            "description": "Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types."
         },
         "enable_text_drag": {
             "type": "boolean",
@@ -1811,6 +1864,12 @@
             "default": "errors_warnings_messages",
             "title": "Use extended display for",
             "description": "When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied."
+        },
+        "show_chat_ui": {
+            "description": "Whether to show the experimental Chat UI",
+            "title": "Show Chat UI",
+            "type": "boolean",
+            "default": false
         }
       }
 }

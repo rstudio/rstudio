@@ -244,6 +244,7 @@ public abstract class
 
    // Console
    public abstract AppCommand consoleClear();
+   public abstract AppCommand consoleFind();
    public abstract AppCommand interruptR();
    public abstract AppCommand restartR();
    public abstract AppCommand restartRClearOutput();
@@ -356,6 +357,8 @@ public abstract class
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
    public abstract AppCommand toggleToolbar();
+   public abstract AppCommand toggleSidebar();
+   public abstract AppCommand toggleSidebarLocation();
    public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();
@@ -554,6 +557,9 @@ public abstract class
    public abstract AppCommand tutorialStop();
    public abstract AppCommand tutorialHome();
 
+   // Chat
+   public abstract AppCommand activateChat();
+   public abstract AppCommand layoutZoomChat();
 
    // Viewer
    public abstract AppCommand activateViewer();
@@ -593,6 +599,7 @@ public abstract class
 
    // Build
    public abstract AppCommand clearBuild();
+   public abstract AppCommand findBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand buildIncremental();
    public abstract AppCommand buildFull();
@@ -705,6 +712,8 @@ public abstract class
    public abstract AppCommand layoutConsoleOnLeft();
    public abstract AppCommand layoutConsoleOnRight();
    public abstract AppCommand paneLayout();
+   public abstract AppCommand restoreDefaultPaneAndTabLayout();
+   public abstract AppCommand restoreDefaultPaneAndTabLayoutNoPrompt();
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand maximizeSource();
    public abstract AppCommand maximizeTabSet1();
@@ -712,11 +721,12 @@ public abstract class
    public abstract AppCommand toggleEditorTokenInfo();
    public abstract AppCommand layoutZoomLeftColumn();
    public abstract AppCommand layoutZoomRightColumn();
+   public abstract AppCommand layoutZoomSidebar();
    public abstract AppCommand focusLeftSeparator();
    public abstract AppCommand focusRightSeparator();
    public abstract AppCommand focusCenterSeparator();
    public abstract AppCommand focusSourceColumnSeparator();
-
+   public abstract AppCommand focusSidebarSeparator();
 
    // Main menu (server)
    public abstract AppCommand showFileMenu();

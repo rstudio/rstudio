@@ -91,4 +91,5 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
     String selectPackageArchiveCaption();
     String selectAllLabel();
     String selectNoneLabel();
+    String displaySourceColumn();
 }

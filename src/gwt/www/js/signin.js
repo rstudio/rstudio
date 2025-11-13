@@ -70,7 +70,7 @@ function verifyMe() {
    setTimeout(function () {
       // Disable username/password controls after event loop so they are enabled at the time the
      // form is actually submitted.
-      if (userEle !== null) 
+      if (userEle !== null)
          userEle.disabled = true;
       if (passwordEle !== null)
          passwordEle.disabled = true;
@@ -140,11 +140,18 @@ function prepare() {
                   var chunks = response.split(':', 2);
                   var exp = chunks[0];
                   var mod = chunks[1];
-                  var encrypted = encrypt(payload, exp, mod);
-                  document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
-                  document.getElementById('package').value = encrypted;
-                  document.getElementById('clientPath').value = window.location.pathname;
-                  document.realform.submit();
+                  encrypt(payload, exp, mod).then(function (result) {
+                     document.getElementById('persist').value = document.getElementById('staySignedIn').checked ? "1" : "0";
+                     if (result.alg) {
+                        document.getElementById('package').value = '$' + result.alg + '$' + result.ct;
+                     } else {
+                        document.getElementById('package').value = result.ct;
+                     }
+                     document.getElementById('clientPath').value = window.location.pathname;
+                     document.realform.submit();
+                  }).catch(function (exception) {
+                     showError("Error: " + exception);
+                  });
                }
             }
          } catch (exception) {
@@ -220,7 +227,7 @@ window.addEventListener("load", function() {
    } else {
       // Place focus on the username element if it exists
       userEle.focus();
-   
+
       // Begin polling for sign-ins from other tabs (we only do this for interactive forms)
       setTimeout(pollForSignin, 3000);
    }

@@ -361,6 +361,8 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
    @Handler
+   void onActivateChat() { paneManager_.activateTab(Tab.Chat); }
+   @Handler
    void onActivatePresentation2() 
    { 
       paneManager_.activateTab(Tab.Presentations); 
@@ -395,6 +397,8 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
    @Handler
+   void onLayoutZoomChat() { paneManager_.zoomTab(Tab.Chat); }
+   @Handler
    void onLayoutZoomPresentation2() { paneManager_.zoomTab(Tab.Presentations); }
 
    @Handler
@@ -402,6 +406,9 @@ public class WorkbenchScreen extends Composite
 
    @Handler
    void onLayoutZoomRightColumn() { paneManager_.zoomColumn(PaneManager.RIGHT_COLUMN); }
+
+   @Handler
+   void onLayoutZoomSidebar() { paneManager_.zoomColumn(PaneManager.SIDEBAR_COLUMN); }
 
    @Handler
    void onMacPreferences()

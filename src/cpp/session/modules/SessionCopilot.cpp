@@ -14,8 +14,7 @@
  */
 
 #include "SessionCopilot.hpp"
-
-#include <unordered_set>
+#include "SessionNodeTools.hpp"
 
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
@@ -51,12 +50,12 @@
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);               \
-      std::string __formatted__ =                                                  \
-          fmt::format("[{}]: {}", __func__, __message__);                          \
-      __LOGGER__("copilot", __formatted__);                                        \
+      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);           \
+      std::string __formatted__ =                                              \
+          fmt::format("[{}]: {}", __func__, __message__);                      \
+      __LOGGER__("copilot", __formatted__);                                    \
       if (copilotLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                                  \
+         std::cerr << __formatted__ << std::endl;                              \
    } while (0)
 
 #define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
@@ -67,12 +66,6 @@
 #ifdef LOG_ERROR
 # undef LOG_ERROR
 # define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
-#endif
-
-#ifndef _WIN32
-# define kNodeExe "node"
-#else
-# define kNodeExe "node.exe"
 #endif
 
 #define kCopilotDefaultDocumentVersion (0)
@@ -307,6 +300,16 @@ std::map<std::string, CopilotContinuation> s_pendingContinuations;
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
 
+// Whether we're about to shut down.
+bool s_isSessionShuttingDown = false;
+
+// Project-specific Copilot options.
+projects::RProjectCopilotOptions s_copilotProjectOptions;
+
+// A queue of pending files to be indexed.
+std::vector<FileInfo> s_indexQueue;
+std::size_t s_indexBatchSize = 200;
+
 // The language server protocol states:
 //
 // ...open notification must not be sent more than once without a corresponding close notification 
@@ -347,16 +350,6 @@ int currentVersionForDocument(const std::string& uri)
    // Otherwise, return the default version.
    return kCopilotDefaultDocumentVersion;
 }
-
-// Whether we're about to shut down.
-bool s_isSessionShuttingDown = false;
-
-// Project-specific Copilot options.
-projects::RProjectCopilotOptions s_copilotProjectOptions;
-
-// A queue of pending files to be indexed.
-std::vector<FileInfo> s_indexQueue;
-std::size_t s_indexBatchSize = 200;
 
 int copilotLogLevel()
 {
@@ -602,91 +595,6 @@ bool waitFor(F&& callback)
    return false;
 }
 
-/**
- * If running onarm64 Mac, substitute the arm64-specific node binary; returns true if this was
- * done, false otherwise.
- */
-bool findNodeMacArm64(const FilePath& inputPath, FilePath* pOutputNodePath)
-{
-#if defined(__APPLE__)
-   if (isAppleSilicon())
-   {
-      FilePath nodeExePath;
-      if (inputPath.isRegularFile())
-      {
-         // change /node/bin/node to /node-arm64/bin/node
-         nodeExePath = inputPath.getParent().getParent().completeChildPath("node-arm64/bin/" kNodeExe);
-      }
-      else if (inputPath.isDirectory())
-      {
-         // change /node to /node-arm64
-         nodeExePath = inputPath.getParent().completeChildPath("node-arm64");
-      }
-      else
-         return false;
-
-      if (nodeExePath.exists())
-      {
-         *pOutputNodePath = nodeExePath;
-         return true;
-      }
-   } 
-#endif
-   return false;
-}
-
-Error findNode(FilePath* pNodePath, core::system::Options* pOptions)
-{
-   // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
-   if (userNodePath.exists())
-   {
-      *pNodePath = userNodePath;
-      return Success();
-   }
-   
-   // Check for an admin-configured node path.
-   FilePath nodePath = session::options().nodePath();
-   if (!nodePath.isEmpty())
-   {
-      FilePath arm64NodePath;
-      // on arm64 Mac, substitute the arm64-specific node binary
-      if (findNodeMacArm64(nodePath, &arm64NodePath))
-      {
-         nodePath = arm64NodePath;
-      }
-
-      // Allow both directories containing a 'node' binary, and the path
-      // to a 'node' binary directly.
-      if (nodePath.isDirectory())
-      {
-         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
-         {
-            FilePath nodeExePath = nodePath.completeChildPath(suffix);
-            if (nodeExePath.exists())
-            {
-               *pNodePath = nodeExePath;
-               return Success();
-            }
-         }
-         
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-      else if (nodePath.isRegularFile())
-      {
-         *pNodePath = nodePath;
-         return Success();
-      }
-      else
-      {
-         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Otherwise, use node from the PATH
-   return core::system::findProgramOnPath(kNodeExe, pNodePath);
-}
-
 void sendNotification(const std::string& method,
                       const json::Value& paramsJson)
 {
@@ -895,6 +803,9 @@ void onStarted(ProcessOperations& operations)
 
 bool onContinue(ProcessOperations& operations)
 {
+   if (s_isSessionShuttingDown)
+      return false;
+
    auto debugCallback = [](const std::string& htmlRequest)
    {
       if (copilotLogLevel() >= 2)
@@ -946,6 +857,9 @@ bool onContinue(ProcessOperations& operations)
 
 void onStdout(ProcessOperations& operations, const std::string& stdOut)
 {
+   if (s_isSessionShuttingDown)
+      return;
+
    // Discard empty lines.
    static const boost::regex reWhitespace("^\\s*$");
    if (regex_utils::match(stdOut, reWhitespace))
@@ -1030,6 +944,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
 {
+   if (s_isSessionShuttingDown)
+      return;
+
    LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
    if (copilotLogLevel() >= 1)
       std::cerr << stdErr << std::endl;
@@ -1072,9 +989,9 @@ void onExit(int status)
 void stopAgent()
 {
    s_knownDocuments.clear();
+
    if (s_agentPid == -1)
    {
-      //DLOG("No agent running; nothing to do.");
       setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
       return;
    }
@@ -1082,6 +999,15 @@ void stopAgent()
    Error error = core::system::terminateProcess(s_agentPid);
    if (error)
       LOG_ERROR(error);
+}
+
+bool stopAgentSync()
+{
+   if (s_agentPid == -1)
+      return true;
+
+   stopAgent();
+   return waitFor([]() { return s_agentPid == -1; });
 }
 
 Error startAgent()
@@ -1107,7 +1033,7 @@ Error startAgent()
 
    // Find node.js
    FilePath nodePath;
-   error = findNode(&nodePath, &environment);
+   error = node_tools::findNode(&nodePath, "rstudio.copilot.nodeBinaryPath");
    if (error)
       return error;
 
@@ -1261,23 +1187,16 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
       return true;
    }
 
+   // bail if we're shutting down
+   if (s_isSessionShuttingDown)
+      return false;
+
    // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
    {
       if (!s_copilotInitialized)
       {
          DLOG("Copilot is not enabled; not starting agent.");
-         s_copilotInitialized = true;
-      }
-      return false;
-   }
-
-   // bail if we're shutting down
-   if (s_isSessionShuttingDown)
-   {
-      if (!s_copilotInitialized)
-      {
-         DLOG("Session is shutting down; not starting agent.");
          s_copilotInitialized = true;
       }
       return false;
@@ -1342,6 +1261,14 @@ void docClosed(const std::string& uri)
 {
    if (s_knownDocuments.count(uri) == 0)
    {
+      // Check if this is an untitled (unsaved) document; if so then it's likely an empty unsaved
+      // file that was never edited (Copilot isn't told about a new file until it gets modified)
+      // so the warning is unnecessary
+      if (uri.find("rstudio-document://") == 0)
+      {
+         return;
+      }
+      
       WLOG("Tried to close unknown document '{}'.", uri);
       return;
    }
@@ -1482,9 +1409,28 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
              contentsFromDocument(pDoc));
 }
 
+void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!ensureAgentRunning())
+      return;
+
+   if (!isIndexableDocument(pDoc))
+      return;
+
+   docClosed(uriFromDocument(pDoc));
+
+   docOpened(uriFromDocument(pDoc),
+             languageIdFromDocument(pDoc),
+             contentsFromDocument(pDoc));
+}
+
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!ensureAgentRunning())
+      return;
+
+   // we didn't tell Copilot about this document, so skip this
+   if (!isIndexableDocument(pDoc))
       return;
 
    docClosed(uriFromDocument(pDoc));
@@ -1696,6 +1642,10 @@ bool subscribeToFileMonitor()
 
 void synchronize()
 {
+   // Bail if we're shutting down.
+   if (s_isSessionShuttingDown)
+      return;
+
    // Update flags
    s_copilotEnabled = isCopilotEnabled();
    s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
@@ -1748,6 +1698,7 @@ void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
+   source_database::events().onDocReopened.connect(onDocReopened);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
@@ -1757,12 +1708,7 @@ void onShutdown(bool)
    s_isSessionShuttingDown = true;
 
    // Shut down the agent.
-   stopAgent();
-
-   // Unset the agent PID. It should already be shutting down,
-   // but this will make sure we don't try to make any more
-   // requests while we're shutting down.
-   s_agentPid = -1;
+   stopAgentSync();
 }
 
 void onSourceFileDiff(module_context::DocumentDiff diff)
@@ -1856,10 +1802,7 @@ SEXP rs_copilotVersion()
 SEXP rs_copilotStopAgent()
 {
    // stop the copilot agent
-   stopAgent();
-   
-   // wait until the process is gone
-   bool stopped = waitFor([]() { return s_agentPid == -1; });
+   bool stopped = stopAgentSync();
  
    // return status
    return Rf_ScalarLogical(stopped);
@@ -2016,7 +1959,6 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    if (!ensureAgentRunning(&launchError))
    {
       json::JsonRpcResponse response;
-      
       json::Object resultJson;
       
       if (launchError)

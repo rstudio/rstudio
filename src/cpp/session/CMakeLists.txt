@@ -175,12 +175,14 @@ set(SESSION_SOURCE_FILES
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp
    modules/SessionAbout.cpp
+   modules/SessionAir.cpp
    modules/SessionApiPrefs.cpp
    modules/SessionAskPass.cpp
    modules/SessionAskSecret.cpp
    modules/SessionAsyncPackageInformation.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
+   modules/SessionChat.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
@@ -210,6 +212,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
+   modules/SessionNodeTools.cpp
    modules/SessionObjectExplorer.cpp
    modules/SessionPackageProvidedExtension.cpp
    modules/SessionPackages.cpp

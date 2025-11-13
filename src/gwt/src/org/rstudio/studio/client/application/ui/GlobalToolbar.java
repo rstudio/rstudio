@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -34,6 +33,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
@@ -201,6 +201,9 @@ public class GlobalToolbar extends Toolbar
       ToolbarPopupMenu paneLayoutMenu = new ToolbarPopupMenu();
 
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
+      paneLayoutMenu.addSeparator();
+      paneLayoutMenu.addItem(commands_.toggleSidebar().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.toggleSidebarLocation().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutConsoleOnRight().createMenuItem(false));

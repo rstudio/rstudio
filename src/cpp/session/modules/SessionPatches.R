@@ -41,14 +41,16 @@
 
 .rs.registerPackageLoadHook("renv", function(...)
 {
+   # if 'renv.download.headers' has already been set, do nothing
+   headers <- getOption("renv.download.headers")
+   if (!is.null(headers))
+      return(NULL)
+   
    # compute authorization headers for renv using .netrc if available
-   default <- getOption("renv.download.headers", default = function(url) {})
    options(renv.download.headers = function(url) {
-      headers <- as.character(default())
       authorization <- .rs.computeAuthorizationHeader(url)
       if (length(authorization) && nzchar(authorization))
-         headers["Authorization"] <- authorization
-      headers
+         c(Authorization = authorization)
    })
 })
 

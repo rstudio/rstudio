@@ -86,7 +86,9 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -228,10 +230,18 @@ public class TextEditingTargetWidget
       docUpdateSentinel_.addPropertyValueChangeHandler(
             TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
             {
-               boolean wrap = StringUtil.equals(newval.getValue(),
-                     DocUpdateSentinel.PROPERTY_TRUE);
+               boolean wrap = StringUtil.equals(newval.getValue(), DocUpdateSentinel.PROPERTY_TRUE);
                commands_.toggleSoftWrapMode().setChecked(wrap);
                editor_.setUseWrapMode(wrap);
+               if (wrap && userPrefs_.marginColumnSoftWrap().getValue())
+               {
+                  int marginColumn = userPrefs_.marginColumn().getValue();
+                  editor_.setWrapLimitRange(marginColumn, marginColumn);
+               }
+               else
+               {
+                  editor_.setWrapLimitRange(null, null);
+               }
             });
 
       docUpdateSentinel_.addPropertyValueChangeHandler(
@@ -264,6 +274,37 @@ public class TextEditingTargetWidget
          // Same behavior when modifying auto-save on idle
          adaptToFileType(editor_.getFileType());
       });
+
+      Scheduler.get().scheduleDeferred(this::finishInit);
+
+   }
+
+   private void finishInit()
+   {
+      userPrefs_.marginColumnEditorWidth().bind(new CommandWithArg<Boolean>()
+      {
+         private HandlerRegistration renderHandler_;
+
+         @Override
+         public void execute(Boolean enabled)
+         {
+            resetEditorWidth();
+            if (renderHandler_ != null)
+            {
+               renderHandler_.removeHandler();
+               renderHandler_ = null;
+            }
+
+            if (enabled)
+            {
+               renderHandler_ = editor_.addRenderFinishedHandler((event) ->
+               {
+                  syncEditorWidth();
+               });
+            }
+         }
+      });
+
    }
 
    public void initWidgetSize()
@@ -2041,11 +2082,49 @@ public class TextEditingTargetWidget
       boolean wrapMode = editor_.getFileType().getWordWrap();
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.SOFT_WRAP_LINES))
       {
-         wrapMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.SOFT_WRAP_LINES,
-               wrapMode);
+         wrapMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.SOFT_WRAP_LINES, wrapMode);
       }
+
       editor_.setUseWrapMode(wrapMode);
       commands_.toggleSoftWrapMode().setChecked(wrapMode);
+   }
+
+   private void resetEditorWidth()
+   {
+      Element editorEl = editor_.asWidget().getElement();
+      editorEl.getStyle().clearProperty("margin");
+      editorEl.getStyle().clearProperty("maxWidth");
+   }
+
+   private void syncEditorWidth()
+   {
+      boolean enabled = userPrefs_.marginColumnEditorWidth().getValue();
+      if (!enabled)
+         return;
+      
+      Element editorEl = editor_.asWidget().getElement();
+      Element gutterEl = DomUtils.querySelector(editorEl, ".ace_gutter");
+      if (gutterEl == null)
+         return;
+      
+      Element printMarginEl = DomUtils.querySelector(editorEl, ".ace_print-margin");
+      if (printMarginEl == null)
+         return;
+      
+      String gutterWidth = gutterEl.getStyle().getProperty("width");
+      gutterWidth = gutterWidth.replaceAll("px$", "");
+      
+      String printMarginWidth = printMarginEl.getStyle().getProperty("left");
+      printMarginWidth = printMarginWidth.replaceAll("px$", "");
+
+      int editorWidth =
+         StringUtil.parseInt(gutterWidth, 0) +
+         StringUtil.parseInt(printMarginWidth, 0);
+
+      int width = Math.max(editorWidth, 600);
+      editorEl.getStyle().setProperty("margin", "0 auto");
+      editorEl.getStyle().setPropertyPx("maxWidth", width + 32);
+      printMarginEl.getStyle().setVisibility(Visibility.HIDDEN);
    }
 
    private void syncRainbowParenMode()

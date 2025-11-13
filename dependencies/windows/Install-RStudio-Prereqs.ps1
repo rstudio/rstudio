@@ -62,9 +62,17 @@ If (-Not (Test-Administrator)) {
 }
 if ($PSVersionTable.PSVersion.Major -lt 5) {
     Write-Host "Error: Requires PowerShell 5.0 or newer"
+    exit
 }
 
 # install build tools
+
+# The version of the Windows SDK we want to use.
+$_WIN32_SDK_VERSION = 20348
+
+# The full version path for the Windows SDK. Some tools want the full version,
+# others just want the "inner" component, so we provide both.
+$WIN32_SDK_VERSION = "10.0.$_WIN32_SDK_VERSION.0"
 
 # Installation instructions borrowed from:
 #
@@ -74,7 +82,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 #
 #   https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2022
 #
-# to look up the assoicated component name.
+# to look up the associated component name.
 #
 # Note that we use this tool to install Visual Studio's build tools, as well as the
 # required Windows 10 SDK, as chocolatey doesn't seem to provide the versions we need.
@@ -85,19 +93,45 @@ Invoke-DownloadFile https://aka.ms/vs/17/release/vs_buildtools.exe vs_buildtools
 
 # Install Build Tools. For whatever reason, this fails when we try to install
 # into C:/Program Files (x86), so just use the "regular" C:/Program Files.
-RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
-    --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
-    --add Microsoft.VisualStudio.Workload.CoreEditor `
-    --add Microsoft.VisualStudio.Workload.NativeDesktop `
-    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core `
-    --add Microsoft.VisualStudio.Component.VC.CoreIde `
-    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
-    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.20348
+Write-Host "Installing Visual Studio Build Tools..."
+$installArgs = @(
+    '--quiet',
+    '--wait',
+    '--norestart',
+    '--nocache',
+    '--installPath', '"C:/Program Files/Microsoft Visual Studio/2022/BuildTools"',
+    '--add', 'Microsoft.VisualStudio.Workload.CoreEditor',
+    '--add', 'Microsoft.VisualStudio.Workload.NativeDesktop',
+    '--add', 'Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core',
+    '--add', 'Microsoft.VisualStudio.Component.VC.CoreIde',
+    '--add', 'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+    '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+    '--add', 'Microsoft.VisualStudio.Component.Windows10SDK',
+    "--add", "Microsoft.VisualStudio.Component.Windows10SDK.$_WIN32_SDK_VERSION"
+)
+$vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
+if ($vsProcess.ExitCode -ne 0) {
+    Write-Error "Visual Studio Build Tools installation failed with exit code $($vsProcess.ExitCode)"
+    exit
+}
+
+# Try testing the build tools. You might see some telemetry errors here;
+# they can apparently be ignored.
+Write-Host "Testing VsDevCmd.bat..."
+$vsDevCmdPath = "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
+if (Test-Path $vsDevCmdPath) {
+    Push-Location "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools"
+    cmd /c "VsDevCmd.bat -clean_env -no_logo && VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=$WIN32_SDK_VERSION -no_logo && echo -- Testing VsDevCmd.bat -- success"
+    Pop-Location
+    Write-Host "Build tools verification completed"
+} else {
+    Write-Warning "VsDevCmd.bat not found at expected path, skipping verification"
+}
 
 # Clean up.
-Remove-Item vs_buildtools.exe
+if ($DeleteDownloads -and (Test-Path "vs_buildtools.exe")) {
+    Remove-Item vs_buildtools.exe -Force -ErrorAction SilentlyContinue
+}
 
 # install R
 if (-Not (Test-Path -Path "C:\R")) {
@@ -108,10 +142,18 @@ if (-Not (Test-Path -Path "C:\R")) {
         Write-Host "Using previously downloaded R installer"
     }
     Write-Host "Installing R..."
-    Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"'
-    if ($DeleteDownloads) { Remove-Item $RSetupPackage -Force }
-    $env:path += ';C:\R\R-3.6.3\bin\i386\'
-    [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
+    $rProcess = Start-Process $RSetupPackage -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.6.3\"' -PassThru
+    if ($rProcess.ExitCode -ne 0) {
+        Write-Error "R installation failed with exit code $($rProcess.ExitCode)"
+        exit
+    }
+    if ($DeleteDownloads) { Remove-Item $RSetupPackage -Force -ErrorAction SilentlyContinue }
+    $rBinPath = 'C:\R\R-3.6.3\bin\x64\'
+    $env:path += ";$rBinPath"
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine)
+    if ($machinePath -notlike "*$rBinPath*") {
+        [Environment]::SetEnvironmentVariable('Path', "$machinePath;$rBinPath", [System.EnvironmentVariableTarget]::Machine)
+    }
 } else {
     Write-Host "C:\R already exists, skipping R installation"
 }

@@ -366,7 +366,8 @@ public class TextEditingTargetCopilotHelper
                            activeCompletion_ = null;
                         }
                      }
-                     else if (event.getKeyCode() == KeyCodes.KEY_RIGHT &&
+                     else if (display_.hasGhostText() &&
+                              event.getKeyCode() == KeyCodes.KEY_RIGHT &&
                               (event.getCtrlKey() || event.getMetaKey()))
                      {
                         event.stopPropagation();
@@ -494,6 +495,11 @@ public class TextEditingTargetCopilotHelper
    public void onFileTypeChanged()
    {
       copilotDisabledInThisDocument_ = false;
+   }
+
+   public boolean isCopilotEnabled()
+   {
+      return copilot_.isEnabled();
    }
    
    private String computeGhostText(String completionText)

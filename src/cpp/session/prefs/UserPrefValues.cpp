@@ -388,6 +388,32 @@ core::Error UserPrefValues::setMarginColumn(int val)
 }
 
 /**
+ * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+ */
+bool UserPrefValues::marginColumnSoftWrap()
+{
+   return readPref<bool>("margin_column_soft_wrap");
+}
+
+core::Error UserPrefValues::setMarginColumnSoftWrap(bool val)
+{
+   return writePref("margin_column_soft_wrap", val);
+}
+
+/**
+ * When set, the editor width will be clamped to the size of the margin column.
+ */
+bool UserPrefValues::marginColumnEditorWidth()
+{
+   return readPref<bool>("margin_column_editor_width");
+}
+
+core::Error UserPrefValues::setMarginColumnEditorWidth(bool val)
+{
+   return writePref("margin_column_editor_width", val);
+}
+
+/**
  * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
  */
 bool UserPrefValues::showInvisibles()
@@ -973,6 +999,19 @@ core::Error UserPrefValues::setSaveBeforeSourcing(bool val)
 }
 
 /**
+ * When enabled, console output will be wrapped at the console width.
+ */
+bool UserPrefValues::consoleSoftWrap()
+{
+   return readPref<bool>("console_soft_wrap");
+}
+
+core::Error UserPrefValues::setConsoleSoftWrap(bool val)
+{
+   return writePref("console_soft_wrap", val);
+}
+
+/**
  * Whether to use syntax highlighting in the R console.
  */
 bool UserPrefValues::syntaxColorConsole()
@@ -1519,6 +1558,19 @@ core::Error UserPrefValues::setPackagesPaneEnabled(bool val)
 }
 
 /**
+ * Whether to display the Source column in the Package's pane.
+ */
+bool UserPrefValues::packagesSourceColumnEnabled()
+{
+   return readPref<bool>("packages_source_column_enabled");
+}
+
+core::Error UserPrefValues::setPackagesSourceColumnEnabled(bool val)
+{
+   return writePref("packages_source_column_enabled", val);
+}
+
+/**
  * C++ template.
  */
 std::string UserPrefValues::cppTemplate()
@@ -1958,6 +2010,19 @@ bool UserPrefValues::showRmdRenderCommand()
 core::Error UserPrefValues::setShowRmdRenderCommand(bool val)
 {
    return writePref("show_rmd_render_command", val);
+}
+
+/**
+ * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+ */
+std::string UserPrefValues::rmdRenameInScopeBehavior()
+{
+   return readPref<std::string>("rmd_rename_in_scope_behavior");
+}
+
+core::Error UserPrefValues::setRmdRenameInScopeBehavior(std::string val)
+{
+   return writePref("rmd_rename_in_scope_behavior", val);
 }
 
 /**
@@ -3494,6 +3559,19 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
    return writePref("console_highlight_conditions", val);
 }
 
+/**
+ * Whether to show the experimental Chat UI
+ */
+bool UserPrefValues::showChatUi()
+{
+   return readPref<bool>("show_chat_ui");
+}
+
+core::Error UserPrefValues::setShowChatUi(bool val)
+{
+   return writePref("show_chat_ui", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3525,6 +3603,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowMargin,
       kBlinkingCursor,
       kMarginColumn,
+      kMarginColumnSoftWrap,
+      kMarginColumnEditorWidth,
       kShowInvisibles,
       kIndentGuides,
       kContinueCommentsOnNewline,
@@ -3570,6 +3650,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFocusConsoleAfterExec,
       kFoldStyle,
       kSaveBeforeSourcing,
+      kConsoleSoftWrap,
       kSyntaxColorConsole,
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
@@ -3612,6 +3693,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
+      kPackagesSourceColumnEnabled,
       kCppTemplate,
       kRestoreSourceDocuments,
       kHandleErrorsInUserCodeOnly,
@@ -3646,6 +3728,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalRenderer,
       kTerminalWeblinks,
       kShowRmdRenderCommand,
+      kRmdRenameInScopeBehavior,
       kEnableTextDrag,
       kShowHiddenFiles,
       kAlwaysShownFiles,
@@ -3764,6 +3847,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
+      kShowChatUi,
    });
 }
    

@@ -65,6 +65,10 @@ button.themedButton:disabled .buttonCenter {
    margin-right: 8px;
 }
 
+.themedButton {
+   border-radius: 6px;
+}
+
 .themedButton.tight {
    margin-left: -3px !important;
    margin-right: -3px !important;

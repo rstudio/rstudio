@@ -41,6 +41,7 @@
 #include <boost/utility.hpp>
 
 #include <shared_core/Error.hpp>
+#include <core/Thread.hpp>
 
 #include <core/Log.hpp>
 
@@ -54,6 +55,8 @@ namespace system {
 namespace crypto {
 
 namespace {
+
+std::recursive_mutex s_openssl_mutex;
 
 template <typename T, typename Deleter>
 std::unique_ptr<T, Deleter> make_unique_ptr(T* ptr, Deleter deleter) {
@@ -113,7 +116,7 @@ void initialize()
    ::ERR_load_crypto_strings();
 #endif
 }
-   
+
 Error HMAC_SHA2(const std::string& data,
                 const std::string& key,
                 std::vector<unsigned char>* pHMAC)
@@ -121,11 +124,11 @@ Error HMAC_SHA2(const std::string& data,
    // copy data into vector
    std::vector<unsigned char> keyVector;
    std::copy(key.begin(), key.end(), std::back_inserter(keyVector));
-   
+
    // call core
    return HMAC_SHA2(data, keyVector, pHMAC);
 }
-   
+
 Error HMAC_SHA2(const std::string& data,
                 const std::vector<unsigned char>& key,
                 std::vector<unsigned char>* pHMAC)
@@ -133,7 +136,7 @@ Error HMAC_SHA2(const std::string& data,
    // copy data into data vector
    std::vector<unsigned char> dataVector;
    std::copy(data.begin(), data.end(), std::back_inserter(dataVector));
-   
+
    // perform the hash
    unsigned int md_len = 0;
    pHMAC->resize(EVP_MAX_MD_SIZE);
@@ -188,6 +191,8 @@ Error rsaSign(const std::string& message,
               const std::string& pemPrivateKey,
               std::string* pOutSignature)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
+
    // create a sha256 hash of the message first which is what we will sign
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
@@ -199,7 +204,7 @@ Error rsaSign(const std::string& message,
    BIO* buffer = BIO_new_mem_buf(
             const_cast<char*>(pemPrivateKey.c_str()),
             gsl::narrow_cast<int>(pemPrivateKey.size()));
-         
+
    auto pKeyBuff = make_unique_ptr(buffer, BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, "RSA sign", ERROR_LOCATION);
@@ -208,10 +213,9 @@ Error rsaSign(const std::string& message,
    auto pRsa = make_unique_ptr(
             PEM_read_bio_PrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
             EVP_PKEY_free);
-   
-   if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, "RSA private key", ERROR_LOCATION);
 
+   if (!pRsa)
+      return getLastCryptoError(ERROR_LOCATION);
 
    // sign the message hash
    std::vector<unsigned char> pSignature(EVP_PKEY_size(pRsa.get()));
@@ -248,6 +252,8 @@ Error rsaVerify(const std::string& message,
                 const std::string& signature,
                 const std::string& pemPublicKey)
 {
+   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
+
    // create a sha256 hash of the message first which is what we will verify
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
@@ -259,7 +265,7 @@ Error rsaVerify(const std::string& message,
    BIO* buffer =  BIO_new_mem_buf(
             const_cast<char*>(pemPublicKey.c_str()),
             gsl::narrow_cast<int>(pemPublicKey.size()));
-   
+
    auto pKeyBuff = make_unique_ptr(buffer, BIO_free);
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, "RSA bio public key", ERROR_LOCATION);
@@ -267,7 +273,7 @@ Error rsaVerify(const std::string& message,
    auto pRsa = make_unique_ptr(
             PEM_read_bio_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
             EVP_PKEY_free);
-   
+
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, "RSA pub key", ERROR_LOCATION);
 
@@ -307,7 +313,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
    auto pKey = make_unique_ptr(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    if (!pKey)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    // Write public key in PEM format
    int status = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
    if (status != 1)
@@ -329,14 +335,14 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
    auto pBioPub = make_unique_ptr(
             BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
             BIO_free);
-   
+
    if (!pBioPub)
       return getLastCryptoError(ERROR_LOCATION);
 
    auto pBioPem = make_unique_ptr(
             BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
             BIO_free);
-   
+
    if (!pBioPem)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -382,7 +388,7 @@ Error generateRsaCertAndKey(const std::string& certCommonName,
    auto pCertKey = make_unique_ptr(EVP_RSA_gen(kRsaKeySizeBits), EVP_PKEY_free);
    if (!pCertKey)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    // Create certificate
    auto pCert = make_unique_ptr(X509_new(), X509_free);
 
@@ -516,7 +522,7 @@ core::Error rsaInit()
    BIGNUM* bn = nullptr;
    if (EVP_PKEY_get_bn_param(s_pRSA, "n", &bn) != 1)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    BIGNUM* be = nullptr;
    if (EVP_PKEY_get_bn_param(s_pRSA, "e", &be) != 1)
       return getLastCryptoError(ERROR_LOCATION);
@@ -533,7 +539,7 @@ core::Error rsaInit()
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
    RSA_free(pRsaKeyPair);
 #endif
-   
+
    return Success();
 }
 
@@ -543,50 +549,89 @@ void rsaPublicKey(std::string* pExponent, std::string* pModulo)
    pExponent->assign(s_exponent.begin(), s_exponent.end());
 }
 
-core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
+core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText, EVP_PKEY* pKey)
 {
    int status = 0;
-   
+
+   std::string algorithm;
    std::vector<unsigned char> cipherTextBytes;
-   Error error = base64Decode(cipherText, cipherTextBytes);
+
+   Error error;
+   if (cipherText.size() > 0 && cipherText[0] == '$')
+   {
+      // $algo$ciphertext
+      auto delimiter = cipherText.find('$', 1);
+      if (delimiter == std::string::npos)
+        return systemError(
+            boost::system::errc::not_supported,
+            "malformed payload",
+            ERROR_LOCATION);
+      algorithm = cipherText.substr(1, delimiter - 1);
+      // RSAES and RSA are synonymous
+      if (algorithm.substr(0, 5) == "RSAES")
+         algorithm = "RSA" + algorithm.substr(5);
+      error = base64Decode(cipherText.substr(delimiter + 1), cipherTextBytes);
+   }
+   else
+   {
+      error = base64Decode(cipherText, cipherTextBytes);
+   }
    if (error)
       return error;
 
    auto ctx = make_unique_ptr(
-            EVP_PKEY_CTX_new(s_pRSA, nullptr),
+            EVP_PKEY_CTX_new(pKey ? pKey : s_pRSA, nullptr),
             EVP_PKEY_CTX_free);
-   
+
    if (ctx == nullptr)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    status = EVP_PKEY_decrypt_init(ctx.get());
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
+   if (algorithm == "RSA-OAEP")
+   {
+      status = EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_OAEP_PADDING);
+      if (status <= 0)
+         return getLastCryptoError(ERROR_LOCATION);
+
+      status = EVP_PKEY_CTX_set_rsa_oaep_md(ctx.get(), EVP_sha256());
+      if (status <= 0)
+         return getLastCryptoError(ERROR_LOCATION);
+   }
+   else if (algorithm != "")
+   {
+      return systemError(
+          boost::system::errc::not_supported,
+          "unknown algorithm " + algorithm,
+          ERROR_LOCATION);
+   }
+
+
    std::size_t size = 0;
    status = EVP_PKEY_decrypt(ctx.get(), nullptr, &size, cipherTextBytes.data(), cipherTextBytes.size());
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    unsigned char* buffer = (unsigned char*) OPENSSL_malloc(size);
    if (buffer == nullptr)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    status = EVP_PKEY_decrypt(
             ctx.get(),
             buffer, &size,
             cipherTextBytes.data(), cipherTextBytes.size());
-   
+
    if (status <= 0)
       return getLastCryptoError(ERROR_LOCATION);
-   
+
    pPlainText->assign(buffer, buffer + size);
    return Success();
 }
 
-                      
+
 } // namespace crypto
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

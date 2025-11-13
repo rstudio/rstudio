@@ -1095,6 +1095,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand consoleFind() {
+        return null;
+    }
+
+    @Override
     public AppCommand interruptR() {
         return null;
     }
@@ -1561,6 +1566,16 @@ public class DummyCommands extends Commands {
 
     @Override
     public AppCommand toggleToolbar() {
+        return null;
+    }
+
+    @Override
+    public AppCommand toggleSidebar() {
+        return null;
+    }
+
+    @Override
+    public AppCommand toggleSidebarLocation() {
         return null;
     }
 
@@ -2555,6 +2570,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand findBuild() {
+        return null;
+    }
+
+    @Override
     public AppCommand buildAll() {
         return null;
     }
@@ -3005,6 +3025,15 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand restoreDefaultPaneAndTabLayout() {
+        return null;
+    }
+    @Override
+    public AppCommand restoreDefaultPaneAndTabLayoutNoPrompt() {
+        return null;
+    }
+
+    @Override
     public AppCommand maximizeConsole() {
         return null;
     }
@@ -3040,6 +3069,11 @@ public class DummyCommands extends Commands {
     }
 
     @Override
+    public AppCommand layoutZoomSidebar() {
+        return null;
+    }
+
+    @Override
     public AppCommand focusLeftSeparator() {
         return null;
     }
@@ -3056,6 +3090,11 @@ public class DummyCommands extends Commands {
 
     @Override
     public AppCommand focusSourceColumnSeparator() {
+        return null;
+    }
+
+    @Override
+    public AppCommand focusSidebarSeparator() {
         return null;
     }
 
@@ -3232,6 +3271,18 @@ public class DummyCommands extends Commands {
 
     @Override
     public AppCommand copyRStudioVersion() {
+        return null;
+    }
+
+    @Override
+    public AppCommand activateChat()
+    {
+        return null;
+    }
+
+    @Override
+    public AppCommand layoutZoomChat()
+    {
         return null;
     }
 }

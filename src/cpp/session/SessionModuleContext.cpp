@@ -351,8 +351,15 @@ SEXP rs_logWarningMessage(SEXP messageSEXP)
    std::string message = r::sexp::asString(messageSEXP);
    LOG_WARNING_MESSAGE(message);
    return R_NilValue;
-}  
-   
+}
+
+SEXP rs_logInfoMessage(SEXP messageSEXP)
+{
+   std::string message = r::sexp::asString(messageSEXP);
+   LOG_INFO_MESSAGE(message);
+   return R_NilValue;
+}
+
 // sleep the main thread (debugging function used to test rpc/abort)
 SEXP rs_threadSleep(SEXP secondsSEXP)
 {
@@ -3021,6 +3028,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_isRScriptInPackageBuildTarget);
    RS_REGISTER_CALL_METHOD(rs_logErrorMessage);
    RS_REGISTER_CALL_METHOD(rs_logWarningMessage);
+   RS_REGISTER_CALL_METHOD(rs_logInfoMessage);
    RS_REGISTER_CALL_METHOD(rs_markdownToHTML);
    RS_REGISTER_CALL_METHOD(rs_packageLoaded);
    RS_REGISTER_CALL_METHOD(rs_packageNameForSourceFile);

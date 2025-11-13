@@ -1,5 +1,5 @@
 /*
- * EditingPreferencesPane.java
+ * CodePreferencesPane.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -80,13 +80,6 @@ public class CodePreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      
-      // Extra UI shown when a project is open makes the pane overflow on some
-      // browsers, so don't display initial "General" section title to regain
-      // some vertical space.
-      if (!hasProject)
-         editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
-
       editingPanel.add(headerLabel("Editing"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
@@ -99,11 +92,13 @@ public class CodePreferencesPane extends PreferencesPane
       editingPanel.add(useNativePipe_);
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
-      editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref(
             constants_.editingContinueCommentsOnNewlineLabel(),
             prefs_.continueCommentsOnNewline(),
             constants_.editingContinueCommentsOnNewlineDesc()));
+      editingPanel.add(checkboxPref(
+            constants_.displayEnableTextDragLabel(),
+            prefs_.enableTextDrag()));
       editingPanel.add(checkboxPref(
             constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
@@ -216,18 +211,13 @@ public class CodePreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayRelativeLineNumbersLabel(), prefs_.relativeLineNumbers()));
       displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
+      displayPanel.add(checkboxPref(prefs_.softWrapRFiles()));
+      displayPanel.add(checkboxPref(prefs_.marginColumnSoftWrap()));
+      displayPanel.add(checkboxPref(prefs_.marginColumnEditorWidth()));
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
-      indentGuides_ = new SelectWidget(
-         prefs_.indentGuides().getTitle() + ":",
-         (Prefs.EnumValue) prefs_.indentGuides(),
-         false,
-         true,
-         false);
-      displayPanel.add(indentGuides_);
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
-      
+
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),
             (Prefs.EnumValue) prefs_.foldStyle(),
@@ -236,6 +226,15 @@ public class CodePreferencesPane extends PreferencesPane
             false);
 
       displayPanel.add(foldMode_);
+
+      indentGuides_ = new SelectWidget(
+         prefs_.indentGuides().getTitle() + ":",
+         (Prefs.EnumValue) prefs_.indentGuides(),
+         false,
+         true,
+         false);
+
+      displayPanel.add(indentGuides_);
 
       displayPanel.add(headerLabel(constants_.syntaxHeaderLabel()));
       displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));

@@ -14,18 +14,17 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Float;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-
 import java.util.HashMap;
 
 import org.rstudio.core.client.ClassIds;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
+import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
+import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -35,6 +34,20 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Float;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+
 public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
               ProvidesResize,
@@ -43,6 +56,16 @@ public class WindowFrame extends Composite
               EnsureHeightEvent.Handler
 {
    public WindowFrame(String name, String accessibleName)
+   {
+      this(name, accessibleName, true, true);
+   }
+
+   public WindowFrame(String name, String accessibleName, boolean showMinMaxButtons)
+   {
+      this(name, accessibleName, showMinMaxButtons, showMinMaxButtons);
+   }
+
+   public WindowFrame(String name, String accessibleName, boolean showMaximizeButton, boolean showMinimizeButton)
    {
       name_ = name;
 
@@ -61,26 +84,33 @@ public class WindowFrame extends Composite
       minimizeButton_.setClickHandler(() -> minimize());
 
       frame_ = new LayoutPanel();
+      frame_.getElement().setId(ElementIds.getUniqueElementId(name + "_pane"));
       Roles.getRegionRole().set(frame_.getElement());
       Roles.getRegionRole().setAriaLabelProperty(frame_.getElement(), accessibleName);
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 
-      frame_.add(minimizeButton_);
-      frame_.setWidgetTopHeight(minimizeButton_,
-            TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-            14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(minimizeButton_,
-            RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
-            14, Style.Unit.PX);
+      if (showMinimizeButton)
+      {
+         frame_.add(minimizeButton_);
+         frame_.setWidgetTopHeight(minimizeButton_,
+               TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+               14, Style.Unit.PX);
+         frame_.setWidgetRightWidth(minimizeButton_,
+               RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
+               14, Style.Unit.PX);
+      }
 
-      frame_.add(maximizeButton_);
-      frame_.setWidgetTopHeight(maximizeButton_,
-                                TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
-                                14, Style.Unit.PX);
-      frame_.setWidgetRightWidth(maximizeButton_,
-                                 RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
-                                 14, Style.Unit.PX);
+      if (showMaximizeButton)
+      {
+         frame_.add(maximizeButton_);
+         frame_.setWidgetTopHeight(maximizeButton_,
+                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+                                   14, Style.Unit.PX);
+         frame_.setWidgetRightWidth(maximizeButton_,
+                                    RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
+                                    14, Style.Unit.PX);
+      }
 
       buttonsArea_ = new FlowPanel();
       frame_.add(buttonsArea_);
@@ -91,6 +121,11 @@ public class WindowFrame extends Composite
    public String getName()
    {
       return name_;
+   }
+
+   public void setMaximizeClickHandler(Command handler)
+   {
+      maximizeButton_.setClickHandler(handler);
    }
 
    @Inject

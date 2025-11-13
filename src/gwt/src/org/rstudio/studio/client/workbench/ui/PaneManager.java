@@ -72,6 +72,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
@@ -87,10 +89,6 @@ import com.google.inject.name.Named;
 
 import elemental2.dom.DomGlobal;
 
-/*
- * TODO: Push client state when selected tab or layout changes
- */
-
 @Singleton
 public class PaneManager
 {
@@ -98,11 +96,12 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn, Chat
    }
 
    public static final String LEFT_COLUMN = "left";
    public static final String RIGHT_COLUMN = "right";
+   public static final String SIDEBAR_COLUMN = "sidebar";
 
    class SelectedTabStateValue extends IntStateValue
    {
@@ -247,6 +246,7 @@ public class PaneManager
                       @Named(LAUNCHER_PANE) final WorkbenchTab launcherJobsTab,
                       @Named(DATA_OUTPUT_PANE) final WorkbenchTab dataTab,
                       @Named(TUTORIAL_PANE) final WorkbenchTab tutorialTab,
+                      @Named(CHAT_PANE) final WorkbenchTab chatTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader,
@@ -285,6 +285,7 @@ public class PaneManager
       testsTab_ = testsTab;
       dataTab_ = dataTab;
       tutorialTab_ = tutorialTab;
+      chatTab_ = chatTab;
       pGlobalDisplay_ = pGlobalDisplay;
 
       binder.bind(commands, this);
@@ -319,7 +320,7 @@ public class PaneManager
          else
          {
             sourceColumnManager_.consolidateColumns(0);
-            PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
+            PaneConfig paneConfig = getCurrentConfig();
             userPrefs_.panes().setGlobalValue(PaneConfig.create(
                JsArrayUtil.copy(paneConfig.getQuadrants()),
                paneConfig.getTabSet1(),
@@ -327,10 +328,33 @@ public class PaneManager
                paneConfig.getHiddenTabSet(),
                paneConfig.getConsoleLeftOnTop(),
                paneConfig.getConsoleRightOnTop(),
-               0).cast());
+               0,
+               paneConfig.getSidebar(),
+               paneConfig.getSidebarVisible(),
+               paneConfig.getSidebarLocation()).cast());
          }
       }
-      panel_.initialize(leftList_, center_, right_);
+      // Initialize sidebar if configured
+      Widget sidebarWidget = null;
+      String sidebarLocation = config.getSidebarLocation();
+      if (config.getSidebarVisible())
+      {
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            // State already set in initPanes, but ensure it's NORMAL if visible
+            if (sidebarWindow.getState() != WindowState.NORMAL)
+               sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebarWidget = sidebarWindow.getNormal();
+            sidebar_ = sidebarWidget;
+         }
+         showSidebar(true);
+      } else {
+         showSidebar(false);
+      }
+      
+      panel_.initialize(leftList_, center_, right_, sidebarWidget, sidebarLocation);
 
       for (LogicalWindow window : sourceLogicalWindows_)
       {
@@ -376,10 +400,10 @@ public class PaneManager
       }
 
       source_.loadDisplay();
+      
       userPrefs.panes().addValueChangeHandler(evt ->
       {
-         ArrayList<LogicalWindow> newPanes = createPanes(
-               validateConfig(evt.getValue().cast()));
+         ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue().cast()));
          panes_ = newPanes;
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
@@ -419,6 +443,9 @@ public class PaneManager
          hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
+         // manage sidebar
+         showSidebar(evt.getValue().getSidebarVisible());
+
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
             (userPrefs.panes().getValue().getAdditionalSourceColumns() < MAX_COLUMN_COUNT);
@@ -448,8 +475,20 @@ public class PaneManager
          // If we're currently zooming a pane, and we're now ensuring
          // a separate window is visible (e.g. a pane raising itself),
          // then transfer zoom to that window.
+         // BUT: don't transfer zoom to an empty source window, as that corrupts the zoom state
          if (maximizedWindow_ != null && !maximizedWindow_.equals(window))
          {
+            // Check if the target window is an empty source window
+            if (sourceLogicalWindows_.contains(window))
+            {
+               int sourceIndex = sourceLogicalWindows_.indexOf(window);
+               int tabCount = sourceColumnManager_.get(sourceIndex).getTabCount();
+               if (tabCount == 0)
+               {
+                  return;
+               }
+            }
+
             fullyMaximizeWindow(window, lastSelectedTab_);
             return;
          }
@@ -526,6 +565,23 @@ public class PaneManager
       });
 
       manageLayoutCommands();
+      manageChatCommands();
+
+      // Monitor changes to show_chat_ui preference and reload when it changes
+      userPrefs_.showChatUi().addValueChangeHandler(event ->
+      {
+         // Write preferences to server before reloading to ensure they persist
+         userPrefs_.writeUserPrefs(succeeded ->
+         {
+            if (succeeded)
+            {
+               // Preference saved successfully - reload the page to apply changes
+               com.google.gwt.user.client.Window.Location.reload();
+            }
+            // If write failed, don't reload to avoid losing user's change
+         });
+      });
+
       new ZoomedTabStateValue();
    }
 
@@ -691,6 +747,12 @@ public class PaneManager
          return;
       }
       panel_.focusSplitter(window.getNormal());
+   }
+
+   @Handler
+   public void onFocusSidebarSeparator()
+   {
+      panel_.focusSplitter(sidebar_);
    }
 
    @Handler
@@ -927,7 +989,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            sourceColumnManager_.getSize() - 1).cast());
+            sourceColumnManager_.getSize() - 1,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -937,7 +1002,173 @@ public class PaneManager
    {
       optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
+   
+   private void setSidebarPref(boolean showSidebar)
+   {
+      PaneConfig paneConfig = getCurrentConfig();
 
+      if (showSidebar == paneConfig.getSidebarVisible())
+         return;
+
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         showSidebar,
+         paneConfig.getSidebarLocation()));
+
+      userPrefs_.writeUserPrefs();
+   }
+
+   @Handler
+   public void onToggleSidebar()
+   {
+      // Toggle the preference value and update UI
+      PaneConfig paneConfig = getCurrentConfig();
+      boolean newVisibility = !paneConfig.getSidebarVisible();
+     
+      setSidebarPref(newVisibility);
+   }
+
+   @Handler
+   public void onToggleSidebarLocation()
+   {
+      // Toggle the sidebar location between left and right
+      PaneConfig paneConfig = getCurrentConfig();
+      String currentLocation = paneConfig.getSidebarLocation();
+      String newLocation = "left".equals(currentLocation) ? "right" : "left";
+      
+      // Update the preference
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         paneConfig.getAdditionalSourceColumns(),
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         newLocation));
+      
+      // Persist the preference change
+      userPrefs_.writeUserPrefs();
+      
+      // Update the UI by hiding and re-showing the sidebar in the new location
+      refreshSidebar();
+      
+      // Update command visibility based on new location
+      manageLayoutCommands();
+   }
+
+   public void showSidebar(boolean showSidebar)
+   {
+      if (showSidebar && sidebar_ == null)
+      {
+         // Create sidebar configuration
+         PaneConfig config = getCurrentConfig();
+         JsArrayString sidebarTabs = config.getSidebar();
+         
+         // Create sidebar tabset if not already created
+         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+         if (sidebarWindow == null)
+         {
+            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+                  tabNamesToTabs(sidebarTabs));
+            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+            sidebarTabPanel_ = sidebar.second;
+            sidebarMinPanel_ = sidebar.third;
+            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
+            sidebarWindow = sidebar.first;
+         }
+         
+         if (sidebarWindow != null)
+         {
+            // For sidebar, we use just the WindowFrame directly (no vertical split)
+            sidebarWindow.transitionToState(WindowState.NORMAL);
+            sidebar_ = sidebarWindow.getNormal();
+            String location = config.getSidebarLocation();
+            panel_.setSidebarWidget(sidebar_, location);
+         }
+      }
+      else if (!showSidebar && sidebar_ != null)
+      {
+         panel_.removeSidebarWidget();
+         sidebar_ = null;
+      }
+
+      commands_.toggleSidebar().setChecked(showSidebar);
+   }
+   
+   public void clearSidebarCache()
+   {
+      // Remove the cached sidebar window so it gets recreated with new tabs
+      panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      sidebarTabPanel_ = null;
+      sidebarMinPanel_ = null;
+      sidebarTabs_ = null;
+   }
+
+   public void refreshSidebar()
+   {
+      // If sidebar is visible, refresh it (e.g. if the sidebar location has changed)
+      if (sidebar_ != null)
+      {
+         // Preserve the current sidebar width before destroying
+         int sidebarWidth = panel_.getSidebarWidth();
+
+         showSidebar(false);
+         showSidebar(true);
+
+         // Restore the preserved width after recreation
+         if (sidebarWidth > 0)
+         {
+            // Use a deferred command to ensure the sidebar is fully initialized
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  panel_.setSidebarWidth(sidebarWidth);
+               }
+            });
+         }
+      }
+   }
+
+   public void setSidebarLocation(String location)
+   {
+      // Update preference and refresh the sidebar if visible
+      PaneConfig paneConfig = getCurrentConfig();
+
+      // Only update if location has changed
+      if (!location.equals(paneConfig.getSidebarLocation()))
+      {
+         userPrefs_.panes().setGlobalValue(PaneConfig.create(
+            JsArrayUtil.copy(paneConfig.getQuadrants()),
+            paneConfig.getTabSet1(),
+            paneConfig.getTabSet2(),
+            paneConfig.getHiddenTabSet(),
+            paneConfig.getConsoleLeftOnTop(),
+            paneConfig.getConsoleRightOnTop(),
+            paneConfig.getAdditionalSourceColumns(),
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            location));
+         
+         userPrefs_.writeUserPrefs();
+         
+         // If sidebar is visible, refresh it in the new location
+         refreshSidebar();
+      }
+   }
+   
    private <T> boolean equals(T lhs, T rhs)
    {
       if (lhs == null)
@@ -1001,8 +1232,22 @@ public class PaneManager
       manageLayoutCommands();
       panel_.setSplitterEnabled(false);
 
+      // Check if sidebar is visible and get its location (needed for correct size saving)
+      PaneConfig config = getCurrentConfig();
+      boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
+                               !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
+
+      // Save right widget size - use getOffsetWidth() when sidebar is on right
+      // because right_ is added with add() instead of addEast() in that configuration
       if (widgetSizePriorToZoom_ < 0)
-         widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      {
+         if (sidebarOnRight)
+            widgetSizePriorToZoom_ = right_.getOffsetWidth();
+         else
+            widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+      }
 
       // Put all of the panes in NORMAL mode, just to ensure an appropriate
       // transfer to EXCLUSIVE mode works. (It seems that 'exclusive' -> 'exclusive'
@@ -1016,6 +1261,8 @@ public class PaneManager
             DomUtils.contains(right_.getElement(), window.getActiveWidget().getElement());
       boolean isCenterWidget =
             DomUtils.contains(center_.getElement(), window.getActiveWidget().getElement());
+      boolean isSidebarWidget = sidebar_ != null &&
+            DomUtils.contains(sidebar_.getElement(), window.getActiveWidget().getElement());
 
       window.onWindowStateChange(new WindowStateChangeEvent(WindowState.EXCLUSIVE));
 
@@ -1047,7 +1294,39 @@ public class PaneManager
          onActivation = () -> commands_.activateHelp().execute();
       }
 
-      resizeHorizontally(rightTargetSize, leftTargets, onActivation);
+      // If sidebar is visible, we need to handle it during zoom
+      if (sidebarOnRight || sidebarOnLeft)
+      {
+         // Store sidebar's prior size if not already saved
+         if (sidebarSizePriorToZoom_ < 0)
+            sidebarSizePriorToZoom_ = sidebar_.getOffsetWidth();
+
+         double sidebarTarget;
+         if (isSidebarWidget)
+         {
+            // Zooming a sidebar widget - expand sidebar to fill entire UI
+            sidebarTarget = panel_.getOffsetWidth();
+            // Collapse all other columns
+            rightTargetSize = 0.0;
+            for (int i = 0; i < leftTargets.size(); i++)
+               leftTargets.set(i, 0.0);
+         }
+         else
+         {
+            // Zooming a non-sidebar widget - collapse sidebar to 0
+            sidebarTarget = 0.0;
+         }
+
+         if (sidebarOnRight)
+            resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargets, sidebarTarget, onActivation);
+         else
+            resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargets, sidebarTarget, onActivation);
+      }
+      else
+      {
+         // No sidebar visible - use original behavior
+         resizeHorizontally(rightTargetSize, leftTargets, onActivation);
+      }
    }
 
    private void resizeHorizontally(final double rightTarget,
@@ -1063,6 +1342,147 @@ public class PaneManager
       panel_.setWidgetSize(right_, rightTarget);
       for (int i = 0; i < leftList_.size(); i++)
          panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
+
+      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
+      panel_.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            panel_.onSplitterResized(new SplitterResizedEvent());
+            if (afterComplete != null)
+               afterComplete.execute();
+         }
+
+         public void onLayout(Layer layer, double progress)
+         {
+         }
+      });
+   }
+
+   private void resizeHorizontallyWithSidebarOnRight(final double rightTarget,
+                                                     final ArrayList<Double> leftTargets,
+                                                     final double sidebarTarget,
+                                                     final Command afterComplete)
+   {
+      // When sidebar is on right, right_ is added with add() so setWidgetSize() doesn't work.
+      // Control right_ size indirectly by setting center_ size.
+      // Layout: Left widgets + Center + Right + Sidebar = Panel width
+      // So: Center = Panel width - Left widgets - Right target - Sidebar target
+
+      // Splitter width constant (each splitter is 7px wide)
+      final double SPLITTER_WIDTH = 7.0;
+
+      double leftTotal = 0.0;
+      for (int i = 0; i < leftList_.size(); i++)
+      {
+         panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
+         leftTotal += leftTargets.get(i);
+      }
+
+      // When zooming sidebar to full width, we need special handling
+      // Check that sidebar target is close to panel width to distinguish zooming from restoring
+      boolean isZoomingSidebar = sidebarTarget > 0 &&
+                                 rightTarget == 0.0 &&
+                                 leftTotal == 0.0 &&
+                                 sidebarTarget > (panel_.getOffsetWidth() - 50);
+
+      double sidebarWidth;
+      double centerTarget;
+
+      if (isZoomingSidebar)
+      {
+         // When zooming sidebar, collapse center and right to minimum
+         // Reserve space for two splitters (middle and sidebar)
+         sidebarWidth = panel_.getOffsetWidth() - (2 * SPLITTER_WIDTH);
+         // Center gets 0 width (console collapses)
+         centerTarget = 0;
+      }
+      else
+      {
+         // Use sidebar target if provided, otherwise use current width
+         sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+         // Calculate center size normally: total - left widgets - right - sidebar
+         centerTarget = panel_.getOffsetWidth() - leftTotal - rightTarget - sidebarWidth;
+         if (centerTarget < 0)
+            centerTarget = 0;
+      }
+
+      if (sidebar_ != null)
+         panel_.setWidgetSize(sidebar_, sidebarWidth);
+
+      panel_.setWidgetSize(center_, centerTarget);
+
+      int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
+      panel_.animate(duration, new AnimationCallback()
+      {
+         public void onAnimationComplete()
+         {
+            panel_.onSplitterResized(new SplitterResizedEvent());
+            if (afterComplete != null)
+               afterComplete.execute();
+         }
+
+         public void onLayout(Layer layer, double progress)
+         {
+         }
+      });
+   }
+
+   private void resizeHorizontallyWithSidebarOnLeft(final double rightTarget,
+                                                     final ArrayList<Double> leftTargets,
+                                                     final double sidebarTarget,
+                                                     final Command afterComplete)
+   {
+      // When sidebar is on left, it's added with addWest() so setWidgetSize() works.
+      // Layout: Sidebar + Left widgets + Center + Right = Panel width
+      // Sidebar, left widgets, and right can be sized directly; center auto-fills.
+
+      // Splitter width constant (each splitter is 7px wide)
+      final double SPLITTER_WIDTH = 7.0;
+
+      // Check if we're zooming the sidebar
+      // Check that sidebar target is close to panel width to distinguish zooming from restoring
+      double leftTotal = 0.0;
+      for (Double target : leftTargets)
+         leftTotal += target;
+      boolean isZoomingSidebar = sidebarTarget > 0 &&
+                                 rightTarget == 0.0 &&
+                                 leftTotal == 0.0 &&
+                                 sidebarTarget > (panel_.getOffsetWidth() - 50);
+
+      double sidebarWidth;
+      double actualRightTarget = rightTarget;
+      ArrayList<Double> actualLeftTargets = new ArrayList<>(leftTargets);
+
+      if (isZoomingSidebar)
+      {
+         // When zooming sidebar on left, we need special handling for splitters
+         // Count total number of splitters (sidebar + left widgets + middle column)
+         int numSplitters = 1 + actualLeftTargets.size() + 1;
+         // Calculate space needed for splitters and minimal widget widths
+         double splitterSpace = numSplitters * SPLITTER_WIDTH;
+         double minimalWidgetSpace = actualLeftTargets.size() * 1.0 + 1.0; // 1px per widget
+         // Sidebar gets remaining space
+         sidebarWidth = panel_.getOffsetWidth() - splitterSpace - minimalWidgetSpace;
+         // Give each collapsed widget 1px to maintain splitter separation
+         for (int i = 0; i < actualLeftTargets.size(); i++)
+            actualLeftTargets.set(i, 1.0);
+         // Right widget gets 1px to maintain splitter visibility
+         actualRightTarget = 1.0;
+      }
+      else
+      {
+         // Use sidebar target if provided, otherwise use current width
+         sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
+      }
+
+      if (sidebar_ != null)
+         panel_.setWidgetSize(sidebar_, sidebarWidth);
+
+      for (int i = 0; i < leftList_.size(); i++)
+         panel_.setWidgetSize(leftList_.get(i), actualLeftTargets.get(i));
+
+      panel_.setWidgetSize(right_, actualRightTarget);
 
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
@@ -1096,6 +1516,7 @@ public class PaneManager
       maximizedWindow_ = null;
       maximizedTab_ = null;
       widgetSizePriorToZoom_ = -1;
+      sidebarSizePriorToZoom_ = -1;
       leftWidgetSizePriorToZoom_.clear();
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
@@ -1198,7 +1619,27 @@ public class PaneManager
             leftTargets.addAll(leftWidgetSizePriorToZoom_);
       }
 
-      resizeHorizontally(widgetSizePriorToZoom_, leftTargets);
+      // Check if sidebar is visible and get its location
+      PaneConfig config = getCurrentConfig();
+      boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
+                               !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
+
+      // Restore with sidebar handling if sidebar was visible during zoom
+      if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
+      {
+         if (sidebarOnRight)
+            resizeHorizontallyWithSidebarOnRight(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, null);
+         else
+            resizeHorizontallyWithSidebarOnLeft(widgetSizePriorToZoom_, leftTargets, sidebarSizePriorToZoom_, null);
+      }
+      else
+      {
+         // No sidebar or sidebar wasn't saved - use original behavior
+         resizeHorizontally(widgetSizePriorToZoom_, leftTargets);
+      }
+
       invalidateSavedLayoutState(true);
    }
 
@@ -1209,8 +1650,16 @@ public class PaneManager
       // TabSet Panes without any tabs should remain minimized.
       for (LogicalWindow window : panes_)
       {
+         boolean shouldMinimize = false;
+
+         // Check if this is an empty TabSet
          if ((window == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1) && tabSet1TabPanel_.isEmpty()) ||
              (window == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2) && tabSet2TabPanel_.isEmpty()))
+         {
+            shouldMinimize = true;
+         }
+
+         if (shouldMinimize)
          {
             if (window.getState() != WindowState.MINIMIZE)
                window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
@@ -1299,6 +1748,18 @@ public class PaneManager
       hiddenTabSetTabPanel_ = tsHide.second;
       hiddenTabSetTabPanel_.setNeverVisible(true);
       hiddenTabSetMinPanel_ = tsHide.third;
+      
+      // Initialize sidebar (always create it, even if not initially visible)
+      Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+            UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+            tabNamesToTabs(config.getSidebar()));
+      panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+      sidebarTabPanel_ = sidebar.second;
+      sidebarMinPanel_ = sidebar.third;
+
+      // Initialize the sidebar window state (HIDE if not visible, NORMAL if visible)
+      // This prevents null state_ in LogicalWindow.visible()
+      sidebar.first.transitionToState(config.getSidebarVisible() ? WindowState.NORMAL : WindowState.HIDE);
    }
 
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
@@ -1308,7 +1769,13 @@ public class PaneManager
       if (tabNames != null)
       {
          for (int j = 0; j < tabNames.length(); j++)
-            tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+         {
+            Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
+            // Filter out Chat tab if show_chat_ui preference is false
+            if (tab == Tab.Chat && !userPrefs_.showChatUi().getGlobalValue())
+               continue;
+            tabList.add(tab);
+         }
       }
       return tabList;
    }
@@ -1348,6 +1815,8 @@ public class PaneManager
             return vcsTab_;
          case Tutorial:
             return tutorialTab_;
+         case Chat:
+            return chatTab_;
          case Build:
             return buildTab_;
          case Presentation:
@@ -1370,12 +1839,26 @@ public class PaneManager
 
    public WorkbenchTab[] getAllTabs()
    {
-      return new WorkbenchTab[] { historyTab_, filesTab_,
-                                  plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, tutorialTab_, buildTab_, 
-                                  presentationTab_, presentation2Tab_,
-                                  environmentTab_, viewerTab_,
-                                  connectionsTab_, jobsTab_, launcherJobsTab_ };
+      // Build list of tabs, conditionally including Chat based on preference
+      ArrayList<WorkbenchTab> tabs = new ArrayList<>();
+      tabs.add(historyTab_);
+      tabs.add(filesTab_);
+      tabs.add(plotsTab_);
+      tabs.add(packagesTab_);
+      tabs.add(helpTab_);
+      tabs.add(vcsTab_);
+      tabs.add(tutorialTab_);
+      tabs.add(buildTab_);
+      tabs.add(presentationTab_);
+      tabs.add(presentation2Tab_);
+      tabs.add(environmentTab_);
+      tabs.add(viewerTab_);
+      if (userPrefs_.showChatUi().getGlobalValue())
+         tabs.add(chatTab_);
+      tabs.add(connectionsTab_);
+      tabs.add(jobsTab_);
+      tabs.add(launcherJobsTab_);
+      return tabs.toArray(new WorkbenchTab[tabs.size()]);
    }
 
    public void activateTab(Tab tab)
@@ -1408,6 +1891,18 @@ public class PaneManager
       if (!parent.visible())
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
+      }
+
+      // If the tab is in the sidebar, ensure the sidebar is visible
+      if (parent == panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+      {
+         // Check if sidebar is currently hidden and show it
+         if (sidebar_ == null)
+         {
+            showSidebar(true);
+            // Update the preference to persist the visibility
+            setSidebarPref(true);
+         }
       }
 
       if (tabToIndex_.containsKey(tab))
@@ -1480,7 +1975,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1496,7 +1994,10 @@ public class PaneManager
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         sourceColumnManager_.getSize() - 1).cast());
+         sourceColumnManager_.getSize() - 1,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1506,16 +2007,76 @@ public class PaneManager
     */
    private String getZoomedColumn()
    {
-      double currentColumnSize = panel_.getWidgetSize(right_);
-      if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
-         return LEFT_COLUMN;
+      // When sidebar is on the right, right_ is added with add() not addEast(),
+      // so getWidgetSize() doesn't work. Use getOffsetWidth() instead.
+      PaneConfig config = getCurrentConfig();
+      boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
+                               !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
 
-      // If MainSplitPanel.enforceBoundaries has been called then the rightZoomPosition is the
-      // offsetWidth - 3
-      double rightZoomPosition = panel_.getOffsetWidth();
-      if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
-          MathUtil.isEqual(currentColumnSize, rightZoomPosition - 3, 0.0001))
-         return RIGHT_COLUMN;
+      double currentColumnSize;
+      if (sidebarOnRight)
+         currentColumnSize = right_.getOffsetWidth();
+      else
+         currentColumnSize = panel_.getWidgetSize(right_);
+
+      // Check if sidebar is zoomed by seeing if it takes up (almost) the entire panel width
+      if (sidebarOnRight || sidebarOnLeft)
+      {
+         double sidebarWidth = sidebar_.getOffsetWidth();
+         double panelWidth = panel_.getOffsetWidth();
+
+         // Check if we're in a transitional layout state (during initial layout or
+         // sidebar show/hide). Don't report zoom state during transitions as widget
+         // sizes may not be accurately calculated yet.
+         if (panelWidth == 0)
+            return null;
+
+         // Allow for small rounding differences and splitter widths (2 splitters = 14px)
+         // When zoomed, sidebar width should be approximately panelWidth - 14px
+         if (MathUtil.isEqual(sidebarWidth, panelWidth, 20.0) ||
+             sidebarWidth > panelWidth - 20.0)
+         {
+            return SIDEBAR_COLUMN;
+         }
+      }
+
+      // Check if right column is zoomed by seeing if left/center are collapsed.
+      // When sidebar is on right, we can't reliably check right column size due to splitters,
+      // so instead check if all other columns are at 0.
+      double centerSize = center_.getOffsetWidth();
+      double leftSize = 0;
+      for (Widget w : leftList_)
+         leftSize += w.getOffsetWidth();
+
+      boolean leftAndCenterCollapsed = MathUtil.isEqual(centerSize, 0.0, 0.0001) &&
+                                       MathUtil.isEqual(leftSize, 0.0, 0.0001);
+
+      if (MathUtil.isEqual(currentColumnSize, 0.0, 0.0001))
+      {
+         // If right column size is 0, check if we're in a transitional layout state.
+         // When sidebar is being shown/hidden, or during initial layout, widgets are
+         // temporarily at width 0. Don't report zoom state in this case.
+         if (panel_.getOffsetWidth() == 0 || center_.getOffsetWidth() == 0)
+            return null;
+         return LEFT_COLUMN;
+      }
+
+      if (sidebarOnRight)
+      {
+         // When sidebar is on right, check if left/center are collapsed
+         if (leftAndCenterCollapsed)
+            return RIGHT_COLUMN;
+      }
+      else
+      {
+         // When no sidebar on right, use the original size-based check
+         double rightZoomPosition = panel_.getOffsetWidth();
+         if (MathUtil.isEqual(currentColumnSize, rightZoomPosition, 0.0001) ||
+             MathUtil.isEqual(currentColumnSize, rightZoomPosition - 3, 0.0001))
+            return RIGHT_COLUMN;
+      }
 
       return null;
    }
@@ -1527,7 +2088,14 @@ public class PaneManager
     */
    public void zoomColumn(String columnId)
    {
+      PaneConfig config = getCurrentConfig();
+      boolean sidebarOnRight = sidebar_ != null && panel_.hasSidebarWidget() &&
+                               !"left".equals(config.getSidebarLocation());
+      boolean sidebarOnLeft = sidebar_ != null && panel_.hasSidebarWidget() &&
+                              "left".equals(config.getSidebarLocation());
+
       double rightTargetSize;
+      double sidebarTargetSize = -1;
       ArrayList<Double> leftTargetSize = new ArrayList<>();
 
       String currentZoomedColumn = getZoomedColumn();
@@ -1545,15 +2113,47 @@ public class PaneManager
          rightTargetSize = widgetSizePriorToZoom_;
          for (Double s : leftWidgetSizePriorToZoom_)
             leftTargetSize.add(s);
+         if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ >= 0)
+            sidebarTargetSize = sidebarSizePriorToZoom_;
          unZooming = true;
       }
       else if (StringUtil.equals(columnId, LEFT_COLUMN))
       {
          rightTargetSize = 0.0;
+         if (sidebarOnRight || sidebarOnLeft)
+            sidebarTargetSize = 0.0;
       }
       else if (StringUtil.equals(columnId, RIGHT_COLUMN))
       {
          rightTargetSize = panel_.getOffsetWidth();
+         if (sidebarOnRight)
+         {
+            // When zooming right with sidebar on right, collapse sidebar to 0
+            // and use 0 in the calculation (not the old sidebar width)
+            sidebarTargetSize = 0.0;
+            rightTargetSize -= sidebarTargetSize;  // Subtract 0, so full width
+         }
+         else if (sidebarOnLeft)
+         {
+            // When zooming right with sidebar on left, collapse sidebar to 0
+            sidebarTargetSize = 0.0;
+         }
+      }
+      else if (StringUtil.equals(columnId, SIDEBAR_COLUMN))
+      {
+         // When zooming sidebar, collapse all other columns
+         rightTargetSize = 0.0;
+         if (sidebarOnRight || sidebarOnLeft)
+         {
+            // Expand sidebar to full width
+            sidebarTargetSize = panel_.getOffsetWidth();
+         }
+         else
+         {
+            // No sidebar visible, cannot zoom it
+            Debug.logWarning("Cannot zoom sidebar when it is not visible");
+            return;
+         }
       }
       else
       {
@@ -1562,7 +2162,7 @@ public class PaneManager
       }
       // Currently we cannot zoom on left widgets
       if (!unZooming)
-      {  
+      {
          for (int i=0; i<leftList_.size(); i++)
             leftTargetSize.add(0.0);
       }
@@ -1578,12 +2178,20 @@ public class PaneManager
       if (unZooming)
       {
          widgetSizePriorToZoom_ = -1;
+         sidebarSizePriorToZoom_ = -1;
          leftWidgetSizePriorToZoom_.clear();
       }
       else
       {
          if (widgetSizePriorToZoom_ < 0)
-            widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+         {
+            if (sidebarOnRight)
+               widgetSizePriorToZoom_ = right_.getOffsetWidth();
+            else
+               widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+         }
+         if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ < 0)
+            sidebarSizePriorToZoom_ = sidebar_.getOffsetWidth();
          if (leftWidgetSizePriorToZoom_.size() != leftList_.size())
          {
             for (Widget w : leftList_)
@@ -1591,7 +2199,12 @@ public class PaneManager
          }
       }
 
-      resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
+      if (sidebarOnRight)
+         resizeHorizontallyWithSidebarOnRight(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
+      else if (sidebarOnLeft)
+         resizeHorizontallyWithSidebarOnLeft(rightTargetSize, leftTargetSize, sidebarTargetSize, () -> manageLayoutCommands());
+      else
+         resizeHorizontally(rightTargetSize, leftTargetSize, () -> manageLayoutCommands());
    }
 
    public LogicalWindow getZoomedWindow()
@@ -1680,7 +2293,10 @@ public class PaneManager
          paneConfig.getHiddenTabSet(),
          paneConfig.getConsoleLeftOnTop(),
          paneConfig.getConsoleRightOnTop(),
-         additionalSourceCount_).cast());
+         additionalSourceCount_,
+         paneConfig.getSidebar(),
+         paneConfig.getSidebarVisible(),
+         paneConfig.getSidebarLocation()).cast());
       userPrefs_.writeUserPrefs();
 
       return panesByName_.get(name).getNormal();
@@ -1720,7 +2336,10 @@ public class PaneManager
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
             paneConfig.getConsoleRightOnTop(),
-            additionalSourceCount_).cast());
+            additionalSourceCount_,
+            paneConfig.getSidebar(),
+            paneConfig.getSidebarVisible(),
+            paneConfig.getSidebarLocation()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -1782,7 +2401,8 @@ public class PaneManager
 
    private LogicalWindow createSource(String frameName, String accessibleName, Widget display)
    {
-      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName);
+      boolean showMinMaxButtons = StringUtil.equals(frameName, SourceColumnManager.MAIN_SOURCE_NAME);
+      WindowFrame sourceFrame = new WindowFrame(frameName, accessibleName, showMinMaxButtons);
       sourceFrame.setFillWidget(display);
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
@@ -1796,11 +2416,23 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName);
+      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      boolean showMaximizeButton = true;  // All tabsets get maximize button
+      boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName);
+      // Wire sidebar maximize button to layoutZoomSidebar command
+      if (isSidebar)
+      {
+         frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
+      }
+
+      // Only pass commands to sidebar for the empty state feature
+      final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
+         isSidebar ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;
@@ -1808,6 +2440,8 @@ public class PaneManager
          tabs2_ = tabs;
       else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
          hiddenTabs_ = tabs;
+      else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
+         sidebarTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -1906,6 +2540,8 @@ public class PaneManager
          return Tab.VCS;
       if (name.equalsIgnoreCase(TUTORIAL_PANE))
          return Tab.Tutorial;
+      if (name.equalsIgnoreCase(CHAT_PANE))
+         return Tab.Chat;
       if (name.equalsIgnoreCase(BUILD_PANE))
          return Tab.Build;
       if (name.equalsIgnoreCase(PRESENTATION_PANE))
@@ -1947,6 +2583,7 @@ public class PaneManager
       case SourceColumn: return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
       case Tutorial:     return commands_.layoutZoomTutorial();
+      case Chat:         return commands_.layoutZoomChat();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
       case Presentations: return commands_.layoutZoomPresentation2();
@@ -1979,6 +2616,7 @@ public class PaneManager
          commands_.layoutConsoleOnRight().setVisible(false);
       }
 
+      manageSidebarCommands();
       manageZoomColumnCommands();
    }
 
@@ -1986,15 +2624,50 @@ public class PaneManager
    {
       boolean zoomLeftChecked = false;
       boolean zoomRightChecked = false;
+      boolean zoomSidebarChecked = false;
 
       String column = getZoomedColumn();
       if (StringUtil.equals(column, LEFT_COLUMN))
          zoomLeftChecked = true;
       else if (StringUtil.equals(column, RIGHT_COLUMN))
          zoomRightChecked = true;
+      else if (StringUtil.equals(column, SIDEBAR_COLUMN))
+         zoomSidebarChecked = true;
 
       commands_.layoutZoomLeftColumn().setChecked(zoomLeftChecked);
       commands_.layoutZoomRightColumn().setChecked(zoomRightChecked);
+      commands_.layoutZoomSidebar().setChecked(zoomSidebarChecked);
+
+      PaneConfig config = getCurrentConfig();
+      boolean isSidebarVisible = config.getSidebarVisible();
+      commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
+
+      // Update sidebar maximize button state to reflect zoom state
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebarWindow != null)
+      {
+         WindowFrame sidebarFrame = sidebarWindow.getNormal();
+         if (sidebarFrame != null)
+         {
+            sidebarFrame.setMaximizedDependentState(
+               zoomSidebarChecked ? WindowState.MAXIMIZE : WindowState.NORMAL);
+         }
+      }
+   }
+
+   private void manageSidebarCommands()
+   {
+      PaneConfig config = getCurrentConfig();
+      boolean isSidebarVisible = config.getSidebarVisible();
+
+      commands_.focusSidebarSeparator().setEnabled(isSidebarVisible);
+   }
+
+   private void manageChatCommands()
+   {
+      boolean showChatUi = userPrefs_.showChatUi().getGlobalValue();
+      commands_.activateChat().setVisible(showChatUi);
+      commands_.layoutZoomChat().setVisible(showChatUi);
    }
 
    private List<AppCommand> getLayoutCommands()
@@ -2016,6 +2689,9 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
+      // Only add layoutZoomChat if show_chat_ui preference is enabled
+      if (userPrefs_.showChatUi().getGlobalValue())
+         commands.add(commands_.layoutZoomChat());
 
       return commands;
    }
@@ -2077,6 +2753,7 @@ public class PaneManager
    private final WorkbenchTab launcherJobsTab_;
    private final WorkbenchTab dataTab_;
    private final WorkbenchTab tutorialTab_;
+   private final WorkbenchTab chatTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
    private final MainSplitPanel panel_;
@@ -2096,6 +2773,10 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
+   private WorkbenchTabPanel sidebarTabPanel_;
+   private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
+   private Widget sidebar_;
+   private ArrayList<Tab> sidebarTabs_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
@@ -2103,6 +2784,7 @@ public class PaneManager
    private LogicalWindow lastFocusedWindow_ = null;
    private Tab maximizedTab_ = null;
    private double widgetSizePriorToZoom_ = -1;
+   private double sidebarSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
    private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
 
@@ -2139,6 +2821,7 @@ public class PaneManager
    public static final String LAUNCHER_PANE = "Launcher"; //$NON-NLS-1$
    public static final String DATA_OUTPUT_PANE = "Data Output"; //$NON-NLS-1$
    public static final String TUTORIAL_PANE = "Tutorial"; //$NON-NLS-1$
+   public static final String CHAT_PANE = "Chat"; //$NON-NLS-1$
    public static final String SOURCE_COLUMN = "SourceColumn"; //$NON-NLS-1$
    public static final String FIND_PANE = "Find"; //$NON-NLS-1$
    public static final String MARKERS_PANE = "Markers"; //$NON-NLS-1$

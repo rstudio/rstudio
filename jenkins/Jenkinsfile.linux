@@ -1,6 +1,6 @@
 def utils
 
-def ext_map = 
+def ext_map =
 [
   'jammy':      'deb',
   'rhel8':      'rpm',
@@ -90,7 +90,7 @@ pipeline {
               RSTUDIO_VERSION_FLOWER = utils.getFlower()
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               RSTUDIO_VERSION_FILENAME = utils.getVersionFilename(RSTUDIO_VERSION) // Define here for use later in utils.rebuildCheck()
-              
+
               // Set up environment for builds.
               ENV = utils.getBuildEnv(!params.DAILY)
             }
@@ -177,6 +177,7 @@ pipeline {
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
               BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
+              PKG_EXTENSION = "${ext_map[env.OS]}"
             }
 
             stages {
@@ -191,18 +192,45 @@ pipeline {
                 }
               }
 
-              stage('Build and Sign') {
-                environment {
-                  CODESIGN_KEY = credentials('gpg-codesign-private-key-2027')
-                  CODESIGN_PASS = credentials('gpg-codesign-passphrase')
-                  PKG_EXTENSION = "${ext_map[env.OS]}"
+              stage('Build (Daily)') {
+                when { expression { params.DAILY } }
+                steps {
+                  dir('package/linux') {
+                    sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                  }
                 }
+              }
 
+              stage('Build (Hourly)') {
+                when { expression { !params.DAILY } }
                 steps {
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
                     }
+                  }
+                }
+              }
+
+              stage('Upload Debug Symbols') {
+                when { expression { env.WORKSPACE != "pull-requests" && FLAVOR != "Selinux" } }
+                steps {
+                  dir('package/linux') {
+                    withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./scripts/upload-debug-symbols ${FLAVOR} ${ext_map[env.OS].toUpperCase()} ${ARCH}"
+                    }
+                  }
+                }
+              }
+
+              stage('Sign') {
+                environment {
+                  CODESIGN_KEY = credentials('gpg-codesign-private-key-2027')
+                  CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+                }
+
+                steps {
+                  dir('package/linux') {
                     sh '../../docker/jenkins/sign-release.sh ${BUILD_LOCATION}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
@@ -317,7 +345,7 @@ pipeline {
                       }
                     }
                   }
-
+                  
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('posit-jenkins-rstudio')
@@ -346,10 +374,10 @@ pipeline {
 
                   stage ("Update Daily Build Redirects") {
                     environment {
-                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
+                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
 
-                    when { 
+                    when {
                       anyOf {
                         expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
                         expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
@@ -378,7 +406,7 @@ pipeline {
     stage('Trigger Testing Jobs') {
       agent { label 'linux' }
 
-      // Skip for hourly builds, non-published builds, and branches that don't 
+      // Skip for hourly builds, non-published builds, and branches that don't
       // have corresponding automation branches
       when {
         allOf {

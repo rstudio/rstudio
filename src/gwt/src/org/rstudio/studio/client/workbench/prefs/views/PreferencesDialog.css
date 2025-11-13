@@ -3,6 +3,7 @@
 
 @eval PANEL_CONTAINER_WIDTH org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidth();
 @eval PANEL_CONTAINER_HEIGHT org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerHeight();
+@eval PANEL_CONTAINER_WIDTH_NO_CHOOSER org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants.panelContainerWidthNoChooser();
 
 .panelContainer {
    width: PANEL_CONTAINER_WIDTH;
@@ -10,7 +11,7 @@
 }
 
 .panelContainerNoChooser {
-   width: 468px;
+   width: PANEL_CONTAINER_WIDTH_NO_CHOOSER;
    height: PANEL_CONTAINER_HEIGHT;
 }
 

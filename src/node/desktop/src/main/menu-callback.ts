@@ -144,6 +144,7 @@ export class MenuCallback extends EventEmitter {
     // GWT redefines and rebuilds the entire menu in some cases
     this.mainMenu = new Menu();
     this.mainMenuTemplate = new Array<MenuItemConstructorOptions>();
+    appState().modalTracker.resetGwtModals();
 
     if (process.platform === 'darwin') {
       const appMenu: MenuItemConstructorOptions = { role: 'appMenu', visible: true };
@@ -406,6 +407,11 @@ export class MenuCallback extends EventEmitter {
         this.emit(MenuCallback.COMMAND_INVOKED, menuItem.id);
       },
     };
+
+    // handle Ctrl + F in GWT instead of via desktop callback
+    if (cmdId === 'findReplace') {
+      menuItemOpts.registerAccelerator = false;
+    }
 
     if (isRadio) {
       // Having true radio menus really only benefits screen-reader users, so avoid the visual

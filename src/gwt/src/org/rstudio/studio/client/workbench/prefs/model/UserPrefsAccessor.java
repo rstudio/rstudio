@@ -389,9 +389,10 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_TABSET1 = "TabSet1";
       public final static String QUADRANTS_TABSET2 = "TabSet2";
       public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
+      public final static String QUADRANTS_SIDEBAR = "Sidebar";
 
       public final native JsArrayString getQuadrants() /*-{
-         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet"];
+         return this && this.quadrants || ["Source","Console","TabSet1","TabSet2","HiddenTabSet","Sidebar"];
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
@@ -406,6 +407,10 @@ public class UserPrefsAccessor extends Prefs
          return this && this.hiddenTabSet || [];
       }-*/;
 
+      public final native JsArrayString getSidebar() /*-{
+         return this && this.sidebar || ["Chat"];
+      }-*/;
+
       public final native boolean getConsoleLeftOnTop() /*-{
          return this && this.console_left_on_top || false;
       }-*/;
@@ -416,6 +421,14 @@ public class UserPrefsAccessor extends Prefs
 
       public final native int getAdditionalSourceColumns() /*-{
          return this && this.additional_source_columns || 0;
+      }-*/;
+
+      public final native boolean getSidebarVisible() /*-{
+         return this && this.sidebar_visible || false;
+      }-*/;
+
+      public final native String getSidebarLocation() /*-{
+         return this && this.sidebar_location || "right";
       }-*/;
 
    }
@@ -502,6 +515,30 @@ public class UserPrefsAccessor extends Prefs
          _constants.marginColumnTitle(), 
          _constants.marginColumnDescription(), 
          80);
+   }
+
+   /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   public PrefValue<Boolean> marginColumnSoftWrap()
+   {
+      return bool(
+         "margin_column_soft_wrap",
+         _constants.marginColumnSoftWrapTitle(), 
+         _constants.marginColumnSoftWrapDescription(), 
+         false);
+   }
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   public PrefValue<Boolean> marginColumnEditorWidth()
+   {
+      return bool(
+         "margin_column_editor_width",
+         _constants.marginColumnEditorWidthTitle(), 
+         _constants.marginColumnEditorWidthDescription(), 
+         false);
    }
 
    /**
@@ -1135,6 +1172,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   public PrefValue<Boolean> consoleSoftWrap()
+   {
+      return bool(
+         "console_soft_wrap",
+         _constants.consoleSoftWrapTitle(), 
+         _constants.consoleSoftWrapDescription(), 
+         true);
+   }
+
+   /**
     * Whether to use syntax highlighting in the R console.
     */
    public PrefValue<Boolean> syntaxColorConsole()
@@ -1666,6 +1715,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   public PrefValue<Boolean> packagesSourceColumnEnabled()
+   {
+      return bool(
+         "packages_source_column_enabled",
+         _constants.packagesSourceColumnEnabledTitle(), 
+         _constants.packagesSourceColumnEnabledDescription(), 
+         true);
+   }
+
+   /**
     * C++ template.
     */
    public PrefValue<String> cppTemplate()
@@ -2144,6 +2205,29 @@ public class UserPrefsAccessor extends Prefs
          _constants.showRmdRenderCommandDescription(), 
          false);
    }
+
+   /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   public PrefValue<String> rmdRenameInScopeBehavior()
+   {
+      return enumeration(
+         "rmd_rename_in_scope_behavior",
+         _constants.rmdRenameInScopeBehaviorTitle(), 
+         _constants.rmdRenameInScopeBehaviorDescription(), 
+         new String[] {
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT,
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL
+         },
+         "all",
+         new String[] {
+            _constants.rmdRenameInScopeBehaviorEnum_current(),
+            _constants.rmdRenameInScopeBehaviorEnum_all()
+         });
+   }
+
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT = "current";
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL = "all";
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
@@ -3838,6 +3922,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS = "errors";
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
+   /**
+    * Whether to show the experimental Chat UI
+    */
+   public PrefValue<Boolean> showChatUi()
+   {
+      return bool(
+         "show_chat_ui",
+         _constants.showChatUiTitle(), 
+         _constants.showChatUiDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3896,6 +3992,10 @@ public class UserPrefsAccessor extends Prefs
          blinkingCursor().setValue(layer, source.getBool("blinking_cursor"));
       if (source.hasKey("margin_column"))
          marginColumn().setValue(layer, source.getInteger("margin_column"));
+      if (source.hasKey("margin_column_soft_wrap"))
+         marginColumnSoftWrap().setValue(layer, source.getBool("margin_column_soft_wrap"));
+      if (source.hasKey("margin_column_editor_width"))
+         marginColumnEditorWidth().setValue(layer, source.getBool("margin_column_editor_width"));
       if (source.hasKey("show_invisibles"))
          showInvisibles().setValue(layer, source.getBool("show_invisibles"));
       if (source.hasKey("indent_guides"))
@@ -3986,6 +4086,8 @@ public class UserPrefsAccessor extends Prefs
          foldStyle().setValue(layer, source.getString("fold_style"));
       if (source.hasKey("save_before_sourcing"))
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
+      if (source.hasKey("console_soft_wrap"))
+         consoleSoftWrap().setValue(layer, source.getBool("console_soft_wrap"));
       if (source.hasKey("syntax_color_console"))
          syntaxColorConsole().setValue(layer, source.getBool("syntax_color_console"));
       if (source.hasKey("highlight_console_errors"))
@@ -4070,6 +4172,8 @@ public class UserPrefsAccessor extends Prefs
          navigateToBuildError().setValue(layer, source.getBool("navigate_to_build_error"));
       if (source.hasKey("packages_pane_enabled"))
          packagesPaneEnabled().setValue(layer, source.getBool("packages_pane_enabled"));
+      if (source.hasKey("packages_source_column_enabled"))
+         packagesSourceColumnEnabled().setValue(layer, source.getBool("packages_source_column_enabled"));
       if (source.hasKey("cpp_template"))
          cppTemplate().setValue(layer, source.getString("cpp_template"));
       if (source.hasKey("restore_source_documents"))
@@ -4138,6 +4242,8 @@ public class UserPrefsAccessor extends Prefs
          terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
+      if (source.hasKey("rmd_rename_in_scope_behavior"))
+         rmdRenameInScopeBehavior().setValue(layer, source.getString("rmd_rename_in_scope_behavior"));
       if (source.hasKey("enable_text_drag"))
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
@@ -4374,6 +4480,8 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
+      if (source.hasKey("show_chat_ui"))
+         showChatUi().setValue(layer, source.getBool("show_chat_ui"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4406,6 +4514,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showMargin());
       prefs.add(blinkingCursor());
       prefs.add(marginColumn());
+      prefs.add(marginColumnSoftWrap());
+      prefs.add(marginColumnEditorWidth());
       prefs.add(showInvisibles());
       prefs.add(indentGuides());
       prefs.add(continueCommentsOnNewline());
@@ -4451,6 +4561,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(focusConsoleAfterExec());
       prefs.add(foldStyle());
       prefs.add(saveBeforeSourcing());
+      prefs.add(consoleSoftWrap());
       prefs.add(syntaxColorConsole());
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
@@ -4493,6 +4604,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
+      prefs.add(packagesSourceColumnEnabled());
       prefs.add(cppTemplate());
       prefs.add(restoreSourceDocuments());
       prefs.add(handleErrorsInUserCodeOnly());
@@ -4527,6 +4639,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
       prefs.add(showRmdRenderCommand());
+      prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
       prefs.add(alwaysShownFiles());
@@ -4645,6 +4758,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
+      prefs.add(showChatUi());
       return prefs;
    }
    

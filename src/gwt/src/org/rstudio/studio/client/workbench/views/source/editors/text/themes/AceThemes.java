@@ -21,6 +21,7 @@ import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
@@ -42,6 +43,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.StyleElement;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -94,31 +98,7 @@ public class AceThemes
       currentStyleEl.setHref(themeUrl.toString());
       
       // In server mode, augment the theme with a font if we have one
-      if (!Desktop.isDesktop() && prefs_.get().serverEditorFontEnabled().getValue())
-      {
-         String font = prefs_.get().serverEditorFont().getValue();
-         if (!StringUtil.isNullOrEmpty(font))
-         {
-            final String fontId = "rstudio-fontelement";
-            LinkElement fontEl = document.createLinkElement();
-            fontEl.setType("text/css");
-            fontEl.setRel("stylesheet");
-            fontEl.setId(fontId);
-            fontEl.setHref(
-                  GWT.getHostPageBaseURL() + 
-                  "fonts/css/" + 
-                  font + ".css");
-            Element oldFontEl = document.getElementById(fontId);
-            if (null != oldFontEl)
-            {
-              document.getBody().replaceChild(fontEl, oldFontEl);
-            }
-            else
-            {
-               document.getBody().appendChild(fontEl);
-            }
-         }
-      }
+      augmentThemeWithFont(document);
    
       Element oldStyleEl = document.getElementById(linkId);
       if (null != oldStyleEl)
@@ -295,6 +275,71 @@ public class AceThemes
          },
          themeLocation);
    }
+
+   private void augmentThemeWithFont(Document document)
+   {
+      // Skip for desktop builds; fonts are applied via alternate mechanism
+      if (Desktop.isDesktop())
+         return;
+      
+      // Check whether server fonts are actually enabled.
+      boolean enabled = prefs_.get().serverEditorFontEnabled().getValue();
+      if (!enabled)
+         return;
+
+      // Check the selected font. Note that the name is misleading; these can
+      // be either be fonts provided by the browser or installed on the user's
+      // system, _or_ fonts installed by an administrator. We need to disambiguate.
+      String fontName = prefs_.get().serverEditorFont().getValue();
+      if (StringUtil.isNullOrEmpty(fontName))
+         return;
+
+      // Remove a pre-existing font element, if any.
+      Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + RSTUDIO_FONTELEMENT_ID);
+      if (fontStylesEl != null)
+         fontStylesEl.removeFromParent();
+
+      // Apply the font CSS. Use alternate code paths depending on whether this
+      // appears to be a client-side font, versus a server font.
+      if (FontDetector.isFontSupported(fontName))
+      {
+         applyBrowserFont(document, fontName);
+      }
+      else
+      {
+         applyServerFont(document, fontName);
+      }
+   }
+
+   private void applyBrowserFont(Document document, String fontName)
+   {
+      String fontCss = getFontCss(fontName);
+      StyleElement fontStyles = document.createStyleElement();
+      fontStyles.setId(RSTUDIO_FONTELEMENT_ID);
+      fontStyles.setPropertyString("textContent", fontCss);
+      document.getHead().appendChild(fontStyles);
+   }
+
+   private void applyServerFont(Document document, String fontName)
+   {
+      LinkElement fontEl = document.createLinkElement();
+      fontEl.setType("text/css");
+      fontEl.setRel("stylesheet");
+      fontEl.setId(RSTUDIO_FONTELEMENT_ID);
+      fontEl.setHref(GWT.getHostPageBaseURL() + "fonts/css/" + fontName + ".css");
+      document.getBody().appendChild(fontEl);
+   }
+
+   public static String getFontCss(String fontName)
+   {
+      return RES.fontsCss().getText().replaceAll("#!font#", fontName);
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("resources/fonts.css")
+      TextResource fontsCss();
+   }
    
    private AceTheme currentTheme_;
 
@@ -303,5 +348,9 @@ public class AceThemes
    private final Provider<UserState> state_;
    private final Provider<UserPrefs> prefs_;
    private HashMap<String, AceTheme> themes_;
+
+   private static final String RSTUDIO_FONTELEMENT_ID = "rstudio-fontelement";
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+   public static final Resources RES = GWT.create(Resources.class);
+   
 }

@@ -37,6 +37,55 @@ namespace core {
 namespace system {
 namespace tests {
 
+/*
+// A randomly-generated key pair that's only used for this test file
+// Unused here, but preserved in case you need to encrypt some more test data with it
+// pragma: allowlist nextline secret
+static const char* RSA_PUBLIC = R"(-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAll6WsBPm0SQUOMlRqZLh7IL75KMh2ve0pZrl
+qN2gPsqislJ+VmAM95sd2CAk6iJPV9E9g4bQytyHp2KtnfZx6CjCwHUbLLUdS7KFkZ5Z6/N9Gj9MEJnf
+X16WBfOUBrCXwABjZV7vgmMUqz1Wt6NS9G+WRypToEj6QRGp6PUm+4HzsY2k7qWe2i4zp9gzYobL6J+M
+iqR7/+Jz+zjyas2MOa7lz7glc0lLaV33/hCNWFTTrqQt8U82gv0RiOOf0ozJiMoLgYolxPYQAcBlw1Z/
+8ik1hOShhyAt7zui/7HSS89hgttPPQdNfyWYPVZnCfj3qVSZdX4wY5IUf1lhsYRFpwIDAQAB
+-----END PUBLIC KEY-----)";
+*/
+// pragma: allowlist nextline secret
+static const char* RSA_PRIVATE = R"(-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCWXpawE+bRJBQ4yVGpkuHsgvvkoyHa
+97SlmuWo3aA+yqKyUn5WYAz3mx3YICTqIk9X0T2DhtDK3IenYq2d9nHoKMLAdRsstR1LsoWRnlnr830a
+P0wQmd9fXpYF85QGsJfAAGNlXu+CYxSrPVa3o1L0b5ZHKlOgSPpBEano9Sb7gfOxjaTupZ7aLjOn2DNi
+hsvon4yKpHv/4nP7OPJqzYw5ruXPuCVzSUtpXff+EI1YVNOupC3xTzaC/RGI45/SjMmIyguBiiXE9hAB
+wGXDVn/yKTWE5KGHIC3vO6L/sdJLz2GC2089B01/JZg9VmcJ+PepVJl1fjBjkhR/WWGxhEWnAgMBAAEC
+ggEAFHjTRiynd6DUWfjas94KATPCDJpDITcpMoS4sLlfuDzJUsLVbXgNO+az9PlHXVMHf1q+57nCkmPc
+2iaeoYtsbaGjBiXLadZMo0IuWil3b57KUPj+J6JzXV4Yyb2kURbYyiyjW6lFrXhE1511wXGseRf6Gz1B
+fmiBHbvEaLF7ubD9oJLd8WI0m7SGmcpa+QZ60OiEoZkKo94A6fy6+gtcHcIIKicmTSZM24QSKorD2ssl
+jmG9A9/q1qKITDxYqBsflynnywIJolaLIEoZ09A3yLTrpF03Q60wtNyWeQgi+ZlsR4vXK9iVKpZ8n2U5
+5o8yosaPF+dnUcWLcJAsysTsjQKBgQDL1dRoRAcBJNSS9FzGRG6Uw1K6HAJhE6HKc3gXHgC6dcY7krKB
+twzCHyrH5HRBvB5gZWZGsaL1PErGHZxocWvd8DJZPOUfuh7Cu9ixvGIFW3pFAfYflKTH1e9vfnbozrpc
+1QwLQhD8pGFmx1/ivqwMLu+2PmtNdsczfH5mdJ+0swKBgQC82fk7oFut0j0V0zsFRaWu9vQmVk/tBOFP
+8PmuY9C7LoIF+WMafsa+Ox/m554Xbtn0Biq9hyyOq4WquXyzTKYvzUjeICdkzLRXnwOwPgqY45XICK5k
+ip68W70fErFkuek5YtmAjp2hSUvIgrh92D6j5L94bShIrKRlxyx72WJtPQKBgQCO0ZkNITUDMSoceUkT
+xljwtNae/gcQu6+t6S/oiqYZ/3FQxl16k6ZF0Y6pFkH62PMzuXhq6gXy7Da8D31KlMXucGDms8saas8o
+xHN1PTg05r6J4XDw+bZnKlekeCiawFZFuyTAMp8yVX7Fg8aEWfK0aqKcv6lxUlsKkR0Dbo2EDwKBgDRs
+DVMP4GMPyQUV7Xw5KRS4WG2L6APTJvgZ3DUcYASVlGI0J95i8qg7oU9nW+sFSlsCmzqhGy0/T4tkkcjz
+re32/hMqucSxTh5EdbGmhyqJgjpUrpQaJpYCoSzO848STDsxxU56SCdNQUwXfT7xl/HGvZ+gLV5/DeNy
+tlZqsXfBAoGBAMNfdpLdEnshMbygyb0/yy1iP8MbaMPnIP4n1NSfgLaQ3BVpaowWtceyU7CQk+xuTlXv
+5N+1MJ3Ha3R3VbyWse504h9ysn3YqsLGkjZ2mywzpOoaFQAksa+3yG9OEyxbBeyKB74OvalZreZcx2DP
+wmzjIvDnR/4XIgku9AVpR1Uk
+-----END PRIVATE KEY-----)";
+
+using pkey_ptr = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
+
+static pkey_ptr loadTestPrivateKey()
+{
+  std::unique_ptr<BIO, decltype(&BIO_free)> bio(BIO_new_mem_buf(RSA_PRIVATE, -1), BIO_free);
+  if (!bio) {
+    return pkey_ptr(nullptr, EVP_PKEY_free);
+  }
+
+  return pkey_ptr(PEM_read_bio_PrivateKey(bio.get(), nullptr, nullptr, nullptr), EVP_PKEY_free);
+}
+
 TEST(CryptoTest, AesEncryptDecrypt)
 {
    // generate a random 128-bit key and IV
@@ -200,13 +249,45 @@ TEST(CryptoTest, Sha256HexEmptyString)
 {
    std::string emptyMessage = "";
    std::string hexHash;
-   
+
    ASSERT_FALSE(core::system::crypto::sha256Hex(emptyMessage, &hexHash));
    EXPECT_EQ(64u, hexHash.size());
-   
+
    // The SHA256 of an empty string is a known value
    std::string expectedEmpty = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
    ASSERT_EQ(hexHash, expectedEmpty);
+}
+
+TEST(CryptoTest, RsaDecryptionPKCS1_5)
+{
+   auto key(loadTestPrivateKey());
+   // pragma: allowlist nextline secret
+   static const std::string cipherText = "fAq9H+a+K/6fdeVR5u78c0LIG/eihceVsCM9y0V5M8Ied0DkZIl/mnyNMio"  // pragma: allowlist secret
+      "BV33aodQm5rDDG1O1kbMOeOgYkHTitQTR+zb6lge4fFBExuV6Ivhitspxkq0TiieyuK4hSMY1xKNdHwTq+3Le0sTgqTQuA"  // pragma: allowlist secret
+      "daR6KGPz8T9FPK0oyqk3KAKmpH6vOSzojA41iLIlnPQiCuz9crixJiD43LGBH0ja7z0jhOCWThLltU5PZj9i/OutQRAofsS"  // pragma: allowlist secret
+      "wSrLdqrXpPufHIe003Pgg7mGyqkL/DMIqXlxKDmsfBOvWLygr8+4Ff2rdnmtR/tsx51Y0KHUPT9kb5CLFWHNMzyubrZRw=="; // pragma: allowlist secret
+   static const std::string expected = "test";
+
+   std::string plainText;
+   Error error = core::system::crypto::rsaPrivateDecrypt(cipherText, &plainText, key.get());
+   ASSERT_FALSE(error);
+   ASSERT_EQ(plainText, expected);
+}
+
+TEST(CryptoTest, RsaDecryptionOAEP)
+{
+   auto key(loadTestPrivateKey());
+   static const std::string cipherText = "$RSA-OAEP$UfkheH3D5+zcpbuUDDX/BIyQ1+EqasZLjsCIE4sIabRFZcd5T"  // pragma: allowlist secret
+      "tgXXDw+B9aqZOWArOtey8YnO1i7yal2BGFmXhgb2k43HeoQenEf2pYnbqps26YBc267ZOTvUqL2OjuccBTR/eeQwNxdfldD"  // pragma: allowlist secret
+      "yEY8h0g0mOOgc+nbH2TWhPXRf3aF3YA+j4nIsshpppY3CgBfuCGKUcIs9qaxYW5A0ycJCkmxVPCm/xeCEYwkppE1Ntdk0bL"  // pragma: allowlist secret
+      "NHW0tD3N/Kb449VbH9rGigV3A+AXEtExcWyTEvU3y1y9cDRtEXP6ygwxCCptPcR4AMQmuWtzQXlY+mIix3XtXZEjWYUvOE7"  // pragma: allowlist secret
+      "W8VUb12A==";  // pragma: allowlist secret
+   static const std::string expected = "test";
+
+   std::string plainText;
+   Error error = core::system::crypto::rsaPrivateDecrypt(cipherText, &plainText, key.get());
+   ASSERT_FALSE(error);
+   ASSERT_EQ(plainText, expected);
 }
 
 } // namespace tests

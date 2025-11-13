@@ -32,6 +32,16 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+namespace {
+
+   inline boost::asio::io_context* newContext()
+   {
+       errno = 0; // Workaround boost::asio bug 1588 - when this is 34 - it throws "config out of range"
+       return new boost::asio::io_context();
+   }
+
+}
+
 typedef boost::function<void(const boost::system::error_code& ec)> 
                                                                AcceptHandler;
 
@@ -40,7 +50,7 @@ class SocketAcceptorService : boost::noncopyable
 {
 public:
    SocketAcceptorService()
-      : pInternalIOService_(new boost::asio::io_context()),
+      : pInternalIOService_(newContext()),
         ioContext_(*pInternalIOService_),
         acceptor_(ioContext_)
    {

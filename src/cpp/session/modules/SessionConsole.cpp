@@ -15,16 +15,14 @@
 
 
 #include "SessionConsole.hpp"
-#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/Exec.hpp>
 #include <core/system/OutputCapture.hpp>
-
 #include <core/text/AnsiCodeParser.hpp>
 
 #include <r/RExec.hpp>
@@ -32,8 +30,9 @@
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
+
+#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #define kMinConsoleLines 10
 
@@ -47,44 +46,42 @@ namespace console {
 
 namespace {   
 
-bool suppressOutput(const std::string& output)
+boost::regex suppressOutputRegex()
 {
+   // tokens to suppress
+   std::vector<std::string> tokenList = {
+       "GLib-WARNING **:",
+       "GLib-CRITICAL **:",
+       "GLib-GObject-WARNING **:",
+       "utoreleaseNoPool",
+       "select: Interrupted system call",
+       "Not a git repository",
+       "is outside repository",
+       "<Error>: CGContext",
+       "\"service\":\"rsession-",
+   };
+
    if (options().getBoolOverlayOption(kLauncherSessionOption))
    {
       // in launcher session mode, we log normal program errors to stderr so they
       // can be recorded in the launcher job's logs, but we don't want them to show
       // up in the RStudio console, so we filter them out here
       // note: all log messages will contain a tag like [rsession-username]
-      if (boost::algorithm::contains(output, "[rsession"))
-         return true;
+      tokenList.insert(tokenList.cbegin(), "[rsession");
    }
 
-   // tokens to suppress
-   const char * const kGlibWarningToken = "GLib-WARNING **:";
-   const char * const kGlibCriticalToken = "GLib-CRITICAL **:";
-   const char * const kGlibGObjectWarningToken = "GLib-GObject-WARNING **:";
-   const char * const kAutoreleaseNoPool = "utoreleaseNoPool";
-   const char * const kSelectInterrupted = "select: Interrupted system call";
-   const char * const kNotAGitRepo = "Not a git repository";
-   const char * const kIsOutsideRepo = "is outside repository";
-   const char * const kCGContextError = "<Error>: CGContext";
+   std::string tokensPattern = fmt::format(
+      "(\\Q{}\\E)",
+      boost::algorithm::join(tokenList, "\\E|\\Q")
+   );
 
-   // check tokens
-   if (boost::algorithm::contains(output, kGlibWarningToken) ||
-       boost::algorithm::contains(output, kGlibCriticalToken) ||
-       boost::algorithm::contains(output, kGlibGObjectWarningToken) ||
-       boost::algorithm::contains(output, kAutoreleaseNoPool) ||
-       boost::algorithm::contains(output, kSelectInterrupted) ||
-       boost::algorithm::contains(output, kNotAGitRepo) ||
-       boost::algorithm::contains(output, kIsOutsideRepo) ||
-       boost::algorithm::contains(output, kCGContextError))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
+   return boost::regex(tokensPattern);
+}
+
+bool suppressOutput(const std::string& output)
+{
+   static boost::regex reTokens = suppressOutputRegex();
+   return boost::regex_search(output, reTokens);
 }
 
 void writeStandardOutput(const std::string& output)

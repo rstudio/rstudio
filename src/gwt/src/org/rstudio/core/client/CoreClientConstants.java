@@ -132,8 +132,11 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String validateMessage();
     String notValidNumberMessage();
     String vimKeyboardShortcutsText();
+    String findButtonText();
     String nextButtonText();
+    String prevButtonText();
     String backButtonText();
+    String caseSensitive();
     String dialogInfoText();
     String directoryContentsLabel();
     String newFolderTitle();

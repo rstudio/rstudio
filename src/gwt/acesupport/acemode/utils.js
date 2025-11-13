@@ -327,7 +327,6 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
                regex: "^\\s*(?!#)",
                onMatch: function(value, state, stack, line, context) {
                   this.next = context.quarto.state;
-                  delete context.quarto.state;
                   return this.token;
                }
             });
@@ -340,7 +339,6 @@ var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules
             regex: "^\\s*(?!#)",
             onMatch: function(value, state, stack, line, context) {
                this.next = context.quarto.state;
-               delete context.quarto.state;
                return this.token;
             }
          });

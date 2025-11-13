@@ -35,6 +35,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/algorithm/Set.hpp>
 #include <core/algorithm/Map.hpp>
+#include <core/collection/Position.hpp>
 #include <core/r_util/RTokenCursor.hpp>
 #include <core/text/TextCursor.hpp>
 
@@ -888,6 +889,8 @@ public:
    static MatchedCall match(RTokenCursor cursor,
                             ParseStatus& status)
    {
+      using core::algorithm::set_difference;
+
       MatchedCall call;
       
       // Get the information associated with the underlying function
@@ -991,8 +994,8 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
-      userSuppliedArgNames = core::algorithm::set_difference(userSuppliedArgNames, matchedArgNames);
+      formalIndices = set_difference(formalIndices, matchedIndices);
+      userSuppliedArgNames = set_difference(userSuppliedArgNames, matchedArgNames);
       
       matchedIndices.clear();
       matchedArgNames.clear();
@@ -1043,7 +1046,7 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      formalIndices = set_difference(formalIndices, matchedIndices);
       matchedIndices.clear();
       
       /*
@@ -1064,7 +1067,7 @@ public:
       }
       
       // Trim
-      formalIndices = core::algorithm::set_difference(formalIndices, matchedIndices);
+      formalIndices = set_difference(formalIndices, matchedIndices);
       matchedIndices.clear();
       
       // Now, we examine the end state and see if we successfully matched
@@ -1073,10 +1076,14 @@ public:
       call.unnamedArguments_ = unnamedArguments;
       call.matchedCall_ = matchedCall;
       call.prefixMatchedPairs_ = prefixMatchedPairs;
-      call.unmatchedArgNames_ = core::algorithm::set_difference(
-               userSuppliedArgNames, matchedArgNames);
+      call.unmatchedArgNames_ = set_difference(userSuppliedArgNames, matchedArgNames);
       call.info_ = info;
       
+      RTokenCursor cloneCursor = cursor.clone();
+      call.startPosition_ = cloneCursor.currentPosition();
+      cloneCursor.moveToEndOfStatement(status.isInParentheticalScope());
+      call.endPosition_ = cloneCursor.currentPosition(true);
+
       applyFixups(cursor, &call);
       applyCustomWarnings(call, status);
       return call;
@@ -1166,6 +1173,38 @@ public:
    static void applyCustomWarnings(const MatchedCall& call,
                                    ParseStatus& status)
    {
+      // If we're invoking 'paste', then check for named arguments
+      // which don't match a known formal.
+      auto&& binding = call.info_.binding();
+      if (!binding.has_value())
+         return;
+
+      std::string name = binding->name;
+      std::string origin = binding->origin;
+
+      // If this is an invocation of 'paste', warn about any
+      // unmatched formal arguments
+      if (name == "paste" && origin == "namespace:base")
+      {
+         auto&& unmatched = call.unmatchedArgNames_;
+         if (!unmatched.empty())
+         {
+            std::string prefix = unmatched.size() == 1
+               ? "unexpected named argument: "
+               : "unexpected named arguments: ";
+
+            std::string message =
+                prefix + "'" + boost::algorithm::join(unmatched, "', '") + "'";
+
+            status.lint().add(
+               call.startPosition_.row,
+               call.startPosition_.column,
+               call.endPosition_.row,
+               call.endPosition_.column,
+               LintTypeWarning,
+               message);
+         }
+      }
    }
 
    // Accessors
@@ -1217,7 +1256,11 @@ private:
    // function call are not matched to a formal name.
    std::vector<std::string> unmatchedArgNames_;
    
-   // Information about the function itself
+   // The locations in source where the call was matched.
+   Position startPosition_;
+   Position endPosition_;
+
+   // Information about the function itself.
    FunctionInformation info_;
 };
 
@@ -2405,9 +2448,9 @@ void validateFunctionCall(RTokenCursor cursor,
    const std::vector<std::string>& unmatched = matched.unmatchedArgNames();
    if (!unmatched.empty())
    {
-      std::string prefix = unmatched.size() == 1 ?
-               "unmatched arguments: " :
-               "unmatched argument: ";
+      std::string prefix = unmatched.size() == 1
+         ? "unmatched argument: "
+         : "unmatched arguments: ";
       
       std::string message = prefix +
             "'" + boost::algorithm::join(unmatched, "', '") + "'";

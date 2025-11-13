@@ -271,6 +271,25 @@
    clear = function() { .rs.clearUserPref("margin_column") }
 )
 
+# Soft-wrap at margin column
+#
+# When set and soft-wrapping is enabled, soft-wrap at the margin column instead
+# of editor width.
+.rs.uiPrefs$marginColumnSoftWrap <- list(
+   get = function() { .rs.getUserPref("margin_column_soft_wrap") },
+   set = function(value) { .rs.setUserPref("margin_column_soft_wrap", value) },
+   clear = function() { .rs.clearUserPref("margin_column_soft_wrap") }
+)
+
+# Clamp editor width to margin column
+#
+# When set, the editor width will be clamped to the size of the margin column.
+.rs.uiPrefs$marginColumnEditorWidth <- list(
+   get = function() { .rs.getUserPref("margin_column_editor_width") },
+   set = function(value) { .rs.setUserPref("margin_column_editor_width", value) },
+   clear = function() { .rs.clearUserPref("margin_column_editor_width") }
+)
+
 # Show invisible characters in editor
 #
 # Whether to show invisible characters, such as spaces and tabs, in the RStudio
@@ -694,6 +713,15 @@
    clear = function() { .rs.clearUserPref("save_before_sourcing") }
 )
 
+# Enable soft-wrapping of console output
+#
+# When enabled, console output will be wrapped at the console width.
+.rs.uiPrefs$consoleSoftWrap <- list(
+   get = function() { .rs.getUserPref("console_soft_wrap") },
+   set = function(value) { .rs.setUserPref("console_soft_wrap", value) },
+   clear = function() { .rs.clearUserPref("console_soft_wrap") }
+)
+
 # Syntax highlighting in R console
 #
 # Whether to use syntax highlighting in the R console.
@@ -1078,6 +1106,15 @@
    clear = function() { .rs.clearUserPref("packages_pane_enabled") }
 )
 
+# Display the Source column in the Packages pane
+#
+# Whether to display the Source column in the Package's pane.
+.rs.uiPrefs$packagesSourceColumnEnabled <- list(
+   get = function() { .rs.getUserPref("packages_source_column_enabled") },
+   set = function(value) { .rs.setUserPref("packages_source_column_enabled", value) },
+   clear = function() { .rs.clearUserPref("packages_source_column_enabled") }
+)
+
 # C++ template
 #
 # C++ template.
@@ -1393,6 +1430,17 @@
    get = function() { .rs.getUserPref("show_rmd_render_command") },
    set = function(value) { .rs.setUserPref("show_rmd_render_command", value) },
    clear = function() { .rs.clearUserPref("show_rmd_render_command") }
+)
+
+# Rename in scope operates on:
+#
+# Controls whether the Rename in Scope command acts only upon the current chunk,
+# or upon all chunks in the document. Multiple executions of the command will
+# toggle between the two selection types.
+.rs.uiPrefs$rmdRenameInScopeBehavior <- list(
+   get = function() { .rs.getUserPref("rmd_rename_in_scope_behavior") },
+   set = function(value) { .rs.setUserPref("rmd_rename_in_scope_behavior", value) },
+   clear = function() { .rs.clearUserPref("rmd_rename_in_scope_behavior") }
 )
 
 # Enable dragging text in code editor
@@ -2487,4 +2535,13 @@
    get = function() { .rs.getUserPref("console_highlight_conditions") },
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },
    clear = function() { .rs.clearUserPref("console_highlight_conditions") }
+)
+
+# Show Chat UI
+#
+# Whether to show the experimental Chat UI
+.rs.uiPrefs$showChatUi <- list(
+   get = function() { .rs.getUserPref("show_chat_ui") },
+   set = function(value) { .rs.setUserPref("show_chat_ui", value) },
+   clear = function() { .rs.clearUserPref("show_chat_ui") }
 )

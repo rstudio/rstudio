@@ -201,6 +201,11 @@ public class ElementIds
    public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
    public final static String NEW_PROJECT_NEW_SESSION = "new_session";
 
+   public final static String SIDEBAR_COLUMN_SPLITTER = "sidebar_column_splitter";
+   public final static String SOURCE_COLUMN_SPLITTER = "source_column_splitter";
+   public final static String MIDDLE_COLUMN_SPLITTER = "middle_column_splitter";
+   public final static String CUSTOMIZE_PANES_BUTTON = "customize_panes";
+
    // AskSecretDialog
    public final static String ASK_SECRET_TEXT = "ask_secret_text";
    public static String getAskSecretText() { return getElementId(ASK_SECRET_TEXT); }
@@ -774,6 +779,20 @@ public class ElementIds
    public final static String CHUNK_OPTIONS_APPLY = "chunk_opt_apply";
    public final static String CHUNK_OPTIONS_REVERT = "chunk_opt_revert";
    
+   // PaneLayoutPreferencesPane
+   public final static String PANE_LAYOUT_LEFT_TOP = "pane_layout_left_top";
+   public final static String PANE_LAYOUT_LEFT_BOTTOM = "pane_layout_left_bottom";
+   public final static String PANE_LAYOUT_RIGHT_TOP = "pane_layout_right_top";
+   public final static String PANE_LAYOUT_RIGHT_BOTTOM = "pane_layout_right_bottom";
+   public final static String PANE_LAYOUT_SIDEBAR = "pane_layout_sidebar";
+   public final static String PANE_LAYOUT_LEFT_TOP_SELECT = "pane_layout_left_top_select";
+   public final static String PANE_LAYOUT_LEFT_BOTTOM_SELECT = "pane_layout_left_bottom_select";
+   public final static String PANE_LAYOUT_RIGHT_TOP_SELECT = "pane_layout_right_top_select";
+   public final static String PANE_LAYOUT_RIGHT_BOTTOM_SELECT = "pane_layout_right_bottom_select";
+   public final static String PANE_LAYOUT_SIDEBAR_SELECT = "pane_layout_sidebar_select";
+   public final static String PANE_LAYOUT_SIDEBAR_VISIBLE = "pane_layout_sidebar_visible";
+   public final static String PANE_LAYOUT_RESET_LINK = "pane_layout_reset_link";
+
    // TextEntryModalDialog
    public final static String TEXT_ENTRY = "text_entry";
 }

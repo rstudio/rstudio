@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import java.util.Comparator;
 import java.util.List;
 
 import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInfo;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerability;
-import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerabilityList;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.PackageVulnerabilityListMap;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageVulnerabilityTypes.RepositoryPackageVulnerabilityListMap;
 
@@ -94,6 +94,15 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
             String vulnText = "";
             List<PackageVulnerability> pvList = pvlMap.get(name).asList();
+            pvList.sort(new Comparator<PackageVulnerability>() 
+            {
+               @Override
+               public int compare(PackageVulnerability o1, PackageVulnerability o2)
+               {
+                  return o1.id.compareToIgnoreCase(o2.id);
+               }
+            });
+
             for (PackageVulnerability pvItem : pvList)
             {
                if (pvItem.versions.has(version))
@@ -172,7 +181,16 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
                if (pvlMap == null || !pvlMap.has(name))
                   return;
 
-               PackageVulnerabilityList pvList = pvlMap.get(name);
+               List<PackageVulnerability> pvList = pvlMap.get(name).asList();
+               pvList.sort(new Comparator<PackageVulnerability>()
+               {
+                  @Override
+                  public int compare(PackageVulnerability o1, PackageVulnerability o2)
+                  {
+                     return o1.id.compareToIgnoreCase(o2.id);
+                  }
+               });
+
                PackageVulnerabilityModalDialog dialog = new PackageVulnerabilityModalDialog(info, pvList);
                dialog.showModal();
             });
@@ -197,7 +215,7 @@ public abstract class PackageLinkColumn extends Column<PackageInfo, PackageInfo>
 
    interface Templates extends SafeHtmlTemplates
    {
-      @Template("<span class=\"{0}\" title=\"{1}\">{1}</span>")
+      @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
       SafeHtml renderPackageName(String className, String title);
 
       @Template("<img class=\"rstudio_vulnerability_icon {0}\" title=\"{1}\" src=\"{2}\"></img>")

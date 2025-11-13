@@ -24,7 +24,13 @@ public class PreferencesDialogConstants
 {
    public static final int PANEL_CONTAINER_WIDTH  = 640;
    public static final int PANEL_CONTAINER_HEIGHT = 580;
-   
+   public static final int SECTION_CHOOSER_WIDTH = 132;
+   public static final int PANE_CONTAINER_WIDTH = PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH;
+
+   // Width of the panel container when the section chooser is not shown, e.g.
+   // Help / Accessibility / Acccessibility Options...
+   public static final int PANEL_CONTAINER_WIDTH_NO_CHOOSER = 516;
+
    public static final String panelContainerWidth()
    {
       return PANEL_CONTAINER_WIDTH + "px";
@@ -35,4 +41,8 @@ public class PreferencesDialogConstants
       return PANEL_CONTAINER_HEIGHT + "px";
    }
    
+   public static final String panelContainerWidthNoChooser()
+   {
+      return PANEL_CONTAINER_WIDTH_NO_CHOOSER + "px";
+   }
 }

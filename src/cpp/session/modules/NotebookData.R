@@ -85,36 +85,69 @@
       x <- x[,c(1:cols.max.print)]
     }
 
-    x <- as.data.frame(head(x, max.print))
-
-    save(
-      x,
-      options,
-      file = output)
-
     # standard metadata
     metadata <- list(classes = className, nrow = nRow, ncol = nCol, summary = list())
 
     # if tibble is loaded, use it to create a summary of the object
     if ("tibble" %in% loadedNamespaces())
-    {
        metadata$summary <- as.list(tibble::tbl_sum(original))
-    }
 
+    # format and save object representation, for later printing
+    data <- as.data.frame(head(x, max.print))
+    result <- .rs.formatDataCapture(data, options)
+    save(result, file = output)
+
+    # report output and metadata to caller
     .Call("rs_recordData", output, metadata, PACKAGE = "(embedding)")
     invisible(original)
   }
 
   overrides <- .rs.dataCaptureOverrides()
   lapply(names(overrides), function(overrideName) {
+    
     overrideMap <- overrides[[overrideName]]
     overrideFun <- function(x, ...) {
+      
+      # differentiate between 'auto-printed' objects and explicit invocations
+      # of the 'print()' function here. when auto-printing an object, R will
+      # synthesize a print call, but with the definition of `base::print`
+      # inlined into the call as opposed to a typical `print` symbol.
+      
+      # check for an 'auto-print'; if we find it, use our override
+      call <- sys.calls()[[1L]]
+      if (identical(call[[1L]], base::print)) {
         o <- overrideMap(x, options)
-        if (!is.null(o)) {
-          overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
-        }
+        if (!is.null(o))
+          return(overridePrint(o$x, o$options, o$className, o$nRow, o$nCol))
       }
-     .rs.addS3Override(overrideName, overrideFun)
+      
+      # otherwise, call the original S3 method. we need to manually manage the
+      # lookup here since we inject overrides into the base namespace, which
+      # could mask the visibility of certain S3 overrides
+      for (class in class(x)) {
+        
+        # check for an explicit S3 method, and invoke it if it's
+        # not one of our overrides
+        f <- getS3method("print", class, optional = TRUE)
+        if (!is.null(f))
+          if (is.null(attr(f, ".rs.S3Override")))
+            return(f(x, ...))
+        
+        # check and see if we kept the original definition for this function;
+        # if so, use it
+        method <- paste("print", class, sep = ".")
+        f <- .rs.S3Originals[[method]]
+        if (!is.null(f))
+          return(f(x, ...))
+        
+      }
+      
+      NextMethod()
+      
+    }
+
+   .rs.addS3Override(overrideName, overrideFun)
+
   })
 
   assign(
@@ -157,6 +190,25 @@
 })
 
 .rs.addFunction("readDataCapture", function(path)
+{
+  # load the saved data object
+  envir <- new.env(parent = emptyenv())
+  load(path, envir = envir)
+
+  # check the format of the saved object -- older versions of RStudio saved both
+  # the original data 'x' plus options 'options', with the expectation that the
+  # formatted representation would be generated on demand, whereas now we will
+  # pre-generate the formatted data representation saved as a variable 'result'
+  result <- envir[["result"]]
+  if (!is.null(result))
+    return(result)
+
+  data <- envir[["x"]]
+  options <- envir[["options"]]
+  .rs.formatDataCapture(data, options)
+})
+
+.rs.addFunction("formatDataCapture", function(data, options)
 {
   type_sum <- function(x) {
     format_sum <- switch (class(x)[[1]],
@@ -242,17 +294,6 @@
     )
   }
 
-  e <- new.env(parent = emptyenv())
-  load(file = path, envir = e)
-  
-  # this works around a strange bug in R 3.5.1 on Windows
-  # where output can be mis-encoded after a save / load
-  cat(NULL, sep = "")
-
-  data <- head(e$x, getOption("max.print", 1000))
-  data <- if (is.null(data)) as.data.frame(list()) else data
-  options <- e$options
-
   columnNames <- names(data)
   columnSequence <- seq_len(ncol(data))
   
@@ -297,9 +338,9 @@
   is_list_not_vctrs <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
   is_list <- vapply(data, is_list_not_vctrs, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
-        summary <- obj_sum(x)
-        paste0("<", summary, ">")
-      })
+    summary <- obj_sum(x)
+    paste0("<", summary, ">")
+  })
 
   # R 3.6.0 on Windows has an issue where RGui escapes can 'leak'
   # into encoded strings; detect and remove those post-hoc.
@@ -310,37 +351,34 @@
     .Platform$OS.type == "windows" &&
     getRversion() == "3.6.0"
   
-  data <- as.data.frame(
-    lapply(
-      data,
-      function (y) {
-        
-        # some objects, e.g. 'hms', might produce an unexpected
-        # value when an empty vector of that class is formatted,
-        # so only format non-empty vectors
-        #
-        # https://github.com/rstudio/rstudio/issues/15459
-        if (length(y) == 0)
-          return(character())
-         
-        # escape NAs from character columns
-        if (typeof(y) == "character") {
-          y[y == "NA"] <- "__NA__"
-        }
+  values <- lapply(data, function(y) {
+    
+    # some objects, e.g. 'hms', might produce an unexpected
+    # value when an empty vector of that class is formatted,
+    # so only format non-empty vectors
+    #
+    # https://github.com/rstudio/rstudio/issues/15459
+    if (length(y) == 0)
+      return(character())
+     
+    # escape NAs from character columns
+    if (typeof(y) == "character") {
+      y[y == "NA"] <- "__NA__"
+    }
 
-        # encode string (ensure control characters are escaped)
-        y <- encodeString(format(y))
-        if (needsEncodeFix) {
-          y <- gsub("^\002\377\376", "", y)
-          y <- gsub("\003\377\376$", "", y)
-        }
+    # encode string (ensure control characters are escaped)
+    y <- encodeString(format(y))
+    if (needsEncodeFix) {
+      y <- gsub("^\002\377\376", "", y)
+      y <- gsub("\003\377\376$", "", y)
+    }
 
-        # trim spaces
-        gsub("^\\s+|\\s+$", "", y)
-      }
-    ),
-    stringsAsFactors = FALSE,
-    optional = TRUE)
+    # trim spaces
+    gsub("^\\s+|\\s+$", "", y)
+
+  })
+
+  data <- as.data.frame(values, stringsAsFactors = FALSE, optional = TRUE)
   
   pagedTableOptions <- list(
     columns = list(
@@ -450,13 +488,9 @@
   # assign varname if requested, otherwise print
   if (!is.null(varname)) {
     assign(varname, data, envir = globalenv())
-  }
-  else if(!is.null(data)) {
+  } else if (!is.null(data)) {
     x <- data
-    save(
-      x, 
-      file = outputFile
-    )
+    save(x, file = outputFile)
   }
 })
 

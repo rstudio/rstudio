@@ -68,7 +68,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab compilePdfTab,
                           FindOutputTab findResultsTab,
                           WorkbenchTab sourceCppTab,
-                          WorkbenchTab renderRmdTab, 
+                          WorkbenchTab renderRmdTab,
                           WorkbenchTab deployContentTab,
                           MarkersOutputTab markersTab,
                           WorkbenchTab terminalTab,
@@ -79,7 +79,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab backgroundJobsTab,
                           WorkbenchTab workbenchJobsTab)
    {
-      super(owner, parentWindow, "ConsoleTabSet");
+      super(owner, parentWindow, "ConsoleTabSet", null);
       owner_ = owner;
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;

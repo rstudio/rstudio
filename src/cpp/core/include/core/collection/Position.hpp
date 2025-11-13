@@ -16,6 +16,7 @@
 #define CORE_COLLECTION_POSITION_HPP
 
 #include <iostream>
+#include <sstream>
 
 namespace rstudio {
 namespace core {

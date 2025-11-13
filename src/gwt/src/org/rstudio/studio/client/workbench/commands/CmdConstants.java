@@ -536,6 +536,18 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("") // $NON-NLS-1$
     String projectSweaveOptionsDesc();
     
+    // toggleSidebar
+    @DefaultStringValue("Show/Hide Sidebar") // $NON-NLS-1$
+    String toggleSidebarLabel();
+    @DefaultStringValue("Show/Hide Sideb_ar") // $NON-NLS-1$
+    String toggleSidebarMenuLabel();
+    
+    // toggleSidebarLocation
+    @DefaultStringValue("Move Sidebar Location Left/Right") // $NON-NLS-1$
+    String toggleSidebarLocationLabel();
+    @DefaultStringValue("Move Sidebar Left/Right") // $NON-NLS-1$
+    String toggleSidebarLocationMenuLabel();
+    
     // showToolbar
     @DefaultStringValue("Show _Toolbar") // $NON-NLS-1$
     String showToolbarMenuLabel();
@@ -674,6 +686,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _Tutorial") // $NON-NLS-1$
     String activateTutorialMenuLabel();
     
+    // activateChat
+    @DefaultStringValue("Show Chat Pane") // $NON-NLS-1$
+    String activateChatLabel();
+    @DefaultStringValue("Show _Chat") // $NON-NLS-1$
+    String activateChatMenuLabel();
+    
     // activateBackgroundJobs
     @DefaultStringValue("Show Background Jobs Pane") // $NON-NLS-1$
     String activateBackgroundJobsLabel();
@@ -779,7 +797,7 @@ public interface CmdConstants extends Constants {
     // layoutZoomPackages
     @DefaultStringValue("Zoom Packages") // $NON-NLS-1$
     String layoutZoomPackagesLabel();
-    @DefaultStringValue("Zoom P_ackages") // $NON-NLS-1$
+    @DefaultStringValue("Zoom Pac_kages") // $NON-NLS-1$
     String layoutZoomPackagesMenuLabel();
     
     // layoutZoomHelp
@@ -799,6 +817,12 @@ public interface CmdConstants extends Constants {
     String layoutZoomTutorialLabel();
     @DefaultStringValue("Zoom _Tutorial") // $NON-NLS-1$
     String layoutZoomTutorialMenuLabel();
+    
+    // layoutZoomChat
+    @DefaultStringValue("Zoom Chat") // $NON-NLS-1$
+    String layoutZoomChatLabel();
+    @DefaultStringValue("Zoom _Chat") // $NON-NLS-1$
+    String layoutZoomChatMenuLabel();
     
     // layoutZoomBuild
     @DefaultStringValue("Zoom Build") // $NON-NLS-1$
@@ -863,6 +887,12 @@ public interface CmdConstants extends Constants {
     String layoutZoomRightColumnLabel();
     @DefaultStringValue("Zoo_m Right Column") // $NON-NLS-1$
     String layoutZoomRightColumnMenuLabel();
+    
+    // layoutZoomSidebar
+    @DefaultStringValue("Zoom Sidebar") // $NON-NLS-1$
+    String layoutZoomSidebarLabel();
+    @DefaultStringValue("Zoom Si_debar") // $NON-NLS-1$
+    String layoutZoomSidebarMenuLabel();
     
     // jumpTo
     @DefaultStringValue("Jump To...") // $NON-NLS-1$
@@ -2228,6 +2258,16 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Clear console") // $NON-NLS-1$
     String consoleClearDesc();
     
+    // consoleFind
+    @DefaultStringValue("Find in Console") // $NON-NLS-1$
+    String consoleFindLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String consoleFindButtonLabel();
+    @DefaultStringValue("_Find in Console") // $NON-NLS-1$
+    String consoleFindMenuLabel();
+    @DefaultStringValue("Find in Console") // $NON-NLS-1$
+    String consoleFindDesc();
+    
     // clearBuild
     @DefaultStringValue("Clear Build Pane Output") // $NON-NLS-1$
     String clearBuildLabel();
@@ -2235,6 +2275,14 @@ public interface CmdConstants extends Constants {
     String clearBuildButtonLabel();
     @DefaultStringValue("Clear build") // $NON-NLS-1$
     String clearBuildDesc();
+    
+    // findBuild
+    @DefaultStringValue("Search in Build Pane") // $NON-NLS-1$
+    String findBuildLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String findBuildButtonLabel();
+    @DefaultStringValue("Search in Build Pane") // $NON-NLS-1$
+    String findBuildDesc();
     
     // interruptR
     @DefaultStringValue("Interrupt R Session") // $NON-NLS-1$
@@ -2923,6 +2971,16 @@ public interface CmdConstants extends Constants {
     String paneLayoutLabel();
     @DefaultStringValue("Pane Layo_ut...") // $NON-NLS-1$
     String paneLayoutMenuLabel();
+    
+    // restoreDefaultPaneAndTabLayout
+    @DefaultStringValue("Restore Default Pane and Tab Layout...") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutLabel();
+    @DefaultStringValue("Restore De_fault Pane and Tab Layout...") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutMenuLabel();
+    
+    // restoreDefaultPaneAndTabLayoutNoPrompt
+    @DefaultStringValue("Restore Default Pane and Tab Layout (no prompt)") // $NON-NLS-1$
+    String restoreDefaultPaneAndTabLayoutNoPromptLabel();
     
     // showPackagesOptions
     @DefaultStringValue("Packages Options...") // $NON-NLS-1$
@@ -4015,6 +4073,10 @@ public interface CmdConstants extends Constants {
     // focusSourceColumnSeparator
     @DefaultStringValue("Adjust Source Column Spli_tter") // $NON-NLS-1$
     String focusSourceColumnSeparatorMenuLabel();
+    
+    // focusSidebarSeparator
+    @DefaultStringValue("Adjust _Sidebar Splitter") // $NON-NLS-1$
+    String focusSidebarSeparatorMenuLabel();
     
     // showShortcutCommand
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$

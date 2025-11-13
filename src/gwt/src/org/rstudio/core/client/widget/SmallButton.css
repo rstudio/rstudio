@@ -20,7 +20,8 @@
 }
 
 button.smallButton {
-   padding-bottom: 2px;
+   margin-bottom: 2px;
+   border-radius: 6px;
 }
 
 button.smallButton > table:first-child {

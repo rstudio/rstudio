@@ -37,7 +37,7 @@
 #include <r/ROptions.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSuspend.hpp>
-#include <r/session/RClientState.hpp> 
+#include <r/session/RClientState.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
 
@@ -68,7 +68,7 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
+namespace modules {
 namespace workbench {
 
 namespace {
@@ -78,30 +78,30 @@ module_context::WaitForMethodFunction s_waitForEditorContext;
 SEXP rs_getEditorContext(SEXP typeSEXP, SEXP idSEXP)
 {
    int type = r::sexp::asInteger(typeSEXP);
-   
+
    json::Object payload;
    payload["type"] = type;
    payload["id"] = r::sexp::safeAsString(idSEXP, "");
-   
+
    json::Object eventData;
    eventData["type"] = "editor_context";
    eventData["data"] = payload;
-   
+
    // send the event
    ClientEvent editorContextEvent(client_events::kEditorCommand, eventData);
-   
+
    // wait for event to complete
    json::JsonRpcRequest request;
-   
+
    bool succeeded = s_waitForEditorContext(&request, editorContextEvent);
    if (!succeeded)
       return R_NilValue;
-   
+
    std::string id;
    std::string path;
    std::string contents;
    json::Array selection;
-   
+
    Error error = json::readObjectParam(request.params, 0,
                                        "id", &id,
                                        "path", &path,
@@ -112,26 +112,26 @@ SEXP rs_getEditorContext(SEXP typeSEXP, SEXP idSEXP)
       LOG_ERROR(error);
       return R_NilValue;
    }
-   
+
    // if the id is empty, implies the source window is closed or
    // no documents were available
    if (id.empty())
       return R_NilValue;
-   
+
    using namespace r::sexp;
    Protect protect;
    ListBuilder builder(&protect);
-   
+
    builder.add("id", id);
    builder.add("path", path);
    builder.add("contents", core::algorithm::split(contents, "\n"));
-   
+
    // add in the selection ranges
    ListBuilder selectionBuilder(&protect);
    for (std::size_t i = 0; i < selection.getSize(); ++i)
    {
       const json::Object& object = selection[i].getObject();
-      
+
       json::Array rangeJson;
       std::string text;
       Error error = json::readObject(object,
@@ -142,45 +142,45 @@ SEXP rs_getEditorContext(SEXP typeSEXP, SEXP idSEXP)
          LOG_ERROR(error);
          continue;
       }
-      
+
       std::vector<int> range;
       if (!rangeJson.toVectorInt(range))
       {
          LOG_WARNING_MESSAGE("failed to parse document range");
          continue;
       }
-      
+
       // the ranges passed use 0-based indexing;
       // transform to 1-based indexing for R
       for (std::size_t i = 0; i < range.size(); ++i)
          ++range[i];
-      
+
       ListBuilder builder(&protect);
       builder.add("range", range);
       builder.add("text", text);
-      
+
       selectionBuilder.add(builder);
    }
-   
+
    builder.add("selection", selectionBuilder);
-   
+
    return r::sexp::create(builder, &protect);
 }
 
-Error setClientState(const json::JsonRpcRequest& request, 
+Error setClientState(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
-{   
+{
    pResponse->setSuppressDetectChanges(true);
 
    // extract params
    json::Object temporaryState, persistentState, projPersistentState;
-   Error error = json::readParams(request.params, 
+   Error error = json::readParams(request.params,
                                   &temporaryState,
                                   &persistentState,
                                   &projPersistentState);
    if (error)
       return error;
-   
+
    // set state
    r::session::ClientState& clientState = r::session::clientState();
    clientState.putTemporary(temporaryState);
@@ -192,14 +192,14 @@ Error setClientState(const json::JsonRpcRequest& request,
          r::session::ClientStateCommitPersistentOnly,
          r::session::utils::clientStatePath(),
          r::session::utils::projectClientStatePath());
-   
+
    return Success();
 }
-   
-     
+
+
 // IN: WorkbenchMetrics object
 // OUT: Void
-Error setWorkbenchMetrics(const json::JsonRpcRequest& request, 
+Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* /*pResponse*/)
 {
    // extract fields
@@ -212,10 +212,10 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
                                  "devicePixelRatio", &(metrics.devicePixelRatio));
    if (error)
       return error;
-   
+
    // set the metrics
    r::session::setClientMetrics(metrics);
-   
+
    return Success();
 }
 
@@ -227,7 +227,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &language);
    if (error)
       return error;
-   
+
    return module_context::adaptToLanguage(language);
 }
 
@@ -475,7 +475,7 @@ void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 }
 
 } // anonymous namespace
-   
+
 std::string editFileCommand()
 {
    // NOTE: only registered for server mode
@@ -522,13 +522,13 @@ Error initialize()
          return error;
       core::system::setenv("BROWSER", browserCommand);
    }
-   
+
    // register waitForMethod for active document context
    using namespace module_context;
    s_waitForEditorContext = registerWaitForMethod("get_editor_context_completed");
-   
+
    RS_REGISTER_CALL_METHOD(rs_getEditorContext, 1);
-   
+
    // complete initialization
    using boost::bind;
    using namespace module_context;

@@ -83,7 +83,7 @@
          </rw:FormCheckBox>
       </div>
 
-      <rw:FormCheckBox elementId="{ElementIds.getExcludeCustom}" ui:field="checkboxExcludeCustom_" text="Exclude these files:">
+      <rw:FormCheckBox elementId="{ElementIds.getExcludeCustom}" ui:field="checkboxExcludeCustom_" text="Exclude files matching pattern">
             <ui:attribute name="text" key="customExclusionsText"/>
       </rw:FormCheckBox>
       <div ui:field="divExcludeCustomFilter_">

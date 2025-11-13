@@ -739,7 +739,7 @@
       {
          len_desc <- if (len > 1)
          {
-            paste(len, " elements,", sep = "")
+            paste(len, "elements, ")
          }
          else
          {
@@ -759,7 +759,7 @@
             if (is_size_estimated)
                size_formatted <- paste(">", size_formatted)
             
-            fmt <- "Large %s (%s %s)"
+            fmt <- "Large %s (%s%s)"
             val <- sprintf(fmt, class, len_desc, size_formatted)
          }
          contents_deferred <- TRUE

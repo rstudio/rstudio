@@ -248,6 +248,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String marginColumnDescription();
 
    /**
+    * When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.
+    */
+   @DefaultStringValue("Soft-wrap at margin column")
+   String marginColumnSoftWrapTitle();
+   @DefaultStringValue("When set and soft-wrapping is enabled, soft-wrap at the margin column instead of editor width.")
+   String marginColumnSoftWrapDescription();
+
+   /**
+    * When set, the editor width will be clamped to the size of the margin column.
+    */
+   @DefaultStringValue("Clamp editor width to margin column")
+   String marginColumnEditorWidthTitle();
+   @DefaultStringValue("When set, the editor width will be clamped to the size of the margin column.")
+   String marginColumnEditorWidthDescription();
+
+   /**
     * Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.
     */
    @DefaultStringValue("Show invisible characters in editor")
@@ -648,6 +664,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveBeforeSourcingDescription();
 
    /**
+    * When enabled, console output will be wrapped at the console width.
+    */
+   @DefaultStringValue("Enable soft-wrapping of console output")
+   String consoleSoftWrapTitle();
+   @DefaultStringValue("When enabled, console output will be wrapped at the console width.")
+   String consoleSoftWrapDescription();
+
+   /**
     * Whether to use syntax highlighting in the R console.
     */
    @DefaultStringValue("Syntax highlighting in R console")
@@ -990,6 +1014,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String packagesPaneEnabledDescription();
 
    /**
+    * Whether to display the Source column in the Package's pane.
+    */
+   @DefaultStringValue("Display the Source column in the Packages pane")
+   String packagesSourceColumnEnabledTitle();
+   @DefaultStringValue("Whether to display the Source column in the Package's pane.")
+   String packagesSourceColumnEnabledDescription();
+
+   /**
     * C++ template.
     */
    @DefaultStringValue("C++ template")
@@ -1266,6 +1298,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showRmdRenderCommandTitle();
    @DefaultStringValue("Whether to print the render command use to knit R Markdown documents in the R Markdown tab.")
    String showRmdRenderCommandDescription();
+
+   /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   @DefaultStringValue("Rename in scope operates on:")
+   String rmdRenameInScopeBehaviorTitle();
+   @DefaultStringValue("Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.")
+   String rmdRenameInScopeBehaviorDescription();
+   @DefaultStringValue("Current chunk")
+   String rmdRenameInScopeBehaviorEnum_current();
+   @DefaultStringValue("All chunks")
+   String rmdRenameInScopeBehaviorEnum_all();
 
    /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
@@ -2246,6 +2290,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleHighlightConditionsEnum_errors();
    @DefaultStringValue("(None)")
    String consoleHighlightConditionsEnum_none();
+
+   /**
+    * Whether to show the experimental Chat UI
+    */
+   @DefaultStringValue("Show Chat UI")
+   String showChatUiTitle();
+   @DefaultStringValue("Whether to show the experimental Chat UI")
+   String showChatUiDescription();
 
 
 

@@ -61,6 +61,8 @@
 # define kQuartoArch "aarch64"
 #elif defined(__amd64__)
 # define kQuartoArch "x86_64"
+#elif defined(__loongarch64) // Add LoongArch64 support
+# define kQuartoArch "loongarch64" // Or "loong64", check what Quarto expects
 #else
 # error "unknown or unsupported platform architecture"
 #endif

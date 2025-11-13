@@ -212,6 +212,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="wordCount"/>
          <separator/>
          <cmd refid="consoleClear"/>
+         <cmd refid="consoleFind"/>
          <separator/>
          <cmd refid="macPreferences"/>
       </menu>
@@ -280,6 +281,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </menu>
 
       <menu label="_View">
+         <cmd refid="toggleSidebar"/>
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
 
@@ -294,6 +296,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="layoutZoomLeftColumn"/>
             <cmd refid="layoutZoomRightColumn"/>
+            <cmd refid="layoutZoomSidebar"/>
             <separator/>
             <cmd refid="layoutZoomSource"/>
             <cmd refid="layoutZoomConsole"/>
@@ -307,6 +310,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="layoutZoomViewer"/>
             <cmd refid="layoutZoomVcs"/>
             <cmd refid="layoutZoomTutorial"/>
+            <cmd refid="layoutZoomChat"/>
             <cmd refid="layoutZoomBuild"/>
             <cmd refid="layoutZoomConnections"/>
             <cmd refid="layoutZoomPresentation2"/>
@@ -315,6 +319,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="focusRightSeparator"/>
             <cmd refid="focusCenterSeparator"/>
             <cmd refid="focusSourceColumnSeparator"/>
+            <cmd refid="focusSidebarSeparator"/>
             <separator/>
             <cmd refid="paneLayout"/>
          </menu>
@@ -350,6 +355,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="activateConnections"/>
          <cmd refid="activatePresentation2"/>
          <cmd refid="activateTutorial"/>
+         <cmd refid="activateChat"/>
          <cmd refid="activateBackgroundJobs"/>
          <cmd refid="activateWorkbenchJobs"/>
          <menu label="Show Other _Panes">
@@ -602,6 +608,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="editUserPrefs"/>
             <cmd refid="clearUserPrefs"/>
             <cmd refid="viewAllPrefs"/>
+            <cmd refid="restoreDefaultPaneAndTabLayout"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -695,7 +702,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F"/>
-         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
+         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="emacs"/>
          <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs,sublime"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
@@ -771,6 +778,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activateChat" value="Ctrl+Meta+i" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activateChat" value="Ctrl+Alt+i" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Meta+F7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Ctrl+F7" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
 
@@ -907,6 +916,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
+         <shortcut refid="consoleFind" value="Meta+Alt+F"/>
          <shortcut value="Cmd+Up" title="Popup Command History"/>
       </shortcutgroup>
       <shortcutgroup name="Terminal">
@@ -974,6 +984,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="layoutZoomPresentation2" value="Ctrl+Shift+F7"/>
          <shortcut refid="layoutZoomLeftColumn" value="Ctrl+Alt+Shift+F12"/>
          <shortcut refid="layoutZoomRightColumn" value="Ctrl+Alt+Shift+F11"/>
+         <shortcut refid="layoutZoomSidebar" value="Ctrl+Alt+Shift+F10"/>
       </shortcutgroup>
 
    </shortcuts>
@@ -1373,6 +1384,15 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc=""/>
 
+   <cmd id="toggleSidebar"
+        menuLabel="Show/Hide Sideb_ar"
+        checkable="true"
+        label="Show/Hide Sidebar"/>
+
+   <cmd id="toggleSidebarLocation"
+        menuLabel="Move Sidebar Left/Right"
+        label="Move Sidebar Location Left/Right"/>
+
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
         rebindable="false"/>
@@ -1486,6 +1506,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Show _Tutorial"
         windowMode="main"/>
 
+   <cmd id="activateChat"
+        label="Show Chat Pane"
+        menuLabel="Show _Chat"
+        windowMode="main"/>
+
    <cmd id="activateBackgroundJobs"
         label="Show Background Jobs Pane"
         menuLabel = "Show Background _Jobs"
@@ -1580,7 +1605,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="layoutZoomPackages"
         checkable="true"
         label="Zoom Packages"
-        menuLabel="Zoom P_ackages"
+        menuLabel="Zoom Pac_kages"
         windowMode="main"/>
 
    <cmd id="layoutZoomHelp"
@@ -1599,6 +1624,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         checkable="true"
         label="Zoom Tutorial"
         menuLabel="Zoom _Tutorial"
+        windowMode="main"/>
+
+   <cmd id="layoutZoomChat"
+        checkable="true"
+        label="Zoom Chat"
+        menuLabel="Zoom _Chat"
         windowMode="main"/>
 
    <cmd id="layoutZoomBuild"
@@ -1661,6 +1692,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         checkable="true"
         label="Zoom Right Column"
         menuLabel="Zoo_m Right Column"/>
+
+   <cmd id="layoutZoomSidebar"
+        checkable="true"
+        label="Zoom Sidebar"
+        menuLabel="Zoom Si_debar"/>
 
    <cmd id="jumpTo"
         label="Jump To..."
@@ -2734,11 +2770,25 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"
         desc="Clear console"/>
 
+   <cmd id="consoleFind"
+        buttonLabel=""
+        label="Find in Console"
+        menuLabel="_Find in Console"
+        desc="Find in Console"
+        windowMode="main"/>
+
    <cmd id="clearBuild"
         buttonLabel=""
         label="Clear Build Pane Output"
         windowMode="main"
         desc="Clear build"
+        context="packageDevelopment"/>
+
+   <cmd id="findBuild"
+        buttonLabel=""
+        label="Search in Build Pane"
+        windowMode="main"
+        desc="Search in Build Pane"
         context="packageDevelopment"/>
 
    <cmd id="interruptR"
@@ -3301,6 +3351,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="paneLayout"
         menuLabel="Pane Layo_ut..."
         label="Pane Layout Options..."
+        windowMode="main"/>
+
+   <cmd id="restoreDefaultPaneAndTabLayout"
+        menuLabel="Restore De_fault Pane and Tab Layout..."
+        label="Restore Default Pane and Tab Layout..."
+        windowMode="main"/>
+
+   <cmd id="restoreDefaultPaneAndTabLayoutNoPrompt"
+        label="Restore Default Pane and Tab Layout (no prompt)"
+        visible="false"
         windowMode="main"/>
 
    <cmd id="showPackagesOptions"
@@ -4269,6 +4329,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="focusSourceColumnSeparator"
         menuLabel="Adjust Source Column Spli_tter"
+        windowMode="main"/>
+
+   <cmd id="focusSidebarSeparator"
+        menuLabel="Adjust _Sidebar Splitter"
         windowMode="main"/>
 
    <cmd id="showShortcutCommand"

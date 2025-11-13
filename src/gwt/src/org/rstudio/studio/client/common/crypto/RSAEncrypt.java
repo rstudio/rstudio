@@ -28,8 +28,8 @@ public class RSAEncrypt
       void onSuccess(String encryptedData);
       void onFailure(ServerError error);
    }
-   
-   
+
+
    public static void encrypt_ServerOnly(
          final CryptoServerOperations server,
          final String input,
@@ -41,7 +41,7 @@ public class RSAEncrypt
          callback.onSuccess(input);
          return;
       }
-      
+
       if (input == null)
       {
          // fallback case for null input (see case 4375)
@@ -52,18 +52,15 @@ public class RSAEncrypt
       {
          @Override
          public void onLoaded()
-         { 
+         {
             server.getPublicKey(new ServerRequestCallback<PublicKeyInfo>()
             {
                @Override
                public void onResponseReceived(PublicKeyInfo response)
                {
-   
-                  callback.onSuccess(encrypt(input,
-                                             response.getExponent(),
-                                             response.getModulo()));
+                  encrypt(input, response.getExponent(), response.getModulo(), callback);
                }
-   
+
                @Override
                public void onError(ServerError error)
                {
@@ -73,42 +70,13 @@ public class RSAEncrypt
          }
       });
    }
-   
-   public static void encrypt_ServerOnly(final PublicKeyInfo publicKeyInfo,
-                                         final String input,
-                                         final CommandWithArg<String> callback)
-   {
-      if (Desktop.hasDesktopFrame())
-      {
-         // Don't encrypt for desktop, Windows can't decrypt it.
-         callback.execute(input);
-         return;
-      }
 
-      if (input == null)
-      {
-         // fallback case for null input (see case 4375)
-         callback.execute("");
-      }
 
-      loader_.addCallback(new Callback()
-      {
-         @Override
-         public void onLoaded()
-         { 
-            callback.execute(encrypt(input, 
-                                     publicKeyInfo.getExponent(),
-                                     publicKeyInfo.getModulo()));
-           
-         }
-      });
-   }
-   
-  
    private static native String encrypt(String value,
                                         String exponent,
-                                        String modulo) /*-{
-      return $wnd.encrypt(value, exponent, modulo);
+                                        String modulo,
+                                        ResponseCallback callback) /*-{
+      $wnd.encrypt(value, exponent, modulo).then(callback.onSuccess, callback.onFailure);
    }-*/;
 
    private static final ExternalJavaScriptLoader loader_ =
