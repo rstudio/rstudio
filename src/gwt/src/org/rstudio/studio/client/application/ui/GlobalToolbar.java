@@ -285,7 +285,8 @@ public class GlobalToolbar extends Toolbar
       }
       else
       {
-         return isVisible ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
+         return isVisible
+            ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
             : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftHidden2x());
       }
    }
