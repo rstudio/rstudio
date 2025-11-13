@@ -70,6 +70,7 @@
 - (rstudio-pro#9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
 - (rstudio-pro#9126): Fixed an issue where `vscode-user-settings.json` and `positron-user-settings.json` were not found on `XDG_CONFIG_DIRS`
 - (rstudio-pro#7638): Fixed an issue where the Workbench API was accessible with a basic license tier
+- (rstudio-pro#9279): Fixed an error running Workbench Jobs from Positron and VScode in Slurm clusters that do not have singularity enabled
 
 ### Dependencies
 - Copilot Language Server 1.393.0
