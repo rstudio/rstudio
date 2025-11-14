@@ -172,7 +172,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
       });
 
-      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch, pUIPrefs_.get());
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
    }

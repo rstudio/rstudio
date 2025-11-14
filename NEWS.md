@@ -22,6 +22,10 @@
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
 - (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
+- (rstudio-pro#9088): Added support for enforced settings in Positron
+- (rstudio-pro#9106): Added support for managing R and Python runtimes for Workbench Jobs in Positron and VScode
+- (rstudio-pro#9106): Improved support for running Workbench Jobs using Python virtual environments in Positron
+- (rstudio-pro#9106): Added support for running Workbench Jobs using R in Positron
 
 ### Fixed
 #### RStudio
@@ -56,6 +60,7 @@
 - ([#16624](https://github.com/rstudio/rstudio/issues/16624)): Fixed an issue where links in a PDF document presented in the Viewer pane could cause navigation to occur in the main RStudio window
 - ([#16322](https://github.com/rstudio/rstudio/issues/16332)): Fixed an issue where 'Reflow comment' dropped prefix text in some cases
 - (#rstudio-pro/6675): Added support for RSA-OAEP when encrypting passwords on the sign-in page
+- (#rstudio-pro#6377): Added CSRF protection to the export file API
 
 #### Posit Workbench
 
@@ -67,6 +72,27 @@
 ### Dependencies
 - Copilot Language Server 1.393.0
 - Electron 38.6.0
+- (rstudio-pro#9126): Fixed an issue where `vscode-user-settings.json` and `positron-user-settings.json` were not found on `XDG_CONFIG_DIRS`
+- (rstudio-pro#7638): Fixed an issue where the Workbench API was accessible with a basic license tier
+- (rstudio-pro#9279): Fixed an error running Workbench Jobs from Positron and VScode in Slurm clusters that do not have singularity enabled
+
+### Upgrade Instructions
+
+#### Posit Workbench
+
+We have removed support for managing R and Python version selectable for running a Workbench Job in Positron and VScode. JSON formatted versions files can now be added as runtimes using these commands,
+
+```
+# Add from r-versions file
+sudo rstudio-server runtimes add --r-versions /path/to/r-versions --cluster=Local
+
+# Add from py-versions file
+sudo rstudio-server runtimes add --py-versions /path/to/py-versions.json --cluster=Local
+```
+
+### Dependencies
+- Copilot Language Server 1.395.0
+- Electron 38.7.0
 - Node.js 22.18.0
 - Quarto 1.8.25
 - Launcher 2.21.0
