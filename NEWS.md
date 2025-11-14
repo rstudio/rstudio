@@ -26,6 +26,7 @@
 - (rstudio-pro#9106): Added support for managing R and Python runtimes for Workbench Jobs in Positron and VScode
 - (rstudio-pro#9106): Improved support for running Workbench Jobs using Python virtual environments in Positron
 - (rstudio-pro#9106): Added support for running Workbench Jobs using R in Positron
+- (rstudio-pro#8920): Added option to remove recent projects from Workbench homepage
 
 ### Fixed
 #### RStudio
