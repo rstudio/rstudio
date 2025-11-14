@@ -21,7 +21,7 @@
 
 #### Posit Workbench
 - ([#16218](https://github.com/rstudio/rstudio/issues/16218)) Workbench no longer uses Crashpad for collecting crash dumps
-- (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials.
+- (rstudio-pro#9506): Added `auth-openid-aws-role-claim` and `auth-openid-aws-session-name-claim` settings to allow mapping custom OIDC claim names for AWS credentials
 - (rstudio-pro#9088): Added support for enforced settings in Positron
 - (rstudio-pro#9106): Added support for managing R and Python runtimes for Workbench Jobs in Positron and VScode
 - (rstudio-pro#9106): Improved support for running Workbench Jobs using Python virtual environments in Positron
