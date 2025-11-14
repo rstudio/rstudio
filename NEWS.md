@@ -65,7 +65,7 @@
 - (rstudio-pro#9386): Fixed an issue where server fonts could not be used in load-balanced Workbench configurations
 
 ### Dependencies
-- Copilot Language Server 1.393.0
+- Copilot Language Server 1.395.0
 - Electron 38.6.0
 - Node.js 22.18.0
 - Quarto 1.8.25
