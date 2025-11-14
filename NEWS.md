@@ -26,6 +26,7 @@
 - (rstudio-pro#9106): Added support for managing R and Python runtimes for Workbench Jobs in Positron and VScode
 - (rstudio-pro#9106): Improved support for running Workbench Jobs using Python virtual environments in Positron
 - (rstudio-pro#9106): Added support for running Workbench Jobs using R in Positron
+- (rstudio-pro#9560) Updated the Posit Workbench Documentatio site, the RStudio Desktop Administration Guide, the RStudio IDE User Guide, and RStudio & Posit Workbench Release Notes to v8.0.1 of the Posit product documentation theme.
 
 ### Fixed
 #### RStudio
