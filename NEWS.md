@@ -72,6 +72,20 @@
 - (rstudio-pro#7638): Fixed an issue where the Workbench API was accessible with a basic license tier
 - (rstudio-pro#9279): Fixed an error running Workbench Jobs from Positron and VScode in Slurm clusters that do not have singularity enabled
 
+### Upgrade Instructions
+
+#### Posit Workbench
+
+We have removed support for managing R and Python version selectable for running a Workbench Job in Positron and VScode. JSON formatted versions files can now be added as runtimes using these commands,
+
+```
+# Add from r-versions file
+sudo rstudio-server runtimes add --r-versions /path/to/r-versions --cluster=Local
+
+# Add from py-versions file
+sudo rstudio-server runtimes add --py-versions /path/to/py-versions.json --cluster=Local
+```
+
 ### Dependencies
 - Copilot Language Server 1.393.0
 - Electron 38.6.0
