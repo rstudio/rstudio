@@ -13,13 +13,13 @@ contributes:
         pinned: true
         logo: "assets/images/posit-icon-fullcolor.svg"
         logo-alt: "Posit Documentation"
-        right:
-          - text: "Help"
-            menu:
-              - text: "Return to Posit Docs"
-                href: "https://docs.posit.co"
-              - text: "Posit Support"
-                href: "https://support.posit.co/hc/en-us/"
+        #right:
+         # - text: "Help"
+          #  menu:
+           #   - text: "Return to Posit Docs"
+            #    href: "https://docs.posit.co"
+             # - text: "Posit Support"
+              #  href: "https://support.posit.co/hc/en-us/"
       search:
         copy-button: true
         show-item-context: true

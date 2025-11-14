@@ -15,3 +15,5 @@ build-site.sh
 cmake_install.cmake
 _variables.yml
 rstudio-*-user-guide.*
+
+**/*.quarto_ipynb
