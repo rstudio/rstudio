@@ -76,7 +76,10 @@ public class RSAEncrypt
                                         String exponent,
                                         String modulo,
                                         ResponseCallback callback) /*-{
-      $wnd.encrypt(value, exponent, modulo).then(callback.onSuccess, callback.onFailure);
+      $wnd.encrypt(value, exponent, modulo).then(
+         function(data) { callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onSuccess(Ljava/lang/String;)(data); },
+         function(error) { callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onFailure(Lorg/rstudio/studio/client/server/ServerError;)(error); }
+      );
    }-*/;
 
    private static final ExternalJavaScriptLoader loader_ =
