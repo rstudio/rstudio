@@ -77,7 +77,10 @@ public class RSAEncrypt
                                         String modulo,
                                         ResponseCallback callback) /*-{
       $wnd.encrypt(value, exponent, modulo).then(
-         function(data) { callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onSuccess(Ljava/lang/String;)(data); },
+         function(data) {
+            var result = data.alg ? '$' + data.alg + '$' + data.ct : data.ct;
+            callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onSuccess(Ljava/lang/String;)(result);
+         },
          function(error) { callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onFailure(Lorg/rstudio/studio/client/server/ServerError;)(error); }
       );
    }-*/;
