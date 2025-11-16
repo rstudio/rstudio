@@ -17,9 +17,11 @@ package org.rstudio.studio.client.common.crypto;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.remote.RemoteServerError;
 
 public class RSAEncrypt
 {
@@ -81,7 +83,15 @@ public class RSAEncrypt
             var result = data.alg ? '$' + data.alg + '$' + data.ct : data.ct;
             callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onSuccess(Ljava/lang/String;)(result);
          },
-         function(error) { callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onFailure(Lorg/rstudio/studio/client/server/ServerError;)(error); }
+         function(error) {
+            var errorMessage = error.message || error.toString();
+            var rpcError = @org.rstudio.core.client.jsonrpc.RpcError::create(ILjava/lang/String;)(
+               @org.rstudio.core.client.jsonrpc.RpcError::EXECUTION_ERROR,
+               errorMessage
+            );
+            var serverError = @org.rstudio.studio.client.server.remote.RemoteServerError::new(Lorg/rstudio/core/client/jsonrpc/RpcError;)(rpcError);
+            callback.@org.rstudio.studio.client.common.crypto.RSAEncrypt.ResponseCallback::onFailure(Lorg/rstudio/studio/client/server/ServerError;)(serverError);
+         }
       );
    }-*/;
 
