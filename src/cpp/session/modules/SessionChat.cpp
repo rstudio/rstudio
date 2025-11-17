@@ -237,8 +237,8 @@ void handleGetActiveSession(core::system::ProcessOperations& ops,
 {
    json::Object result;
    result["language"] = "R";
-   result["version"] = "4.3.0";
-   result["sessionId"] = "session-1";
+   result["version"] = module_context::rVersion();
+   result["sessionId"] = module_context::activeSession().id();
    result["mode"] = "console";
 
    DLOG("Handling runtime/getActiveSession request");
@@ -337,8 +337,8 @@ void handleLoggerLog(const json::Object& params)
    }
 
    // Map backend log levels to RStudio logging macros
-   // Use "databot" prefix to distinguish backend logs
-   std::string prefixedMessage = fmt::format("[databot] {}", message);
+   // Use "databot" prefix and include level to distinguish backend logs
+   std::string prefixedMessage = fmt::format("[databot] [{}] {}", level, message);
 
    if (level == "trace")
    {
@@ -364,6 +364,49 @@ void handleLoggerLog(const json::Object& params)
    {
       DLOG("[databot] [{}] {}", level, message);
    }
+}
+
+// Check if a logger/log notification should be shown in raw JSON-RPC format
+// Returns true if the message should be logged in raw form
+// Verbosity levels:
+//   CHAT_LOG_LEVEL=2: Show all JSON except logger/log (formatted version is enough)
+//   CHAT_LOG_LEVEL=3+: Show all JSON including logger/log (for debugging logging itself)
+bool shouldLogBackendMessage(const std::string& messageBody)
+{
+   // Quick parse to check if this is a logger/log notification
+   json::Value message;
+   if (message.parse(messageBody))
+      return true; // Parse error, show it
+
+   if (!message.isObject())
+      return true; // Not an object, show it
+
+   json::Object obj = message.getObject();
+
+   // Check if it's a logger/log notification
+   std::string method;
+   if (json::readObject(obj, "method", method) || method != "logger/log")
+      return true; // Not a logger/log notification, always show it at level 2+
+
+   // It's a logger/log notification
+   // At level 2: hide raw JSON (formatted version will be shown by handleLoggerLog)
+   // At level 3+: show raw JSON (for debugging the logging mechanism itself)
+   if (chatLogLevel() >= 3)
+   {
+      // Level 3+: apply backend level filter and show if it passes
+      json::Object params;
+      if (json::readObject(obj, "params", params))
+         return true; // No params, show it
+
+      std::string level;
+      if (json::readObject(params, "level", level))
+         return true; // No level field, show it
+
+      return getLogLevelPriority(level) >= getLogLevelPriority(s_chatBackendMinLogLevel);
+   }
+
+   // Level 2: hide logger/log raw JSON (user will see formatted version)
+   return false;
 }
 
 void onBackgroundProcessing(bool isIdle)
@@ -587,8 +630,8 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       // Extract the message body (IMPORTANT: byte-based, not character-based)
       std::string messageBody = s_backendOutputBuffer.substr(bodyStart, contentLength);
 
-      // Verbose logging
-      if (chatLogLevel() >= 2)
+      // Verbose logging (filtered by backend log level for logger/log notifications)
+      if (chatLogLevel() >= 2 && shouldLogBackendMessage(messageBody))
       {
          DLOG("Received message from backend: {}", messageBody);
       }
