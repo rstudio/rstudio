@@ -339,8 +339,8 @@ void handleLoggerLog(const json::Object& params)
    }
 
    // Map backend log levels to RStudio logging macros
-   // Use "databot" prefix and include level to distinguish backend logs
-   std::string prefixedMessage = fmt::format("[databot] [{}] {}", level, message);
+   // Use "ai" prefix and include level to distinguish backend logs
+   std::string prefixedMessage = fmt::format("[ai] [{}] {}", level, message);
 
    if (level == "trace")
    {
@@ -370,7 +370,7 @@ void handleLoggerLog(const json::Object& params)
    {
       // Unknown levels are treated as high priority (see getLogLevelPriority),
       // so log them as errors to ensure visibility
-      ELOG("[databot] [{}] {}", level, message);
+      ELOG("[ai] [{}] {}", level, message);
    }
 }
 
@@ -567,7 +567,7 @@ std::string buildWebSocketUrl(int port)
    }
 #endif
 
-   // Desktop mode: include /ai-chat base path for DatabotServer routing
+   // Desktop mode: include /ai-chat base path for AIServer routing
    // The client will append /ws to get ws://127.0.0.1:{port}/ai-chat/ws
    std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port) + "/ai-chat";
    DLOG("Desktop WebSocket URL: {}", desktopUrl);
