@@ -186,6 +186,39 @@ void sendJsonRpcResponse(core::system::ProcessOperations& ops,
    }
 }
 
+void sendJsonRpcError(core::system::ProcessOperations& ops,
+                      const json::Value& id,
+                      int code,
+                      const std::string& message)
+{
+   json::Object errorObj;
+   errorObj["code"] = code;
+   errorObj["message"] = message;
+
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["error"] = errorObj;
+
+   std::string body = response.write();
+   std::string frameMessage = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC error response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(frameMessage, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC error response to backend stdin: {}", error.getMessage());
+   }
+}
+
 void handleGetActiveSession(core::system::ProcessOperations& ops,
                             const json::Value& requestId)
 {
@@ -210,7 +243,9 @@ void handleRequest(core::system::ProcessOperations& ops,
    }
    else
    {
+      // Unknown method - send JSON-RPC error response
       WLOG("Unknown JSON-RPC request method: {}", method);
+      sendJsonRpcError(ops, requestId, -32601, "Method not found");
    }
 }
 
@@ -239,27 +274,20 @@ void processBackendMessage(core::system::ProcessOperations& ops,
       json::readObject(messageObj, "params", params);
 
       // Check for 'id' field to distinguish request from notification
-      // Per JSON-RPC 2.0 spec, id can be string, number, or null
+      // Per JSON-RPC 2.0 spec:
+      // - Request: has 'id' field (value can be string, number, or null)
+      // - Notification: 'id' field is absent entirely
+      // The VALUE of id doesn't matter - only its presence/absence
       auto it = messageObj.find("id");
-      bool isRequest = (it != messageObj.end());
-
-      if (isRequest)
+      if (it != messageObj.end())
       {
-         // Handle request (needs response) - pass the id as json::Value
+         // 'id' field EXISTS - this is a REQUEST (even if value is null)
          json::Value requestId = messageObj["id"];
-         if (!requestId.isNull())
-         {
-            handleRequest(ops, method, requestId, params);
-         }
-         else
-         {
-            // id is null, treat as notification per JSON-RPC 2.0 spec
-            handleNotification(method, params);
-         }
+         handleRequest(ops, method, requestId, params);
       }
       else
       {
-         // Handle notification (no response)
+         // 'id' field ABSENT - this is a NOTIFICATION
          handleNotification(method, params);
       }
    }
