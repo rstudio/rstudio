@@ -290,7 +290,7 @@ public class TextEditingTargetCopilotHelper
                DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
                {
                   Element target = event.getEventTarget().cast();
-                  Element nesEl = DomUtils.findParentElement(target, new ElementPredicate()
+                  Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
                   {
                      @Override
                      public boolean test(Element el)
