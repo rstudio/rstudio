@@ -119,9 +119,6 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 // Buffer for accumulating stdout data from backend
 std::string s_backendOutputBuffer;
 
-// Queue of parsed JSON-RPC messages from backend
-std::vector<json::Value> s_pendingResponses;
-
 // Regex for parsing Content-Length header (case-insensitive per HTTP spec)
 // Matches only at start of line to avoid false matches in log output
 boost::regex s_contentLengthRegex("(?:^|\r\n)Content-Length:\\s*(\\d+)", boost::regex::icase);
@@ -157,7 +154,72 @@ void handleNotification(const std::string& method, const json::Object& params)
    }
 }
 
-void processBackendMessage(const json::Value& message)
+// ============================================================================
+// JSON-RPC Request Handling
+// ============================================================================
+
+void sendJsonRpcResponse(core::system::ProcessOperations& ops,
+                         const json::Value& id,
+                         const json::Value& result)
+{
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["result"] = result;
+
+   std::string body = response.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC response to backend stdin: {}", error.getMessage());
+   }
+}
+
+void handleGetActiveSession(core::system::ProcessOperations& ops,
+                            const json::Value& requestId)
+{
+   json::Object result;
+   result["language"] = "R";
+   result["version"] = "4.3.0";
+   result["sessionId"] = "session-1";
+   result["mode"] = "console";
+
+   DLOG("Handling runtime/getActiveSession request");
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRequest(core::system::ProcessOperations& ops,
+                   const std::string& method,
+                   const json::Value& requestId,
+                   const json::Object& params)
+{
+   if (method == "runtime/getActiveSession")
+   {
+      handleGetActiveSession(ops, requestId);
+   }
+   else
+   {
+      WLOG("Unknown JSON-RPC request method: {}", method);
+   }
+}
+
+// ============================================================================
+// JSON-RPC Message Processing
+// ============================================================================
+
+void processBackendMessage(core::system::ProcessOperations& ops,
+                           const json::Value& message)
 {
    if (!message.isObject())
    {
@@ -172,12 +234,34 @@ void processBackendMessage(const json::Value& message)
    Error error = json::readObject(messageObj, "method", method);
    if (!error)  // Success - method field is present
    {
-      // This is a notification (no 'id' field) or request from backend
+      // This is a notification or request from backend
       json::Object params;
       json::readObject(messageObj, "params", params);
 
-      // For now, we only handle notifications
-      handleNotification(method, params);
+      // Check for 'id' field to distinguish request from notification
+      // Per JSON-RPC 2.0 spec, id can be string, number, or null
+      auto it = messageObj.find("id");
+      bool isRequest = (it != messageObj.end());
+
+      if (isRequest)
+      {
+         // Handle request (needs response) - pass the id as json::Value
+         json::Value requestId = messageObj["id"];
+         if (!requestId.isNull())
+         {
+            handleRequest(ops, method, requestId, params);
+         }
+         else
+         {
+            // id is null, treat as notification per JSON-RPC 2.0 spec
+            handleNotification(method, params);
+         }
+      }
+      else
+      {
+         // Handle notification (no response)
+         handleNotification(method, params);
+      }
    }
    else
    {
@@ -234,24 +318,12 @@ void handleLoggerLog(const json::Object& params)
    }
 }
 
-void processPendingMessages()
-{
-   // Process all pending messages from the backend
-   while (!s_pendingResponses.empty())
-   {
-      json::Value message = s_pendingResponses.front();
-      s_pendingResponses.erase(s_pendingResponses.begin());
-
-      processBackendMessage(message);
-   }
-}
-
 void onBackgroundProcessing(bool isIdle)
 {
-   // Process pending messages from backend on main thread
-   processPendingMessages();
+   // Messages are now processed immediately in onBackendStdout while we have
+   // a valid ProcessOperations reference. No deferred processing needed.
 
-   // Future: Add timeout handling for request/response pattern
+   // Future: Add timeout handling for request/response pattern if needed
    // (similar to SessionCopilot.cpp lines 1448-1462)
 }
 
@@ -413,6 +485,9 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
    s_backendOutputBuffer.append(output);
 
    // Process all complete messages in the buffer
+   // NOTE: We process messages immediately here (not deferred) because:
+   // 1. callbacksRequireMainThread=true means we're already on the main thread
+   // 2. We need the valid 'ops' reference to send responses to requests
    while (true)
    {
       // Find the end of headers (blank line: \r\n\r\n) first
@@ -478,15 +553,13 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       }
       else
       {
-         // Queue the parsed message for processing
-         s_pendingResponses.push_back(messageValue);
+         // Process message immediately while ops is valid
+         processBackendMessage(ops, messageValue);
       }
 
       // Remove the processed message from buffer
       s_backendOutputBuffer = s_backendOutputBuffer.substr(bodyEnd);
    }
-
-   // Messages will be processed by onBackgroundProcessing on the main thread
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
@@ -504,7 +577,6 @@ void onBackendExit(int exitCode)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
 
    // Auto-restart once
    if (s_chatBackendRestartCount < kMaxRestartAttempts)
@@ -865,7 +937,6 @@ void onShutdown(bool terminatedNormally)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
 }
 
 } // end anonymous namespace
