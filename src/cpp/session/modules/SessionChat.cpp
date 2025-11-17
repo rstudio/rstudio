@@ -99,10 +99,23 @@ const char* const kIndexFileName = "index.html";
 // Logging
 // ============================================================================
 int s_chatLogLevel = 0;
+std::string s_chatBackendMinLogLevel = "error"; // Default: show only error logs
 
 int chatLogLevel()
 {
    return s_chatLogLevel;
+}
+
+// Map log level names to numeric priorities for filtering
+// Returns priority (higher = more severe), or 0 for unknown levels (show by default)
+int getLogLevelPriority(const std::string& level)
+{
+   if (level == "trace") return 0;
+   if (level == "debug") return 1;
+   if (level == "info")  return 2;
+   if (level == "warn")  return 3;
+   if (level == "error") return 4;
+   return 0; // Unknown levels default to lowest priority (show them)
 }
 
 SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
@@ -313,6 +326,13 @@ void handleLoggerLog(const json::Object& params)
    if (json::readObject(params, "message", message))  // Returns error if missing
    {
       WLOG("logger/log notification missing 'message' field");
+      return;
+   }
+
+   // Filter backend logs based on minimum level setting
+   if (getLogLevelPriority(level) < getLogLevelPriority(s_chatBackendMinLogLevel))
+   {
+      // This log level is below the threshold, skip it
       return;
    }
 
@@ -982,6 +1002,26 @@ Error initialize()
    std::string chatLogLevelStr = core::system::getenv("CHAT_LOG_LEVEL");
    if (!chatLogLevelStr.empty())
       s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevelStr, 0);
+
+   // Read backend minimum log level filter
+   std::string backendMinLevel = core::system::getenv("CHAT_BACKEND_MIN_LEVEL");
+   if (!backendMinLevel.empty())
+   {
+      // Convert to lowercase for case-insensitive matching
+      boost::algorithm::to_lower(backendMinLevel);
+
+      // Validate it's a known level, otherwise keep default
+      if (backendMinLevel == "trace" || backendMinLevel == "debug" ||
+          backendMinLevel == "info" || backendMinLevel == "warn" ||
+          backendMinLevel == "error")
+      {
+         s_chatBackendMinLogLevel = backendMinLevel;
+      }
+      else
+      {
+         WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'trace'", backendMinLevel);
+      }
+   }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
 
