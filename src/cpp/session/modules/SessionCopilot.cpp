@@ -272,9 +272,6 @@ CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningRea
 // The current runtime status of the Copilot agent process.
 CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
 
-// Is there a next-edit request pending?
-bool s_copilotNextEditSuggestionsPending = false;
-
 void setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus status)
 {
    if (s_agentRuntimeStatus != status)
