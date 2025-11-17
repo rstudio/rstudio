@@ -57,6 +57,7 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.TextBox;
@@ -1401,6 +1402,48 @@ public class DomUtils
    public static final native DOMRect getBoundingClientRect(Element el)
    /*-{
       return el.getBoundingClientRect();
+   }-*/;
+
+   public static interface EventListener
+   {
+      public void handleEvent(NativeEvent event);
+   }
+
+   public static final HandlerRegistration addEventListener(Element el,
+                                                            String type,
+                                                            boolean useCapture,
+                                                            EventListener listener)
+   {
+      JavaScriptObject callback = addEventListenerImpl(el, type, useCapture, listener);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            removeEventListenerImpl(el, type, callback, useCapture);
+         }
+      };
+   }
+
+   private static final native JavaScriptObject addEventListenerImpl(Element el,
+                                                                     String type,
+                                                                     boolean useCapture,
+                                                                     EventListener listener)
+   /*-{
+      var callback = $entry(function(event) {
+         listener.@org.rstudio.core.client.dom.DomUtils.EventListener::handleEvent(*)(event);
+      });
+
+      el.addEventListener(type, callback, useCapture);
+      return callback;
+   }-*/;
+
+   private static final native JavaScriptObject removeEventListenerImpl(Element el,
+                                                                        String type,
+                                                                        JavaScriptObject callback,
+                                                                        boolean useCapture)
+   /*-{
+      el.removeEventListener(type, callback, useCapture);
    }-*/;
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

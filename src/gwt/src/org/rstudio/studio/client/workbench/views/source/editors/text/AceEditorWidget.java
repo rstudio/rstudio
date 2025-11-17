@@ -1341,6 +1341,7 @@ public class AceEditorWidget extends Composite
          {
             externalGutterAnnotations_.delete(id);
             refresh();
+            editor_.getRenderer().forceImmediateRender();
          }
       };
    }

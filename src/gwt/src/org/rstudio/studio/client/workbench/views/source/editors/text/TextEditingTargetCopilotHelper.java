@@ -285,10 +285,11 @@ public class TextEditingTargetCopilotHelper
                   requestNextEditSuggestions();
                }),
 
-               // click handler for next-edit suggestion gutter icon
-               display_.addClickHandler((event) ->
+               // click handler for next-edit suggestion gutter icon. we use a capturing
+               // event handler here so we can intercept the event before Ace does.
+               DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
                {
-                  Element target = event.getNativeEvent().getEventTarget().cast();
+                  Element target = event.getEventTarget().cast();
                   Element nesEl = DomUtils.findParentElement(target, new ElementPredicate()
                   {
                      @Override
@@ -300,7 +301,17 @@ public class TextEditingTargetCopilotHelper
 
                   if (nesEl != null)
                   {
+                     event.stopPropagation();
+                     event.preventDefault();
                      display_.applyGhostText();
+
+                     // Remove an existing annotation, if any
+                     if (nextEditAnnotationRegistration_ != null)
+                     {
+                        nextEditAnnotationRegistration_.removeHandler();
+                        nextEditAnnotationRegistration_ = null;
+                     }
+
                   }
                }),
 

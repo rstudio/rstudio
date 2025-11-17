@@ -3603,6 +3603,11 @@ public class AceEditor implements DocDisplay
       return widget_;
    }
 
+   public Element getElement()
+   {
+      return widget_.getElement();
+   }
+
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addKeyDownHandler(handler);
