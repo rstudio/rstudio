@@ -4263,11 +4263,9 @@ public class AceEditor implements DocDisplay
 
    // ---- Annotation related operations
 
-   public void addAnnotation(AceAnnotation annotation)
+   public HandlerRegistration addGutterItem(LintItem item)
    {
-      JsArray<AceAnnotation> annotations = getAnnotations();
-      annotations.push(annotation);
-      setAnnotations(annotations);
+      return widget_.addGutterItem(item);
    }
 
    public JsArray<AceAnnotation> getAnnotations()
@@ -4279,7 +4277,7 @@ public class AceEditor implements DocDisplay
    {
       widget_.setAnnotations(annotations);
    }
-   
+
    public JsMap<Marker> getMarkers(boolean inFront)
    {
       return widget_.getMarkers(inFront);

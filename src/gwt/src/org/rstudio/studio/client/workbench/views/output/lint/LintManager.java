@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsMap;
@@ -462,43 +461,6 @@ public class LintManager
       });
       $wnd.setTimeout(callback, 100);
    }-*/;
-
-   public HandlerRegistration addItem(LintItem annotation)
-   {
-      String id = StringUtil.makeRandomId(40);
-      externalLint_.set(id, annotation);
-
-      // remove handler when document changes
-      new ImmediatelyInvokedFunctionExpression()
-      {
-         private HandlerRegistration handler_;
-
-         @Override
-         protected void invoke()
-         {
-            handler_ = docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<Void> event)
-               {
-                  externalLint_.delete(id);
-                  handler_.removeHandler();
-                  docDisplay_.forceImmediateRender();
-               }
-            });
-         }
-      };
-
-      // also provide handler to caller to allow early removal
-      return new HandlerRegistration()
-      {
-         @Override
-         public void removeHandler()
-         {
-            externalLint_.delete(id);
-         }
-      };
-   }
 
    public final static int DEFAULT_LINT_DELAY = -1;
 

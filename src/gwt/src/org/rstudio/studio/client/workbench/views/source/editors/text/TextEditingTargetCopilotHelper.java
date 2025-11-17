@@ -285,16 +285,6 @@ public class TextEditingTargetCopilotHelper
                   requestNextEditSuggestions();
                }),
 
-               display_.addValueChangeHandler((event) ->
-               {
-                  if (nextEditAnnotationRegistration_ != null)
-                  {
-                     nextEditAnnotationRegistration_.removeHandler();
-                     nextEditAnnotationRegistration_ = null;
-                     display_.forceImmediateRender();
-                  }
-               }),
-
                // click handler for next-edit suggestion gutter icon
                display_.addClickHandler((event) ->
                {
@@ -316,6 +306,13 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Remove an existing annotation, if any
+                  if (nextEditAnnotationRegistration_ != null)
+                  {
+                     nextEditAnnotationRegistration_.removeHandler();
+                     nextEditAnnotationRegistration_ = null;
+                  }
+
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
                      return;
@@ -488,7 +485,7 @@ public class TextEditingTargetCopilotHelper
                   "[NES] Apply next-edit suggestion",
                   "ace_next-edit-suggestion");
 
-               nextEditAnnotationRegistration_ = target_.getLintManager().addItem(item);
+               nextEditAnnotationRegistration_ = display_.addGutterItem(item);
                server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
             }
 

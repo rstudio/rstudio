@@ -1275,6 +1275,7 @@ public class AceEditorWidget extends Composite
 
    public void showLint(JsVector<LintItem> lint)
    {
+      lint_ = lint;
       clearAnnotations();
       
       // Set gutter annotations. Don't include 'spelling' items in gutter.
@@ -1331,7 +1332,7 @@ public class AceEditorWidget extends Composite
 
    public HandlerRegistration addGutterItem(LintItem item)
    {
-      String id = StringUtil.makeRandomId(40);
+      String id = StringUtil.makeRandomId(16);
       externalGutterAnnotations_.set(id, item);
       return new HandlerRegistration()
       {
@@ -1339,8 +1340,14 @@ public class AceEditorWidget extends Composite
          public void removeHandler()
          {
             externalGutterAnnotations_.delete(id);
+            refresh();
          }
       };
+   }
+
+   private void refresh()
+   {
+      showLint(lint_);
    }
 
    private void removeMarkersInRange(Range range, List<AnchoredAceAnnotation> annotations)
@@ -1520,6 +1527,7 @@ public class AceEditorWidget extends Composite
    private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
+   private JsVector<LintItem> lint_ = JsVector.createVector();
    private static boolean hasEditHandlers_ = false;
    private boolean tabMovesFocus_ = false;
    private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
