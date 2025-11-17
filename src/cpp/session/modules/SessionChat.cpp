@@ -107,7 +107,8 @@ int chatLogLevel()
 }
 
 // Map log level names to numeric priorities for filtering
-// Returns priority (higher = more severe), or 0 for unknown levels (show by default)
+// Returns priority (higher = more severe)
+// Unknown levels return very high priority to ensure critical messages are never filtered
 int getLogLevelPriority(const std::string& level)
 {
    if (level == "trace") return 0;
@@ -115,7 +116,8 @@ int getLogLevelPriority(const std::string& level)
    if (level == "info")  return 2;
    if (level == "warn")  return 3;
    if (level == "error") return 4;
-   return 0; // Unknown levels default to lowest priority (show them)
+   if (level == "fatal") return 5;
+   return 999; // Unknown levels treated as highest priority (always show them)
 }
 
 SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
@@ -360,9 +362,15 @@ void handleLoggerLog(const json::Object& params)
    {
       ELOG("{}", prefixedMessage);
    }
+   else if (level == "fatal")
+   {
+      ELOG("{}", prefixedMessage);
+   }
    else
    {
-      DLOG("[databot] [{}] {}", level, message);
+      // Unknown levels are treated as high priority (see getLogLevelPriority),
+      // so log them as errors to ensure visibility
+      ELOG("[databot] [{}] {}", level, message);
    }
 }
 
@@ -1056,13 +1064,13 @@ Error initialize()
       // Validate it's a known level, otherwise keep default
       if (backendMinLevel == "trace" || backendMinLevel == "debug" ||
           backendMinLevel == "info" || backendMinLevel == "warn" ||
-          backendMinLevel == "error")
+          backendMinLevel == "error" || backendMinLevel == "fatal")
       {
          s_chatBackendMinLogLevel = backendMinLevel;
       }
       else
       {
-         WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'trace'", backendMinLevel);
+         WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'error'", backendMinLevel);
       }
    }
 
