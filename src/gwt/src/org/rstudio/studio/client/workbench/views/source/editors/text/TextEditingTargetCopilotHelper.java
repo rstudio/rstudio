@@ -22,6 +22,8 @@ import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -45,15 +47,18 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotErr
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -280,6 +285,35 @@ public class TextEditingTargetCopilotHelper
                   requestNextEditSuggestions();
                }),
 
+               display_.addValueChangeHandler((event) ->
+               {
+                  if (nextEditAnnotationRegistration_ != null)
+                  {
+                     nextEditAnnotationRegistration_.removeHandler();
+                     nextEditAnnotationRegistration_ = null;
+                     display_.forceImmediateRender();
+                  }
+               }),
+
+               // click handler for next-edit suggestion gutter icon
+               display_.addClickHandler((event) ->
+               {
+                  Element target = event.getNativeEvent().getEventTarget().cast();
+                  Element nesEl = DomUtils.findParentElement(target, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName("ace_next-edit-suggestion");
+                     }
+                  });
+
+                  if (nesEl != null)
+                  {
+                     display_.applyGhostText();
+                  }
+               }),
+
                display_.addCursorChangedHandler((event) ->
                {
                   // Check if we've been toggled off
@@ -412,6 +446,14 @@ public class TextEditingTargetCopilotHelper
             @Override
             public void onResponseReceived(CopilotNextEditSuggestionsResponse response)
             {
+               // Remove any pre-existing next-edit annotations
+               // Also indicate in the gutter that an edit suggestion is available
+               if (nextEditAnnotationRegistration_ != null)
+               {
+                  nextEditAnnotationRegistration_.removeHandler();
+                  nextEditAnnotationRegistration_ = null;
+               }
+
                // Check for edits
                boolean hasEdits =
                   response.result != null &&
@@ -439,6 +481,14 @@ public class TextEditingTargetCopilotHelper
                   completion.range.start.line,
                   completion.range.start.character);
                display_.setGhostText(activeCompletion_.displayText, position);
+
+               LintItem item = LintItem.create(
+                  completion.range.start.line,
+                  completion.range.start.character,
+                  "[NES] Apply next-edit suggestion",
+                  "ace_next-edit-suggestion");
+
+               nextEditAnnotationRegistration_ = target_.getLintManager().addItem(item);
                server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
             }
 
@@ -639,6 +689,7 @@ public class TextEditingTargetCopilotHelper
    private int requestId_;
    private boolean suppressCursorChangeHandler_;
    private boolean copilotDisabledInThisDocument_;
+   private HandlerRegistration nextEditAnnotationRegistration_;
    
    private Completion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;

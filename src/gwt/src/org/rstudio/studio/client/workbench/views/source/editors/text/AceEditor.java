@@ -4263,6 +4263,13 @@ public class AceEditor implements DocDisplay
 
    // ---- Annotation related operations
 
+   public void addAnnotation(AceAnnotation annotation)
+   {
+      JsArray<AceAnnotation> annotations = getAnnotations();
+      annotations.push(annotation);
+      setAnnotations(annotations);
+   }
+
    public JsArray<AceAnnotation> getAnnotations()
    {
       return widget_.getAnnotations();

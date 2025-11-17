@@ -24,7 +24,8 @@ public class AceAnnotation extends JavaScriptObject
                                              int column,
                                              String html,
                                              String text,
-                                             String type)
+                                             String type,
+                                             String className)
    /*-{
       
       if (type !== "error" && type !== "warning") {
@@ -42,6 +43,7 @@ public class AceAnnotation extends JavaScriptObject
       else
          aceAnnotation.text = text;
 
+      aceAnnotation.className = className;
       return aceAnnotation;
    }-*/;
    
@@ -50,4 +52,5 @@ public class AceAnnotation extends JavaScriptObject
    public final native String text() /*-{ return this.text; }-*/;
    public final native String html() /*-{ return this.html; }-*/;
    public final native String type() /*-{ return this.type; }-*/;
+   public final native String className() /*-{ return this.className; }-*/;
 }

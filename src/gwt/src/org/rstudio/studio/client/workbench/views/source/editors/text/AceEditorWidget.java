@@ -1235,7 +1235,8 @@ public class AceEditorWidget extends Composite
                anchor_.getColumn(),
                annotation_.html(),
                annotation_.text(),
-               annotation_.type());
+               annotation_.type(),
+               annotation_.className());
       }
 
       private final AceAnnotation annotation_;
@@ -1286,6 +1287,11 @@ public class AceEditorWidget extends Composite
          }
       });
       
+      // Add the external gutter lint items.
+      JsArray<LintItem> externalItems = externalGutterAnnotations_.values();
+      for (int i = 0, n = externalItems.length(); i < n; i++)
+         gutterLint.push(externalItems.get(i));
+
       JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(gutterLint.cast());
       editor_.getSession().setAnnotations(annotations);
 
@@ -1321,6 +1327,20 @@ public class AceEditorWidget extends Composite
    {
       clearAnnotations();
       editor_.getSession().setAnnotations(null);
+   }
+
+   public HandlerRegistration addGutterItem(LintItem item)
+   {
+      String id = StringUtil.makeRandomId(40);
+      externalGutterAnnotations_.set(id, item);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            externalGutterAnnotations_.delete(id);
+         }
+      };
    }
 
    private void removeMarkersInRange(Range range, List<AnchoredAceAnnotation> annotations)
@@ -1496,6 +1516,7 @@ public class AceEditorWidget extends Composite
    private boolean isRendered_ = false;
    private final ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
    private final List<AnchoredAceAnnotation> gutterAnnotations_ = new ArrayList<>();
+   private final JsMap<LintItem> externalGutterAnnotations_ = JsMap.create().cast();
    private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();

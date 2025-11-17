@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ImmediatelyInvokedFunctionExpression;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -109,6 +111,7 @@ public class LintManager
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
+      externalLint_ = JsArray.createArray().cast();
       timer_ = new Timer()
       {
 
@@ -380,6 +383,10 @@ public class LintManager
                for (int i = 0; i < response.length(); i++)
                   finalLint.push(response.get(i));
 
+               JsArray<LintItem> externalLint = externalLint_.values();
+               for (int i = 0, n = externalLint.length(); i < n; i++)
+                  finalLint.push(externalLint.get(i));
+
                source_.showLint(finalLint);
             }
 
@@ -392,6 +399,10 @@ public class LintManager
       }
       else
       {
+         JsArray<LintItem> externalLint = externalLint_.values();
+         for (int i = 0, n = externalLint.length(); i < n; i++)
+            finalLint.push(externalLint.get(i));
+         
          source_.showLint(finalLint);
       }
    }
@@ -452,12 +463,50 @@ public class LintManager
       $wnd.setTimeout(callback, 100);
    }-*/;
 
+   public HandlerRegistration addItem(LintItem annotation)
+   {
+      String id = StringUtil.makeRandomId(40);
+      externalLint_.set(id, annotation);
+
+      // remove handler when document changes
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+
+         @Override
+         protected void invoke()
+         {
+            handler_ = docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Void> event)
+               {
+                  externalLint_.delete(id);
+                  handler_.removeHandler();
+                  docDisplay_.forceImmediateRender();
+               }
+            });
+         }
+      };
+
+      // also provide handler to caller to allow early removal
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            externalLint_.delete(id);
+         }
+      };
+   }
+
    public final static int DEFAULT_LINT_DELAY = -1;
 
    private final Timer timer_;
    private final LintSource source_;
    private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
+   private final JsMap<LintItem> externalLint_;
    
    private boolean explicit_;
    private boolean showMarkers_;
