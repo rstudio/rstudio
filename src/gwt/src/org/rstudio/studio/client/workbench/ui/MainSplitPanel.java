@@ -199,16 +199,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
             int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
-            int savedCount = (state != null && state.hasSplitterPos()) ? state.getSplitterCount() : 0;
-            boolean sidebarVisibilityChanged = state != null &&
-                                               state.validate() &&
-                                               state.hasSplitterPos() &&
-                                               Math.abs(savedCount - expectedCount) == 1;
 
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
-                (state.getSplitterCount() == expectedCount || sidebarVisibilityChanged))
+                state.getSplitterCount() == expectedCount)
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
@@ -217,31 +212,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   int offsetWidth = Window.getClientWidth() - delta;
                   int idx = 0;
                   double pct;
-                  // When sidebar visibility changed, we need to handle the state index mapping carefully
-                  boolean sidebarWasInState = savedCount > expectedCount; // Sidebar was visible in saved state
-                  boolean skipSidebarInState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ == null;
-                  boolean useSidebarFromState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ != null;
 
                   // Add sidebar if on left
                   if (sidebar_ != null && "left".equals(sidebarLocation_))
                   {
-                     if (useSidebarFromState || !sidebarVisibilityChanged)
-                     {
-                        pct = (double)state.getSplitterPos()[idx++]
-                                     / state.getPanelWidth();
-                        addWest(sidebar_, pct * offsetWidth);
-                     }
-                     else
-                     {
-                        // Sidebar wasn't in saved state, use default width
-                        addWest(sidebar_, getDefaultSplitterWidth() * 0.8);
-                     }
+                     pct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
+                     addWest(sidebar_, pct * offsetWidth);
                   }
-                  else if (skipSidebarInState && "left".equals(sidebarLocation_))
-                  {
-                     // Skip the sidebar entry from saved state since we're hiding it
-                     idx++;
-                  }
+
                   // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
                   {
@@ -249,28 +228,19 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                             / state.getPanelWidth();
                      addWest(leftList_.get(i), pct * offsetWidth);
                   }
+
                   // Handle right-side sidebar case differently for proper resizing
                   if (sidebar_ != null && !"left".equals(sidebarLocation_))
                   {
                      // Add sidebar first using addEast (rightmost position)
-                     double sidebarPct;
-                     if (useSidebarFromState || !sidebarVisibilityChanged)
-                     {
-                        sidebarPct = (double)state.getSplitterPos()[idx++]
-                                     / state.getPanelWidth();
-                     }
-                     else
-                     {
-                        // Sidebar wasn't in saved state, use default width
-                        sidebarPct = (getDefaultSplitterWidth() * 0.8) / offsetWidth;
-                        // Don't increment idx since sidebar wasn't in state
-                     }
+                     double sidebarPct = (double)state.getSplitterPos()[idx++]
+                                  / state.getPanelWidth();
                      addEast(sidebar_, sidebarPct * offsetWidth);
 
                      // Get right widget width
                      double rightPct = (double)state.getSplitterPos()[idx++]
                                   / state.getPanelWidth();
-                     
+
                      // Calculate center width: total - left widgets - sidebar - right
                      double centerWidth = offsetWidth;
                      // Subtract all left widget widths that were already added
@@ -283,20 +253,16 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                      // Subtract sidebar and right widths
                      centerWidth -= sidebarPct * offsetWidth;
                      centerWidth -= rightPct * offsetWidth;
-                     
+
                      // Add center using addWest (last addWest call)
                      addWest(center_, centerWidth);
-                     
+
                      // Add right using add() (last thing added)
                      add(right_);
                   }
                   else
                   {
                      // No sidebar on right - use original logic
-                     // Skip sidebar position if it was in saved state but we're hiding it now
-                     if (skipSidebarInState && !"left".equals(sidebarLocation_))
-                        idx++;
-
                      pct = (double)state.getSplitterPos()[idx++]
                                   / state.getPanelWidth();
                      addEast(right_, pct * offsetWidth);
@@ -306,51 +272,25 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                else
                {
                   int idx = 0;
-                  // When sidebar visibility changed, we need to handle the state index mapping carefully
-                  boolean sidebarWasInState = savedCount > expectedCount; // Sidebar was visible in saved state
-                  boolean skipSidebarInState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ == null;
-                  boolean useSidebarFromState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ != null;
 
                   // Add sidebar if on left
                   if (sidebar_ != null && "left".equals(sidebarLocation_))
-                  {
-                     if (useSidebarFromState || !sidebarVisibilityChanged)
-                     {
-                        addWest(sidebar_, state.getSplitterPos()[idx++]);
-                     }
-                     else
-                     {
-                        // Sidebar wasn't in saved state, use default width
-                        addWest(sidebar_, (int)(getDefaultSplitterWidth() * 0.8));
-                     }
-                  }
-                  else if (skipSidebarInState && "left".equals(sidebarLocation_))
-                  {
-                     // Skip the sidebar entry from saved state since we're hiding it
-                     idx++;
-                  }
+                     addWest(sidebar_, state.getSplitterPos()[idx++]);
+
                   // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
                      addWest(leftList_.get(i), state.getSplitterPos()[idx++]);
+
                   // Handle right-side sidebar case differently for proper resizing
                   if (sidebar_ != null && !"left".equals(sidebarLocation_))
                   {
                      // Add sidebar first using addEast (rightmost position)
-                     int sidebarWidth;
-                     if (useSidebarFromState || !sidebarVisibilityChanged)
-                     {
-                        sidebarWidth = state.getSplitterPos()[idx++];
-                     }
-                     else
-                     {
-                        // Sidebar wasn't in saved state, use default width
-                        sidebarWidth = (int)(getDefaultSplitterWidth() * 0.8);
-                     }
+                     int sidebarWidth = state.getSplitterPos()[idx++];
                      addEast(sidebar_, sidebarWidth);
-                     
+
                      // Get right widget width
                      int rightWidth = state.getSplitterPos()[idx++];
-                     
+
                      // Calculate remaining width for center (total - left widgets - sidebar - right)
                      int centerWidth = state.getPanelWidth();
                      // Subtract all left widget widths that were already added
@@ -360,20 +300,16 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                      // Subtract sidebar and right widths
                      centerWidth -= sidebarWidth;
                      centerWidth -= rightWidth;
-                     
-                     // Add center using addWest (last addWest call)  
+
+                     // Add center using addWest (last addWest call)
                      addWest(center_, centerWidth);
-                     
-                     // Add right using add() (last thing added)  
+
+                     // Add right using add() (last thing added)
                      add(right_);
                   }
                   else
                   {
                      // No sidebar on right - use original logic
-                     // Skip sidebar position if it was in saved state but we're hiding it now
-                     if (skipSidebarInState && !"left".equals(sidebarLocation_))
-                        idx++;
-
                      addEast(right_, state.getSplitterPos()[idx++]);
                      add(center_);
                   }
@@ -530,8 +466,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    public void setSidebarWidget(Widget widget, String location)
    {
       // When showing sidebar, restore widths from before we hid it
-      // If we don't have saved widths, we'll use defaults
+      // BUT only if the sidebar location matches what we saved
       int[] preservedWidths = widthsBeforeHidingSidebar_;
+      boolean locationMatches = savedSidebarLocation_ != null &&
+                                savedSidebarLocation_.equals(location);
 
       isTogglingSidebar_ = true;
       clearForRefresh();
@@ -540,14 +478,20 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
 
       // Restore the preserved widths after initialization
-      if (preservedWidths != null)
+      // ONLY if we have saved widths AND the location matches
+      if (preservedWidths != null && locationMatches)
       {
          restoreColumnWidths(preservedWidths, true);
          widthsBeforeHidingSidebar_ = null; // Clear after use
+         savedSidebarLocation_ = null;
       }
       else
       {
-         // No saved widths, just reset the toggle flag
+         // No saved widths or location mismatch - discard saved state and use defaults
+         widthsBeforeHidingSidebar_ = null; // Clear saved state
+         savedSidebarLocation_ = null;
+
+         // Just reset the toggle flag
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             public void execute()
@@ -562,6 +506,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       // Save current widths (including sidebar) so we can restore them when sidebar is shown again
       widthsBeforeHidingSidebar_ = captureColumnWidths();
+      savedSidebarLocation_ = sidebarLocation_; // Save the location too
+
       isTogglingSidebar_ = true;
       clearForRefresh();
       sidebar_ = null;
@@ -887,6 +833,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Integer previousOffsetWidth_ = null;
    private boolean isTogglingSidebar_ = false;
    private int[] widthsBeforeHidingSidebar_ = null;
+   private String savedSidebarLocation_ = null;
 
    private final EventBus events_;
    private final Session session_;

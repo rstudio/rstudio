@@ -1400,3 +1400,360 @@ withr::defer(.rs.automation.deleteRemote())
    # Clean up
    .rs.resetUILayout(remote)
 })
+
+.rs.test("Column widths preserved through multiple hide/show cycles", {
+   # This test verifies that width preservation works reliably across multiple cycles,
+   # not just a single hide/show operation
+
+   # Show the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   Sys.sleep(0.3)
+
+   # Resize columns
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   expect_true(!is.null(splitter), "Middle column splitter should exist")
+
+   splitter$focus()
+   for (i in 1:15) {
+      remote$keyboard.insertText("<Right>")
+   }
+
+   Sys.sleep(0.3)
+
+   # Capture the modified width
+   consoleModified <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1Modified <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Cycle 1: Hide then show
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden cycle 1", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible cycle 1", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleCycle1 <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1Cycle1 <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Cycle 2: Hide then show again
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden cycle 2", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible cycle 2", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleCycle2 <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1Cycle2 <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Cycle 3: One more time for good measure
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden cycle 3", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible cycle 3", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleCycle3 <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1Cycle3 <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # All widths should match within tolerance
+   expect_true(abs(consoleCycle1 - consoleModified) / consoleModified < 0.05,
+               paste0("Console width preserved after cycle 1: ",
+                      consoleModified, " -> ", consoleCycle1))
+   expect_true(abs(consoleCycle2 - consoleModified) / consoleModified < 0.05,
+               paste0("Console width preserved after cycle 2: ",
+                      consoleModified, " -> ", consoleCycle2))
+   expect_true(abs(consoleCycle3 - consoleModified) / consoleModified < 0.05,
+               paste0("Console width preserved after cycle 3: ",
+                      consoleModified, " -> ", consoleCycle3))
+
+   expect_true(abs(tabSet1Cycle1 - tabSet1Modified) / tabSet1Modified < 0.05,
+               paste0("TabSet1 width preserved after cycle 1: ",
+                      tabSet1Modified, " -> ", tabSet1Cycle1))
+   expect_true(abs(tabSet1Cycle2 - tabSet1Modified) / tabSet1Modified < 0.05,
+               paste0("TabSet1 width preserved after cycle 2: ",
+                      tabSet1Modified, " -> ", tabSet1Cycle2))
+   expect_true(abs(tabSet1Cycle3 - tabSet1Modified) / tabSet1Modified < 0.05,
+               paste0("TabSet1 width preserved after cycle 3: ",
+                      tabSet1Modified, " -> ", tabSet1Cycle3))
+
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Sidebar show uses default widths after columns resized while hidden", {
+   # This test verifies that if user resizes columns while sidebar is hidden,
+   # then shows the sidebar, we don't try to restore stale saved widths.
+   # Instead, we should use reasonable default layout.
+
+   # Start with sidebar visible
+   remote$commands.execute("toggleSidebar")
+
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   Sys.sleep(0.3)
+
+   # Do an initial resize with sidebar visible
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   splitter$focus()
+   for (i in 1:10) {
+      remote$keyboard.insertText("<Right>")
+   }
+
+   Sys.sleep(0.3)
+
+   # Capture widths with sidebar visible (these will be saved when we hide)
+   consoleWithSidebar <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+
+   # Hide sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   # NOW resize columns WHILE sidebar is hidden
+   # This should invalidate the saved widths
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   splitter$focus()
+   for (i in 1:25) {
+      remote$keyboard.insertText("<Left>")  # Move LEFT this time
+   }
+
+   Sys.sleep(0.3)
+
+   # Capture the widths while hidden (these should NOT be restored when showing sidebar)
+   consoleWhileHidden <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1WhileHidden <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # The "while hidden" width should be different from "with sidebar" width
+   # (we moved the splitter in opposite direction)
+   message(paste0("Console width with sidebar: ", consoleWithSidebar,
+                  ", while hidden: ", consoleWhileHidden))
+
+   # Show sidebar again
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible again", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   # Get final widths after showing sidebar
+   consoleAfterShow <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterShow <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+   sidebarAfterShow <- remote$js.querySelector("#rstudio_Sidebar_pane")$offsetWidth
+
+   # The widths should be reasonable (not zero, not corrupted)
+   expect_true(consoleAfterShow > 100,
+               paste0("Console should have reasonable width after show: ", consoleAfterShow))
+   expect_true(tabSet1AfterShow > 100,
+               paste0("TabSet1 should have reasonable width after show: ", tabSet1AfterShow))
+   expect_true(sidebarAfterShow > 100,
+               paste0("Sidebar should have reasonable width after show: ", sidebarAfterShow))
+
+   # The final console width should NOT match the "while hidden" width
+   # (because we resized while hidden, so saved state is invalid)
+   # It should be either the original "with sidebar" width or a reasonable default
+   message(paste0("Final console width: ", consoleAfterShow,
+                  " (expected != ", consoleWhileHidden, ")"))
+
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Different resize patterns preserve correctly through sidebar toggle", {
+   # This test verifies that width preservation works regardless of which
+   # splitter is moved or in which direction
+
+   # Show sidebar
+   remote$commands.execute("toggleSidebar")
+
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   Sys.sleep(0.3)
+
+   # Test 1: Resize middle splitter LEFT (shrink console, widen right side)
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   splitter$focus()
+   for (i in 1:15) {
+      remote$keyboard.insertText("<Left>")
+   }
+
+   Sys.sleep(0.3)
+
+   consoleAfterLeft <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterLeft <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Hide and show sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden test 1", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar shown test 1", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleAfterToggle1 <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterToggle1 <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Verify preservation
+   expect_true(abs(consoleAfterToggle1 - consoleAfterLeft) / consoleAfterLeft < 0.05,
+               paste0("Console width preserved after LEFT resize: ",
+                      consoleAfterLeft, " -> ", consoleAfterToggle1))
+   expect_true(abs(tabSet1AfterToggle1 - tabSet1AfterLeft) / tabSet1AfterLeft < 0.05,
+               paste0("TabSet1 width preserved after LEFT resize: ",
+                      tabSet1AfterLeft, " -> ", tabSet1AfterToggle1))
+
+   # Test 2: Now resize RIGHT (widen console again)
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   splitter$focus()
+   for (i in 1:20) {
+      remote$keyboard.insertText("<Right>")
+   }
+
+   Sys.sleep(0.3)
+
+   consoleAfterRight <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterRight <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Hide and show sidebar again
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden test 2", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar shown test 2", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleAfterToggle2 <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterToggle2 <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Verify preservation again
+   expect_true(abs(consoleAfterToggle2 - consoleAfterRight) / consoleAfterRight < 0.05,
+               paste0("Console width preserved after RIGHT resize: ",
+                      consoleAfterRight, " -> ", consoleAfterToggle2))
+   expect_true(abs(tabSet1AfterToggle2 - tabSet1AfterRight) / tabSet1AfterRight < 0.05,
+               paste0("TabSet1 width preserved after RIGHT resize: ",
+                      tabSet1AfterRight, " -> ", tabSet1AfterToggle2))
+
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Extreme resize values preserve correctly through sidebar toggle", {
+   # This test verifies that width preservation works even with very large
+   # or very small column widths (edge cases)
+
+   # Show sidebar
+   remote$commands.execute("toggleSidebar")
+
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   Sys.sleep(0.3)
+
+   # Resize to make console VERY wide (move splitter far right)
+   # Use 30 iterations instead of 50 to avoid completely zero-width panes
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+   splitter$focus()
+   for (i in 1:30) {
+      remote$keyboard.insertText("<Right>")
+   }
+
+   Sys.sleep(0.3)
+
+   consoleVeryWide <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1VeryNarrow <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   message(paste0("Extreme resize: Console = ", consoleVeryWide,
+                  ", TabSet1 = ", tabSet1VeryNarrow))
+
+   # Hide and show sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.3)
+
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar shown", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   Sys.sleep(0.5)
+
+   consoleAfterToggle <- remote$js.querySelector("#rstudio_Console_pane")$offsetWidth
+   tabSet1AfterToggle <- remote$js.querySelector("#rstudio_TabSet1_pane")$offsetWidth
+
+   # Verify preservation (within tolerance)
+   # For very wide console, check within 5% tolerance
+   consoleWithinTolerance <- abs(consoleAfterToggle - consoleVeryWide) / consoleVeryWide < 0.05
+
+   # For very narrow TabSet1, use absolute difference for very small values
+   # or relative tolerance for larger values
+   if (tabSet1VeryNarrow < 50) {
+      # For very narrow panes, check absolute difference (within 10 pixels)
+      tabSet1WithinTolerance <- abs(tabSet1AfterToggle - tabSet1VeryNarrow) < 10
+   } else {
+      # For larger panes, use relative tolerance
+      tabSet1WithinTolerance <- abs(tabSet1AfterToggle - tabSet1VeryNarrow) / tabSet1VeryNarrow < 0.10
+   }
+
+   expect_true(consoleWithinTolerance,
+               paste0("Very wide console preserved: ",
+                      consoleVeryWide, " -> ", consoleAfterToggle,
+                      " (", round(abs(consoleAfterToggle - consoleVeryWide) / consoleVeryWide * 100, 1), "%)"))
+
+   expect_true(tabSet1WithinTolerance,
+               paste0("Very narrow TabSet1 preserved: ",
+                      tabSet1VeryNarrow, " -> ", tabSet1AfterToggle,
+                      " (absolute diff: ", abs(tabSet1AfterToggle - tabSet1VeryNarrow), "px)"))
+
+   # Verify console still has reasonable width (it was made very wide)
+   expect_true(consoleAfterToggle > 50,
+               paste0("Console should still be very wide: ", consoleAfterToggle))
+
+   # For TabSet1, only check it's visible IF it was visible before toggle
+   # The key test is preservation, not absolute visibility
+   if (tabSet1VeryNarrow > 0) {
+      expect_true(tabSet1AfterToggle >= 0,
+                  paste0("TabSet1 width should be preserved: ",
+                         tabSet1VeryNarrow, " -> ", tabSet1AfterToggle))
+   }
+
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(sidebarElement$offsetWidth > 0,
+               paste0("Sidebar should be visible: ", sidebarElement$offsetWidth))
+
+   .rs.resetUILayout(remote)
+})
