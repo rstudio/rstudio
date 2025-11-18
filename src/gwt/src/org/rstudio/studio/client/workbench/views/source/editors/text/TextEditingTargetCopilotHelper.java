@@ -289,6 +289,9 @@ public class TextEditingTargetCopilotHelper
                // event handler here so we can intercept the event before Ace does.
                DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
                {
+                  if (event.getButton() != NativeEvent.BUTTON_LEFT)
+                     return;
+
                   Element target = event.getEventTarget().cast();
                   Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
                   {
