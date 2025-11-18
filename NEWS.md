@@ -27,6 +27,7 @@
 - (rstudio-pro#9106): Improved support for running Workbench Jobs using Python virtual environments in Positron
 - (rstudio-pro#9106): Added support for running Workbench Jobs using R in Positron
 - (rstudio-pro#9560) Updated the Posit Workbench Documentatio site, the RStudio Desktop Administration Guide, the RStudio IDE User Guide, and RStudio & Posit Workbench Release Notes to v8.0.1 of the Posit product documentation theme.
+- (rstudio-pro#8920): Added option to remove recent projects from Workbench homepage
 
 ### Fixed
 #### RStudio
@@ -88,9 +89,9 @@ sudo rstudio-server runtimes add --py-versions /path/to/py-versions.json --clust
 ```
 
 ### Dependencies
-- Copilot Language Server 1.395.0
+- Copilot Language Server 1.397.0
 - Electron 38.7.0
-- Node.js 22.18.0
+- Node.js 22.21.1
 - Quarto 1.8.25
 - Launcher 2.21.0
 - rserver-saml 0.9.2

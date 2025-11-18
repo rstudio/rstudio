@@ -99,10 +99,25 @@ const char* const kIndexFileName = "index.html";
 // Logging
 // ============================================================================
 int s_chatLogLevel = 0;
+std::string s_chatBackendMinLogLevel = "error"; // Default: show only error logs
 
 int chatLogLevel()
 {
    return s_chatLogLevel;
+}
+
+// Map log level names to numeric priorities for filtering
+// Returns priority (higher = more severe)
+// Unknown levels return very high priority to ensure critical messages are never filtered
+int getLogLevelPriority(const std::string& level)
+{
+   if (level == "trace") return 0;
+   if (level == "debug") return 1;
+   if (level == "info")  return 2;
+   if (level == "warn")  return 3;
+   if (level == "error") return 4;
+   if (level == "fatal") return 5;
+   return 999; // Unknown levels treated as highest priority (always show them)
 }
 
 SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
@@ -118,9 +133,6 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 
 // Buffer for accumulating stdout data from backend
 std::string s_backendOutputBuffer;
-
-// Queue of parsed JSON-RPC messages from backend
-std::vector<json::Value> s_pendingResponses;
 
 // Regex for parsing Content-Length header (case-insensitive per HTTP spec)
 // Matches only at start of line to avoid false matches in log output
@@ -157,7 +169,107 @@ void handleNotification(const std::string& method, const json::Object& params)
    }
 }
 
-void processBackendMessage(const json::Value& message)
+// ============================================================================
+// JSON-RPC Request Handling
+// ============================================================================
+
+void sendJsonRpcResponse(core::system::ProcessOperations& ops,
+                         const json::Value& id,
+                         const json::Value& result)
+{
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["result"] = result;
+
+   std::string body = response.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC response to backend stdin: {}", error.getMessage());
+   }
+}
+
+void sendJsonRpcError(core::system::ProcessOperations& ops,
+                      const json::Value& id,
+                      int code,
+                      const std::string& message)
+{
+   json::Object errorObj;
+   errorObj["code"] = code;
+   errorObj["message"] = message;
+
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["error"] = errorObj;
+
+   std::string body = response.write();
+   std::string frameMessage = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC error response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(frameMessage, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC error response to backend stdin: {}", error.getMessage());
+   }
+}
+
+void handleGetActiveSession(core::system::ProcessOperations& ops,
+                            const json::Value& requestId)
+{
+   json::Object result;
+   result["language"] = "R";
+   result["version"] = module_context::rVersion();
+   result["sessionId"] = module_context::activeSession().id();
+   result["mode"] = "console";
+
+   DLOG("Handling runtime/getActiveSession request");
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRequest(core::system::ProcessOperations& ops,
+                   const std::string& method,
+                   const json::Value& requestId,
+                   const json::Object& params)
+{
+   if (method == "runtime/getActiveSession")
+   {
+      handleGetActiveSession(ops, requestId);
+   }
+   else
+   {
+      // Unknown method - send JSON-RPC error response
+      WLOG("Unknown JSON-RPC request method: {}", method);
+      sendJsonRpcError(ops, requestId, -32601, "Method not found");
+   }
+}
+
+// ============================================================================
+// JSON-RPC Message Processing
+// ============================================================================
+
+void processBackendMessage(core::system::ProcessOperations& ops,
+                           const json::Value& message)
 {
    if (!message.isObject())
    {
@@ -172,12 +284,27 @@ void processBackendMessage(const json::Value& message)
    Error error = json::readObject(messageObj, "method", method);
    if (!error)  // Success - method field is present
    {
-      // This is a notification (no 'id' field) or request from backend
+      // This is a notification or request from backend
       json::Object params;
       json::readObject(messageObj, "params", params);
 
-      // For now, we only handle notifications
-      handleNotification(method, params);
+      // Check for 'id' field to distinguish request from notification
+      // Per JSON-RPC 2.0 spec:
+      // - Request: has 'id' field (value can be string, number, or null)
+      // - Notification: 'id' field is absent entirely
+      // The VALUE of id doesn't matter - only its presence/absence
+      auto it = messageObj.find("id");
+      if (it != messageObj.end())
+      {
+         // 'id' field EXISTS - this is a REQUEST (even if value is null)
+         json::Value requestId = messageObj["id"];
+         handleRequest(ops, method, requestId, params);
+      }
+      else
+      {
+         // 'id' field ABSENT - this is a NOTIFICATION
+         handleNotification(method, params);
+      }
    }
    else
    {
@@ -204,9 +331,16 @@ void handleLoggerLog(const json::Object& params)
       return;
    }
 
+   // Filter backend logs based on minimum level setting
+   if (getLogLevelPriority(level) < getLogLevelPriority(s_chatBackendMinLogLevel))
+   {
+      // This log level is below the threshold, skip it
+      return;
+   }
+
    // Map backend log levels to RStudio logging macros
-   // Use "databot" prefix to distinguish backend logs
-   std::string prefixedMessage = fmt::format("[databot] {}", message);
+   // Use "ai" prefix and include level to distinguish backend logs
+   std::string prefixedMessage = fmt::format("[ai] [{}] {}", level, message);
 
    if (level == "trace")
    {
@@ -228,30 +362,67 @@ void handleLoggerLog(const json::Object& params)
    {
       ELOG("{}", prefixedMessage);
    }
+   else if (level == "fatal")
+   {
+      ELOG("{}", prefixedMessage);
+   }
    else
    {
-      DLOG("[databot] [{}] {}", level, message);
+      // Unknown levels are treated as high priority (see getLogLevelPriority),
+      // so log them as errors to ensure visibility
+      ELOG("[ai] [{}] {}", level, message);
    }
 }
 
-void processPendingMessages()
+// Check if a logger/log notification should be shown in raw JSON-RPC format
+// Returns true if the message should be logged in raw form
+// Verbosity levels:
+//   CHAT_LOG_LEVEL=2: Show all JSON except logger/log (formatted version is enough)
+//   CHAT_LOG_LEVEL=3+: Show all JSON including logger/log (for debugging logging itself)
+bool shouldLogBackendMessage(const std::string& messageBody)
 {
-   // Process all pending messages from the backend
-   while (!s_pendingResponses.empty())
-   {
-      json::Value message = s_pendingResponses.front();
-      s_pendingResponses.erase(s_pendingResponses.begin());
+   // Quick parse to check if this is a logger/log notification
+   json::Value message;
+   if (message.parse(messageBody))
+      return true; // Parse error, show it
 
-      processBackendMessage(message);
+   if (!message.isObject())
+      return true; // Not an object, show it
+
+   json::Object obj = message.getObject();
+
+   // Check if it's a logger/log notification
+   std::string method;
+   if (json::readObject(obj, "method", method) || method != "logger/log")
+      return true; // Not a logger/log notification, always show it at level 2+
+
+   // It's a logger/log notification
+   // At level 2: hide raw JSON (formatted version will be shown by handleLoggerLog)
+   // At level 3+: show raw JSON (for debugging the logging mechanism itself)
+   if (chatLogLevel() >= 3)
+   {
+      // Level 3+: apply backend level filter and show if it passes
+      json::Object params;
+      if (json::readObject(obj, "params", params))
+         return true; // No params, show it
+
+      std::string level;
+      if (json::readObject(params, "level", level))
+         return true; // No level field, show it
+
+      return getLogLevelPriority(level) >= getLogLevelPriority(s_chatBackendMinLogLevel);
    }
+
+   // Level 2: hide logger/log raw JSON (user will see formatted version)
+   return false;
 }
 
 void onBackgroundProcessing(bool isIdle)
 {
-   // Process pending messages from backend on main thread
-   processPendingMessages();
+   // Messages are now processed immediately in onBackendStdout while we have
+   // a valid ProcessOperations reference. No deferred processing needed.
 
-   // Future: Add timeout handling for request/response pattern
+   // Future: Add timeout handling for request/response pattern if needed
    // (similar to SessionCopilot.cpp lines 1448-1462)
 }
 
@@ -381,22 +552,44 @@ std::string buildWebSocketUrl(int port)
       std::string baseUrl = persistentState().activeClientUrl();
       DLOG("Base URL: {}", baseUrl);
 
-      // Parse base URL to get scheme and host
-      http::URL parsedBase(baseUrl);
+      // Determine WebSocket scheme and extract URL without scheme
+      // This preserves the full path including any session prefix (e.g., /s/abc123/)
+      std::string wsScheme;
+      std::string urlWithoutScheme;
 
-      // Determine WebSocket scheme based on HTTP scheme
-      std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
+      if (baseUrl.find("https://") == 0)
+      {
+         wsScheme = "wss://";
+         urlWithoutScheme = baseUrl.substr(8); // Remove "https://"
+      }
+      else if (baseUrl.find("http://") == 0)
+      {
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl.substr(7); // Remove "http://"
+      }
+      else
+      {
+         // Fallback - shouldn't happen
+         WLOG("Unexpected base URL format: {}", baseUrl);
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl;
+      }
 
-      // Build complete WebSocket URL as string with /ai-chat base path
-      // The proxy will route {portmappedPath}/ai-chat/ws to http://127.0.0.1:{port}/ai-chat/ws
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath + "/ai-chat";
+      // Remove trailing slash from URL if present (portmappedPath will add one)
+      if (!urlWithoutScheme.empty() && urlWithoutScheme.back() == '/')
+         urlWithoutScheme = urlWithoutScheme.substr(0, urlWithoutScheme.length() - 1);
+
+      // Build complete WebSocket URL preserving any session path from baseUrl
+      // Example: wss://hostname:8787/s/abc123/p/58fab3e4/ai-chat
+      // The proxy will route this to http://127.0.0.1:{port}/ai-chat/ws
+      std::string wsUrl = wsScheme + urlWithoutScheme + portmappedPath + "/ai-chat";
       DLOG("Final WebSocket URL: {}", wsUrl);
 
       return wsUrl;
    }
 #endif
 
-   // Desktop mode: include /ai-chat base path for DatabotServer routing
+   // Desktop mode: include /ai-chat base path for AIServer routing
    // The client will append /ws to get ws://127.0.0.1:{port}/ai-chat/ws
    std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port) + "/ai-chat";
    DLOG("Desktop WebSocket URL: {}", desktopUrl);
@@ -413,6 +606,9 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
    s_backendOutputBuffer.append(output);
 
    // Process all complete messages in the buffer
+   // NOTE: We process messages immediately here (not deferred) because:
+   // 1. callbacksRequireMainThread=true means we're already on the main thread
+   // 2. We need the valid 'ops' reference to send responses to requests
    while (true)
    {
       // Find the end of headers (blank line: \r\n\r\n) first
@@ -464,8 +660,8 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       // Extract the message body (IMPORTANT: byte-based, not character-based)
       std::string messageBody = s_backendOutputBuffer.substr(bodyStart, contentLength);
 
-      // Verbose logging
-      if (chatLogLevel() >= 2)
+      // Verbose logging (filtered by backend log level for logger/log notifications)
+      if (chatLogLevel() >= 2 && shouldLogBackendMessage(messageBody))
       {
          DLOG("Received message from backend: {}", messageBody);
       }
@@ -478,15 +674,13 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       }
       else
       {
-         // Queue the parsed message for processing
-         s_pendingResponses.push_back(messageValue);
+         // Process message immediately while ops is valid
+         processBackendMessage(ops, messageValue);
       }
 
       // Remove the processed message from buffer
       s_backendOutputBuffer = s_backendOutputBuffer.substr(bodyEnd);
    }
-
-   // Messages will be processed by onBackgroundProcessing on the main thread
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
@@ -504,7 +698,6 @@ void onBackendExit(int exitCode)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
 
    // Auto-restart once
    if (s_chatBackendRestartCount < kMaxRestartAttempts)
@@ -761,7 +954,10 @@ Error handleAIChatRequest(const http::Request& request,
        boost::ends_with(requestPath, ".css"))
    {
       // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
-      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      // Use multiple headers to ensure cache is disabled across all browsers and proxies
+      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+      pResponse->setHeader("Pragma", "no-cache");  // HTTP/1.0 compatibility
+      pResponse->setHeader("Expires", "0");        // Proxy cache control
    }
    else if (requestPath.find(".") != std::string::npos)
    {
@@ -865,7 +1061,6 @@ void onShutdown(bool terminatedNormally)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
 }
 
 } // end anonymous namespace
@@ -883,6 +1078,26 @@ Error initialize()
    std::string chatLogLevelStr = core::system::getenv("CHAT_LOG_LEVEL");
    if (!chatLogLevelStr.empty())
       s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevelStr, 0);
+
+   // Read backend minimum log level filter
+   std::string backendMinLevel = core::system::getenv("CHAT_BACKEND_MIN_LEVEL");
+   if (!backendMinLevel.empty())
+   {
+      // Convert to lowercase for case-insensitive matching
+      boost::algorithm::to_lower(backendMinLevel);
+
+      // Validate it's a known level, otherwise keep default
+      if (backendMinLevel == "trace" || backendMinLevel == "debug" ||
+          backendMinLevel == "info" || backendMinLevel == "warn" ||
+          backendMinLevel == "error" || backendMinLevel == "fatal")
+      {
+         s_chatBackendMinLogLevel = backendMinLevel;
+      }
+      else
+      {
+         WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'error'", backendMinLevel);
+      }
+   }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
 
