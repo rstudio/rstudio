@@ -6,7 +6,7 @@
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
-@external ace_active_debug_line;
+@external ace_active_debug_line, ace_next-edit-suggestion-highlight;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -407,6 +407,14 @@ pre {
    background-size: 10px 10px !important;
    background: rgba(128, 128, 128, 0.5);
    cursor: pointer;
+}
+
+.ace_next-edit-suggestion-highlight {
+   position: absolute;
+   z-index: 1;
+   background: rgba(128, 128, 128, 0.5) !important;
+   cursor: pointer !important;
+   pointer-events: auto;
 }
 
 .visual_chunk-queued-line,

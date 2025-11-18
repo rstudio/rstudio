@@ -3258,6 +3258,18 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
+   public int addHighlight(Range range, String className)
+   {
+      return getSession().addMarker(range, className, "text", false);
+   }
+
+   @Override
+   public void removeHighlight(int markerId)
+   {
+      getSession().removeMarker(markerId);
+   }
+
+   @Override
    public void highlightDebugLocation(SourcePosition startPosition,
                                       SourcePosition endPosition,
                                       boolean executing)

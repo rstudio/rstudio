@@ -25,6 +25,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -71,8 +72,32 @@ public class TextEditingTargetCopilotHelper
    interface CopilotCommandBinder extends CommandBinder<Commands, TextEditingTargetCopilotHelper>
    {
    }
+
+   // A class used to track the state associated with a next-edit suggestion / copilot completion.
+   private static class NextEditSuggestion
+   {
+      public NextEditSuggestion(int markerId, CopilotCompletion completion)
+      {
+         markerId_ = markerId;
+         completion_ = completion;
+      }
+
+      public void applyEdit(DocDisplay display)
+      {
+         Range range = Range.create(
+               completion_.range.start.line,
+               completion_.range.start.character,
+               completion_.range.end.line,
+               completion_.range.end.character);
+         display.replaceRange(range, completion_.insertText);
+      }
+
+      private int markerId_;
+      private CopilotCompletion completion_;
+   }
    
-   class Completion
+   // A wrapper class for Copilot Completions, which is used to track partially-accepted completions.
+   private static class Completion
    {
       public Completion(CopilotCompletion originalCompletion)
       {
@@ -230,8 +255,8 @@ public class TextEditingTargetCopilotHelper
                               // The completion data gets modified when doing partial (word-by-word)
                               // completions, so we need to use a copy and preserve the original
                               // (which we need to send back to the server as-is in some language-server methods).
-                              normalizeCompletion(completion);
-                              activeCompletion_ = new Completion(completion);
+                              CopilotCompletion normalized = normalizeCompletion(completion);
+                              activeCompletion_ = new Completion(normalized);
 
                               display_.setGhostText(activeCompletion_.displayText);
                               server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
@@ -293,6 +318,35 @@ public class TextEditingTargetCopilotHelper
                      return;
 
                   Element target = event.getEventTarget().cast();
+
+                  // Check for clicks on a next-edit suggestion highlight.
+                  Element highlightEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName("ace_next-edit-suggestion-highlight");
+                     }
+                  });
+
+                  if (highlightEl != null)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+
+                     // Apply the code suggestion associated with this range.
+
+                     // Remove an existing annotation, if any
+                     if (nextEditAnnotationRegistration_ != null)
+                     {
+                        nextEditAnnotationRegistration_.removeHandler();
+                        nextEditAnnotationRegistration_ = null;
+                     }
+
+                     return;
+                  }
+
+                  // Check for clicks on the next-edit suggestion gutter icon.
                   Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
                   {
                      @Override
@@ -315,18 +369,12 @@ public class TextEditingTargetCopilotHelper
                         nextEditAnnotationRegistration_ = null;
                      }
 
+                     return;
                   }
                }),
 
                display_.addCursorChangedHandler((event) ->
                {
-                  // Remove an existing annotation, if any
-                  if (nextEditAnnotationRegistration_ != null)
-                  {
-                     nextEditAnnotationRegistration_.removeHandler();
-                     nextEditAnnotationRegistration_ = null;
-                  }
-
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
                      return;
@@ -485,22 +533,50 @@ public class TextEditingTargetCopilotHelper
                // The completion data gets modified when doing partial (word-by-word)
                // completions, so we need to use a copy and preserve the original
                // (which we need to send back to the server as-is in some language-server methods).
-               normalizeCompletion(completion);
-               activeCompletion_ = new Completion(completion);
+               CopilotCompletion normalized = normalizeCompletion(completion);
+               activeCompletion_ = new Completion(normalized);
 
-               Position position = Position.create(
-                  completion.range.start.line,
-                  completion.range.start.character);
-               display_.setGhostText(activeCompletion_.displayText, position);
+               // If the start position and end position match, then display
+               // the suggestion using ghost text at that position.
+               if (normalized.range.start.line == normalized.range.end.line &&
+                   normalized.range.start.character == normalized.range.end.character)
+               {
+                  Position position = Position.create(
+                     normalized.range.start.line,
+                     normalized.range.start.character);
+                  display_.setGhostText(activeCompletion_.displayText, position);
 
-               LintItem item = LintItem.create(
-                  completion.range.start.line,
-                  completion.range.start.character,
-                  "[NES] Apply next-edit suggestion",
-                  "ace_next-edit-suggestion");
+                  LintItem item = LintItem.create(
+                     normalized.range.start.line,
+                     normalized.range.start.character,
+                     "[NES] Apply next-edit suggestion",
+                     "ace_next-edit-suggestion");
 
-               nextEditAnnotationRegistration_ = display_.addGutterItem(item);
-               server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  nextEditAnnotationRegistration_ = display_.addGutterItem(item);
+                  server_.copilotDidShowCompletion(normalized, new VoidServerRequestCallback());
+                  return;
+               }
+
+               // Otherwise, we'll just highlight the range to be replaced.
+               int markerId = display_.addHighlight(
+                  Range.create(
+                     completion.range.start.line,
+                     completion.range.start.character,
+                     completion.range.end.line,
+                     completion.range.end.character),
+                  "ace_next-edit-suggestion-highlight");
+
+               nextEditAnnotationRegistration_ = new HandlerRegistration()
+               {
+                  @Override
+                  public void removeHandler()
+                  {
+                     display_.removeHighlight(markerId);
+                  }
+               };
+
+               // Save the current suggestion.
+               suggestion_ = new NextEditSuggestion(markerId, completion);
             }
 
             @Override
@@ -608,7 +684,7 @@ public class TextEditingTargetCopilotHelper
       });
    }
    
-   private String postProcessCompletion(String text)
+   private static String postProcessCompletion(String text)
    {
       // Exclude chunk markers from completion results
       int endChunkIndex = text.indexOf("\n```");
@@ -631,7 +707,7 @@ public class TextEditingTargetCopilotHelper
    // A Copilot completion will often overlap region(s) of the document.
    // Try to avoid presenting this overlap, so that only the relevant
    // portion of the completed text is presented to the user.
-   private void normalizeCompletion(CopilotCompletion completion)
+   private CopilotCompletion normalizeCompletion(CopilotCompletion completion)
    {
       // Remove any overlap from the start of the completion.
       int lhs = 0;
@@ -667,12 +743,11 @@ public class TextEditingTargetCopilotHelper
          }
       }
 
-      if (lhs != 0 || rhs != 0)
-      {
-         completion.insertText = completion.insertText.substring(lhs, completion.insertText.length() - rhs);
-         completion.range.start.character += lhs;
-         completion.range.end.character -= rhs;
-      }
+      CopilotCompletion normalized = JsUtil.clone(completion);
+      normalized.insertText = normalized.insertText.substring(lhs, normalized.insertText.length() - rhs);
+      normalized.range.start.character += lhs;
+      normalized.range.end.character -= rhs;
+      return normalized;
    }
 
    @Inject
@@ -703,6 +778,7 @@ public class TextEditingTargetCopilotHelper
    private HandlerRegistration nextEditAnnotationRegistration_;
    
    private Completion activeCompletion_;
+   private NextEditSuggestion suggestion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
    
    

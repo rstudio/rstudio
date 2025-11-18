@@ -27,6 +27,17 @@ import com.google.gwt.core.client.JsArrayString;
 
 public class JsUtil
 {
+   @SuppressWarnings("unchecked")
+   public static final <T> T clone(T object)
+   {
+      return (T) cloneImpl(object);
+   }
+
+   private native static final Object cloneImpl(Object object)
+   /*-{
+      return $wnd.structuredClone(object);
+   }-*/;
+
    public static Iterable<String> asIterable(final JsArrayString array)
    {
       return new Iterable<String>()
