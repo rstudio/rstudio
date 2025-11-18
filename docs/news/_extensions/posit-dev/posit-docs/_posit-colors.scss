@@ -1,37 +1,93 @@
 /* Posit Color definitions */
+
+/* Posit Primary Colors */
 $posit-blue:             #447099;
+$posit-orange:           #ee6331;
+$posit-gray:             #404041;
+$posit-blue-alt:         #468CCD;
+/* Posit Secondary Colors */
+$posit-teal:             #419599;
+$posit-green:            #72994e;
+$posit-white:            #f2f2f2;
+$posit-yellow:           #e7b10a;
+$posit-burgundy:         #9a4665;
+$posit-red:              #d44000;
+
+
+/* Posit Colors */
+
+/* Posit blues */
 $posit-light-blue-1:     #d1dbe5;
 $posit-light-blue-2:     #a2b8cb;
 $posit-light-blue-3:     #7494b1;
+
 $posit-dark-blue-1:      #305775;
 $posit-dark-blue-2:      #213d4f;
+$posit-dark-blue-3:      #17212b;
 
-$posit-orange:           #ee6331;
-$posit-light-orange-1:   #edccbf;
-$posit-light-orange-2:   #eba38c;
-$posit-dark-orange-1:    #ab4d26;
-$posit-dark-orange-2:    #80361c;
-$posit-dark-orange-3:    #451f12;
-
-$posit-gray:             #404041;
+/* Posit grays */
 $posit-light-gray-1:     #c2c2c4;
 $posit-light-gray-2:     #949494;
+$posit-light-gray-3:     #707073;
 $posit-dark-gray-1:      #333333;
+$posit-dark-gray-2:      #242426;
+$posit-dark-gray-3:      #151515;
 
-$posit-teal:             #419599;
+/* Posit teals */
 $posit-light-teal-1:     #c2d9d9;
 $posit-light-teal-2:     #94bdbf;
 $posit-light-teal-3:     #70a3a6;
+
 $posit-dark-teal-1:      #297075;
 $posit-dark-teal-2:      #1f4f4f;
 $posit-dark-teal-3:      #122b2b;
 
-$posit-green:            #72994e;
+/* Posit greens */
+$posit-light-green-1:    #cfd9c7;
+$posit-light-green-2:    #adbf99;
+$posit-light-green-3:    #8aa67a;
 
-$posit-burgundy:         #9a4665;
+$posit-dark-green-1:     #57733d;
+$posit-dark-green-2:     #3b4f29;
+$posit-dark-green-3:     #212b1c;
+
+/* Posit reds */
+$posit-light-red-1:     #f2c2c2;
+$posit-light-red-2:     #e59494;
+$posit-light-red-3:     #d66f6f;
+
+$posit-dark-red-1:      #a63d3d;
+$posit-dark-red-2:      #7a2b2b;
+$posit-dark-red-3:      #4f1919;
+
+/* Posit burgundies */
 $posit-light-burgundy-1: #d9c4cc;
 $posit-light-burgundy-2: #bf96a3;
 $posit-light-burgundy-3: #a67380;
+
 $posit-dark-burgundy-1:  #78384f;
 $posit-dark-burgundy-2:  #542938;
 $posit-dark-burgundy-3:  #2e171f;
+
+/* Posit oranges */
+$posit-light-orange-1:   #edccbf;
+$posit-light-orange-2:   #eba38c;
+$posit-light-orange-3:   #e58066;
+
+$posit-dark-orange-1:    #ab4d26;
+$posit-dark-orange-2:    #80361c;
+$posit-dark-orange-3:    #451f12;
+
+/* Posit yellows */
+$posit-light-yellow-1:  #efdeb9;
+$posit-light-yellow-2:  #f5d487;
+$posit-light-yellow-3:  #f4c540;
+
+$posit-dark-yellow-1:   #c48f0a;
+$posit-dark-yellow-2:   #9b6c04;
+$posit-dark-yellow-3:   #6d4a03;
+
+
+/* Misc. */
+
+$shiny-sidebar: #595959;
