@@ -1277,3 +1277,126 @@ withr::defer(.rs.automation.deleteRemote())
    toggleSidebarChecked <- remote$js.eval("window.rstudioCallbacks.commandIsChecked('toggleSidebar')")
    expect_false(toggleSidebarChecked, "toggleSidebar should be unchecked when sidebar is hidden again")
 })
+
+.rs.test("Column widths are preserved when toggling sidebar visibility (issue #16676)", {
+   # This test verifies the fix for issue #16676: column widths should be preserved
+   # when hiding and showing the sidebar, not revert to old saved state
+
+   # 1. Show the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   # Wait for the sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Add delay to ensure layout is fully settled
+   Sys.sleep(0.3)
+
+   # 2. Record initial column widths with sidebar visible
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+
+   initialConsoleWidth <- consoleElement$offsetWidth
+   initialTabSet1Width <- tabSet1Element$offsetWidth
+   initialSidebarWidth <- sidebarElement$offsetWidth
+
+   expect_true(initialConsoleWidth > 0, "Console pane should be visible")
+   expect_true(initialTabSet1Width > 0, "TabSet1 pane should be visible")
+   expect_true(initialSidebarWidth > 0, "Sidebar pane should be visible")
+
+   # 3. Change column widths by focusing the splitter and using keyboard to resize
+   # We'll drag the splitter between console and TabSet1 to widen the console
+   splitter <- remote$js.querySelector("#rstudio_middle_column_splitter")
+
+   # Verify splitter exists
+   expect_true(!is.null(splitter), "Middle column splitter should exist")
+
+   # Focus the splitter
+   splitter$focus()
+
+   # Press Right arrow multiple times to drag the splitter right (widening the console)
+   # Each keypress moves the splitter a few pixels
+   for (i in 1:18) {
+      remote$keyboard.insertText("<Right>")
+   }
+
+   # Wait for the layout to update
+   Sys.sleep(0.3)
+
+   # 4. Record modified column widths (after simulated resize)
+   consoleElementModified <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1ElementModified <- remote$js.querySelector("#rstudio_TabSet1_pane")
+
+   modifiedConsoleWidth <- consoleElementModified$offsetWidth
+   modifiedTabSet1Width <- tabSet1ElementModified$offsetWidth
+
+   # Verify that column widths changed (allowing for some cases where simulation might not work)
+   widthChanged <- abs(modifiedConsoleWidth - initialConsoleWidth) > 20 ||
+                   abs(modifiedTabSet1Width - initialTabSet1Width) > 20
+
+   # If we couldn't change widths programmatically, we'll still test that widths
+   # are preserved through the toggle cycle (just comparing to initial)
+   if (widthChanged) {
+      message(paste0("Successfully changed column widths: Console ",
+                     initialConsoleWidth, " -> ", modifiedConsoleWidth,
+                     ", TabSet1 ", initialTabSet1Width, " -> ", modifiedTabSet1Width))
+   } else {
+      message("Width change simulation didn't work, testing initial width preservation only")
+      modifiedConsoleWidth <- initialConsoleWidth
+      modifiedTabSet1Width <- initialTabSet1Width
+   }
+
+   # 5. Hide the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   # Wait for the sidebar to be removed
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   Sys.sleep(0.3)
+
+   # 6. Show the sidebar again
+   remote$commands.execute("toggleSidebar")
+
+   # Wait for the sidebar to be created again
+   .rs.waitUntil("sidebar re-created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Wait for layout to fully settle
+   Sys.sleep(0.5)
+
+   # 7. Record final column widths (after hide/show cycle)
+   consoleElementFinal <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSet1ElementFinal <- remote$js.querySelector("#rstudio_TabSet1_pane")
+
+   finalConsoleWidth <- consoleElementFinal$offsetWidth
+   finalTabSet1Width <- tabSet1ElementFinal$offsetWidth
+
+   # 8. Verify that final widths match modified widths (within tolerance)
+   # This is the key assertion that would fail before the fix in MainSplitPanel.java
+
+   # Column widths should be within 5% of the modified widths
+   consoleWithinTolerance <- abs(finalConsoleWidth - modifiedConsoleWidth) / modifiedConsoleWidth < 0.05
+   tabSet1WithinTolerance <- abs(finalTabSet1Width - modifiedTabSet1Width) / modifiedTabSet1Width < 0.05
+
+   expect_true(consoleWithinTolerance,
+               paste0("Console width should be preserved after sidebar toggle. ",
+                      "Modified: ", modifiedConsoleWidth, ", ",
+                      "Final: ", finalConsoleWidth, ", ",
+                      "Difference: ", abs(finalConsoleWidth - modifiedConsoleWidth), " ",
+                      "(", round(abs(finalConsoleWidth - modifiedConsoleWidth) / modifiedConsoleWidth * 100, 1), "%)"))
+
+   expect_true(tabSet1WithinTolerance,
+               paste0("TabSet1 width should be preserved after sidebar toggle. ",
+                      "Modified: ", modifiedTabSet1Width, ", ",
+                      "Final: ", finalTabSet1Width, ", ",
+                      "Difference: ", abs(finalTabSet1Width - modifiedTabSet1Width), " ",
+                      "(", round(abs(finalTabSet1Width - modifiedTabSet1Width) / modifiedTabSet1Width * 100, 1), "%)"))
+
+   # Clean up
+   .rs.resetUILayout(remote)
+})

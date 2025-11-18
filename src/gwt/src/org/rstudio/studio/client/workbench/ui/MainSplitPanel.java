@@ -155,13 +155,60 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          @Override
          protected void onInit(JsObject value)
          {
+            // Skip state restoration if we're in the middle of a sidebar toggle
+            // Let restoreColumnWidths handle the sizing instead
+            if (isTogglingSidebar_)
+            {
+               // Don't restore from saved state - just use defaults
+               // restoreColumnWidths will set the correct widths
+
+               // Set up default layout without restoring saved state
+               double splitWidth = getDefaultSplitterWidth();
+
+               if (sidebar_ != null && "left".equals(sidebarLocation_))
+                  addWest(sidebar_, splitWidth * 0.8);
+
+               for (Widget w : leftList_)
+                  addWest(w, splitWidth);
+
+               if (sidebar_ != null && !"left".equals(sidebarLocation_))
+               {
+                  addEast(sidebar_, splitWidth * 0.8);
+                  addWest(center_, splitWidth);
+                  add(right_);
+               }
+               else
+               {
+                  addEast(right_, splitWidth);
+                  add(center_);
+               }
+
+               Scheduler.get().scheduleDeferred(new ScheduledCommand()
+               {
+                  public void execute()
+                  {
+                     enforceBoundaries();
+                     setSplitterAttributes();
+                     deferredSaveWidthPercent();
+                  }
+               });
+
+               return;
+            }
+
             // If we already have a set state, with the correct number of columns use that
             State state = value == null ? null : (State)value.cast();
             int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
+            int savedCount = (state != null && state.hasSplitterPos()) ? state.getSplitterCount() : 0;
+            boolean sidebarVisibilityChanged = state != null &&
+                                               state.validate() &&
+                                               state.hasSplitterPos() &&
+                                               Math.abs(savedCount - expectedCount) == 1;
+
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
-                state.getSplitterCount() == expectedCount)
+                (state.getSplitterCount() == expectedCount || sidebarVisibilityChanged))
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
@@ -170,12 +217,30 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   int offsetWidth = Window.getClientWidth() - delta;
                   int idx = 0;
                   double pct;
+                  // When sidebar visibility changed, we need to handle the state index mapping carefully
+                  boolean sidebarWasInState = savedCount > expectedCount; // Sidebar was visible in saved state
+                  boolean skipSidebarInState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ == null;
+                  boolean useSidebarFromState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ != null;
+
                   // Add sidebar if on left
                   if (sidebar_ != null && "left".equals(sidebarLocation_))
                   {
-                     pct = (double)state.getSplitterPos()[idx++]
-                                  / state.getPanelWidth();
-                     addWest(sidebar_, pct * offsetWidth);
+                     if (useSidebarFromState || !sidebarVisibilityChanged)
+                     {
+                        pct = (double)state.getSplitterPos()[idx++]
+                                     / state.getPanelWidth();
+                        addWest(sidebar_, pct * offsetWidth);
+                     }
+                     else
+                     {
+                        // Sidebar wasn't in saved state, use default width
+                        addWest(sidebar_, getDefaultSplitterWidth() * 0.8);
+                     }
+                  }
+                  else if (skipSidebarInState && "left".equals(sidebarLocation_))
+                  {
+                     // Skip the sidebar entry from saved state since we're hiding it
+                     idx++;
                   }
                   // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
@@ -188,10 +253,20 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   if (sidebar_ != null && !"left".equals(sidebarLocation_))
                   {
                      // Add sidebar first using addEast (rightmost position)
-                     double sidebarPct = (double)state.getSplitterPos()[idx++]
-                                  / state.getPanelWidth();
+                     double sidebarPct;
+                     if (useSidebarFromState || !sidebarVisibilityChanged)
+                     {
+                        sidebarPct = (double)state.getSplitterPos()[idx++]
+                                     / state.getPanelWidth();
+                     }
+                     else
+                     {
+                        // Sidebar wasn't in saved state, use default width
+                        sidebarPct = (getDefaultSplitterWidth() * 0.8) / offsetWidth;
+                        // Don't increment idx since sidebar wasn't in state
+                     }
                      addEast(sidebar_, sidebarPct * offsetWidth);
-                     
+
                      // Get right widget width
                      double rightPct = (double)state.getSplitterPos()[idx++]
                                   / state.getPanelWidth();
@@ -218,6 +293,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   else
                   {
                      // No sidebar on right - use original logic
+                     // Skip sidebar position if it was in saved state but we're hiding it now
+                     if (skipSidebarInState && !"left".equals(sidebarLocation_))
+                        idx++;
+
                      pct = (double)state.getSplitterPos()[idx++]
                                   / state.getPanelWidth();
                      addEast(right_, pct * offsetWidth);
@@ -227,9 +306,29 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                else
                {
                   int idx = 0;
+                  // When sidebar visibility changed, we need to handle the state index mapping carefully
+                  boolean sidebarWasInState = savedCount > expectedCount; // Sidebar was visible in saved state
+                  boolean skipSidebarInState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ == null;
+                  boolean useSidebarFromState = sidebarVisibilityChanged && sidebarWasInState && sidebar_ != null;
+
                   // Add sidebar if on left
                   if (sidebar_ != null && "left".equals(sidebarLocation_))
-                     addWest(sidebar_, state.getSplitterPos()[idx++]);
+                  {
+                     if (useSidebarFromState || !sidebarVisibilityChanged)
+                     {
+                        addWest(sidebar_, state.getSplitterPos()[idx++]);
+                     }
+                     else
+                     {
+                        // Sidebar wasn't in saved state, use default width
+                        addWest(sidebar_, (int)(getDefaultSplitterWidth() * 0.8));
+                     }
+                  }
+                  else if (skipSidebarInState && "left".equals(sidebarLocation_))
+                  {
+                     // Skip the sidebar entry from saved state since we're hiding it
+                     idx++;
+                  }
                   // Add left widgets
                   for (int i = 0; i < leftList_.size(); i++)
                      addWest(leftList_.get(i), state.getSplitterPos()[idx++]);
@@ -237,7 +336,16 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   if (sidebar_ != null && !"left".equals(sidebarLocation_))
                   {
                      // Add sidebar first using addEast (rightmost position)
-                     int sidebarWidth = state.getSplitterPos()[idx++];
+                     int sidebarWidth;
+                     if (useSidebarFromState || !sidebarVisibilityChanged)
+                     {
+                        sidebarWidth = state.getSplitterPos()[idx++];
+                     }
+                     else
+                     {
+                        // Sidebar wasn't in saved state, use default width
+                        sidebarWidth = (int)(getDefaultSplitterWidth() * 0.8);
+                     }
                      addEast(sidebar_, sidebarWidth);
                      
                      // Get right widget width
@@ -262,6 +370,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   else
                   {
                      // No sidebar on right - use original logic
+                     // Skip sidebar position if it was in saved state but we're hiding it now
+                     if (skipSidebarInState && !"left".equals(sidebarLocation_))
+                        idx++;
+
                      addEast(right_, state.getSplitterPos()[idx++]);
                      add(center_);
                   }
@@ -325,22 +437,22 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             int sidebarCount = sidebar_ != null ? 1 : 0;
             int[] splitterArray = new int[leftList_.size() + 1 + sidebarCount];
             int idx = 0;
-            
+
             // Store sidebar width if on left
             if (sidebar_ != null && "left".equals(sidebarLocation_))
                splitterArray[idx++] = sidebar_.getOffsetWidth();
-            
+
             // Store left widget widths
             if (!leftList_.isEmpty())
             {
                for (int i = 0; i < leftList_.size(); i++)
                   splitterArray[idx++] = leftList_.get(i).getOffsetWidth();
             }
-            
+
             // Store sidebar width if on right (before right widget in the array)
             if (sidebar_ != null && !"left".equals(sidebarLocation_))
                splitterArray[idx++] = sidebar_.getOffsetWidth();
-            
+
             // Store right widget width
             splitterArray[idx++] = right_.getOffsetWidth();
             state.setSplitterPos(splitterArray);
@@ -417,17 +529,177 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    
    public void setSidebarWidget(Widget widget, String location)
    {
+      // When showing sidebar, restore widths from before we hid it
+      // If we don't have saved widths, we'll use defaults
+      int[] preservedWidths = widthsBeforeHidingSidebar_;
+
+      isTogglingSidebar_ = true;
       clearForRefresh();
       sidebar_ = widget;
       sidebarLocation_ = location;
       initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
+
+      // Restore the preserved widths after initialization
+      if (preservedWidths != null)
+      {
+         restoreColumnWidths(preservedWidths, true);
+         widthsBeforeHidingSidebar_ = null; // Clear after use
+      }
+      else
+      {
+         // No saved widths, just reset the toggle flag
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            public void execute()
+            {
+               isTogglingSidebar_ = false;
+            }
+         });
+      }
    }
-   
+
    public void removeSidebarWidget()
    {
+      // Save current widths (including sidebar) so we can restore them when sidebar is shown again
+      widthsBeforeHidingSidebar_ = captureColumnWidths();
+      isTogglingSidebar_ = true;
       clearForRefresh();
       sidebar_ = null;
       initialize(leftList_, center_, right_, sidebar_, sidebarLocation_);
+
+      // Don't restore widths when hiding - let columns naturally expand
+      // Just reset the flag after layout completes
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            isTogglingSidebar_ = false;
+         }
+      });
+   }
+
+   private int[] captureColumnWidths()
+   {
+      try
+      {
+         // Capture all current widths in order: [leftWidgets..., center, right, sidebar?]
+         int size = leftList_.size() + 2 + (sidebar_ != null ? 1 : 0);
+         int[] widths = new int[size];
+         int idx = 0;
+
+         // Capture left widget widths
+         for (Widget w : leftList_)
+            widths[idx++] = w.getOffsetWidth();
+
+         // Capture center and right widths
+         widths[idx++] = center_.getOffsetWidth();
+         widths[idx++] = right_.getOffsetWidth();
+
+         // Capture sidebar width if present
+         if (sidebar_ != null)
+            widths[idx++] = sidebar_.getOffsetWidth();
+
+         return widths;
+      }
+      catch (Exception e)
+      {
+         return new int[0];
+      }
+   }
+
+   private void restoreColumnWidths(final int[] preservedWidths, final boolean sidebarAdded)
+   {
+      if (preservedWidths == null || preservedWidths.length == 0)
+      {
+         return;
+      }
+
+      // Use a deferred command to restore widths after layout is complete
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         public void execute()
+         {
+            int preservedIdx = 0;
+
+            // Restore left widget widths
+            for (int i = 0; i < leftList_.size() && preservedIdx < preservedWidths.length; i++)
+            {
+               Widget w = leftList_.get(i);
+               LayoutData layoutData = (LayoutData) w.getLayoutData();
+               if (layoutData != null)
+               {
+                  layoutData.size = preservedWidths[preservedIdx++];
+               }
+            }
+
+            // Restore center width
+            // When sidebar is on right, center is a WEST widget with fixed width
+            // When no sidebar, center is the CENTER widget that fills remaining space
+            if (preservedIdx < preservedWidths.length)
+            {
+               // Only restore center width if sidebar is present (center has fixed width)
+               // or if we're adding sidebar (we need to restore the pre-toggle center width)
+               if (sidebar_ != null && !"left".equals(sidebarLocation_))
+               {
+                  LayoutData layoutData = (LayoutData) center_.getLayoutData();
+                  if (layoutData != null)
+                  {
+                     layoutData.size = preservedWidths[preservedIdx];
+                  }
+               }
+               preservedIdx++;
+            }
+
+            // Restore right width
+            if (preservedIdx < preservedWidths.length)
+            {
+               LayoutData layoutData = (LayoutData) right_.getLayoutData();
+               if (layoutData != null)
+               {
+                  layoutData.size = preservedWidths[preservedIdx++];
+               }
+            }
+
+            // Restore sidebar width if present
+            if (sidebar_ != null)
+            {
+               int sidebarWidth;
+               if (sidebarAdded)
+               {
+                  // Sidebar was just added, use a default width if not in preserved widths
+                  sidebarWidth = preservedIdx < preservedWidths.length ?
+                                 preservedWidths[preservedIdx] :
+                                 (int)(getDefaultSplitterWidth() * 0.8);
+               }
+               else
+               {
+                  // Sidebar was already there, use preserved width
+                  sidebarWidth = preservedIdx < preservedWidths.length ?
+                                 preservedWidths[preservedIdx] :
+                                 (int)(getDefaultSplitterWidth() * 0.8);
+               }
+
+               LayoutData layoutData = (LayoutData) sidebar_.getLayoutData();
+               if (layoutData != null)
+               {
+                  layoutData.size = sidebarWidth;
+               }
+            }
+
+            // Force layout update
+            forceLayout();
+            deferredSaveWidthPercent();
+
+            // Reset the sidebar toggle flag
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  isTogglingSidebar_ = false;
+               }
+            });
+         }
+      });
    }
    
    public boolean hasSidebarWidget()
@@ -613,6 +885,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    
    private Map<Widget, Double> widgetPercentages_ = new HashMap<>();
    private Integer previousOffsetWidth_ = null;
+   private boolean isTogglingSidebar_ = false;
+   private int[] widthsBeforeHidingSidebar_ = null;
 
    private final EventBus events_;
    private final Session session_;
