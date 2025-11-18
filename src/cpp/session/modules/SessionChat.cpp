@@ -552,15 +552,37 @@ std::string buildWebSocketUrl(int port)
       std::string baseUrl = persistentState().activeClientUrl();
       DLOG("Base URL: {}", baseUrl);
 
-      // Parse base URL to get scheme and host
-      http::URL parsedBase(baseUrl);
+      // Determine WebSocket scheme and extract URL without scheme
+      // This preserves the full path including any session prefix (e.g., /s/abc123/)
+      std::string wsScheme;
+      std::string urlWithoutScheme;
 
-      // Determine WebSocket scheme based on HTTP scheme
-      std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
+      if (baseUrl.find("https://") == 0)
+      {
+         wsScheme = "wss://";
+         urlWithoutScheme = baseUrl.substr(8); // Remove "https://"
+      }
+      else if (baseUrl.find("http://") == 0)
+      {
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl.substr(7); // Remove "http://"
+      }
+      else
+      {
+         // Fallback - shouldn't happen
+         WLOG("Unexpected base URL format: {}", baseUrl);
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl;
+      }
 
-      // Build complete WebSocket URL as string with /ai-chat base path
-      // The proxy will route {portmappedPath}/ai-chat/ws to http://127.0.0.1:{port}/ai-chat/ws
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath + "/ai-chat";
+      // Remove trailing slash from URL if present (portmappedPath will add one)
+      if (!urlWithoutScheme.empty() && urlWithoutScheme.back() == '/')
+         urlWithoutScheme = urlWithoutScheme.substr(0, urlWithoutScheme.length() - 1);
+
+      // Build complete WebSocket URL preserving any session path from baseUrl
+      // Example: wss://hostname:8787/s/abc123/p/58fab3e4/ai-chat
+      // The proxy will route this to http://127.0.0.1:{port}/ai-chat/ws
+      std::string wsUrl = wsScheme + urlWithoutScheme + portmappedPath + "/ai-chat";
       DLOG("Final WebSocket URL: {}", wsUrl);
 
       return wsUrl;
@@ -932,7 +954,10 @@ Error handleAIChatRequest(const http::Request& request,
        boost::ends_with(requestPath, ".css"))
    {
       // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
-      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      // Use multiple headers to ensure cache is disabled across all browsers and proxies
+      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+      pResponse->setHeader("Pragma", "no-cache");  // HTTP/1.0 compatibility
+      pResponse->setHeader("Expires", "0");        // Proxy cache control
    }
    else if (requestPath.find(".") != std::string::npos)
    {
