@@ -852,7 +852,7 @@ public class AceEditorWidget extends Composite
    {
       editor_.onCursorChange();
    }
-   
+
    public void syncScrollSpeed(double scrollRatio)
    {
       final double DEFAULT_SCROLL_FACTOR = 2.0;

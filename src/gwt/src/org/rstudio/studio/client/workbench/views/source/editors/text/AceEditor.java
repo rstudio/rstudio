@@ -157,6 +157,8 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpHandler;
@@ -2701,6 +2703,11 @@ public class AceEditor implements DocDisplay
       return useVimMode_ && widget_.getEditor().isVimInInsertMode();
    }
 
+   public void setMargin(int top, int bottom, int left, int right)
+   {
+      widget_.getEditor().getRenderer().setMargin(top, bottom, left, right);
+   }
+
    public void setPadding(int padding)
    {
       widget_.getEditor().getRenderer().setPadding(padding);
@@ -2786,6 +2793,11 @@ public class AceEditor implements DocDisplay
    public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
    {
       return widget_.addAttachHandler(handler);
+   }
+
+   public HandlerRegistration addLoadHandler(LoadHandler handler)
+   {
+      return widget_.addHandler(handler, LoadEvent.getType());
    }
 
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
@@ -4725,6 +4737,16 @@ public class AceEditor implements DocDisplay
    public void removeGhostText()
    {
       widget_.getEditor().removeGhostText();
+   }
+
+   public int getLineCount()
+   {
+      return widget_.getEditor().getSession().getLength();
+   }
+
+   public double getLineHeight()
+   {
+      return widget_.getEditor().getRenderer().getLineHeight();
    }
 
    private static class BackgroundTokenizer

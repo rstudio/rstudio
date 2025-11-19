@@ -56,18 +56,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
 import jsinterop.base.Any;
@@ -133,73 +126,89 @@ public class TextEditingTargetCopilotHelper
    }
 
    // Widget for displaying inline diff view with Apply/Discard buttons
-   private class InlineDiffView extends AceEditorPopupDiffView
+   private class InlineDiffView
    {
-      public InlineDiffView()
-      {
-         super("", display_.getFileType());
-      }
+      private PinnedLineWidget lineWidget_;
+      private AceEditorDiffView diffView_;
+      private NextEditSuggestion suggestion_;
 
       public void showForSuggestion(NextEditSuggestion suggestion)
       {
+         // Remove any existing line widget
+         hide();
+
          suggestion_ = suggestion;
-         setMouseOverHighlight(true);
 
-         // Get the text that would result from applying the edit
-         String newText = suggestion.completion_.insertText;
+         // Get the original text from the document at the edit range
+         String originalText = display_.getCode(
+            Position.create(suggestion.completion_.range.start.line,
+                            suggestion.completion_.range.start.character),
+            Position.create(suggestion.completion_.range.end.line,
+                            suggestion.completion_.range.end.character));
 
-         // Show the content using the base class
-         showWithContent(newText);
+         // Get the replacement text from the suggestion
+         String replacementText = suggestion.completion_.insertText;
 
-         // Position the popup below the bottom-most highlighted element
-         positionBelowHighlight();
-      }
-
-      private void positionBelowHighlight()
-      {
-         // Find all elements with the highlight class using DomUtils
-         Element[] highlightElements = DomUtils.getElementsByClassName(
-            display_.getElement(), "ace_next-edit-suggestion-highlight");
-
-         if (highlightElements.length == 0)
-            return;
-
-         // Find the bottom-most element
-         Element bottomElement = highlightElements[0];
-         int maxBottom = bottomElement.getAbsoluteBottom();
-
-         for (int i = 1; i < highlightElements.length; i++)
+         // Create the diff view widget
+         diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
          {
-            Element el = highlightElements[i];
-            int bottom = el.getAbsoluteBottom();
-            if (bottom > maxBottom)
+            @Override
+            protected void accept()
             {
-               maxBottom = bottom;
-               bottomElement = el;
+               if (suggestion_ != null)
+               {
+                  suggestion_.applyEdit(display_);
+               }
+
+               // Detach the line widget
+               if (lineWidget_ != null)
+               {
+                  lineWidget_.detach();
+                  lineWidget_ = null;
+               }
+
+               cleanupHighlight();
             }
-         }
 
-         // Position the popup just below the bottom-most element with 8px right offset
-         int left = bottomElement.getAbsoluteLeft() + 8; // 8px offset to the right
-         int top = maxBottom + 9; // 9px padding below
+            @Override
+            protected void discard()
+            {
+               // Detach the line widget
+               if (lineWidget_ != null)
+               {
+                  lineWidget_.detach();
+                  lineWidget_ = null;
+               }
 
-         setPopupPosition(left, top);
+               cleanupHighlight();
+            }
+         };
+
+         // Insert as line widget at the end row of the suggestion
+         int row = suggestion.completion_.range.end.line;
+
+         lineWidget_ = new PinnedLineWidget(
+            "copilot-diff",
+            display_,
+            diffView_.getWidget(),
+            row,
+            null,
+            null);
       }
 
-      @Override
-      protected void accept()
+      public void hide()
       {
-         if (suggestion_ != null)
+         if (diffView_ != null)
          {
-            suggestion_.applyEdit(display_);
+            diffView_.detach();
+            diffView_ = null;
          }
-         cleanupHighlight();
-      }
 
-      @Override
-      protected void discard()
-      {
-         cleanupHighlight();
+         if (lineWidget_ != null)
+         {
+            lineWidget_.detach();
+            lineWidget_ = null;
+         }
       }
 
       private void cleanupHighlight()
@@ -211,8 +220,6 @@ public class TextEditingTargetCopilotHelper
          }
          suggestion_ = null;
       }
-
-      private NextEditSuggestion suggestion_;
    }
 
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
@@ -425,28 +432,6 @@ public class TextEditingTargetCopilotHelper
                   }
                }),
 
-               // Mouseout handler for next-edit suggestion highlights
-               DomUtils.addEventListener(display_.getElement(), "mouseout", false, (event) ->
-               {
-                  Element target = event.getEventTarget().cast();
-
-                  // Check if leaving a next-edit suggestion highlight
-                  Element highlightEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName("ace_next-edit-suggestion-highlight");
-                     }
-                  });
-
-                  if (highlightEl != null && inlineDiffView_ != null)
-                  {
-                     // Mark that mouse is no longer over highlight
-                     inlineDiffView_.setMouseOverHighlight(false);
-                  }
-               }),
-
                // click handler for next-edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
                DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
@@ -485,7 +470,7 @@ public class TextEditingTargetCopilotHelper
                      }
 
                      // Hide the inline diff view
-                     if (inlineDiffView_ != null && inlineDiffView_.isShowing())
+                     if (inlineDiffView_ != null)
                      {
                         inlineDiffView_.hide();
                      }

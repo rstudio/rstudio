@@ -516,4 +516,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean hasGhostText();
    void applyGhostText();
    void removeGhostText();
+
+   double getLineHeight();
 }
