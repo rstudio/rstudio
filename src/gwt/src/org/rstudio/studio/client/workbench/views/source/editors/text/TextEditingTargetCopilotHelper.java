@@ -403,7 +403,7 @@ public class TextEditingTargetCopilotHelper
 
                display_.addValueChangeHandler((event) ->
                {
-                  nesTimer_.schedule(200);
+                  nesTimer_.schedule(300);
                }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing
