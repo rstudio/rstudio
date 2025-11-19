@@ -791,6 +791,19 @@ public class TextEditingTargetCopilotHelper
    // portion of the completed text is presented to the user.
    private CopilotCompletion normalizeCompletion(CopilotCompletion completion)
    {
+      try
+      {
+         return normalizeCompletionImpl(completion);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         return completion;
+      }
+   }
+
+   private CopilotCompletion normalizeCompletionImpl(CopilotCompletion completion)
+   {
       // Remove any overlap from the start of the completion.
       int lhs = 0;
       {
