@@ -42,6 +42,20 @@ public abstract class AceEditorDiffView
    protected abstract void apply();
    protected abstract void discard();
 
+   // Unfortunately, sizing computations here are a bit awkward.
+   //
+   // - Ace can't compute its line height until after it's tried to render some lines.
+   // - It can't render until it's been attached to the DOM.
+   // - Line widgets want to know the widget height when they're created.
+   //
+   // To wit, we make the editor line height an overridable method, and set it
+   // to a reasonable default. Clients can override this method if they want
+   // to provide a more accurate / known line height.
+   public double getLineHeight()
+   {
+      return 19;
+   }
+
    public AceEditorDiffView(String originalText,
                             String replacementText,
                             TextFileType fileType)
@@ -68,6 +82,10 @@ public abstract class AceEditorDiffView
       editor_.getElement().getStyle().setMarginTop(6, Unit.PX);
       editorContainer_.setWidget(editor_.asWidget());
 
+      // Set editor height based on number of lines
+      int lineCount = StringUtil.countMatches(editorText_, '\n') + 1;
+      editor_.getElement().getStyle().setHeight(lineCount * getLineHeight(), Unit.PX);
+
       // Set up line height -- needs to happen after load, since font size is not known
       // until the Ace renderer has done a first render pass.
       Scheduler.get().scheduleDeferred(() ->
@@ -75,9 +93,6 @@ public abstract class AceEditorDiffView
          applyStatusBarStyling();
          highlightDiffs();
       });
-
-      int lineCount = StringUtil.countMatches(editorText_, '\n') + 1;
-      editor_.getElement().getStyle().setHeight(lineCount * 19, Unit.PX);
 
       // Create status bar with clickable text - style to match Ace editor
       // Note that we need to use 'raw' event listeners as GWT event listeners

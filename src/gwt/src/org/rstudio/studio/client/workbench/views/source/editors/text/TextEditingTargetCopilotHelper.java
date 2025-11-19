@@ -160,6 +160,12 @@ public class TextEditingTargetCopilotHelper
          {
             reset();
          }
+
+         @Override
+         public double getLineHeight()
+         {
+            return display_.getLineHeight();
+         }
       };
 
       // Insert as line widget at the end row of the completion
