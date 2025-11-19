@@ -173,8 +173,9 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL as query parameter
-      String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl);
+      // Append WebSocket URL and timestamp as query parameters to bust cache
+      long timestamp = System.currentTimeMillis();
+      String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
       com.google.gwt.core.client.GWT.log("ChatPresenter: Loading chat UI from: " + urlWithWsParam);
       com.google.gwt.core.client.GWT.log("ChatPresenter: WebSocket URL: " + wsUrl);

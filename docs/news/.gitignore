@@ -11,3 +11,5 @@ _publish.yml
 /.quarto/
 .bash_history
 .cache/*
+
+**/*.quarto_ipynb
