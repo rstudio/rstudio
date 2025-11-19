@@ -252,6 +252,46 @@ void handleGetActiveSession(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleGetDetailedEnvironmentContext(core::system::ProcessOperations& ops,
+                                         const json::Value& requestId)
+{
+   DLOG("Handling runtime/getDetailedEnvironmentContext request");
+
+   // Get current time in human-readable format
+   // Format: "Friday, October 3, 2025 at 10:32:34 PM CDT"
+   std::time_t now = std::time(nullptr);
+   std::tm* localTime = std::localtime(&now);
+   char dateBuffer[128];
+   std::strftime(dateBuffer, sizeof(dateBuffer), "%A, %B %d, %Y at %I:%M:%S %p %Z", localTime);
+   std::string currentDate(dateBuffer);
+
+   // Session object
+   // TODO: Future work - detect and support Python sessions
+   json::Object session;
+   session["language"] = "R";
+   session["version"] = module_context::rVersion();
+   session["mode"] = "console";
+   session["sessionId"] = module_context::activeSession().id();
+   // TODO: Future work - return R workspace variables
+   session["variables"] = json::Array();
+
+   // PlatformInfo object
+   json::Object platformInfo;
+   // TODO: Future work - check if active plots exist
+   platformInfo["hasPlots"] = false;
+   platformInfo["platformVersion"] = RSTUDIO_VERSION;
+   platformInfo["currentDate"] = currentDate;
+
+   // Main result
+   json::Object result;
+   // TODO: Future work - return detailed file context
+   result["files"] = json::Array();
+   result["session"] = session;
+   result["platformInfo"] = platformInfo;
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleRequest(core::system::ProcessOperations& ops,
                    const std::string& method,
                    const json::Value& requestId,
@@ -260,6 +300,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    if (method == "runtime/getActiveSession")
    {
       handleGetActiveSession(ops, requestId);
+   }
+   else if (method == "runtime/getDetailedEnvironmentContext")
+   {
+      handleGetDetailedEnvironmentContext(ops, requestId);
    }
    else
    {
