@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 #include <core/r_util/RTokenCursor.hpp>
 
 namespace rstudio {
@@ -28,141 +28,134 @@ bool isPipeOperator(const std::wstring& string)
    return regex_utils::match(string.begin(), string.end(), rePipe);
 }
 
-test_context("RTokenCursor")
+TEST(RutilTest, TokenCursorsDetectEndOfStatements)
 {
-   test_that("Token cursors properly detect end of statements")
-   {
-      RTokens rTokens(L"1 + 2\n");
-      RTokenCursor cursor(rTokens);
-      
-      expect_true(cursor.isType(RToken::NUMBER));
-      expect_true(cursor.moveToNextSignificantToken());
-      expect_true(cursor.isType(RToken::OPER));
-      expect_true(cursor.moveToNextToken());
-      expect_true(cursor.isType(RToken::WHITESPACE));
-      expect_true(cursor.moveToNextToken());
-      expect_true(cursor.isType(RToken::NUMBER));
-      expect_true(cursor.isAtEndOfStatement(false));
-   }
+   RTokens rTokens(L"1 + 2\n");
+   RTokenCursor cursor(rTokens);
    
-   test_that("Token cursor ignores EOL when in parenthetical scope")
-   {
-      RTokens rTokens(L"(1\n+2)");
-      RTokenCursor cursor(rTokens);
-      expect_true(cursor.isType(RToken::LPAREN));
-      expect_true(cursor.moveToNextSignificantToken());
-      expect_true(cursor.isType(RToken::NUMBER));
-      expect_true(cursor.nextToken().isType(RToken::WHITESPACE));
-      expect_true(cursor.nextToken().contentEquals(L"\n"));
-      expect_false(cursor.isAtEndOfStatement(true));
-   }
-   
-   test_that("Move to position functions as expected")
-   {
-      RTokens rTokens(L"\n\napple + 2");
-      RTokenCursor cursor(rTokens);
-      
-      expect_true(cursor.moveToPosition(2, 0));
-      expect_true(cursor.isType(RToken::ID));
-      
-      expect_true(cursor.moveToPosition(2, 1));
-      expect_true(cursor.isType(RToken::ID));
-      
-      expect_true(cursor.moveToPosition(2, 5));
-      expect_true(cursor.isType(RToken::WHITESPACE));
-   }
-   
-   test_that("pipe / chain operation heads are extracted successfully")
-   {
-      expect_true(isPipeOperator(L"%>%"));
-      expect_true(isPipeOperator(L"%>>%"));
-      expect_true(isPipeOperator(L"%T>%"));
-      expect_true(isPipeOperator(L"|>"));
-      expect_false(isPipeOperator(L"%!%"));
-      
-      RTokens rTokens(L"mtcars %>% first_level() %>% second_level(1");
-      RTokenCursor cursor(rTokens);
-      cursor.moveToEndOfTokenStream();
-      expect_true(cursor.isType(RToken::NUMBER) &&
-                  cursor.contentEquals(L"1"));
-      
-      expect_true(cursor.moveToOpeningParenAssociatedWithCurrentFunctionCall());
-      expect_true(cursor.isType(RToken::LPAREN));
-      expect_true(cursor.moveToPreviousSignificantToken());
-      expect_true(cursor.contentEquals(L"second_level"));
-      expect_true(cursor.moveToStartOfEvaluation());
-      expect_true(cursor.contentEquals(L"second_level"));
-      expect_true(cursor.getHeadOfPipeChain() == "mtcars");
-   }
-   
-   test_that("pipe / chain operation lookups fail when not within associated chain")
-   {
-      RTokens rTokens(L"mtcars %>% foo\nbar");
-      RTokenCursor cursor(rTokens);
-      cursor.moveToEndOfTokenStream();
-      expect_true(cursor.getHeadOfPipeChain().empty());
-   }
-   
-   test_that("evaluation lookarounds work")
-   {
-      RTokens rTokens(L"foo$bar$baz[[1]]$bam");
-      RTokenCursor cursor(rTokens);
-      
-      expect_true(cursor.contentEquals(L"foo"));
-      expect_true(cursor.moveToEndOfEvaluation());
-      expect_true(cursor.contentEquals(L"baz"));
-      expect_true(cursor.moveToStartOfEvaluation());
-      expect_true(cursor.contentEquals(L"foo"));
-      
-      expect_true(cursor.moveToEndOfStatement(false));
-      expect_true(cursor.contentEquals(L"bam"));
-   }
+   EXPECT_TRUE(cursor.isType(RToken::NUMBER));
+   ASSERT_TRUE(cursor.moveToNextSignificantToken());
+   ASSERT_TRUE(cursor.isType(RToken::OPER));
+   ASSERT_TRUE(cursor.moveToNextToken());
+   ASSERT_TRUE(cursor.isType(RToken::WHITESPACE));
+   ASSERT_TRUE(cursor.moveToNextToken());
+   ASSERT_TRUE(cursor.isType(RToken::NUMBER));
+   ASSERT_TRUE(cursor.isAtEndOfStatement(false));
+}
 
-   test_that("previousSignificantToken works at end of token list")
-   {
-      RTokens rTokens(L"a <- b");
-      RTokenCursor cursor(rTokens);
-      cursor.moveToEndOfTokenStream();
-      auto result = cursor.previousSignificantToken();
-      expect_true(result.isType(RToken::OPER));
-      expect_true(result.contentEquals(L"<-"));
-   }
+TEST(RutilTest, TokenCursorIgnoresEolInParentheses)
+{
+   RTokens rTokens(L"(1\n+2)");
+   RTokenCursor cursor(rTokens);
+   EXPECT_TRUE(cursor.isType(RToken::LPAREN));
+   ASSERT_TRUE(cursor.moveToNextSignificantToken());
+   ASSERT_TRUE(cursor.isType(RToken::NUMBER));
+   ASSERT_TRUE(cursor.nextToken().isType(RToken::WHITESPACE));
+   ASSERT_TRUE(cursor.nextToken().contentEquals(L"\n"));
+   EXPECT_FALSE(cursor.isAtEndOfStatement(true));
+}
 
-   test_that("previousSignificantToken works in middle of token list")
-   {
-      RTokens rTokens(L"a <- b");
-      RTokenCursor cursor(rTokens);
-      cursor.moveToEndOfTokenStream();
-      cursor.moveToPreviousSignificantToken();
-      auto result = cursor.previousSignificantToken();
-      expect_true(result.isType(RToken::ID));
-      expect_true(result.contentEquals(L"a"));
-   }
-
-   test_that("previousSignificantToken returns dummy token when already at beginning")
-   {
-      RTokens rTokens(L"a <- b");
-      RTokenCursor cursor(rTokens);
-      const auto& result = cursor.previousSignificantToken();
-      expect_true(result.isType(RToken::ERR));
-      expect_true(result.content().empty());
-      expect_true(result.length() == 0);
-
-      // isPipeOperator exercises the token's begin/end iterators
-      expect_false(token_utils::isPipeOperator(result));
-   }
+TEST(RutilTest, MoveToPositionWorks)
+{
+   RTokens rTokens(L"\n\napple + 2");
+   RTokenCursor cursor(rTokens);
    
-   test_that("1:2:3 is parsed appropriately")
-   {
-      RTokens rTokens(L"1:2:3");
-      expect_true(rTokens.size() == 5);
-      expect_true(rTokens.at(0).isType(RToken::NUMBER));
-      expect_true(rTokens.at(1).isType(RToken::OPER));
-      expect_true(rTokens.at(2).isType(RToken::NUMBER));
-      expect_true(rTokens.at(3).isType(RToken::OPER));
-      expect_true(rTokens.at(4).isType(RToken::NUMBER));
-      
-   }
+   EXPECT_TRUE(cursor.moveToPosition(2, 0));
+   ASSERT_TRUE(cursor.isType(RToken::ID));
+   
+   ASSERT_TRUE(cursor.moveToPosition(2, 1));
+   ASSERT_TRUE(cursor.isType(RToken::ID));
+   
+   ASSERT_TRUE(cursor.moveToPosition(2, 5));
+   ASSERT_TRUE(cursor.isType(RToken::WHITESPACE));
+}
+
+TEST(RutilTest, PipeChainHeadsExtraction)
+{
+   EXPECT_TRUE(isPipeOperator(L"%>%"));
+   ASSERT_TRUE(isPipeOperator(L"%>>%"));
+   ASSERT_TRUE(isPipeOperator(L"%T>%"));
+   ASSERT_TRUE(isPipeOperator(L"|>"));
+   EXPECT_FALSE(isPipeOperator(L"%!%"));
+   RTokens rTokens(L"mtcars %>% first_level() %>% second_level(1");
+   RTokenCursor cursor(rTokens);
+   cursor.moveToEndOfTokenStream();
+   EXPECT_TRUE((cursor.isType(RToken::NUMBER) && cursor.contentEquals(L"1")));
+   ASSERT_TRUE(cursor.moveToOpeningParenAssociatedWithCurrentFunctionCall());
+   ASSERT_TRUE(cursor.isType(RToken::LPAREN));
+   ASSERT_TRUE(cursor.moveToPreviousSignificantToken());
+   ASSERT_TRUE(cursor.contentEquals(L"second_level"));
+   ASSERT_TRUE(cursor.moveToStartOfEvaluation());
+   ASSERT_TRUE(cursor.contentEquals(L"second_level"));
+   EXPECT_EQ("mtcars", cursor.getHeadOfPipeChain());
+}
+
+TEST(RutilTest, PipeChainLookupsFailOutsideChain)
+{
+   RTokens rTokens(L"mtcars %>% foo\nbar");
+   RTokenCursor cursor(rTokens);
+   cursor.moveToEndOfTokenStream();
+   EXPECT_TRUE(cursor.getHeadOfPipeChain().empty());
+}
+
+TEST(RutilTest, EvaluationLookaroundsWork)
+{
+   RTokens rTokens(L"foo$bar$baz[[1]]$bam");
+   RTokenCursor cursor(rTokens);
+   
+   EXPECT_TRUE(cursor.contentEquals(L"foo"));
+   ASSERT_TRUE(cursor.moveToEndOfEvaluation());
+   ASSERT_TRUE(cursor.contentEquals(L"baz"));
+   ASSERT_TRUE(cursor.moveToStartOfEvaluation());
+   ASSERT_TRUE(cursor.contentEquals(L"foo"));
+   
+   ASSERT_TRUE(cursor.moveToEndOfStatement(false));
+   ASSERT_TRUE(cursor.contentEquals(L"bam"));
+}
+
+TEST(RutilTest, PreviousSignificantTokenAtEnd)
+{
+   RTokens rTokens(L"a <- b");
+   RTokenCursor cursor(rTokens);
+   cursor.moveToEndOfTokenStream();
+   auto result = cursor.previousSignificantToken();
+   EXPECT_TRUE(result.isType(RToken::OPER));
+   ASSERT_TRUE(result.contentEquals(L"<-"));
+}
+
+TEST(RutilTest, PreviousSignificantTokenInMiddle)
+{
+   RTokens rTokens(L"a <- b");
+   RTokenCursor cursor(rTokens);
+   cursor.moveToEndOfTokenStream();
+   cursor.moveToPreviousSignificantToken();
+   auto result = cursor.previousSignificantToken();
+   EXPECT_TRUE(result.isType(RToken::ID));
+   ASSERT_TRUE(result.contentEquals(L"a"));
+}
+
+TEST(RutilTest, PreviousSignificantTokenAtBeginning)
+{
+   RTokens rTokens(L"a <- b");
+   RTokenCursor cursor(rTokens);
+   const auto& result = cursor.previousSignificantToken();
+   EXPECT_TRUE(result.isType(RToken::ERR));
+   ASSERT_TRUE(result.content().empty());
+   EXPECT_EQ(0u, result.length());
+
+   // isPipeOperator exercises the token's begin/end iterators
+   EXPECT_FALSE(token_utils::isPipeOperator(result));
+}
+
+TEST(RutilTest, OneColonTwoColonThreeParsing)
+{
+   RTokens rTokens(L"1:2:3");
+   EXPECT_EQ(5u, rTokens.size());
+   EXPECT_TRUE(rTokens.at(0).isType(RToken::NUMBER));
+   EXPECT_TRUE(rTokens.at(1).isType(RToken::OPER));
+   EXPECT_TRUE(rTokens.at(2).isType(RToken::NUMBER));
+   EXPECT_TRUE(rTokens.at(3).isType(RToken::OPER));
+   EXPECT_TRUE(rTokens.at(4).isType(RToken::NUMBER));
 }
 
 } // namespace unit_tests

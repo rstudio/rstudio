@@ -17,8 +17,7 @@
 
 #include <core/system/ShellUtils.hpp>
 
-#define RSTUDIO_NO_TESTTHAT_ALIASES
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace session {
@@ -54,292 +53,265 @@ const size_t wMatchOff = 20;
 const std::string kLineNoMatch("RStudio is the greatest");
 } // anonymous namespace
 
-TEST_CASE("SessionFind")
-{
-   SECTION("Replace literal ignore case")
-   {
-      std::string line(kLine);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceLiteralIgnoreCase) {
+   std::string line(kLine);
+   size_t replaceMatchOff;
 
-      Replacer replacer(true);
-      replacer.replaceLiteral(matchOn, matchOff,
-         kReplaceString, &line, &replaceMatchOff);
-      CHECK(line.compare("RStudio is awesome") == 0);
-      CHECK(replaceMatchOff == 18);
-   }
+   Replacer replacer(true);
+   replacer.replaceLiteral(matchOn, matchOff,
+      kReplaceString, &line, &replaceMatchOff);
+   EXPECT_EQ("RStudio is awesome", line);
+   EXPECT_EQ(18u, replaceMatchOff);
+}
 
-   SECTION("Replace regex case sensitive")
-   {
-      std::string line(kRegexLine);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceRegexCaseSensitiveSimple) {
+   std::string line(kRegexLine);
+   size_t replaceMatchOff;
 
-      Replacer replacer(false);
-      replacer.replaceRegex(caseMatchOn, caseMatchOff,
-         kFindRegex, kReplaceString, &line, &replaceMatchOff);
-      CHECK(line.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
-      CHECK(replaceMatchOff == 28);
-   }
+   Replacer replacer(false);
+   replacer.replaceRegex(caseMatchOn, caseMatchOff,
+      kFindRegex, kReplaceString, &line, &replaceMatchOff);
+   EXPECT_EQ("aba OOOkkk okab AAOO awesome aa abab", line);
+   EXPECT_EQ(28u, replaceMatchOff);
+}
 
-   SECTION("Replace regex ignore case")
-   {
-      std::string line(kRegexLine);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceRegexIgnoreCase) {
+   std::string line(kRegexLine);
+   size_t replaceMatchOff;
 
-      Replacer replacer(true);
-      replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex, &line,
-         &replaceMatchOff);
-      CHECK(line.compare("aba OkOk okab AAOO aaabbb aa abab") == 0);
-      CHECK(replaceMatchOff == 8);
+   Replacer replacer(true);
+   replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex, &line,
+      &replaceMatchOff);
+   EXPECT_EQ("aba OkOk okab AAOO aaabbb aa abab", line);
+   EXPECT_EQ(8u, replaceMatchOff);
 
-      size_t matchOn = 18;
-      size_t matchOff = 24;
-      replacer.replaceRegex(matchOn, matchOff, kFindRegex, kReplaceRegex, &line,
-         &replaceMatchOff);
-      CHECK(line.compare("aba OkOk okab AAOO abab aa abab") == 0);
-      CHECK(replaceMatchOff == 22);
-   }
+   size_t matchOn = 18;
+   size_t matchOff = 24;
+   replacer.replaceRegex(matchOn, matchOff, kFindRegex, kReplaceRegex, &line,
+      &replaceMatchOff);
+   EXPECT_EQ("aba OkOk okab AAOO abab aa abab", line);
+   EXPECT_EQ(22u, replaceMatchOff);
+}
 
-   SECTION("Replace regex case sensitive")
-   {
-      std::string line(kRegexLine);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceRegexCaseSensitive) {
+   std::string line(kRegexLine);
+   size_t replaceMatchOff;
 
-      Replacer replacer(false);
-      replacer.replaceRegex(caseMatchOn, caseMatchOff, kFindRegex, kReplaceRegex, &line,
-         &replaceMatchOff);
-      CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
-      CHECK(replaceMatchOff == 25);
-   }
+   Replacer replacer(false);
+   replacer.replaceRegex(caseMatchOn, caseMatchOff, kFindRegex, kReplaceRegex, &line,
+      &replaceMatchOff);
+   EXPECT_EQ("aba OOOkkk okab AAOO abab aa abab", line);
+   EXPECT_EQ(25u, replaceMatchOff);
+}
 
-   SECTION("Replace regex word boundaries")
-   {
-      std::string line(kLine);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceRegexWordBoundaries) {
+   std::string line(kLine);
+   size_t replaceMatchOff;
 
-      Replacer replacer(true);
-      replacer.replaceRegex(matchOn, matchOff, kWordBoundaryRegex, kReplaceString,
-                            &line, &replaceMatchOff);
-      CHECK(line.compare("RStudio is awesome") == 0);
-      CHECK(replaceMatchOff == 18);
-   }
+   Replacer replacer(true);
+   replacer.replaceRegex(matchOn, matchOff, kWordBoundaryRegex, kReplaceString,
+                         &line, &replaceMatchOff);
+   EXPECT_EQ("RStudio is awesome", line);
+   EXPECT_EQ(18u, replaceMatchOff);
+}
 
-   SECTION("Replace regex word boundaries - no match")
-   {
-      std::string line(kLineNoMatch);
-      size_t replaceMatchOff;
+TEST(SessionFindTest, ReplaceRegexWordBoundariesNoMatch) {
+   std::string line(kLineNoMatch);
+   size_t replaceMatchOff;
 
-      Replacer replacer(true);
-      replacer.replaceRegex(wMatchOn, wMatchOff, kWordBoundaryRegex, kReplaceString,
-                            &line, &replaceMatchOff);
-      CHECK(line.compare("RStudio is the greatest") == 0);
-      CHECK(replaceMatchOff == wMatchOff);
-   }
+   Replacer replacer(true);
+   replacer.replaceRegex(wMatchOn, wMatchOff, kWordBoundaryRegex, kReplaceString,
+                         &line, &replaceMatchOff);
+   EXPECT_EQ("RStudio is the greatest", line);
+   EXPECT_EQ(wMatchOff, replaceMatchOff);
+}
 
-   SECTION("Replace ASCII encoding")
-   {
-      std::string line("äSCII ìs ƒun");
-      std::string find("ƒun");
-      std::string replace("Ök");
+TEST(SessionFindTest, ReplaceASCIIEncoding) {
+   std::string line("äSCII ìs ƒun");
+   std::string find("ƒun");
+   std::string replace("Ök");
 
-      size_t matchOn = 11;
-      size_t matchOff = 15;
-      size_t replaceMatchOff;
+   size_t matchOn = 11;
+   size_t matchOff = 15;
+   size_t replaceMatchOff;
 
-      Replacer replacer(false, "ASCII");
-      replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
-      CHECK(line.compare("äSCII ìs Ök") == 0);
-      CHECK(replaceMatchOff == 14);
-   }
+   Replacer replacer(false, "ASCII");
+   replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
+   EXPECT_EQ("äSCII ìs Ök", line);
+   EXPECT_EQ(14u, replaceMatchOff);
+}
 
-   SECTION("Replace BIG5 encoding")
-   {
-      std::string line("´sπƒ∆GƒßµM");
-      std::string find("∆G");
-      std::string replace("…@");
+TEST(SessionFindTest, ReplaceBIG5Encoding) {
+   std::string line("´sπƒ∆GƒßµM");
+   std::string find("∆G");
+   std::string replace("…@");
 
-      size_t matchOn = 7;
-      size_t matchOff = 11;
-      size_t replaceMatchOff;
+   size_t matchOn = 7;
+   size_t matchOff = 11;
+   size_t replaceMatchOff;
 
-      Replacer replacer(false, "BIG5");
-      replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
-      CHECK(line.compare("´sπƒ…@ƒßµM") == 0);
-      CHECK(replaceMatchOff == 11);
-
-   }
-
-   SECTION("Attempt replace without valid match")
-   {
-      std::string line(kLine);
-      size_t replaceMatchOff = 99;
-
-      Replacer replacer(true);
-      Error error = replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex,
-         &line, &replaceMatchOff);
-      CHECK(line.compare(kLine) == 0);
-   }
-
-   SECTION("Attempt replace with consecutive matches")
-   {
-      std::string line("hellohellohello");
-      std::string replacePattern("hello world");
-      size_t replaceMatchOff;
-      size_t on = 10;
-      size_t off = 15;
-
-      Replacer replacer(true);
-      replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
-      CHECK(line.compare("hellohellohello world") == 0);
-      CHECK(replaceMatchOff == 21);
-
-      on = 5;
-      off = 10;
-      replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
-      CHECK(line.compare("hellohello worldhello world") == 0);
-      CHECK(replaceMatchOff == 16);
-
-      on = 0;
-      off = 5;
-      replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
-      CHECK(line.compare("hello worldhello worldhello world") == 0);
-      CHECK(replaceMatchOff == 11);
-   }
-
-   SECTION("Attempt regex replace with nested results")
-   {
-      std::string line("hehello worldllo");
-      std::string findPattern("he[^ ].*llo");
-      std::string replacePattern("hello world");
-      size_t replaceMatchOff;
-      size_t on = 0;
-      size_t off = 16;
-
-      Replacer replacer(false);
-      replacer.replaceRegex(on, off, findPattern, replacePattern, &line, &replaceMatchOff);
-      CHECK(line.compare("hello world") == 0);
-      CHECK(replaceMatchOff == 11);
-   }
-
-   SECTION("Grep get file, line number, and contents")
-   {
-      boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ false);
-      std::string contents(
-         "case.test:2:aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
-
-      boost::smatch match;
-      CHECK(regex_utils::match(contents, match, regex));
-      CHECK(match[1].str().compare("case.test") == 0);
-      CHECK(match[2].str().compare("2") == 0);
-      CHECK(match[3].str().compare(kGrepPattern) == 0);
-   }
-
-   SECTION("Grep get color encoding regex")
-   {
-      boost::regex regex = getColorEncodingRegex(/*isGitGrep*/ false);
-      boost::cmatch match;
-      CHECK(regex_utils::search(kGrepPattern.c_str(), match, regex));
-      CHECK(match[1].str().compare("01") == 0);
-   }
-
-   SECTION("Git grep get file, line number, and contents")
-   {
-      boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ true);
-      std::string contents(
-   "case.test\033[36m:\033[m2\033[36m:\033[maba \033[1;31mOOOkkk\033[m okab AAOO awesome aa abab");
-
-      boost::smatch match;
-      CHECK(regex_utils::match(contents, match, regex));
-      CHECK(match[1].str().compare("case.test") == 0);
-      CHECK(match[2].str().compare("2") == 0);
-      CHECK(match[3].str().compare(kGitGrepPattern) == 0);
-   }
-
-   SECTION("Git grep with colon get file, line number, and contents")
-   {
-      boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ true);
-      std::string contents(
-         "file.test\033[36m:\033[m9\033[36m:\033[m  - \033[1;31mr:\033[m devel");
-
-      boost::smatch match;
-      CHECK(regex_utils::match(contents, match, regex));
-      CHECK(match[1].str().compare("file.test") == 0);
-      CHECK(match[2].str().compare("9") == 0);
-      CHECK(match[3].str().compare("  - \033[1;31mr:\033[m devel") == 0);
-   }
-
-   SECTION("Git grep get color encoding regex")
-   {
-      boost::regex regex = getColorEncodingRegex(/*isGitGrep*/ true);
-      boost::cmatch match;
-      CHECK(regex_utils::search(kGitGrepPattern.c_str(), match, regex));
-      CHECK(match[2].str().compare("1") == 0);
-   }
-
-   SECTION("Replace regex with quantifiers")
-   {
-      std::string line("helllooo");
-      const std::string regex("l+o+X?");
-      const std::string replacement("LO!");
-      Replacer replacer(false);
-      const size_t matchOn = 2;
-      const size_t matchOff = 7;
-      size_t replaceMatchOff;
-
-      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
-      CHECK(line.compare("heLO!") == 0);
-      CHECK(replaceMatchOff == 4);
-   }
-
-   SECTION("Replace regex with quantifiers, word character, and backreferences")
-   {
-      std::string line("good, !@$ good and more!");
-      const std::string regex("^(\\w+)(\\W+)\\1");
-      const std::string replacement("\\1");
-      Replacer replacer(false);
-      const size_t matchOn = 0;
-      const size_t matchOff = 13;
-      size_t replaceMatchOff;
-
-      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
-      CHECK(line.compare("good and more!") == 0);
-      CHECK(replaceMatchOff == 3);
-   }
-
-   SECTION("Replace regex with bounded repeat and alternation")
-   {
-      std::string line("11 cats");
-      const std::string regex("\\d{2} (cat|dog)");
-      const std::string replacement("x");
-      Replacer replacer(false);
-      const size_t matchOn = 0;
-      const size_t matchOff = 5;
-      size_t replaceMatchOff;
-
-      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
-      CHECK(line.compare("xs") == 0);
-      CHECK(replaceMatchOff == 0);
-   }
-
-   SECTION("Replace regex with square brackets and literal special characters")
-   {
-      std::string line("How are you? Mr. (x)");
-      const std::string regex("\\? [A-Z][a-z]{0,2}\\. \\(\\w\\)");
-      const std::string replacement("\\?!");
-      Replacer replacer(false);
-      const size_t matchOn = 11;
-      const size_t matchOff = 19;
-      size_t replaceMatchOff;
-
-      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
-      CHECK(line.compare("How are you?!") == 0);
-      CHECK(replaceMatchOff == 12);
-   }
+   Replacer replacer(false, "BIG5");
+   replacer.replaceRegex(matchOn, matchOff, find, replace, &line, &replaceMatchOff);
+   EXPECT_EQ("´sπƒ…@ƒßµM", line);
+   EXPECT_EQ(11u, replaceMatchOff);
 
 }
 
-} // end namespace tests
-} // end namespace modules
-} // end namespace find
-} // end namespace session
-} // end namespace rstudio
+TEST(SessionFindTest, ReplaceWithoutValidMatch) {
+   std::string line(kLine);
+   size_t replaceMatchOff = 99;
 
+   Replacer replacer(true);
+   Error error = replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex,
+      &line, &replaceMatchOff);
+   EXPECT_EQ(kLine, line);
+}
+
+TEST(SessionFindTest, ReplaceWithConsecutiveMatches) {
+   std::string line("hellohellohello");
+   std::string replacePattern("hello world");
+   size_t replaceMatchOff;
+   size_t on = 10;
+   size_t off = 15;
+
+   Replacer replacer(true);
+   replacer.replaceLiteral(on, off, replacePattern, &line, &replaceMatchOff);
+   EXPECT_EQ("hellohellohello world", line);
+   EXPECT_EQ(21u, replaceMatchOff);
+
+   on = 5;
+   off = 10;
+   replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
+   EXPECT_EQ("hellohello worldhello world", line);
+   EXPECT_EQ(16u, replaceMatchOff);
+
+   on = 0;
+   off = 5;
+   replacer.replaceRegex(on, off, "hello", replacePattern, &line, &replaceMatchOff);
+   EXPECT_EQ("hello worldhello worldhello world", line);
+   EXPECT_EQ(11u, replaceMatchOff);
+}
+
+TEST(SessionFindTest, ReplaceRegexWithNestedResults) {
+   std::string line("hehello worldllo");
+   std::string findPattern("he[^ ].*llo");
+   std::string replacePattern("hello world");
+   size_t replaceMatchOff;
+   size_t on = 0;
+   size_t off = 16;
+
+   Replacer replacer(false);
+   replacer.replaceRegex(on, off, findPattern, replacePattern, &line, &replaceMatchOff);
+   EXPECT_EQ("hello world", line);
+   EXPECT_EQ(11u, replaceMatchOff);
+}
+
+TEST(SessionFindTest, GrepGetFileLineNumberAndContents) {
+   boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ false);
+   std::string contents(
+      "case.test:2:aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
+
+   boost::smatch match;
+   EXPECT_TRUE(regex_utils::match(contents, match, regex));
+   EXPECT_EQ("case.test", match[1].str());
+   EXPECT_EQ("2", match[2].str());
+   EXPECT_EQ(kGrepPattern, match[3].str());
+}
+
+TEST(SessionFindTest, GrepGetColorEncodingRegex) {
+   boost::regex regex = getColorEncodingRegex(/*isGitGrep*/ false);
+   boost::cmatch match;
+   EXPECT_TRUE(regex_utils::search(kGrepPattern.c_str(), match, regex));
+   EXPECT_EQ("01", match[1].str());
+}
+
+TEST(SessionFindTest, GitGrepGetFileLineNumberAndContents) {
+   boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ true);
+   std::string contents(
+"case.test\033[36m:\033[m2\033[36m:\033[maba \033[1;31mOOOkkk\033[m okab AAOO awesome aa abab");
+
+   boost::smatch match;
+   EXPECT_TRUE(regex_utils::match(contents, match, regex));
+   EXPECT_EQ("case.test", match[1].str());
+   EXPECT_EQ("2", match[2].str());
+   EXPECT_EQ(kGitGrepPattern, match[3].str());
+}
+
+TEST(SessionFindTest, GitGrepWithColonGetFileLineNumberAndContents) {
+   boost::regex regex = getGrepOutputRegex(/*isGitGrep*/ true);
+   std::string contents(
+      "file.test\033[36m:\033[m9\033[36m:\033[m  - \033[1;31mr:\033[m devel");
+
+   boost::smatch match;
+   EXPECT_TRUE(regex_utils::match(contents, match, regex));
+   EXPECT_EQ("file.test", match[1].str());
+   EXPECT_EQ("9", match[2].str());
+   EXPECT_EQ("  - \033[1;31mr:\033[m devel", match[3].str());
+}
+
+TEST(SessionFindTest, GitGrepGetColorEncodingRegex) {
+   boost::regex regex = getColorEncodingRegex(/*isGitGrep*/ true);
+   boost::cmatch match;
+   EXPECT_TRUE(regex_utils::search(kGitGrepPattern.c_str(), match, regex));
+   EXPECT_EQ("1", match[2].str());
+}
+
+TEST(SessionFindTest, ReplaceRegexWithQuantifiers) {
+   std::string line("helllooo");
+   const std::string regex("l+o+X?");
+   const std::string replacement("LO!");
+   Replacer replacer(false);
+   const size_t matchOn = 2;
+   const size_t matchOff = 7;
+   size_t replaceMatchOff;
+
+   replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+   EXPECT_EQ("heLO!", line);
+   EXPECT_EQ(4u, replaceMatchOff);
+}
+
+TEST(SessionFindTest, ReplaceRegexWithWordCharsAndBackrefs) {
+   std::string line("good, !@$ good and more!");
+   const std::string regex("^(\\w+)(\\W+)\\1");
+   const std::string replacement("\\1");
+   Replacer replacer(false);
+   const size_t matchOn = 0;
+   const size_t matchOff = 13;
+   size_t replaceMatchOff;
+
+   replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+   EXPECT_EQ("good and more!", line);
+   EXPECT_EQ(3u, replaceMatchOff);
+}
+
+TEST(SessionFindTest, ReplaceRegexWithBoundedRepeatAndAlternation) {
+   std::string line("11 cats");
+   const std::string regex("\\d{2} (cat|dog)");
+   const std::string replacement("x");
+   Replacer replacer(false);
+   const size_t matchOn = 0;
+   const size_t matchOff = 5;
+   size_t replaceMatchOff;
+
+   replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+   EXPECT_EQ("xs", line);
+   EXPECT_EQ(0u, replaceMatchOff);
+}
+
+TEST(SessionFindTest, ReplaceRegexWithBracketsAndSpecialChars) {
+   std::string line("How are you? Mr. (x)");
+   size_t matchOn = 11;  // include '?'
+   size_t matchOff = 20; // include ')'
+   size_t replaceMatchOff;
+   
+   Replacer replacer(false);
+   replacer.replaceRegex(matchOn, matchOff, "\\? [A-Z][a-z]{0,2}\\. \\(\\w\\)", "?!", &line, &replaceMatchOff);
+   EXPECT_EQ("How are you?!", line);
+   EXPECT_EQ(13u, replaceMatchOff);
+}
+
+} // namespace tests
+} // namespace find
+} // namespace modules
+} // namespace session
+} // namespace rstudio

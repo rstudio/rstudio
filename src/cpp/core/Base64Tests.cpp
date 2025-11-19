@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <shared_core/Error.hpp>
 #include <core/Base64.hpp>
@@ -23,74 +23,84 @@ namespace rstudio {
 namespace core {
 namespace base64 {
 
-test_context("Base64 Encoding")
+TEST(Base64Test, VariousSmallStringsEncodeCorrectly)
 {
    std::string encoded;
-   test_that("Various small strings encode correctly")
-   {
-      encode("a", &encoded);
-      expect_true(encoded == "YQ==");
-      
-      encode("ab", &encoded);
-      expect_true(encoded == "YWI=");
-      
-      encode("abc", &encoded);
-      expect_true(encoded == "YWJj");
-      
-      encode("abcd", &encoded);
-      expect_true(encoded == "YWJjZA==");
-      
-      encode("abcde", &encoded);
-      expect_true(encoded == "YWJjZGU=");
-      
-      encode("abcdef", &encoded);
-      expect_true(encoded == "YWJjZGVm");
-   }
+   Error err;
+   err = encode("a", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YQ==", encoded);
    
-   std::string decoded;
-   test_that("Various small strings decode correctly")
-   {
-      decode("YQ==", &decoded);
-      expect_true(decoded == "a");
-      
-      decode("YWI=", &decoded);
-      expect_true(decoded ==  "ab");
-      
-      decode("YWJj", &decoded);
-      expect_true(decoded == "abc");
-      
-      decode("YWJjZA==", &decoded);
-      expect_true(decoded == "abcd");
-      
-      decode("YWJjZGU=", &decoded);
-      expect_true(decoded == "abcde");
-      
-      decode("YWJjZGVm", &decoded);
-      expect_true(decoded == "abcdef");
-   }
+   err = encode("ab", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YWI=", encoded);
    
-   test_that("Contents are preserved in encode / decode process")
-   {
-      Error error;
-      ::srand(1);
-      for (std::size_t i = 0; i < 100; ++i)
-      {
-         std::string random =
-               string_utils::makeRandomByteString(::rand() % 1024);
-         
-         std::string encoded;
-         error = encode(random, &encoded);
-         expect_true(!error);
-         
-         std::string decoded;
-         error = decode(encoded, &decoded);
-         expect_true(!error);
-         
-         expect_true(random == decoded);
-      }
-   }
+   err = encode("abc", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YWJj", encoded);
+   
+   err = encode("abcd", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YWJjZA==", encoded);
+   
+   err = encode("abcde", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YWJjZGU=", encoded);
+   
+   err = encode("abcdef", &encoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("YWJjZGVm", encoded);
 }
 
+TEST(Base64Test, VariousSmallStringsDecodeCorrectly)
+{
+   std::string decoded;
+   Error err;
+   err = decode("YQ==", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("a", decoded);
+   
+   err = decode("YWI=", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("ab", decoded);
+   
+   err = decode("YWJj", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("abc", decoded);
+   
+   err = decode("YWJjZA==", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("abcd", decoded);
+   
+   err = decode("YWJjZGU=", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("abcde", decoded);
+   
+   err = decode("YWJjZGVm", &decoded);
+   EXPECT_FALSE(err);
+   EXPECT_EQ("abcdef", decoded);
+}
+
+TEST(Base64Test, ContentsArePreservedInEncodeDecodeProcess)
+{
+   Error error;
+   ::srand(1);
+   for (std::size_t i = 0; i < 100; ++i)
+   {
+      std::string random =
+            string_utils::makeRandomByteString(::rand() % 1024);
+      
+      std::string encoded;
+      error = encode(random, &encoded);
+      EXPECT_FALSE(error);
+      
+      std::string decoded;
+      error = decode(encoded, &decoded);
+      EXPECT_FALSE(error);
+      
+      EXPECT_EQ(random, decoded);
+   }
+}
 } // end namespace base64
 } // end namespace core
 } // end namespace rstudio
