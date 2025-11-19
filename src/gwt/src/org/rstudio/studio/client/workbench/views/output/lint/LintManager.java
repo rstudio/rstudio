@@ -19,7 +19,6 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.js.JsMap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -110,7 +109,6 @@ public class LintManager
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
-      externalLint_ = JsArray.createArray().cast();
       timer_ = new Timer()
       {
 
@@ -382,10 +380,6 @@ public class LintManager
                for (int i = 0; i < response.length(); i++)
                   finalLint.push(response.get(i));
 
-               JsArray<LintItem> externalLint = externalLint_.values();
-               for (int i = 0, n = externalLint.length(); i < n; i++)
-                  finalLint.push(externalLint.get(i));
-
                source_.showLint(finalLint);
             }
 
@@ -398,10 +392,6 @@ public class LintManager
       }
       else
       {
-         JsArray<LintItem> externalLint = externalLint_.values();
-         for (int i = 0, n = externalLint.length(); i < n; i++)
-            finalLint.push(externalLint.get(i));
-         
          source_.showLint(finalLint);
       }
    }
@@ -468,7 +458,6 @@ public class LintManager
    private final LintSource source_;
    private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
-   private final JsMap<LintItem> externalLint_;
    
    private boolean explicit_;
    private boolean showMarkers_;
