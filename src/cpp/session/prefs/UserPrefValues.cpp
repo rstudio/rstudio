@@ -3417,6 +3417,19 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 }
 
 /**
+ * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+ */
+bool UserPrefValues::copilotNesEnabled()
+{
+   return readPref<bool>("copilot_nes_enabled");
+}
+
+core::Error UserPrefValues::setCopilotNesEnabled(bool val)
+{
+   return writePref("copilot_nes_enabled", val);
+}
+
+/**
  * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
  */
 bool UserPrefValues::copilotShowMessages()
@@ -3836,6 +3849,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kCopilotNesEnabled,
       kCopilotShowMessages,
       kCopilotProjectWorkspace,
       kProjectName,

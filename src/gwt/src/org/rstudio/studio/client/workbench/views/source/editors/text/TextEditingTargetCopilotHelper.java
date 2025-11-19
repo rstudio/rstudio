@@ -629,6 +629,9 @@ public class TextEditingTargetCopilotHelper
 
    private void requestNextEditSuggestions()
    {
+      if (!prefs_.copilotNesEnabled().getGlobalValue())
+         return;
+
       server_.copilotNextEditSuggestions(
          target_.getId(),
          StringUtil.notNull(target_.getPath()),

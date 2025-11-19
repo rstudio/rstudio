@@ -2433,6 +2433,16 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
+# Enable next-edit suggestions
+#
+# When enabled, RStudio will display next-edit suggestions as provided by Copilot
+# when available.
+.rs.uiPrefs$copilotNesEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_nes_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_nes_enabled", value) },
+   clear = function() { .rs.clearUserPref("copilot_nes_enabled") }
+)
+
 # Display account and billing messages from GitHub Copilot
 #
 # When enabled, RStudio will show account and billing messages from GitHub

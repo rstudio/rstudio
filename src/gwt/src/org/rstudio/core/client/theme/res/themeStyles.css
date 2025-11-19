@@ -413,9 +413,7 @@ pre {
 .ace_next-edit-suggestion-highlight {
    position: absolute;
    z-index: 1;
-   background: rgba(128, 128, 128, 0.4) !important;
-   cursor: pointer !important;
-   pointer-events: auto;
+   background: rgba(128, 128, 128, 0.2) !important;
 }
 
 .ace_diff-added {
