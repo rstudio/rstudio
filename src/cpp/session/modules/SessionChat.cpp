@@ -88,6 +88,11 @@ int s_chatBackendRestartCount = 0;
 const int kMaxRestartAttempts = 1;
 
 // ============================================================================
+// Suspension blocking
+// ============================================================================
+static bool s_chatBusy = false;
+
+// ============================================================================
 // Installation paths
 // ============================================================================
 const char* const kPositAiDirName = "ai";
@@ -372,6 +377,23 @@ void handleLoggerLog(const json::Object& params)
       // so log them as errors to ensure visibility
       ELOG("[ai] [{}] {}", level, message);
    }
+}
+
+void handleSetBusyStatus(const json::Object& params)
+{
+   bool busy = false;
+   Error error = json::readObject(params, "busy", busy);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // Update our tracking flag
+   s_chatBusy = busy;
+
+   // Log for debugging (using chat-specific logging infrastructure)
+   DLOG("Chat backend busy status: {}", busy ? "busy" : "idle");
 }
 
 // Check if a logger/log notification should be shown in raw JSON-RPC format
@@ -691,6 +713,13 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
 void onBackendExit(int exitCode)
 {
    WLOG("Chat backend exited with code: {}", exitCode);
+
+   // Clear databot busy state to prevent stuck suspension blocking
+   if (s_chatBusy)
+   {
+      s_chatBusy = false;
+      DLOG("Cleared chat backend busy state on process exit");
+   }
 
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
@@ -1045,6 +1074,12 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
 
 void onShutdown(bool terminatedNormally)
 {
+   // Clear busy state
+   if (s_chatBusy)
+   {
+      s_chatBusy = false;
+   }
+
    // Terminate backend process
    if (s_chatBackendPid != -1)
    {
@@ -1064,6 +1099,16 @@ void onShutdown(bool terminatedNormally)
 }
 
 } // end anonymous namespace
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+bool isSuspendable()
+{
+   // Session can suspend if chat backend is NOT busy
+   return !s_chatBusy;
+}
 
 // ============================================================================
 // Module Initialization
@@ -1103,6 +1148,7 @@ Error initialize()
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
+   registerNotificationHandler("chat/setBusyStatus", handleSetBusyStatus);
 
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
