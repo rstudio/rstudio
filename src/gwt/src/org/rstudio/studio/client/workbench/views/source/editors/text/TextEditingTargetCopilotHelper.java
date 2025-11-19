@@ -108,6 +108,12 @@ public class TextEditingTargetCopilotHelper
       // Reset any existing diff view
       reset();
 
+      // Note that we can accept the diff suggestion with Tab
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         canAcceptSuggestionWithTab_ = true;
+      });
+
       // Highlight the range in the document associated with
       // the edit suggestion
       Range editRange = Range.create(
@@ -429,6 +435,9 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Eagerly reset Tab acceptance flag
+                  canAcceptSuggestionWithTab_ = false;
+
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
                      return;
@@ -466,6 +475,19 @@ public class TextEditingTargetCopilotHelper
                   @Override
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
+                     // Let diff view accept on Tab if applicable
+                     if (diffView_ != null)
+                     {
+                        NativeEvent event = keyEvent.getNativeEvent();
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           diffView_.accept();
+                           return;
+                        }
+                     }
+
                      // Respect suppression flag
                      if (completionRequestsSuspended_)
                         return;
@@ -496,21 +518,13 @@ public class TextEditingTargetCopilotHelper
                         event.stopPropagation();
                         event.preventDefault();
 
-                        if (diffView_ != null)
-                        {
-                           // If an inline diff view is being shown, accept that instead
-                           diffView_.accept();
-                        }
-                        else
-                        {
-                           // Otherwise, accept the ghost text
-                           Range aceRange = Range.create(
-                                 activeCompletion_.startLine,
-                                 activeCompletion_.startCharacter,
-                                 activeCompletion_.endLine,
-                                 activeCompletion_.endCharacter);
-                           display_.replaceRange(aceRange, activeCompletion_.insertText);
-                        }
+                        // Otherwise, accept the ghost text
+                        Range aceRange = Range.create(
+                              activeCompletion_.startLine,
+                              activeCompletion_.startCharacter,
+                              activeCompletion_.endLine,
+                              activeCompletion_.endCharacter);
+                        display_.replaceRange(aceRange, activeCompletion_.insertText);
 
                         Position cursorPos = Position.create(
                            activeCompletion_.endLine,
@@ -846,6 +860,7 @@ public class TextEditingTargetCopilotHelper
    private AceEditorDiffView diffView_;
    private PinnedLineWidget diffWidget_;
    private int diffMarkerId_ = -1;
+   private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
 
