@@ -402,6 +402,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Range getParagraph(Position pos, int startRow, int endRow);
 
    int addHighlight(Range range, String className);
+   int addHighlight(Range range, String className, String highlightType);
    void removeHighlight(int id);
 
    void highlightDebugLocation(

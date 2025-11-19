@@ -37,10 +37,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 
 import jsinterop.base.JsArrayLike;
 
-/**
- * Abstract widget that displays a diff view of code using an embedded AceEditor.
- * Subclasses should implement accept() and discard() methods to handle user actions.
- */
 public abstract class AceEditorDiffView
 {
    protected abstract void accept();
@@ -84,6 +80,8 @@ public abstract class AceEditorDiffView
       editor_.getElement().getStyle().setHeight(lineCount * 19, Unit.PX);
 
       // Create status bar with clickable text - style to match Ace editor
+      // Note that we need to use 'raw' event listeners as GWT event listeners
+      // will not function within line widgets
       statusBar_ = new HorizontalPanel();
       statusBar_.setStyleName(styles.statusBar());
       statusBar_.setSpacing(12);

@@ -125,8 +125,7 @@ public class TextEditingTargetCopilotHelper
       public int partialAcceptedLength;
    }
 
-   // Widget for displaying inline diff view with Apply/Discard buttons
-   private class InlineDiffView
+   private class DiffView
    {
       private PinnedLineWidget lineWidget_;
       private AceEditorDiffView diffView_;
@@ -135,7 +134,7 @@ public class TextEditingTargetCopilotHelper
       public void showForSuggestion(NextEditSuggestion suggestion)
       {
          // Remove any existing line widget
-         hide();
+         detach();
 
          suggestion_ = suggestion;
 
@@ -168,6 +167,7 @@ public class TextEditingTargetCopilotHelper
                }
 
                cleanupHighlight();
+               nesTimer_.schedule(200);
             }
 
             @Override
@@ -196,7 +196,7 @@ public class TextEditingTargetCopilotHelper
             null);
       }
 
-      public void hide()
+      public void detach()
       {
          if (diffView_ != null)
          {
@@ -369,6 +369,24 @@ public class TextEditingTargetCopilotHelper
             });
          }
       };
+
+      suspendTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            completionRequestsSuspended_ = false;
+         }
+      };
+
+      nesTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            requestNextEditSuggestions();
+         }
+      };
       
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
@@ -400,36 +418,11 @@ public class TextEditingTargetCopilotHelper
       }
       else
       {
-         // Initialize the inline diff view
-         inlineDiffView_ = new InlineDiffView();
-
          registrations_.addAll(
 
-               display_.addSaveCompletedHandler((event) ->
+               display_.addValueChangeHandler((event) ->
                {
-                  requestNextEditSuggestions();
-               }),
-
-               // Hover handler for next-edit suggestion highlights
-               DomUtils.addEventListener(display_.getElement(), "mouseover", false, (event) ->
-               {
-                  Element target = event.getEventTarget().cast();
-
-                  // Check for hover on a next-edit suggestion highlight
-                  Element highlightEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName("ace_next-edit-suggestion-highlight");
-                     }
-                  });
-
-                  if (highlightEl != null && suggestion_ != null)
-                  {
-                     // Show the inline diff view
-                     inlineDiffView_.showForSuggestion(suggestion_);
-                  }
+                  nesTimer_.schedule(200);
                }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing
@@ -440,46 +433,6 @@ public class TextEditingTargetCopilotHelper
                      return;
 
                   Element target = event.getEventTarget().cast();
-
-                  // Check for clicks on a next-edit suggestion highlight.
-                  Element highlightEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName("ace_next-edit-suggestion-highlight");
-                     }
-                  });
-
-                  if (highlightEl != null)
-                  {
-                     event.stopPropagation();
-                     event.preventDefault();
-
-                     // Apply the code suggestion associated with this range.
-                     if (suggestion_ != null)
-                     {
-                        suggestion_.applyEdit(display_);
-                     }
-
-                     // Remove an existing annotation, if any
-                     if (nextEditAnnotationRegistration_ != null)
-                     {
-                        nextEditAnnotationRegistration_.removeHandler();
-                        nextEditAnnotationRegistration_ = null;
-                     }
-
-                     // Hide the inline diff view
-                     if (inlineDiffView_ != null)
-                     {
-                        inlineDiffView_.hide();
-                     }
-
-                     // Clear the suggestion
-                     suggestion_ = null;
-
-                     return;
-                  }
 
                   // Check for clicks on the next-edit suggestion gutter icon.
                   Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
@@ -520,11 +473,8 @@ public class TextEditingTargetCopilotHelper
                      return;
                            
                   // Allow one-time suppression of cursor change handler
-                  if (suppressCursorChangeHandler_)
-                  {
-                     suppressCursorChangeHandler_ = false;
+                  if (completionRequestsSuspended_)
                      return;
-                  }
                   
                   // Don't do anything if we have a selection.
                   if (display_.hasSelection())
@@ -550,6 +500,10 @@ public class TextEditingTargetCopilotHelper
                   @Override
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
+                     // Respect suppression flag
+                     if (completionRequestsSuspended_)
+                        return;
+
                      // If ghost text is being displayed, accept it on a Tab key press.
                      // TODO: Let user choose keybinding for accepting ghost text?
                      if (activeCompletion_ == null)
@@ -566,7 +520,7 @@ public class TextEditingTargetCopilotHelper
                      if (activeCompletion_.displayText.startsWith(key))
                      {
                         updateCompletion(key);
-                        suppressCursorChangeHandler_ = true;
+                        temporarilySuspendCompletionRequests();
                         return;
                      }
 
@@ -632,6 +586,17 @@ public class TextEditingTargetCopilotHelper
       if (!prefs_.copilotNesEnabled().getGlobalValue())
          return;
 
+      if (completionRequestsSuspended_)
+         return;
+
+      target_.withSavedDoc(() ->
+      {
+         requestNextEditSuggestionsImpl();
+      });
+   }
+
+   private void requestNextEditSuggestionsImpl()
+   {
       server_.copilotNextEditSuggestions(
          target_.getId(),
          StringUtil.notNull(target_.getPath()),
@@ -687,15 +652,15 @@ public class TextEditingTargetCopilotHelper
                   LintItem item = LintItem.create(
                      normalized.range.start.line,
                      normalized.range.start.character,
-                     "[NES] Apply next-edit suggestion",
+                     "Apply edit",
                      "ace_next-edit-suggestion");
 
                   nextEditAnnotationRegistration_ = display_.addGutterItem(item);
-                  server_.copilotDidShowCompletion(normalized, new VoidServerRequestCallback());
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
 
-               // Otherwise, we'll just highlight the range to be replaced.
+               // Otherwise, display the code suggestion as a line widget diff.
                int markerId = display_.addHighlight(
                   Range.create(
                      completion.range.start.line,
@@ -713,8 +678,14 @@ public class TextEditingTargetCopilotHelper
                   }
                };
 
-               // Save the current suggestion.
-               suggestion_ = new NextEditSuggestion(markerId, completion);
+               if (diffView_ != null)
+               {
+                  diffView_.detach();
+                  diffView_ = null;
+               }
+
+               diffView_ = new DiffView();
+               diffView_.showForSuggestion(new NextEditSuggestion(markerId, completion));
             }
 
             @Override
@@ -768,7 +739,7 @@ public class TextEditingTargetCopilotHelper
       
       Timers.singleShot(() ->
       {
-         suppressCursorChangeHandler_ = true;
+         temporarilySuspendCompletionRequests();
          display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
          server_.copilotDidAcceptPartialCompletion(activeCompletion_.originalCompletion, 
@@ -888,6 +859,12 @@ public class TextEditingTargetCopilotHelper
       return normalized;
    }
 
+   private void temporarilySuspendCompletionRequests()
+   {
+      completionRequestsSuspended_ = true;
+      suspendTimer_.schedule(1200);
+   }
+
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
@@ -907,18 +884,19 @@ public class TextEditingTargetCopilotHelper
    private final TextEditingTarget target_;
    private final DocDisplay display_;
    private final Timer completionTimer_;
+   private final Timer suspendTimer_;
+   private final Timer nesTimer_;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    
    private int requestId_;
-   private boolean suppressCursorChangeHandler_;
+   private boolean completionRequestsSuspended_;
    private boolean copilotDisabledInThisDocument_;
    private HandlerRegistration nextEditAnnotationRegistration_;
    
+   private DiffView diffView_;
    private Completion activeCompletion_;
-   private NextEditSuggestion suggestion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
-   private InlineDiffView inlineDiffView_;
 
 
    // Injected ----
