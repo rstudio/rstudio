@@ -120,7 +120,7 @@ const char * const kProgramIdentity = "rserver";
 
 const int kMinDesiredOpenFiles = 4096;
 const int kMaxDesiredOpenFiles = 8192;
-   
+
 bool mainPageFilter(const core::http::Request& request,
                     core::http::Response* pResponse)
 {
@@ -456,7 +456,7 @@ Error waitForSignals()
          };
          std::set<std::string> overlayProcs = overlay::interruptProcs();
          interruptProcs.insert(overlayProcs.begin(), overlayProcs.end());
-         
+
          // get list of child processes
          std::vector<system::ProcessInfo> procInfos;
          error = core::system::getChildProcesses(&procInfos, false);
@@ -465,7 +465,7 @@ Error waitForSignals()
             LOG_ERROR(error);
             break;
          }
-         
+
          // pull out pids matching our process names
          std::vector<pid_t> pids;
          for (auto&& procInfo : procInfos)
@@ -478,7 +478,7 @@ Error waitForSignals()
             else
                LOG_DEBUG_MESSAGE("Not terminating rserver child process: " + procInfo.exe);
          }
-         
+
          // signal those processes
          error = core::system::sendSignalToSpecifiedChildProcesses(pids, SIGTERM);
          if (error)
@@ -505,9 +505,9 @@ Error waitForSignals()
                   break;
             }
          });
-         
+
          waitThread.timed_join(boost::chrono::seconds(60));
-         
+
          // notify user if there seem to still be some processes around
          int status = 0;
          if (::waitpid(-1, &status, WNOHANG) == 0)
@@ -526,7 +526,7 @@ Error waitForSignals()
             }
             LOG_WARNING_MESSAGE("Continuing with shutdown despite remaining child processes: " + stuckProcInfo);
          }
-         
+
          // call overlay shutdown
          overlay::shutdown();
 
@@ -656,7 +656,7 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 } // namespace server
 } // namespace rstudio
 
-int main(int argc, char * const argv[]) 
+int main(int argc, char * const argv[])
 {
    try
    {
@@ -678,7 +678,7 @@ int main(int argc, char * const argv[])
       // ignore SIGPIPE (don't log error because we should never call
       // syslog prior to daemonizing)
       core::system::ignoreSignal(core::system::SigPipe);
-      
+
 #ifdef __APPLE__
       // warn if the rstudio pam profile does not exist
       // (note that this only effects macOS development configurations)
@@ -690,7 +690,7 @@ int main(int argc, char * const argv[])
       }
 #endif
 
-      // read program options 
+      // read program options
       std::ostringstream osWarnings;
       Options& options = server::options();
       ProgramStatus status = options.read(argc, argv, osWarnings);
@@ -702,7 +702,7 @@ int main(int argc, char * const argv[])
       {
          return status.exitCode();
       }
-      
+
       // daemonize if requested
       if (options.serverDaemonize() && options.dbCommand().empty())
       {
@@ -841,7 +841,7 @@ int main(int argc, char * const argv[])
       if (httpsProxyVar)
          LOG_INFO_MESSAGE("Using HTTPS Proxy: " + httpsProxyVar.value().absoluteURL());
       const auto& noProxyRules = http::proxyUtils().noProxyRules();
-      if (!noProxyRules.empty()) 
+      if (!noProxyRules.empty())
       {
          std::string noProxyStr;
          for (const auto& rule : noProxyRules)
@@ -926,7 +926,7 @@ int main(int argc, char * const argv[])
       }
 
       // overlay may replace this
-      if (server::options().wwwRootPath() != kRequestDefaultRootPath) 
+      if (server::options().wwwRootPath() != kRequestDefaultRootPath)
       {
          // inject the path prefix as the root path for all requests
          uri_handlers::setRequestFilter(rootPathRequestFilter);
@@ -1018,9 +1018,9 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
-      
+
       server::session_rpc::addHandler(
-         "/server_version", 
+         "/server_version",
          [](const std::string&, boost::shared_ptr<core::http::AsyncConnection> pConnection)
          {
             json::Object obj;
@@ -1061,7 +1061,7 @@ int main(int argc, char * const argv[])
          {
             address = "localhost";
          }
-         
+
          std::string port = options.wwwPort();
          if (port.empty())
          {
@@ -1095,7 +1095,7 @@ int main(int argc, char * const argv[])
          if (error)
             LOG_ERROR(error);
       }
-      
+
       // wait for signals
       error = waitForSignals();
       if (error)
@@ -1105,7 +1105,7 @@ int main(int argc, char * const argv[])
       return EXIT_SUCCESS;
    }
    CATCH_UNEXPECTED_EXCEPTION
-   
+
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE;
 }
