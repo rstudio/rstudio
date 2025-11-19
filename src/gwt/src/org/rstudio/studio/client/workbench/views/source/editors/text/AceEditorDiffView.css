@@ -37,12 +37,16 @@
 
 .discardLabel {
    font-size: 11px;
+   padding-left: 4px;
+   padding-right: 4px;
    cursor: pointer;
    color: #999;
 }
 
 .applyLabel {
    font-size: 11px;
+   padding-left: 4px;
+   padding-right: 4px;
    cursor: pointer;
    color: #4a90e2;
    font-weight: 500;
