@@ -2433,7 +2433,7 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
-# Enable next-edit suggestions
+# [Preview] Enable next-edit suggestions
 #
 # When enabled, RStudio will display next-edit suggestions as provided by Copilot
 # when available.
