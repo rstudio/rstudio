@@ -138,7 +138,7 @@ public class TextEditingTargetCopilotHelper
       diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
       {
          @Override
-         protected void accept()
+         protected void apply()
          {
             // Apply the edit
             Range range = Range.create(
@@ -484,7 +484,7 @@ public class TextEditingTargetCopilotHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           diffView_.accept();
+                           diffView_.apply();
                            return;
                         }
                      }

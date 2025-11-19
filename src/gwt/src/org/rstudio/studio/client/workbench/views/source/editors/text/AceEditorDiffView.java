@@ -39,7 +39,7 @@ import jsinterop.base.JsArrayLike;
 
 public abstract class AceEditorDiffView
 {
-   protected abstract void accept();
+   protected abstract void apply();
    protected abstract void discard();
 
    public AceEditorDiffView(String originalText,
@@ -97,7 +97,7 @@ public abstract class AceEditorDiffView
       applyLabel.setStyleName(styles.applyLabel());
       DomUtils.addEventListener(applyLabel.getElement(), "click", false, (event) ->
       {
-         accept();
+         apply();
       });
 
       statusBar_.add(discardLabel);
