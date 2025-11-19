@@ -137,16 +137,22 @@ public class TextEditingTargetCopilotHelper
          @Override
          protected void apply()
          {
-            // Apply the edit
+            // Get edit range
             Range range = Range.create(
                completion.range.start.line,
                completion.range.start.character,
                completion.range.end.line,
                completion.range.end.character);
+
+            // Move cursor to end of edit range
+            display_.setCursorPosition(range.getEnd());
+
+            // Perform the actual replacement
             display_.replaceRange(range, completion.insertText);
 
+            // Reset and schedule another suggestion
             reset();
-            nesTimer_.schedule(200);
+            nesTimer_.schedule(20);
          }
 
          @Override
