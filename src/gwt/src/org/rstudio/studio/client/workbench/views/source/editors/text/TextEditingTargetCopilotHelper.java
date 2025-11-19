@@ -180,6 +180,7 @@ public class TextEditingTargetCopilotHelper
       // Remove ghost text
       display_.removeGhostText();
       activeCompletion_ = null;
+      completionTimer_.cancel();
 
       // Detach inline diff view
       if (diffView_ != null)
@@ -479,7 +480,7 @@ public class TextEditingTargetCopilotHelper
                      if (diffView_ != null)
                      {
                         NativeEvent event = keyEvent.getNativeEvent();
-                        if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
@@ -531,13 +532,11 @@ public class TextEditingTargetCopilotHelper
                            activeCompletion_.endCharacter + activeCompletion_.insertText.length());
                         display_.setCursorPosition(cursorPos);
 
-                        reset();
-                        completionTimer_.cancel();
-                        activeCompletion_ = null;
-
                         server_.copilotDidAcceptCompletion(
                            activeCompletion_.originalCompletion.command,
                            new VoidServerRequestCallback());
+
+                        reset();
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
                      {
@@ -630,15 +629,14 @@ public class TextEditingTargetCopilotHelper
                // completions, so we need to use a copy and preserve the original
                // (which we need to send back to the server as-is in some language-server methods).
                CopilotCompletion normalized = normalizeCompletion(completion);
-
-               reset();
                activeCompletion_ = new Completion(normalized);
 
-               // If the start position and end position match, then display
-               // the suggestion using ghost text at that position.
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)
                {
+                  // If the start position and end position match, then display
+                  // the suggestion using ghost text at that position.
+                  reset();
                   Position position = Position.create(
                      normalized.range.start.line,
                      normalized.range.start.character);
@@ -647,8 +645,11 @@ public class TextEditingTargetCopilotHelper
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
-
-               showEditSuggestion(completion);
+               else
+               {
+                  // Otherwise, show the suggestion as an inline diff view.
+                  showEditSuggestion(completion);
+               }
             }
 
             @Override
