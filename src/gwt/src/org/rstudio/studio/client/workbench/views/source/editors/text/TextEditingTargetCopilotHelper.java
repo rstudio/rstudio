@@ -105,9 +105,6 @@ public class TextEditingTargetCopilotHelper
     */
    private void showEditSuggestion(CopilotCompletion completion)
    {
-      // Reset any existing diff view
-      reset();
-
       // Note that we can accept the diff suggestion with Tab
       Scheduler.get().scheduleDeferred(() ->
       {
@@ -617,6 +614,7 @@ public class TextEditingTargetCopilotHelper
                if (!hasEdits)
                   return;
 
+               reset();
                CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
 
                // Construct a Copilot completion object from the response
@@ -636,7 +634,6 @@ public class TextEditingTargetCopilotHelper
                {
                   // If the start position and end position match, then display
                   // the suggestion using ghost text at that position.
-                  reset();
                   Position position = Position.create(
                      normalized.range.start.line,
                      normalized.range.start.character);
