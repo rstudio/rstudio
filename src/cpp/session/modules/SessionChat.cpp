@@ -17,7 +17,10 @@
 #include "SessionNodeTools.hpp"
 
 #include <map>
+#include <set>
 #include <functional>
+
+#include <boost/thread/mutex.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -34,8 +37,10 @@
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
+#include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -110,6 +115,15 @@ int chatLogLevel()
 {
    return s_chatLogLevel;
 }
+
+// ============================================================================
+// Execution Tracking (for cancellation support)
+// ============================================================================
+// R is single-threaded, so only one execution can be active at a time,
+// but we need to track cancelled IDs to handle pre-cancellation of queued requests
+boost::mutex s_executionTrackingMutex;
+std::string s_currentTrackingId;  // Empty string when not executing
+std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
 
 // Map log level names to numeric priorities for filtering
 // Returns priority (higher = more severe)
@@ -292,6 +306,292 @@ void handleGetDetailedEnvironmentContext(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleExecuteCode(core::system::ProcessOperations& ops,
+                       const json::Value& requestId,
+                       const json::Object& params)
+{
+   DLOG("Handling runtime/executeCode request");
+
+   // Extract required parameters
+   std::string language;
+   std::string code;
+   std::string trackingId;
+
+   Error error = json::readObject(params,
+      "language", language,
+      "code", code,
+      "trackingId", trackingId);
+
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602,
+         "Invalid params: " + error.getMessage());
+      return;
+   }
+
+   // Validate language (only R supported currently)
+   if (language != "r")
+   {
+      sendJsonRpcError(ops, requestId, -32602,
+         "Unsupported language: " + language + ". Only 'r' is currently supported.");
+      return;
+   }
+
+   // Extract optional options object
+   json::Object options;
+   json::readObject(params, "options", options);  // Ignore error if missing
+
+   bool captureOutput = true;
+   bool capturePlot = false;
+   int timeout = 30000;
+
+   json::readObject(options, "captureOutput", captureOutput);
+   json::readObject(options, "capturePlot", capturePlot);
+   json::readObject(options, "timeout", timeout);
+
+   // Check if this request was already cancelled (pre-cancellation of queued request)
+   // and register tracking ID for cancellation support
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+      // Check if already cancelled
+      if (s_cancelledTrackingIds.count(trackingId) > 0)
+      {
+         s_cancelledTrackingIds.erase(trackingId);
+
+         // Return a response indicating cancellation
+         json::Object result;
+         result["output"] = "";
+         result["error"] = "Execution cancelled";
+         result["plots"] = json::Array();
+         result["executionTime"] = 0;
+
+         sendJsonRpcResponse(ops, requestId, result);
+         return;
+      }
+
+      // Register as current execution
+      s_currentTrackingId = trackingId;
+   }
+
+   // Call R helper function to execute code
+   r::sexp::Protect protect;
+   SEXP resultSEXP = R_NilValue;
+
+   r::exec::RFunction executeFunc(".rs.chat.executeCode");
+   executeFunc.addParam("code", code);
+   executeFunc.addParam("capturePlot", capturePlot);
+   executeFunc.addParam("timeout", timeout);
+
+   error = executeFunc.call(&resultSEXP, &protect);
+
+   // Clear tracking ID - execution complete
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentTrackingId.clear();
+      // Also clean up from cancelled set in case cancel arrived during execution
+      s_cancelledTrackingIds.erase(trackingId);
+   }
+
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32000,
+         "Code execution failed: " + error.getMessage());
+      return;
+   }
+
+   // Verify we got a list back
+   if (!r::sexp::isList(resultSEXP))
+   {
+      sendJsonRpcError(ops, requestId, -32000,
+         "Unexpected result type from R helper");
+      return;
+   }
+
+   // Extract result components from R list
+   // The R helper returns: list(items = list(...), plots = list(...), executionTime = int)
+
+   // Get items array
+   SEXP itemsSEXP = r::sexp::getAttrib(resultSEXP, "items");
+   if (itemsSEXP == R_NilValue)
+      itemsSEXP = VECTOR_ELT(resultSEXP, 0);  // First element
+
+   // Get plots array
+   SEXP plotsSEXP = r::sexp::getAttrib(resultSEXP, "plots");
+   if (plotsSEXP == R_NilValue && Rf_length(resultSEXP) > 1)
+      plotsSEXP = VECTOR_ELT(resultSEXP, 1);  // Second element
+
+   // Get execution time
+   int executionTime = 0;
+   SEXP timeSEXP = r::sexp::getAttrib(resultSEXP, "executionTime");
+   if (timeSEXP == R_NilValue && Rf_length(resultSEXP) > 2)
+      timeSEXP = VECTOR_ELT(resultSEXP, 2);  // Third element
+   if (timeSEXP != R_NilValue && Rf_length(timeSEXP) > 0)
+      executionTime = Rf_asInteger(timeSEXP);
+
+   // Process items: write to console and accumulate output
+   std::string outputBuffer;
+   std::string errorBuffer;
+
+   if (itemsSEXP != R_NilValue && Rf_isVector(itemsSEXP))
+   {
+      int numItems = Rf_length(itemsSEXP);
+      for (int i = 0; i < numItems; i++)
+      {
+         SEXP itemSEXP = VECTOR_ELT(itemsSEXP, i);
+         if (!r::sexp::isList(itemSEXP))
+            continue;
+
+         // Extract type and content from item
+         std::string type;
+         std::string content;
+
+         SEXP names = Rf_getAttrib(itemSEXP, R_NamesSymbol);
+         int itemLen = Rf_length(itemSEXP);
+
+         for (int j = 0; j < itemLen; j++)
+         {
+            if (names != R_NilValue && j < Rf_length(names))
+            {
+               std::string name = CHAR(STRING_ELT(names, j));
+               SEXP valueSEXP = VECTOR_ELT(itemSEXP, j);
+
+               if (name == "type" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  type = CHAR(STRING_ELT(valueSEXP, 0));
+               }
+               else if (name == "content" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  content = CHAR(STRING_ELT(valueSEXP, 0));
+               }
+            }
+         }
+
+         // Process based on type
+         if (type == "source" || type == "output" || type == "message" || type == "warning")
+         {
+            // Write to console for user visibility
+            module_context::consoleWriteOutput(content + "\n");
+
+            // Only accumulate for response if captureOutput is true
+            if (captureOutput)
+            {
+               if (!outputBuffer.empty())
+                  outputBuffer += "\n";
+               outputBuffer += content;
+            }
+         }
+         else if (type == "error")
+         {
+            // Write error to console
+            module_context::consoleWriteError(content + "\n");
+
+            // Accumulate error
+            if (!errorBuffer.empty())
+               errorBuffer += "\n";
+            errorBuffer += content;
+         }
+      }
+   }
+
+   // Process plots
+   json::Array plotsArray;
+   if (plotsSEXP != R_NilValue && Rf_isVector(plotsSEXP))
+   {
+      int numPlots = Rf_length(plotsSEXP);
+      for (int i = 0; i < numPlots; i++)
+      {
+         SEXP plotSEXP = VECTOR_ELT(plotsSEXP, i);
+         if (!r::sexp::isList(plotSEXP))
+            continue;
+
+         // Extract plot data
+         json::Object plotObj;
+         SEXP plotNames = Rf_getAttrib(plotSEXP, R_NamesSymbol);
+         int plotLen = Rf_length(plotSEXP);
+
+         for (int j = 0; j < plotLen; j++)
+         {
+            if (plotNames != R_NilValue && j < Rf_length(plotNames))
+            {
+               std::string name = CHAR(STRING_ELT(plotNames, j));
+               SEXP valueSEXP = VECTOR_ELT(plotSEXP, j);
+
+               if (name == "data" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  plotObj["data"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+               }
+               else if (name == "mimeType" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  plotObj["mimeType"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+               }
+               else if (name == "width" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  plotObj["width"] = INTEGER(valueSEXP)[0];
+               }
+               else if (name == "height" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+               {
+                  plotObj["height"] = INTEGER(valueSEXP)[0];
+               }
+            }
+         }
+
+         if (plotObj.hasMember("data"))
+            plotsArray.push_back(plotObj);
+      }
+   }
+
+   // Build response
+   json::Object result;
+   result["output"] = outputBuffer;
+   result["error"] = errorBuffer;
+   result["plots"] = plotsArray;
+   result["executionTime"] = executionTime;
+
+   // Send successful response
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleCancelExecution(const json::Object& params)
+{
+   DLOG("Handling runtime/cancelExecution notification");
+
+   // Extract trackingId
+   std::string trackingId;
+   Error error = json::readObject(params, "trackingId", trackingId);
+
+   if (error)
+   {
+      WLOG("runtime/cancelExecution: missing or invalid trackingId");
+      return;
+   }
+
+   // Add to cancelled set and check if currently executing
+   bool shouldInterrupt = false;
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+      // Always add to cancelled set - handles pre-cancellation of queued requests
+      s_cancelledTrackingIds.insert(trackingId);
+
+      // Check if this is currently executing
+      shouldInterrupt = !s_currentTrackingId.empty() &&
+                        s_currentTrackingId == trackingId;
+   }
+
+   if (shouldInterrupt)
+   {
+      // Set the interrupt flag - this will cause R to throw an interrupt condition
+      r::exec::setInterruptsPending(true);
+      DLOG("Set interrupt pending for trackingId: {}", trackingId);
+   }
+   else
+   {
+      // Not currently executing - pre-cancellation recorded for when it starts
+      DLOG("Recorded pre-cancellation for trackingId: {}", trackingId);
+   }
+}
+
 void handleRequest(core::system::ProcessOperations& ops,
                    const std::string& method,
                    const json::Value& requestId,
@@ -304,6 +604,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "runtime/getDetailedEnvironmentContext")
    {
       handleGetDetailedEnvironmentContext(ops, requestId);
+   }
+   else if (method == "runtime/executeCode")
+   {
+      handleExecuteCode(ops, requestId, params);
    }
    else
    {
@@ -1193,6 +1497,7 @@ Error initialize()
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
    registerNotificationHandler("chat/setBusyStatus", handleSetBusyStatus);
+   registerNotificationHandler("runtime/cancelExecution", handleCancelExecution);
 
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
