@@ -411,21 +411,26 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // Extract result components from R list
    // The R helper returns: list(items = list(...), plots = list(...), executionTime = int)
 
-   // Get items array
-   SEXP itemsSEXP = r::sexp::getAttrib(resultSEXP, "items");
-   if (itemsSEXP == R_NilValue)
-      itemsSEXP = VECTOR_ELT(resultSEXP, 0);  // First element
+   // Get names vector for named element lookup
+   SEXP resultNames = Rf_getAttrib(resultSEXP, R_NamesSymbol);
 
-   // Get plots array
-   SEXP plotsSEXP = r::sexp::getAttrib(resultSEXP, "plots");
-   if (plotsSEXP == R_NilValue && Rf_length(resultSEXP) > 1)
-      plotsSEXP = VECTOR_ELT(resultSEXP, 1);  // Second element
+   // Helper to find element by name
+   auto findElement = [&](const char* name) -> SEXP {
+      if (resultNames == R_NilValue) return R_NilValue;
+      for (int i = 0; i < Rf_length(resultNames); i++) {
+         if (strcmp(CHAR(STRING_ELT(resultNames, i)), name) == 0)
+            return VECTOR_ELT(resultSEXP, i);
+      }
+      return R_NilValue;
+   };
 
-   // Get execution time
+   // Get elements by name
+   SEXP itemsSEXP = findElement("items");
+   SEXP plotsSEXP = findElement("plots");
+   SEXP timeSEXP = findElement("executionTime");
+
+   // Extract execution time
    int executionTime = 0;
-   SEXP timeSEXP = r::sexp::getAttrib(resultSEXP, "executionTime");
-   if (timeSEXP == R_NilValue && Rf_length(resultSEXP) > 2)
-      timeSEXP = VECTOR_ELT(resultSEXP, 2);  // Third element
    if (timeSEXP != R_NilValue && Rf_length(timeSEXP) > 0)
       executionTime = Rf_asInteger(timeSEXP);
 
