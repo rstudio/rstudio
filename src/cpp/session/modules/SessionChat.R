@@ -99,6 +99,7 @@
          code,
          envir = globalenv(),
          new_device = capturePlot,
+         stop_on_error = 0,  # Continue through errors to capture all output
          output_handler = evaluate::new_output_handler(
             # Use default handlers - we'll process the result list
          )
