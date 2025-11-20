@@ -68,6 +68,18 @@
                                               capturePlot = FALSE,
                                               timeout = 30000)
 {
+   # Check for required package
+   if (!requireNamespace("evaluate", quietly = TRUE)) {
+      return(list(
+         items = list(list(
+            type = "error",
+            content = "The 'evaluate' package is required for code execution. Please install it with: install.packages('evaluate')"
+         )),
+         plots = list(),
+         executionTime = 0
+      ))
+   }
+
    # Initialize result structure
    result <- list(
       items = list(),      # List of output items (source, output, message, warning, error)
