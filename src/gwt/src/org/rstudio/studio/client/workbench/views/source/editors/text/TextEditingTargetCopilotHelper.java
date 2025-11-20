@@ -188,20 +188,20 @@ public class TextEditingTargetCopilotHelper
    {
       // Remove ghost text
       display_.removeGhostText();
-      activeCompletion_ = null;
       completionTimer_.cancel();
+      activeCompletion_ = null;
 
       // Detach inline diff view
-      if (diffView_ != null)
-      {
-         diffView_.detach();
-         diffView_ = null;
-      }
-
       if (diffWidget_ != null)
       {
          diffWidget_.detach();
          diffWidget_ = null;
+      }
+
+      if (diffView_ != null)
+      {
+         diffView_.detach();
+         diffView_ = null;
       }
 
       if (diffMarkerId_ != -1)
