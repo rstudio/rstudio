@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasContextMenuHandlers;
@@ -112,6 +113,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
       EditorBehaviorsDisabled,
    }
    
+   public Element getElement();
+
    TextFileType getFileType();
    void setFileType(TextFileType fileType);
    void setFileType(TextFileType fileType, boolean suppressCompletion);
@@ -398,6 +401,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Range getMultiLineExpr(Position pos, int startRow, int endRow);
    Range getParagraph(Position pos, int startRow, int endRow);
 
+   int addHighlight(Range range, String className);
+   int addHighlight(Range range, String className, String highlightType);
+   void removeHighlight(int id);
+
    void highlightDebugLocation(
          SourcePosition startPos,
          SourcePosition endPos,
@@ -416,7 +423,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
 
+   HandlerRegistration addGutterItem(LintItem item);
+
    void setAnnotations(JsArray<AceAnnotation> annotations);
+   JsArray<AceAnnotation> getAnnotations();
+
    void showLint(JsArray<LintItem> lint);
    void clearLint();
    
@@ -502,7 +513,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    AceGhostText getGhostText();
    void setGhostText(String text);
+   void setGhostText(String text, Position position);
    boolean hasGhostText();
    void applyGhostText();
    void removeGhostText();
+
+   double getLineHeight();
 }

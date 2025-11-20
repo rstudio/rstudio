@@ -38,9 +38,9 @@ import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsLoadEvent;
 import org.rstudio.studio.client.pdfviewer.pdfjs.events.PdfJsWindowClosedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -79,10 +79,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
 
       // when this window is closed, automatically close the PDF.js window,
       // if it's open
-      Window.addCloseHandler(new CloseHandler<Window>()
+      Window.addWindowClosingHandler(new ClosingHandler() 
       {
          @Override
-         public void onClose(CloseEvent<Window> event)
+         public void onWindowClosing(ClosingEvent event)
          {
             if (pdfJsWindow_ != null)
             {

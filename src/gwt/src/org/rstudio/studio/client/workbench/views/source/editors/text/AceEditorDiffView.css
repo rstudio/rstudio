@@ -1,0 +1,59 @@
+
+@external ace_cursor, ace_diff-highlight;
+
+.aceEditorDiffView {
+}
+
+.mainPanel {
+   padding: 10px;
+}
+
+.innerContainer {
+   background-color: rgba(128, 128, 128, 0.2);
+   padding: 4px;
+}
+
+.editorContainer {
+   overflow: auto;
+   filter: contrast(0.85);
+   padding: 4px
+}
+
+.editorContainer .ace_cursor {
+   display: none !important;
+}
+
+.statusBar {
+   width: 100%;
+   height: 24px;
+   max-height: 24px;
+   padding: 2px 8px;
+   display: flex;
+   align-items: center;
+   justify-content: flex-start;
+   box-sizing: border-box;
+   pointer-events: auto;
+}
+
+.discardLabel {
+   font-size: 11px;
+   padding-left: 4px;
+   padding-right: 4px;
+   cursor: pointer;
+   color: #999;
+}
+
+.applyLabel {
+   font-size: 11px;
+   padding-left: 4px;
+   padding-right: 4px;
+   cursor: pointer;
+   color: #4a90e2;
+   font-weight: 500;
+}
+
+/* Ace diff highlight marker */
+.ace_diff-highlight {
+   position: absolute;
+   background-color: rgba(0, 255, 0, 0.2);
+}

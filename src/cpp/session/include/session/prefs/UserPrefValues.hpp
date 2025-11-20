@@ -446,6 +446,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kCopilotNesEnabled "copilot_nes_enabled"
 #define kCopilotShowMessages "copilot_show_messages"
 #define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
@@ -2037,6 +2038,12 @@ public:
     */
    bool copilotIndexingEnabled();
    core::Error setCopilotIndexingEnabled(bool val);
+
+   /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   bool copilotNesEnabled();
+   core::Error setCopilotNesEnabled(bool val);
 
    /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.

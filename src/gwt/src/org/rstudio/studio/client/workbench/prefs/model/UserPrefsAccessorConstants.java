@@ -2186,6 +2186,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledDescription();
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   @DefaultStringValue("[Preview] Enable next-edit suggestions")
+   String copilotNesEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.")
+   String copilotNesEnabledDescription();
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    @DefaultStringValue("Display account and billing messages from GitHub Copilot")

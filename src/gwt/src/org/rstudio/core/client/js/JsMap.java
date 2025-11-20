@@ -38,6 +38,10 @@ public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
       this[key] = value;
    }-*/;
 
+   public native final void delete(String key) /*-{
+      delete this[key];
+   }-*/;
+
    public native final JsArrayString keys() /*-{
       return Object.keys(this);
    }-*/;

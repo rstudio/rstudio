@@ -4,9 +4,10 @@
 @external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info, ace_tooltip;
 @external ace_info, ace_warning, ace_error;
-@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
+@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
-@external ace_active_debug_line;
+@external ace_active_debug_line, ace_next-edit-suggestion-highlight;
+@external ace_diff-added, ace_diff-removed;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
 @external cueText;
@@ -376,7 +377,8 @@ pre {
 .ace_breakpoint,
 .ace_pending-breakpoint,
 .ace_inactive-breakpoint,
-.ace_executing-line {
+.ace_executing-line,
+.ace_next-edit-suggestion {
    background-position: 12% center !important;
    background-repeat: no-repeat !important;
 }
@@ -399,6 +401,29 @@ pre {
 .ace_executing-line {
    background-image: EXECUTINGLINE !important;
    background-size: 10px 10px;
+}
+
+.ace_next-edit-suggestion {
+   background-image: EXECUTINGLINE !important;
+   background-size: 10px 10px !important;
+   background: rgba(128, 128, 128, 0.5);
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-highlight {
+   position: absolute;
+   z-index: 1;
+   background: rgba(128, 128, 128, 0.2) !important;
+}
+
+.ace_diff-added {
+   position: absolute;
+   background-color: rgba(0, 255, 0, 0.2);
+}
+
+.ace_diff-removed {
+   position: absolute;
+   background-color: rgba(255, 0, 0, 0.2);
 }
 
 .visual_chunk-queued-line,

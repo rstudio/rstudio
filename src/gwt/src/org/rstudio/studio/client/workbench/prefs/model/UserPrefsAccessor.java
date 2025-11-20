@@ -3749,6 +3749,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   public PrefValue<Boolean> copilotNesEnabled()
+   {
+      return bool(
+         "copilot_nes_enabled",
+         _constants.copilotNesEnabledTitle(), 
+         _constants.copilotNesEnabledDescription(), 
+         false);
+   }
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    public PrefValue<Boolean> copilotShowMessages()
@@ -4458,6 +4470,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("copilot_nes_enabled"))
+         copilotNesEnabled().setValue(layer, source.getBool("copilot_nes_enabled"));
       if (source.hasKey("copilot_show_messages"))
          copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
       if (source.hasKey("copilot_project_workspace"))
@@ -4747,6 +4761,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(copilotNesEnabled());
       prefs.add(copilotShowMessages());
       prefs.add(copilotProjectWorkspace());
       prefs.add(projectName());
