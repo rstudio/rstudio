@@ -729,9 +729,9 @@ void logWarningMessage(const std::string& in_message,
 
 // Exists for the LOG_DEBUG_MESSAGE macro that needs a dummy value here so we can use a ? statement
 // to hide the evaluation of the arguments.
-bool logDebugMessageReturn(const std::string& in_message)
+bool logDebugMessageReturn(const std::string& in_message, const ErrorLocation& in_errorLocation)
 {
-   logDebugMessage(in_message, std::string());
+   logDebugMessage(in_message, std::string(), boost::none, in_errorLocation);
    return true;
 }
 
@@ -761,9 +761,9 @@ void logDebugAction(const boost::function<std::string(boost::optional<LogMessage
 
 // Exists for the LOG_TRACE_MESSAGE macro that needs a dummy value here so we can use a ? statement
 // to hide the evaluation of the arguments.
-bool logTraceMessageReturn(const std::string& in_message)
+bool logTraceMessageReturn(const std::string& in_message, const ErrorLocation& in_errorLocation)
 {
-   logTraceMessage(in_message, std::string());
+   logTraceMessage(in_message, std::string(), boost::none, in_errorLocation);
    return true;
 }
 

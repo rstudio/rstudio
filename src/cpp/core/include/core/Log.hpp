@@ -72,40 +72,53 @@ std::string errorAsLogEntry(const Error& error);
                                                                                              boost::none, \
                                                                                              ERROR_LOCATION)
 
-#define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message)
+#define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message, \
+                                                                     ERROR_LOCATION)
 
 #define LOG_INFO_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logInfoMessage(message, \
                                                                                        std::string(), \
                                                                                        props, \
-                                                                                       ErrorLocation())
+                                                                                       ERROR_LOCATION)
 
 #define LOG_INFO_MESSAGE_NAMED(logSection, message) rstudio::core::log::logInfoMessage(message, \
-                                                                                       logSection)
+                                                                                       logSection, \
+                                                                                       boost::none, \
+                                                                                       ERROR_LOCATION)
 
 
-#define LOG_DEBUG_MESSAGE(message) (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::DEBUG_LEVEL) ? rstudio::core::log::logDebugMessageReturn(message) : false)
+#define LOG_DEBUG_MESSAGE(message) \
+   (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::DEBUG_LEVEL) ? \
+      rstudio::core::log::logDebugMessageReturn(message, ERROR_LOCATION) : \
+      false)
 
 
 #define LOG_DEBUG_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logDebugMessage(message, \
                                                                                          std::string(), \
                                                                                          props, \
-                                                                                         ErrorLocation())
+                                                                                         ERROR_LOCATION)
 
 #define LOG_DEBUG_MESSAGE_NAMED(logSection, message) rstudio::core::log::logDebugMessage(message, \
-                                                                                         logSection)
+                                                                                         logSection, \
+                                                                                         boost::none, \
+                                                                                         ERROR_LOCATION)
 
 #define LOG_DEBUG_ACTION_NAMED(logSection, action) rstudio::core::log::logDebugAction(logSection, \
                                                                                       action)
 
-#define LOG_TRACE_MESSAGE(message) (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::TRACE_LEVEL) ? rstudio::core::log::logTraceMessageReturn(message) : false)
+#define LOG_TRACE_MESSAGE(message) \
+   (rstudio::core::log::isLogLevel(rstudio::core::log::LogLevel::TRACE_LEVEL) ? \
+      rstudio::core::log::logTraceMessageReturn(message, ERROR_LOCATION) : \
+      false)
 
 #define LOG_TRACE_MESSAGE_WITH_PROPS(message, props) rstudio::core::log::logTraceMessage(message, \
                                                                                          std::string(), \
                                                                                          props, \
-                                                                                         ErrorLocation())
+                                                                                         ERROR_LOCATION)
 
 #define LOG_TRACE_MESSAGE_NAMED(logSection, message) rstudio::core::log::logTraceMessage(message, \
-                                                                                         logSection)
+                                                                                         logSection, \
+                                                                                         boost::none, \
+                                                                                         ERROR_LOCATION)
 
 #define LOG_TRACE_ACTION_NAMED(logSection, action) rstudio::core::log::logTraceAction(logSection, \
                                                                                       action)
