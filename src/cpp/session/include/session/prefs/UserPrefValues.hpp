@@ -467,7 +467,7 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
-#define kShowChatUi "show_chat_ui"
+#define kPai "pai"
 
 class UserPrefValues: public Preferences
 {
@@ -2112,10 +2112,10 @@ public:
    core::Error setConsoleHighlightConditions(std::string val);
 
    /**
-    * Whether to show the experimental Chat UI
+    * 
     */
-   bool showChatUi();
-   core::Error setShowChatUi(bool val);
+   bool pai();
+   core::Error setPai(bool val);
 
 };
 

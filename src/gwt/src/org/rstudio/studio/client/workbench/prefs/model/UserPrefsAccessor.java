@@ -3935,14 +3935,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
    /**
-    * Whether to show the experimental Chat UI
+    * 
     */
-   public PrefValue<Boolean> showChatUi()
+   public PrefValue<Boolean> pai()
    {
       return bool(
-         "show_chat_ui",
-         _constants.showChatUiTitle(), 
-         _constants.showChatUiDescription(), 
+         "pai",
+         _constants.paiTitle(), 
+         _constants.paiDescription(), 
          false);
    }
 
@@ -4494,8 +4494,8 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
-      if (source.hasKey("show_chat_ui"))
-         showChatUi().setValue(layer, source.getBool("show_chat_ui"));
+      if (source.hasKey("pai"))
+         pai().setValue(layer, source.getBool("pai"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4773,7 +4773,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
-      prefs.add(showChatUi());
+      prefs.add(pai());
       return prefs;
    }
    

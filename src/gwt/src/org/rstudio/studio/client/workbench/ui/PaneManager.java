@@ -567,8 +567,8 @@ public class PaneManager
       manageLayoutCommands();
       manageChatCommands();
 
-      // Monitor changes to show_chat_ui preference and reload when it changes
-      userPrefs_.showChatUi().addValueChangeHandler(event ->
+      // Monitor changes to preference and reload when it changes
+      userPrefs_.pai().addValueChangeHandler(event ->
       {
          // Write preferences to server before reloading to ensure they persist
          userPrefs_.writeUserPrefs(succeeded ->
@@ -1771,8 +1771,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            // Filter out Chat tab if show_chat_ui preference is false
-            if (tab == Tab.Chat && !userPrefs_.showChatUi().getGlobalValue())
+            if (tab == Tab.Chat && !userPrefs_.pai().getGlobalValue())
                continue;
             tabList.add(tab);
          }
@@ -1853,7 +1852,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (userPrefs_.showChatUi().getGlobalValue())
+      if (userPrefs_.pai().getGlobalValue())
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -2665,9 +2664,9 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showChatUi = userPrefs_.showChatUi().getGlobalValue();
-      commands_.activateChat().setVisible(showChatUi);
-      commands_.layoutZoomChat().setVisible(showChatUi);
+      boolean showPaiUi = userPrefs_.pai().getGlobalValue();
+      commands_.activateChat().setVisible(showPaiUi);
+      commands_.layoutZoomChat().setVisible(showPaiUi);
    }
 
    private List<AppCommand> getLayoutCommands()
@@ -2689,8 +2688,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      // Only add layoutZoomChat if show_chat_ui preference is enabled
-      if (userPrefs_.showChatUi().getGlobalValue())
+      if (userPrefs_.pai().getGlobalValue())
          commands.add(commands_.layoutZoomChat());
 
       return commands;

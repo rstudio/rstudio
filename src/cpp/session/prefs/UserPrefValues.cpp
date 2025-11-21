@@ -3573,16 +3573,16 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
 }
 
 /**
- * Whether to show the experimental Chat UI
+ * 
  */
-bool UserPrefValues::showChatUi()
+bool UserPrefValues::pai()
 {
-   return readPref<bool>("show_chat_ui");
+   return readPref<bool>("pai");
 }
 
-core::Error UserPrefValues::setShowChatUi(bool val)
+core::Error UserPrefValues::setPai(bool val)
 {
-   return writePref("show_chat_ui", val);
+   return writePref("pai", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3861,7 +3861,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
-      kShowChatUi,
+      kPai,
    });
 }
    
