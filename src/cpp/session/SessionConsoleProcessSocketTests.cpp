@@ -39,7 +39,7 @@ namespace {
 void blockingwait(int ms)
 {
    boost::asio::io_context io;
-   boost::asio::deadline_timer timer(io, boost::posix_time::milliseconds(ms));
+   boost::asio::system_timer timer(io, std::chrono::milliseconds(ms));
    timer.wait();
 }
 
