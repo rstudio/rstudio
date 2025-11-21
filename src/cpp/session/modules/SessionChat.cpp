@@ -106,6 +106,11 @@ const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 
 // ============================================================================
+// Protocol Version
+// ============================================================================
+const char* const kProtocolVersion = "1.0";
+
+// ============================================================================
 // Logging
 // ============================================================================
 int s_chatLogLevel = 0;
@@ -597,6 +602,31 @@ void handleCancelExecution(const json::Object& params)
    }
 }
 
+void handleGetProtocolVersion(core::system::ProcessOperations& ops,
+                               const json::Value& requestId,
+                               const json::Object& params)
+{
+   DLOG("Handling protocol/getVersion request");
+
+   // Extract client info for debugging (optional fields)
+   std::string clientProtocolVersion;
+   std::string clientVersion;
+
+   json::readObject(params, "clientProtocolVersion", clientProtocolVersion);
+   json::readObject(params, "clientVersion", clientVersion);
+
+   DLOG("Client protocol version: {}, client version: {}",
+        clientProtocolVersion.empty() ? "unknown" : clientProtocolVersion,
+        clientVersion.empty() ? "unknown" : clientVersion);
+
+   // Build response
+   json::Object result;
+   result["protocolVersion"] = kProtocolVersion;
+   result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleRequest(core::system::ProcessOperations& ops,
                    const std::string& method,
                    const json::Value& requestId,
@@ -613,6 +643,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "runtime/executeCode")
    {
       handleExecuteCode(ops, requestId, params);
+   }
+   else if (method == "protocol/getVersion")
+   {
+      handleGetProtocolVersion(ops, requestId, params);
    }
    else
    {
