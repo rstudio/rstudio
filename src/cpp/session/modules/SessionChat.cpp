@@ -266,10 +266,10 @@ void handleGetActiveSession(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
-void handleGetDetailedEnvironmentContext(core::system::ProcessOperations& ops,
-                                         const json::Value& requestId)
+void handleGetDetailedContext(core::system::ProcessOperations& ops,
+                               const json::Value& requestId)
 {
-   DLOG("Handling runtime/getDetailedEnvironmentContext request");
+   DLOG("Handling runtime/getDetailedContext request");
 
    // Get current time in human-readable format
    // Format: "Friday, October 3, 2025 at 10:32:34 PM CDT"
@@ -299,7 +299,7 @@ void handleGetDetailedEnvironmentContext(core::system::ProcessOperations& ops,
    // Main result
    json::Object result;
    // TODO: Future work - return detailed file context
-   result["files"] = json::Array();
+   result["openFiles"] = json::Array();
    result["session"] = session;
    result["platformInfo"] = platformInfo;
 
@@ -606,9 +606,9 @@ void handleRequest(core::system::ProcessOperations& ops,
    {
       handleGetActiveSession(ops, requestId);
    }
-   else if (method == "runtime/getDetailedEnvironmentContext")
+   else if (method == "runtime/getDetailedContext")
    {
-      handleGetDetailedEnvironmentContext(ops, requestId);
+      handleGetDetailedContext(ops, requestId);
    }
    else if (method == "runtime/executeCode")
    {
