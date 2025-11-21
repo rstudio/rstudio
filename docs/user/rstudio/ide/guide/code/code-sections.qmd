@@ -45,7 +45,7 @@ Folded regions are preserved while editing a document; however all foldable regi
 
 In Quarto and R Markdown documents, the following sections can also be collapsed separately:
 
--   YAML metadata
+-   YAML (Yet Another Markup Language) metadata
 -   Headings and subheadings
 -   Code chunks
 
@@ -72,7 +72,7 @@ To insert a new code section use the **Code** -\> **Insert Section** command. Al
 ### Section Three ####
 ```
 
-::: {callout-tip}
+::: {.callout-note}
 
 ## Code section levels
 
@@ -115,7 +115,7 @@ The following menu commands and shortcuts are available for working with folded 
 
     -   **Jump To** --- <kbd>Shift+Alt+J</kbd> (<kbd>Cmd+Shift+Option+J</kbd> on Mac)
 
-::: {callout-tip}
+::: {.callout-note}
 
 The **Collapse All** command collapses all of the outermost foldable regions (rather than all of the nested regions within the source file).
 
