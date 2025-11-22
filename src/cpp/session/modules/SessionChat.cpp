@@ -46,6 +46,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/SessionScopes.hpp>
+
+#include "../SessionDirs.hpp"
 
 #include "session-config.h"
 
@@ -1179,6 +1182,38 @@ Error startChatBackend()
    args.push_back("-p");
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
    args.push_back("--json"); // Enable JSON-RPC mode
+
+   // Add workspace path argument
+   FilePath workspacePath = dirs::getInitialWorkingDirectory();
+   args.push_back("--workspace");
+   args.push_back(workspacePath.getAbsolutePath());
+
+   // Add storage path argument
+   // Generate a persistent ID for this workspace directory
+   std::string workspacePathStr = workspacePath.getAbsolutePath();
+   std::string workspaceId = session::projectToProjectId(
+       module_context::userScratchPath(),
+       FilePath(),  // No shared storage - use per-user workspace IDs
+       workspacePathStr
+   ).id();
+
+   // Create storage path: {XDG_DATA_HOME}/ai-workspaces/{id}
+   FilePath storagePath = xdg::userDataDir()
+                          .completePath("ai-workspaces")
+                          .completePath(workspaceId);
+
+   // Ensure storage directory exists
+   error = storagePath.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      // Fall back to not providing storage path if creation fails
+   }
+   else
+   {
+      args.push_back("--storage");
+      args.push_back(storagePath.getAbsolutePath());
+   }
 
    // Set up environment
    core::system::Options environment;
