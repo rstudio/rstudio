@@ -3585,6 +3585,19 @@ core::Error UserPrefValues::setPai(bool val)
    return writePref("pai", val);
 }
 
+/**
+ * 
+ */
+std::string UserPrefValues::paiDownloadUri()
+{
+   return readPref<std::string>("pai_download_uri");
+}
+
+core::Error UserPrefValues::setPaiDownloadUri(std::string val)
+{
+   return writePref("pai_download_uri", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3862,6 +3875,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
       kPai,
+      kPaiDownloadUri,
    });
 }
    

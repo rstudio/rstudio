@@ -2555,3 +2555,12 @@
    set = function(value) { .rs.setUserPref("pai", value) },
    clear = function() { .rs.clearUserPref("pai") }
 )
+
+# 
+#
+# 
+.rs.uiPrefs$paiDownloadUri <- list(
+   get = function() { .rs.getUserPref("pai_download_uri") },
+   set = function(value) { .rs.setUserPref("pai_download_uri", value) },
+   clear = function() { .rs.clearUserPref("pai_download_uri") }
+)

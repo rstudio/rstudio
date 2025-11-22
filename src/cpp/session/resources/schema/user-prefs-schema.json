@@ -1874,6 +1874,10 @@
         "pai": {
             "type": "boolean",
             "default": false
+        },
+        "pai_download_uri": {
+            "type": "string",
+            "default": ""
         }
       }
 }
