@@ -137,6 +137,13 @@
                result$plots[[plotIndex]] <- plotData
                plotIndex <- plotIndex + 1
             }
+
+            # Also replay the plot to the current RStudio device so it appears in the plots pane
+            tryCatch({
+               replayPlot(item)
+            }, error = function(e) {
+               # Ignore errors in replay - the plot was already captured successfully
+            })
          } else if (inherits(item, "message")) {
             # Message condition
             result$items[[length(result$items) + 1]] <- list(
