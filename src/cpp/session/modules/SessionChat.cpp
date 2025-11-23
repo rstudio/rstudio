@@ -956,6 +956,10 @@ Error downloadManifest(json::Object* pManifest)
 
    // Get download URI from preference
    std::string downloadUri = prefs::userPrefs().paiDownloadUri();
+
+   // Trim whitespace from the URL
+   boost::algorithm::trim(downloadUri);
+
    if (downloadUri.empty())
    {
       return systemError(boost::system::errc::operation_not_permitted,
@@ -1401,8 +1405,8 @@ Error checkForUpdatesOnStartup()
    std::string installedVersion = getInstalledVersion();
    if (installedVersion.empty())
    {
-      WLOG("Could not determine installed version, skipping update check");
-      return Success();
+      DLOG("No installation found, checking for initial install");
+      installedVersion = "0.0.0";
    }
 
    s_updateState.currentVersion = installedVersion;
@@ -1644,7 +1648,7 @@ void onBackendExit(int exitCode)
 {
    WLOG("Chat backend exited with code: {}", exitCode);
 
-   // Clear databot busy state to prevent stuck suspension blocking
+   // Clear chat backend busy state to prevent stuck suspension blocking
    if (s_chatBusy)
    {
       s_chatBusy = false;
@@ -2051,6 +2055,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
+   result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
 
    pResponse->setResult(result);
    return Success();
@@ -2109,7 +2114,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    }
 
    // Download package
-   FilePath tempPackage = module_context::tempFile("databot-update", "zip");
+   FilePath tempPackage = module_context::tempFile("pai-update", "zip");
    Error error = downloadPackage(s_updateState.downloadUrl, tempPackage);
 
    if (error)

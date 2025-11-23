@@ -235,7 +235,7 @@ public class ChatPane
       updateMessageLabel_.setHTML("A new version (" + newVersion + ") is available.");
       updateButtonPanel_.clear();
 
-      Button updateNowButton = new Button("Update Now");
+      Button updateNowButton = new Button("Update");
       updateNowButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -248,7 +248,7 @@ public class ChatPane
          }
       });
 
-      Button remindLaterButton = new Button("Remind Me Later");
+      Button remindLaterButton = new Button("Ignore Once");
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -262,6 +262,49 @@ public class ChatPane
       });
 
       updateButtonPanel_.add(updateNowButton);
+      updateButtonPanel_.add(remindLaterButton);
+
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void showInstallNotification(String newVersion)
+   {
+      updateMessageLabel_.setHTML("Posit Assistant (" + newVersion + ") is available for install.");
+      updateButtonPanel_.clear();
+
+      // Change background to green for install (vs blue for update)
+      updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#e8f5e9");
+      updateNotificationPanel_.getElement().getStyle().setProperty("borderBottom", "1px solid #81c784");
+
+      Button installNowButton = new Button("Install");
+      installNowButton.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (updateObserver_ != null)
+            {
+               updateObserver_.onUpdateNow();  // Reuse same callback
+            }
+         }
+      });
+
+      Button remindLaterButton = new Button("Ignore Once");
+      remindLaterButton.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (updateObserver_ != null)
+            {
+               updateObserver_.onRemindLater();  // Reuse same callback
+            }
+         }
+      });
+
+      updateButtonPanel_.add(installNowButton);
       updateButtonPanel_.add(remindLaterButton);
 
       updateNotificationPanel_.setVisible(true);
@@ -425,8 +468,13 @@ public class ChatPane
             {
                if (!result)
                {
-                  // Chat is not installed
+                  // Chat is not installed - show message but still check for updates
                   setStatus("not_installed");
+                  // Still trigger observer so update/install check can happen
+                  if (observer_ != null)
+                  {
+                     observer_.onPaneReady();
+                  }
                }
                else
                {

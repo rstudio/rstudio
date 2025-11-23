@@ -12,7 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -55,6 +54,7 @@ public class ChatPresenter extends BasePresenter
       void showError(String errorMessage);
       void loadUrl(String url);
       void showUpdateNotification(String newVersion);
+      void showInstallNotification(String newVersion);
       void showUpdatingStatus();
       void showUpdateComplete();
       void showUpdateError(String errorMessage);
@@ -107,6 +107,8 @@ public class ChatPresenter extends BasePresenter
          public void onRemindLater()
          {
             display_.hideUpdateNotification();
+            // User wants to use current version - start backend now
+            startBackend();
          }
 
          @Override
@@ -171,12 +173,28 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onResponseReceived(JsObject result)
          {
-            if (result.getBoolean("updateAvailable"))
+            boolean updateAvailable = result.getBoolean("updateAvailable");
+            boolean isInitialInstall = result.getBoolean("isInitialInstall");
+
+            if (updateAvailable)
             {
                String newVersion = result.getString("newVersion");
-               display_.showUpdateNotification(newVersion);
+
+               if (isInitialInstall)
+               {
+                  display_.showInstallNotification(newVersion);
+               }
+               else
+               {
+                  display_.showUpdateNotification(newVersion);
+               }
+               // Do NOT start backend when update/install is available
+               // Backend will start after user clicks "Update/Install Now" and it completes,
+               // or after user clicks "Remind Me Later"
+               return;
             }
-            // Always start backend after update check completes (success path)
+
+            // No update available - start backend normally
             startBackend();
          }
 
@@ -185,8 +203,11 @@ public class ChatPresenter extends BasePresenter
          {
             // Network failure or other error - show message but don't block
             display_.showUpdateCheckFailure();
-            Debug.log("Update check failed: " + error.getMessage());
-            // Always start backend even if update check fails (error path)
+
+            // Try to start backend anyway - if nothing is installed, backend will
+            // return an error that we handle gracefully. This handles the case where
+            // there IS an existing installation but the update check failed due to
+            // network issues.
             startBackend();
          }
       });
@@ -246,6 +267,8 @@ public class ChatPresenter extends BasePresenter
                   @Override
                   public boolean execute()
                   {
+                     // Set flag so we know to hide the notification after reload
+                     reloadingAfterUpdate_ = true;
                      initializeChat();
                      return false;
                   }
@@ -355,11 +378,16 @@ public class ChatPresenter extends BasePresenter
       long timestamp = System.currentTimeMillis();
       String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
-      Debug.log("ChatPresenter: Loading chat UI from: " + urlWithWsParam);
-      Debug.log("ChatPresenter: WebSocket URL: " + wsUrl);
-
       display_.loadUrl(urlWithWsParam);
       display_.setStatus("ready");
+
+      // Only hide notification if we're reloading after an install/update completion
+      // Otherwise, keep any "Update available" notification visible
+      if (reloadingAfterUpdate_)
+      {
+         display_.hideUpdateNotification();
+         reloadingAfterUpdate_ = false;  // Reset flag
+      }
    }
 
    private final Display display_;
@@ -368,4 +396,7 @@ public class ChatPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Commands commands_;
    private final ChatServerOperations server_;
+
+   // Track whether we're reloading after an install/update completion
+   private boolean reloadingAfterUpdate_ = false;
 }
