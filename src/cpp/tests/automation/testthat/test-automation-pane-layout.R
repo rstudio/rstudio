@@ -138,7 +138,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, allTabNames)
 
@@ -157,7 +157,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Help"], info = "Help should be unchecked in TabSet1")
    expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in TabSet1")
    expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in TabSet1")
-   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet1")
+   expect_false(tabStates["Posit Assistant"], info = "Posit Assistant should be unchecked in TabSet1")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -167,7 +167,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, allTabNames)
 
@@ -186,7 +186,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Build"], info = "Build should be unchecked in TabSet2")
    expect_false(tabStates["VCS"], info = "VCS should be unchecked in TabSet2")
    expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in TabSet2")
-   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet2")
+   expect_false(tabStates["Posit Assistant"], info = "Posit Assistant should be unchecked in TabSet2")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -196,12 +196,12 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
 
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_SIDEBAR, allTabNames)
 
    # Default Sidebar should have these tabs checked
-   expect_true(tabStates["Chat"], info = "Chat should be checked in Sidebar")
+   expect_true(tabStates["Posit Assistant"], info = "Posit Assistant should be checked in Sidebar")
 
    # These should be unchecked in Sidebar
    expect_false(tabStates["Files"], info = "Files should be unchecked in Sidebar")
@@ -429,9 +429,9 @@ withr::defer(.rs.automation.deleteRemote())
    expect_equal(sidebarPositionAfter, "Sidebar on Right",
                 info = "Sidebar should be on right after reset")
 
-   # 3. Only Chat should be checked in Sidebar
-   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Chat"),
-               info = "Chat should be checked in Sidebar after reset")
+   # 3. Only Posit Assistant should be checked in Sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be checked in Sidebar after reset")
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
                 info = "Files should not be checked in Sidebar after reset")
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
@@ -465,7 +465,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
                 info = "Sidebar should be initially unchecked")
 
-   # Verify sidebar has no visible tabs initially (Chat is checked but hidden by default)
+   # Verify sidebar has no visible tabs initially (Posit Assistant is checked but hidden by default)
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
                 info = "Files should not be in sidebar initially")
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),

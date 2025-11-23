@@ -1074,21 +1074,17 @@ public class PaneManager
          // Create sidebar configuration
          PaneConfig config = getCurrentConfig();
          JsArrayString sidebarTabs = config.getSidebar();
-         
-         // Create sidebar tabset if not already created
-         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-         if (sidebarWindow == null)
-         {
-            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
-                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
-                  tabNamesToTabs(sidebarTabs));
-            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-            sidebarTabPanel_ = sidebar.second;
-            sidebarMinPanel_ = sidebar.third;
-            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
-            sidebarWindow = sidebar.first;
-         }
-         
+
+         // Always recreate sidebar to ensure tabs match current preference values
+         // This handles cases where preferences change via API without triggering client refresh
+         clearSidebarCache();
+         ArrayList<Tab> tabs = tabNamesToTabs(sidebarTabs);
+         Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+               UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+               tabs);
+         panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+         LogicalWindow sidebarWindow = sidebar.first;
+
          if (sidebarWindow != null)
          {
             // For sidebar, we use just the WindowFrame directly (no vertical split)
@@ -1111,9 +1107,6 @@ public class PaneManager
    {
       // Remove the cached sidebar window so it gets recreated with new tabs
       panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      sidebarTabPanel_ = null;
-      sidebarMinPanel_ = null;
-      sidebarTabs_ = null;
    }
 
    public void refreshSidebar()
@@ -1754,8 +1747,6 @@ public class PaneManager
             UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
             tabNamesToTabs(config.getSidebar()));
       panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-      sidebarTabPanel_ = sidebar.second;
-      sidebarMinPanel_ = sidebar.third;
 
       // Initialize the sidebar window state (HIDE if not visible, NORMAL if visible)
       // This prevents null state_ in LogicalWindow.visible()
@@ -2439,8 +2430,6 @@ public class PaneManager
          tabs2_ = tabs;
       else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
          hiddenTabs_ = tabs;
-      else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
-         sidebarTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -2771,10 +2760,7 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
-   private WorkbenchTabPanel sidebarTabPanel_;
-   private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
    private Widget sidebar_;
-   private ArrayList<Tab> sidebarTabs_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;

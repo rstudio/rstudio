@@ -2307,6 +2307,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("")
    String paiDescription();
 
+   /**
+    * 
+    */
+   @DefaultStringValue("")
+   String paiDownloadUriTitle();
+   @DefaultStringValue("")
+   String paiDownloadUriDescription();
+
 
 
 }
