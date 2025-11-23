@@ -12,11 +12,13 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -40,10 +42,24 @@ public class ChatPresenter extends BasePresenter
          void onPaneReady();
       }
 
+      interface UpdateObserver
+      {
+         void onUpdateNow();
+         void onRemindLater();
+         void onRetryUpdate();
+      }
+
       void setObserver(Observer observer);
+      void setUpdateObserver(UpdateObserver observer);
       void setStatus(String status);
       void showError(String errorMessage);
       void loadUrl(String url);
+      void showUpdateNotification(String newVersion);
+      void showUpdatingStatus();
+      void showUpdateComplete();
+      void showUpdateError(String errorMessage);
+      void showUpdateCheckFailure();
+      void hideUpdateNotification();
    }
 
    public static class Chat
@@ -74,12 +90,48 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onPaneReady()
          {
-            startBackendAndLoadUI();
+            initializeChat();
+         }
+      });
+
+      // Set up update observer
+      display_.setUpdateObserver(new Display.UpdateObserver()
+      {
+         @Override
+         public void onUpdateNow()
+         {
+            installUpdate();
+         }
+
+         @Override
+         public void onRemindLater()
+         {
+            display_.hideUpdateNotification();
+         }
+
+         @Override
+         public void onRetryUpdate()
+         {
+            installUpdate();
          }
       });
    }
 
-   public void startBackendAndLoadUI()
+   /**
+    * Initialize the Chat pane by checking for updates and starting the backend.
+    *
+    * This method initiates an async update check. Once the check completes
+    * (whether successful or failed), the backend will be started automatically
+    * via the checkForUpdates() callback.
+    *
+    * Flow: initializeChat() -> checkForUpdates() -> startBackend() -> pollForBackendUrl() -> loadChatUI()
+    */
+   public void initializeChat()
+   {
+      checkForUpdates();
+   }
+
+   private void startBackend()
    {
       // Show loading state
       display_.setStatus("starting");
@@ -108,6 +160,132 @@ public class ChatPresenter extends BasePresenter
          {
             display_.setStatus("error");
             display_.showError("Failed to start backend: " + error.getMessage());
+         }
+      });
+   }
+
+   private void checkForUpdates()
+   {
+      server_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject result)
+         {
+            if (result.getBoolean("updateAvailable"))
+            {
+               String newVersion = result.getString("newVersion");
+               display_.showUpdateNotification(newVersion);
+            }
+            // Always start backend after update check completes (success path)
+            startBackend();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // Network failure or other error - show message but don't block
+            display_.showUpdateCheckFailure();
+            Debug.log("Update check failed: " + error.getMessage());
+            // Always start backend even if update check fails (error path)
+            startBackend();
+         }
+      });
+   }
+
+   private void installUpdate()
+   {
+      display_.showUpdatingStatus();
+
+      server_.chatInstallUpdate(new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void result)
+         {
+            // Start polling for update status
+            pollUpdateStatus();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showUpdateError(error.getMessage());
+         }
+      });
+   }
+
+   private void pollUpdateStatus()
+   {
+      pollUpdateStatus(0);
+   }
+
+   private void pollUpdateStatus(final int attemptCount)
+   {
+      // Reduced timeout: 60 seconds (was 300 = 5 minutes)
+      // Most downloads should complete in seconds, not minutes
+      if (attemptCount > 60)
+      {
+         display_.showUpdateError("Update timeout - the update process took too long. Please try again or check your network connection.");
+         return;
+      }
+
+      server_.chatGetUpdateStatus(new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            String status = response.getString("status");
+
+            if (status.equals("complete"))
+            {
+               // Update complete - restart backend and reload UI
+               display_.showUpdateComplete();
+
+               // Give user a moment to see the success message
+               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               {
+                  @Override
+                  public boolean execute()
+                  {
+                     initializeChat();
+                     return false;
+                  }
+               }, 1000);
+            }
+            else if (status.equals("error"))
+            {
+               String message = response.getString("message");
+               display_.showUpdateError(message);
+            }
+            else if (status.equals("downloading") || status.equals("installing"))
+            {
+               // Keep polling - update in progress
+               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               {
+                  @Override
+                  public boolean execute()
+                  {
+                     pollUpdateStatus(attemptCount + 1);
+                     return false;
+                  }
+               }, 1000);
+            }
+            else if (status.equals("idle"))
+            {
+               // Unexpected: update not actually running
+               // This shouldn't happen, but handle it to prevent infinite polling
+               display_.showUpdateError("Update process did not start. Please try again.");
+            }
+            else
+            {
+               // Unknown status - stop polling to prevent infinite loop
+               display_.showUpdateError("Unknown update status: " + status);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showUpdateError("Failed to check update status: " + error.getMessage());
          }
       });
    }
@@ -177,8 +355,8 @@ public class ChatPresenter extends BasePresenter
       long timestamp = System.currentTimeMillis();
       String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
-      com.google.gwt.core.client.GWT.log("ChatPresenter: Loading chat UI from: " + urlWithWsParam);
-      com.google.gwt.core.client.GWT.log("ChatPresenter: WebSocket URL: " + wsUrl);
+      Debug.log("ChatPresenter: Loading chat UI from: " + urlWithWsParam);
+      Debug.log("ChatPresenter: WebSocket URL: " + wsUrl);
 
       display_.loadUrl(urlWithWsParam);
       display_.setStatus("ready");

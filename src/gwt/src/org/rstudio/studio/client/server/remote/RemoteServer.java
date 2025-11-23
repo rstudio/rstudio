@@ -6978,6 +6978,24 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "chat_get_backend_status", requestCallback);
    }
 
+   @Override
+   public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_check_for_updates", requestCallback);
+   }
+
+   @Override
+   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+   }
+
+   @Override
+   public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_update_status", requestCallback);
+   }
+
    private boolean isAuthStatusRequest(RpcRequest request)
    {
       return request.getMethod().equals(AUTH_STATUS);
