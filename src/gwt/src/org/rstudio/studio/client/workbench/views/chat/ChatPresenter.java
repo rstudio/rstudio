@@ -190,7 +190,7 @@ public class ChatPresenter extends BasePresenter
                }
                // Do NOT start backend when update/install is available
                // Backend will start after user clicks "Update/Install Now" and it completes,
-               // or after user clicks "Remind Me Later"
+               // or after user clicks "Ignore"
                return;
             }
 
@@ -241,8 +241,6 @@ public class ChatPresenter extends BasePresenter
 
    private void pollUpdateStatus(final int attemptCount)
    {
-      // Reduced timeout: 60 seconds (was 300 = 5 minutes)
-      // Most downloads should complete in seconds, not minutes
       if (attemptCount > 60)
       {
          display_.showUpdateError("Update timeout - the update process took too long. Please try again or check your network connection.");

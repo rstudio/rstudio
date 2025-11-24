@@ -248,7 +248,7 @@ public class ChatPane
          }
       });
 
-      Button remindLaterButton = new Button("Ignore Once");
+      Button remindLaterButton = new Button("Ignore");
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -291,7 +291,7 @@ public class ChatPane
          }
       });
 
-      Button remindLaterButton = new Button("Ignore Once");
+      Button remindLaterButton = new Button("Ignore");
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
