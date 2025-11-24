@@ -63,6 +63,9 @@ public class ChatPane
       server_ = server;
 
       ensureWidget();
+
+      // Hide empty toolbar until we have content to show
+      setMainToolbarVisible(false);
    }
 
    @Override
