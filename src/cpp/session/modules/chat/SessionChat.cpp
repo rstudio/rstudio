@@ -15,6 +15,7 @@
 
 #include "SessionChat.hpp"
 #include "ChatInternal.hpp"
+#include "ChatInstallation.hpp"
 #include "../SessionNodeTools.hpp"
 
 #include <map>
@@ -808,73 +809,6 @@ void onBackgroundProcessing(bool isIdle)
 
    // Future: Add timeout handling for request/response pattern if needed
    // (similar to SessionCopilot.cpp lines 1448-1462)
-}
-
-// ============================================================================
-// Installation Detection
-// ============================================================================
-
-/**
- * Verify that an AI installation at the given path contains all required files.
- */
-bool verifyPositAiInstallation(const FilePath& positAiPath)
-{
-   if (!positAiPath.exists())
-      return false;
-
-   FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
-   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
-   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
-
-   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
-}
-
-FilePath locatePositAiInstallation()
-{
-   // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-   if (!rstudioPositAiPath.empty())
-   {
-      FilePath positAiPath(rstudioPositAiPath);
-      if (verifyPositAiInstallation(positAiPath))
-      {
-         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
-         return positAiPath;
-      }
-      else
-      {
-         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
-      }
-   }
-
-   // 2. Check user data directory (XDG-based, platform-appropriate)
-   // Linux: ~/.local/share/rstudio/ai
-   // macOS: ~/Library/Application Support/RStudio/ai
-   // Windows: %LOCALAPPDATA%/RStudio/ai
-   FilePath userPositAiPath = xdg::userDataDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(userPositAiPath))
-   {
-      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
-      return userPositAiPath;
-   }
-
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux: /etc/rstudio/ai
-   // Windows: C:/ProgramData/RStudio/ai
-   FilePath systemPositAiPath = xdg::systemConfigDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(systemPositAiPath))
-   {
-      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
-      return systemPositAiPath;
-   }
-
-   DLOG("No valid AI installation found. Checked locations:");
-   if (!rstudioPositAiPath.empty())
-      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
-   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
-
-   return FilePath(); // Not found
 }
 
 // ============================================================================
