@@ -17,7 +17,7 @@
 #include "ChatInternal.hpp"
 
 #include <shared_core/FilePath.hpp>
-#include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
 
 using namespace rstudio::core;
@@ -43,7 +43,7 @@ bool verifyPositAiInstallation(const FilePath& positAiPath)
 FilePath locatePositAiInstallation()
 {
    // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = getenv("RSTUDIO_POSIT_AI_PATH");
+   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
    if (!rstudioPositAiPath.empty())
    {
       FilePath positAiPath(rstudioPositAiPath);
