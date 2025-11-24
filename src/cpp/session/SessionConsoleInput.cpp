@@ -23,7 +23,7 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionMainProcess.hpp"
 
-#include "modules/SessionChat.hpp"
+#include "modules/chat/SessionChat.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionReticulate.hpp"
 

@@ -145,7 +145,7 @@
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionCopilot.hpp"
-#include "modules/SessionChat.hpp"
+#include "modules/chat/SessionChat.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionDebugging.hpp"

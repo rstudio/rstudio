@@ -14,7 +14,8 @@
  */
 
 #include "SessionChat.hpp"
-#include "SessionNodeTools.hpp"
+#include "ChatInternal.hpp"
+#include "../SessionNodeTools.hpp"
 
 #include <map>
 #include <set>
@@ -53,23 +54,6 @@
 
 #include "session-config.h"
 
-#define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                       \
-   {                                                                        \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);        \
-      std::string __formatted__ =                                           \
-          fmt::format("[{}]: {}", __func__, __message__);                   \
-      __LOGGER__("chat", __formatted__);                                    \
-      if (chatLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                           \
-   } while (0)
-
-#define DLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define ILOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_INFO_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define TLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-
 // Use a default section of 'chat' for errors / warnings
 #ifdef LOG_ERROR
 # undef LOG_ERROR
@@ -85,58 +69,43 @@ namespace session {
 namespace modules {
 namespace chat {
 
-namespace {
+// ============================================================================
+// Global State Definitions (declared as extern in ChatInternal.hpp)
+// ============================================================================
 
-// ============================================================================
+// Installation paths
+const char* const kPositAiDirName = "ai";
+const char* const kClientDirPath = "dist/client";
+const char* const kServerScriptPath = "dist/server/main.js";
+const char* const kIndexFileName = "index.html";
+
+// Protocol Version
+const char* const kProtocolVersion = "0.1";
+
 // Process management
-// ============================================================================
 PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
 std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
 const int kMaxRestartAttempts = 1;
 
-// ============================================================================
 // Suspension blocking
-// ============================================================================
-static bool s_chatBusy = false;
+bool s_chatBusy = false;
 
-// ============================================================================
-// Installation paths
-// ============================================================================
-const char* const kPositAiDirName = "ai";
-const char* const kClientDirPath = "dist/client";
-const char* const kServerScriptPath = "dist/server/main.js";
-const char* const kIndexFileName = "index.html";
-
-// ============================================================================
-// Protocol Version
-// ============================================================================
-const char* const kProtocolVersion = "0.1";
-
-// ============================================================================
 // Logging
-// ============================================================================
 int s_chatLogLevel = 0;
 std::string s_chatBackendMinLogLevel = "error"; // Default: show only error logs
+
+// Execution Tracking (for cancellation support)
+boost::mutex s_executionTrackingMutex;
+std::string s_currentTrackingId;  // Empty string when not executing
+std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
 
 int chatLogLevel()
 {
    return s_chatLogLevel;
 }
 
-// ============================================================================
-// Execution Tracking (for cancellation support)
-// ============================================================================
-// R is single-threaded, so only one execution can be active at a time,
-// but we need to track cancelled IDs to handle pre-cancellation of queued requests
-boost::mutex s_executionTrackingMutex;
-std::string s_currentTrackingId;  // Empty string when not executing
-std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
-
-// Map log level names to numeric priorities for filtering
-// Returns priority (higher = more severe)
-// Unknown levels return very high priority to ensure critical messages are never filtered
 int getLogLevelPriority(const std::string& level)
 {
    if (level == "trace") return 0;
@@ -147,6 +116,8 @@ int getLogLevelPriority(const std::string& level)
    if (level == "fatal") return 5;
    return 999; // Unknown levels treated as highest priority (always show them)
 }
+
+namespace {
 
 SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 {

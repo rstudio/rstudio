@@ -182,7 +182,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionAsyncPackageInformation.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
-   modules/SessionChat.cpp
+   modules/chat/SessionChat.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
