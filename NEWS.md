@@ -61,6 +61,7 @@
 - ([#16355](https://github.com/rstudio/rstudio/issues/16355)): Fixed an issue where rendering large, nested tables in R Markdown / Quarto documents could be prohibitively slow
 - ([#16624](https://github.com/rstudio/rstudio/issues/16624)): Fixed an issue where links in a PDF document presented in the Viewer pane could cause navigation to occur in the main RStudio window
 - ([#16322](https://github.com/rstudio/rstudio/issues/16332)): Fixed an issue where 'Reflow comment' dropped prefix text in some cases
+- ([#16358](https://github.com/rstudio/rstudio/issues/16358)): Eliminated the extra border around the splash screen on macOS Tahoe
 - (#rstudio-pro/6675): Added support for RSA-OAEP when encrypting passwords on the sign-in page
 - (#rstudio-pro#6377): Added CSRF protection to the export file API
 
@@ -90,7 +91,7 @@ sudo rstudio-server runtimes add --py-versions /path/to/py-versions.json --clust
 
 ### Dependencies
 - Copilot Language Server 1.397.0
-- Electron 38.7.0
+- Electron 38.7.1
 - Node.js 22.21.1
 - Quarto 1.8.25
 - Launcher 2.21.0
