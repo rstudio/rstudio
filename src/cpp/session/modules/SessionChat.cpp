@@ -113,7 +113,7 @@ const char* const kIndexFileName = "index.html";
 // ============================================================================
 // Protocol Version
 // ============================================================================
-const char* const kProtocolVersion = "0.1";
+const char* const kProtocolVersion = "1.0";
 
 // ============================================================================
 // Logging
@@ -1753,7 +1753,15 @@ Error startChatBackend()
    args.push_back("--workspace");
    args.push_back(workspacePath.getAbsolutePath());
 
-   // Add storage path argument
+   // Create storage base path: {XDG_DATA_HOME}/ai-data/
+   FilePath storagePath = xdg::userDataDir().completePath("ai-data");
+   error = storagePath.ensureDirectory();
+   if (error)
+      return(error);
+
+   args.push_back("--storage");
+   args.push_back(storagePath.getAbsolutePath());
+
    // Generate a persistent ID for this workspace directory
    std::string workspacePathStr = workspacePath.getAbsolutePath();
    std::string workspaceId = session::projectToProjectId(
@@ -1762,23 +1770,8 @@ Error startChatBackend()
        workspacePathStr
    ).id();
 
-   // Create storage path: {XDG_DATA_HOME}/ai-workspaces/{id}
-   FilePath storagePath = xdg::userDataDir()
-                          .completePath("ai-workspaces")
-                          .completePath(workspaceId);
-
-   // Ensure storage directory exists
-   error = storagePath.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      // Fall back to not providing storage path if creation fails
-   }
-   else
-   {
-      args.push_back("--storage");
-      args.push_back(storagePath.getAbsolutePath());
-   }
+   args.push_back("--workspace-id");
+   args.push_back(workspaceId);
 
    // Set up environment
    core::system::Options environment;
