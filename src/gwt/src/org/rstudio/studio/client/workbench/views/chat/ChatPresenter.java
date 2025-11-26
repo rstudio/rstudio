@@ -64,7 +64,7 @@ public class ChatPresenter extends BasePresenter
       void showUpdateError(String errorMessage);
       void showUpdateCheckFailure();
       void hideUpdateNotification();
-      void showCrashedMessage();
+      void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
    }
 
@@ -138,7 +138,7 @@ public class ChatPresenter extends BasePresenter
          {
             if (event.getCrashed())
             {
-               display_.showCrashedMessage();
+               display_.showCrashedMessage(event.getExitCode());
             }
          }
       });

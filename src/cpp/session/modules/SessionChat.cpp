@@ -112,7 +112,7 @@ const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 
 // ============================================================================
-// Protocol Version
+// Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 // ============================================================================
 const char* const kProtocolVersion = "0.1";
 

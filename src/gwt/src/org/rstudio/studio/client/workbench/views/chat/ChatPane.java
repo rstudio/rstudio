@@ -464,9 +464,9 @@ public class ChatPane
    }
 
    @Override
-   public void showCrashedMessage()
+   public void showCrashedMessage(int exitCode)
    {
-      String html = generateCrashedMessageHTML();
+      String html = generateCrashedMessageHTML(exitCode);
       updateFrameContent(html);
    }
 
@@ -530,8 +530,28 @@ public class ChatPane
       return html.toString();
    }
 
-   private String generateCrashedMessageHTML()
+   private String generateCrashedMessageHTML(int exitCode)
    {
+      // Determine title and message based on exit code
+      String title;
+      String message;
+
+      if (exitCode == 76) // EXIT_CODE_PROTOCOL_SERVER_TOO_OLD
+      {
+         title = "Update Required";
+         message = "Your RStudio version is incompatible with Posit Assistant. Please update RStudio to the latest version.";
+      }
+      else if (exitCode == 77) // EXIT_CODE_PROTOCOL_CLIENT_TOO_OLD
+      {
+         title = "Update Required";
+         message = "Posit Assistant is incompatible with your RStudio version. Please update Posit Assistant to the latest version.";
+      }
+      else
+      {
+         title = "Process Exited";
+         message = "The Posit Assistant process has exited unexpectedly.";
+      }
+
       StringBuilder html = new StringBuilder();
       html.append("<!DOCTYPE html>");
       html.append("<html lang='");
@@ -585,8 +605,12 @@ public class ChatPane
       html.append("</head>");
       html.append("<body>");
       html.append("<div class='message'>");
-      html.append("<h2>Process Exited</h2>");
-      html.append("<p>The Posit Assistant process has exited.</p>");
+      html.append("<h2>");
+      html.append(title);
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(message);
+      html.append("</p>");
       html.append("<button id='restart-btn'>Restart Posit Assistant</button>");
       html.append("</div>");
       html.append("<script>");
