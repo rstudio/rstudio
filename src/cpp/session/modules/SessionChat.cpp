@@ -16,6 +16,7 @@
 #include "SessionChat.hpp"
 #include "SessionNodeTools.hpp"
 
+#include <chrono>
 #include <map>
 #include <set>
 #include <functional>
@@ -133,6 +134,72 @@ int chatLogLevel()
 boost::mutex s_executionTrackingMutex;
 std::string s_currentTrackingId;  // Empty string when not executing
 std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
+
+// ============================================================================
+// Code Execution Context (for console output capture)
+// ============================================================================
+class ChatExecContext
+{
+public:
+   ChatExecContext(bool captureOutput)
+      : captureOutput_(captureOutput)
+   {
+   }
+
+   ~ChatExecContext()
+   {
+      disconnect();
+   }
+
+   void connect()
+   {
+      connection_ = module_context::events().onConsoleOutput.connect(
+          boost::bind(&ChatExecContext::onConsoleOutput, this, _1, _2));
+   }
+
+   void disconnect()
+   {
+      connection_.disconnect();
+   }
+
+   std::string getOutput() const { return outputBuffer_; }
+   std::string getError() const { return errorBuffer_; }
+
+private:
+   void onConsoleOutput(module_context::ConsoleOutputType type,
+                        const std::string& output)
+   {
+      if (!captureOutput_)
+         return;
+
+      if (type == module_context::ConsoleOutputNormal)
+         outputBuffer_ += output;
+      else
+         errorBuffer_ += output;
+   }
+
+   bool captureOutput_;
+   std::string outputBuffer_;
+   std::string errorBuffer_;
+   RSTUDIO_BOOST_CONNECTION connection_;
+};
+
+// Echo source code with prompts (like evaluate does)
+void echoSourceCode(const std::string& code)
+{
+   std::vector<std::string> lines;
+   boost::split(lines, code, boost::is_any_of("\n"));
+
+   for (size_t i = 0; i < lines.size(); i++)
+   {
+      // Skip trailing empty line from trailing newline
+      if (i == lines.size() - 1 && lines[i].empty())
+         continue;
+
+      std::string prompt = (i == 0) ? "> " : "+ ";
+      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+   }
+}
 
 // Map log level names to numeric priorities for filtering
 // Returns priority (higher = more severe)
@@ -383,16 +450,117 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       s_currentTrackingId = trackingId;
    }
 
-   // Call R helper function to execute code
+   // Record start time
+   auto startTime = std::chrono::steady_clock::now();
+
+   // Create execution context to capture console output
+   ChatExecContext execContext(captureOutput);
+   execContext.connect();
+
+   // Record the display list length before execution so we can detect if
+   // plotting actually occurred (to avoid capturing stale plots)
+   int displayListLengthBefore = 0;
+   if (capturePlot)
+   {
+      r::sexp::Protect lenProtect;
+      SEXP lenSEXP = R_NilValue;
+      Error lenError = r::exec::RFunction(".rs.chat.getDisplayListLength").call(
+         &lenSEXP, &lenProtect);
+      if (!lenError && lenSEXP != R_NilValue && Rf_isInteger(lenSEXP) && Rf_length(lenSEXP) > 0)
+         displayListLengthBefore = INTEGER(lenSEXP)[0];
+   }
+
+   // Echo source code with prompts (like evaluate does)
+   echoSourceCode(code);
+
+   // Evaluate the code using existing RExec infrastructure
+   // evaluateString wraps in try(..., silent=TRUE) for error handling
    r::sexp::Protect protect;
    SEXP resultSEXP = R_NilValue;
+   error = r::exec::evaluateString(code, R_GlobalEnv, &resultSEXP, &protect);
 
-   r::exec::RFunction executeFunc(".rs.chat.executeCode");
-   executeFunc.addParam("code", code);
-   executeFunc.addParam("capturePlot", capturePlot);
-   executeFunc.addParam("timeout", timeout);
+   // Handle parse/runtime errors from evaluateString.
+   // evaluateString uses silent=TRUE, so errors don't automatically go to console.
+   // We need to both:
+   // 1. Fire the onConsoleOutput signal so our callback can capture it
+   // 2. Write to console UI via consoleWriteError for user visibility
+   if (error)
+   {
+      std::string errorMsg = error.getMessage();
+      // Ensure consistent "Error: " prefix
+      if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
+         errorMsg = "Error: " + errorMsg;
 
-   error = executeFunc.call(&resultSEXP, &protect);
+      std::string errorOutput = errorMsg + "\n";
+
+      // Fire signal first so callback captures it
+      module_context::events().onConsoleOutput(
+         module_context::ConsoleOutputError, errorOutput);
+
+      // Also write to console UI
+      module_context::consoleWriteError(errorOutput);
+   }
+
+   // Handle plots if requested
+   // NOTE: This only captures the final plot state. If code creates multiple plots
+   // (e.g., plot(1); plot(2)), only the last one is captured. This is a known
+   // limitation compared to the previous evaluate-based approach which used new_device.
+   json::Array plotsArray;
+   if (capturePlot)
+   {
+      // Use R helper for plot capture, passing the display list length from before
+      // execution so it can detect if a NEW plot was created (vs. stale plot)
+      r::sexp::Protect plotProtect;
+      SEXP plotSEXP = R_NilValue;
+
+      r::exec::RFunction captureFunc(".rs.chat.captureCurrentPlot");
+      captureFunc.addParam("displayListLengthBefore", displayListLengthBefore);
+      Error plotError = captureFunc.call(&plotSEXP, &plotProtect);
+
+      if (!plotError && plotSEXP != R_NilValue && r::sexp::isList(plotSEXP))
+      {
+         // Extract plot data from R list
+         SEXP plotNames = Rf_getAttrib(plotSEXP, R_NamesSymbol);
+         if (plotNames != R_NilValue)
+         {
+            json::Object plotObj;
+            int plotLen = Rf_length(plotSEXP);
+
+            for (int j = 0; j < plotLen; j++)
+            {
+               if (j < Rf_length(plotNames))
+               {
+                  std::string name = CHAR(STRING_ELT(plotNames, j));
+                  SEXP valueSEXP = VECTOR_ELT(plotSEXP, j);
+
+                  if (name == "data" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["data"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+                  }
+                  else if (name == "mimeType" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["mimeType"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+                  }
+                  else if (name == "width" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["width"] = INTEGER(valueSEXP)[0];
+                  }
+                  else if (name == "height" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["height"] = INTEGER(valueSEXP)[0];
+                  }
+               }
+            }
+
+            if (plotObj.hasMember("data"))
+               plotsArray.push_back(plotObj);
+         }
+      }
+      // Don't fail on plot errors - just continue without plots
+   }
+
+   // Disconnect context
+   execContext.disconnect();
 
    // Clear tracking ID - execution complete
    {
@@ -402,163 +570,16 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       s_cancelledTrackingIds.erase(trackingId);
    }
 
-   if (error)
-   {
-      sendJsonRpcError(ops, requestId, -32000,
-         "Code execution failed: " + error.getMessage());
-      return;
-   }
+   // Calculate execution time in milliseconds
+   auto endTime = std::chrono::steady_clock::now();
+   int executionTime = static_cast<int>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+         endTime - startTime).count());
 
-   // Verify we got a list back
-   if (!r::sexp::isList(resultSEXP))
-   {
-      sendJsonRpcError(ops, requestId, -32000,
-         "Unexpected result type from R helper");
-      return;
-   }
-
-   // Extract result components from R list
-   // The R helper returns: list(items = list(...), plots = list(...), executionTime = int)
-
-   // Get names vector for named element lookup
-   SEXP resultNames = Rf_getAttrib(resultSEXP, R_NamesSymbol);
-
-   // Helper to find element by name
-   auto findElement = [&](const char* name) -> SEXP {
-      if (resultNames == R_NilValue) return R_NilValue;
-      for (int i = 0; i < Rf_length(resultNames); i++) {
-         if (strcmp(CHAR(STRING_ELT(resultNames, i)), name) == 0)
-            return VECTOR_ELT(resultSEXP, i);
-      }
-      return R_NilValue;
-   };
-
-   // Get elements by name
-   SEXP itemsSEXP = findElement("items");
-   SEXP plotsSEXP = findElement("plots");
-   SEXP timeSEXP = findElement("executionTime");
-
-   // Extract execution time
-   int executionTime = 0;
-   if (timeSEXP != R_NilValue && Rf_length(timeSEXP) > 0)
-      executionTime = Rf_asInteger(timeSEXP);
-
-   // Process items: write to console and accumulate output
-   std::string outputBuffer;
-   std::string errorBuffer;
-
-   if (itemsSEXP != R_NilValue && Rf_isVector(itemsSEXP))
-   {
-      int numItems = Rf_length(itemsSEXP);
-      for (int i = 0; i < numItems; i++)
-      {
-         SEXP itemSEXP = VECTOR_ELT(itemsSEXP, i);
-         if (!r::sexp::isList(itemSEXP))
-            continue;
-
-         // Extract type and content from item
-         std::string type;
-         std::string content;
-
-         SEXP names = Rf_getAttrib(itemSEXP, R_NamesSymbol);
-         int itemLen = Rf_length(itemSEXP);
-
-         for (int j = 0; j < itemLen; j++)
-         {
-            if (names != R_NilValue && j < Rf_length(names))
-            {
-               std::string name = CHAR(STRING_ELT(names, j));
-               SEXP valueSEXP = VECTOR_ELT(itemSEXP, j);
-
-               if (name == "type" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  type = CHAR(STRING_ELT(valueSEXP, 0));
-               }
-               else if (name == "content" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  content = CHAR(STRING_ELT(valueSEXP, 0));
-               }
-            }
-         }
-
-         // Process based on type
-         if (type == "source" || type == "output" || type == "message" || type == "warning")
-         {
-            // Write to console for user visibility
-            module_context::consoleWriteOutput(content + "\n");
-
-            // Only accumulate for response if captureOutput is true
-            if (captureOutput)
-            {
-               if (!outputBuffer.empty())
-                  outputBuffer += "\n";
-               outputBuffer += content;
-            }
-         }
-         else if (type == "error")
-         {
-            // Write error to console
-            module_context::consoleWriteError(content + "\n");
-
-            // Accumulate error
-            if (!errorBuffer.empty())
-               errorBuffer += "\n";
-            errorBuffer += content;
-         }
-      }
-   }
-
-   // Process plots
-   json::Array plotsArray;
-   if (plotsSEXP != R_NilValue && Rf_isVector(plotsSEXP))
-   {
-      int numPlots = Rf_length(plotsSEXP);
-      for (int i = 0; i < numPlots; i++)
-      {
-         SEXP plotSEXP = VECTOR_ELT(plotsSEXP, i);
-         if (!r::sexp::isList(plotSEXP))
-            continue;
-
-         // Extract plot data
-         json::Object plotObj;
-         SEXP plotNames = Rf_getAttrib(plotSEXP, R_NamesSymbol);
-         int plotLen = Rf_length(plotSEXP);
-
-         for (int j = 0; j < plotLen; j++)
-         {
-            if (plotNames != R_NilValue && j < Rf_length(plotNames))
-            {
-               std::string name = CHAR(STRING_ELT(plotNames, j));
-               SEXP valueSEXP = VECTOR_ELT(plotSEXP, j);
-
-               if (name == "data" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  plotObj["data"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
-               }
-               else if (name == "mimeType" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  plotObj["mimeType"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
-               }
-               else if (name == "width" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  plotObj["width"] = INTEGER(valueSEXP)[0];
-               }
-               else if (name == "height" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
-               {
-                  plotObj["height"] = INTEGER(valueSEXP)[0];
-               }
-            }
-         }
-
-         if (plotObj.hasMember("data"))
-            plotsArray.push_back(plotObj);
-      }
-   }
-
-   // Build response
+   // Build response (same format as before)
    json::Object result;
-   result["output"] = outputBuffer;
-   result["error"] = errorBuffer;
+   result["output"] = execContext.getOutput();
+   result["error"] = execContext.getError();
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
