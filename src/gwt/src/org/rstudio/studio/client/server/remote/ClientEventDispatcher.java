@@ -124,6 +124,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.AdminNotificationEvent;
 import org.rstudio.studio.client.workbench.events.BrowseUrlEvent;
@@ -1188,6 +1189,11 @@ public class ClientEventDispatcher
          {
             CopilotStatusChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new CopilotStatusChangedEvent(data.getStatus()));
+         }
+         else if (type == ClientEvent.ChatBackendExit)
+         {
+            ChatBackendExitEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ChatBackendExitEvent(data.getExitCode(), data.getCrashed()));
          }
          else
          {

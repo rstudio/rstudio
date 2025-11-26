@@ -101,6 +101,7 @@ const int kMaxRestartAttempts = 1;
 // ============================================================================
 static bool s_chatBusy = false;
 
+
 // ============================================================================
 // Installation paths
 // ============================================================================
@@ -1655,23 +1656,21 @@ void onBackendExit(int exitCode)
       DLOG("Cleared chat backend busy state on process exit");
    }
 
+   // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
-
-   // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
+   s_chatBackendRestartCount = kMaxRestartAttempts;
 
-   // Auto-restart once
-   if (s_chatBackendRestartCount < kMaxRestartAttempts)
-   {
-      s_chatBackendRestartCount++;
-      DLOG("Attempting to restart chat backend (attempt {})", s_chatBackendRestartCount);
-
-      Error error = startChatBackend();
-      if (error)
-         LOG_ERROR(error);
-   }
+   // Notify client of unexpected backend exit
+   json::Object exitData;
+   exitData["exit_code"] = exitCode;
+   exitData["crashed"] = true;
+   module_context::enqueClientEvent(ClientEvent(
+      client_events::kChatBackendExit,
+      exitData
+   ));
 }
 
 Error startChatBackend()
@@ -2246,6 +2245,49 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 // Module Lifecycle
 // ============================================================================
 
+void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
+{
+   DLOG("Session suspension starting - terminating chat backend");
+
+   // Persist whether backend was running before suspension
+   bool wasRunning = (s_chatBackendPid != -1);
+   pSettings->set("chat_suspended", wasRunning);
+
+   // Terminate backend if running
+   if (wasRunning)
+   {
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+
+      // Clear state (rsession is exiting anyway)
+      s_chatBackendPid = -1;
+      s_chatBackendPort = -1;
+      s_chatBackendUrl.clear();
+   }
+
+   // Clear busy state and JSON-RPC buffer
+   s_chatBusy = false;
+   s_backendOutputBuffer.clear();
+}
+
+void onResume(const Settings& settings)
+{
+   DLOG("Session resuming");
+
+   // Check if we were suspended with chat backend running
+   bool wasSuspended = settings.getBool("chat_suspended", false);
+
+   if (wasSuspended)
+   {
+      DLOG("Restarting chat backend after resume");
+
+      Error error = startChatBackend();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void onShutdown(bool terminatedNormally)
 {
    // Clear busy state
@@ -2328,6 +2370,12 @@ Error initialize()
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+
+   // Register suspend/resume handlers
+   addSuspendHandler(SuspendHandler(
+      boost::bind(onSuspend, _1, _2),
+      onResume
+   ));
 
    // Register RPC methods
    ExecBlock initBlock;

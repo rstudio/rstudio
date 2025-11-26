@@ -20,7 +20,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.gwt.core.client.Scheduler;
@@ -39,6 +42,7 @@ public class ChatPresenter extends BasePresenter
       interface Observer
       {
          void onPaneReady();
+         void onRestartBackend();
       }
 
       interface UpdateObserver
@@ -60,6 +64,8 @@ public class ChatPresenter extends BasePresenter
       void showUpdateError(String errorMessage);
       void showUpdateCheckFailure();
       void hideUpdateNotification();
+      void showCrashedMessage();
+      void showSuspendedMessage();
    }
 
    public static class Chat
@@ -92,6 +98,12 @@ public class ChatPresenter extends BasePresenter
          {
             initializeChat();
          }
+
+         @Override
+         public void onRestartBackend()
+         {
+            restartBackend();
+         }
       });
 
       // Set up update observer
@@ -115,6 +127,39 @@ public class ChatPresenter extends BasePresenter
          public void onRetryUpdate()
          {
             installUpdate();
+         }
+      });
+
+      // Listen for backend exit events (crashes)
+      events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
+      {
+         @Override
+         public void onChatBackendExit(ChatBackendExitEvent event)
+         {
+            if (event.getCrashed())
+            {
+               display_.showCrashedMessage();
+            }
+         }
+      });
+
+      // Listen for session suspension/resume events
+      events_.addHandler(SessionSerializationEvent.TYPE, new SessionSerializationEvent.Handler()
+      {
+         @Override
+         public void onSessionSerialization(SessionSerializationEvent event)
+         {
+            int action = event.getAction().getType();
+            if (action == SessionSerializationAction.SUSPEND_SESSION)
+            {
+               display_.showSuspendedMessage();
+            }
+            else if (action == SessionSerializationAction.RESUME_SESSION)
+            {
+               // Backend will be restarted by onResume() handler in SessionChat.cpp
+               // Just need to wait for it to become available
+               pollForBackendUrl(0);
+            }
          }
       });
    }
@@ -337,9 +382,10 @@ public class ChatPresenter extends BasePresenter
                String wsUrl = response.getString("url");
                loadChatUI(wsUrl);
             }
-            else if (status.equals("starting"))
+            else
             {
-               // Retry after 1 second
+               // Backend is still starting (could be "starting", "stopped", etc.)
+               // Keep retrying until timeout or ready
                Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
                {
                   @Override
@@ -350,11 +396,6 @@ public class ChatPresenter extends BasePresenter
                   }
                }, 1000);
             }
-            else
-            {
-               display_.setStatus("error");
-               display_.showError("Backend failed to start: " + status);
-            }
          }
 
          @Override
@@ -362,6 +403,34 @@ public class ChatPresenter extends BasePresenter
          {
             display_.setStatus("error");
             display_.showError("Failed to check backend status: " + error.getMessage());
+         }
+      });
+   }
+
+   private void restartBackend()
+   {
+      display_.setStatus("Restarting Posit Assistant...");
+
+      server_.chatStartBackend(new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            if (response.getBoolean("success"))
+            {
+               // Backend started - begin polling for URL
+               pollForBackendUrl(0);
+            }
+            else
+            {
+               display_.showError("Failed to restart: " + response.getString("error"));
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showError("Failed to restart: " + error.getMessage());
          }
       });
    }
