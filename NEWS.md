@@ -1,4 +1,4 @@
-## RStudio 2025.11.0 "Apple Blossom" Release Notes
+## RStudio 2025.12.0 "Apple Blossom" Release Notes
 
 ### New
 #### RStudio
@@ -74,6 +74,9 @@
 - (rstudio-pro#9126): Fixed an issue where `vscode-user-settings.json` and `positron-user-settings.json` were not found on `XDG_CONFIG_DIRS`
 - (rstudio-pro#7638): Fixed an issue where the Workbench API was accessible with a basic license tier
 - (rstudio-pro#9279): Fixed an error running Workbench Jobs from Positron and VScode in Slurm clusters that do not have singularity enabled
+- (rstudio-pro#9224): The Workbench API supports projects in the get_session and launch_session APIs
+- (rstudio-pro#6426): The Workbench API's get_session endpoint supports waiting for immediate session status changes.
+- (rstudio-pro#9178): The RStudio Memory Usage dialog shows the correct session memory limits and info when running in a Kubernetes pod.
 
 ### Upgrade Instructions
 

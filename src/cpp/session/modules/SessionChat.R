@@ -63,121 +63,71 @@
    })
 })
 
-# Main function to execute code and capture output
-.rs.addFunction("chat.executeCode", function(code,
-                                              capturePlot = FALSE,
-                                              timeout = 30000)
+# Get the current display list length (used to detect if plotting occurred)
+.rs.addFunction("chat.getDisplayListLength", function()
 {
-   # Check for required package
-   if (!requireNamespace("evaluate", quietly = TRUE)) {
-      return(list(
-         items = list(list(
-            type = "error",
-            content = "The 'evaluate' package is required for code execution. Please install it with: install.packages('evaluate')"
-         )),
-         plots = list(),
-         executionTime = 0
-      ))
-   }
-
-   # Initialize result structure
-   result <- list(
-      items = list(),      # List of output items (source, output, message, warning, error)
-      plots = list(),      # Captured plots
-      executionTime = 0
-   )
-
-   # Record start time
-   startTime <- Sys.time()
-
-   # Plot index for capturing multiple plots
-   plotIndex <- 1
+   if (dev.cur() <= 1)
+      return(0L)
 
    tryCatch({
-      # Use evaluate package for proper output capture
-      evalResult <- evaluate::evaluate(
-         code,
-         envir = globalenv(),
-         new_device = capturePlot,
-         stop_on_error = 0,  # Continue through errors to capture all output
-         output_handler = evaluate::new_output_handler(
-            # Use default handlers - we'll process the result list
-         )
-      )
-
-      # Process each item from evaluate's result
-      for (item in evalResult) {
-         if (inherits(item, "source")) {
-            # Source code - format with prompts
-            srcLines <- strsplit(item$src, "\n", fixed = TRUE)[[1]]
-            # Remove trailing empty line if present (from trailing newline)
-            if (length(srcLines) > 0 && srcLines[length(srcLines)] == "") {
-               srcLines <- srcLines[-length(srcLines)]
-            }
-            formattedLines <- character()
-            for (i in seq_along(srcLines)) {
-               # Use "> " for first line, "+ " for continuation lines
-               prompt <- if (i == 1) "> " else "+ "
-               formattedLines <- c(formattedLines, paste0(prompt, srcLines[i]))
-            }
-            result$items[[length(result$items) + 1]] <- list(
-               type = "source",
-               content = paste(formattedLines, collapse = "\n")
-            )
-         } else if (is.character(item)) {
-            # Standard output
-            result$items[[length(result$items) + 1]] <- list(
-               type = "output",
-               content = item
-            )
-         } else if (evaluate::is.recordedplot(item) && capturePlot) {
-            # Capture plot to PNG and base64 encode
-            plotData <- .rs.chat.capturePlotFromRecorded(item)
-            if (!is.null(plotData)) {
-               result$plots[[plotIndex]] <- plotData
-               plotIndex <- plotIndex + 1
-            }
-
-            # Also replay the plot to the current RStudio device so it appears in the plots pane
-            tryCatch({
-               replayPlot(item)
-            }, error = function(e) {
-               # Ignore errors in replay - the plot was already captured successfully
-            })
-         } else if (inherits(item, "message")) {
-            # Message condition
-            result$items[[length(result$items) + 1]] <- list(
-               type = "message",
-               content = conditionMessage(item)
-            )
-         } else if (inherits(item, "warning")) {
-            # Warning condition
-            result$items[[length(result$items) + 1]] <- list(
-               type = "warning",
-               content = paste0("Warning message:\n", conditionMessage(item))
-            )
-         } else if (inherits(item, "error")) {
-            # Error condition
-            result$items[[length(result$items) + 1]] <- list(
-               type = "error",
-               content = conditionMessage(item)
-            )
-         }
-      }
-
+      p <- recordPlot()
+      if (is.null(p))
+         return(0L)
+      length(p[[1]])
    }, error = function(e) {
-      # Catch any errors in the evaluation infrastructure itself
-      result$items[[length(result$items) + 1]] <<- list(
-         type = "error",
-         content = conditionMessage(e)
-      )
+      0L
+   })
+})
+
+# Capture the current plot, but only if plotting occurred since the given
+# display list length (to avoid returning stale plots from previous executions).
+#
+# NOTE: This only captures the final plot state. If code creates multiple plots
+# (e.g., plot(1); plot(2)), only the last one is captured. This is a known
+# limitation compared to the previous evaluate-based approach.
+#
+# Returns NULL if no NEW plot is available, otherwise returns a list with:
+#   - data: base64-encoded PNG
+#   - mimeType: "image/png"
+#   - width: pixel width
+#   - height: pixel height
+.rs.addFunction("chat.captureCurrentPlot", function(displayListLengthBefore = 0L)
+{
+   # No graphics device open
+   if (dev.cur() <= 1)
+      return(NULL)
+
+   # Try to record the current plot
+   recordedPlot <- tryCatch({
+      recorded <- recordPlot()
+      # Check if the display list is non-empty
+      if (is.null(recorded) || length(recorded[[1]]) == 0)
+         return(NULL)
+      recorded
+   }, error = function(e) {
+      NULL
    })
 
-   # Calculate execution time in milliseconds
-   endTime <- Sys.time()
-   result$executionTime <- as.integer(
-      difftime(endTime, startTime, units = "secs") * 1000
-   )
+   if (is.null(recordedPlot))
+      return(NULL)
 
-   result
+   # Check if the display list grew since before execution
+   # If not, this is a stale plot from a previous execution
+   currentLength <- length(recordedPlot[[1]])
+   if (currentLength <= displayListLengthBefore)
+      return(NULL)
+
+   # Use the helper to capture and encode the plot
+   plotData <- .rs.chat.capturePlotFromRecorded(recordedPlot)
+
+   if (!is.null(plotData)) {
+      # Also replay the plot to the current RStudio device so it appears in the plots pane
+      tryCatch({
+         replayPlot(recordedPlot)
+      }, error = function(e) {
+         # Ignore errors in replay - the plot was already captured successfully
+      })
+   }
+
+   plotData
 })
