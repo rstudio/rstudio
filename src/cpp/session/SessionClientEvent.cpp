@@ -217,6 +217,7 @@ const int kRunAutomation = 199;
 const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
 const int kCopilotStatusChanged = 202;
+const int kChatBackendExit = 203;
 
 }
 
@@ -607,8 +608,10 @@ std::string ClientEvent::typeName() const
          return "console_write_pending_warning";
       case client_events::kCopilotStatusChanged:
          return "copilot_status_changed";
+      case client_events::kChatBackendExit:
+         return "chat_backend_exit";
       default:
-         LOG_WARNING_MESSAGE("unexpected event type: " + 
+         LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));
          return "";
    }

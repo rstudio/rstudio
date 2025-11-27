@@ -203,8 +203,42 @@ public class ChatPane
       contentType_ = ContentType.HTML;
       currentContent_ = html;
       currentUrl_ = null;
-      setFrameContent(frame_, html);
+
+      // Force a complete iframe reload by navigating to about:blank first
+      // This kills the existing JavaScript context (stops WebSocket reconnection attempts)
+
+      // Set up a one-time load handler to write content after about:blank loads
+      setupOneShotLoadHandler(frame_, html);
+
+      // Navigate to about:blank
+      frame_.setUrl("about:blank");
    }
+
+   private native void setupOneShotLoadHandler(RStudioThemedFrame frame, String html) /*-{
+      var self = this;
+      var iframe = frame.@org.rstudio.core.client.widget.RStudioFrame::getElement()();
+
+      // Remove any existing pending handler
+      if (iframe._rstudioPendingLoadHandler) {
+         iframe.removeEventListener('load', iframe._rstudioPendingLoadHandler);
+         console.log("ChatPane: Removed previous pending load handler");
+      }
+
+      var handler = function() {
+         console.log("ChatPane: Load handler fired, writing content");
+         // Remove this handler so it only fires once
+         iframe.removeEventListener('load', handler);
+         iframe._rstudioPendingLoadHandler = null;
+
+         // Now write the content
+         self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::setFrameContent(Lorg/rstudio/core/client/widget/RStudioThemedFrame;Ljava/lang/String;)(frame, html);
+      };
+
+      // Store reference so we can cancel it if needed
+      iframe._rstudioPendingLoadHandler = handler;
+      iframe.addEventListener('load', handler);
+      console.log("ChatPane: Set up load handler, html length: " + html.length);
+   }-*/;
 
    /**
     * Loads a URL in the iframe and stores it for later refresh.
@@ -402,6 +436,13 @@ public class ChatPane
    }
 
    @Override
+   public void showIncompatibleVersion()
+   {
+      String message = "No version of Posit Assistant is available for this version of RStudio.";
+      showMessage(message);
+   }
+
+   @Override
    public void setStatus(String status)
    {
       currentStatus_ = status;
@@ -441,6 +482,167 @@ public class ChatPane
    }
 
    @Override
+   public void showCrashedMessage(int exitCode)
+   {
+      String html = generateCrashedMessageHTML(exitCode);
+      updateFrameContent(html);
+   }
+
+   @Override
+   public void showSuspendedMessage()
+   {
+      String html = generateSuspendedMessageHTML();
+      updateFrameContent(html);
+   }
+
+   private String generateSuspendedMessageHTML()
+   {
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-secondary-foreground, #666);");
+      html.append("  margin: 8px 0;");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>Session Suspended</h2>");
+      html.append("<p>The RStudio session has suspended.</p>");
+      html.append("<p>The Posit Assistant will restart when you resume your session.</p>");
+      html.append("</div>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   private String generateCrashedMessageHTML(int exitCode)
+   {
+      // Determine title and message based on exit code
+      String title;
+      String message;
+
+      if (exitCode == 76) // EXIT_CODE_PROTOCOL_SERVER_TOO_OLD
+      {
+         title = "Update Required";
+         message = "Your RStudio version is incompatible with Posit Assistant. Please update RStudio to the latest version.";
+      }
+      else if (exitCode == 77) // EXIT_CODE_PROTOCOL_CLIENT_TOO_OLD
+      {
+         title = "Update Required";
+         message = "Posit Assistant is incompatible with your RStudio version. Please update Posit Assistant to the latest version.";
+      }
+      else
+      {
+         title = "Process Exited";
+         message = "The Posit Assistant process has exited unexpectedly.";
+      }
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-secondary-foreground, #666);");
+      html.append("  margin: 0 0 24px 0;");
+      html.append("}");
+      html.append("button {");
+      html.append("  padding: 10px 20px;");
+      html.append("  font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: #4A90E2;");
+      html.append("  color: white;");
+      html.append("  border: none;");
+      html.append("  border-radius: 4px;");
+      html.append("}");
+      html.append("button:hover {");
+      html.append("  background-color: #357ABD;");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(title);
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(message);
+      html.append("</p>");
+      html.append("<button id='restart-btn'>Restart Posit Assistant</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('restart-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('restart-backend', '*');");
+      html.append("});");
+      html.append("</script>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   @Override
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar(constants_.chatTabLabel());
@@ -456,6 +658,9 @@ public class ChatPane
       {
          initialized_ = true;
 
+         // Set up message listener for restart button
+         setupMessageListener();
+
          // Show pending message now that frame is loaded
          if (pendingMessage_ != null)
          {
@@ -469,23 +674,16 @@ public class ChatPane
             @Override
             public void onResponseReceived(Boolean result)
             {
-               if (!result)
+               // Don't call setStatus("not_installed") here - let the update check
+               // flow determine what message to show. If noCompatibleVersion is true,
+               // showIncompatibleVersion() will be called. If an update/install is
+               // available, that notification will be shown. This avoids competing
+               // updateFrameContent() calls that cause rendering issues.
+
+               // Trigger observer so update/install check can happen
+               if (observer_ != null)
                {
-                  // Chat is not installed - show message but still check for updates
-                  setStatus("not_installed");
-                  // Still trigger observer so update/install check can happen
-                  if (observer_ != null)
-                  {
-                     observer_.onPaneReady();
-                  }
-               }
-               else
-               {
-                  // Chat is installed - start backend and load UI
-                  if (observer_ != null)
-                  {
-                     observer_.onPaneReady();
-                  }
+                  observer_.onPaneReady();
                }
             }
 
@@ -495,6 +693,25 @@ public class ChatPane
                updateFrameContent(generateMessageHTML(constants_.errorDetectingInstallationMessage()));
             }
          });
+      }
+   }
+
+   private native void setupMessageListener() /*-{
+      var self = this;
+
+      // Listen for restart button clicks via postMessage
+      $wnd.addEventListener('message', function(event) {
+         if (event.data === 'restart-backend') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
+         }
+      });
+   }-*/;
+
+   private void handleRestartRequest()
+   {
+      if (observer_ != null)
+      {
+         observer_.onRestartBackend();
       }
    }
 
