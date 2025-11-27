@@ -936,6 +936,7 @@ FilePath locatePositAiInstallation()
 struct UpdateState
 {
    bool updateAvailable;
+   bool noCompatibleVersion;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -955,6 +956,7 @@ struct UpdateState
 
    UpdateState()
       : updateAvailable(false),
+        noCompatibleVersion(false),
         installStatus(Status::Idle)
    {
    }
@@ -1449,8 +1451,19 @@ Error checkForUpdatesOnStartup()
    error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
    if (error)
    {
-      WLOG("Failed to parse manifest: {}", error.getMessage());
-      // Silent failure
+      WLOG("Failed to get package info from manifest: {}", error.getMessage());
+      WLOG("Error code: {}, Expected: {}", error.getCode(),
+           static_cast<int>(boost::system::errc::protocol_not_supported));
+
+      // Check if this is specifically a "protocol not found" error
+      if (error.getCode() == boost::system::errc::protocol_not_supported)
+      {
+         // Protocol version not in manifest - incompatible RStudio version
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+
+      // For other errors (network, parsing, etc), do silent failure as before
       return Success();
    }
 
@@ -2058,6 +2071,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
       // Return empty/negative response - don't reveal feature exists
       json::Object result;
       result["updateAvailable"] = false;
+      result["noCompatibleVersion"] = false;
       pResponse->setResult(result);
       return Success();
    }
@@ -2065,10 +2079,14 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // Return cached startup check result
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
+   result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
    result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+
+   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}",
+        s_updateState.updateAvailable, s_updateState.noCompatibleVersion);
 
    pResponse->setResult(result);
    return Success();

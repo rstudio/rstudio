@@ -218,15 +218,26 @@ public class ChatPane
       var self = this;
       var iframe = frame.@org.rstudio.core.client.widget.RStudioFrame::getElement()();
 
+      // Remove any existing pending handler
+      if (iframe._rstudioPendingLoadHandler) {
+         iframe.removeEventListener('load', iframe._rstudioPendingLoadHandler);
+         console.log("ChatPane: Removed previous pending load handler");
+      }
+
       var handler = function() {
+         console.log("ChatPane: Load handler fired, writing content");
          // Remove this handler so it only fires once
          iframe.removeEventListener('load', handler);
+         iframe._rstudioPendingLoadHandler = null;
 
          // Now write the content
          self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::setFrameContent(Lorg/rstudio/core/client/widget/RStudioThemedFrame;Ljava/lang/String;)(frame, html);
       };
 
+      // Store reference so we can cancel it if needed
+      iframe._rstudioPendingLoadHandler = handler;
       iframe.addEventListener('load', handler);
+      console.log("ChatPane: Set up load handler, html length: " + html.length);
    }-*/;
 
    /**
@@ -422,6 +433,13 @@ public class ChatPane
       updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#fff8dc");
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
+   }
+
+   @Override
+   public void showIncompatibleVersion()
+   {
+      String message = "No version of Posit Assistant is available for this version of RStudio.";
+      showMessage(message);
    }
 
    @Override
@@ -656,23 +674,16 @@ public class ChatPane
             @Override
             public void onResponseReceived(Boolean result)
             {
-               if (!result)
+               // Don't call setStatus("not_installed") here - let the update check
+               // flow determine what message to show. If noCompatibleVersion is true,
+               // showIncompatibleVersion() will be called. If an update/install is
+               // available, that notification will be shown. This avoids competing
+               // updateFrameContent() calls that cause rendering issues.
+
+               // Trigger observer so update/install check can happen
+               if (observer_ != null)
                {
-                  // Chat is not installed - show message but still check for updates
-                  setStatus("not_installed");
-                  // Still trigger observer so update/install check can happen
-                  if (observer_ != null)
-                  {
-                     observer_.onPaneReady();
-                  }
-               }
-               else
-               {
-                  // Chat is installed - start backend and load UI
-                  if (observer_ != null)
-                  {
-                     observer_.onPaneReady();
-                  }
+                  observer_.onPaneReady();
                }
             }
 

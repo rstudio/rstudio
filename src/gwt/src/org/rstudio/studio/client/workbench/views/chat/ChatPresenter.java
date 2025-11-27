@@ -15,13 +15,13 @@ package org.rstudio.studio.client.workbench.views.chat;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.application.events.SessionSerializationEvent;
-import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
@@ -66,6 +66,7 @@ public class ChatPresenter extends BasePresenter
       void hideUpdateNotification();
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
+      void showIncompatibleVersion();
    }
 
    public static class Chat
@@ -218,6 +219,14 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onResponseReceived(JsObject result)
          {
+            // Check for incompatible protocol version first
+            boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
+            if (noCompatibleVersion)
+            {
+               display_.showIncompatibleVersion();
+               return;  // Don't try to start backend
+            }
+
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
 
