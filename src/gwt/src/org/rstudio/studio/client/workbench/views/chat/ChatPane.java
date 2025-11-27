@@ -269,10 +269,10 @@ public class ChatPane
    @Override
    public void showUpdateNotification(String newVersion)
    {
-      updateMessageLabel_.setHTML("A new version (" + newVersion + ") is available.");
+      updateMessageLabel_.setHTML(constants_.chatUpdateAvailable(newVersion));
       updateButtonPanel_.clear();
 
-      Button updateNowButton = new Button("Update");
+      Button updateNowButton = new Button(constants_.chatUpdate());
       updateNowButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -285,7 +285,7 @@ public class ChatPane
          }
       });
 
-      Button remindLaterButton = new Button("Ignore");
+      Button remindLaterButton = new Button(constants_.chatIgnore());
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -308,14 +308,14 @@ public class ChatPane
    @Override
    public void showInstallNotification(String newVersion)
    {
-      updateMessageLabel_.setHTML("Posit Assistant (" + newVersion + ") is available for install.");
+      updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
       updateButtonPanel_.clear();
 
       // Change background to green for install (vs blue for update)
       updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#e8f5e9");
       updateNotificationPanel_.getElement().getStyle().setProperty("borderBottom", "1px solid #81c784");
 
-      Button installNowButton = new Button("Install");
+      Button installNowButton = new Button(constants_.chatInstallNow());
       installNowButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -328,7 +328,7 @@ public class ChatPane
          }
       });
 
-      Button remindLaterButton = new Button("Ignore");
+      Button remindLaterButton = new Button(constants_.chatIgnore());
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -351,7 +351,7 @@ public class ChatPane
    @Override
    public void showUpdatingStatus()
    {
-      updateMessageLabel_.setHTML("Updating Posit Assistant...");
+      updateMessageLabel_.setHTML(constants_.chatUpdating());
       updateButtonPanel_.clear();
 
       updateNotificationPanel_.setVisible(true);
@@ -361,7 +361,7 @@ public class ChatPane
    @Override
    public void showUpdateComplete()
    {
-      updateMessageLabel_.setHTML("Update complete. Reloading...");
+      updateMessageLabel_.setHTML(constants_.chatUpdateComplete());
       updateButtonPanel_.clear();
 
       updateNotificationPanel_.setVisible(true);
@@ -371,10 +371,10 @@ public class ChatPane
    @Override
    public void showUpdateError(String errorMessage)
    {
-      updateMessageLabel_.setHTML("Update failed: " + errorMessage);
+      updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
       updateButtonPanel_.clear();
 
-      Button retryButton = new Button("Retry");
+      Button retryButton = new Button(constants_.chatRetry());
       retryButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -387,7 +387,7 @@ public class ChatPane
          }
       });
 
-      Button dismissButton = new Button("Dismiss");
+      Button dismissButton = new Button(constants_.chatDismiss());
       dismissButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -414,10 +414,10 @@ public class ChatPane
    @Override
    public void showUpdateCheckFailure()
    {
-      updateMessageLabel_.setHTML("Unable to download update information, continuing with currently installed version");
+      updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
       updateButtonPanel_.clear();
 
-      Button dismissButton = new Button("Dismiss");
+      Button dismissButton = new Button(constants_.chatDismiss());
       dismissButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -438,7 +438,7 @@ public class ChatPane
    @Override
    public void showIncompatibleVersion()
    {
-      String message = "No version of Posit Assistant is available for this version of RStudio.";
+      String message = constants_.chatIncompatibleVersion();
       showMessage(message);
    }
 
@@ -468,7 +468,7 @@ public class ChatPane
    @Override
    public void showError(String errorMessage)
    {
-      showMessage("Error: " + errorMessage);
+      showMessage(constants_.chatErrorPrefix(errorMessage));
    }
 
    private void showMessage(String message)
@@ -538,9 +538,15 @@ public class ChatPane
       html.append("</head>");
       html.append("<body>");
       html.append("<div class='message'>");
-      html.append("<h2>Session Suspended</h2>");
-      html.append("<p>The RStudio session has suspended.</p>");
-      html.append("<p>The Posit Assistant will restart when you resume your session.</p>");
+      html.append("<h2>");
+      html.append(constants_.chatSessionSuspendedTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(constants_.chatSessionSuspendedMessage1());
+      html.append("</p>");
+      html.append("<p>");
+      html.append(constants_.chatSessionSuspendedMessage2());
+      html.append("</p>");
       html.append("</div>");
       html.append("</body>");
       html.append("</html>");
@@ -556,18 +562,18 @@ public class ChatPane
 
       if (exitCode == 76) // EXIT_CODE_PROTOCOL_SERVER_TOO_OLD
       {
-         title = "Update Required";
-         message = "Your RStudio version is incompatible with Posit Assistant. Please update RStudio to the latest version.";
+         title = constants_.chatUpdateRequiredTitle();
+         message = constants_.chatRStudioTooOldMessage();
       }
       else if (exitCode == 77) // EXIT_CODE_PROTOCOL_CLIENT_TOO_OLD
       {
-         title = "Update Required";
-         message = "Posit Assistant is incompatible with your RStudio version. Please update Posit Assistant to the latest version.";
+         title = constants_.chatUpdateRequiredTitle();
+         message = constants_.chatAssistantTooOldMessage();
       }
       else
       {
-         title = "Process Exited";
-         message = "The Posit Assistant process has exited unexpectedly.";
+         title = constants_.chatProcessExitedTitle();
+         message = constants_.chatProcessExitedMessage();
       }
 
       StringBuilder html = new StringBuilder();
@@ -629,7 +635,9 @@ public class ChatPane
       html.append("<p>");
       html.append(message);
       html.append("</p>");
-      html.append("<button id='restart-btn'>Restart Posit Assistant</button>");
+      html.append("<button id='restart-btn'>");
+      html.append(constants_.chatRestartButton());
+      html.append("</button>");
       html.append("</div>");
       html.append("<script>");
       html.append("document.getElementById('restart-btn').addEventListener('click', function() {");

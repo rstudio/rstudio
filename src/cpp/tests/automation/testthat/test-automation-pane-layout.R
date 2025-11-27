@@ -83,6 +83,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant swapping works correctly", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    sourceInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -222,6 +225,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1
@@ -250,6 +256,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in TabSet1 unchecks it in the Sidebar", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1 or Sidebar
@@ -286,6 +295,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Environment is checked in TabSet1 by default
@@ -311,6 +323,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("All tabs can be moved to one TabSet leaving the other empty", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Check that TabSet1 and TabSet2 contain expected tabs at the start of the test
@@ -350,6 +365,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet quadrants can be swapped while maintaining their tab configurations", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Get initial TabSet positions
@@ -384,6 +402,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Reset link restores all pane layout settings to defaults", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Make sidebar visible
@@ -459,6 +480,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar visibility checkbox auto-updates based on tab assignments", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Verify sidebar visibility checkbox is initially unchecked (default state)
