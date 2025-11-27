@@ -94,7 +94,7 @@ sudo rstudio-server runtimes add --py-versions /path/to/py-versions.json --clust
 
 ### Dependencies
 - Copilot Language Server 1.397.0
-- Electron 38.7.1
+- Electron 38.7.2
 - Node.js 22.21.1
 - Quarto 1.8.25
 - Launcher 2.21.0
