@@ -15,15 +15,21 @@
 
 package org.rstudio.core.client.widget;
 
+import java.util.Map;
+
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.Timers;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.event.dom.client.LoadEvent;
@@ -134,7 +140,10 @@ public class RStudioThemedFrame extends RStudioFrame
          }
          
          RStudioGinjector.INSTANCE.getAceThemes().applyTheme(document);
-         
+
+         // Inject CSS variables after theme is applied
+         injectThemeVariables();
+
          BodyElement body = document.getBody();
          if (body != null)
          {
@@ -179,23 +188,93 @@ public class RStudioThemedFrame extends RStudioFrame
       });
    }
    
+   /**
+    * Inject CSS theme variables into the iframe's document element.
+    * Uses a 1000ms delay to ensure theme CSS is fully loaded before sampling.
+    * This method is protected to allow future enhancements where ChatPane
+    * or other components could explicitly trigger re-injection if needed.
+    */
+   protected void injectThemeVariables()
+   {
+      // Use same 1000ms delay as ApplicationThemes.onComputeThemeColors()
+      // to ensure theme CSS is fully loaded before sampling
+      Timers.singleShot(1000, () -> {
+         doInjectThemeVariables();
+      });
+   }
+
+   /**
+    * Internal implementation of CSS variable injection with comprehensive error handling.
+    */
+   private void doInjectThemeVariables()
+   {
+      try
+      {
+         // Check iframe is ready (use getWindow/getDocument, NOT getIFrame/getContentDocument)
+         if (getWindow() == null)
+            return;
+
+         Document document = null;
+         try
+         {
+            document = getWindow().getDocument();
+         }
+         catch (Exception e)
+         {
+            // Cross-origin iframe - can't inject, skip silently
+            return;
+         }
+
+         if (document == null)
+            return;
+
+         // Extract colors (cache is managed inside ThemeColorExtractor)
+         Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+
+         // Get iframe's html element
+         Element htmlElement = document.getDocumentElement();
+         if (htmlElement == null)
+            return;
+
+         // Inject each variable
+         for (Map.Entry<String, String> entry : colors.entrySet())
+         {
+            injectCSSVariable(htmlElement, entry.getKey(), entry.getValue());
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         // Fail gracefully - iframe will use fallback CSS values
+      }
+   }
+
+   /**
+    * Native method to inject a CSS custom property into an element.
+    */
+   private native void injectCSSVariable(Element htmlElement,
+                                        String property,
+                                        String value) /*-{
+      htmlElement.style.setProperty(property, value);
+   }-*/;
+
    private static final native boolean isEligibleForCustomStyles(Document document)
    /*-{
       // We disable custom styling for most vignettes, as we cannot guarantee
       // the vignette will remain legible after attempting to re-style with
       // a dark theme.
-      
+
       // If the document contains an 'article', avoid custom styling.
       var articles = document.getElementsByTagName("article");
       if (articles.length !== 0)
          return false;
-         
+
       // If the document uses hljs, avoid custom styling.
       // https://github.com/rstudio/rstudio/issues/11022
       var hljs = document.defaultView.hljs;
       if (hljs != null)
          return false;
-         
+
       return true;
    }-*/;
    
