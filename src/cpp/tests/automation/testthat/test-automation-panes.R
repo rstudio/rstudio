@@ -148,7 +148,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar can be shown and hidden with toggleSidebar command", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # Show the sidebar
@@ -279,10 +279,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar hidden works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
-  # Verify sidebar is hidden (default state)
+   # Verify sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
 
@@ -394,10 +394,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar visible works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
-  # First make the sidebar visible
+   # First make the sidebar visible
    remote$commands.execute("toggleSidebar")
 
    # Wait for the sidebar to be created
@@ -536,10 +536,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar hidden works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
-  # Verify sidebar is hidden (default state)
+   # Verify sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
 
@@ -653,7 +653,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar visible works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # First make the sidebar visible
@@ -797,7 +797,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar on left works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # First make the sidebar visible
@@ -965,7 +965,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar on left works as expected", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # First make the sidebar visible
@@ -1135,7 +1135,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("layoutZoomSidebar command state depends on sidebar visibility and persists across UI reload", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # 1. Confirm sidebar is hidden (default state)
@@ -1204,7 +1204,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
@@ -1266,7 +1266,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("toggleSidebar command is checked when sidebar is visible, unchecked when hidden", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # 1. Confirm sidebar is hidden (default state)
@@ -1315,7 +1315,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Column widths are preserved when toggling sidebar visibility (issue #16676)", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # This test verifies the fix for issue #16676: column widths should be preserved
@@ -1441,7 +1441,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Column widths preserved through multiple hide/show cycles", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # This test verifies that width preservation works reliably across multiple cycles,
@@ -1544,7 +1544,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar show uses default widths after columns resized while hidden", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # This test verifies that if user resizes columns while sidebar is hidden,
@@ -1628,7 +1628,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Different resize patterns preserve correctly through sidebar toggle", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # This test verifies that width preservation works regardless of which
@@ -1719,7 +1719,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Extreme resize values preserve correctly through sidebar toggle", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # This test verifies that width preservation works even with very large

@@ -93,7 +93,7 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width is preserved when adding tabs via pane layout options", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # Show the sidebar
@@ -200,7 +200,7 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # Show the sidebar
@@ -313,7 +313,7 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("layoutZoomEnvironment zooms environment pane and toggles back", {
-    # skipping to cut down run times on CI
+   # skipping to cut down run times on CI
    skip_on_ci()
 
    # Verify Environment panel exists and is visible
