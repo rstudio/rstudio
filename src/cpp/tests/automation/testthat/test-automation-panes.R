@@ -69,6 +69,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Source columns can be created and closed", {
+   # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Create a new source column
    remote$commands.execute("newSourceColumn")
    
@@ -145,6 +148,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar can be shown and hidden with toggleSidebar command", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar
    remote$commands.execute("toggleSidebar")
    
@@ -185,6 +191,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar can be moved left and right with toggleSidebarLocation command", {
+   # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar first
    remote$commands.execute("toggleSidebar")
    
@@ -270,7 +279,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar hidden works as expected", {
-   # Verify sidebar is hidden (default state)
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
+  # Verify sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
 
@@ -382,7 +394,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar visible works as expected", {
-   # First make the sidebar visible
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
+  # First make the sidebar visible
    remote$commands.execute("toggleSidebar")
 
    # Wait for the sidebar to be created
@@ -521,7 +536,10 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar hidden works as expected", {
-   # Verify sidebar is hidden (default state)
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
+  # Verify sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
 
@@ -635,6 +653,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar visible works as expected", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # First make the sidebar visible
    remote$commands.execute("toggleSidebar")
 
@@ -776,6 +797,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed left column with sidebar on left works as expected", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # First make the sidebar visible
    remote$commands.execute("toggleSidebar")
 
@@ -941,6 +965,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Zoomed right column with sidebar on left works as expected", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # First make the sidebar visible
    remote$commands.execute("toggleSidebar")
 
@@ -1108,6 +1135,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("layoutZoomSidebar command state depends on sidebar visibility and persists across UI reload", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # 1. Confirm sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
@@ -1174,6 +1204,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Keyboard resizing splitter after zooming unchecks zoom command", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # NOTE: This test currently fails due to a GWT bug when using keyboard resizing; I couldn't
    # get mouse-based resizing to work in the test environment.
    # https://github.com/rstudio/rstudio/issues/16578
@@ -1233,6 +1266,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("toggleSidebar command is checked when sidebar is visible, unchecked when hidden", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # 1. Confirm sidebar is hidden (default state)
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist in default layout")
@@ -1279,6 +1315,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Column widths are preserved when toggling sidebar visibility (issue #16676)", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # This test verifies the fix for issue #16676: column widths should be preserved
    # when hiding and showing the sidebar, not revert to old saved state
 
@@ -1402,6 +1441,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Column widths preserved through multiple hide/show cycles", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # This test verifies that width preservation works reliably across multiple cycles,
    # not just a single hide/show operation
 
@@ -1502,6 +1544,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Sidebar show uses default widths after columns resized while hidden", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # This test verifies that if user resizes columns while sidebar is hidden,
    # then shows the sidebar, we don't try to restore stale saved widths.
    # Instead, we should use reasonable default layout.
@@ -1583,6 +1628,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Different resize patterns preserve correctly through sidebar toggle", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # This test verifies that width preservation works regardless of which
    # splitter is moved or in which direction
 
@@ -1671,6 +1719,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Extreme resize values preserve correctly through sidebar toggle", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # This test verifies that width preservation works even with very large
    # or very small column widths (edge cases)
 

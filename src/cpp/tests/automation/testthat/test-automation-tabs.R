@@ -93,6 +93,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width is preserved when adding tabs via pane layout options", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar
    remote$commands.execute("toggleSidebar")
    .rs.waitUntil("sidebar created", function() {
@@ -197,6 +200,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar
    remote$commands.execute("toggleSidebar")
    .rs.waitUntil("sidebar created", function() {
@@ -307,6 +313,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("layoutZoomEnvironment zooms environment pane and toggles back", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Verify Environment panel exists and is visible
    expect_true(remote$dom.elementExists("#rstudio_workbench_panel_environment"),
                "Environment panel should exist")
