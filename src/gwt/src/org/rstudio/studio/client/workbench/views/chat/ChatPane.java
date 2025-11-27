@@ -17,6 +17,7 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -77,16 +79,15 @@ public class ChatPane
       // Create update notification bar
       updateNotificationPanel_ = new FlowPanel();
       updateNotificationPanel_.setVisible(false);
-      updateNotificationPanel_.setStyleName("chatUpdateNotification");
-      updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#e3f2fd");
-      updateNotificationPanel_.getElement().getStyle().setPadding(10, Unit.PX);
-      updateNotificationPanel_.getElement().getStyle().setProperty("borderBottom", "1px solid #90caf9");
+      updateNotificationPanel_.setStyleName(RES.styles().chatUpdateNotification());
 
       updateMessageLabel_ = new HTML();
+      updateMessageLabel_.setStyleName(RES.styles().chatUpdateMessage());
       updateButtonPanel_ = new HorizontalPanel();
       updateButtonPanel_.getElement().getStyle().setMarginLeft(10, Unit.PX);
 
       HorizontalPanel notificationContent = new HorizontalPanel();
+      notificationContent.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
       notificationContent.add(updateMessageLabel_);
       notificationContent.add(updateButtonPanel_);
       updateNotificationPanel_.add(notificationContent);
@@ -157,8 +158,8 @@ public class ChatPane
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
       html.append("  font-size: 12px;");
-      html.append("  color: var(--rstudio-foreground, #000);");
-      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, #000);");
+      html.append("  background-color: var(--rstudio-editor-background, #fff);");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
@@ -232,6 +233,9 @@ public class ChatPane
 
          // Now write the content
          self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::setFrameContent(Lorg/rstudio/core/client/widget/RStudioThemedFrame;Ljava/lang/String;)(frame, html);
+
+         // Inject theme variables after writing content
+         self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::injectThemeVariablesDelayed(Lorg/rstudio/core/client/widget/RStudioThemedFrame;)(frame);
       };
 
       // Store reference so we can cancel it if needed
@@ -239,6 +243,18 @@ public class ChatPane
       iframe.addEventListener('load', handler);
       console.log("ChatPane: Set up load handler, html length: " + html.length);
    }-*/;
+
+   /**
+    * Injects theme variables into the frame after a short delay.
+    * This ensures the HTML content is fully parsed before variables are applied.
+    */
+   private void injectThemeVariablesDelayed(RStudioThemedFrame frame)
+   {
+      // Small delay to ensure HTML is fully parsed
+      Timers.singleShot(50, () -> {
+         frame.injectThemeVariables();
+      });
+   }
 
    /**
     * Loads a URL in the iframe and stores it for later refresh.
@@ -273,6 +289,7 @@ public class ChatPane
       updateButtonPanel_.clear();
 
       Button updateNowButton = new Button(constants_.chatUpdate());
+      updateNowButton.addStyleName(RES.styles().chatNotificationButton());
       updateNowButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -286,6 +303,7 @@ public class ChatPane
       });
 
       Button remindLaterButton = new Button(constants_.chatIgnore());
+      remindLaterButton.addStyleName(RES.styles().chatNotificationButton());
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -311,11 +329,10 @@ public class ChatPane
       updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
       updateButtonPanel_.clear();
 
-      // Change background to green for install (vs blue for update)
-      updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#e8f5e9");
-      updateNotificationPanel_.getElement().getStyle().setProperty("borderBottom", "1px solid #81c784");
+      // Notification styling is now handled by CSS for uniform theme-aware appearance
 
       Button installNowButton = new Button(constants_.chatInstallNow());
+      installNowButton.addStyleName(RES.styles().chatNotificationButton());
       installNowButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -329,6 +346,7 @@ public class ChatPane
       });
 
       Button remindLaterButton = new Button(constants_.chatIgnore());
+      remindLaterButton.addStyleName(RES.styles().chatNotificationButton());
       remindLaterButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -375,6 +393,7 @@ public class ChatPane
       updateButtonPanel_.clear();
 
       Button retryButton = new Button(constants_.chatRetry());
+      retryButton.addStyleName(RES.styles().chatNotificationButton());
       retryButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -388,6 +407,7 @@ public class ChatPane
       });
 
       Button dismissButton = new Button(constants_.chatDismiss());
+      dismissButton.addStyleName(RES.styles().chatNotificationButton());
       dismissButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -418,6 +438,7 @@ public class ChatPane
       updateButtonPanel_.clear();
 
       Button dismissButton = new Button(constants_.chatDismiss());
+      dismissButton.addStyleName(RES.styles().chatNotificationButton());
       dismissButton.addClickHandler(new ClickHandler()
       {
          @Override
@@ -429,8 +450,7 @@ public class ChatPane
 
       updateButtonPanel_.add(dismissButton);
 
-      // Use different background color for info message (lighter blue/yellow)
-      updateNotificationPanel_.getElement().getStyle().setBackgroundColor("#fff8dc");
+      // Notification styling is now handled by CSS for uniform theme-aware appearance
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -519,19 +539,19 @@ public class ChatPane
       html.append("  font-family: ");
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
-      html.append("  color: var(--rstudio-foreground, #333);");
-      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, #333);");
+      html.append("  background-color: var(--rstudio-editor-background, #fff);");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
       html.append("  padding: 40px;");
       html.append("}");
       html.append("h2 {");
-      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  color: var(--rstudio-editor-foreground, #333);");
       html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append("p {");
-      html.append("  color: var(--rstudio-secondary-foreground, #666);");
+      html.append("  color: var(--rstudio-disabledForeground, #666);");
       html.append("  margin: 8px 0;");
       html.append("}");
       html.append("</style>");
@@ -598,32 +618,32 @@ public class ChatPane
       html.append("  font-family: ");
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
-      html.append("  color: var(--rstudio-foreground, #333);");
-      html.append("  background-color: var(--rstudio-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, #333);");
+      html.append("  background-color: var(--rstudio-editor-background, #fff);");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
       html.append("  padding: 40px;");
       html.append("}");
       html.append("h2 {");
-      html.append("  color: var(--rstudio-foreground, #333);");
+      html.append("  color: var(--rstudio-editor-foreground, #333);");
       html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append("p {");
-      html.append("  color: var(--rstudio-secondary-foreground, #666);");
+      html.append("  color: var(--rstudio-disabledForeground, #666);");
       html.append("  margin: 0 0 24px 0;");
       html.append("}");
-      html.append("button {");
+      html.append(".chatIframeButton {");
       html.append("  padding: 10px 20px;");
       html.append("  font-size: 14px;");
       html.append("  cursor: pointer;");
-      html.append("  background-color: #4A90E2;");
-      html.append("  color: white;");
-      html.append("  border: none;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, #f4f8f9);");
+      html.append("  color: var(--rstudio-editor-foreground, #333);");
+      html.append("  border: 1px solid var(--rstudio-panel-border, #d6dadc);");
       html.append("  border-radius: 4px;");
       html.append("}");
-      html.append("button:hover {");
-      html.append("  background-color: #357ABD;");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, #d6dadc);");
       html.append("}");
       html.append("</style>");
       html.append("</head>");
@@ -635,7 +655,7 @@ public class ChatPane
       html.append("<p>");
       html.append(message);
       html.append("</p>");
-      html.append("<button id='restart-btn'>");
+      html.append("<button id='restart-btn' class='chatIframeButton'>");
       html.append(constants_.chatRestartButton());
       html.append("</button>");
       html.append("</div>");
@@ -742,9 +762,22 @@ public class ChatPane
    public interface Resources extends ClientBundle
    {
       @Source("ChatPane.css")
-      CssResource styles();
+      Styles styles();
    }
 
+   interface Styles extends CssResource
+   {
+      String chatUpdateNotification();
+      String chatNotificationButton();
+      String chatIframeButton();
+      String chatUpdateMessage();
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
 
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;

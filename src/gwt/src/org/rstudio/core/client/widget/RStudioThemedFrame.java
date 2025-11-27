@@ -191,10 +191,10 @@ public class RStudioThemedFrame extends RStudioFrame
    /**
     * Inject CSS theme variables into the iframe's document element.
     * Uses a 1000ms delay to ensure theme CSS is fully loaded before sampling.
-    * This method is protected to allow future enhancements where ChatPane
-    * or other components could explicitly trigger re-injection if needed.
+    * This method is public to allow components like ChatPane to explicitly
+    * trigger re-injection after dynamically writing HTML content.
     */
-   protected void injectThemeVariables()
+   public void injectThemeVariables()
    {
       // Use same 1000ms delay as ApplicationThemes.onComputeThemeColors()
       // to ensure theme CSS is fully loaded before sampling
