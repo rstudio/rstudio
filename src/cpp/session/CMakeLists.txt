@@ -183,6 +183,11 @@ set(SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionChat.cpp
+   modules/chat/ChatConstants.cpp
+   modules/chat/ChatTypes.cpp
+   modules/chat/ChatLogging.cpp
+   modules/chat/ChatInstallation.cpp
+   modules/chat/ChatStaticFiles.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
