@@ -12,10 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
@@ -60,6 +62,7 @@ public class ChatPane
       super(constants_.chatTitle(), events);
 
       globalDisplay_ = globalDisplay;
+      events_ = events;
       commands_ = commands;
       session_ = session;
       server_ = server;
@@ -68,6 +71,23 @@ public class ChatPane
 
       // Hide empty toolbar until we have content to show
       setMainToolbarVisible(false);
+
+      // Listen for theme changes to update iframe content
+      events_.addHandler(ThemeChangedEvent.TYPE, new ThemeChangedEvent.Handler()
+      {
+         @Override
+         public void onThemeChanged(ThemeChangedEvent event)
+         {
+            // Clear the color cache so fresh colors are extracted
+            ThemeColorExtractor.clearCache();
+
+            // Re-inject theme variables into current iframe content
+            if (frame_ != null)
+            {
+               frame_.injectThemeVariables();
+            }
+         }
+      });
    }
 
    @Override
@@ -247,11 +267,12 @@ public class ChatPane
    /**
     * Injects theme variables into the frame after a short delay.
     * This ensures the HTML content is fully parsed before variables are applied.
+    * Uses 100ms delay here, followed by RStudioThemedFrame's 1000ms delay (1100ms total).
     */
    private void injectThemeVariablesDelayed(RStudioThemedFrame frame)
    {
-      // Small delay to ensure HTML is fully parsed
-      Timers.singleShot(50, () -> {
+      // Delay allows HTML to be parsed before theme variable injection
+      Timers.singleShot(100, () -> {
          frame.injectThemeVariables();
       });
    }
@@ -769,7 +790,6 @@ public class ChatPane
    {
       String chatUpdateNotification();
       String chatNotificationButton();
-      String chatIframeButton();
       String chatUpdateMessage();
    }
 
@@ -797,6 +817,7 @@ public class ChatPane
    private HorizontalPanel updateButtonPanel_;
 
    // Injected ----
+   private final EventBus events_;
    @SuppressWarnings("unused")
    private final GlobalDisplay globalDisplay_;
    @SuppressWarnings("unused")

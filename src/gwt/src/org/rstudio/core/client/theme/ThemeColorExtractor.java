@@ -50,9 +50,6 @@ public class ThemeColorExtractor
     */
    public static Map<String, String> extractEssentialColors()
    {
-      // Clear cache to ensure fresh colors for current theme
-      clearCache();
-
       // Get current theme name for cache key
       String currentThemeName = getCurrentThemeName();
 

@@ -73,39 +73,3 @@
 .rstudio-themes-alternate .chatNotificationButton:hover {
    background-color: THEME_ALTERNATE_BORDER !important;
 }
-
-/* Buttons in generated HTML (iframe content) - base light theme */
-.chatIframeButton {
-   padding: 10px 20px;
-   font-size: 14px;
-   cursor: pointer;
-   border: 1px solid THEME_DEFAULT_BORDER;
-   background-color: THEME_DEFAULT_BACKGROUND;
-   color: #333;
-   border-radius: 4px;
-}
-
-.chatIframeButton:hover {
-   background-color: THEME_DEFAULT_BORDER;
-}
-
-/* Iframe buttons - dark theme override */
-.rstudio-themes-dark-grey .chatIframeButton {
-   border: 1px solid THEME_DARKGREY_BORDER !important;
-   background-color: THEME_DARKGREY_BACKGROUND !important;
-   color: #fff !important;
-}
-
-.rstudio-themes-dark-grey .chatIframeButton:hover {
-   background-color: THEME_DARKGREY_BORDER !important;
-}
-
-/* Iframe buttons - alternate theme override */
-.rstudio-themes-alternate .chatIframeButton {
-   border: 1px solid THEME_ALTERNATE_BORDER !important;
-   background-color: THEME_ALTERNATE_BACKGROUND !important;
-}
-
-.rstudio-themes-alternate .chatIframeButton:hover {
-   background-color: THEME_ALTERNATE_BORDER !important;
-}
