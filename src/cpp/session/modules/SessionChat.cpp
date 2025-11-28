@@ -16,6 +16,12 @@
 #include "SessionChat.hpp"
 #include "SessionNodeTools.hpp"
 
+#include "chat/ChatConstants.hpp"
+#include "chat/ChatTypes.hpp"
+#include "chat/ChatLogging.hpp"
+#include "chat/ChatInstallation.hpp"
+#include "chat/ChatStaticFiles.hpp"
+
 #include <chrono>
 #include <map>
 #include <queue>
@@ -56,23 +62,6 @@
 
 #include "session-config.h"
 
-#define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                       \
-   {                                                                        \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);        \
-      std::string __formatted__ =                                           \
-          fmt::format("[{}]: {}", __func__, __message__);                   \
-      __LOGGER__("chat", __formatted__);                                    \
-      if (chatLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                           \
-   } while (0)
-
-#define DLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define ILOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_INFO_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define TLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-
 // Use a default section of 'chat' for errors / warnings
 #ifdef LOG_ERROR
 # undef LOG_ERROR
@@ -97,7 +86,6 @@ PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
 std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
-const int kMaxRestartAttempts = 1;
 
 // ============================================================================
 // Suspension blocking
@@ -105,29 +93,43 @@ const int kMaxRestartAttempts = 1;
 static bool s_chatBusy = false;
 
 
-// ============================================================================
-// Installation paths
-// ============================================================================
-const char* const kPositAiDirName = "ai";
-const char* const kClientDirPath = "dist/client";
-const char* const kServerScriptPath = "dist/server/main.js";
-const char* const kIndexFileName = "index.html";
+// Selective imports from chat modules to avoid namespace pollution
+namespace chat_constants = rstudio::session::modules::chat::constants;
+namespace chat_types = rstudio::session::modules::chat::types;
+namespace chat_logging = rstudio::session::modules::chat::logging;
+namespace chat_installation = rstudio::session::modules::chat::installation;
+namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
-// ============================================================================
-// Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-// ============================================================================
-const char* const kProtocolVersion = "1.0";
+// Constants used throughout
+using chat_constants::kProtocolVersion;
+using chat_constants::kMaxQueueSize;
+using chat_constants::kMaxBufferSize;
+using chat_constants::kMaxDelay;
+using chat_constants::kMaxRestartAttempts;
+using chat_constants::kPositAiDirName;
+using chat_constants::kServerScriptPath;
 
-// ============================================================================
-// Logging
-// ============================================================================
-int s_chatLogLevel = 0;
-std::string s_chatBackendMinLogLevel = "error"; // Default: show only error logs
+// Types used throughout
+using chat_types::SemanticVersion;
 
-int chatLogLevel()
-{
-   return s_chatLogLevel;
-}
+// Logging functions used throughout
+using chat_logging::chatLogLevel;
+using chat_logging::setChatLogLevel;
+using chat_logging::setBackendMinLogLevel;
+using chat_logging::getBackendMinLogLevel;
+using chat_logging::getLogLevelPriority;
+using chat_logging::shouldLogBackendMessage;
+using chat_logging::rs_chatSetLogLevel;
+
+// Installation functions used throughout
+using chat_installation::locatePositAiInstallation;
+using chat_installation::verifyPositAiInstallation;
+using chat_installation::getInstalledVersion;
+
+// Static file handler (used once for URI registration)
+using chat_staticfiles::handleAIChatRequest;
+
+// Logging functions are now in chat/ChatLogging.hpp/.cpp
 
 // ============================================================================
 // Execution Tracking (for cancellation support)
@@ -164,9 +166,6 @@ struct PendingNotification
    {
    }
 };
-
-// Queue configuration
-static constexpr size_t kMaxQueueSize = 10000;  // Max pending notifications
 
 // Global state (all protected by mutex)
 static boost::mutex s_notificationQueueMutex;
@@ -300,16 +299,6 @@ private:
       s_notificationQueue.push(PendingNotification(trackingId, type, content, weakOps));
    }
 
-   // Buffer size chosen to balance latency vs notification volume
-   // 1KB ≈ 10-20 lines of typical R output, provides responsive feedback
-   // without excessive notification overhead
-   static constexpr size_t kMaxBufferSize = 1024;  // 1KB
-
-   // Delay chosen to balance responsiveness vs overhead
-   // 100ms perceived as "instant" by users (< perceptual threshold)
-   // Reduces notification rate by ~10x for high-frequency output
-   static constexpr std::chrono::milliseconds kMaxDelay{100};  // 100ms
-
    bool captureOutput_;
    std::string trackingId_;
    boost::weak_ptr<core::system::ProcessOperations> weakOps_;
@@ -340,27 +329,6 @@ void echoSourceCode(const std::string& code)
       std::string prompt = (i == 0) ? "> " : "+ ";
       module_context::consoleWriteOutput(prompt + lines[i] + "\n");
    }
-}
-
-// Map log level names to numeric priorities for filtering
-// Returns priority (higher = more severe)
-// Unknown levels return very high priority to ensure critical messages are never filtered
-int getLogLevelPriority(const std::string& level)
-{
-   if (level == "trace") return 0;
-   if (level == "debug") return 1;
-   if (level == "info")  return 2;
-   if (level == "warn")  return 3;
-   if (level == "error") return 4;
-   if (level == "fatal") return 5;
-   return 999; // Unknown levels treated as highest priority (always show them)
-}
-
-SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
-{
-   int logLevel = r::sexp::asInteger(logLevelSEXP);
-   s_chatLogLevel = logLevel;
-   return logLevelSEXP;
 }
 
 // ============================================================================
@@ -1016,7 +984,7 @@ void handleLoggerLog(const json::Object& params)
    }
 
    // Filter backend logs based on minimum level setting
-   if (getLogLevelPriority(level) < getLogLevelPriority(s_chatBackendMinLogLevel))
+   if (getLogLevelPriority(level) < getLogLevelPriority(getBackendMinLogLevel()))
    {
       // This log level is below the threshold, skip it
       return;
@@ -1075,49 +1043,6 @@ void handleSetBusyStatus(const json::Object& params)
    DLOG("Chat backend busy status: {}", busy ? "busy" : "idle");
 }
 
-// Check if a logger/log notification should be shown in raw JSON-RPC format
-// Returns true if the message should be logged in raw form
-// Verbosity levels:
-//   CHAT_LOG_LEVEL=2: Show all JSON except logger/log (formatted version is enough)
-//   CHAT_LOG_LEVEL=3+: Show all JSON including logger/log (for debugging logging itself)
-bool shouldLogBackendMessage(const std::string& messageBody)
-{
-   // Quick parse to check if this is a logger/log notification
-   json::Value message;
-   if (message.parse(messageBody))
-      return true; // Parse error, show it
-
-   if (!message.isObject())
-      return true; // Not an object, show it
-
-   json::Object obj = message.getObject();
-
-   // Check if it's a logger/log notification
-   std::string method;
-   if (json::readObject(obj, "method", method) || method != "logger/log")
-      return true; // Not a logger/log notification, always show it at level 2+
-
-   // It's a logger/log notification
-   // At level 2: hide raw JSON (formatted version will be shown by handleLoggerLog)
-   // At level 3+: show raw JSON (for debugging the logging mechanism itself)
-   if (chatLogLevel() >= 3)
-   {
-      // Level 3+: apply backend level filter and show if it passes
-      json::Object params;
-      if (json::readObject(obj, "params", params))
-         return true; // No params, show it
-
-      std::string level;
-      if (json::readObject(params, "level", level))
-         return true; // No level field, show it
-
-      return getLogLevelPriority(level) >= getLogLevelPriority(s_chatBackendMinLogLevel);
-   }
-
-   // Level 2: hide logger/log raw JSON (user will see formatted version)
-   return false;
-}
-
 void onBackgroundProcessing(bool isIdle)
 {
    std::vector<PendingNotification> toProcess;
@@ -1151,73 +1076,6 @@ void onBackgroundProcessing(bool isIdle)
       }
       // If ops expired, notification is dropped (backend dead)
    }
-}
-
-// ============================================================================
-// Installation Detection
-// ============================================================================
-
-/**
- * Verify that an AI installation at the given path contains all required files.
- */
-bool verifyPositAiInstallation(const FilePath& positAiPath)
-{
-   if (!positAiPath.exists())
-      return false;
-
-   FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
-   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
-   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
-
-   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
-}
-
-FilePath locatePositAiInstallation()
-{
-   // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-   if (!rstudioPositAiPath.empty())
-   {
-      FilePath positAiPath(rstudioPositAiPath);
-      if (verifyPositAiInstallation(positAiPath))
-      {
-         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
-         return positAiPath;
-      }
-      else
-      {
-         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
-      }
-   }
-
-   // 2. Check user data directory (XDG-based, platform-appropriate)
-   // Linux: ~/.local/share/rstudio/ai
-   // macOS: ~/Library/Application Support/RStudio/ai
-   // Windows: %LOCALAPPDATA%/RStudio/ai
-   FilePath userPositAiPath = xdg::userDataDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(userPositAiPath))
-   {
-      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
-      return userPositAiPath;
-   }
-
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux: /etc/rstudio/ai
-   // Windows: C:/ProgramData/RStudio/ai
-   FilePath systemPositAiPath = xdg::systemConfigDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(systemPositAiPath))
-   {
-      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
-      return systemPositAiPath;
-   }
-
-   DLOG("No valid AI installation found. Checked locations:");
-   if (!rstudioPositAiPath.empty())
-      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
-   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
-
-   return FilePath(); // Not found
 }
 
 // ============================================================================
@@ -1419,112 +1277,6 @@ Error getPackageInfoFromManifest(
 
    return Success();
 }
-
-// Read installed version from package.json in ai directory
-std::string getInstalledVersion()
-{
-   FilePath positAiPath = locatePositAiInstallation();
-   if (positAiPath.isEmpty())
-      return "";
-
-   FilePath packageJson = positAiPath.completeChildPath("package.json");
-   if (!packageJson.exists())
-   {
-      WLOG("package.json not found in AI installation");
-      return "";
-   }
-
-   // Read and parse package.json
-   std::string content;
-   Error error = core::readStringFromFile(packageJson, &content);
-   if (error)
-   {
-      WLOG("Failed to read package.json: {}", error.getMessage());
-      return "";
-   }
-
-   json::Value packageValue;
-   if (packageValue.parse(content))
-   {
-      WLOG("Failed to parse package.json");
-      return "";
-   }
-
-   if (!packageValue.isObject())
-   {
-      WLOG("package.json is not a JSON object");
-      return "";
-   }
-
-   json::Object packageObj = packageValue.getObject();
-   std::string version;
-   error = json::readObject(packageObj, "version", version);
-   if (error)
-   {
-      WLOG("package.json missing 'version' field");
-      return "";
-   }
-
-   DLOG("Installed version: {}", version);
-   return version;
-}
-
-// Parse semantic version string into components
-struct SemanticVersion
-{
-   int major;
-   int minor;
-   int patch;
-
-   SemanticVersion() : major(0), minor(0), patch(0) {}
-
-   bool parse(const std::string& versionStr)
-   {
-      // Match format: major.minor.patch (with optional "v" prefix)
-      std::string cleanVersion = versionStr;
-      if (!cleanVersion.empty() && cleanVersion[0] == 'v')
-         cleanVersion = cleanVersion.substr(1);
-
-      // Split on dots
-      std::vector<std::string> parts;
-      boost::split(parts, cleanVersion, boost::is_any_of("."));
-
-      if (parts.size() < 1)
-         return false;
-
-      // Parse major (required)
-      major = safe_convert::stringTo<int>(parts[0], -1);
-      if (major < 0)
-         return false;
-
-      // Parse minor (optional, default to 0)
-      if (parts.size() >= 2)
-      {
-         minor = safe_convert::stringTo<int>(parts[1], -1);
-         if (minor < 0)
-            return false;
-      }
-
-      // Parse patch (optional, default to 0)
-      if (parts.size() >= 3)
-      {
-         patch = safe_convert::stringTo<int>(parts[2], -1);
-         if (patch < 0)
-            return false;
-      }
-
-      return true;
-   }
-
-   bool operator>(const SemanticVersion& other) const
-   {
-      if (major != other.major)
-         return major > other.major;
-      if (minor != other.minor)
-         return minor > other.minor;
-      return patch > other.patch;
-   }
-};
 
 // Compare semantic versions (returns true if available > installed)
 bool isNewerVersionAvailable(
@@ -2132,159 +1884,6 @@ Error startChatBackend()
 }
 
 // ============================================================================
-// Static File Serving
-// ============================================================================
-
-std::string getContentType(const std::string& extension)
-{
-   static std::map<std::string, std::string> contentTypes = {
-      {".html", "text/html; charset=utf-8"},
-      {".js", "application/javascript; charset=utf-8"},
-      {".mjs", "application/javascript; charset=utf-8"},
-      {".css", "text/css; charset=utf-8"},
-      {".json", "application/json; charset=utf-8"},
-      {".svg", "image/svg+xml"},
-      {".png", "image/png"},
-      {".jpg", "image/jpeg"},
-      {".jpeg", "image/jpeg"},
-      {".gif", "image/gif"},
-      {".ico", "image/x-icon"},
-      {".woff", "font/woff"},
-      {".woff2", "font/woff2"},
-      {".ttf", "font/ttf"},
-      {".eot", "application/vnd.ms-fontobject"}
-   };
-
-   auto it = contentTypes.find(extension);
-   if (it != contentTypes.end())
-      return it->second;
-
-   return "application/octet-stream";
-}
-
-Error validateAndResolvePath(const FilePath& clientRoot,
-                             const std::string& requestPath,
-                             FilePath* pResolvedPath)
-{
-   // Remove query string and fragment
-   std::string cleanPath = requestPath;
-   size_t queryPos = cleanPath.find('?');
-   if (queryPos != std::string::npos)
-      cleanPath = cleanPath.substr(0, queryPos);
-
-   size_t fragmentPos = cleanPath.find('#');
-   if (fragmentPos != std::string::npos)
-      cleanPath = cleanPath.substr(0, fragmentPos);
-
-   // URL decode
-   cleanPath = http::util::urlDecode(cleanPath);
-
-   // Build full path
-   FilePath resolved = clientRoot.completeChildPath(cleanPath);
-
-   // CRITICAL: Canonicalize to resolve symlinks and ".." before security check
-   Error error = core::system::realPath(resolved, &resolved);
-   if (error)
-      return error;
-
-   // Security: Ensure resolved path is within clientRoot
-   std::string resolvedStr = resolved.getAbsolutePath();
-   std::string rootStr = clientRoot.getAbsolutePath();
-
-   if (!boost::starts_with(resolvedStr, rootStr))
-   {
-      return systemError(boost::system::errc::permission_denied,
-                        "Path traversal attempt detected",
-                        ERROR_LOCATION);
-   }
-
-   *pResolvedPath = resolved;
-   return Success();
-}
-
-Error handleAIChatRequest(const http::Request& request,
-                          http::Response* pResponse)
-{
-   // Locate installation
-   FilePath positAiPath = locatePositAiInstallation();
-   if (positAiPath.isEmpty())
-   {
-      pResponse->setStatusCode(http::status::NotFound);
-      pResponse->setBody("Posit AI not installed.");
-      return Success();
-   }
-
-   FilePath clientRoot = positAiPath.completeChildPath(kClientDirPath);
-
-   // Parse requested path from URI
-   // URI format: /ai-chat/<path>
-   std::string uri = request.uri();
-   size_t pos = uri.find("/ai-chat/");
-   if (pos == std::string::npos)
-   {
-      pResponse->setStatusCode(http::status::BadRequest);
-      return Success();
-   }
-
-   std::string requestPath = uri.substr(pos + 9); // Length of "/ai-chat/"
-
-   // Default to index.html
-   if (requestPath.empty() || requestPath == "/")
-      requestPath = kIndexFileName;
-
-   // Validate and resolve path
-   FilePath resolvedPath;
-   Error error = validateAndResolvePath(clientRoot, requestPath, &resolvedPath);
-   if (error)
-   {
-      pResponse->setStatusCode(http::status::Forbidden);
-      return Success();
-   }
-
-   // Check if file exists
-   if (!resolvedPath.exists())
-   {
-      pResponse->setStatusCode(http::status::NotFound);
-      return Success();
-   }
-
-   // Read file BYTE-FOR-BYTE (no modifications)
-   std::string content;
-   error = core::readStringFromFile(resolvedPath, &content);
-   if (error)
-   {
-      pResponse->setStatusCode(http::status::InternalServerError);
-      return error;
-   }
-
-   // Set content type
-   std::string extension = resolvedPath.getExtension();
-   pResponse->setContentType(getContentType(extension));
-
-   // Set caching headers
-   if (boost::ends_with(requestPath, kIndexFileName) ||
-       boost::ends_with(requestPath, ".js") ||
-       boost::ends_with(requestPath, ".css"))
-   {
-      // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
-      // Use multiple headers to ensure cache is disabled across all browsers and proxies
-      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
-      pResponse->setHeader("Pragma", "no-cache");  // HTTP/1.0 compatibility
-      pResponse->setHeader("Expires", "0");        // Proxy cache control
-   }
-   else if (requestPath.find(".") != std::string::npos)
-   {
-      // Cache other assets like images, fonts, etc.
-      pResponse->setHeader("Cache-Control", "public, max-age=31536000");
-   }
-
-   pResponse->setStatusCode(http::status::Ok);
-   pResponse->setBody(content);
-
-   return Success();
-}
-
-// ============================================================================
 // RPC Methods
 // ============================================================================
 
@@ -2670,7 +2269,7 @@ Error initialize()
    // Read default log level
    std::string chatLogLevelStr = core::system::getenv("CHAT_LOG_LEVEL");
    if (!chatLogLevelStr.empty())
-      s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevelStr, 0);
+      setChatLogLevel(safe_convert::stringTo<int>(chatLogLevelStr, 0));
 
    // Read backend minimum log level filter
    std::string backendMinLevel = core::system::getenv("CHAT_BACKEND_MIN_LEVEL");
@@ -2684,7 +2283,7 @@ Error initialize()
           backendMinLevel == "info" || backendMinLevel == "warn" ||
           backendMinLevel == "error" || backendMinLevel == "fatal")
       {
-         s_chatBackendMinLogLevel = backendMinLevel;
+         setBackendMinLogLevel(backendMinLevel);
       }
       else
       {
