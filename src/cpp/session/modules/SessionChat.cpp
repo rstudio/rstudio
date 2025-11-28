@@ -18,7 +18,9 @@
 
 #include <chrono>
 #include <map>
+#include <queue>
 #include <set>
+#include <vector>
 #include <functional>
 
 #include <boost/thread/mutex.hpp>
@@ -137,18 +139,61 @@ std::string s_currentTrackingId;  // Empty string when not executing
 std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
 
 // ============================================================================
+// Streaming Output Notification Queue with Lifecycle Management
+// ============================================================================
+// Notifications are queued from onConsoleOutput (any thread) and drained
+// from onBackgroundProcessing (main thread only) to ensure thread safety
+//
+// Lifecycle management prevents unbounded growth and stale notifications:
+// - Track active executions to filter notifications for completed/cancelled requests
+// - Queue size limit prevents memory exhaustion from noisy executions
+// - Automatic cleanup when weak_ptr expires (backend died)
+
+struct PendingNotification
+{
+   std::string trackingId;
+   std::string type;  // "stdout" or "stderr"
+   std::string content;
+   boost::weak_ptr<core::system::ProcessOperations> weakOps;
+
+   PendingNotification(const std::string& id,
+                       const std::string& t,
+                       const std::string& c,
+                       boost::weak_ptr<core::system::ProcessOperations> ops)
+      : trackingId(id), type(t), content(c), weakOps(ops)
+   {
+   }
+};
+
+// Queue configuration
+static constexpr size_t kMaxQueueSize = 10000;  // Max pending notifications
+
+// Global state (all protected by mutex)
+static boost::mutex s_notificationQueueMutex;
+static std::queue<PendingNotification> s_notificationQueue;
+static std::set<std::string> s_activeTrackingIds;  // Active executions
+
+// ============================================================================
 // Code Execution Context (for console output capture)
 // ============================================================================
 class ChatExecContext
 {
 public:
-   ChatExecContext(bool captureOutput)
-      : captureOutput_(captureOutput)
+   ChatExecContext(bool captureOutput,
+                   const std::string& trackingId,
+                   boost::shared_ptr<core::system::ProcessOperations> ops)
+      : captureOutput_(captureOutput),
+        trackingId_(trackingId),
+        weakOps_(ops),
+        lastStdoutFlush_(std::chrono::steady_clock::now()),
+        lastStderrFlush_(std::chrono::steady_clock::now())
    {
    }
 
    ~ChatExecContext()
    {
+      // Flush any remaining buffered output
+      flushBuffers();
       disconnect();
    }
 
@@ -163,8 +208,24 @@ public:
       connection_.disconnect();
    }
 
-   std::string getOutput() const { return outputBuffer_; }
-   std::string getError() const { return errorBuffer_; }
+   void flushBuffers()
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      flushStdoutLocked();
+      flushStderrLocked();
+   }
+
+   std::string getOutput() const
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      return outputBuffer_;
+   }
+
+   std::string getError() const
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      return errorBuffer_;
+   }
 
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type,
@@ -173,15 +234,94 @@ private:
       if (!captureOutput_)
          return;
 
+      boost::mutex::scoped_lock lock(bufferMutex_);
+
       if (type == module_context::ConsoleOutputNormal)
+      {
          outputBuffer_ += output;
+         stdoutBuffer_ += output;
+
+         auto now = std::chrono::steady_clock::now();
+         bool sizeThreshold = stdoutBuffer_.size() >= kMaxBufferSize;
+         bool timeThreshold = (now - lastStdoutFlush_) >= kMaxDelay;
+
+         if (sizeThreshold || timeThreshold)
+            flushStdoutLocked();
+      }
       else
+      {
          errorBuffer_ += output;
+         stderrBuffer_ += output;
+
+         auto now = std::chrono::steady_clock::now();
+         bool sizeThreshold = stderrBuffer_.size() >= kMaxBufferSize;
+         bool timeThreshold = (now - lastStderrFlush_) >= kMaxDelay;
+
+         if (sizeThreshold || timeThreshold)
+            flushStderrLocked();
+      }
    }
 
+   void flushStdoutLocked()
+   {
+      if (!stdoutBuffer_.empty())
+      {
+         queueNotification(trackingId_, "stdout", stdoutBuffer_, weakOps_);
+         stdoutBuffer_.clear();
+         lastStdoutFlush_ = std::chrono::steady_clock::now();
+      }
+   }
+
+   void flushStderrLocked()
+   {
+      if (!stderrBuffer_.empty())
+      {
+         queueNotification(trackingId_, "stderr", stderrBuffer_, weakOps_);
+         stderrBuffer_.clear();
+         lastStderrFlush_ = std::chrono::steady_clock::now();
+      }
+   }
+
+   void queueNotification(const std::string& trackingId,
+                          const std::string& type,
+                          const std::string& content,
+                          boost::weak_ptr<core::system::ProcessOperations> weakOps)
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      // Enforce queue size limit to prevent unbounded growth
+      if (s_notificationQueue.size() >= kMaxQueueSize)
+      {
+         WLOG("Notification queue full (size={}), dropping oldest notification",
+              s_notificationQueue.size());
+         s_notificationQueue.pop();
+      }
+
+      s_notificationQueue.push(PendingNotification(trackingId, type, content, weakOps));
+   }
+
+   // Buffer size chosen to balance latency vs notification volume
+   // 1KB ≈ 10-20 lines of typical R output, provides responsive feedback
+   // without excessive notification overhead
+   static constexpr size_t kMaxBufferSize = 1024;  // 1KB
+
+   // Delay chosen to balance responsiveness vs overhead
+   // 100ms perceived as "instant" by users (< perceptual threshold)
+   // Reduces notification rate by ~10x for high-frequency output
+   static constexpr std::chrono::milliseconds kMaxDelay{100};  // 100ms
+
    bool captureOutput_;
-   std::string outputBuffer_;
-   std::string errorBuffer_;
+   std::string trackingId_;
+   boost::weak_ptr<core::system::ProcessOperations> weakOps_;
+
+   mutable boost::mutex bufferMutex_;
+   std::string outputBuffer_;  // Complete accumulated output
+   std::string errorBuffer_;   // Complete accumulated error
+   std::string stdoutBuffer_;  // Pending stdout to flush
+   std::string stderrBuffer_;  // Pending stderr to flush
+   std::chrono::steady_clock::time_point lastStdoutFlush_;
+   std::chrono::steady_clock::time_point lastStderrFlush_;
+
    RSTUDIO_BOOST_CONNECTION connection_;
 };
 
@@ -330,6 +470,112 @@ void sendJsonRpcError(core::system::ProcessOperations& ops,
    }
 }
 
+void sendStreamingOutput(core::system::ProcessOperations& ops,
+                         const std::string& trackingId,
+                         const std::string& type,
+                         const std::string& content)
+{
+   json::Object notification;
+   notification["jsonrpc"] = "2.0";
+   notification["method"] = "runtime/executionOutput";
+
+   json::Object params;
+   params["trackingId"] = trackingId;
+   params["type"] = type;
+   params["content"] = content;
+   params["isIncremental"] = true;
+
+   notification["params"] = params;
+
+   std::string body = notification.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending streaming output: trackingId={}, type={}, length={}",
+           trackingId, type, content.size());
+   }
+
+   // Best-effort send - don't abort execution on failure
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      ELOG("Failed to send streaming output: {}", error.getMessage());
+   }
+}
+
+void drainNotificationQueueForExecution(core::system::ProcessOperations& ops,
+                                         const std::string& trackingId)
+{
+   std::vector<PendingNotification> toProcess;
+
+   // Phase 1: Extract notifications to process (hold lock briefly)
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      std::queue<PendingNotification> remaining;
+      while (!s_notificationQueue.empty())
+      {
+         PendingNotification notif = s_notificationQueue.front();
+         s_notificationQueue.pop();
+
+         if (notif.trackingId == trackingId)
+         {
+            toProcess.push_back(notif);
+         }
+         else
+         {
+            // Preserve notifications from concurrent executions
+            remaining.push(notif);
+         }
+      }
+
+      s_notificationQueue = remaining;
+   }
+
+   // Phase 2: Send notifications (no lock held, no race condition)
+   for (const auto& notif : toProcess)
+   {
+      sendStreamingOutput(ops, notif.trackingId, notif.type, notif.content);
+   }
+}
+
+void registerActiveExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+   s_activeTrackingIds.insert(trackingId);
+}
+
+void unregisterActiveExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+   s_activeTrackingIds.erase(trackingId);
+}
+
+void clearNotificationsForExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+   std::queue<PendingNotification> remaining;
+   while (!s_notificationQueue.empty())
+   {
+      PendingNotification notif = s_notificationQueue.front();
+      s_notificationQueue.pop();
+
+      if (notif.trackingId != trackingId)
+      {
+         remaining.push(notif);
+      }
+      // Drop notifications for cancelled trackingId
+   }
+
+   s_notificationQueue = remaining;
+}
+
 void handleGetActiveSession(core::system::ProcessOperations& ops,
                             const json::Value& requestId)
 {
@@ -444,6 +690,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          result["executionTime"] = 0;
 
          sendJsonRpcResponse(ops, requestId, result);
+         // Note: No need to unregister here as we never registered (this check is before registration)
          return;
       }
 
@@ -451,11 +698,15 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       s_currentTrackingId = trackingId;
    }
 
+   // Register this execution as active to enable notification filtering
+   registerActiveExecution(trackingId);
+
    // Record start time
    auto startTime = std::chrono::steady_clock::now();
 
-   // Create execution context to capture console output
-   ChatExecContext execContext(captureOutput);
+   // Create execution context with streaming support
+   // Pass shared_ptr for safe access from background thread
+   ChatExecContext execContext(captureOutput, trackingId, ops.shared_from_this());
    execContext.connect();
 
    // Record the display list length before execution so we can detect if
@@ -560,6 +811,15 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       // Don't fail on plot errors - just continue without plots
    }
 
+   // Flush any remaining buffered output
+   // This queues final notifications to the global queue
+   execContext.flushBuffers();
+
+   // Synchronously drain THIS execution's notifications before final response
+   // This guarantees correct ordering without sleeping or waiting for background processing
+   // Handles concurrent executions correctly by only draining matching trackingId
+   drainNotificationQueueForExecution(ops, trackingId);
+
    // Disconnect context
    execContext.disconnect();
 
@@ -583,6 +843,9 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    result["error"] = execContext.getError();
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
+
+   // Unregister this execution - notifications after this point are stale
+   unregisterActiveExecution(trackingId);
 
    // Send successful response
    sendJsonRpcResponse(ops, requestId, result);
@@ -614,6 +877,9 @@ void handleCancelExecution(const json::Object& params)
       shouldInterrupt = !s_currentTrackingId.empty() &&
                         s_currentTrackingId == trackingId;
    }
+
+   // Clear any queued notifications for this cancelled execution
+   clearNotificationsForExecution(trackingId);
 
    if (shouldInterrupt)
    {
@@ -854,11 +1120,37 @@ bool shouldLogBackendMessage(const std::string& messageBody)
 
 void onBackgroundProcessing(bool isIdle)
 {
-   // Messages are now processed immediately in onBackendStdout while we have
-   // a valid ProcessOperations reference. No deferred processing needed.
+   std::vector<PendingNotification> toProcess;
 
-   // Future: Add timeout handling for request/response pattern if needed
-   // (similar to SessionCopilot.cpp lines 1448-1462)
+   // Phase 1: Extract notifications to process (hold lock briefly)
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      while (!s_notificationQueue.empty())
+      {
+         PendingNotification notif = s_notificationQueue.front();
+         s_notificationQueue.pop();
+
+         // Only send notifications for active executions
+         if (s_activeTrackingIds.find(notif.trackingId) != s_activeTrackingIds.end())
+         {
+            toProcess.push_back(notif);
+         }
+         // Notifications for inactive executions are dropped (completed/cancelled)
+      }
+   }
+
+   // Phase 2: Send notifications (no lock held, no race condition)
+   for (const auto& notif : toProcess)
+   {
+      // Check if ops still valid (backend may have died)
+      auto ops = notif.weakOps.lock();
+      if (ops)
+      {
+         sendStreamingOutput(*ops, notif.trackingId, notif.type, notif.content);
+      }
+      // If ops expired, notification is dropped (backend dead)
+   }
 }
 
 // ============================================================================
@@ -2344,6 +2636,14 @@ void onShutdown(bool terminatedNormally)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
+
+   // Clear notification queue
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+      while (!s_notificationQueue.empty())
+         s_notificationQueue.pop();
+      s_activeTrackingIds.clear();
+   }
 }
 
 } // end anonymous namespace
