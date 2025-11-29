@@ -28,7 +28,7 @@ const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 
 // Protocol Version
-const char* const kProtocolVersion = "1.0";
+const char* const kProtocolVersion = "1.1";
 
 } // namespace constants
 } // namespace chat

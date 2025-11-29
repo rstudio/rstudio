@@ -150,6 +150,13 @@ public class ThemeColorExtractor
          // Error/destructive color
          colors.put("--rstudio-errorForeground", deriveErrorColor(isDark));
 
+         // Primary button colors (distinct from focus border)
+         colors.put("--rstudio-primaryButton-background", derivePrimaryButtonBackground(isDark));
+         colors.put("--rstudio-primaryButton-foreground", derivePrimaryButtonForeground(isDark));
+
+         // Selection/message background color
+         colors.put("--rstudio-selectionBackground", deriveSelectionBackground(background, isDark));
+
       }
       catch (Exception e)
       {
@@ -173,6 +180,9 @@ public class ThemeColorExtractor
          colors.put("--rstudio-list-hoverBackground", "#e8e8e8");
          colors.put("--rstudio-list-activeSelectionForeground", "#000000");
          colors.put("--rstudio-errorForeground", "#dc3545");
+         colors.put("--rstudio-primaryButton-background", "#4d9de0");
+         colors.put("--rstudio-primaryButton-foreground", "#ffffff");
+         colors.put("--rstudio-selectionBackground", "#daeffe");
       }
 
       return colors;
@@ -377,6 +387,75 @@ public class ThemeColorExtractor
    {
       // Use standard red tones that work well in both themes
       return isDark ? "#f48771" : "#dc3545";
+   }
+
+   /**
+    * Derive a primary button background color appropriate for the theme.
+    * Uses RStudio's blue accent color, adapted for light and dark themes.
+    */
+   private static String derivePrimaryButtonBackground(boolean isDark)
+   {
+      if (isDark)
+      {
+         // Slightly lighter blue for dark themes (better contrast)
+         return "#5a9fe5";
+      }
+      else
+      {
+         // Medium blue for light themes (RStudio's standard blue)
+         return "#4d9de0";
+      }
+   }
+
+   /**
+    * Derive a primary button foreground color.
+    * Always white for maximum contrast with blue background.
+    */
+   private static String derivePrimaryButtonForeground(boolean isDark)
+   {
+      // White text works well on both blue backgrounds
+      return "#ffffff";
+   }
+
+   /**
+    * Derive a selection background color appropriate for the theme.
+    * Used for chat message backgrounds, text selections, etc.
+    * Should be distinct from main background but still subtle.
+    */
+   private static String deriveSelectionBackground(String background, boolean isDark)
+   {
+      try
+      {
+         RGBColor bg = RGBColor.fromCss(background);
+         if (bg != null)
+         {
+            if (isDark)
+            {
+               // For dark themes, make selection lighter than background
+               // Increase RGB values by 40 for better contrast on very dark backgrounds
+               int r = Math.max(0, Math.min(255, bg.red() + 40));
+               int g = Math.max(0, Math.min(255, bg.green() + 40));
+               int b = Math.max(0, Math.min(255, bg.blue() + 40));
+               return "rgb(" + r + ", " + g + ", " + b + ")";
+            }
+            else
+            {
+               // For light themes, make selection slightly darker than background
+               // Decrease RGB values by 15 for subtle highlighting
+               int r = Math.max(0, Math.min(255, bg.red() - 15));
+               int g = Math.max(0, Math.min(255, bg.green() - 15));
+               int b = Math.max(0, Math.min(255, bg.blue() - 15));
+               return "rgb(" + r + ", " + g + ", " + b + ")";
+            }
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      // Fallback colors aligned with CSS defaults
+      return isDark ? "#47789e" : "#daeffe";
    }
 
    /**
