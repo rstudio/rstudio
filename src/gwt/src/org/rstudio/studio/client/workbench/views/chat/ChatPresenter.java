@@ -39,6 +39,14 @@ public class ChatPresenter extends BasePresenter
 
    public interface Display extends WorkbenchView
    {
+      enum Status
+      {
+         STARTING,
+         NOT_INSTALLED,
+         ERROR,
+         READY
+      }
+
       interface Observer
       {
          void onPaneReady();
@@ -54,7 +62,7 @@ public class ChatPresenter extends BasePresenter
 
       void setObserver(Observer observer);
       void setUpdateObserver(UpdateObserver observer);
-      void setStatus(String status);
+      void setStatus(Status status);
       void showError(String errorMessage);
       void loadUrl(String url);
       void showUpdateNotification(String newVersion);
@@ -182,7 +190,7 @@ public class ChatPresenter extends BasePresenter
    private void startBackend()
    {
       // Show loading state
-      display_.setStatus("starting");
+      display_.setStatus(Display.Status.STARTING);
 
       // Start backend
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
@@ -198,7 +206,7 @@ public class ChatPresenter extends BasePresenter
             else
             {
                String error = response.getString("error");
-               display_.setStatus("error");
+               display_.setStatus(Display.Status.ERROR);
                display_.showError("Failed to start Chat backend: " + error);
             }
          }
@@ -206,7 +214,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            display_.setStatus("error");
+            display_.setStatus(Display.Status.ERROR);
             display_.showError("Failed to start backend: " + error.getMessage());
          }
       });
@@ -374,7 +382,7 @@ public class ChatPresenter extends BasePresenter
    {
       if (attemptCount > 30) // 30 seconds timeout
       {
-         display_.setStatus("error");
+         display_.setStatus(Display.Status.ERROR);
          display_.showError("Timeout waiting for backend to start");
          return;
       }
@@ -410,7 +418,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            display_.setStatus("error");
+            display_.setStatus(Display.Status.ERROR);
             display_.showError("Failed to check backend status: " + error.getMessage());
          }
       });
@@ -418,7 +426,7 @@ public class ChatPresenter extends BasePresenter
 
    private void restartBackend()
    {
-      display_.setStatus("Restarting Posit Assistant...");
+      display_.setStatus(Display.Status.STARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
       {
@@ -455,7 +463,7 @@ public class ChatPresenter extends BasePresenter
       String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
       display_.loadUrl(urlWithWsParam);
-      display_.setStatus("ready");
+      display_.setStatus(Display.Status.READY);
 
       // Only hide notification if we're reloading after an install/update completion
       // Otherwise, keep any "Update available" notification visible
@@ -467,7 +475,6 @@ public class ChatPresenter extends BasePresenter
    }
 
    private final Display display_;
-   @SuppressWarnings("unused")
    private final EventBus events_;
    @SuppressWarnings("unused")
    private final Commands commands_;

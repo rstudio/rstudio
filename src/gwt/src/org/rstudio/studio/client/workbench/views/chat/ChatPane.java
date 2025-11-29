@@ -484,22 +484,20 @@ public class ChatPane
    }
 
    @Override
-   public void setStatus(String status)
+   public void setStatus(ChatPresenter.Display.Status status)
    {
-      currentStatus_ = status;
-
       switch (status)
       {
-         case "starting":
+         case STARTING:
             showMessage(constants_.startingChatMessage());
             break;
-         case "not_installed":
+         case NOT_INSTALLED:
             showMessage(constants_.chatNotInstalledMessage());
             break;
-         case "error":
+         case ERROR:
             // Error message will be shown via showError()
             break;
-         case "ready":
+         case READY:
             // UI is loaded, hide messages
             hideMessage();
             break;
@@ -807,7 +805,6 @@ public class ChatPane
    private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
    private String currentUrl_ = null;
-   private String currentStatus_ = "idle";
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
 
