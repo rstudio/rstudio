@@ -22,6 +22,7 @@
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatStaticFiles.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <map>
 #include <queue>
@@ -59,6 +60,7 @@
 #include <session/prefs/UserPrefs.hpp>
 
 #include "../SessionDirs.hpp"
+#include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
 
@@ -577,8 +579,186 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
    session["version"] = module_context::rVersion();
    session["mode"] = "console";
    session["sessionId"] = module_context::activeSession().id();
-   // TODO: Future work - return R workspace variables
-   session["variables"] = json::Array();
+
+   // Get R workspace variables with smart filtering
+   json::Array variablesArray;
+   size_t totalVariableCount = 0;
+   {
+      using namespace rstudio::r::sexp;
+
+      // Note: R_GlobalEnv objects don't need explicit protection as they're
+      // already protected by the environment itself. rProtect is available
+      // for any intermediate R operations.
+      Protect rProtect;
+      std::vector<Variable> vars;
+
+      // List ALL variables (including hidden) to get accurate total count
+      listEnvironment(R_GlobalEnv,
+                      true,   // includeAll - get everything first
+                      false,  // includeLastDotValue - we'll filter manually
+                      &vars);
+
+      totalVariableCount = vars.size();
+
+      // Smart filtering: exclude functions and hidden variables
+      std::vector<Variable> filteredVars;
+      filteredVars.reserve(vars.size());
+
+      for (const Variable& var : vars)
+      {
+         const std::string& name = var.first;
+         SEXP varSEXP = var.second;
+
+         // Skip hidden variables (starting with '.')
+         if (!name.empty() && name[0] == '.')
+            continue;
+
+         // Skip functions (CLOSXP = user functions, SPECIALSXP/BUILTINSXP = built-ins)
+         int objType = TYPEOF(varSEXP);
+         if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
+            continue;
+
+         filteredVars.push_back(var);
+      }
+
+      // OPTIMIZATION: Extract sizes WITHOUT full JSON conversion
+      // This is much faster than calling varToJson() on all variables
+      struct VarWithSize {
+         Variable var;
+         int64_t size;
+      };
+
+      std::vector<VarWithSize> varsWithSize;
+      varsWithSize.reserve(filteredVars.size());
+
+      for (const Variable& var : filteredVars)
+      {
+         // Use .rs.estimatedObjectSize() which is optimized for:
+         // - ALTREP objects (doesn't materialize)
+         // - Large objects (returns estimate quickly)
+         // - Edge cases (null pointers, etc.)
+         SEXP sizeSEXP;
+         Error error = r::exec::RFunction(".rs.estimatedObjectSize")
+            .addParam(var.second)
+            .call(&sizeSEXP, &rProtect);
+
+         int64_t size = 0;
+         if (!error && sizeSEXP != R_NilValue)
+         {
+            if (Rf_isInteger(sizeSEXP) && Rf_length(sizeSEXP) > 0)
+            {
+               int rSize = INTEGER(sizeSEXP)[0];
+               // Check for NA and negative values
+               if (rSize != NA_INTEGER && rSize >= 0)
+                  size = static_cast<int64_t>(rSize);
+            }
+            else if (Rf_isReal(sizeSEXP) && Rf_length(sizeSEXP) > 0)
+            {
+               double rSize = REAL(sizeSEXP)[0];
+               // Check for NA/NaN, negative values, and overflow
+               if (!ISNA(rSize) && !ISNAN(rSize) && rSize >= 0.0 &&
+                   rSize <= static_cast<double>(INT64_MAX))
+                  size = static_cast<int64_t>(rSize);
+            }
+         }
+
+         varsWithSize.push_back(VarWithSize{var, size});
+      }
+
+      // Sort by size (largest first)
+      std::sort(varsWithSize.begin(),
+                varsWithSize.end(),
+                [](const VarWithSize& a, const VarWithSize& b)
+                {
+                   return a.size > b.size;
+                });
+
+      // Take top MAX_VARIABLES and convert to JSON
+      // Limit to 100 to balance context richness with performance.
+      // Most workspaces have <100 data objects; for larger workspaces,
+      // showing the largest objects provides the most useful context.
+      const size_t MAX_VARIABLES = 100;
+      size_t numToInclude = std::min(varsWithSize.size(), MAX_VARIABLES);
+
+      for (size_t i = 0; i < numToInclude; i++)
+      {
+         json::Value jsonVal = environment::varToJson(R_GlobalEnv, varsWithSize[i].var);
+
+         // Skip variables that fail conversion (though this is rare)
+         if (jsonVal.isNull() || !jsonVal.isObject())
+         {
+            DLOG("Failed to convert variable '{}' to JSON, skipping",
+                 varsWithSize[i].var.first);
+            continue;
+         }
+
+         // Transform to SessionVariable schema (name, type, displayName)
+         // The backend expects simplified variables for context, not full details
+         json::Object varObj = jsonVal.getObject();
+         json::Object simplifiedVar;
+
+         // Extract name (required) - fallback to variable name from pair if missing
+         std::string name;
+         if (varObj.hasMember("name") && varObj["name"].isString())
+            name = varObj["name"].getString();
+         else
+            name = varsWithSize[i].var.first;
+         simplifiedVar["name"] = name;
+
+         // Extract type (required) - fallback to "unknown" if missing
+         std::string type;
+         if (varObj.hasMember("type") && varObj["type"].isString())
+            type = varObj["type"].getString();
+         else
+            type = "unknown";
+         simplifiedVar["type"] = type;
+
+         // Extract description and use as displayName (required)
+         // Description contains human-readable summary like "data.frame: 32 obs. of 11 variables"
+         std::string displayName;
+         if (varObj.hasMember("description") && varObj["description"].isString())
+         {
+            displayName = varObj["description"].getString();
+         }
+
+         if (displayName.empty())
+         {
+            // Fallback: use "type: value" format if no description
+            std::string value;
+            if (varObj.hasMember("value") && varObj["value"].isString())
+               value = varObj["value"].getString();
+
+            if (value.empty())
+               displayName = type;
+            else
+               displayName = type + ": " + value;
+         }
+         simplifiedVar["displayName"] = displayName;
+
+         variablesArray.push_back(std::move(simplifiedVar));
+      }
+
+      // Log filtering results
+      if (filteredVars.size() > MAX_VARIABLES)
+      {
+         DLOG("Variable context: showing {} of {} variables (filtered from {} total)",
+              variablesArray.getSize(), filteredVars.size(), totalVariableCount);
+      }
+      else if (filteredVars.size() < totalVariableCount)
+      {
+         DLOG("Variable context: showing {} variables (filtered from {} total)",
+              variablesArray.getSize(), totalVariableCount);
+      }
+   }
+
+   // Add metadata about filtering
+   json::Object variablesMeta;
+   variablesMeta["totalCount"] = static_cast<int>(totalVariableCount);
+   variablesMeta["shownCount"] = static_cast<int>(variablesArray.getSize());
+   variablesMeta["filtered"] = (variablesArray.getSize() < totalVariableCount);
+
+   session["variables"] = variablesArray;
+   session["variablesMeta"] = variablesMeta;
 
    // PlatformInfo object
    json::Object platformInfo;
