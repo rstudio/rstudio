@@ -1128,6 +1128,62 @@ Error downloadManifest(json::Object* pManifest)
    if (!pManifest)
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
+#ifndef NDEBUG
+   // DEBUG builds only: Support local manifest file for testing
+   std::string debugManifestPath = core::system::getenv("RSTUDIO_CHAT_DEBUG_MANIFEST");
+   if (!debugManifestPath.empty())
+   {
+      // Validate path ends with manifest.json
+      if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
+      {
+         WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json', ignoring: {}",
+              debugManifestPath);
+      }
+      else
+      {
+         FilePath debugManifestFile(debugManifestPath);
+         if (debugManifestFile.exists())
+         {
+            DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
+            // Read and parse JSON from local file
+            std::string manifestContent;
+            Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
+            if (error)
+            {
+               WLOG("Failed to read debug manifest file: {}", error.getMessage());
+               return error;
+            }
+
+            // Parse JSON
+            json::Value manifestValue;
+            if (manifestValue.parse(manifestContent))
+            {
+               WLOG("Failed to parse debug manifest JSON");
+               return systemError(boost::system::errc::protocol_error,
+                                 "Invalid JSON in debug manifest",
+                                 ERROR_LOCATION);
+            }
+
+            if (!manifestValue.isObject())
+            {
+               return systemError(boost::system::errc::protocol_error,
+                                 "Debug manifest must be a JSON object",
+                                 ERROR_LOCATION);
+            }
+
+            *pManifest = manifestValue.getObject();
+            DLOG("Successfully loaded and parsed debug manifest");
+            return Success();
+         }
+         else
+         {
+            WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST file does not exist, ignoring: {}", debugManifestPath);
+         }
+      }
+   }
+#endif
+
    // Get download URI from preference
    std::string downloadUri = prefs::userPrefs().paiDownloadUri();
 
@@ -1203,6 +1259,7 @@ Error downloadManifest(json::Object* pManifest)
 }
 
 // Parse manifest to get package info for current protocol version
+// Selects the highest minor version that matches the major version
 Error getPackageInfoFromManifest(
     const json::Object& manifest,
     const std::string& protocolVersion,
@@ -1221,65 +1278,112 @@ Error getPackageInfoFromManifest(
       return error;
    }
 
-   // Look up our protocol version
-   auto it = versions.find(protocolVersion);
-   if (it == versions.end())
+   // Parse RStudio's protocol version to get major version
+   SemanticVersion rstudioProtocol;
+   if (!rstudioProtocol.parse(protocolVersion))
    {
-      WLOG("Manifest does not contain entry for protocol version: {}", protocolVersion);
+      WLOG("Failed to parse RStudio protocol version: {}", protocolVersion);
+      return systemError(boost::system::errc::invalid_argument,
+                        "Invalid protocol version format",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("Looking for compatible protocols with major version {}", rstudioProtocol.major);
+
+   // Find all compatible protocol versions (matching major version)
+   // and select the highest minor version
+   SemanticVersion bestProtocol;
+   std::string bestPackageVersion;
+   std::string bestDownloadUrl;
+   bool foundCompatible = false;
+
+   for (const auto& entry : versions)
+   {
+      std::string manifestProtocol = entry.getName();
+
+      // Parse this manifest protocol version
+      SemanticVersion manifestProtocolVer;
+      if (!manifestProtocolVer.parse(manifestProtocol))
+      {
+         WLOG("Skipping manifest entry with invalid protocol version: {}", manifestProtocol);
+         continue;
+      }
+
+      // Check if major version matches
+      if (manifestProtocolVer.major != rstudioProtocol.major)
+      {
+         DLOG("Skipping protocol {} (major version mismatch)", manifestProtocol);
+         continue;
+      }
+
+      // Extract version info for this protocol
+      json::Value versionValue = entry.getValue();
+      if (!versionValue.isObject())
+      {
+         WLOG("Skipping protocol {} (value is not an object)", manifestProtocol);
+         continue;
+      }
+
+      json::Object versionInfo = versionValue.getObject();
+
+      std::string packageVersion;
+      std::string downloadUrl;
+
+      error = json::readObject(versionInfo, "version", packageVersion);
+      if (error)
+      {
+         WLOG("Skipping protocol {} (missing 'version' field)", manifestProtocol);
+         continue;
+      }
+
+      error = json::readObject(versionInfo, "url", downloadUrl);
+      if (error)
+      {
+         WLOG("Skipping protocol {} (missing 'url' field)", manifestProtocol);
+         continue;
+      }
+
+      // Validate download URL is HTTPS
+      if (!isHttpsUrl(downloadUrl))
+      {
+         WLOG("Skipping protocol {} (non-HTTPS URL: {})", manifestProtocol, downloadUrl);
+         continue;
+      }
+
+      // Check if this is the best (highest) protocol version so far
+      if (!foundCompatible || manifestProtocolVer > bestProtocol)
+      {
+         bestProtocol = manifestProtocolVer;
+         bestPackageVersion = packageVersion;
+         bestDownloadUrl = downloadUrl;
+         foundCompatible = true;
+         DLOG("Found compatible protocol {}.{} with package version {}",
+              manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
+      }
+   }
+
+   if (!foundCompatible)
+   {
+      WLOG("No compatible protocol found in manifest for major version {}", rstudioProtocol.major);
       return systemError(boost::system::errc::protocol_not_supported,
-                        "Protocol version not found in manifest",
+                        "No compatible protocol version found in manifest",
                         ERROR_LOCATION);
    }
 
-   // Access the value for this protocol version
-   json::Object::Member member = *it;
-   json::Value versionValue = member.getValue();
+   *pPackageVersion = bestPackageVersion;
+   *pDownloadUrl = bestDownloadUrl;
 
-   if (!versionValue.isObject())
-   {
-      return systemError(boost::system::errc::protocol_error,
-                        "Protocol version entry must be an object",
-                        ERROR_LOCATION);
-   }
-
-   json::Object versionInfo = versionValue.getObject();
-
-   // Extract version and url
-   std::string version;
-   std::string url;
-   error = json::readObject(versionInfo, "version", version);
-   if (error)
-   {
-      WLOG("Version info missing 'version' field");
-      return error;
-   }
-
-   error = json::readObject(versionInfo, "url", url);
-   if (error)
-   {
-      WLOG("Version info missing 'url' field");
-      return error;
-   }
-
-   // Validate download URL is HTTPS
-   if (!isHttpsUrl(url))
-   {
-      WLOG("Package download URL must use HTTPS, rejecting: {}", url);
-      return systemError(boost::system::errc::protocol_error,
-                        "Package download URL must use HTTPS protocol",
-                        ERROR_LOCATION);
-   }
-
-   *pPackageVersion = version;
-   *pDownloadUrl = url;
-
-   DLOG("Found package info: version={}, url={}", version, url);
+   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}",
+        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl);
 
    return Success();
 }
 
-// Compare semantic versions (returns true if available > installed)
-bool isNewerVersionAvailable(
+// Compare semantic versions and determine if installation is needed
+// Returns true if versions differ, enabling both upgrades (available > installed)
+// and downgrades (available < installed) when RStudio version changes
+// Returns false if versions are identical or if either version fails to parse
+bool shouldInstallVersion(
     const std::string& installedVersion,
     const std::string& availableVersion)
 {
@@ -1297,7 +1401,7 @@ bool isNewerVersionAvailable(
       return false;
    }
 
-   return available > installed;
+   return available != installed;
 }
 
 // Download package to temp directory
@@ -1511,17 +1615,36 @@ Error checkForUpdatesOnStartup()
       return Success();
    }
 
-   // Compare versions
-   if (isNewerVersionAvailable(installedVersion, packageVersion))
+   // Compare versions - offer install if versions differ (upgrade or downgrade)
+   if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+      // Determine if this is an upgrade or downgrade
+      SemanticVersion installed, available;
+      bool isDowngrade = false;
+
+      // These parses should always succeed since shouldInstallVersion validated them
+      if (installed.parse(installedVersion) && available.parse(packageVersion))
+      {
+         isDowngrade = (available < installed);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
+      }
+      else
+      {
+         // Defensive: this shouldn't happen, but handle gracefully
+         WLOG("Version re-parsing failed unexpectedly: {} -> {}",
+              installedVersion, packageVersion);
+         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+      }
+
       s_updateState.updateAvailable = true;
       s_updateState.newVersion = packageVersion;
       s_updateState.downloadUrl = downloadUrl;
    }
    else
    {
-      DLOG("No update available (installed: {}, available: {})", installedVersion, packageVersion);
+      DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
       s_updateState.updateAvailable = false;
    }
 
