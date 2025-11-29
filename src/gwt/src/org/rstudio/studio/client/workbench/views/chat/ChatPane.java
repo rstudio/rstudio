@@ -30,11 +30,8 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -307,38 +304,20 @@ public class ChatPane
    public void showUpdateNotification(String newVersion)
    {
       updateMessageLabel_.setHTML(constants_.chatUpdateAvailable(newVersion));
-      updateButtonPanel_.clear();
 
-      Button updateNowButton = new Button(constants_.chatUpdate());
-      updateNowButton.addStyleName(RES.styles().chatNotificationButton());
-      updateNowButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .addButton(constants_.chatUpdate(), () -> {
             if (updateObserver_ != null)
             {
                updateObserver_.onUpdateNow();
             }
-         }
-      });
-
-      Button remindLaterButton = new Button(constants_.chatIgnore());
-      remindLaterButton.addStyleName(RES.styles().chatNotificationButton());
-      remindLaterButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
+         })
+         .addButton(constants_.chatIgnore(), () -> {
             if (updateObserver_ != null)
             {
                updateObserver_.onRemindLater();
             }
-         }
-      });
-
-      updateButtonPanel_.add(updateNowButton);
-      updateButtonPanel_.add(remindLaterButton);
+         });
 
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
@@ -348,40 +327,20 @@ public class ChatPane
    public void showInstallNotification(String newVersion)
    {
       updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
-      updateButtonPanel_.clear();
 
-      // Notification styling is now handled by CSS for uniform theme-aware appearance
-
-      Button installNowButton = new Button(constants_.chatInstallNow());
-      installNowButton.addStyleName(RES.styles().chatNotificationButton());
-      installNowButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .addButton(constants_.chatInstallNow(), () -> {
             if (updateObserver_ != null)
             {
-               updateObserver_.onUpdateNow();  // Reuse same callback
+               updateObserver_.onUpdateNow();
             }
-         }
-      });
-
-      Button remindLaterButton = new Button(constants_.chatIgnore());
-      remindLaterButton.addStyleName(RES.styles().chatNotificationButton());
-      remindLaterButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
+         })
+         .addButton(constants_.chatIgnore(), () -> {
             if (updateObserver_ != null)
             {
-               updateObserver_.onRemindLater();  // Reuse same callback
+               updateObserver_.onRemindLater();
             }
-         }
-      });
-
-      updateButtonPanel_.add(installNowButton);
-      updateButtonPanel_.add(remindLaterButton);
+         });
 
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
@@ -391,7 +350,9 @@ public class ChatPane
    public void showUpdatingStatus()
    {
       updateMessageLabel_.setHTML(constants_.chatUpdating());
-      updateButtonPanel_.clear();
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
 
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
@@ -401,7 +362,9 @@ public class ChatPane
    public void showUpdateComplete()
    {
       updateMessageLabel_.setHTML(constants_.chatUpdateComplete());
-      updateButtonPanel_.clear();
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
 
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
@@ -411,35 +374,15 @@ public class ChatPane
    public void showUpdateError(String errorMessage)
    {
       updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
-      updateButtonPanel_.clear();
 
-      Button retryButton = new Button(constants_.chatRetry());
-      retryButton.addStyleName(RES.styles().chatNotificationButton());
-      retryButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .addButton(constants_.chatRetry(), () -> {
             if (updateObserver_ != null)
             {
                updateObserver_.onRetryUpdate();
             }
-         }
-      });
-
-      Button dismissButton = new Button(constants_.chatDismiss());
-      dismissButton.addStyleName(RES.styles().chatNotificationButton());
-      dismissButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            hideUpdateNotification();
-         }
-      });
-
-      updateButtonPanel_.add(retryButton);
-      updateButtonPanel_.add(dismissButton);
+         })
+         .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
 
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
@@ -456,22 +399,10 @@ public class ChatPane
    public void showUpdateCheckFailure()
    {
       updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
-      updateButtonPanel_.clear();
 
-      Button dismissButton = new Button(constants_.chatDismiss());
-      dismissButton.addStyleName(RES.styles().chatNotificationButton());
-      dismissButton.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            hideUpdateNotification();
-         }
-      });
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
 
-      updateButtonPanel_.add(dismissButton);
-
-      // Notification styling is now handled by CSS for uniform theme-aware appearance
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
