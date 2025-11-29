@@ -35,7 +35,6 @@ public class NotificationBuilder
    {
       buttonPanel_ = buttonPanel;
       buttonStyleName_ = buttonStyleName;
-      buttonPanel_.clear();
    }
 
    /**
@@ -58,11 +57,16 @@ public class NotificationBuilder
     * Adds a button with the specified label and runnable action.
     *
     * @param label The button label
-    * @param action The action to execute when button is clicked
+    * @param action The action to execute when button is clicked (must not be null)
     * @return This builder for method chaining
     */
    public NotificationBuilder addButton(String label, Runnable action)
    {
+      if (action == null)
+      {
+         throw new IllegalArgumentException("Action cannot be null");
+      }
+
       return addButton(label, new ClickHandler()
       {
          @Override

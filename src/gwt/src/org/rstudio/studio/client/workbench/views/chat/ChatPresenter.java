@@ -42,6 +42,7 @@ public class ChatPresenter extends BasePresenter
       enum Status
       {
          STARTING,
+         RESTARTING,
          NOT_INSTALLED,
          ERROR,
          READY
@@ -426,7 +427,7 @@ public class ChatPresenter extends BasePresenter
 
    private void restartBackend()
    {
-      display_.setStatus(Display.Status.STARTING);
+      display_.setStatus(Display.Status.RESTARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
       {

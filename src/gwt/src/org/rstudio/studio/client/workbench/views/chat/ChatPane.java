@@ -306,6 +306,7 @@ public class ChatPane
       updateMessageLabel_.setHTML(constants_.chatUpdateAvailable(newVersion));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
          .addButton(constants_.chatUpdate(), () -> {
             if (updateObserver_ != null)
             {
@@ -329,6 +330,7 @@ public class ChatPane
       updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
          .addButton(constants_.chatInstallNow(), () -> {
             if (updateObserver_ != null)
             {
@@ -376,6 +378,7 @@ public class ChatPane
       updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
          .addButton(constants_.chatRetry(), () -> {
             if (updateObserver_ != null)
             {
@@ -401,6 +404,7 @@ public class ChatPane
       updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear()
          .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
 
       updateNotificationPanel_.setVisible(true);
@@ -421,6 +425,9 @@ public class ChatPane
       {
          case STARTING:
             showMessage(constants_.startingChatMessage());
+            break;
+         case RESTARTING:
+            showMessage(constants_.restartingChatMessage());
             break;
          case NOT_INSTALLED:
             showMessage(constants_.chatNotInstalledMessage());
