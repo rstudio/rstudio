@@ -815,11 +815,8 @@ public class ChatPane
 
    // Injected ----
    private final EventBus events_;
-   @SuppressWarnings("unused")
    private final GlobalDisplay globalDisplay_;
-   @SuppressWarnings("unused")
    private final Commands commands_;
-   @SuppressWarnings("unused")
    private final Session session_;
    private final ChatServerOperations server_;
 
