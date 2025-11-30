@@ -1001,6 +1001,9 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
    // Send successful response
    sendJsonRpcResponse(ops, requestId, result);
+
+   // Fire change detection event to trigger environment refresh
+   module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
 }
 
 void handleCancelExecution(const json::Object& params)
