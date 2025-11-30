@@ -713,27 +713,31 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             type = "unknown";
          simplifiedVar["type"] = type;
 
-         // Extract description and use as displayName (required)
-         // Description contains human-readable summary like "data.frame: 32 obs. of 11 variables"
-         std::string displayName;
-         if (varObj.hasMember("description") && varObj["description"].isString())
-         {
-            displayName = varObj["description"].getString();
-         }
-
-         if (displayName.empty())
-         {
-            // Fallback: use "type: value" format if no description
-            std::string value;
-            if (varObj.hasMember("value") && varObj["value"].isString())
-               value = varObj["value"].getString();
-
-            if (value.empty())
-               displayName = type;
-            else
-               displayName = type + ": " + value;
-         }
-         simplifiedVar["displayName"] = displayName;
+         // TODO: Reevaluate providing a richer displayName in the future.
+         // For now, displayName is the same as name for simplicity.
+         // Previous implementation attempted to extract description/value:
+         //
+         // // Extract description and use as displayName (required)
+         // // Description contains human-readable summary like "data.frame: 32 obs. of 11 variables"
+         // std::string displayName;
+         // if (varObj.hasMember("description") && varObj["description"].isString())
+         // {
+         //    displayName = varObj["description"].getString();
+         // }
+         //
+         // if (displayName.empty())
+         // {
+         //    // Fallback: use "type: value" format if no description
+         //    std::string value;
+         //    if (varObj.hasMember("value") && varObj["value"].isString())
+         //       value = varObj["value"].getString();
+         //
+         //    if (value.empty())
+         //       displayName = type;
+         //    else
+         //       displayName = type + ": " + value;
+         // }
+         simplifiedVar["displayName"] = name;
 
          variablesArray.push_back(std::move(simplifiedVar));
       }
