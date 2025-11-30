@@ -23,6 +23,7 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String checkingInstallationMessage();
     String chatNotInstalledMessage();
     String startingChatMessage();
+    String restartingChatMessage();
     String chatUpdateAvailable(String version);
     String chatUpdateNow();
     String chatRemindLater();
@@ -49,4 +50,13 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatProcessExitedTitle();
     String chatProcessExitedMessage();
     String chatRestartButton();
+    String chatBackendStartFailed(String error);
+    String chatBackendStartError(String error);
+    String chatUpdateTimeout();
+    String chatUpdateNotStarted();
+    String chatUpdateStatusUnknown(String status);
+    String chatUpdateStatusCheckFailed(String error);
+    String chatBackendStartTimeout();
+    String chatBackendStatusCheckFailed(String error);
+    String chatRestartFailed(String error);
 }
