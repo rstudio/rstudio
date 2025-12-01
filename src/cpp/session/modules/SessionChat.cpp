@@ -950,11 +950,28 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
-   // Evaluate the code using existing RExec infrastructure
-   // evaluateString wraps in try(..., silent=TRUE) for error handling
+   // Evaluate the code using withVisible() to capture both result and visibility flag.
+   // This mimics REPL behavior where invisible results (from invisible(), assignments, etc.)
+   // are not printed. evaluateString wraps in try(..., silent=TRUE) for error handling.
    r::sexp::Protect protect;
+   std::string wrappedCode = "base::withVisible({" + code + "})";
+   SEXP withVisibleResultSEXP = R_NilValue;
+   error = r::exec::evaluateString(wrappedCode, R_GlobalEnv, &withVisibleResultSEXP, &protect);
+
+   // Extract the actual result and visibility flag from withVisible() output
    SEXP resultSEXP = R_NilValue;
-   error = r::exec::evaluateString(code, R_GlobalEnv, &resultSEXP, &protect);
+   bool visible = false;
+   if (!error && withVisibleResultSEXP != R_NilValue && r::sexp::isList(withVisibleResultSEXP))
+   {
+      // withVisible returns list(value = ..., visible = TRUE/FALSE)
+      if (Rf_length(withVisibleResultSEXP) >= 2)
+      {
+         resultSEXP = VECTOR_ELT(withVisibleResultSEXP, 0);  // value
+         SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1); // visible flag
+         if (visibleSEXP != R_NilValue)
+            visible = Rf_asLogical(visibleSEXP) == TRUE;
+      }
+   }
 
    // Handle parse/runtime errors from evaluateString.
    // evaluateString uses silent=TRUE, so errors don't automatically go to console.
@@ -976,6 +993,14 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
       // Also write to console UI
       module_context::consoleWriteError(errorOutput);
+   }
+
+   // Print the result to trigger print methods (e.g., for htmlwidgets)
+   // This mimics REPL behavior where results are automatically printed only if visible.
+   // Skip NULL results and invisible results (from invisible(), assignments, etc.).
+   if (!error && visible && resultSEXP != R_NilValue)
+   {
+      r::sexp::printValue(resultSEXP);
    }
 
    // Handle plots if requested
