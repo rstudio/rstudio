@@ -821,12 +821,16 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
                FilePath resolvedPath = module_context::resolveAliasedPath(docPath);
                std::string absPath = resolvedPath.getAbsolutePath();
 
+               // Windows: file:///C:/Users/file.txt
+               // Linux/macOS: file:///home/user/file.txt
+
 #ifdef _WIN32
                // Normalize path separators on Windows (C:\path -> C:/path)
                std::replace(absPath.begin(), absPath.end(), '\\', '/');
-#endif
-
                fileObj["uri"] = fmt::format("file:///{}", absPath);
+#else
+               fileObj["uri"] = fmt::format("file://{}", absPath);
+#endif
             }
 
             // Document state flags
