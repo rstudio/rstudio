@@ -237,207 +237,20 @@ TEST(CryptoTest, Sha256HexOutputCharacters)
    std::string hexHash;
    
    ASSERT_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
-   
+
    // Check that all characters are valid hex (0-9, a-f)
    for (char c : hexHash)
    {
-<<<<<<< HEAD
       ASSERT_TRUE((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'));
-=======
-      FilePath certFilePath, keyFilePath;
-      REQUIRE_FALSE(FilePath::tempFilePath(".cert", certFilePath));
-      REQUIRE_FALSE(FilePath::tempFilePath(".key", keyFilePath));
-      Error error = core::system::crypto::generateRsaCertAndKeyFiles("testCN", certFilePath, keyFilePath);
-      REQUIRE_FALSE(error);
-
-      REQUIRE(certFilePath.exists());
-      REQUIRE(keyFilePath.exists());
-
-      BIO* certBIO = BIO_new_file(certFilePath.getAbsolutePath().c_str(), "r");
-      BIO* keyBIO = BIO_new_file(keyFilePath.getAbsolutePath().c_str(), "r");
-      X509* cert = PEM_read_bio_X509(certBIO, NULL, 0, NULL);
-      EVP_PKEY* key = PEM_read_bio_PrivateKey(keyBIO, NULL, NULL, NULL);
-
-      // check the common name we gave it matches
-      REQUIRE(X509_check_host(cert, (const char *) "testCN", 0, 0, NULL) == 1);
-      // check that the private key matches the public key in the cert
-      REQUIRE(X509_check_private_key(cert, key) == 1);
-
-      EVP_PKEY_free(key);
-      X509_free(cert);
-      BIO_free(certBIO);
-      BIO_free(keyBIO);
-
-      certFilePath.remove();
-      keyFilePath.remove();
-   }
-
-   test_that("Can generate RSA string cert")
-   {
-      std::string certStr, keyStr;
-      Error error = core::system::crypto::generateRsaCertAndKeyPair("testCN", certStr, keyStr);
-      REQUIRE_FALSE(error);
-
-      BIO* certBIO = BIO_new_mem_buf(const_cast<char*>(certStr.c_str()), gsl::narrow_cast<int>(certStr.size()));
-      BIO* keyBIO = BIO_new_mem_buf(const_cast<char*>(keyStr.c_str()), gsl::narrow_cast<int>(keyStr.size()));
-      X509* cert = PEM_read_bio_X509(certBIO, NULL, 0, NULL);
-      EVP_PKEY* key = PEM_read_bio_PrivateKey(keyBIO, NULL, NULL, NULL);
-
-      // check the common name we gave it matches
-      REQUIRE(X509_check_host(cert, (const char *) "testCN", 0, 0, NULL) == 1);
-      // check that the private key matches the public key in the cert
-      REQUIRE(X509_check_private_key(cert, key) == 1);
-
-      EVP_PKEY_free(key);
-      X509_free(cert);
-      BIO_free(certBIO);
-      BIO_free(keyBIO);
-   }
-
-   test_that("Roundtrip RSA signing and verification works")
-   {
-      std::string message = "message from the key holder";
-      std::string pub, priv, sig;
-      REQUIRE_FALSE(core::system::crypto::generateRsaKeyPair(&pub, &priv));
-      REQUIRE_FALSE(core::system::crypto::rsaSign(message, priv, &sig));
-      REQUIRE_FALSE(core::system::crypto::rsaVerify(message, sig, pub));
-      // Sanity checks.
-      REQUIRE(pub.rfind("-----BEGIN PUBLIC KEY-----", 0) == 0);   // pragma: allowlist secret
-      REQUIRE(priv.rfind("-----BEGIN PRIVATE KEY-----", 0) == 0); // pragma: allowlist secret
-      REQUIRE(sig.size() == kRsaKeySizeBits / 8);
-   }
-
-   test_that("SHA-256 hashing works correctly")
-   {
-      // Generated with openssl sha256 -hex.
-      std::string message = "secret message";
-      std::vector<unsigned char> raw = {
-         0xbb, 0x0b, 0x57, 0x00, 0x5f, 0x01, 0x01, 0x8b, 0x19, 0xc2, 0x78, 0xc5,
-         0x52, 0x73, 0xa6, 0x01, 0x18, 0xff, 0xdd, 0x3e, 0x57, 0x90, 0xcc, 0xc8,
-         0xa4, 0x8c, 0xad, 0x03, 0x90, 0x7f, 0xa5, 0x21
-      };
-      std::string expected(raw.begin(), raw.end());
-      std::string hash;
-      REQUIRE_FALSE(core::system::crypto::sha256(message, &hash));
-      REQUIRE(hash.size() == 32);
-      REQUIRE(hash == expected);
-   }
-
-   test_that("SHA-256 hex hashing works correctly")
-   {
-      // Generated with openssl sha256 -hex.
-      std::string message = "secret message";
-      // pragma: allowlist nextline secret
-      std::string expectedHex = "bb0b57005f01018b19c278c55273a60118ffdd3e5790ccc8a48cad03907fa521";
-      std::string hexHash;
-      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
-      REQUIRE(hexHash.size() == 64);
-      REQUIRE(hexHash == expectedHex);
-   }
-
-   test_that("SHA-256 binary and hex produce equivalent results")
-   {
-      std::string message = "test consistency";
-      std::string binaryHash, hexHash;
-
-      REQUIRE_FALSE(core::system::crypto::sha256(message, &binaryHash));
-      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
-
-      // Convert binary hash to hex manually and compare
-      std::string expectedHex;
-      for (unsigned char byte : binaryHash)
-      {
-         char hexByte[3];
-         snprintf(hexByte, sizeof(hexByte), "%02x", static_cast<unsigned int>(byte));
-         expectedHex += hexByte;
-      }
-
-      REQUIRE(hexHash == expectedHex);
-      REQUIRE(hexHash.size() == 64);
-      REQUIRE(binaryHash.size() == 32);
-   }
-
-   test_that("SHA-256 hex output contains only valid hexadecimal characters")
-   {
-      std::string message = "validate hex format";
-      std::string hexHash;
-
-      REQUIRE_FALSE(core::system::crypto::sha256Hex(message, &hexHash));
-
-      // Check that all characters are valid hex (0-9, a-f)
-      for (char c : hexHash)
-      {
-         REQUIRE(((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')));
-      }
-   }
-
-   test_that("SHA-256 hex handles empty string")
-   {
-      std::string emptyMessage = "";
-      std::string hexHash;
-
-      REQUIRE_FALSE(core::system::crypto::sha256Hex(emptyMessage, &hexHash));
-      REQUIRE(hexHash.size() == 64);
-
-      // The SHA256 of an empty string is a known value
-      // pragma: allowlist nextline secret
-      std::string expectedEmpty = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-      REQUIRE(hexHash == expectedEmpty);
->>>>>>> main
-   }
-
-   test_that("RSA decryption handles PKCS#1 1.5")
-   {
-     auto key(loadTestPrivateKey());
-     // pragma: allowlist nextline secret
-     static const std::string cipherText = "fAq9H+a+K/6fdeVR5u78c0LIG/eihceVsCM9y0V5M8Ied0DkZIl/mnyNMio"  // pragma: allowlist secret
-       "BV33aodQm5rDDG1O1kbMOeOgYkHTitQTR+zb6lge4fFBExuV6Ivhitspxkq0TiieyuK4hSMY1xKkNdHwTq+3Le0sTgqTQuA"  // pragma: allowlist secret
-       "daR6KGPz8T9FPK0oyqk3KAKmpH6vOSzojA41iLIlnPQiCuz9crixJiD43LGBH0ja7z0jhOCWThLltU5PZj9i/OutQRAofsS"  // pragma: allowlist secret
-       "wSrLdqrXpPufHIe003Pgg7mGyqkL/DMIqXlxKDmsfBOvWLygr8+4Ff2rdnmtR/tsx51Y0KHUPT9kb5CLFWHNMzyubrZRw=="; // pragma: allowlist secret
-     static const std::string expected = "test";
-
-     std::string plainText;
-     Error error = core::system::crypto::rsaPrivateDecrypt(cipherText, &plainText, key.get());
-     REQUIRE_FALSE(error);
-     REQUIRE(plainText == expected);
-   }
-
-   test_that("RSA decryption handles OAEP")
-   {
-     auto key(loadTestPrivateKey());
-     static const std::string cipherText = "$RSA-OAEP$UfkheH3D5+zcpbuUDDX/BIyQ1+EqasZLjsCIE4sIabRFZcd5T"  // pragma: allowlist secret
-       "tgXXDw+B9aqZOWArOtey8YnO1i7yal2BGFmXhgb2k43HeoQenEf2pYnbqps26YBc267ZOTvUqL2OjuccBTR/eeQwNxdfldD"  // pragma: allowlist secret
-       "yEY8h0g0mOOgc+nbH2TWhPXRf3aF3YA+j4nIsshpppY3CgBfuCGKUcIs9qaxYW5A0ycJCkmxVPCm/xeCEYwkppE1Ntdk0bL"  // pragma: allowlist secret
-       "NHW0tD3N/Kb449VbH9rGigV3A+AXEtExcWyTEvU3y1y9cDRtEXP6ygwxCCptPcR4AMQmuWtzQXlY+mIix3XtXZEjWYUvOE7"  // pragma: allowlist secret
-       "W8VUb12A==";  // pragma: allowlist secret
-     static const std::string expected = "test";
-
-     std::string plainText;
-     Error error = core::system::crypto::rsaPrivateDecrypt(cipherText, &plainText, key.get());
-     REQUIRE_FALSE(error);
-     REQUIRE(plainText == expected);
    }
 }
 
-TEST(CryptoTest, Sha256HexEmptyString)
-{
-   std::string emptyMessage = "";
-   std::string hexHash;
-
-   ASSERT_FALSE(core::system::crypto::sha256Hex(emptyMessage, &hexHash));
-   EXPECT_EQ(64u, hexHash.size());
-
-   // The SHA256 of an empty string is a known value
-   std::string expectedEmpty = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";  // pragma: allowlist secret
-   ASSERT_EQ(hexHash, expectedEmpty);
-}
-
-TEST(CryptoTest, RsaDecryptionPKCS1_5)
+TEST(CryptoTest, RsaDecryptionHandlesPkcs11_5)
 {
    auto key(loadTestPrivateKey());
    // pragma: allowlist nextline secret
    static const std::string cipherText = "fAq9H+a+K/6fdeVR5u78c0LIG/eihceVsCM9y0V5M8Ied0DkZIl/mnyNMio"  // pragma: allowlist secret
-      "BV33aodQm5rDDG1O1kbMOeOgYkHTitQTR+zb6lge4fFBExuV6Ivhitspxkq0TiieyuK4hSMY1xKNdHwTq+3Le0sTgqTQuA"  // pragma: allowlist secret
+      "BV33aodQm5rDDG1O1kbMOeOgYkHTitQTR+zb6lge4fFBExuV6Ivhitspxkq0TiieyuK4hSMY1xKkNdHwTq+3Le0sTgqTQuA"  // pragma: allowlist secret
       "daR6KGPz8T9FPK0oyqk3KAKmpH6vOSzojA41iLIlnPQiCuz9crixJiD43LGBH0ja7z0jhOCWThLltU5PZj9i/OutQRAofsS"  // pragma: allowlist secret
       "wSrLdqrXpPufHIe003Pgg7mGyqkL/DMIqXlxKDmsfBOvWLygr8+4Ff2rdnmtR/tsx51Y0KHUPT9kb5CLFWHNMzyubrZRw=="; // pragma: allowlist secret
    static const std::string expected = "test";
@@ -462,6 +275,19 @@ TEST(CryptoTest, RsaDecryptionOAEP)
    Error error = core::system::crypto::rsaPrivateDecrypt(cipherText, &plainText, key.get());
    ASSERT_FALSE(error);
    ASSERT_EQ(plainText, expected);
+}
+
+TEST(CryptoTest, Sha256HexEmptyString)
+{
+   std::string emptyMessage = "";
+   std::string hexHash;
+
+   ASSERT_FALSE(core::system::crypto::sha256Hex(emptyMessage, &hexHash));
+   EXPECT_EQ(64u, hexHash.size());
+
+   // The SHA256 of an empty string is a known value
+   std::string expectedEmpty = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";  // pragma: allowlist secret
+   ASSERT_EQ(hexHash, expectedEmpty);
 }
 
 } // namespace tests
