@@ -2549,7 +2549,7 @@
 
 # 
 #
-# 
+# Experimental
 .rs.uiPrefs$pai <- list(
    get = function() { .rs.getUserPref("pai") },
    set = function(value) { .rs.setUserPref("pai", value) },
@@ -2558,7 +2558,7 @@
 
 # 
 #
-# 
+# Experimental
 .rs.uiPrefs$paiDownloadUri <- list(
    get = function() { .rs.getUserPref("pai_download_uri") },
    set = function(value) { .rs.setUserPref("pai_download_uri", value) },

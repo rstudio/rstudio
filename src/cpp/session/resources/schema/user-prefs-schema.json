@@ -1873,10 +1873,12 @@
         },
         "pai": {
             "type": "boolean",
+            "description": "Experimental",
             "default": false
         },
         "pai_download_uri": {
             "type": "string",
+            "description": "Experimental",
             "default": ""
         }
       }

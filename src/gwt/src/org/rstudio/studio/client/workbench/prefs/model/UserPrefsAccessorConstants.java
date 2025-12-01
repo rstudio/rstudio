@@ -2300,19 +2300,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleHighlightConditionsEnum_none();
 
    /**
-    * 
+    * Experimental
     */
    @DefaultStringValue("")
    String paiTitle();
-   @DefaultStringValue("")
+   @DefaultStringValue("Experimental")
    String paiDescription();
 
    /**
-    * 
+    * Experimental
     */
    @DefaultStringValue("")
    String paiDownloadUriTitle();
-   @DefaultStringValue("")
+   @DefaultStringValue("Experimental")
    String paiDownloadUriDescription();
 
 

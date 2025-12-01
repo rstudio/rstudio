@@ -3935,7 +3935,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
    /**
-    * 
+    * Experimental
     */
    public PrefValue<Boolean> pai()
    {
@@ -3947,7 +3947,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * 
+    * Experimental
     */
    public PrefValue<String> paiDownloadUri()
    {
