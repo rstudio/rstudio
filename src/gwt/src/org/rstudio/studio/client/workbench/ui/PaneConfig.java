@@ -172,11 +172,23 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (indexOfReplacedTab(tabs.get(idx)) >= 0)
+         int replacementIdx = indexOfReplacedTab(tabs.get(idx));
+         if (replacementIdx >= 0)
          {
-            tabs.set(idx, getReplacementTabs()[idx]);
+            tabs.set(idx, getReplacementTabs()[replacementIdx]);
          }
       }
+   }
+
+   // Get the display label for a pane identifier
+   // This allows internal identifiers to differ from display labels
+   public static String getPaneDisplayLabel(String paneId)
+   {
+      if (StringUtil.equals(paneId, PaneManager.CHAT_PANE))
+      {
+         return "Posit Assistant"; //$NON-NLS-1$
+      }
+      return paneId;
    }
 
    protected PaneConfig()

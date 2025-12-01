@@ -99,6 +99,10 @@ public class Renderer extends JavaScriptObject
       this.setDisplayIndentGuides(show); 
    }-*/;
    
+   public native final void setMargin(int top, int bottom, int left, int right) /*-{
+      this.setMargin(top, bottom, left, right);
+   }-*/;
+
    public native final void setPadding(int padding) /*-{
       this.setPadding(padding);
    }-*/;
@@ -202,5 +206,4 @@ public class Renderer extends JavaScriptObject
    public final native void setColorPreview(boolean show) /*-{
       this.$textLayer.setColorPreview(show);
    }-*/;
-
 }

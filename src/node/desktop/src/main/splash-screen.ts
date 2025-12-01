@@ -29,6 +29,7 @@ export function createSplashScreen(): BrowserWindow {
     roundedCorners: false,
     show: false,
     alwaysOnTop: true,
+    hasShadow: false,
   });
 
   splash.loadURL(SPLASH_WEBPACK_ENTRY).catch((err: unknown) => logger().logError(err));

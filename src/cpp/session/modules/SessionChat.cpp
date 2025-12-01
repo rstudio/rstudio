@@ -16,8 +16,21 @@
 #include "SessionChat.hpp"
 #include "SessionNodeTools.hpp"
 
+#include "chat/ChatConstants.hpp"
+#include "chat/ChatTypes.hpp"
+#include "chat/ChatLogging.hpp"
+#include "chat/ChatInstallation.hpp"
+#include "chat/ChatStaticFiles.hpp"
+
+#include <algorithm>
+#include <chrono>
 #include <map>
+#include <queue>
+#include <set>
+#include <vector>
 #include <functional>
+
+#include <boost/thread/mutex.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -34,32 +47,22 @@
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
+#include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/SessionScopes.hpp>
+#include <session/prefs/UserPrefs.hpp>
+
+#include "../SessionDirs.hpp"
+#include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
-
-#define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                       \
-   {                                                                        \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);        \
-      std::string __formatted__ =                                           \
-          fmt::format("[{}]: {}", __func__, __message__);                   \
-      __LOGGER__("chat", __formatted__);                                    \
-      if (chatLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                           \
-   } while (0)
-
-#define DLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define ILOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_INFO_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define TLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
 
 // Use a default section of 'chat' for errors / warnings
 #ifdef LOG_ERROR
@@ -85,31 +88,249 @@ PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
 std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
-const int kMaxRestartAttempts = 1;
 
 // ============================================================================
-// Installation paths
+// Suspension blocking
 // ============================================================================
-const char* const kPositAiDirName = "ai";
-const char* const kClientDirPath = "dist/client";
-const char* const kServerScriptPath = "dist/server/main.js";
-const char* const kIndexFileName = "index.html";
+static bool s_chatBusy = false;
+
+
+// Selective imports from chat modules to avoid namespace pollution
+namespace chat_constants = rstudio::session::modules::chat::constants;
+namespace chat_types = rstudio::session::modules::chat::types;
+namespace chat_logging = rstudio::session::modules::chat::logging;
+namespace chat_installation = rstudio::session::modules::chat::installation;
+namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
+
+// Constants used throughout
+using chat_constants::kProtocolVersion;
+using chat_constants::kMaxQueueSize;
+using chat_constants::kMaxBufferSize;
+using chat_constants::kMaxDelay;
+using chat_constants::kMaxRestartAttempts;
+using chat_constants::kPositAiDirName;
+using chat_constants::kServerScriptPath;
+
+// Types used throughout
+using chat_types::SemanticVersion;
+
+// Logging functions used throughout
+using chat_logging::chatLogLevel;
+using chat_logging::setChatLogLevel;
+using chat_logging::setBackendMinLogLevel;
+using chat_logging::getBackendMinLogLevel;
+using chat_logging::getLogLevelPriority;
+using chat_logging::shouldLogBackendMessage;
+using chat_logging::rs_chatSetLogLevel;
+
+// Installation functions used throughout
+using chat_installation::locatePositAiInstallation;
+using chat_installation::verifyPositAiInstallation;
+using chat_installation::getInstalledVersion;
+
+// Static file handler (used once for URI registration)
+using chat_staticfiles::handleAIChatRequest;
+
+// Logging functions are now in chat/ChatLogging.hpp/.cpp
 
 // ============================================================================
-// Logging
+// Execution Tracking (for cancellation support)
 // ============================================================================
-int s_chatLogLevel = 0;
+// R is single-threaded, so only one execution can be active at a time,
+// but we need to track cancelled IDs to handle pre-cancellation of queued requests
+boost::mutex s_executionTrackingMutex;
+std::string s_currentTrackingId;  // Empty string when not executing
+std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
 
-int chatLogLevel()
+// ============================================================================
+// Streaming Output Notification Queue with Lifecycle Management
+// ============================================================================
+// Notifications are queued from onConsoleOutput (any thread) and drained
+// from onBackgroundProcessing (main thread only) to ensure thread safety
+//
+// Lifecycle management prevents unbounded growth and stale notifications:
+// - Track active executions to filter notifications for completed/cancelled requests
+// - Queue size limit prevents memory exhaustion from noisy executions
+// - Automatic cleanup when weak_ptr expires (backend died)
+
+struct PendingNotification
 {
-   return s_chatLogLevel;
-}
+   std::string trackingId;
+   std::string type;  // "stdout" or "stderr"
+   std::string content;
+   boost::weak_ptr<core::system::ProcessOperations> weakOps;
 
-SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
+   PendingNotification(const std::string& id,
+                       const std::string& t,
+                       const std::string& c,
+                       boost::weak_ptr<core::system::ProcessOperations> ops)
+      : trackingId(id), type(t), content(c), weakOps(ops)
+   {
+   }
+};
+
+// Global state (all protected by mutex)
+static boost::mutex s_notificationQueueMutex;
+static std::queue<PendingNotification> s_notificationQueue;
+static std::set<std::string> s_activeTrackingIds;  // Active executions
+
+// ============================================================================
+// Code Execution Context (for console output capture)
+// ============================================================================
+class ChatExecContext
 {
-   int logLevel = r::sexp::asInteger(logLevelSEXP);
-   s_chatLogLevel = logLevel;
-   return logLevelSEXP;
+public:
+   ChatExecContext(bool captureOutput,
+                   const std::string& trackingId,
+                   boost::shared_ptr<core::system::ProcessOperations> ops)
+      : captureOutput_(captureOutput),
+        trackingId_(trackingId),
+        weakOps_(ops),
+        lastStdoutFlush_(std::chrono::steady_clock::now()),
+        lastStderrFlush_(std::chrono::steady_clock::now())
+   {
+   }
+
+   ~ChatExecContext()
+   {
+      // Flush any remaining buffered output
+      flushBuffers();
+      disconnect();
+   }
+
+   void connect()
+   {
+      connection_ = module_context::events().onConsoleOutput.connect(
+          boost::bind(&ChatExecContext::onConsoleOutput, this, _1, _2));
+   }
+
+   void disconnect()
+   {
+      connection_.disconnect();
+   }
+
+   void flushBuffers()
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      flushStdoutLocked();
+      flushStderrLocked();
+   }
+
+   std::string getOutput() const
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      return outputBuffer_;
+   }
+
+   std::string getError() const
+   {
+      boost::mutex::scoped_lock lock(bufferMutex_);
+      return errorBuffer_;
+   }
+
+private:
+   void onConsoleOutput(module_context::ConsoleOutputType type,
+                        const std::string& output)
+   {
+      if (!captureOutput_)
+         return;
+
+      boost::mutex::scoped_lock lock(bufferMutex_);
+
+      if (type == module_context::ConsoleOutputNormal)
+      {
+         outputBuffer_ += output;
+         stdoutBuffer_ += output;
+
+         auto now = std::chrono::steady_clock::now();
+         bool sizeThreshold = stdoutBuffer_.size() >= kMaxBufferSize;
+         bool timeThreshold = (now - lastStdoutFlush_) >= kMaxDelay;
+
+         if (sizeThreshold || timeThreshold)
+            flushStdoutLocked();
+      }
+      else
+      {
+         errorBuffer_ += output;
+         stderrBuffer_ += output;
+
+         auto now = std::chrono::steady_clock::now();
+         bool sizeThreshold = stderrBuffer_.size() >= kMaxBufferSize;
+         bool timeThreshold = (now - lastStderrFlush_) >= kMaxDelay;
+
+         if (sizeThreshold || timeThreshold)
+            flushStderrLocked();
+      }
+   }
+
+   void flushStdoutLocked()
+   {
+      if (!stdoutBuffer_.empty())
+      {
+         queueNotification(trackingId_, "stdout", stdoutBuffer_, weakOps_);
+         stdoutBuffer_.clear();
+         lastStdoutFlush_ = std::chrono::steady_clock::now();
+      }
+   }
+
+   void flushStderrLocked()
+   {
+      if (!stderrBuffer_.empty())
+      {
+         queueNotification(trackingId_, "stderr", stderrBuffer_, weakOps_);
+         stderrBuffer_.clear();
+         lastStderrFlush_ = std::chrono::steady_clock::now();
+      }
+   }
+
+   void queueNotification(const std::string& trackingId,
+                          const std::string& type,
+                          const std::string& content,
+                          boost::weak_ptr<core::system::ProcessOperations> weakOps)
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      // Enforce queue size limit to prevent unbounded growth
+      if (s_notificationQueue.size() >= kMaxQueueSize)
+      {
+         WLOG("Notification queue full (size={}), dropping oldest notification",
+              s_notificationQueue.size());
+         s_notificationQueue.pop();
+      }
+
+      s_notificationQueue.push(PendingNotification(trackingId, type, content, weakOps));
+   }
+
+   bool captureOutput_;
+   std::string trackingId_;
+   boost::weak_ptr<core::system::ProcessOperations> weakOps_;
+
+   mutable boost::mutex bufferMutex_;
+   std::string outputBuffer_;  // Complete accumulated output
+   std::string errorBuffer_;   // Complete accumulated error
+   std::string stdoutBuffer_;  // Pending stdout to flush
+   std::string stderrBuffer_;  // Pending stderr to flush
+   std::chrono::steady_clock::time_point lastStdoutFlush_;
+   std::chrono::steady_clock::time_point lastStderrFlush_;
+
+   RSTUDIO_BOOST_CONNECTION connection_;
+};
+
+// Echo source code with prompts (like evaluate does)
+void echoSourceCode(const std::string& code)
+{
+   std::vector<std::string> lines;
+   boost::split(lines, code, boost::is_any_of("\n"));
+
+   for (size_t i = 0; i < lines.size(); i++)
+   {
+      // Skip trailing empty line from trailing newline
+      if (i == lines.size() - 1 && lines[i].empty())
+         continue;
+
+      std::string prompt = (i == 0) ? "> " : "+ ";
+      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+   }
 }
 
 // ============================================================================
@@ -118,9 +339,6 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 
 // Buffer for accumulating stdout data from backend
 std::string s_backendOutputBuffer;
-
-// Queue of parsed JSON-RPC messages from backend
-std::vector<json::Value> s_pendingResponses;
 
 // Regex for parsing Content-Length header (case-insensitive per HTTP spec)
 // Matches only at start of line to avoid false matches in log output
@@ -157,7 +375,740 @@ void handleNotification(const std::string& method, const json::Object& params)
    }
 }
 
-void processBackendMessage(const json::Value& message)
+// ============================================================================
+// JSON-RPC Request Handling
+// ============================================================================
+
+void sendJsonRpcResponse(core::system::ProcessOperations& ops,
+                         const json::Value& id,
+                         const json::Value& result)
+{
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["result"] = result;
+
+   std::string body = response.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC response to backend stdin: {}", error.getMessage());
+   }
+}
+
+void sendJsonRpcError(core::system::ProcessOperations& ops,
+                      const json::Value& id,
+                      int code,
+                      const std::string& message)
+{
+   json::Object errorObj;
+   errorObj["code"] = code;
+   errorObj["message"] = message;
+
+   json::Object response;
+   response["jsonrpc"] = "2.0";
+   response["id"] = id;
+   response["error"] = errorObj;
+
+   std::string body = response.write();
+   std::string frameMessage = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending JSON-RPC error response: {}", body);
+   }
+
+   Error error = ops.writeToStdin(frameMessage, false);
+   if (error)
+   {
+      ELOG("Failed to write JSON-RPC error response to backend stdin: {}", error.getMessage());
+   }
+}
+
+void sendStreamingOutput(core::system::ProcessOperations& ops,
+                         const std::string& trackingId,
+                         const std::string& type,
+                         const std::string& content)
+{
+   json::Object notification;
+   notification["jsonrpc"] = "2.0";
+   notification["method"] = "runtime/executionOutput";
+
+   json::Object params;
+   params["trackingId"] = trackingId;
+   params["type"] = type;
+   params["content"] = content;
+   params["isIncremental"] = true;
+
+   notification["params"] = params;
+
+   std::string body = notification.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   if (chatLogLevel() >= 2)
+   {
+      DLOG("Sending streaming output: trackingId={}, type={}, length={}",
+           trackingId, type, content.size());
+   }
+
+   // Best-effort send - don't abort execution on failure
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      ELOG("Failed to send streaming output: {}", error.getMessage());
+   }
+}
+
+void drainNotificationQueueForExecution(core::system::ProcessOperations& ops,
+                                         const std::string& trackingId)
+{
+   std::vector<PendingNotification> toProcess;
+
+   // Phase 1: Extract notifications to process (hold lock briefly)
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      std::queue<PendingNotification> remaining;
+      while (!s_notificationQueue.empty())
+      {
+         PendingNotification notif = s_notificationQueue.front();
+         s_notificationQueue.pop();
+
+         if (notif.trackingId == trackingId)
+         {
+            toProcess.push_back(notif);
+         }
+         else
+         {
+            // Preserve notifications from concurrent executions
+            remaining.push(notif);
+         }
+      }
+
+      s_notificationQueue = remaining;
+   }
+
+   // Phase 2: Send notifications (no lock held, no race condition)
+   for (const auto& notif : toProcess)
+   {
+      sendStreamingOutput(ops, notif.trackingId, notif.type, notif.content);
+   }
+}
+
+void registerActiveExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+   s_activeTrackingIds.insert(trackingId);
+}
+
+void unregisterActiveExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+   s_activeTrackingIds.erase(trackingId);
+}
+
+void clearNotificationsForExecution(const std::string& trackingId)
+{
+   boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+   std::queue<PendingNotification> remaining;
+   while (!s_notificationQueue.empty())
+   {
+      PendingNotification notif = s_notificationQueue.front();
+      s_notificationQueue.pop();
+
+      if (notif.trackingId != trackingId)
+      {
+         remaining.push(notif);
+      }
+      // Drop notifications for cancelled trackingId
+   }
+
+   s_notificationQueue = remaining;
+}
+
+void handleGetActiveSession(core::system::ProcessOperations& ops,
+                            const json::Value& requestId)
+{
+   json::Object result;
+   result["language"] = "R";
+   result["version"] = module_context::rVersion();
+   result["sessionId"] = module_context::activeSession().id();
+   result["mode"] = "console";
+
+   DLOG("Handling runtime/getActiveSession request");
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleGetDetailedContext(core::system::ProcessOperations& ops,
+                               const json::Value& requestId)
+{
+   DLOG("Handling runtime/getDetailedContext request");
+
+   // Get current time in human-readable format
+   // Format: "Friday, October 3, 2025 at 10:32:34 PM CDT"
+   std::time_t now = std::time(nullptr);
+   std::tm* localTime = std::localtime(&now);
+   char dateBuffer[128];
+   std::strftime(dateBuffer, sizeof(dateBuffer), "%A, %B %d, %Y at %I:%M:%S %p %Z", localTime);
+   std::string currentDate(dateBuffer);
+
+   // Session object
+   // TODO: Future work - detect and support Python sessions
+   json::Object session;
+   session["language"] = "R";
+   session["version"] = module_context::rVersion();
+   session["mode"] = "console";
+   session["sessionId"] = module_context::activeSession().id();
+
+   // Get R workspace variables with smart filtering
+   json::Array variablesArray;
+   size_t totalVariableCount = 0;
+   {
+      using namespace rstudio::r::sexp;
+
+      // Note: R_GlobalEnv objects don't need explicit protection as they're
+      // already protected by the environment itself. rProtect is available
+      // for any intermediate R operations.
+      Protect rProtect;
+      std::vector<Variable> vars;
+
+      // List ALL variables (including hidden) to get accurate total count
+      listEnvironment(R_GlobalEnv,
+                      true,   // includeAll - get everything first
+                      false,  // includeLastDotValue - we'll filter manually
+                      &vars);
+
+      totalVariableCount = vars.size();
+
+      // Smart filtering: exclude functions and hidden variables
+      std::vector<Variable> filteredVars;
+      filteredVars.reserve(vars.size());
+
+      for (const Variable& var : vars)
+      {
+         const std::string& name = var.first;
+         SEXP varSEXP = var.second;
+
+         // Skip hidden variables (starting with '.')
+         if (!name.empty() && name[0] == '.')
+            continue;
+
+         // Skip functions (CLOSXP = user functions, SPECIALSXP/BUILTINSXP = built-ins)
+         int objType = TYPEOF(varSEXP);
+         if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
+            continue;
+
+         filteredVars.push_back(var);
+      }
+
+      // OPTIMIZATION: Extract sizes WITHOUT full JSON conversion
+      // This is much faster than calling varToJson() on all variables
+      struct VarWithSize {
+         Variable var;
+         int64_t size;
+      };
+
+      std::vector<VarWithSize> varsWithSize;
+      varsWithSize.reserve(filteredVars.size());
+
+      for (const Variable& var : filteredVars)
+      {
+         // Use .rs.estimatedObjectSize() which is optimized for:
+         // - ALTREP objects (doesn't materialize)
+         // - Large objects (returns estimate quickly)
+         // - Edge cases (null pointers, etc.)
+         SEXP sizeSEXP;
+         Error error = r::exec::RFunction(".rs.estimatedObjectSize")
+            .addParam(var.second)
+            .call(&sizeSEXP, &rProtect);
+
+         int64_t size = 0;
+         if (!error && sizeSEXP != R_NilValue)
+         {
+            if (Rf_isInteger(sizeSEXP) && Rf_length(sizeSEXP) > 0)
+            {
+               int rSize = INTEGER(sizeSEXP)[0];
+               // Check for NA and negative values
+               if (rSize != NA_INTEGER && rSize >= 0)
+                  size = static_cast<int64_t>(rSize);
+            }
+            else if (Rf_isReal(sizeSEXP) && Rf_length(sizeSEXP) > 0)
+            {
+               double rSize = REAL(sizeSEXP)[0];
+               // Check for NA/NaN, negative values, and overflow
+               if (!ISNA(rSize) && !ISNAN(rSize) && rSize >= 0.0 &&
+                   rSize <= static_cast<double>(INT64_MAX))
+                  size = static_cast<int64_t>(rSize);
+            }
+         }
+
+         varsWithSize.push_back(VarWithSize{var, size});
+      }
+
+      // Sort by size (largest first)
+      std::sort(varsWithSize.begin(),
+                varsWithSize.end(),
+                [](const VarWithSize& a, const VarWithSize& b)
+                {
+                   return a.size > b.size;
+                });
+
+      // Take top MAX_VARIABLES and convert to JSON
+      // Limit to 100 to balance context richness with performance.
+      // Most workspaces have <100 data objects; for larger workspaces,
+      // showing the largest objects provides the most useful context.
+      const size_t MAX_VARIABLES = 100;
+      size_t numToInclude = std::min(varsWithSize.size(), MAX_VARIABLES);
+
+      for (size_t i = 0; i < numToInclude; i++)
+      {
+         json::Value jsonVal = environment::varToJson(R_GlobalEnv, varsWithSize[i].var);
+
+         // Skip variables that fail conversion (though this is rare)
+         if (jsonVal.isNull() || !jsonVal.isObject())
+         {
+            DLOG("Failed to convert variable '{}' to JSON, skipping",
+                 varsWithSize[i].var.first);
+            continue;
+         }
+
+         // Transform to SessionVariable schema (name, type, displayName)
+         // The backend expects simplified variables for context, not full details
+         json::Object varObj = jsonVal.getObject();
+         json::Object simplifiedVar;
+
+         // Extract name (required) - fallback to variable name from pair if missing
+         std::string name;
+         if (varObj.hasMember("name") && varObj["name"].isString())
+            name = varObj["name"].getString();
+         else
+            name = varsWithSize[i].var.first;
+         simplifiedVar["name"] = name;
+
+         // Extract type (required) - fallback to "unknown" if missing
+         std::string type;
+         if (varObj.hasMember("type") && varObj["type"].isString())
+            type = varObj["type"].getString();
+         else
+            type = "unknown";
+         simplifiedVar["type"] = type;
+
+         // TODO: Reevaluate providing a richer displayName in the future.
+         // For now, displayName is the same as name for simplicity.
+         // Previous implementation attempted to extract description/value:
+         //
+         // // Extract description and use as displayName (required)
+         // // Description contains human-readable summary like "data.frame: 32 obs. of 11 variables"
+         // std::string displayName;
+         // if (varObj.hasMember("description") && varObj["description"].isString())
+         // {
+         //    displayName = varObj["description"].getString();
+         // }
+         //
+         // if (displayName.empty())
+         // {
+         //    // Fallback: use "type: value" format if no description
+         //    std::string value;
+         //    if (varObj.hasMember("value") && varObj["value"].isString())
+         //       value = varObj["value"].getString();
+         //
+         //    if (value.empty())
+         //       displayName = type;
+         //    else
+         //       displayName = type + ": " + value;
+         // }
+         simplifiedVar["displayName"] = name;
+
+         variablesArray.push_back(std::move(simplifiedVar));
+      }
+
+      // Log filtering results
+      if (filteredVars.size() > MAX_VARIABLES)
+      {
+         DLOG("Variable context: showing {} of {} variables (filtered from {} total)",
+              variablesArray.getSize(), filteredVars.size(), totalVariableCount);
+      }
+      else if (filteredVars.size() < totalVariableCount)
+      {
+         DLOG("Variable context: showing {} variables (filtered from {} total)",
+              variablesArray.getSize(), totalVariableCount);
+      }
+   }
+
+   // Add metadata about filtering
+   json::Object variablesMeta;
+   variablesMeta["totalCount"] = static_cast<int>(totalVariableCount);
+   variablesMeta["shownCount"] = static_cast<int>(variablesArray.getSize());
+   variablesMeta["filtered"] = (variablesArray.getSize() < totalVariableCount);
+
+   session["variables"] = variablesArray;
+   session["variablesMeta"] = variablesMeta;
+
+   // PlatformInfo object
+   json::Object platformInfo;
+   // TODO: Future work - check if active plots exist
+   platformInfo["hasPlots"] = false;
+   platformInfo["platformVersion"] = RSTUDIO_VERSION;
+   platformInfo["currentDate"] = currentDate;
+
+   // Main result
+   json::Object result;
+   // TODO: Future work - return detailed file context
+   result["openFiles"] = json::Array();
+   result["session"] = session;
+   result["platformInfo"] = platformInfo;
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleExecuteCode(core::system::ProcessOperations& ops,
+                       const json::Value& requestId,
+                       const json::Object& params)
+{
+   DLOG("Handling runtime/executeCode request");
+
+   // Extract required parameters
+   std::string language;
+   std::string code;
+   std::string trackingId;
+
+   Error error = json::readObject(params,
+      "language", language,
+      "code", code,
+      "trackingId", trackingId);
+
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602,
+         "Invalid params: " + error.getMessage());
+      return;
+   }
+
+   // Validate language (only R supported currently)
+   if (language != "r")
+   {
+      sendJsonRpcError(ops, requestId, -32602,
+         "Unsupported language: " + language + ". Only 'r' is currently supported.");
+      return;
+   }
+
+   // Extract optional options object
+   json::Object options;
+   json::readObject(params, "options", options);  // Ignore error if missing
+
+   bool captureOutput = true;
+   bool capturePlot = false;
+   int timeout = 30000;
+
+   json::readObject(options, "captureOutput", captureOutput);
+   json::readObject(options, "capturePlot", capturePlot);
+   json::readObject(options, "timeout", timeout);
+
+   // Check if this request was already cancelled (pre-cancellation of queued request)
+   // and register tracking ID for cancellation support
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+      // Check if already cancelled
+      if (s_cancelledTrackingIds.count(trackingId) > 0)
+      {
+         s_cancelledTrackingIds.erase(trackingId);
+
+         // Return a response indicating cancellation
+         json::Object result;
+         result["output"] = "";
+         result["error"] = "Execution cancelled";
+         result["plots"] = json::Array();
+         result["executionTime"] = 0;
+
+         sendJsonRpcResponse(ops, requestId, result);
+         // Note: No need to unregister here as we never registered (this check is before registration)
+         return;
+      }
+
+      // Register as current execution
+      s_currentTrackingId = trackingId;
+   }
+
+   // Register this execution as active to enable notification filtering
+   registerActiveExecution(trackingId);
+
+   // Record start time
+   auto startTime = std::chrono::steady_clock::now();
+
+   // Create execution context with streaming support
+   // Pass shared_ptr for safe access from background thread
+   ChatExecContext execContext(captureOutput, trackingId, ops.shared_from_this());
+   execContext.connect();
+
+   // Record the display list length before execution so we can detect if
+   // plotting actually occurred (to avoid capturing stale plots)
+   int displayListLengthBefore = 0;
+   if (capturePlot)
+   {
+      r::sexp::Protect lenProtect;
+      SEXP lenSEXP = R_NilValue;
+      Error lenError = r::exec::RFunction(".rs.chat.getDisplayListLength").call(
+         &lenSEXP, &lenProtect);
+      if (!lenError && lenSEXP != R_NilValue && Rf_isInteger(lenSEXP) && Rf_length(lenSEXP) > 0)
+         displayListLengthBefore = INTEGER(lenSEXP)[0];
+   }
+
+   // Echo source code with prompts (like evaluate does)
+   echoSourceCode(code);
+
+   // Evaluate the code using existing RExec infrastructure
+   // evaluateString wraps in try(..., silent=TRUE) for error handling
+   r::sexp::Protect protect;
+   SEXP resultSEXP = R_NilValue;
+   error = r::exec::evaluateString(code, R_GlobalEnv, &resultSEXP, &protect);
+
+   // Handle parse/runtime errors from evaluateString.
+   // evaluateString uses silent=TRUE, so errors don't automatically go to console.
+   // We need to both:
+   // 1. Fire the onConsoleOutput signal so our callback can capture it
+   // 2. Write to console UI via consoleWriteError for user visibility
+   if (error)
+   {
+      std::string errorMsg = error.getMessage();
+      // Ensure consistent "Error: " prefix
+      if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
+         errorMsg = "Error: " + errorMsg;
+
+      std::string errorOutput = errorMsg + "\n";
+
+      // Fire signal first so callback captures it
+      module_context::events().onConsoleOutput(
+         module_context::ConsoleOutputError, errorOutput);
+
+      // Also write to console UI
+      module_context::consoleWriteError(errorOutput);
+   }
+
+   // Handle plots if requested
+   // NOTE: This only captures the final plot state. If code creates multiple plots
+   // (e.g., plot(1); plot(2)), only the last one is captured. This is a known
+   // limitation compared to the previous evaluate-based approach which used new_device.
+   json::Array plotsArray;
+   if (capturePlot)
+   {
+      // Use R helper for plot capture, passing the display list length from before
+      // execution so it can detect if a NEW plot was created (vs. stale plot)
+      r::sexp::Protect plotProtect;
+      SEXP plotSEXP = R_NilValue;
+
+      r::exec::RFunction captureFunc(".rs.chat.captureCurrentPlot");
+      captureFunc.addParam("displayListLengthBefore", displayListLengthBefore);
+      Error plotError = captureFunc.call(&plotSEXP, &plotProtect);
+
+      if (!plotError && plotSEXP != R_NilValue && r::sexp::isList(plotSEXP))
+      {
+         // Extract plot data from R list
+         SEXP plotNames = Rf_getAttrib(plotSEXP, R_NamesSymbol);
+         if (plotNames != R_NilValue)
+         {
+            json::Object plotObj;
+            int plotLen = Rf_length(plotSEXP);
+
+            for (int j = 0; j < plotLen; j++)
+            {
+               if (j < Rf_length(plotNames))
+               {
+                  std::string name = CHAR(STRING_ELT(plotNames, j));
+                  SEXP valueSEXP = VECTOR_ELT(plotSEXP, j);
+
+                  if (name == "data" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["data"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+                  }
+                  else if (name == "mimeType" && Rf_isString(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["mimeType"] = std::string(CHAR(STRING_ELT(valueSEXP, 0)));
+                  }
+                  else if (name == "width" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["width"] = INTEGER(valueSEXP)[0];
+                  }
+                  else if (name == "height" && Rf_isInteger(valueSEXP) && Rf_length(valueSEXP) > 0)
+                  {
+                     plotObj["height"] = INTEGER(valueSEXP)[0];
+                  }
+               }
+            }
+
+            if (plotObj.hasMember("data"))
+               plotsArray.push_back(plotObj);
+         }
+      }
+      // Don't fail on plot errors - just continue without plots
+   }
+
+   // Flush any remaining buffered output
+   // This queues final notifications to the global queue
+   execContext.flushBuffers();
+
+   // Synchronously drain THIS execution's notifications before final response
+   // This guarantees correct ordering without sleeping or waiting for background processing
+   // Handles concurrent executions correctly by only draining matching trackingId
+   drainNotificationQueueForExecution(ops, trackingId);
+
+   // Disconnect context
+   execContext.disconnect();
+
+   // Clear tracking ID - execution complete
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      s_currentTrackingId.clear();
+      // Also clean up from cancelled set in case cancel arrived during execution
+      s_cancelledTrackingIds.erase(trackingId);
+   }
+
+   // Calculate execution time in milliseconds
+   auto endTime = std::chrono::steady_clock::now();
+   int executionTime = static_cast<int>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+         endTime - startTime).count());
+
+   // Build response (same format as before)
+   json::Object result;
+   result["output"] = execContext.getOutput();
+   result["error"] = execContext.getError();
+   result["plots"] = plotsArray;
+   result["executionTime"] = executionTime;
+
+   // Unregister this execution - notifications after this point are stale
+   unregisterActiveExecution(trackingId);
+
+   // Send successful response
+   sendJsonRpcResponse(ops, requestId, result);
+
+   // Fire change detection event to trigger environment refresh
+   module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+}
+
+void handleCancelExecution(const json::Object& params)
+{
+   DLOG("Handling runtime/cancelExecution notification");
+
+   // Extract trackingId
+   std::string trackingId;
+   Error error = json::readObject(params, "trackingId", trackingId);
+
+   if (error)
+   {
+      WLOG("runtime/cancelExecution: missing or invalid trackingId");
+      return;
+   }
+
+   // Add to cancelled set and check if currently executing
+   bool shouldInterrupt = false;
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+
+      // Always add to cancelled set - handles pre-cancellation of queued requests
+      s_cancelledTrackingIds.insert(trackingId);
+
+      // Check if this is currently executing
+      shouldInterrupt = !s_currentTrackingId.empty() &&
+                        s_currentTrackingId == trackingId;
+   }
+
+   // Clear any queued notifications for this cancelled execution
+   clearNotificationsForExecution(trackingId);
+
+   if (shouldInterrupt)
+   {
+      // Set the interrupt flag - this will cause R to throw an interrupt condition
+      r::exec::setInterruptsPending(true);
+      DLOG("Set interrupt pending for trackingId: {}", trackingId);
+   }
+   else
+   {
+      // Not currently executing - pre-cancellation recorded for when it starts
+      DLOG("Recorded pre-cancellation for trackingId: {}", trackingId);
+   }
+}
+
+void handleGetProtocolVersion(core::system::ProcessOperations& ops,
+                               const json::Value& requestId,
+                               const json::Object& params)
+{
+   DLOG("Handling protocol/getVersion request");
+
+   // Extract client info for debugging (optional fields)
+   std::string clientProtocolVersion;
+   std::string clientVersion;
+
+   json::readObject(params, "clientProtocolVersion", clientProtocolVersion);
+   json::readObject(params, "clientVersion", clientVersion);
+
+   DLOG("Client protocol version: {}, client version: {}",
+        clientProtocolVersion.empty() ? "unknown" : clientProtocolVersion,
+        clientVersion.empty() ? "unknown" : clientVersion);
+
+   // Build response
+   json::Object result;
+   result["protocolVersion"] = kProtocolVersion;
+   result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleRequest(core::system::ProcessOperations& ops,
+                   const std::string& method,
+                   const json::Value& requestId,
+                   const json::Object& params)
+{
+   if (method == "runtime/getActiveSession")
+   {
+      handleGetActiveSession(ops, requestId);
+   }
+   else if (method == "runtime/getDetailedContext")
+   {
+      handleGetDetailedContext(ops, requestId);
+   }
+   else if (method == "runtime/executeCode")
+   {
+      handleExecuteCode(ops, requestId, params);
+   }
+   else if (method == "protocol/getVersion")
+   {
+      handleGetProtocolVersion(ops, requestId, params);
+   }
+   else
+   {
+      // Unknown method - send JSON-RPC error response
+      WLOG("Unknown JSON-RPC request method: {}", method);
+      sendJsonRpcError(ops, requestId, -32601, "Method not found");
+   }
+}
+
+// ============================================================================
+// JSON-RPC Message Processing
+// ============================================================================
+
+void processBackendMessage(core::system::ProcessOperations& ops,
+                           const json::Value& message)
 {
    if (!message.isObject())
    {
@@ -172,12 +1123,27 @@ void processBackendMessage(const json::Value& message)
    Error error = json::readObject(messageObj, "method", method);
    if (!error)  // Success - method field is present
    {
-      // This is a notification (no 'id' field) or request from backend
+      // This is a notification or request from backend
       json::Object params;
       json::readObject(messageObj, "params", params);
 
-      // For now, we only handle notifications
-      handleNotification(method, params);
+      // Check for 'id' field to distinguish request from notification
+      // Per JSON-RPC 2.0 spec:
+      // - Request: has 'id' field (value can be string, number, or null)
+      // - Notification: 'id' field is absent entirely
+      // The VALUE of id doesn't matter - only its presence/absence
+      auto it = messageObj.find("id");
+      if (it != messageObj.end())
+      {
+         // 'id' field EXISTS - this is a REQUEST (even if value is null)
+         json::Value requestId = messageObj["id"];
+         handleRequest(ops, method, requestId, params);
+      }
+      else
+      {
+         // 'id' field ABSENT - this is a NOTIFICATION
+         handleNotification(method, params);
+      }
    }
    else
    {
@@ -204,9 +1170,16 @@ void handleLoggerLog(const json::Object& params)
       return;
    }
 
+   // Filter backend logs based on minimum level setting
+   if (getLogLevelPriority(level) < getLogLevelPriority(getBackendMinLogLevel()))
+   {
+      // This log level is below the threshold, skip it
+      return;
+   }
+
    // Map backend log levels to RStudio logging macros
-   // Use "databot" prefix to distinguish backend logs
-   std::string prefixedMessage = fmt::format("[databot] {}", message);
+   // Use "ai" prefix and include level to distinguish backend logs
+   std::string prefixedMessage = fmt::format("[ai] [{}] {}", level, message);
 
    if (level == "trace")
    {
@@ -228,98 +1201,641 @@ void handleLoggerLog(const json::Object& params)
    {
       ELOG("{}", prefixedMessage);
    }
+   else if (level == "fatal")
+   {
+      ELOG("{}", prefixedMessage);
+   }
    else
    {
-      DLOG("[databot] [{}] {}", level, message);
+      // Unknown levels are treated as high priority (see getLogLevelPriority),
+      // so log them as errors to ensure visibility
+      ELOG("[ai] [{}] {}", level, message);
    }
 }
 
-void processPendingMessages()
+void handleSetBusyStatus(const json::Object& params)
 {
-   // Process all pending messages from the backend
-   while (!s_pendingResponses.empty())
+   bool busy = false;
+   Error error = json::readObject(params, "busy", busy);
+   if (error)
    {
-      json::Value message = s_pendingResponses.front();
-      s_pendingResponses.erase(s_pendingResponses.begin());
-
-      processBackendMessage(message);
+      LOG_ERROR(error);
+      return;
    }
+
+   // Update our tracking flag
+   s_chatBusy = busy;
+
+   // Log for debugging (using chat-specific logging infrastructure)
+   DLOG("Chat backend busy status: {}", busy ? "busy" : "idle");
 }
 
 void onBackgroundProcessing(bool isIdle)
 {
-   // Process pending messages from backend on main thread
-   processPendingMessages();
+   std::vector<PendingNotification> toProcess;
 
-   // Future: Add timeout handling for request/response pattern
-   // (similar to SessionCopilot.cpp lines 1448-1462)
-}
-
-// ============================================================================
-// Installation Detection
-// ============================================================================
-
-/**
- * Verify that an AI installation at the given path contains all required files.
- */
-bool verifyPositAiInstallation(const FilePath& positAiPath)
-{
-   if (!positAiPath.exists())
-      return false;
-
-   FilePath clientDir = positAiPath.completeChildPath(kClientDirPath);
-   FilePath serverScript = positAiPath.completeChildPath(kServerScriptPath);
-   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
-
-   return clientDir.exists() && serverScript.exists() && indexHtml.exists();
-}
-
-FilePath locatePositAiInstallation()
-{
-   // 1. Check environment variable override (for development/testing)
-   std::string rstudioPositAiPath = core::system::getenv("RSTUDIO_POSIT_AI_PATH");
-   if (!rstudioPositAiPath.empty())
+   // Phase 1: Extract notifications to process (hold lock briefly)
    {
-      FilePath positAiPath(rstudioPositAiPath);
-      if (verifyPositAiInstallation(positAiPath))
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+
+      while (!s_notificationQueue.empty())
       {
-         DLOG("Using AI installation from RSTUDIO_POSIT_AI_PATH: {}", positAiPath.getAbsolutePath());
-         return positAiPath;
+         PendingNotification notif = s_notificationQueue.front();
+         s_notificationQueue.pop();
+
+         // Only send notifications for active executions
+         if (s_activeTrackingIds.find(notif.trackingId) != s_activeTrackingIds.end())
+         {
+            toProcess.push_back(notif);
+         }
+         // Notifications for inactive executions are dropped (completed/cancelled)
+      }
+   }
+
+   // Phase 2: Send notifications (no lock held, no race condition)
+   for (const auto& notif : toProcess)
+   {
+      // Check if ops still valid (backend may have died)
+      auto ops = notif.weakOps.lock();
+      if (ops)
+      {
+         sendStreamingOutput(*ops, notif.trackingId, notif.type, notif.content);
+      }
+      // If ops expired, notification is dropped (backend dead)
+   }
+}
+
+// ============================================================================
+// Update Management
+// ============================================================================
+
+// Structure to hold update check state
+struct UpdateState
+{
+   bool updateAvailable;
+   bool noCompatibleVersion;
+   std::string currentVersion;
+   std::string newVersion;
+   std::string downloadUrl;
+   std::string errorMessage;
+
+   // Installation status tracking
+   enum class Status
+   {
+      Idle,
+      Downloading,
+      Installing,
+      Complete,
+      Error
+   };
+   Status installStatus;
+   std::string installMessage;
+
+   UpdateState()
+      : updateAvailable(false),
+        noCompatibleVersion(false),
+        installStatus(Status::Idle)
+   {
+   }
+};
+
+// Global update state
+UpdateState s_updateState;
+boost::mutex s_updateStateMutex;
+
+// Validate that a URL uses HTTPS protocol
+bool isHttpsUrl(const std::string& url)
+{
+   return boost::starts_with(url, "https://");
+}
+
+// Download manifest from URL specified in pai_download_uri preference
+Error downloadManifest(json::Object* pManifest)
+{
+   if (!pManifest)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+#ifndef NDEBUG
+   // DEBUG builds only: Support local manifest file for testing
+   std::string debugManifestPath = core::system::getenv("RSTUDIO_CHAT_DEBUG_MANIFEST");
+   if (!debugManifestPath.empty())
+   {
+      // Validate path ends with manifest.json
+      if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
+      {
+         WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json', ignoring: {}",
+              debugManifestPath);
       }
       else
       {
-         WLOG("RSTUDIO_POSIT_AI_PATH set but installation invalid: {}", rstudioPositAiPath);
+         FilePath debugManifestFile(debugManifestPath);
+         if (debugManifestFile.exists())
+         {
+            DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
+            // Read and parse JSON from local file
+            std::string manifestContent;
+            Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
+            if (error)
+            {
+               WLOG("Failed to read debug manifest file: {}", error.getMessage());
+               return error;
+            }
+
+            // Parse JSON
+            json::Value manifestValue;
+            if (manifestValue.parse(manifestContent))
+            {
+               WLOG("Failed to parse debug manifest JSON");
+               return systemError(boost::system::errc::protocol_error,
+                                 "Invalid JSON in debug manifest",
+                                 ERROR_LOCATION);
+            }
+
+            if (!manifestValue.isObject())
+            {
+               return systemError(boost::system::errc::protocol_error,
+                                 "Debug manifest must be a JSON object",
+                                 ERROR_LOCATION);
+            }
+
+            *pManifest = manifestValue.getObject();
+            DLOG("Successfully loaded and parsed debug manifest");
+            return Success();
+         }
+         else
+         {
+            WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST file does not exist, ignoring: {}", debugManifestPath);
+         }
+      }
+   }
+#endif
+
+   // Get download URI from preference
+   std::string downloadUri = prefs::userPrefs().paiDownloadUri();
+
+   // Trim whitespace from the URL
+   boost::algorithm::trim(downloadUri);
+
+   if (downloadUri.empty())
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                        "pai_download_uri preference not set",
+                        ERROR_LOCATION);
+   }
+
+   // Validate HTTPS
+   if (!isHttpsUrl(downloadUri))
+   {
+      WLOG("Manifest download URL must use HTTPS, rejecting: {}", downloadUri);
+      return systemError(boost::system::errc::protocol_error,
+                        "Manifest URL must use HTTPS protocol",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("Downloading manifest from: {}", downloadUri);
+
+   // Create temp file for download
+   FilePath tempFile = module_context::tempFile("manifest", "json");
+
+   // Use R's download.file() function with timeout protection
+   r::exec::RFunction downloadFunc("download.file");
+   downloadFunc.addParam("url", downloadUri);
+   downloadFunc.addParam("destfile", tempFile.getAbsolutePath());
+   downloadFunc.addParam("quiet", true);
+   downloadFunc.addParam("method", "libcurl");  // Use libcurl for HTTPS support
+   downloadFunc.addParam("timeout", 30);  // 30 second timeout
+
+   Error error = downloadFunc.call();
+   if (error)
+   {
+      WLOG("Failed to download manifest: {}", error.getMessage());
+      return error;
+   }
+
+   // Read and parse JSON
+   std::string manifestContent;
+   error = core::readStringFromFile(tempFile, &manifestContent);
+   if (error)
+   {
+      WLOG("Failed to read manifest file: {}", error.getMessage());
+      return error;
+   }
+
+   // Parse JSON
+   json::Value manifestValue;
+   if (manifestValue.parse(manifestContent))
+   {
+      WLOG("Failed to parse manifest JSON");
+      return systemError(boost::system::errc::protocol_error,
+                        "Invalid JSON in manifest",
+                        ERROR_LOCATION);
+   }
+
+   if (!manifestValue.isObject())
+   {
+      return systemError(boost::system::errc::protocol_error,
+                        "Manifest must be a JSON object",
+                        ERROR_LOCATION);
+   }
+
+   *pManifest = manifestValue.getObject();
+   DLOG("Successfully downloaded and parsed manifest");
+
+   return Success();
+}
+
+// Parse manifest to get package info for current protocol version
+// Selects the highest minor version that matches the major version
+Error getPackageInfoFromManifest(
+    const json::Object& manifest,
+    const std::string& protocolVersion,
+    std::string* pPackageVersion,
+    std::string* pDownloadUrl)
+{
+   if (!pPackageVersion || !pDownloadUrl)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Get "versions" object
+   json::Object versions;
+   Error error = json::readObject(manifest, "versions", versions);
+   if (error)
+   {
+      WLOG("Manifest missing 'versions' field");
+      return error;
+   }
+
+   // Parse RStudio's protocol version to get major version
+   SemanticVersion rstudioProtocol;
+   if (!rstudioProtocol.parse(protocolVersion))
+   {
+      WLOG("Failed to parse RStudio protocol version: {}", protocolVersion);
+      return systemError(boost::system::errc::invalid_argument,
+                        "Invalid protocol version format",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("Looking for compatible protocols with major version {}", rstudioProtocol.major);
+
+   // Find all compatible protocol versions (matching major version)
+   // and select the highest minor version
+   SemanticVersion bestProtocol;
+   std::string bestPackageVersion;
+   std::string bestDownloadUrl;
+   bool foundCompatible = false;
+
+   for (const auto& entry : versions)
+   {
+      std::string manifestProtocol = entry.getName();
+
+      // Parse this manifest protocol version
+      SemanticVersion manifestProtocolVer;
+      if (!manifestProtocolVer.parse(manifestProtocol))
+      {
+         WLOG("Skipping manifest entry with invalid protocol version: {}", manifestProtocol);
+         continue;
+      }
+
+      // Check if major version matches
+      if (manifestProtocolVer.major != rstudioProtocol.major)
+      {
+         DLOG("Skipping protocol {} (major version mismatch)", manifestProtocol);
+         continue;
+      }
+
+      // Extract version info for this protocol
+      json::Value versionValue = entry.getValue();
+      if (!versionValue.isObject())
+      {
+         WLOG("Skipping protocol {} (value is not an object)", manifestProtocol);
+         continue;
+      }
+
+      json::Object versionInfo = versionValue.getObject();
+
+      std::string packageVersion;
+      std::string downloadUrl;
+
+      error = json::readObject(versionInfo, "version", packageVersion);
+      if (error)
+      {
+         WLOG("Skipping protocol {} (missing 'version' field)", manifestProtocol);
+         continue;
+      }
+
+      error = json::readObject(versionInfo, "url", downloadUrl);
+      if (error)
+      {
+         WLOG("Skipping protocol {} (missing 'url' field)", manifestProtocol);
+         continue;
+      }
+
+      // Validate download URL is HTTPS
+      if (!isHttpsUrl(downloadUrl))
+      {
+         WLOG("Skipping protocol {} (non-HTTPS URL: {})", manifestProtocol, downloadUrl);
+         continue;
+      }
+
+      // Check if this is the best (highest) protocol version so far
+      if (!foundCompatible || manifestProtocolVer > bestProtocol)
+      {
+         bestProtocol = manifestProtocolVer;
+         bestPackageVersion = packageVersion;
+         bestDownloadUrl = downloadUrl;
+         foundCompatible = true;
+         DLOG("Found compatible protocol {}.{} with package version {}",
+              manifestProtocolVer.major, manifestProtocolVer.minor, packageVersion);
       }
    }
 
-   // 2. Check user data directory (XDG-based, platform-appropriate)
-   // Linux: ~/.local/share/rstudio/ai
-   // macOS: ~/Library/Application Support/RStudio/ai
-   // Windows: %LOCALAPPDATA%/RStudio/ai
-   FilePath userPositAiPath = xdg::userDataDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(userPositAiPath))
+   if (!foundCompatible)
    {
-      DLOG("Using user-level AI installation: {}", userPositAiPath.getAbsolutePath());
-      return userPositAiPath;
+      WLOG("No compatible protocol found in manifest for major version {}", rstudioProtocol.major);
+      return systemError(boost::system::errc::protocol_not_supported,
+                        "No compatible protocol version found in manifest",
+                        ERROR_LOCATION);
    }
 
-   // 3. Check system-wide installation (XDG config directory)
-   // Linux: /etc/rstudio/ai
-   // Windows: C:/ProgramData/RStudio/ai
-   FilePath systemPositAiPath = xdg::systemConfigDir().completePath(kPositAiDirName);
-   if (verifyPositAiInstallation(systemPositAiPath))
+   *pPackageVersion = bestPackageVersion;
+   *pDownloadUrl = bestDownloadUrl;
+
+   DLOG("Selected best compatible protocol {}.{}: package version={}, url={}",
+        bestProtocol.major, bestProtocol.minor, bestPackageVersion, bestDownloadUrl);
+
+   return Success();
+}
+
+// Compare semantic versions and determine if installation is needed
+// Returns true if versions differ, enabling both upgrades (available > installed)
+// and downgrades (available < installed) when RStudio version changes
+// Returns false if versions are identical or if either version fails to parse
+bool shouldInstallVersion(
+    const std::string& installedVersion,
+    const std::string& availableVersion)
+{
+   SemanticVersion installed, available;
+
+   if (!installed.parse(installedVersion))
    {
-      DLOG("Using system-wide AI installation: {}", systemPositAiPath.getAbsolutePath());
-      return systemPositAiPath;
+      WLOG("Failed to parse installed version: {}", installedVersion);
+      return false;
    }
 
-   DLOG("No valid AI installation found. Checked locations:");
-   if (!rstudioPositAiPath.empty())
-      DLOG("  - RSTUDIO_POSIT_AI_PATH: {}", rstudioPositAiPath);
-   DLOG("  - User data dir: {}", userPositAiPath.getAbsolutePath());
-   DLOG("  - System config dir: {}", systemPositAiPath.getAbsolutePath());
+   if (!available.parse(availableVersion))
+   {
+      WLOG("Failed to parse available version: {}", availableVersion);
+      return false;
+   }
 
-   return FilePath(); // Not found
+   return available != installed;
+}
+
+// Download package to temp directory
+Error downloadPackage(const std::string& url, const FilePath& destPath)
+{
+   if (!isHttpsUrl(url))
+   {
+      WLOG("Package download URL must use HTTPS, rejecting: {}", url);
+      return systemError(boost::system::errc::protocol_error,
+                        "Package download URL must use HTTPS protocol",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
+
+   // Use R's download.file() function with timeout protection
+   r::exec::RFunction downloadFunc("download.file");
+   downloadFunc.addParam("url", url);
+   downloadFunc.addParam("destfile", destPath.getAbsolutePath());
+   downloadFunc.addParam("quiet", false);  // Show progress for user feedback
+   downloadFunc.addParam("method", "libcurl");
+   downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
+   downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
+
+   Error error = downloadFunc.call();
+   if (error)
+   {
+      WLOG("Failed to download package: {}", error.getMessage());
+      return error;
+   }
+
+   // Verify file exists and has content
+   if (!destPath.exists() || destPath.getSize() == 0)
+   {
+      return systemError(boost::system::errc::io_error,
+                        "Downloaded file is empty or missing",
+                        ERROR_LOCATION);
+   }
+
+   DLOG("Successfully downloaded package ({} bytes)", destPath.getSize());
+   return Success();
+}
+
+// Install package (backup, extract, cleanup)
+Error installPackage(const FilePath& packagePath)
+{
+   FilePath userDataDir = xdg::userDataDir();
+   FilePath aiDir = userDataDir.completePath(kPositAiDirName);
+   FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+
+   DLOG("Installing package from: {}", packagePath.getAbsolutePath());
+
+   // Step 1: Remove old backup if it exists
+   if (aiPrevDir.exists())
+   {
+      DLOG("Removing old backup directory: {}", aiPrevDir.getAbsolutePath());
+      Error error = aiPrevDir.removeIfExists();
+      if (error)
+      {
+         WLOG("Failed to remove old backup: {}", error.getMessage());
+         return error;
+      }
+   }
+
+   // Step 2: Backup current installation if it exists
+   if (aiDir.exists())
+   {
+      DLOG("Backing up current installation to: {}", aiPrevDir.getAbsolutePath());
+      Error error = aiDir.move(aiPrevDir);
+      if (error)
+      {
+         WLOG("Failed to backup current installation: {}", error.getMessage());
+         return error;
+      }
+   }
+
+   // Step 3: Create new ai directory
+   Error error = aiDir.ensureDirectory();
+   if (error)
+   {
+      WLOG("Failed to create ai directory: {}", error.getMessage());
+      // Try to restore backup
+      if (aiPrevDir.exists())
+      {
+         aiPrevDir.move(aiDir);
+      }
+      return error;
+   }
+
+   // Step 4: Extract package using R's unzip()
+   DLOG("Extracting package to: {}", aiDir.getAbsolutePath());
+   r::exec::RFunction unzipFunc("unzip");
+   unzipFunc.addParam("zipfile", packagePath.getAbsolutePath());
+   unzipFunc.addParam("exdir", aiDir.getAbsolutePath());
+
+   error = unzipFunc.call();
+   if (error)
+   {
+      WLOG("Failed to extract package: {}", error.getMessage());
+      // Clean up partial extraction
+      Error cleanupError = aiDir.removeIfExists();
+      if (cleanupError)
+      {
+         ELOG("Failed to clean up failed extraction directory: {}", cleanupError.getMessage());
+      }
+      // Restore backup
+      if (aiPrevDir.exists())
+      {
+         Error restoreError = aiPrevDir.move(aiDir);
+         if (restoreError)
+         {
+            ELOG("Failed to restore backup after extraction failure: {}", restoreError.getMessage());
+         }
+      }
+      return error;
+   }
+
+   // Step 5: Verify installation
+   if (!verifyPositAiInstallation(aiDir))
+   {
+      WLOG("Extracted package failed verification");
+      // Clean up invalid extraction
+      Error cleanupError = aiDir.removeIfExists();
+      if (cleanupError)
+      {
+         ELOG("Failed to clean up invalid extraction directory: {}", cleanupError.getMessage());
+      }
+      // Restore backup
+      if (aiPrevDir.exists())
+      {
+         Error restoreError = aiPrevDir.move(aiDir);
+         if (restoreError)
+         {
+            ELOG("Failed to restore backup after verification failure: {}", restoreError.getMessage());
+         }
+      }
+      return systemError(boost::system::errc::io_error,
+                        "Extracted package is incomplete or invalid",
+                        ERROR_LOCATION);
+   }
+
+   // Step 6: Success - remove backup
+   if (aiPrevDir.exists())
+   {
+      DLOG("Installation successful, removing backup");
+      Error backupCleanup = aiPrevDir.removeIfExists();
+      if (backupCleanup)
+      {
+         WLOG("Failed to remove backup directory after successful install: {}", backupCleanup.getMessage());
+         // Don't fail the installation for this - backup will be cleaned up next time
+      }
+   }
+
+   DLOG("Package installation complete");
+   return Success();
+}
+
+// Called during session initialization to check for updates
+Error checkForUpdatesOnStartup()
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+   // Eligibility check: require both preferences
+   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   {
+      DLOG("Update check skipped: pai preferences not configured");
+      return Success();
+   }
+
+   DLOG("Checking for updates on startup");
+
+   // Get installed version
+   std::string installedVersion = getInstalledVersion();
+   if (installedVersion.empty())
+   {
+      DLOG("No installation found, checking for initial install");
+      installedVersion = "0.0.0";
+   }
+
+   s_updateState.currentVersion = installedVersion;
+
+   // Download manifest (silent failure)
+   json::Object manifest;
+   Error error = downloadManifest(&manifest);
+   if (error)
+   {
+      WLOG("Failed to download manifest: {}", error.getMessage());
+      // Silent failure - don't block feature usage
+      return Success();
+   }
+
+   // Get package info for our protocol version
+   std::string packageVersion;
+   std::string downloadUrl;
+   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   if (error)
+   {
+      WLOG("Failed to get package info from manifest: {}", error.getMessage());
+      WLOG("Error code: {}, Expected: {}", error.getCode(),
+           static_cast<int>(boost::system::errc::protocol_not_supported));
+
+      // Check if this is specifically a "protocol not found" error
+      if (error.getCode() == boost::system::errc::protocol_not_supported)
+      {
+         // Protocol version not in manifest - incompatible RStudio version
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+
+      // For other errors (network, parsing, etc), do silent failure as before
+      return Success();
+   }
+
+   // Compare versions - offer install if versions differ (upgrade or downgrade)
+   if (shouldInstallVersion(installedVersion, packageVersion))
+   {
+      // Determine if this is an upgrade or downgrade
+      SemanticVersion installed, available;
+      bool isDowngrade = false;
+
+      // These parses should always succeed since shouldInstallVersion validated them
+      if (installed.parse(installedVersion) && available.parse(packageVersion))
+      {
+         isDowngrade = (available < installed);
+         DLOG("{} available: {} -> {}",
+              isDowngrade ? "Downgrade" : "Update",
+              installedVersion, packageVersion);
+      }
+      else
+      {
+         // Defensive: this shouldn't happen, but handle gracefully
+         WLOG("Version re-parsing failed unexpectedly: {} -> {}",
+              installedVersion, packageVersion);
+         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+      }
+
+      s_updateState.updateAvailable = true;
+      s_updateState.newVersion = packageVersion;
+      s_updateState.downloadUrl = downloadUrl;
+   }
+   else
+   {
+      DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
+      s_updateState.updateAvailable = false;
+   }
+
+   return Success();
 }
 
 // ============================================================================
@@ -381,22 +1897,44 @@ std::string buildWebSocketUrl(int port)
       std::string baseUrl = persistentState().activeClientUrl();
       DLOG("Base URL: {}", baseUrl);
 
-      // Parse base URL to get scheme and host
-      http::URL parsedBase(baseUrl);
+      // Determine WebSocket scheme and extract URL without scheme
+      // This preserves the full path including any session prefix (e.g., /s/abc123/)
+      std::string wsScheme;
+      std::string urlWithoutScheme;
 
-      // Determine WebSocket scheme based on HTTP scheme
-      std::string wsScheme = (parsedBase.protocol() == "https") ? "wss" : "ws";
+      if (baseUrl.find("https://") == 0)
+      {
+         wsScheme = "wss://";
+         urlWithoutScheme = baseUrl.substr(8); // Remove "https://"
+      }
+      else if (baseUrl.find("http://") == 0)
+      {
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl.substr(7); // Remove "http://"
+      }
+      else
+      {
+         // Fallback - shouldn't happen
+         WLOG("Unexpected base URL format: {}", baseUrl);
+         wsScheme = "ws://";
+         urlWithoutScheme = baseUrl;
+      }
 
-      // Build complete WebSocket URL as string with /ai-chat base path
-      // The proxy will route {portmappedPath}/ai-chat/ws to http://127.0.0.1:{port}/ai-chat/ws
-      std::string wsUrl = wsScheme + "://" + parsedBase.host() + portmappedPath + "/ai-chat";
+      // Remove trailing slash from URL if present (portmappedPath will add one)
+      if (!urlWithoutScheme.empty() && urlWithoutScheme.back() == '/')
+         urlWithoutScheme = urlWithoutScheme.substr(0, urlWithoutScheme.length() - 1);
+
+      // Build complete WebSocket URL preserving any session path from baseUrl
+      // Example: wss://hostname:8787/s/abc123/p/58fab3e4/ai-chat
+      // The proxy will route this to http://127.0.0.1:{port}/ai-chat/ws
+      std::string wsUrl = wsScheme + urlWithoutScheme + portmappedPath + "/ai-chat";
       DLOG("Final WebSocket URL: {}", wsUrl);
 
       return wsUrl;
    }
 #endif
 
-   // Desktop mode: include /ai-chat base path for DatabotServer routing
+   // Desktop mode: include /ai-chat base path for AIServer routing
    // The client will append /ws to get ws://127.0.0.1:{port}/ai-chat/ws
    std::string desktopUrl = "ws://127.0.0.1:" + boost::lexical_cast<std::string>(port) + "/ai-chat";
    DLOG("Desktop WebSocket URL: {}", desktopUrl);
@@ -413,6 +1951,9 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
    s_backendOutputBuffer.append(output);
 
    // Process all complete messages in the buffer
+   // NOTE: We process messages immediately here (not deferred) because:
+   // 1. callbacksRequireMainThread=true means we're already on the main thread
+   // 2. We need the valid 'ops' reference to send responses to requests
    while (true)
    {
       // Find the end of headers (blank line: \r\n\r\n) first
@@ -464,8 +2005,8 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       // Extract the message body (IMPORTANT: byte-based, not character-based)
       std::string messageBody = s_backendOutputBuffer.substr(bodyStart, contentLength);
 
-      // Verbose logging
-      if (chatLogLevel() >= 2)
+      // Verbose logging (filtered by backend log level for logger/log notifications)
+      if (chatLogLevel() >= 2 && shouldLogBackendMessage(messageBody))
       {
          DLOG("Received message from backend: {}", messageBody);
       }
@@ -478,15 +2019,13 @@ void onBackendStdout(core::system::ProcessOperations& ops, const std::string& ou
       }
       else
       {
-         // Queue the parsed message for processing
-         s_pendingResponses.push_back(messageValue);
+         // Process message immediately while ops is valid
+         processBackendMessage(ops, messageValue);
       }
 
       // Remove the processed message from buffer
       s_backendOutputBuffer = s_backendOutputBuffer.substr(bodyEnd);
    }
-
-   // Messages will be processed by onBackgroundProcessing on the main thread
 }
 
 void onBackendStderr(core::system::ProcessOperations& ops, const std::string& output)
@@ -498,24 +2037,28 @@ void onBackendExit(int exitCode)
 {
    WLOG("Chat backend exited with code: {}", exitCode);
 
+   // Clear chat backend busy state to prevent stuck suspension blocking
+   if (s_chatBusy)
+   {
+      s_chatBusy = false;
+      DLOG("Cleared chat backend busy state on process exit");
+   }
+
+   // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
-
-   // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
+   s_chatBackendRestartCount = kMaxRestartAttempts;
 
-   // Auto-restart once
-   if (s_chatBackendRestartCount < kMaxRestartAttempts)
-   {
-      s_chatBackendRestartCount++;
-      DLOG("Attempting to restart chat backend (attempt {})", s_chatBackendRestartCount);
-
-      Error error = startChatBackend();
-      if (error)
-         LOG_ERROR(error);
-   }
+   // Notify client of unexpected backend exit
+   json::Object exitData;
+   exitData["exit_code"] = exitCode;
+   exitData["crashed"] = true;
+   module_context::enqueClientEvent(ClientEvent(
+      client_events::kChatBackendExit,
+      exitData
+   ));
 }
 
 Error startChatBackend()
@@ -571,6 +2114,31 @@ Error startChatBackend()
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
    args.push_back("--json"); // Enable JSON-RPC mode
 
+   // Add workspace path argument
+   FilePath workspacePath = dirs::getInitialWorkingDirectory();
+   args.push_back("--workspace");
+   args.push_back(workspacePath.getAbsolutePath());
+
+   // Create storage base path: {XDG_DATA_HOME}/ai-data/
+   FilePath storagePath = xdg::userDataDir().completePath("ai-data");
+   error = storagePath.ensureDirectory();
+   if (error)
+      return(error);
+
+   args.push_back("--storage");
+   args.push_back(storagePath.getAbsolutePath());
+
+   // Generate a persistent ID for this workspace directory
+   std::string workspacePathStr = workspacePath.getAbsolutePath();
+   std::string workspaceId = session::projectToProjectId(
+       module_context::userScratchPath(),
+       FilePath(),  // No shared storage - use per-user workspace IDs
+       workspacePathStr
+   ).id();
+
+   args.push_back("--workspace-id");
+   args.push_back(workspaceId);
+
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
@@ -621,156 +2189,6 @@ Error startChatBackend()
       s_chatBackendUrl.clear();
       return error;
    }
-
-   return Success();
-}
-
-// ============================================================================
-// Static File Serving
-// ============================================================================
-
-std::string getContentType(const std::string& extension)
-{
-   static std::map<std::string, std::string> contentTypes = {
-      {".html", "text/html; charset=utf-8"},
-      {".js", "application/javascript; charset=utf-8"},
-      {".mjs", "application/javascript; charset=utf-8"},
-      {".css", "text/css; charset=utf-8"},
-      {".json", "application/json; charset=utf-8"},
-      {".svg", "image/svg+xml"},
-      {".png", "image/png"},
-      {".jpg", "image/jpeg"},
-      {".jpeg", "image/jpeg"},
-      {".gif", "image/gif"},
-      {".ico", "image/x-icon"},
-      {".woff", "font/woff"},
-      {".woff2", "font/woff2"},
-      {".ttf", "font/ttf"},
-      {".eot", "application/vnd.ms-fontobject"}
-   };
-
-   auto it = contentTypes.find(extension);
-   if (it != contentTypes.end())
-      return it->second;
-
-   return "application/octet-stream";
-}
-
-Error validateAndResolvePath(const FilePath& clientRoot,
-                             const std::string& requestPath,
-                             FilePath* pResolvedPath)
-{
-   // Remove query string and fragment
-   std::string cleanPath = requestPath;
-   size_t queryPos = cleanPath.find('?');
-   if (queryPos != std::string::npos)
-      cleanPath = cleanPath.substr(0, queryPos);
-
-   size_t fragmentPos = cleanPath.find('#');
-   if (fragmentPos != std::string::npos)
-      cleanPath = cleanPath.substr(0, fragmentPos);
-
-   // URL decode
-   cleanPath = http::util::urlDecode(cleanPath);
-
-   // Build full path
-   FilePath resolved = clientRoot.completeChildPath(cleanPath);
-
-   // CRITICAL: Canonicalize to resolve symlinks and ".." before security check
-   Error error = core::system::realPath(resolved, &resolved);
-   if (error)
-      return error;
-
-   // Security: Ensure resolved path is within clientRoot
-   std::string resolvedStr = resolved.getAbsolutePath();
-   std::string rootStr = clientRoot.getAbsolutePath();
-
-   if (!boost::starts_with(resolvedStr, rootStr))
-   {
-      return systemError(boost::system::errc::permission_denied,
-                        "Path traversal attempt detected",
-                        ERROR_LOCATION);
-   }
-
-   *pResolvedPath = resolved;
-   return Success();
-}
-
-Error handleAIChatRequest(const http::Request& request,
-                          http::Response* pResponse)
-{
-   // Locate installation
-   FilePath positAiPath = locatePositAiInstallation();
-   if (positAiPath.isEmpty())
-   {
-      pResponse->setStatusCode(http::status::NotFound);
-      pResponse->setBody("Posit AI not installed.");
-      return Success();
-   }
-
-   FilePath clientRoot = positAiPath.completeChildPath(kClientDirPath);
-
-   // Parse requested path from URI
-   // URI format: /ai-chat/<path>
-   std::string uri = request.uri();
-   size_t pos = uri.find("/ai-chat/");
-   if (pos == std::string::npos)
-   {
-      pResponse->setStatusCode(http::status::BadRequest);
-      return Success();
-   }
-
-   std::string requestPath = uri.substr(pos + 9); // Length of "/ai-chat/"
-
-   // Default to index.html
-   if (requestPath.empty() || requestPath == "/")
-      requestPath = kIndexFileName;
-
-   // Validate and resolve path
-   FilePath resolvedPath;
-   Error error = validateAndResolvePath(clientRoot, requestPath, &resolvedPath);
-   if (error)
-   {
-      pResponse->setStatusCode(http::status::Forbidden);
-      return Success();
-   }
-
-   // Check if file exists
-   if (!resolvedPath.exists())
-   {
-      pResponse->setStatusCode(http::status::NotFound);
-      return Success();
-   }
-
-   // Read file BYTE-FOR-BYTE (no modifications)
-   std::string content;
-   error = core::readStringFromFile(resolvedPath, &content);
-   if (error)
-   {
-      pResponse->setStatusCode(http::status::InternalServerError);
-      return error;
-   }
-
-   // Set content type
-   std::string extension = resolvedPath.getExtension();
-   pResponse->setContentType(getContentType(extension));
-
-   // Set caching headers
-   if (boost::ends_with(requestPath, kIndexFileName) ||
-       boost::ends_with(requestPath, ".js") ||
-       boost::ends_with(requestPath, ".css"))
-   {
-      // Don't cache HTML, JS, or CSS files to avoid stale cache issues during development
-      pResponse->setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-   }
-   else if (requestPath.find(".") != std::string::npos)
-   {
-      // Cache other assets like images, fonts, etc.
-      pResponse->setHeader("Cache-Control", "public, max-age=31536000");
-   }
-
-   pResponse->setStatusCode(http::status::Ok);
-   pResponse->setBody(content);
 
    return Success();
 }
@@ -843,12 +2261,274 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error chatCheckForUpdates(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+   // Guard: Require both preferences to be set
+   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   {
+      // Return empty/negative response - don't reveal feature exists
+      json::Object result;
+      result["updateAvailable"] = false;
+      result["noCompatibleVersion"] = false;
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // Return cached startup check result
+   json::Object result;
+   result["updateAvailable"] = s_updateState.updateAvailable;
+   result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
+   result["currentVersion"] = s_updateState.currentVersion;
+   result["newVersion"] = s_updateState.newVersion;
+   result["downloadUrl"] = s_updateState.downloadUrl;
+   result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+
+   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}",
+        s_updateState.updateAvailable, s_updateState.noCompatibleVersion);
+
+   pResponse->setResult(result);
+   return Success();
+}
+
+Error chatInstallUpdate(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+   // Guard: Require both preferences to be set
+   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                        "Feature not enabled",
+                        ERROR_LOCATION);
+   }
+
+   // Check if update is available
+   if (!s_updateState.updateAvailable)
+   {
+      return systemError(boost::system::errc::operation_not_permitted,
+                        "No update available",
+                        ERROR_LOCATION);
+   }
+
+   // Check if already in progress
+   if (s_updateState.installStatus != UpdateState::Status::Idle &&
+       s_updateState.installStatus != UpdateState::Status::Complete &&
+       s_updateState.installStatus != UpdateState::Status::Error)
+   {
+      return systemError(boost::system::errc::operation_in_progress,
+                        "Update already in progress",
+                        ERROR_LOCATION);
+   }
+
+   // Start update process (async would be better, but doing sync for simplicity)
+   s_updateState.installStatus = UpdateState::Status::Downloading;
+   s_updateState.installMessage = "Downloading update...";
+
+   // Unlock mutex during download/install to allow status queries
+   lock.unlock();
+
+   // Stop backend if running
+   if (s_chatBackendPid != -1)
+   {
+      DLOG("Stopping backend for update");
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+      {
+         WLOG("Failed to stop backend: {}", error.getMessage());
+      }
+      s_chatBackendPid = -1;
+      s_chatBackendPort = -1;
+      s_chatBackendUrl.clear();
+   }
+
+   // Download package
+   FilePath tempPackage = module_context::tempFile("pai-update", "zip");
+   Error error = downloadPackage(s_updateState.downloadUrl, tempPackage);
+
+   if (error)
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage = "Download failed: " + error.getMessage();
+
+      // Clean up temp file
+      Error cleanupError = tempPackage.removeIfExists();
+      if (cleanupError)
+         WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
+
+      return error;
+   }
+
+   // Install package
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Installing;
+      s_updateState.installMessage = "Installing update...";
+   }
+
+   error = installPackage(tempPackage);
+
+   // Always clean up temp file (do this before error handling)
+   Error cleanupError = tempPackage.removeIfExists();
+   if (cleanupError)
+   {
+      WLOG("Failed to remove temp package: {}", cleanupError.getMessage());
+   }
+
+   if (error)
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Error;
+      s_updateState.installMessage = "Installation failed: " + error.getMessage();
+
+      // Note: installPackage() already handles backup restoration internally,
+      // so we don't need to call restoreFromBackup() here again.
+      // Just verify backup was restored and clean up if needed.
+      FilePath userDataDir = xdg::userDataDir();
+      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+
+      // Defensive cleanup: remove orphaned backup if it exists
+      if (aiPrevDir.exists())
+      {
+         Error prevCleanup = aiPrevDir.removeIfExists();
+         if (prevCleanup)
+            WLOG("Failed to clean up backup directory after failed install: {}", prevCleanup.getMessage());
+      }
+
+      return error;
+   }
+
+   // Success - ensure backup is cleaned up
+   {
+      boost::mutex::scoped_lock lock2(s_updateStateMutex);
+
+      // Defensive cleanup: ensure ai.prev is removed
+      FilePath userDataDir = xdg::userDataDir();
+      FilePath aiPrevDir = userDataDir.completePath("ai.prev");
+      if (aiPrevDir.exists())
+      {
+         WLOG("Backup directory still exists after successful install, cleaning up");
+         Error prevCleanup = aiPrevDir.removeIfExists();
+         if (prevCleanup)
+            WLOG("Failed to clean up backup directory: {}", prevCleanup.getMessage());
+      }
+
+      s_updateState.installStatus = UpdateState::Status::Complete;
+      s_updateState.installMessage = "Update complete";
+      s_updateState.updateAvailable = false;  // Clear update flag
+      s_updateState.currentVersion = s_updateState.newVersion;
+   }
+
+   pResponse->setResult(json::Value());
+   return Success();
+}
+
+Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+   // Guard: Require both preferences to be set
+   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   {
+      // Return idle status - don't reveal feature exists
+      json::Object result;
+      result["status"] = "idle";
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   json::Object result;
+
+   // Map status enum to string
+   switch (s_updateState.installStatus)
+   {
+      case UpdateState::Status::Idle:
+         result["status"] = "idle";
+         break;
+      case UpdateState::Status::Downloading:
+         result["status"] = "downloading";
+         break;
+      case UpdateState::Status::Installing:
+         result["status"] = "installing";
+         break;
+      case UpdateState::Status::Complete:
+         result["status"] = "complete";
+         break;
+      case UpdateState::Status::Error:
+         result["status"] = "error";
+         break;
+   }
+
+   result["message"] = s_updateState.installMessage;
+   if (s_updateState.installStatus == UpdateState::Status::Error)
+   {
+      result["error"] = s_updateState.errorMessage;
+   }
+
+   pResponse->setResult(result);
+   return Success();
+}
+
 // ============================================================================
 // Module Lifecycle
 // ============================================================================
 
+void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
+{
+   DLOG("Session suspension starting - terminating chat backend");
+
+   // Persist whether backend was running before suspension
+   bool wasRunning = (s_chatBackendPid != -1);
+   pSettings->set("chat_suspended", wasRunning);
+
+   // Terminate backend if running
+   if (wasRunning)
+   {
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+
+      // Clear state (rsession is exiting anyway)
+      s_chatBackendPid = -1;
+      s_chatBackendPort = -1;
+      s_chatBackendUrl.clear();
+   }
+
+   // Clear busy state and JSON-RPC buffer
+   s_chatBusy = false;
+   s_backendOutputBuffer.clear();
+}
+
+void onResume(const Settings& settings)
+{
+   DLOG("Session resuming");
+
+   // Check if we were suspended with chat backend running
+   bool wasSuspended = settings.getBool("chat_suspended", false);
+
+   if (wasSuspended)
+   {
+      DLOG("Restarting chat backend after resume");
+
+      Error error = startChatBackend();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void onShutdown(bool terminatedNormally)
 {
+   // Clear busy state
+   if (s_chatBusy)
+   {
+      s_chatBusy = false;
+   }
+
    // Terminate backend process
    if (s_chatBackendPid != -1)
    {
@@ -865,10 +2545,27 @@ void onShutdown(bool terminatedNormally)
 
    // Clear JSON-RPC state
    s_backendOutputBuffer.clear();
-   s_pendingResponses.clear();
+
+   // Clear notification queue
+   {
+      boost::mutex::scoped_lock lock(s_notificationQueueMutex);
+      while (!s_notificationQueue.empty())
+         s_notificationQueue.pop();
+      s_activeTrackingIds.clear();
+   }
 }
 
 } // end anonymous namespace
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+bool isSuspendable()
+{
+   // Session can suspend if chat backend is NOT busy
+   return !s_chatBusy;
+}
 
 // ============================================================================
 // Module Initialization
@@ -882,16 +2579,44 @@ Error initialize()
    // Read default log level
    std::string chatLogLevelStr = core::system::getenv("CHAT_LOG_LEVEL");
    if (!chatLogLevelStr.empty())
-      s_chatLogLevel = safe_convert::stringTo<int>(chatLogLevelStr, 0);
+      setChatLogLevel(safe_convert::stringTo<int>(chatLogLevelStr, 0));
+
+   // Read backend minimum log level filter
+   std::string backendMinLevel = core::system::getenv("CHAT_BACKEND_MIN_LEVEL");
+   if (!backendMinLevel.empty())
+   {
+      // Convert to lowercase for case-insensitive matching
+      boost::algorithm::to_lower(backendMinLevel);
+
+      // Validate it's a known level, otherwise keep default
+      if (backendMinLevel == "trace" || backendMinLevel == "debug" ||
+          backendMinLevel == "info" || backendMinLevel == "warn" ||
+          backendMinLevel == "error" || backendMinLevel == "fatal")
+      {
+         setBackendMinLogLevel(backendMinLevel);
+      }
+      else
+      {
+         WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'error'", backendMinLevel);
+      }
+   }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
+   registerNotificationHandler("chat/setBusyStatus", handleSetBusyStatus);
+   registerNotificationHandler("runtime/cancelExecution", handleCancelExecution);
 
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+
+   // Register suspend/resume handlers
+   addSuspendHandler(SuspendHandler(
+      boost::bind(onSuspend, _1, _2),
+      onResume
+   ));
 
    // Register RPC methods
    ExecBlock initBlock;
@@ -900,6 +2625,9 @@ Error initialize()
       (bind(registerRpcMethod, "chat_start_backend", chatStartBackend))
       (bind(registerRpcMethod, "chat_get_backend_url", chatGetBackendUrl))
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
+      (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
+      (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
+      (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))
       (bind(sourceModuleRFile, "SessionChat.R"))
       ;
@@ -909,6 +2637,14 @@ Error initialize()
    {
       LOG_ERROR(error);
       return error;
+   }
+
+   // Check for updates on startup (async, won't block initialization)
+   error = checkForUpdatesOnStartup();
+   if (error)
+   {
+      // Log but don't fail initialization
+      WLOG("Update check failed: {}", error.getMessage());
    }
 
    DLOG("SessionChat module initialized successfully, URI handler registered for /ai-chat");

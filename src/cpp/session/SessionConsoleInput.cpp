@@ -23,6 +23,7 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionMainProcess.hpp"
 
+#include "modules/SessionChat.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionReticulate.hpp"
 
@@ -129,9 +130,10 @@ bool canSuspend(const std::string& prompt)
 #endif
    
    bool suspendIsBlocked = false;
-   
+
    suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::chat::isSuspendable(), "Chat is processing a request");
    suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
 
    if (session::options().sessionConnectionsBlockSuspend())

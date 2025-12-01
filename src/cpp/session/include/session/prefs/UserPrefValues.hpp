@@ -446,6 +446,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kCopilotNesEnabled "copilot_nes_enabled"
 #define kCopilotShowMessages "copilot_show_messages"
 #define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
@@ -466,7 +467,8 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
-#define kShowChatUi "show_chat_ui"
+#define kPai "pai"
+#define kPaiDownloadUri "pai_download_uri"
 
 class UserPrefValues: public Preferences
 {
@@ -2039,6 +2041,12 @@ public:
    core::Error setCopilotIndexingEnabled(bool val);
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   bool copilotNesEnabled();
+   core::Error setCopilotNesEnabled(bool val);
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    bool copilotShowMessages();
@@ -2105,10 +2113,16 @@ public:
    core::Error setConsoleHighlightConditions(std::string val);
 
    /**
-    * Whether to show the experimental Chat UI
+    * 
     */
-   bool showChatUi();
-   core::Error setShowChatUi(bool val);
+   bool pai();
+   core::Error setPai(bool val);
+
+   /**
+    * 
+    */
+   std::string paiDownloadUri();
+   core::Error setPaiDownloadUri(std::string val);
 
 };
 

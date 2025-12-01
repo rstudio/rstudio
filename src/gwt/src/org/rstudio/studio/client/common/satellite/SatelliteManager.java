@@ -18,8 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import com.google.inject.Provider;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
@@ -47,14 +45,15 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class SatelliteManager implements CloseHandler<Window>
+public class SatelliteManager implements ClosingHandler
 {
    @Inject
    public SatelliteManager(
@@ -80,7 +79,7 @@ public class SatelliteManager implements CloseHandler<Window>
       exportSatelliteRegistrationCallback();
 
       // handle onClosed to automatically close all satellites
-      Window.addCloseHandler(this);
+      Window.addWindowClosingHandler(this);
    }
 
    public void openSatellite(String name,
@@ -428,7 +427,7 @@ public class SatelliteManager implements CloseHandler<Window>
 
    // close all satellites when we are closed
    @Override
-   public void onClose(CloseEvent<Window> event)
+   public void onWindowClosing(ClosingEvent event)
    {
       closeAllSatellites();
    }

@@ -4110,6 +4110,11 @@ public class TextEditingTarget implements
       lintManager_.lint(true, true, false);
    }
 
+   public LintManager getLintManager()
+   {
+      return lintManager_;
+   }
+
    public void withSavedDoc(Command onsaved)
    {
       docUpdateSentinel_.withSavedDoc(onsaved);

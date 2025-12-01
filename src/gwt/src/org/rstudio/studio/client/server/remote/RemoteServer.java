@@ -159,6 +159,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
@@ -754,6 +755,25 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+
+   @Override
+   public void copilotNextEditSuggestions(String documentId,
+                                          String documentPath,
+                                          boolean isUntitled,
+                                          int cursorRow,
+                                          int cursorColumn,
+                                          ServerRequestCallback<CopilotNextEditSuggestionsResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .add(documentPath)
+            .add(isUntitled)
+            .add(cursorRow)
+            .add(cursorColumn)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_next_edit_suggestions", params, requestCallback);
    }
    
    @Override
@@ -6956,6 +6976,24 @@ public class RemoteServer implements Server
    public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_get_backend_status", requestCallback);
+   }
+
+   @Override
+   public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_check_for_updates", requestCallback);
+   }
+
+   @Override
+   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+   }
+
+   @Override
+   public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_update_status", requestCallback);
    }
 
    private boolean isAuthStatusRequest(RpcRequest request)

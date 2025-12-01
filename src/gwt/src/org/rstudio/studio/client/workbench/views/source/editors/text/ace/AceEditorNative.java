@@ -722,8 +722,8 @@ public class AceEditorNative extends JavaScriptObject
       return this.renderer.$ghostText;
    }-*/;
    
-   public final native void setGhostText(String text) /*-{
-      this.setGhostText(text);
+   public final native void setGhostText(String text, Position position) /*-{
+      this.setGhostText(text, position);
    }-*/;
    
    public final void applyGhostText()

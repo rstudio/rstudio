@@ -2433,6 +2433,16 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
+# [Preview] Enable next-edit suggestions
+#
+# When enabled, RStudio will display next-edit suggestions as provided by Copilot
+# when available.
+.rs.uiPrefs$copilotNesEnabled <- list(
+   get = function() { .rs.getUserPref("copilot_nes_enabled") },
+   set = function(value) { .rs.setUserPref("copilot_nes_enabled", value) },
+   clear = function() { .rs.clearUserPref("copilot_nes_enabled") }
+)
+
 # Display account and billing messages from GitHub Copilot
 #
 # When enabled, RStudio will show account and billing messages from GitHub
@@ -2537,11 +2547,20 @@
    clear = function() { .rs.clearUserPref("console_highlight_conditions") }
 )
 
-# Show Chat UI
+# 
 #
-# Whether to show the experimental Chat UI
-.rs.uiPrefs$showChatUi <- list(
-   get = function() { .rs.getUserPref("show_chat_ui") },
-   set = function(value) { .rs.setUserPref("show_chat_ui", value) },
-   clear = function() { .rs.clearUserPref("show_chat_ui") }
+# 
+.rs.uiPrefs$pai <- list(
+   get = function() { .rs.getUserPref("pai") },
+   set = function(value) { .rs.setUserPref("pai", value) },
+   clear = function() { .rs.clearUserPref("pai") }
+)
+
+# 
+#
+# 
+.rs.uiPrefs$paiDownloadUri <- list(
+   get = function() { .rs.getUserPref("pai_download_uri") },
+   set = function(value) { .rs.setUserPref("pai_download_uri", value) },
+   clear = function() { .rs.clearUserPref("pai_download_uri") }
 )

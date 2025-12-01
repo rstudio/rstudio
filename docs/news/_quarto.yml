@@ -25,7 +25,7 @@ website:
             url: 'https://docs.posit.co/ide/server-pro/licenses/'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/'
-      - icon: "list"
+      - text: "Help"
         menu:
           - text: "docs.posit.co"
             href: "https://docs.posit.co"
@@ -33,17 +33,24 @@ website:
             href: "https://support.posit.co/hc/en-us/"
 
   page-footer:
-    left: |
-      Copyright © 2011-2025 Posit Software, PBC. All Rights Reserved.
+    left:
+      - text: <img src="/images/posit-logos-2024_horiz-full-color.svg" alt="Posit" width="65px" class="light-content posit-footer-logo"><img src="/images/posit-logo-fullcolor-TM.svg" alt="Posit" width="65px" class="dark-content posit-footer-logo">
+        href: "https://posit.co"
+      - Copyright © 2011-2025 Posit Software, PBC. All Rights Reserved.
     center: |
        RStudio & Posit Workbench Release Notes
     right:
-      - icon: question-circle-fill
-        href: https://support.posit.co/hc/en-us
-      - text: '<a href="#" id="open_preferences_center" title="Manage your cookie preferences"><i class="bi bi-cookie"></i></i></a>'
+      - text: '<a href="#" id="open_preferences_center" title="Update cookie preferences">
+              <img src="/images/cookie.svg" alt="Cookie Preferences" class="light-content" style="width: 1em; height: 1em;">
+              <img src="/images/cookie-copy.svg" alt="Cookie Preferences" class="dark-content" style="width: 1em; height: 1em;">
+           </a>'
         aria-label: 'Cookie Prefs'
-      - text: "<img src='/images/posit-icon-fullcolor.svg' id='footer-right-posit-logo'>"
-        href: "https://posit.co"
+      - text: Support
+        aria-label: 'Link to Posit Support'
+        href: "https://support.posit.co/hc/en-us"
+      - text: Posit Docs
+        aria-label: 'Link to Posit Docs'
+        href: "https://docs.posit.co"
         
 format:
   html:

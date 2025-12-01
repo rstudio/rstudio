@@ -3417,6 +3417,19 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 }
 
 /**
+ * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+ */
+bool UserPrefValues::copilotNesEnabled()
+{
+   return readPref<bool>("copilot_nes_enabled");
+}
+
+core::Error UserPrefValues::setCopilotNesEnabled(bool val)
+{
+   return writePref("copilot_nes_enabled", val);
+}
+
+/**
  * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
  */
 bool UserPrefValues::copilotShowMessages()
@@ -3560,16 +3573,29 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
 }
 
 /**
- * Whether to show the experimental Chat UI
+ * 
  */
-bool UserPrefValues::showChatUi()
+bool UserPrefValues::pai()
 {
-   return readPref<bool>("show_chat_ui");
+   return readPref<bool>("pai");
 }
 
-core::Error UserPrefValues::setShowChatUi(bool val)
+core::Error UserPrefValues::setPai(bool val)
 {
-   return writePref("show_chat_ui", val);
+   return writePref("pai", val);
+}
+
+/**
+ * 
+ */
+std::string UserPrefValues::paiDownloadUri()
+{
+   return readPref<std::string>("pai_download_uri");
+}
+
+core::Error UserPrefValues::setPaiDownloadUri(std::string val)
+{
+   return writePref("pai_download_uri", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3836,6 +3862,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kCopilotNesEnabled,
       kCopilotShowMessages,
       kCopilotProjectWorkspace,
       kProjectName,
@@ -3847,7 +3874,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
-      kShowChatUi,
+      kPai,
+      kPaiDownloadUri,
    });
 }
    
