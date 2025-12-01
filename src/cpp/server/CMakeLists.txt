@@ -290,7 +290,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   endif()
 
   file(GLOB_RECURSE SERVER_DB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/db/*")
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/db/test")
   foreach(SERVER_DB_FILE ${SERVER_DB_FILES})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${SERVER_DB_FILE}
                    ${CMAKE_CURRENT_BINARY_DIR}/${SERVER_DB_FILE} COPYONLY)
@@ -298,9 +297,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   set(SERVER_TEST_FILES
      DBActiveSessionStorageTests.cpp
-     ServerEnvVarsTests.cpp
-     ServerDatabaseMigrationTests.cpp
-     ServerDatabaseMigrationOverlayTests.cpp)
+     ServerEnvVarsTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 

@@ -15,83 +15,80 @@
 
 #include "ChatLogging.hpp"
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 using namespace rstudio::session::modules::chat::logging;
 
-test_context("ChatLogging")
+TEST(ChatLogging, GetLogLevelPriorityReturnsCorrectPrioritiesForAllLevels)
 {
-   test_that("GetLogLevelPriority returns correct priorities for all levels")
-   {
-      expect_equal(getLogLevelPriority("trace"), 0);
-      expect_equal(getLogLevelPriority("debug"), 1);
-      expect_equal(getLogLevelPriority("info"), 2);
-      expect_equal(getLogLevelPriority("warn"), 3);
-      expect_equal(getLogLevelPriority("error"), 4);
-      expect_equal(getLogLevelPriority("fatal"), 5);
-   }
+   EXPECT_EQ(getLogLevelPriority("trace"), 0);
+   EXPECT_EQ(getLogLevelPriority("debug"), 1);
+   EXPECT_EQ(getLogLevelPriority("info"), 2);
+   EXPECT_EQ(getLogLevelPriority("warn"), 3);
+   EXPECT_EQ(getLogLevelPriority("error"), 4);
+   EXPECT_EQ(getLogLevelPriority("fatal"), 5);
+}
 
-   test_that("GetLogLevelPriority treats unknown levels as highest priority")
-   {
-      expect_equal(getLogLevelPriority("unknown"), 999);
-      expect_equal(getLogLevelPriority("invalid"), 999);
-      expect_equal(getLogLevelPriority(""), 999);
-      expect_equal(getLogLevelPriority("TRACE"), 999); // Case-sensitive
-   }
+TEST(ChatLogging, GetLogLevelPriorityTreatsUnknownLevelsAsHighestPriority)
+{
+   EXPECT_EQ(getLogLevelPriority("unknown"), 999);
+   EXPECT_EQ(getLogLevelPriority("invalid"), 999);
+   EXPECT_EQ(getLogLevelPriority(""), 999);
+   EXPECT_EQ(getLogLevelPriority("TRACE"), 999); // Case-sensitive
+}
 
-   test_that("ShouldLogBackendMessage returns true for non-logger/log notifications")
-   {
-      // Regular notification
-      std::string msg = R"({"jsonrpc":"2.0","method":"other/notification","params":{}})";
-      expect_true(shouldLogBackendMessage(msg));
+TEST(ChatLogging, ShouldLogBackendMessageReturnsTrueForNonLoggerLogNotifications)
+{
+   // Regular notification
+   std::string msg = R"({"jsonrpc":"2.0","method":"other/notification","params":{}})";
+   EXPECT_TRUE(shouldLogBackendMessage(msg));
 
-      // Request (has id)
-      msg = R"({"jsonrpc":"2.0","id":1,"method":"some/method","params":{}})";
-      expect_true(shouldLogBackendMessage(msg));
-   }
+   // Request (has id)
+   msg = R"({"jsonrpc":"2.0","id":1,"method":"some/method","params":{}})";
+   EXPECT_TRUE(shouldLogBackendMessage(msg));
+}
 
-   test_that("ShouldLogBackendMessage returns true for malformed JSON")
-   {
-      expect_true(shouldLogBackendMessage("not json"));
-      expect_true(shouldLogBackendMessage("{invalid"));
-      expect_true(shouldLogBackendMessage(""));
-   }
+TEST(ChatLogging, ShouldLogBackendMessageReturnsTrueForMalformedJson)
+{
+   EXPECT_TRUE(shouldLogBackendMessage("not json"));
+   EXPECT_TRUE(shouldLogBackendMessage("{invalid"));
+   EXPECT_TRUE(shouldLogBackendMessage(""));
+}
 
-   test_that("ShouldLogBackendMessage filters logger/log at level 2")
-   {
-      // Save original level
-      int originalLevel = chatLogLevel();
+TEST(ChatLogging, ShouldLogBackendMessageFiltersLoggerLogAtLevel2)
+{
+   // Save original level
+   int originalLevel = chatLogLevel();
 
-      // Set to level 2
-      setChatLogLevel(2);
+   // Set to level 2
+   setChatLogLevel(2);
 
-      std::string msg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"info","message":"test"}})";
-      expect_false(shouldLogBackendMessage(msg));
+   std::string msg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"info","message":"test"}})";
+   EXPECT_FALSE(shouldLogBackendMessage(msg));
 
-      // Restore original level
-      setChatLogLevel(originalLevel);
-   }
+   // Restore original level
+   setChatLogLevel(originalLevel);
+}
 
-   test_that("ShouldLogBackendMessage shows logger/log at level 3+")
-   {
-      // Save original level
-      int originalLevel = chatLogLevel();
-      std::string originalMinLevel = getBackendMinLogLevel();
+TEST(ChatLogging, ShouldLogBackendMessageShowsLoggerLogAtLevel3Plus)
+{
+   // Save original level
+   int originalLevel = chatLogLevel();
+   std::string originalMinLevel = getBackendMinLogLevel();
 
-      // Set to level 3 and backend min level to error
-      setChatLogLevel(3);
-      setBackendMinLogLevel("error");
+   // Set to level 3 and backend min level to error
+   setChatLogLevel(3);
+   setBackendMinLogLevel("error");
 
-      // Error level should be shown
-      std::string errorMsg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"error","message":"test"}})";
-      expect_true(shouldLogBackendMessage(errorMsg));
+   // Error level should be shown
+   std::string errorMsg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"error","message":"test"}})";
+   EXPECT_TRUE(shouldLogBackendMessage(errorMsg));
 
-      // Debug level should not be shown (below error threshold)
-      std::string debugMsg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"debug","message":"test"}})";
-      expect_false(shouldLogBackendMessage(debugMsg));
+   // Debug level should not be shown (below error threshold)
+   std::string debugMsg = R"({"jsonrpc":"2.0","method":"logger/log","params":{"level":"debug","message":"test"}})";
+   EXPECT_FALSE(shouldLogBackendMessage(debugMsg));
 
-      // Restore original levels
-      setChatLogLevel(originalLevel);
-      setBackendMinLogLevel(originalMinLevel);
-   }
+   // Restore original levels
+   setChatLogLevel(originalLevel);
+   setBackendMinLogLevel(originalMinLevel);
 }
