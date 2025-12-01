@@ -55,6 +55,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionSourceDatabase.hpp>
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/prefs/UserPrefs.hpp>
@@ -773,8 +774,76 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
    // Main result
    json::Object result;
-   // TODO: Future work - return detailed file context
-   result["openFiles"] = json::Array();
+
+   // Enumerate open files from source database
+   // This includes all documents currently open in the editor, both saved and unsaved
+   json::Array openFilesArray;
+   {
+      std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
+      Error error = source_database::list(&docs);
+
+      if (error)
+      {
+         WLOG("Failed to enumerate open files for detailed context: {}", error.getSummary());
+         // Continue with empty array rather than failing the entire request
+      }
+      else
+      {
+         DLOG("Building open files context from {} documents", docs.size());
+
+         for (const auto& pDoc : docs)
+         {
+            // Defensive null check
+            if (!pDoc)
+            {
+               WLOG("Encountered null document pointer in source database, skipping");
+               continue;
+            }
+
+            json::Object fileObj;
+
+            // Construct URI based on document type
+            if (pDoc->isUntitled())
+            {
+               // Use untitled: scheme for unsaved documents (matches Positron/VSCode convention)
+               fileObj["uri"] = fmt::format("untitled:{}", pDoc->id());
+            }
+            else
+            {
+               std::string docPath = pDoc->path();
+               if (docPath.empty())
+               {
+                  WLOG("Titled document {} has empty path, skipping", pDoc->id());
+                  continue;
+               }
+
+               // Use file:/// scheme with absolute path for saved documents (RFC 8089)
+               FilePath resolvedPath = module_context::resolveAliasedPath(docPath);
+               std::string absPath = resolvedPath.getAbsolutePath();
+
+#ifdef _WIN32
+               // Normalize path separators on Windows (C:\path -> C:/path)
+               std::replace(absPath.begin(), absPath.end(), '\\', '/');
+#endif
+
+               fileObj["uri"] = fmt::format("file:///{}", absPath);
+            }
+
+            // Document state flags
+            fileObj["isModified"] = pDoc->dirty();
+            fileObj["isUntitled"] = pDoc->isUntitled();
+
+            // Visibility: documents with relativeOrder > 0 are visible tabs in the editor
+            // relativeOrder == 0 means document is loaded but not visible in a tab
+            fileObj["isVisible"] = (pDoc->relativeOrder() > 0);
+
+            openFilesArray.push_back(fileObj);
+         }
+
+         DLOG("Open files context: returning {} files", openFilesArray.getSize());
+      }
+   }
+   result["openFiles"] = openFilesArray;
    result["session"] = session;
    result["platformInfo"] = platformInfo;
 
