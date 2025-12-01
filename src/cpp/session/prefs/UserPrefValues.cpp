@@ -3573,7 +3573,7 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
 }
 
 /**
- * 
+ * Experimental
  */
 bool UserPrefValues::pai()
 {
@@ -3586,7 +3586,7 @@ core::Error UserPrefValues::setPai(bool val)
 }
 
 /**
- * 
+ * Experimental
  */
 std::string UserPrefValues::paiDownloadUri()
 {

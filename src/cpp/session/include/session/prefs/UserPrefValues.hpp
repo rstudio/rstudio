@@ -2113,13 +2113,13 @@ public:
    core::Error setConsoleHighlightConditions(std::string val);
 
    /**
-    * 
+    * Experimental
     */
    bool pai();
    core::Error setPai(bool val);
 
    /**
-    * 
+    * Experimental
     */
    std::string paiDownloadUri();
    core::Error setPaiDownloadUri(std::string val);
