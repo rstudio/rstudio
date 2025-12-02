@@ -950,64 +950,69 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
-   // Evaluate the code using withVisible() to capture both result and visibility flag.
-   // This mimics REPL behavior where invisible results (from invisible(), assignments, etc.)
-   // are not printed. evaluateString wraps in try(..., silent=TRUE) for error handling.
+   // Evaluate the code. For multi-line code, we parse it into separate expressions
+   // and evaluate each one, mimicking REPL behavior where each line is evaluated
+   // and visible results are auto-printed. This is necessary because wrapping
+   // multi-statement code in withVisible({...}) causes only the last statement's
+   // result to be captured, losing intermediate htmlwidgets or other visible results.
    r::sexp::Protect protect;
-   std::string wrappedCode = "base::withVisible({" + code + "})";
-   SEXP withVisibleResultSEXP = R_NilValue;
-   error = r::exec::evaluateString(wrappedCode, R_GlobalEnv, &withVisibleResultSEXP, &protect);
 
-   // Extract the actual result and visibility flag from withVisible() output
-   SEXP resultSEXP = R_NilValue;
-   bool visible = false;
+   // Parse the code into expressions
+   SEXP parsedSEXP = R_NilValue;
+   error = r::exec::RFunction("parse")
+      .addParam("text", code)
+      .addParam("keep.source", false)
+      .call(&parsedSEXP, &protect);
 
-   if (!error && withVisibleResultSEXP != R_NilValue)
+   if (error)
    {
-      // withVisible() should always return a list with 2 elements
-      if (TYPEOF(withVisibleResultSEXP) != VECSXP)
-      {
-         LOG_WARNING_MESSAGE("withVisible() returned unexpected type: " +
-                           std::to_string(TYPEOF(withVisibleResultSEXP)) +
-                           ", treating as visible NULL");
-         visible = true;  // Default to visible on unexpected result
-      }
-      else if (Rf_length(withVisibleResultSEXP) < 2)
-      {
-         LOG_WARNING_MESSAGE("withVisible() returned list with unexpected length: " +
-                           std::to_string(Rf_length(withVisibleResultSEXP)) +
-                           ", treating as visible NULL");
-         visible = true;
-      }
-      else
-      {
-         // withVisible returns list(value = ..., visible = TRUE/FALSE)
-         resultSEXP = VECTOR_ELT(withVisibleResultSEXP, 0);  // value
-         SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1); // visible flag
+      LOG_ERROR_MESSAGE("Failed to parse code: " + error.getMessage());
+   }
 
-         if (visibleSEXP != R_NilValue)
+   // Evaluate each expression with withVisible() to capture visibility
+   if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
+   {
+      int numExpressions = Rf_length(parsedSEXP);
+
+      // Evaluate each expression
+      for (int i = 0; i < numExpressions && !error; i++)
+      {
+         SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
+         SEXP withVisibleResultSEXP = R_NilValue;
+
+         // Evaluate this expression with withVisible()
+         error = r::exec::RFunction("withVisible")
+            .addParam(exprSEXP)
+            .call(&withVisibleResultSEXP, &protect);
+
+         if (error)
+            break;
+
+         // Extract result and visibility for this expression
+         if (withVisibleResultSEXP != R_NilValue && TYPEOF(withVisibleResultSEXP) == VECSXP &&
+             Rf_length(withVisibleResultSEXP) >= 2)
          {
-            int logicalVal = Rf_asLogical(visibleSEXP);
-            if (logicalVal == NA_LOGICAL)
+            SEXP exprResult = VECTOR_ELT(withVisibleResultSEXP, 0);
+            SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1);
+            bool exprVisible = (visibleSEXP != R_NilValue && Rf_asLogical(visibleSEXP) == TRUE);
+
+            // Print visible results immediately (mimics REPL)
+            if (exprVisible)
             {
-               LOG_WARNING_MESSAGE("withVisible() returned NA for visibility flag, treating as visible");
-               visible = true;
+               Error printError = r::exec::RFunction("print")
+                  .addParam(exprResult)
+                  .call();
+
+               if (printError)
+               {
+                  LOG_ERROR_MESSAGE("Error printing expression: " + printError.getMessage());
+               }
             }
-            else
-            {
-               visible = (logicalVal == TRUE);
-            }
-         }
-         else
-         {
-            LOG_WARNING_MESSAGE("withVisible() returned NULL visibility flag, treating as visible");
-            visible = true;
          }
       }
    }
 
-   // Handle parse/runtime errors from evaluateString.
-   // evaluateString uses silent=TRUE, so errors don't automatically go to console.
+   // Handle parse/runtime errors
    // We need to both:
    // 1. Fire the onConsoleOutput signal so our callback can capture it
    // 2. Write to console UI via consoleWriteError for user visibility
@@ -1028,43 +1033,10 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       module_context::consoleWriteError(errorOutput);
    }
 
-   // Print the result to trigger print methods (e.g., for htmlwidgets)
-   // This mimics REPL behavior where results are automatically printed only if visible.
-   // The visibility flag correctly distinguishes all cases:
-   //   - NULL → visible=TRUE, prints "NULL"
-   //   - invisible(NULL) → visible=FALSE, prints nothing
-   //   - x <- value → visible=FALSE, prints nothing
-   if (!error && visible)
-   {
-      // Call base::print() explicitly to capture errors from S3/S4 print methods.
-      // We use base::print (not unqualified print) to match REPL semantics - the
-      // REPL's auto-print uses Rf_PrintValue which cannot be masked by user code.
-      // Unlike r::sexp::printValue() which silently logs print errors, this allows
-      // us to surface them to the user, matching REPL behavior where print method
-      // errors are displayed (e.g., "Error in print.foo(x) : ...").
-      r::sexp::Protect printProtect;
-      SEXP printResult = R_NilValue;
-      Error printError = r::exec::RFunction("base::print")
-         .addParam(resultSEXP)
-         .call(&printResult, &printProtect);
-
-      if (printError)
-      {
-         // Surface print errors just like execution errors
-         std::string errorMsg = printError.getMessage();
-         if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
-            errorMsg = "Error in print: " + errorMsg;
-
-         std::string errorOutput = errorMsg + "\n";
-
-         // Fire signal first so callback captures it
-         module_context::events().onConsoleOutput(
-            module_context::ConsoleOutputError, errorOutput);
-
-         // Also write to console UI
-         module_context::consoleWriteError(errorOutput);
-      }
-   }
+   // NOTE: We no longer need to print results here because we print each visible
+   // expression immediately as we evaluate them in the loop above. This mimics
+   // REPL behavior where each line's visible result is printed before the next
+   // line is evaluated.
 
    // Handle plots if requested
    // NOTE: This only captures the final plot state. If code creates multiple plots
