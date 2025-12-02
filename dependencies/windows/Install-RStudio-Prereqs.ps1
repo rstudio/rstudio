@@ -97,7 +97,7 @@ $installArgs = @(
     '--add', 'Microsoft.VisualStudio.Component.VC.CoreIde',
     '--add', 'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-    '--add', 'Microsoft.VisualStudio.Component.Windows11SDK'
+    '--add', 'Microsoft.VisualStudio.Component.Windows10SDK'
 )
 $vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
 if ($vsProcess.ExitCode -ne 0) {
