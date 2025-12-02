@@ -35,18 +35,3 @@ Ensure old code will work with the new schema for when users upgrade and downgra
 ## Documentation
 
 When you change the database schema, ensure you also update the data dictionary in the documentation, found in `docs/server/data_dictionary`.
-
-### Updating Schema Migration Tests
-
-For each workbench version where there's a schema change, we generate a database dump of the previous version to test against the 'alter' script we are adding.
-
-Generating these dumps is automated. Run the script:
-```
-./build-version-dump.sh
-```
-It will prompt you for the previous version's flower and version number, i.e. the current released version, and postgres user/password. It must be run on a system with psql and sqlite3 installed. It generates
-files for the previous version in src/cpp/server/db/test that you commit with your schema changes.
-
-Also update `ServerDatabaseMigrationTests.cpp` and `ServerDatabaseDataset.hpp` to add to the enum and and where it points to the new files in db/test that were just created.
-
-If you are making the schema change in OS, run the script OS with the OS version, then again once the changes have been merged to pro with the pro version. The database dumps are specific to the CreateTables files that are different in OS and pro and so must be generated separately on each branch.

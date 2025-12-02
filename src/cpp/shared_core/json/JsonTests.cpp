@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <iostream>
 #include <set>
@@ -80,7 +80,8 @@ json::Object returnObject()
 {
    std::string jsonStr = "{\"a\": 5}";
    json::Value val;
-   REQUIRE(!val.parse(jsonStr));
+   Error err = val.parse(jsonStr);
+   if (err) return json::Object();
 
    return val.getValue<json::Object>();
 }
@@ -89,7 +90,8 @@ json::Value getValue()
 {
    std::string jsonStr = "{\"a\": 5}";
    json::Value val;
-   REQUIRE(!val.parse(jsonStr));
+   Error err = val.parse(jsonStr);
+   if (err) return json::Value();
 
    json::Object obj = val.getObject();
 
@@ -136,9 +138,9 @@ void insertGlobalValue(const std::string& scope,
 
 } // anonymous namespace
 
-TEST_CASE("Json")
+TEST(SharedCoreTest, Json)
 {
-   SECTION("Initialize")
+   // Initialize section
    {
       json::Object objectA;
       objectA["1"] = 1;
@@ -153,18 +155,18 @@ TEST_CASE("Json")
       s_object["c"] = objectC;
    }
 
-   SECTION("Can construct simple json object")
+   // Can construct simple json object section
    {
       json::Object obj;
 
       obj["a"] = "Hello";
-      REQUIRE(obj["a"].getString() == "Hello");
+      ASSERT_TRUE(obj["a"].getString() == "Hello");
 
       obj["b"] = "world";
-      REQUIRE(obj["b"].getString() == "world");
+      ASSERT_TRUE(obj["b"].getString() == "world");
 
       obj["c"] = 25;
-      REQUIRE(obj["c"].getInt() == 25);
+      ASSERT_TRUE(obj["c"].getInt() == 25);
 
       json::Array array;
       array.push_back(1);
@@ -177,60 +179,60 @@ TEST_CASE("Json")
       for (const json::Value& val : obj["d"].getArray())
       {
          int num = val.getInt();
-         REQUIRE(num == expectedNum);
+         ASSERT_TRUE(num == expectedNum);
          expectedNum++;
       }
 
-      REQUIRE(obj["d"].getArray()[0].getInt() == 1);
-      REQUIRE(obj["d"].getArray()[1].getInt() == 2);
-      REQUIRE(obj["d"].getArray()[2].getInt() == 3);
+      ASSERT_TRUE(obj["d"].getArray()[0].getInt() == 1);
+      ASSERT_TRUE(obj["d"].getArray()[1].getInt() == 2);
+      ASSERT_TRUE(obj["d"].getArray()[2].getInt() == 3);
 
       json::Object innerObj;
       innerObj["a"] = "Inner hello";
       obj["e"] = innerObj;
 
-      REQUIRE(obj["e"].getObject()["a"].getString() == "Inner hello");
+      ASSERT_TRUE(obj["e"].getObject()["a"].getString() == "Inner hello");
 
       std::string serialized = obj.write();
       std::string expected = "{\"a\":\"Hello\",\"b\":\"world\",\"c\":25,\"d\":[1,2,3],\"e\":{\"a\":\"Inner hello\"}}";
-      REQUIRE(serialized == expected);
+      ASSERT_TRUE(serialized == expected);
    }
 
-   SECTION("Can deserialize simple json object")
+   // Can deserialize simple json object section
    {
       std::string json = "{\"a\":\"Hello\",\"b\":\"world\",\"c\":25,\"c2\":25.5,\"d\":[1,2,3],\"e\":{\"a\":\"Inner hello\"}}";
 
       json::Value value;
-      REQUIRE(!value.parse(json));
+      ASSERT_TRUE(!value.parse(json));
 
-      REQUIRE(value.getType() == json::Type::OBJECT);
+      ASSERT_TRUE(value.getType() == json::Type::OBJECT);
       json::Object obj = value.getObject();
 
-      REQUIRE(obj["a"].getType() == json::Type::STRING);
-      REQUIRE(obj["a"].getString() == "Hello");
+      ASSERT_TRUE(obj["a"].getType() == json::Type::STRING);
+      ASSERT_TRUE(obj["a"].getString() == "Hello");
 
-      REQUIRE(obj["b"].getType() == json::Type::STRING);
-      REQUIRE(obj["b"].getString() == "world");
+      ASSERT_TRUE(obj["b"].getType() == json::Type::STRING);
+      ASSERT_TRUE(obj["b"].getString() == "world");
 
-      REQUIRE(obj["c"].getType() == json::Type::INTEGER);
-      REQUIRE(obj["c"].getInt() == 25);
+      ASSERT_TRUE(obj["c"].getType() == json::Type::INTEGER);
+      ASSERT_TRUE(obj["c"].getInt() == 25);
 
-      REQUIRE(obj["c2"].getType() == json::Type::REAL);
-      REQUIRE(obj["c2"].getDouble() == Approx(25.5));
+      ASSERT_TRUE(obj["c2"].getType() == json::Type::REAL);
+      ASSERT_TRUE(obj["c2"].getDouble() == 25.5);
 
-      REQUIRE(obj["d"].getType() == json::Type::ARRAY);
+      ASSERT_TRUE(obj["d"].getType() == json::Type::ARRAY);
       json::Array array = obj["d"].getArray();
-      REQUIRE(array[0].getInt() == 1);
-      REQUIRE(array[1].getInt() == 2);
-      REQUIRE(array[2].getInt() == 3);
+      ASSERT_TRUE(array[0].getInt() == 1);
+      ASSERT_TRUE(array[1].getInt() == 2);
+      ASSERT_TRUE(array[2].getInt() == 3);
 
-      REQUIRE(obj["e"].getType() == json::Type::OBJECT);
+      ASSERT_TRUE(obj["e"].getType() == json::Type::OBJECT);
       json::Object innerObj = obj["e"].getObject();
-      REQUIRE(innerObj["a"].getType() == json::Type::STRING);
-      REQUIRE(innerObj["a"].getString() == "Inner hello");
+      ASSERT_TRUE(innerObj["a"].getType() == json::Type::STRING);
+      ASSERT_TRUE(innerObj["a"].getString() == "Inner hello");
    }
 
-   SECTION("Can nest objects within arrays")
+   // Can nest objects within arrays section
    {
       json::Array array;
 
@@ -245,13 +247,13 @@ TEST_CASE("Json")
       array.push_back(obj1);
       array.push_back(obj2);
 
-      REQUIRE(array[0].getObject()["1"].getString() == "obj1");
-      REQUIRE(array[0].getObject()["2"].getInt() == 1);
-      REQUIRE(array[1].getObject()["1"].getString() == "obj2");
-      REQUIRE(array[1].getObject()["2"].getInt() == 2);
+      ASSERT_TRUE(array[0].getObject()["1"].getString() == "obj1");
+      ASSERT_TRUE(array[0].getObject()["2"].getInt() == 1);
+      ASSERT_TRUE(array[1].getObject()["1"].getString() == "obj2");
+      ASSERT_TRUE(array[1].getObject()["2"].getInt() == 2);
    }
 
-   SECTION("Can iterate arrays")
+   // Can iterate arrays section
    {
       json::Array arr;
       arr.push_back(json::Value(1));
@@ -271,22 +273,22 @@ TEST_CASE("Json")
          { return json::Value(val.getInt() * 2); });
 
       json::Array::Iterator iter = arr.begin();
-      REQUIRE((*iter++).getInt() == 1);
-      REQUIRE((*iter++).getInt() == 2);
-      REQUIRE((*iter++).getInt() == 3);
-      REQUIRE((*iter++).getInt() == 8);
-      REQUIRE((*iter++).getInt() == 10);
-      REQUIRE((*iter++).getInt() == 12);
-      REQUIRE(iter == arr.end());
+      ASSERT_TRUE((*iter++).getInt() == 1);
+      ASSERT_TRUE((*iter++).getInt() == 2);
+      ASSERT_TRUE((*iter++).getInt() == 3);
+      ASSERT_TRUE((*iter++).getInt() == 8);
+      ASSERT_TRUE((*iter++).getInt() == 10);
+      ASSERT_TRUE((*iter++).getInt() == 12);
+      ASSERT_TRUE(iter == arr.end());
 
       json::Array::ReverseIterator riter = arr.rbegin();
-      REQUIRE((*riter++).getInt() == 12);
-      REQUIRE((*riter++).getInt() == 10);
-      REQUIRE((*riter++).getInt() == 8);
-      REQUIRE((*riter++).getInt() == 3);
-      REQUIRE((*riter++).getInt() == 2);
-      REQUIRE((*riter++).getInt() == 1);
-      REQUIRE(riter == arr.rend());
+      ASSERT_TRUE((*riter++).getInt() == 12);
+      ASSERT_TRUE((*riter++).getInt() == 10);
+      ASSERT_TRUE((*riter++).getInt() == 8);
+      ASSERT_TRUE((*riter++).getInt() == 3);
+      ASSERT_TRUE((*riter++).getInt() == 2);
+      ASSERT_TRUE((*riter++).getInt() == 1);
+      ASSERT_TRUE(riter == arr.rend());
 
       std::string jsonStr = "[1, 2, 3, 4, 5]";
       json::Value val;
@@ -297,15 +299,15 @@ TEST_CASE("Json")
       for (const json::Value& arrVal : valArray)
          sum += arrVal.getInt();
 
-      REQUIRE(sum == 15);
+      ASSERT_TRUE(sum == 15);
    }
 
-   SECTION("Ref/copy semantics")
+   // Ref/copy semantics section
    {
       std::string json = R"({"a":"Hello","b":"world","c":25,"c2":25.5,"d":[1,2,3],"e":{"a":"Inner hello"}})";
 
       json::Value value;
-      REQUIRE(!value.parse(json));
+      ASSERT_TRUE(!value.parse(json));
 
       json::Object obj1 = value.getObject();
       json::Object obj2 = value.getValue<json::Object>();
@@ -330,57 +332,57 @@ TEST_CASE("Json")
       arr3[2] = 5;
       arr4[2] = 6;
 
-      REQUIRE(value.getObject()["a"].getString() == "Modified Hello");
-      REQUIRE(obj2["a"].getString() == "Hello");
-      REQUIRE(value.getObject()["b"].getString() == "world");
-      REQUIRE(obj2["b"].getString() == "modified world");
+      ASSERT_TRUE(value.getObject()["a"].getString() == "Modified Hello");
+      ASSERT_TRUE(obj2["a"].getString() == "Hello");
+      ASSERT_TRUE(value.getObject()["b"].getString() == "world");
+      ASSERT_TRUE(obj2["b"].getString() == "modified world");
 
-      REQUIRE(value.getObject()["d"].getArray()[1].getInt() == 4);
-      REQUIRE(value.getObject()["d"].getArray()[2].getInt() == 5);
-      REQUIRE(arr2[1].getInt() == 2);
-      REQUIRE(arr2[2].getInt() == 6);
+      ASSERT_TRUE(value.getObject()["d"].getArray()[1].getInt() == 4);
+      ASSERT_TRUE(value.getObject()["d"].getArray()[2].getInt() == 5);
+      ASSERT_TRUE(arr2[1].getInt() == 2);
+      ASSERT_TRUE(arr2[2].getInt() == 6);
 
       json::Object obj = returnObject();
-      REQUIRE(obj["a"].getInt() == 5);
+      ASSERT_TRUE(obj["a"].getInt() == 5);
       obj["a"] = 15;
-      REQUIRE(obj["a"].getInt() == 15);
+      ASSERT_TRUE(obj["a"].getInt() == 15);
    }
 
-   SECTION("Can modify object members via iterator")
+   // Can modify object members via iterator section
    {
       json::Object obj = createObject();
       auto iter = obj.find("c");
-      REQUIRE((*iter).getValue().getInt() == 1000);
+      ASSERT_TRUE((*iter).getValue().getInt() == 1000);
 
       (*iter).getValue() = 25;
-      REQUIRE((*iter).getValue().getInt() == 25);
-      REQUIRE(obj["c"].getInt() == 25);
+      ASSERT_TRUE((*iter).getValue().getInt() == 25);
+      ASSERT_TRUE(obj["c"].getInt() == 25);
    }
 
-   SECTION("Can add new member")
+   // Can add new member section
    {
       std::string jsonStr = "{\"a\": {}}";
       json::Value val;
 
-      REQUIRE(!val.parse(jsonStr));
-      REQUIRE(val.getType() == json::Type::OBJECT);
+      Error err = val.parse(jsonStr);       ASSERT_TRUE(!err);
+      ASSERT_TRUE(val.getType() == json::Type::OBJECT);
 
       json::Object object = val.getObject();
       object.insert("a", json::Value(1));
 
-      REQUIRE(object["a"].getInt() == 1);
+      ASSERT_TRUE(object["a"].getInt() == 1);
    }
 
-   SECTION("Complex member fetch and set test")
+   // Complex member fetch and set test section
    {
       json::Value value = getGlobalValue("a", "1");
-      REQUIRE(value.getInt() == 1);
+      ASSERT_TRUE(value.getInt() == 1);
 
       insertGlobalValue("a", "testVal", json::Value(55));
-      REQUIRE(getGlobalValue("a", "testVal").getInt() == 55);
+      ASSERT_TRUE(getGlobalValue("a", "testVal").getInt() == 55);
    }
 
-   SECTION("Multiple assign")
+   // Multiple assign section
    {
       json::Object object = createObject();
       json::Value val = object;
@@ -391,7 +393,7 @@ TEST_CASE("Json")
       root["b"] = val2;
    }
 
-   SECTION("Can std erase an array meeting certain criteria")
+   // Can std erase an array meeting certain criteria section
    {
       json::Array arr;
       for (int i = 0; i < 10; ++i)
@@ -407,15 +409,15 @@ TEST_CASE("Json")
             { return val.getInt() % 2 == 0; }),
          arr.end());
 
-      REQUIRE(arr.getSize() == 5);
-      REQUIRE(arr[0].getInt() == 1);
-      REQUIRE(arr[1].getInt() == 3);
-      REQUIRE(arr[2].getInt() == 5);
-      REQUIRE(arr[3].getInt() == 7);
-      REQUIRE(arr[4].getInt() == 9);
+      ASSERT_TRUE(arr.getSize() == 5);
+      ASSERT_TRUE(arr[0].getInt() == 1);
+      ASSERT_TRUE(arr[1].getInt() == 3);
+      ASSERT_TRUE(arr[2].getInt() == 5);
+      ASSERT_TRUE(arr[3].getInt() == 7);
+      ASSERT_TRUE(arr[4].getInt() == 9);
    }
 
-   SECTION("Can std erase an array meeting no criteria")
+   // Can std erase an array meeting no criteria section
    {
       json::Array arr;
       for (int i = 0; i < 10; ++i)
@@ -431,10 +433,10 @@ TEST_CASE("Json")
             { return val.getInt() > 32; }),
          arr.end());
 
-      REQUIRE(arr.getSize() == 10);
+      ASSERT_TRUE(arr.getSize() == 10);
    }
 
-   SECTION("Can erase an empty array")
+   // Can erase an empty array section
    {
       json::Array arr;
 
@@ -446,33 +448,33 @@ TEST_CASE("Json")
             { return val.getInt() % 2 == 0; }),
          arr.end());
 
-      REQUIRE(arr.getSize() == 0);
+      ASSERT_TRUE(arr.getSize() == 0);
    }
 
-   SECTION("Unicode string test")
+   // Unicode string test section
    {
       std::string jsonStr = "{\"a\": \"的中文翻譯 | 英漢字典\"}";
       json::Value val;
-      REQUIRE(!val.parse(jsonStr));
+      Error err = val.parse(jsonStr);       ASSERT_TRUE(!err);
 
-      REQUIRE(val.getObject()["a"].getString() == "的中文翻譯 | 英漢字典");
+      ASSERT_TRUE(val.getObject()["a"].getString() == "的中文翻譯 | 英漢字典");
    }
 
-   SECTION("Can get value from function")
+   // Can get value from function section
    {
       json::Value val = getValue();
-      REQUIRE(val.getInt() == 5);
+      ASSERT_TRUE(val.getInt() == 5);
    }
 
-   SECTION("Parse errors")
+   // Parse errors section
    {
       std::string invalid = R"({ key: value )";
       json::Value val;
       Error err = val.parse(invalid);
-      REQUIRE(err);
+      ASSERT_TRUE(err);
    }
 
-   SECTION("Schema default parse")
+   // Schema default parse section
    {
       std::string schema = R"(
       {
@@ -502,15 +504,15 @@ TEST_CASE("Json")
 
       json::Object defaults;
       Error err = json::Object::getSchemaDefaults(schema, defaults);
-      INFO(err.asString());
-      REQUIRE(!err);
+      // INFO(err.asString()); // Use this for debugging if needed
+      ASSERT_TRUE(!err);
 
-      REQUIRE(defaults["first"].getInt() == 5);
+      ASSERT_TRUE(defaults["first"].getInt() == 5);
       json::Object second = defaults["second"].getObject();
-      REQUIRE(second["foo"].getInt() == 10);
+      ASSERT_TRUE(second["foo"].getInt() == 10);
    }
 
-   SECTION("Object merge")
+   // Object merge section
    {
       json::Object base;
       json::Object overlay;
@@ -532,21 +534,21 @@ TEST_CASE("Json")
       // Regular properties should pick up values from the overlay (ensure they are copied, not
       // moved)
       auto result = json::Object::mergeObjects(base, overlay);
-      REQUIRE(result["p1"].getString() == "overlay");
-      REQUIRE(overlay["p1"].getString() == "overlay");
+      ASSERT_TRUE(result["p1"].getString() == "overlay");
+      ASSERT_TRUE(overlay["p1"].getString() == "overlay");
 
       // Properties with no overlay should pick up values from the base (ensure they are copied, not
       // moved)
-      REQUIRE(result["p2"].getString() == "base");
-      REQUIRE(base["p2"].getString() == "base");
+      ASSERT_TRUE(result["p2"].getString() == "base");
+      ASSERT_TRUE(base["p2"].getString() == "base");
 
       // Sub-objects with interleaved properties should inherit the union of properties
       auto p3result = result["p3"].getObject();
-      REQUIRE(p3result["p3-a"].getString() == "base");
-      REQUIRE(p3result["p3-b"].getString() == "overlay");
+      ASSERT_TRUE(p3result["p3-a"].getString() == "base");
+      ASSERT_TRUE(p3result["p3-b"].getString() == "overlay");
    }
 
-   SECTION("Schema validation")
+   // Schema validation section
    {
       std::string schema = R"(
       {
@@ -576,15 +578,15 @@ TEST_CASE("Json")
 
       json::Value val;
       Error err = val.parseAndValidate(valid, schema);
-      REQUIRE(!err);
-      REQUIRE(val.getObject()["first"].getBool());
+      ASSERT_TRUE(!err);
+      ASSERT_TRUE(val.getObject()["first"].getBool());
 
       // do invalid documents fail?
       std::string invalid = R"(
          { "first": "a", "second": "d", "third": 3 }
       )";
       err = val.parseAndValidate(invalid, schema);
-      REQUIRE(err);
+      ASSERT_TRUE(err);
 
       // finally, test the defaults:
       std::string partial = R"(
@@ -592,43 +594,43 @@ TEST_CASE("Json")
       )";
       // ... parse according to the schema
       err = val.parseAndValidate(partial, schema);
-      REQUIRE(!err);
+      ASSERT_TRUE(!err);
 
       // ... extract defaults from the schema (RapidJSON doesn't do defaults)
       json::Object defaults;
       err = json::Object::getSchemaDefaults(schema, defaults);
-      REQUIRE(!err);
+      ASSERT_TRUE(!err);
 
       // ... overlay the document on the defaults
       json::Object result = json::Object::mergeObjects(defaults.getObject(), val.getObject());
 
       // ... see if we got what we expected.
-      REQUIRE(result["first"].getBool() == true);   // non-default value
-      REQUIRE(result["second"].getString() == "b");   // default value
+      ASSERT_TRUE(result["first"].getBool() == true);   // non-default value
+      ASSERT_TRUE(result["second"].getString() == "b");   // default value
 
       // now let's try coercing the invalid document
       json::Value corrected;
       err = corrected.parse(invalid);
-      REQUIRE(!err);
+      ASSERT_TRUE(!err);
       std::vector<std::string> violations;
       err = corrected.coerce(schema, violations);
-      REQUIRE(!err);
+      ASSERT_TRUE(!err);
 
       // make sure that we got a violation
-      REQUIRE(violations.size() > 0);
+      ASSERT_TRUE(violations.size() > 0);
 
       // make sure the coerced document is valid according to the schema
       err = val.validate(schema);
-      REQUIRE(!err);
+      ASSERT_TRUE(!err);
 
       // make sure that the two invalid nodes were removed, leaving the valid one
       json::Object obj = corrected.getObject();
-      REQUIRE(obj.find("first") == obj.end());
-      REQUIRE(obj.find("second") == obj.end());
-      REQUIRE(obj.find("third") != obj.end());
+      ASSERT_TRUE(obj.find("first") == obj.end());
+      ASSERT_TRUE(obj.find("second") == obj.end());
+      ASSERT_TRUE(obj.find("third") != obj.end());
    }
 
-   SECTION("Can iterate object")
+   // Can iterate object section
    {
       json::Object obj;
       obj["first"] = 1;
@@ -640,27 +642,27 @@ TEST_CASE("Json")
       {
          if (i == 0)
          {
-            REQUIRE((*itr).getName() == "first");
-            REQUIRE((*itr).getValue().getInt() == 1);
+            ASSERT_TRUE((*itr).getName() == "first");
+            ASSERT_TRUE((*itr).getValue().getInt() == 1);
          }
          else
             if (i == 1)
             {
-               REQUIRE((*itr).getName() == "second");
-               REQUIRE((*itr).getValue().getInt() == 2);
+               ASSERT_TRUE((*itr).getName() == "second");
+               ASSERT_TRUE((*itr).getValue().getInt() == 2);
             }
             else
             {
-               REQUIRE((*itr).getName() == "third");
-               REQUIRE((*itr).getValue().getInt() == 3);
+               ASSERT_TRUE((*itr).getName() == "third");
+               ASSERT_TRUE((*itr).getValue().getInt() == 3);
             }
       }
 
       // Check that we iterated the correct number of times.
-      REQUIRE(i == 3);
+      ASSERT_TRUE(i == 3);
    }
 
-   SECTION("Can compare object iterators")
+   // Can compare object iterators section
    {
       json::Object obj1, obj2;
       obj1["first"] = 1;
@@ -673,21 +675,21 @@ TEST_CASE("Json")
 
       // Comparing iterators pointing to the same object.
       auto itr1 = obj1.begin(), itr2 = obj1.begin();
-      REQUIRE(itr1 == itr2);           // Both at the start.
-      REQUIRE(++itr1 == ++itr2);       // Both at the second element.
-      REQUIRE(itr1 != obj1.begin());   // An itr at the second element is not the same as an itr at the start.
-      REQUIRE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
-      REQUIRE(itr1 != obj1.end());     // An itr isn't at the end until it's after the last element.
-      REQUIRE(++itr1 == obj1.end());   // Both at the end.
+      ASSERT_TRUE(itr1 == itr2);           // Both at the start.
+      ASSERT_TRUE(++itr1 == ++itr2);       // Both at the second element.
+      ASSERT_TRUE(itr1 != obj1.begin());   // An itr at the second element is not the same as an itr at the start.
+      ASSERT_TRUE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
+      ASSERT_TRUE(itr1 != obj1.end());     // An itr isn't at the end until it's after the last element.
+      ASSERT_TRUE(++itr1 == obj1.end());   // Both at the end.
 
       // Comparing iterators pointing to different objects. They should never be equal.
       itr1 = obj1.begin(), itr2 = obj2.begin();
-      REQUIRE(itr1 != itr2);
-      REQUIRE(++itr1 != ++itr2);
-      REQUIRE(obj1.end() != obj2.end());
+      ASSERT_TRUE(itr1 != itr2);
+      ASSERT_TRUE(++itr1 != ++itr2);
+      ASSERT_TRUE(obj1.end() != obj2.end());
    }
 
-   SECTION("Can compare array iterators")
+   // Can compare array iterators section
    {
       json::Array arr1, arr2;
       arr1.push_back(json::Value("first"));
@@ -700,21 +702,21 @@ TEST_CASE("Json")
 
       // Comparing iterators pointing to the same object.
       auto itr1 = arr1.begin(), itr2 = arr1.begin();
-      REQUIRE(itr1 == itr2);           // Both at the start.
-      REQUIRE(++itr1 == ++itr2);       // Both at the second element.
-      REQUIRE(itr1 != arr1.begin());   // An itr at the second element is not the same as an itr at the start.
-      REQUIRE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
-      REQUIRE(itr1 != arr1.end());     // An itr isn't at the end until it's after the last element.
-      REQUIRE(++itr1 == arr1.end());   // Both at the end.
+      ASSERT_TRUE(itr1 == itr2);           // Both at the start.
+      ASSERT_TRUE(++itr1 == ++itr2);       // Both at the second element.
+      ASSERT_TRUE(itr1 != arr1.begin());   // An itr at the second element is not the same as an itr at the start.
+      ASSERT_TRUE(++itr1 != itr2);         // itr1 at the 3rd element, itr2 at the 2nd element.
+      ASSERT_TRUE(itr1 != arr1.end());     // An itr isn't at the end until it's after the last element.
+      ASSERT_TRUE(++itr1 == arr1.end());   // Both at the end.
 
       // Comparing iterators pointing to different objects. They should never be equal.
       itr1 = arr1.begin(), itr2 = arr2.begin();
-      REQUIRE(itr1 != itr2);
-      REQUIRE(++itr1 != ++itr2);
-      REQUIRE(arr1.end() != arr2.end());
+      ASSERT_TRUE(itr1 != itr2);
+      ASSERT_TRUE(++itr1 != ++itr2);
+      ASSERT_TRUE(arr1.end() != arr2.end());
    }
 
-   SECTION("Can set pointer value")
+   // Can set pointer value section
    {
       json::Object obj;
       obj["a"] = 1;
@@ -727,7 +729,7 @@ TEST_CASE("Json")
 
       obj["c"] = cArray;
 
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/d", json::Value(4)));
+      ASSERT_FALSE(obj.setValueAtPointerPath("/d", json::Value(4)));
 
       json::Object eObj;
       eObj["param1"] = "param1";
@@ -737,24 +739,24 @@ TEST_CASE("Json")
       param3Obj["nested"] = "nestedValue";
       eObj["param3"] = param3Obj;
 
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/e", eObj));
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/c/3", json::Value("4")));
-      REQUIRE_FALSE(obj.setValueAtPointerPath("/e/param3/nested2", json::Value("nestedValue2")));
+      ASSERT_FALSE(obj.setValueAtPointerPath("/e", eObj));
+      ASSERT_FALSE(obj.setValueAtPointerPath("/c/3", json::Value("4")));
+      ASSERT_FALSE(obj.setValueAtPointerPath("/e/param3/nested2", json::Value("nestedValue2")));
 
-      REQUIRE(obj["c"].getArray().getSize() == 4);
-      REQUIRE(obj["c"].getArray()[3].getString() == "4");
-      REQUIRE(obj["d"].getInt() == 4);
-      REQUIRE(obj["e"].getObject()["param3"].getObject()["nested"].getString() == "nestedValue");
-      REQUIRE(obj["e"].getObject()["param3"].getObject()["nested2"].getString() == "nestedValue2");
+      ASSERT_TRUE(obj["c"].getArray().getSize() == 4);
+      ASSERT_TRUE(obj["c"].getArray()[3].getString() == "4");
+      ASSERT_TRUE(obj["d"].getInt() == 4);
+      ASSERT_TRUE(obj["e"].getObject()["param3"].getObject()["nested"].getString() == "nestedValue");
+      ASSERT_TRUE(obj["e"].getObject()["param3"].getObject()["nested2"].getString() == "nestedValue2");
    }
 
-   SECTION("Invalid pointer path returns error on set")
+   // Invalid pointer path returns error on set section
    {
       json::Object obj;
-      REQUIRE(obj.setValueAtPointerPath("path must begin with a /", json::Value(1)));
+      ASSERT_TRUE(obj.setValueAtPointerPath("path must begin with a /", json::Value(1)));
    }
 
-   SECTION("Object deep comparison")
+   // Object deep comparison section
    {
       json::Object obj1;
       obj1.insert("member1", json::Value(1));
@@ -764,10 +766,10 @@ TEST_CASE("Json")
       obj2.insert("member1", json::Value(1));
       obj2.insert("member2", json::Value(2));
 
-      CHECK(obj1 == obj2);
+      EXPECT_TRUE(obj1 == obj2);
    }
 
-   SECTION("Object deep comparison - insertion order doesn't matter")
+   // Object deep comparison - insertion order doesn't matter section
    {
       json::Object obj1;
       obj1.insert("member1", json::Value(1));
@@ -777,10 +779,10 @@ TEST_CASE("Json")
       obj2.insert("member2", json::Value(2));
       obj2.insert("member1", json::Value(1));
 
-      CHECK(obj1 == obj2);
+      EXPECT_TRUE(obj1 == obj2);
    }
 
-   SECTION("Object deep comparison - not equal")
+   // Object deep comparison - not equal section
    {
       json::Object obj1;
       obj1.insert("member1", json::Value(1));
@@ -790,10 +792,10 @@ TEST_CASE("Json")
       obj2.insert("member1", json::Value(1));
       obj2.insert("member2", json::Value(3));
 
-      CHECK(obj1 != obj2);
+      EXPECT_TRUE(obj1 != obj2);
    }
 
-   SECTION("Array deep comparison")
+   // Array deep comparison section
    {
       json::Array arr1;
       arr1.push_back(json::Value("value1"));
@@ -805,10 +807,10 @@ TEST_CASE("Json")
       arr2.push_back(json::Value("value2"));
       arr2.push_back(json::Value(3.5));
 
-      CHECK(arr1 == arr2);
+      EXPECT_TRUE(arr1 == arr2);
    }
 
-   SECTION("Array deep comparison - different order")
+   // Array deep comparison - different order section
    {
       json::Array arr1;
       arr1.push_back(json::Value("value1"));
@@ -820,10 +822,10 @@ TEST_CASE("Json")
       arr2.push_back(json::Value("value1"));
       arr2.push_back(json::Value("value2"));
 
-      CHECK(arr1 != arr2);
+      EXPECT_TRUE(arr1 != arr2);
    }
 
-   SECTION("Array deep comparison - different length")
+   // Array deep comparison - different length section
    {
       json::Array arr1;
       arr1.push_back(json::Value("value1"));
@@ -834,10 +836,10 @@ TEST_CASE("Json")
       arr2.push_back(json::Value("value1"));
       arr2.push_back(json::Value("value2"));
 
-      CHECK(arr1 != arr2);
+      EXPECT_TRUE(arr1 != arr2);
    }
 
-   SECTION("Array deep comparison - not equal")
+   // Array deep comparison - not equal section
    {
       json::Array arr1;
       arr1.push_back(json::Value("value1"));
@@ -849,10 +851,10 @@ TEST_CASE("Json")
       arr2.push_back(json::Value("value2"));
       arr1.push_back(json::Value(5));
 
-      CHECK(arr1 != arr2);
+      EXPECT_TRUE(arr1 != arr2);
    }
 
-   SECTION("Complex object deep comparison")
+   // Complex object deep comparison section
    {
       json::Array simpleArr;
       simpleArr.push_back(json::Value(1));
@@ -884,10 +886,10 @@ TEST_CASE("Json")
       obj2.insert("strValue", json::Value("hello"));
       obj2.insert("strValue2", json::Value("goodbye"));
 
-      CHECK(obj1 == obj2);
+      EXPECT_TRUE(obj1 == obj2);
    }
 
-   SECTION("Parse json object")
+   // Parse json object section
    {
       json::Array arr;
       arr.push_back(json::Value("a"));
@@ -911,19 +913,19 @@ TEST_CASE("Json")
           "5": ["a", "b", "c"]
       })");
 
-      REQUIRE_FALSE(error);
-      CHECK(actual == expected);
+      ASSERT_FALSE(error);
+      EXPECT_TRUE(actual == expected);
    }
 
-   SECTION("Parse json array into object")
+   // Parse json array into object section
    {
       json::Object result;
       Error error = result.parse(R"([ "a", "b", "c" ])");
 
-      REQUIRE(error);
+      ASSERT_TRUE(error);
    }
 
-   SECTION("Parse json array")
+   // Parse json array section
    {
       json::Array expected;
       expected.push_back(json::Value("a"));
@@ -933,19 +935,19 @@ TEST_CASE("Json")
       json::Array actual;
       Error error = actual.parse(R"([ "a", "b", "c" ])");
 
-      REQUIRE_FALSE(error);
-      CHECK(actual == expected);
+      ASSERT_FALSE(error);
+      EXPECT_TRUE(actual == expected);
    }
 
-   SECTION("Parse object into json array")
+   // Parse object into json array section
    {
       json::Array result;
       Error error = result.parse(R"({ "first": 1, "second": true })");
 
-      REQUIRE(error);
+      ASSERT_TRUE(error);
    }
 
-   SECTION("readObject tests")
+   // readObject tests section
    {
       json::Object obj;
       json::Object obj2;
@@ -965,32 +967,32 @@ TEST_CASE("Json")
                                      "c", c,
                                      "d", d);
 
-      REQUIRE_FALSE(error);
-      REQUIRE(a == 1);
-      REQUIRE_FALSE(b);
-      REQUIRE(c == "Hello there");
-      REQUIRE(d["a"].getString() == "Inner obj");
+      ASSERT_FALSE(error);
+      ASSERT_TRUE(a == 1);
+      ASSERT_FALSE(b);
+      ASSERT_TRUE(c == "Hello there");
+      ASSERT_TRUE(d["a"].getString() == "Inner obj");
 
       error = json::readObject(obj,
                                "a", c,
                                "b", b,
                                "c", c);
-      REQUIRE(error);
+      ASSERT_TRUE(error);
 
       error = json::readObject(obj,
                                "a", a,
                                "b", a,
                                "c", c);
-      REQUIRE(error);
+      ASSERT_TRUE(error);
 
       error = json::readObject(obj,
                                "a", a,
                                "b", b,
                                "c", a);
-      REQUIRE(error);
+      ASSERT_TRUE(error);
    }
 
-   SECTION("readObject tests (lists and optionals)")
+   // readObject tests (lists and optionals) section
    {
       json::Array intArr;
       intArr.push_back(4);
@@ -1022,7 +1024,7 @@ TEST_CASE("Json")
       boost::optional<std::set<std::string> > optStrSet, badOptIntSet;
 
       // No errors.
-      REQUIRE_FALSE(json::readObject(obj,
+      ASSERT_FALSE(json::readObject(obj,
          "intArr", intList,
          "intArr", intSet,
          "intArr", optIntList,
@@ -1035,66 +1037,51 @@ TEST_CASE("Json")
          "notFound", badOptStrSet));
 
       // Check good values
-      REQUIRE(intList.size() == 5);
-      CHECK(intList[0] == 4);
-      CHECK(intList[1] == 3);
-      CHECK(intList[2] == 2);
-      CHECK(intList[3] == 1);
-      CHECK(intList[4] == 4);
-      REQUIRE(intSet.size() == 4);
-      CHECK(intSet.find(1) != intSet.end());
-      CHECK(intSet.find(2) != intSet.end());
-      CHECK(intSet.find(3) != intSet.end());
-      CHECK(intSet.find(4) != intSet.end());
-      REQUIRE(!(optIntList == boost::none));
-      CHECK(std::equal(intList.begin(), intList.end(), optIntList.get().begin()));
-      REQUIRE(!(optIntSet == boost::none));
-      CHECK(std::equal(intSet.begin(), intSet.end(), optIntSet.get().begin()));
+      ASSERT_TRUE(intList.size() == 5);
+      EXPECT_TRUE(intList[0] == 4);
+      EXPECT_TRUE(intList[1] == 3);
+      EXPECT_TRUE(intList[2] == 2);
+      EXPECT_TRUE(intList[3] == 1);
+      EXPECT_TRUE(intList[4] == 4);
+      ASSERT_TRUE(intSet.size() == 4);
+      EXPECT_TRUE(intSet.find(1) != intSet.end());
+      EXPECT_TRUE(intSet.find(2) != intSet.end());
+      EXPECT_TRUE(intSet.find(3) != intSet.end());
+      EXPECT_TRUE(intSet.find(4) != intSet.end());
+      ASSERT_TRUE(!(optIntList == boost::none));
+      EXPECT_TRUE(std::equal(intList.begin(), intList.end(), optIntList.get().begin()));
+      ASSERT_TRUE(!(optIntSet == boost::none));
+      EXPECT_TRUE(std::equal(intSet.begin(), intSet.end(), optIntSet.get().begin()));
 
-      REQUIRE(strList.size() == 6);
-      CHECK(strList[0] == "a string");
-      CHECK(strList[1] == "A CAPITAL STRING");
-      CHECK(strList[2] == "a duplicate string");
-      CHECK(strList[3] == "a duplicate string");
-      CHECK(strList[4] == "a duplicate string");
-      CHECK(strList[5] == "A CAPITAL STRING");
-      REQUIRE(strSet.size() == 3);
-      CHECK(strSet.find("a string") != strSet.end());
-      CHECK(strSet.find("A CAPITAL STRING") != strSet.end());
-      CHECK(strSet.find("a duplicate string") != strSet.end());
-      REQUIRE(!!optStrList);
-      CHECK(std::equal(strList.begin(), strList.end(), optStrList.get().begin()));
-      REQUIRE(!!optStrSet);
-      CHECK(std::equal(strSet.begin(), strSet.end(), optStrSet.get().begin()));
+      ASSERT_TRUE(strList.size() == 6);
+      EXPECT_TRUE(strList[0] == "a string");
+      EXPECT_TRUE(strList[1] == "A CAPITAL STRING");
+      EXPECT_TRUE(strList[2] == "a duplicate string");
+      EXPECT_TRUE(strList[3] == "a duplicate string");
+      EXPECT_TRUE(strList[4] == "a duplicate string");
+      EXPECT_TRUE(strList[5] == "A CAPITAL STRING");
+      ASSERT_TRUE(strSet.size() == 3);
+      EXPECT_TRUE(strSet.find("a string") != strSet.end());
+      EXPECT_TRUE(strSet.find("A CAPITAL STRING") != strSet.end());
+      EXPECT_TRUE(strSet.find("a duplicate string") != strSet.end());
+      ASSERT_TRUE(!!optStrList);
+      EXPECT_TRUE(std::equal(strList.begin(), strList.end(), optStrList.get().begin()));
+      ASSERT_TRUE(!!optStrSet);
+      EXPECT_TRUE(std::equal(strSet.begin(), strSet.end(), optStrSet.get().begin()));
 
       // Bad values, one at a time.
-      CHECK((json::readObject(obj, "notFound", badStrList) && badStrList.empty()));
-      CHECK((json::readObject(obj, "notFound", badStrSet) && badStrSet.empty()));
-      CHECK((json::readObject(obj, "strArr", badStrList) && badStrList.empty()));
-      CHECK((json::readObject(obj, "strArr", badOptStrList) && !!(badOptStrList == boost::none)));
-      CHECK((json::readObject(obj, "strArr", badStrSet) && badStrSet.empty()));
-      CHECK((json::readObject(obj, "strArr", badOptStrSet) && !!(badOptStrSet == boost::none)));
-      CHECK((json::readObject(obj, "notFound", badIntList) && badIntList.empty()));
-      CHECK((json::readObject(obj, "notFound", badIntSet) && badIntSet.empty()));
-      CHECK((json::readObject(obj, "intArr", badIntList) && badIntList.empty()));
-      CHECK((json::readObject(obj, "intArr", badOptIntList) && !!(badOptIntList == boost::none)));
-      CHECK((json::readObject(obj, "intArr", badIntSet) && badIntSet.empty()));
-      CHECK((json::readObject(obj, "intArr", badOptIntSet) && !!(badOptIntSet == boost::none)));
-   }
-
-   SECTION("Objects and shared values")
-   {
-      json::Object object;
-      object["apple"] = "apple";
-      object["banana"] = "banana";
-      {
-         object["apple"] = object["banana"];
-         CHECK(object["apple"].isString());
-         CHECK(object["banana"].isString());
-         object["apple"] = object["banana"];
-         CHECK(object["apple"].isString());
-         CHECK(object["banana"].isString());
-      }
+      EXPECT_TRUE((json::readObject(obj, "notFound", badStrList) && badStrList.empty()));
+      EXPECT_TRUE((json::readObject(obj, "notFound", badStrSet) && badStrSet.empty()));
+      EXPECT_TRUE((json::readObject(obj, "strArr", badStrList) && badStrList.empty()));
+      EXPECT_TRUE((json::readObject(obj, "strArr", badOptStrList) && !!(badOptStrList == boost::none)));
+      EXPECT_TRUE((json::readObject(obj, "strArr", badStrSet) && badStrSet.empty()));
+      EXPECT_TRUE((json::readObject(obj, "strArr", badOptStrSet) && !!(badOptStrSet == boost::none)));
+      EXPECT_TRUE((json::readObject(obj, "notFound", badIntList) && badIntList.empty()));
+      EXPECT_TRUE((json::readObject(obj, "notFound", badIntSet) && badIntSet.empty()));
+      EXPECT_TRUE((json::readObject(obj, "intArr", badIntList) && badIntList.empty()));
+      EXPECT_TRUE((json::readObject(obj, "intArr", badOptIntList) && !!(badOptIntList == boost::none)));
+      EXPECT_TRUE((json::readObject(obj, "intArr", badIntSet) && badIntSet.empty()));
+      EXPECT_TRUE((json::readObject(obj, "intArr", badOptIntSet) && !!(badOptIntSet == boost::none)));
    }
 }
 

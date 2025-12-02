@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include "SessionRCompletions.hpp"
 
@@ -22,23 +22,19 @@ namespace session {
 namespace modules {
 namespace r_packages {
 
-test_context("r_completions")
-{
-   test_that("finishExpression works")
-   {
-      expect_true(finishExpression("(abc") == "(abc)");
-      expect_true(finishExpression(L"(abc") == L"(abc)");
-   }
+TEST(SessionRCompletionsTest, FinishExpressionWorks) {
+   EXPECT_EQ("(abc)", finishExpression("(abc"));
+   EXPECT_EQ(L"(abc)", finishExpression(L"(abc"));
 
    // https://github.com/rstudio/rstudio/issues/14625
-   test_that("finishExpression accepts non-ASCII inputs")
-   {
-      expect_true(finishExpression(L"(你好") == L"(你好)");
-      expect_true(finishExpression(L"(こんにちは") == L"(こんにちは)");
-   }
 }
 
-} // namespace r_completions
+TEST(SessionRCompletionsTest, FinishExpressionAcceptsNonAsciiInputs) {
+   EXPECT_EQ(L"(你好)", finishExpression(L"(你好"));
+   EXPECT_EQ(L"(こんにちは)", finishExpression(L"(こんにちは"));
+}
+
+} // namespace r_packages
 } // namespace modules
-} // namespace rsession
+} // namespace session
 } // namespace rstudio

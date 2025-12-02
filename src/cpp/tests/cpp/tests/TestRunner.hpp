@@ -21,8 +21,7 @@
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
 
-# define CATCH_CONFIG_RUNNER
-# include "vendor/catch.hpp"
+# include <gtest/gtest.h>
 
 #endif
 
@@ -33,12 +32,15 @@ namespace tests {
 
 int run()
 {
-   // pass some dummy arguments to Catch
+   // pass some dummy arguments to gtest
    int argc = 1;
    
    // avoid deprecation warnings by initializing as const char*
-   const char* argv[1] = { "catch-unit-tests" };
-   return Catch::Session().run(argc, const_cast<char**>(argv));
+   const char* argv[1] = { "gtest-unit-tests" };
+   
+   // Initialize Google Test and run all tests
+   testing::InitGoogleTest(&argc, const_cast<char**>(argv));
+   return RUN_ALL_TESTS();
 }
 
 #else // not RSTUDIO_UNIT_TESTS_ENABLED

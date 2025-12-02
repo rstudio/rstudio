@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <core/http/Util.hpp>
 #include <core/http/URL.hpp>
@@ -23,122 +23,120 @@ namespace core {
 namespace http {
 namespace util {
 
-test_context("HttpUtil Tests")
+TEST(HttpTest, CanParseSimpleUrl)
 {
-   test_that("Can parse simple url")
-   {
-      URL url("http://www.google.com");
+   URL url("http://www.google.com");
 
-      expect_true(url.isValid());
-      expect_true(url.protocol() == "http");
-      expect_true(url.hostname() == "www.google.com");
-      expect_true(url.portStr() == "80");
-      expect_true(url.port() == 80);
-      expect_true(url.path() == std::string());
-   }
-
-   test_that("Can parse simple https url")
-   {
-      URL url("https://www.google.com");
-
-      expect_true(url.isValid());
-      expect_true(url.protocol() == "https");
-      expect_true(url.hostname() == "www.google.com");
-      expect_true(url.portStr() == "443");
-      expect_true(url.port() == 443);
-      expect_true(url.path() == std::string());
-   }
-   
-   test_that("Can parse url with port")
-   {
-      URL url("http://test.localhost:5235");
-
-      expect_true(url.isValid());
-      expect_true(url.protocol() == "http");
-      expect_true(url.hostname() == "test.localhost");
-      expect_true(url.portStr() == "5235");
-      expect_true(url.port() == 5235);
-      expect_true(url.path() == std::string());
-   }
-
-   test_that("Can parse url with path")
-   {
-      URL url("http://google.com/search");
-
-      expect_true(url.isValid());
-      expect_true(url.protocol() == "http");
-      expect_true(url.hostname() == "google.com");
-      expect_true(url.portStr() == "80");
-      expect_true(url.port() == 80);
-      expect_true(url.path() == "/search");
-   }
-
-   test_that("Can parse complex url")
-   {
-      URL url("https://localhost:9987/a/long/path/?term=happy&term=dog");
-
-      expect_true(url.isValid());
-      expect_true(url.protocol() == "https");
-      expect_true(url.hostname() == "localhost");
-      expect_true(url.portStr() == "9987");
-      expect_true(url.port() == 9987);
-      expect_true(url.path() == "/a/long/path/?term=happy&term=dog");
-   }
-
-   test_that("Bad urls return parse failure")
-   {
-      URL url("127.0.0.1");
-
-      expect_false(url.isValid());
-   }
-
-   test_that("Can clean up paths")
-   {
-      expect_equal(URL::cleanupPath(""), "");
-      expect_equal(URL::cleanupPath("/"), "/");
-      expect_equal(URL::cleanupPath("./"), "");
-      expect_equal(URL::cleanupPath("/./"), "/");
-      expect_equal(URL::cleanupPath("/."), "/.");
-      expect_equal(URL::cleanupPath("/foo/../"), "/");
-      expect_equal(URL::cleanupPath("foo/../"), "");
-      expect_equal(URL::cleanupPath("/foo/bar/../../"), "/");
-      expect_equal(URL::cleanupPath("foo/bar/../../"), "");
-      expect_equal(URL::cleanupPath("/foo/bar/../../"), "/");
-      expect_equal(URL::cleanupPath("/foo/bar/../.."), "/foo/..");
-      expect_equal(URL::cleanupPath("/foo/?/../"), "/foo/?/../");
-      expect_equal(URL::cleanupPath("/foo/#/../"), "/foo/#/../");
-      expect_equal(URL::cleanupPath("/foo/?/../#/../"), "/foo/?/../#/../");
-      expect_equal(URL::cleanupPath("/foo/bar/../../../"), "/");
-      expect_equal(URL::cleanupPath("/foo/bar/../../../baz"), "/baz");
-   }
-
-   test_that("Can complete URLs")
-   {
-      expect_equal(URL::complete("http://www.example.com", "foo"), "http://www.example.com/foo");
-      expect_equal(URL::complete("http://www.example.com/foo", "bar"), "http://www.example.com/bar");
-      expect_equal(URL::complete("http://www.example.com/foo/", "bar"), "http://www.example.com/foo/bar");
-      expect_equal(URL::complete("http://www.example.com:80/foo/", "/bar"), "http://www.example.com:80/bar");
-      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "baz/qux"), "http://www.example.com:80/foo/baz/qux");
-      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "../baz/qux"), "http://www.example.com:80/baz/qux");
-      expect_equal(URL::complete("http://www.example.com:80/foo/bar/", "../baz/qux"), "http://www.example.com:80/foo/baz/qux");
-      expect_equal(URL::complete("http://www.example.com:80/foo/bar/", "baz/../qux"), "http://www.example.com:80/foo/bar/qux");
-      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "http://baz"), "http://baz");
-
-      expect_equal(URL::complete("foo/bar/", "baz/qux"), "foo/bar/baz/qux");
-      expect_equal(URL::complete("foo/bar/", "../baz/qux"), "foo/baz/qux");
-      expect_equal(URL::complete("../foo/bar/", "../baz/qux"), "foo/baz/qux");
-      expect_equal(URL::complete("../../foo/bar/", "../baz/qux"), "foo/baz/qux");
-   }
-
-   test_that("Can uncomplete URLs")
-   {
-      expect_equal(URL::uncomplete("/foo/bar/baz", "/foo/qux/quux"), "../qux/quux");
-      expect_equal(URL::uncomplete("/foo/bar/baz/", "/foo/qux/quux"), "../../qux/quux");
-      expect_equal(URL::uncomplete("/bar/baz", "/qux/quux"), "../qux/quux");
-   }
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("www.google.com", url.hostname());
+   EXPECT_EQ("80", url.portStr());
+   EXPECT_EQ(80, url.port());
+   EXPECT_EQ(std::string(), url.path());
 }
 
-} // end namespace util
-} // end namespace http
-} // end namespace core
-} // end namespace rstudio
+TEST(HttpTest, CanParseSimpleHttpsUrl)
+{
+   URL url("https://www.google.com");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("https", url.protocol());
+   EXPECT_EQ("www.google.com", url.hostname());
+   EXPECT_EQ("443", url.portStr());
+   EXPECT_EQ(443, url.port());
+   EXPECT_EQ(std::string(), url.path());
+}
+   
+
+TEST(HttpTest, CanParseUrlWithPort)
+{
+   URL url("http://test.localhost:5235");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("test.localhost", url.hostname());
+   EXPECT_EQ("5235", url.portStr());
+   EXPECT_EQ(5235, url.port());
+   EXPECT_EQ(std::string(), url.path());
+}
+
+TEST(HttpTest, CanParseUrlWithPath)
+{
+   URL url("http://google.com/search");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("google.com", url.hostname());
+   EXPECT_EQ("80", url.portStr());
+   EXPECT_EQ(80, url.port());
+   EXPECT_EQ("/search", url.path());
+}
+
+TEST(HttpTest, CanParseComplexUrl)
+{
+   URL url("https://localhost:9987/a/long/path/?term=happy&term=dog");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("https", url.protocol());
+   EXPECT_EQ("localhost", url.hostname());
+   EXPECT_EQ("9987", url.portStr());
+   EXPECT_EQ(9987, url.port());
+   EXPECT_EQ("/a/long/path/?term=happy&term=dog", url.path());
+}
+
+TEST(HttpTest, BadUrlsReturnParseFailure)
+{
+   URL url("127.0.0.1");
+
+   EXPECT_FALSE(url.isValid());
+}
+
+TEST(HttpTest, CanCleanUpPaths)
+{
+   EXPECT_EQ("", URL::cleanupPath(""));
+   EXPECT_EQ("/", URL::cleanupPath("/"));
+   EXPECT_EQ("", URL::cleanupPath("./"));
+   EXPECT_EQ("/", URL::cleanupPath("/./"));
+   EXPECT_EQ("/.", URL::cleanupPath("/."));
+   EXPECT_EQ("/", URL::cleanupPath("/foo/../"));
+   EXPECT_EQ("", URL::cleanupPath("foo/../"));
+   EXPECT_EQ("/", URL::cleanupPath("/foo/bar/../../"));
+   EXPECT_EQ("", URL::cleanupPath("foo/bar/../../"));
+   EXPECT_EQ("/", URL::cleanupPath("/foo/bar/../../"));
+   EXPECT_EQ("/foo/..", URL::cleanupPath("/foo/bar/../.."));
+   EXPECT_EQ("/foo/?/../", URL::cleanupPath("/foo/?/../"));
+   EXPECT_EQ("/foo/#/../", URL::cleanupPath("/foo/#/../"));
+   EXPECT_EQ("/foo/?/../#/../", URL::cleanupPath("/foo/?/../#/../"));
+   EXPECT_EQ("/", URL::cleanupPath("/foo/bar/../../../"));
+   EXPECT_EQ("/baz", URL::cleanupPath("/foo/bar/../../../baz"));
+}
+
+TEST(HttpTest, CanCompleteUrls)
+{
+   EXPECT_EQ("http://www.example.com/foo", URL::complete("http://www.example.com", "foo"));
+   EXPECT_EQ("http://www.example.com/bar", URL::complete("http://www.example.com/foo", "bar"));
+   EXPECT_EQ("http://www.example.com/foo/bar", URL::complete("http://www.example.com/foo/", "bar"));
+   EXPECT_EQ("http://www.example.com:80/bar", URL::complete("http://www.example.com:80/foo/", "/bar"));
+   EXPECT_EQ("http://www.example.com:80/foo/baz/qux", URL::complete("http://www.example.com:80/foo/bar", "baz/qux"));
+   EXPECT_EQ("http://www.example.com:80/baz/qux", URL::complete("http://www.example.com:80/foo/bar", "../baz/qux"));
+   EXPECT_EQ("http://www.example.com:80/foo/baz/qux", URL::complete("http://www.example.com:80/foo/bar/", "../baz/qux"));
+   EXPECT_EQ("http://www.example.com:80/foo/bar/qux", URL::complete("http://www.example.com:80/foo/bar/", "baz/../qux"));
+   EXPECT_EQ("http://baz", URL::complete("http://www.example.com:80/foo/bar", "http://baz"));
+
+   EXPECT_EQ("foo/bar/baz/qux", URL::complete("foo/bar/", "baz/qux"));
+   EXPECT_EQ("foo/baz/qux", URL::complete("foo/bar/", "../baz/qux"));
+   EXPECT_EQ("foo/baz/qux", URL::complete("../foo/bar/", "../baz/qux"));
+   EXPECT_EQ("foo/baz/qux", URL::complete("../../foo/bar/", "../baz/qux"));
+}
+
+TEST(HttpTest, CanUncompleteUrls)
+{
+   EXPECT_EQ("../qux/quux", URL::uncomplete("/foo/bar/baz", "/foo/qux/quux"));
+   EXPECT_EQ("../../qux/quux", URL::uncomplete("/foo/bar/baz/", "/foo/qux/quux"));
+   EXPECT_EQ("../qux/quux", URL::uncomplete("/bar/baz", "/qux/quux"));
+}
+
+} // namespace util
+} // namespace http
+} // namespace core
+} // namespace rstudio
