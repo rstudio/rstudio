@@ -13,7 +13,7 @@
  *
  */
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <vector>
 #include <string>
@@ -56,281 +56,263 @@ private:
    std::streambuf* pCerrBuf_;
 };
 
-test_context("Errors")
+TEST(MiscTest, CanLogSuccess)
 {
-   test_that("Success() can be logged")
-   {
-      // attempts to log default-constructed Error objects could segfault
-      // https://github.com/rstudio/rstudio/issues/9113
-      Error error;
-      LOG_ERROR(error);
-      LOG_ERROR(Success());
-   }
+   // attempts to log default-constructed Error objects could segfault
+   // https://github.com/rstudio/rstudio/issues/9113
+   Error error;
+   LOG_ERROR(error);
+   LOG_ERROR(Success());
 }
 
-test_context("Position")
+TEST(MiscTest, PositionComparison)
 {
-   test_that("Positions are compared correctly")
+   EXPECT_TRUE(Position(0, 0) == Position(0, 0));
+   EXPECT_TRUE(Position(0, 0) <  Position(0, 1));
+   EXPECT_TRUE(Position(0, 0) <  Position(1, 0));
+   EXPECT_TRUE(Position(2, 2) <  Position(2, 4));
+}
+
+TEST(MiscTest, SplitWithMultiCharDelimiters)
+{
+   std::string contents = "foo::bar::baz";
+   std::vector<std::string> splat = core::algorithm::split(contents, "::");
+   ASSERT_EQ(3u, splat.size());
+   EXPECT_EQ(std::string("foo"), splat[0]);
+   EXPECT_EQ(std::string("bar"), splat[1]);
+   EXPECT_EQ(std::string("baz"), splat[2]);
+}
+
+TEST(MiscTest, RegexComplexityExceptionHandling)
+{
+   boost::regex pattern("(\\w*|\\w*)*@");
+   std::string haystack =
+         "abcdefghijklmnopqrstuvwxyz"
+         "abcdefghijklmnopqrstuvwxyz"
+         "|@";
+   
+   // boost-level APIs will throw an exception
    {
-      expect_true(Position(0, 0) == Position(0, 0));
-      expect_true(Position(0, 0) <  Position(0, 1));
-      expect_true(Position(0, 0) <  Position(1, 0));
-      expect_true(Position(2, 2) <  Position(2, 4));
+      // REQUIRE_THROWS - not directly supported in gtest
+      try {
+         boost::regex_match(
+            haystack.begin(),
+            haystack.end(),
+            pattern);
+         FAIL() << "Expected boost::regex_match to throw an exception";
+      } catch (...) {
+         // Expected exception
+      }
+   }
+   
+   {
+      // REQUIRE_THROWS - not directly supported in gtest
+      try {
+         boost::regex_search(
+            haystack.begin(),
+            haystack.end(),
+            pattern);
+         FAIL() << "Expected boost::regex_search to throw an exception";
+      } catch (...) {
+         // Expected exception
+      }
+   }
+   
+   // our wrappers catch and report exception, and return false
+   {
+      SuppressOutputScope scope;
+      bool result = core::regex_utils::match(
+               haystack.begin(),
+               haystack.end(),
+               pattern);
+
+      // although in theory the above regular expression matches
+      // we should instead see a report regarding complexity overload
+      EXPECT_FALSE(result);
+   }
+   
+   {
+      SuppressOutputScope scope;
+      bool result = core::regex_utils::search(
+               haystack.begin(),
+               haystack.end(),
+               pattern);
+
+      // although in theory the above regular expression matches
+      // we should instead see a report regarding complexity overload
+      EXPECT_FALSE(result);
    }
    
 }
 
-test_context("Splitting")
+TEST(MiscTest, HttpAcceptEncodingParsing)
 {
-   test_that("core::algorithm::split handles multi-character delimiters")
+   std::string encodingStr = "gzip,deflate,br";
+   std::string encodingStr2 = "gzip, deflate, br";
+
+   core::http::Request request;
+   request.setHeader("Accept-Encoding", encodingStr);
+
+   EXPECT_TRUE(request.acceptsEncoding("gzip"));
+   EXPECT_TRUE(request.acceptsEncoding("deflate"));
+   EXPECT_TRUE(request.acceptsEncoding("br"));
+   EXPECT_FALSE(request.acceptsEncoding("gzip,deflate,br"));
+
+   request.setHeader("Accept-Encoding", encodingStr2);
+   EXPECT_TRUE(request.acceptsEncoding("gzip"));
+   EXPECT_TRUE(request.acceptsEncoding("deflate"));
+   EXPECT_TRUE(request.acceptsEncoding("br"));
+   EXPECT_FALSE(request.acceptsEncoding("gzip,deflate,br"));
+}
+
+TEST(LruCacheTest, UpdatesSameValueMultipleTimes)
+{
+   LruCache<std::string, int> cache(10);
+   for (int i = 0; i < 1000; ++i)
    {
-      std::string contents = "foo::bar::baz";
-      std::vector<std::string> splat = core::algorithm::split(contents, "::");
-      expect_true(splat.size() == 3);
-      if (splat.size() == 3)
-      {
-         expect_true(splat[0] == "foo");
-         expect_true(splat[1] == "bar");
-         expect_true(splat[2] == "baz");
-      }
+      cache.insert("val", i);
+   }
+
+   EXPECT_EQ(1u, cache.size());
+
+   int val;
+   EXPECT_TRUE(cache.get("val", &val));
+   EXPECT_EQ(999, val);
+}
+
+TEST(LruCacheTest, RespectsSizeLimit)
+{
+   LruCache<int, int> cache(100);
+   for (int i = 0; i < 1000; ++i)
+   {
+      cache.insert(i, i);
+   }
+
+   EXPECT_EQ(100u, cache.size());
+
+   int val;
+   EXPECT_TRUE(cache.get(999, &val));
+   EXPECT_EQ(999, val);
+
+   EXPECT_FALSE(cache.get(100, &val));
+}
+
+TEST(LruCacheTest, ExplicitRemovalWorks)
+{
+   LruCache<int, int> cache(100);
+   for (int i = 0; i < 100; ++i)
+   {
+      cache.insert(5000, i);
+      cache.insert(i, i);
+   }
+
+   // expect that 0 has been kicked out
+   // this is because we added an insert for 5000 so it should have
+   // removed 0 (the oldest entry)
+   int val;
+   EXPECT_FALSE(cache.get(0, &val));
+
+   EXPECT_TRUE(cache.get(50, &val));
+   EXPECT_EQ(val, 50);
+
+   cache.remove(50);
+
+   EXPECT_FALSE(cache.get(50, &val));
+   EXPECT_EQ(99u, cache.size());
+}
+
+TEST(LruCacheTest, ReadsUpdateAccessTime)
+{
+   LruCache<int, int> cache(100);
+   cache.insert(5000, 1);
+
+   int val;
+   for (int i = 0; i < 1000; ++i)
+   {
+      EXPECT_TRUE(cache.get(5000, &val));
+   EXPECT_EQ(1, val);
+
+      cache.insert(i, i);
+   }
+
+   EXPECT_EQ(100u, cache.size());
+   EXPECT_TRUE(cache.get(5000, &val));
+   EXPECT_FALSE(cache.get(900, &val));
+}
+
+TEST(LruCacheTest, NoValuesAfterRemoval)
+{
+   LruCache<int, int> cache(100);
+
+   for (int i = 0; i < 1000; ++i)
+   {
+      cache.insert(i, i);
+   }
+
+   for (int i = 999; i >= 900; --i)
+   {
+      cache.remove(i);
+   }
+
+   EXPECT_EQ(0u, cache.size());
+}
+
+TEST(MiscTest, OptionsSerializationDeserialization)
+{
+   core::system::Options options;
+   options.push_back({"abc", "123"});
+   options.push_back({"abc=123", "456"});
+   options.push_back({"abc=", "=123"});
+   options.push_back({"abc", std::string()});
+   options.push_back({"abc=", std::string()});
+
+   core::json::Array optionsArray = core::json::Array(options);
+   core::system::Options options2 = optionsArray.toStringPairList();
+
+   for (size_t i = 0; i < options.size(); ++i)
+   {
+      EXPECT_EQ(options[i].first, options2[i].first);
+      EXPECT_EQ(options[i].second, options2[i].second);
    }
 }
 
-test_context("Regular Expressions")
+TEST(LruCacheTest, TruncatingHandlesNormalOperations)
 {
-   test_that("Exceptions caused by regular expression complexity are caught")
-   {
-      boost::regex pattern("(\\w*|\\w*)*@");
-      std::string haystack =
-            "abcdefghijklmnopqrstuvwxyz"
-            "abcdefghijklmnopqrstuvwxyz"
-            "|@";
-      
-      // boost-level APIs will throw an exception
-      {
-         REQUIRE_THROWS(
-                  boost::regex_match(
-                     haystack.begin(),
-                     haystack.end(),
-                     pattern));
-      }
-      
-      {
-         REQUIRE_THROWS(
-                  boost::regex_search(
-                     haystack.begin(),
-                     haystack.end(),
-                     pattern));
-      }
-      
-      // our wrappers catch and report exception, and return false
-      {
-         SuppressOutputScope scope;
-         bool result = core::regex_utils::match(
-                  haystack.begin(),
-                  haystack.end(),
-                  pattern);
-
-         // although in theory the above regular expression matches
-         // we should instead see a report regarding complexity overload
-         expect_false(result);
-      }
-      
-      {
-         SuppressOutputScope scope;
-         bool result = core::regex_utils::search(
-                  haystack.begin(),
-                  haystack.end(),
-                  pattern);
-
-         // although in theory the above regular expression matches
-         // we should instead see a report regarding complexity overload
-         expect_false(result);
-      }
-      
-   }
+   EXPECT_TRUE(Truncating<int>(4) + 4 == 8);
+   EXPECT_TRUE(Truncating<int>(4) - 4 == 0);
+   EXPECT_TRUE(Truncating<int>(4) * 4 == 16);
 }
 
-test_context("HttpRequest")
+TEST(LruCacheTest, TruncatingHandlesOverflow)
 {
-   test_that("Accept encoding works properly")
-   {
-      std::string encodingStr = "gzip,deflate,br";
-      std::string encodingStr2 = "gzip, deflate, br";
+   EXPECT_TRUE(Truncating<int>(42) + INT_MAX == INT_MAX);
+   EXPECT_TRUE(Truncating<int>(42) + INT_MIN == 42 + INT_MIN);
+   EXPECT_TRUE(Truncating<int>(42) - INT_MAX == 42 - INT_MAX);
+   EXPECT_TRUE(Truncating<int>(42) - INT_MIN == INT_MAX);
+   EXPECT_TRUE(Truncating<int>(42) * INT_MAX == INT_MAX);
+   EXPECT_TRUE(Truncating<int>(42) * INT_MIN == INT_MIN);
 
-      core::http::Request request;
-      request.setHeader("Accept-Encoding", encodingStr);
-
-      expect_true(request.acceptsEncoding("gzip"));
-      expect_true(request.acceptsEncoding("deflate"));
-      expect_true(request.acceptsEncoding("br"));
-      expect_false(request.acceptsEncoding("gzip,deflate,br"));
-
-      request.setHeader("Accept-Encoding", encodingStr2);
-      expect_true(request.acceptsEncoding("gzip"));
-      expect_true(request.acceptsEncoding("deflate"));
-      expect_true(request.acceptsEncoding("br"));
-      expect_false(request.acceptsEncoding("gzip,deflate,br"));
-   }
+   EXPECT_TRUE(Truncating<int>(-42) + INT_MAX == -42 + INT_MAX);
+   EXPECT_TRUE(Truncating<int>(-42) + INT_MIN == INT_MIN);
+   EXPECT_EQ(Truncating<int>(-42) - INT_MAX, INT_MIN);
+   EXPECT_TRUE(Truncating<int>(-42) - INT_MIN == -42 - INT_MIN);
+   EXPECT_TRUE(Truncating<int>(-42) * INT_MAX == INT_MIN);
+   EXPECT_TRUE(Truncating<int>(-42) * INT_MIN == INT_MAX);
 }
 
-test_context("LruCache")
+TEST(LruCacheTest, TruncatingExampleWorks)
 {
-   test_that("Can update the same value multiple times")
-   {
-      LruCache<std::string, int> cache(10);
-      for (int i = 0; i < 1000; ++i)
-      {
-         cache.insert("val", i);
-      }
-
-      expect_true(cache.size() == 1);
-
-      int val;
-      expect_true(cache.get("val", &val));
-      expect_true(val == 999);
-   }
-
-   test_that("Cache never grows past max size")
-   {
-      LruCache<int, int> cache(100);
-      for (int i = 0; i < 1000; ++i)
-      {
-         cache.insert(i, i);
-      }
-
-      expect_true(cache.size() == 100);
-
-      int val;
-      expect_true(cache.get(999, &val));
-      expect_true(val == 999);
-
-      expect_false(cache.get(100, &val));
-   }
-
-   test_that("Explicit cache removal works")
-   {
-      LruCache<int, int> cache(100);
-      for (int i = 0; i < 100; ++i)
-      {
-         cache.insert(5000, i);
-         cache.insert(i, i);
-      }
-
-      // expect that 0 has been kicked out
-      // this is because we added an insert for 5000 so it should have
-      // removed 0 (the oldest entry)
-      int val;
-      expect_false(cache.get(0, &val));
-
-      expect_true(cache.get(50, &val));
-      expect_true(val == 50);
-
-      cache.remove(50);
-
-      expect_false(cache.get(50, &val));
-      expect_true(cache.size() == 99);
-   }
-
-   test_that("Reads update the access time of the cache entry")
-   {
-      LruCache<int, int> cache(100);
-      cache.insert(5000, 1);
-
-      int val;
-      for (int i = 0; i < 1000; ++i)
-      {
-         expect_true(cache.get(5000, &val));
-         expect_true(val == 1);
-
-         cache.insert(i, i);
-      }
-
-      expect_true(cache.size() == 100);
-      expect_true(cache.get(5000, &val));
-      expect_false(cache.get(900, &val));
-   }
-
-   test_that("No values when explicitly removed")
-   {
-      LruCache<int, int> cache(100);
-
-      for (int i = 0; i < 1000; ++i)
-      {
-         cache.insert(i, i);
-      }
-
-      for (int i = 999; i >= 900; --i)
-      {
-         cache.remove(i);
-      }
-
-      expect_true(cache.size() == 0);
-   }
+   Truncating<int> x(INT_MAX);
+   auto y = x + 1;
+   EXPECT_EQ(y, INT_MAX);
 }
 
-test_context("Options")
-{
-   test_that("Options are properly serialized/deserialized")
-   {
-      core::system::Options options;
-      options.push_back({"abc", "123"});
-      options.push_back({"abc=123", "456"});
-      options.push_back({"abc=", "=123"});
-      options.push_back({"abc", std::string()});
-      options.push_back({"abc=", std::string()});
-
-      core::json::Array optionsArray = core::json::Array(options);
-      core::system::Options options2 = optionsArray.toStringPairList();
-
-      for (size_t i = 0; i < options.size(); ++i)
-      {
-         expect_true(options[i].first == options2[i].first);
-         expect_true(options[i].second == options2[i].second);
-      }
-   }
-}
-
-test_context("Truncating")
-{
-   test_that("Truncating<T> handles non-overflowing operations")
-   {
-      expect_true(Truncating<int>(4) + 4 == 8);
-      expect_true(Truncating<int>(4) - 4 == 0);
-      expect_true(Truncating<int>(4) * 4 == 16);
-   }
-
-   test_that("Truncating<T> handles various kinds of overflow")
-   {
-      expect_true(Truncating<int>(42) + INT_MAX == INT_MAX);
-      expect_true(Truncating<int>(42) + INT_MIN == 42 + INT_MIN);
-      expect_true(Truncating<int>(42) - INT_MAX == 42 - INT_MAX);
-      expect_true(Truncating<int>(42) - INT_MIN == INT_MAX);
-      expect_true(Truncating<int>(42) * INT_MAX == INT_MAX);
-      expect_true(Truncating<int>(42) * INT_MIN == INT_MIN);
-
-      expect_true(Truncating<int>(-42) + INT_MAX == -42 + INT_MAX);
-      expect_true(Truncating<int>(-42) + INT_MIN == INT_MIN);
-      expect_true(Truncating<int>(-42) - INT_MAX == INT_MIN);
-      expect_true(Truncating<int>(-42) - INT_MIN == -42 - INT_MIN);
-      expect_true(Truncating<int>(-42) * INT_MAX == INT_MIN);
-      expect_true(Truncating<int>(-42) * INT_MIN == INT_MAX);
-   }
-
-   test_that("example usage works as expected")
-   {
-      auto x = Truncating<int>(INT_MAX) + 42;
-      auto y = x + 1;
-      expect_true(y == INT_MAX);
-   }
-
-   test_that("we can interact with types of lower size")
-   {
-      Truncating<long> x = 4;
-      Truncating<short> y = 4;
-      expect_equal(x + y, 8);
-      expect_equal(x - y, 0);
-   }
+TEST(LruCacheTest, TruncatingDifferentSizes)
+{ 
+   Truncating<long> x = 4;
+   Truncating<short> y = 4;
+   EXPECT_EQ(x + y, 8);
+   EXPECT_EQ(x - y, 0);
 }
 
 } // namespace unit_tests

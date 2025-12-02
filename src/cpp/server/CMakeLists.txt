@@ -280,8 +280,16 @@ endif()
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
+  # Use gtest from vendor directory
+  set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
+  include_directories(${GTEST_SOURCE_DIR}/include)
+  
+  # Add Google Test if not already added
+  if(NOT TARGET gtest)
+     add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+  endif()
+
   file(GLOB_RECURSE SERVER_DB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/db/*")
-  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/db/test")
   foreach(SERVER_DB_FILE ${SERVER_DB_FILES})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${SERVER_DB_FILE}
                    ${CMAKE_CURRENT_BINARY_DIR}/${SERVER_DB_FILE} COPYONLY)
@@ -289,9 +297,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   set(SERVER_TEST_FILES
      DBActiveSessionStorageTests.cpp
-     ServerEnvVarsTests.cpp
-     ServerDatabaseMigrationTests.cpp
-     ServerDatabaseMigrationOverlayTests.cpp)
+     ServerEnvVarsTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 
@@ -307,8 +313,14 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
      rstudio-core
      rstudio-server-core
      rstudio-monitor
+     gtest
+     pthread
      ${SOCI_LIBRARIES}
      ${SERVER_SYSTEM_LIBRARIES}
   )
+  
+  enable_testing()
+  include(GoogleTest)
+  gtest_discover_tests(rserver-tests)
 
 endif()

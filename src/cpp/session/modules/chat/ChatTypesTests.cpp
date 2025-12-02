@@ -15,188 +15,185 @@
 
 #include "ChatTypes.hpp"
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 using namespace rstudio::session::modules::chat::types;
 
-test_context("SemanticVersion")
+TEST(SemanticVersion, ParseValidFullVersions)
 {
-   test_that("Parse valid full versions (major.minor.patch)")
-   {
-      SemanticVersion v;
+   SemanticVersion v;
 
-      expect_true(v.parse("1.2.3"));
-      expect_equal(v.major, 1);
-      expect_equal(v.minor, 2);
-      expect_equal(v.patch, 3);
-   }
+   EXPECT_TRUE(v.parse("1.2.3"));
+   EXPECT_EQ(v.major, 1);
+   EXPECT_EQ(v.minor, 2);
+   EXPECT_EQ(v.patch, 3);
+}
 
-   test_that("Parse versions with v prefix")
-   {
-      SemanticVersion v;
+TEST(SemanticVersion, ParseVersionsWithVPrefix)
+{
+   SemanticVersion v;
 
-      expect_true(v.parse("v2.1.0"));
-      expect_equal(v.major, 2);
-      expect_equal(v.minor, 1);
-      expect_equal(v.patch, 0);
-   }
+   EXPECT_TRUE(v.parse("v2.1.0"));
+   EXPECT_EQ(v.major, 2);
+   EXPECT_EQ(v.minor, 1);
+   EXPECT_EQ(v.patch, 0);
+}
 
-   test_that("Parse partial versions (major only, major.minor)")
-   {
-      SemanticVersion v1;
-      expect_true(v1.parse("3"));
-      expect_equal(v1.major, 3);
-      expect_equal(v1.minor, 0);
-      expect_equal(v1.patch, 0);
+TEST(SemanticVersion, ParsePartialVersions)
+{
+   SemanticVersion v1;
+   EXPECT_TRUE(v1.parse("3"));
+   EXPECT_EQ(v1.major, 3);
+   EXPECT_EQ(v1.minor, 0);
+   EXPECT_EQ(v1.patch, 0);
 
-      SemanticVersion v2;
-      expect_true(v2.parse("2.5"));
-      expect_equal(v2.major, 2);
-      expect_equal(v2.minor, 5);
-      expect_equal(v2.patch, 0);
-   }
+   SemanticVersion v2;
+   EXPECT_TRUE(v2.parse("2.5"));
+   EXPECT_EQ(v2.major, 2);
+   EXPECT_EQ(v2.minor, 5);
+   EXPECT_EQ(v2.patch, 0);
+}
 
-   test_that("Reject invalid versions")
-   {
-      SemanticVersion v;
+TEST(SemanticVersion, RejectInvalidVersions)
+{
+   SemanticVersion v;
 
-      expect_false(v.parse(""));           // Empty string
-      expect_false(v.parse("abc"));        // Non-numeric
-      expect_false(v.parse("1.a.3"));      // Non-numeric minor
-      expect_false(v.parse("1.2.x"));      // Non-numeric patch
-      expect_false(v.parse("-1.2.3"));     // Negative major
-      expect_false(v.parse("1.-2.3"));     // Negative minor
-      expect_false(v.parse("1.2.-3"));     // Negative patch
-   }
+   EXPECT_FALSE(v.parse(""));           // Empty string
+   EXPECT_FALSE(v.parse("abc"));        // Non-numeric
+   EXPECT_FALSE(v.parse("1.a.3"));      // Non-numeric minor
+   EXPECT_FALSE(v.parse("1.2.x"));      // Non-numeric patch
+   EXPECT_FALSE(v.parse("-1.2.3"));     // Negative major
+   EXPECT_FALSE(v.parse("1.-2.3"));     // Negative minor
+   EXPECT_FALSE(v.parse("1.2.-3"));     // Negative patch
+}
 
-   test_that("Compare major versions")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, CompareMajorVersions)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("2.0.0");
-      v2.parse("1.9.9");
-      expect_true(v1 > v2);
+   v1.parse("2.0.0");
+   v2.parse("1.9.9");
+   EXPECT_TRUE(v1 > v2);
 
-      v1.parse("1.0.0");
-      v2.parse("2.0.0");
-      expect_false(v1 > v2);
-   }
+   v1.parse("1.0.0");
+   v2.parse("2.0.0");
+   EXPECT_FALSE(v1 > v2);
+}
 
-   test_that("Compare minor versions")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, CompareMinorVersions)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.5.0");
-      v2.parse("1.4.9");
-      expect_true(v1 > v2);
+   v1.parse("1.5.0");
+   v2.parse("1.4.9");
+   EXPECT_TRUE(v1 > v2);
 
-      v1.parse("1.3.0");
-      v2.parse("1.4.0");
-      expect_false(v1 > v2);
-   }
+   v1.parse("1.3.0");
+   v2.parse("1.4.0");
+   EXPECT_FALSE(v1 > v2);
+}
 
-   test_that("Compare patch versions")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, ComparePatchVersions)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.2.5");
-      v2.parse("1.2.4");
-      expect_true(v1 > v2);
+   v1.parse("1.2.5");
+   v2.parse("1.2.4");
+   EXPECT_TRUE(v1 > v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.4");
-      expect_false(v1 > v2);
-   }
+   v1.parse("1.2.3");
+   v2.parse("1.2.4");
+   EXPECT_FALSE(v1 > v2);
+}
 
-   test_that("Equal versions are not greater than each other")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, EqualVersionsAreNotGreaterThanEachOther)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_false(v1 > v2);
-      expect_false(v2 > v1);
-   }
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_FALSE(v1 > v2);
+   EXPECT_FALSE(v2 > v1);
+}
 
-   test_that("Less-than operator works correctly")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, LessThanOperatorWorksCorrectly)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.2.3");
-      v2.parse("2.0.0");
-      expect_true(v1 < v2);
-      expect_false(v2 < v1);
+   v1.parse("1.2.3");
+   v2.parse("2.0.0");
+   EXPECT_TRUE(v1 < v2);
+   EXPECT_FALSE(v2 < v1);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_false(v1 < v2);
-   }
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_FALSE(v1 < v2);
+}
 
-   test_that("Greater-than-or-equal operator works correctly")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, GreaterThanOrEqualOperatorWorksCorrectly)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("2.0.0");
-      v2.parse("1.9.9");
-      expect_true(v1 >= v2);
+   v1.parse("2.0.0");
+   v2.parse("1.9.9");
+   EXPECT_TRUE(v1 >= v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_true(v1 >= v2);
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_TRUE(v1 >= v2);
 
-      v1.parse("1.0.0");
-      v2.parse("2.0.0");
-      expect_false(v1 >= v2);
-   }
+   v1.parse("1.0.0");
+   v2.parse("2.0.0");
+   EXPECT_FALSE(v1 >= v2);
+}
 
-   test_that("Less-than-or-equal operator works correctly")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, LessThanOrEqualOperatorWorksCorrectly)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.0.0");
-      v2.parse("2.0.0");
-      expect_true(v1 <= v2);
+   v1.parse("1.0.0");
+   v2.parse("2.0.0");
+   EXPECT_TRUE(v1 <= v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_true(v1 <= v2);
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_TRUE(v1 <= v2);
 
-      v1.parse("2.0.0");
-      v2.parse("1.9.9");
-      expect_false(v1 <= v2);
-   }
+   v1.parse("2.0.0");
+   v2.parse("1.9.9");
+   EXPECT_FALSE(v1 <= v2);
+}
 
-   test_that("Equality operator works correctly")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, EqualityOperatorWorksCorrectly)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_true(v1 == v2);
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_TRUE(v1 == v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.4");
-      expect_false(v1 == v2);
+   v1.parse("1.2.3");
+   v2.parse("1.2.4");
+   EXPECT_FALSE(v1 == v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.3.3");
-      expect_false(v1 == v2);
+   v1.parse("1.2.3");
+   v2.parse("1.3.3");
+   EXPECT_FALSE(v1 == v2);
 
-      v1.parse("1.2.3");
-      v2.parse("2.2.3");
-      expect_false(v1 == v2);
-   }
+   v1.parse("1.2.3");
+   v2.parse("2.2.3");
+   EXPECT_FALSE(v1 == v2);
+}
 
-   test_that("Inequality operator works correctly")
-   {
-      SemanticVersion v1, v2;
+TEST(SemanticVersion, InequalityOperatorWorksCorrectly)
+{
+   SemanticVersion v1, v2;
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.4");
-      expect_true(v1 != v2);
+   v1.parse("1.2.3");
+   v2.parse("1.2.4");
+   EXPECT_TRUE(v1 != v2);
 
-      v1.parse("1.2.3");
-      v2.parse("1.2.3");
-      expect_false(v1 != v2);
-   }
+   v1.parse("1.2.3");
+   v2.parse("1.2.3");
+   EXPECT_FALSE(v1 != v2);
 }

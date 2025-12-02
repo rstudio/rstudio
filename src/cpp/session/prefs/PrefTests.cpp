@@ -22,7 +22,7 @@
 
 #include <core/FileSerializer.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 using namespace rstudio::core;
 
@@ -76,49 +76,45 @@ std::string findMissingDefaults(const FilePath& schemaFile)
    return "";
 }
 
-test_context("default validation")
-{
-   test_that("all user preferences have defaults")
-   {
-      std::string err = findMissingDefaults(
-         options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
-      expect_equal(err, "");
-   }
- 
-   test_that("all user state values have defaults")
-   {
-      std::string err = findMissingDefaults(
-         options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
-      expect_equal(err, "");
-   }
- 
-   test_that("user preference defaults are valid according to their schema")
-   {
-      UserPrefsDefaultLayer defaults;
-      Error error = defaults.readPrefs();
-      expect_true(!error);
+TEST(SessionTest, UserPrefsHaveDefaults) {
+   std::string err = findMissingDefaults(
+      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
+   ASSERT_EQ("", err);
+}
 
-      error = defaults.validatePrefsFromSchema(
-         options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
-      INFO(error.asString());
-      expect_true(!error);
-   }
+TEST(SessionTest, UserStateHaveDefaults) {
+   std::string err = findMissingDefaults(
+      options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
+   ASSERT_EQ("", err);
+}
 
-   test_that("user state defaults are valid according to their schema")
-   {
-      UserStateDefaultLayer defaults;
-      Error error = defaults.readPrefs();
-      expect_true(!error);
+TEST(SessionTest, UserPrefsDefaultsMatchSchema) {
+   UserPrefsDefaultLayer defaults;
+   Error error = defaults.readPrefs();
+   ASSERT_FALSE(error);
 
-      error = defaults.validatePrefsFromSchema(
-         options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
-      INFO(error.asString());
-      expect_true(!error);
+   error = defaults.validatePrefsFromSchema(
+      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
+   if (error) {
+      std::cerr << error.asString() << std::endl;
    }
+   ASSERT_FALSE(error);
+}
+
+TEST(SessionTest, UserStateDefaultsMatchSchema) {
+   UserStateDefaultLayer defaults;
+   Error error = defaults.readPrefs();
+   ASSERT_FALSE(error);
+
+   error = defaults.validatePrefsFromSchema(
+      options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
+   if (error) {
+      std::cerr << error.asString() << std::endl;
+   }
+   ASSERT_FALSE(error);
 }
 
 } // namespace tests
 } // namespace prefs
 } // namespace session
 } // namespace rstudio
-
