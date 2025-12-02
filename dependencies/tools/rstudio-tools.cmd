@@ -51,7 +51,7 @@ call :add-vstools-to-path
 call :set-java-home
 
 :: The version of the Windows SDK to use when building.
-set WIN32_SDK_VERSION=1.0.20348.0
+set WIN32_SDK_VERSION=1.0.22621.0
 
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1

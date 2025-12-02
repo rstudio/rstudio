@@ -68,7 +68,7 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
 # install build tools
 
 # The version of the Windows SDK we want to use.
-$_WIN32_SDK_VERSION = 20348
+$_WIN32_SDK_VERSION = 22621
 
 # The full version path for the Windows SDK. Some tools want the full version,
 # others just want the "inner" component, so we provide both.
