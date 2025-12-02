@@ -65,15 +65,6 @@ if ($PSVersionTable.PSVersion.Major -lt 5) {
     exit
 }
 
-# install build tools
-
-# The version of the Windows SDK we want to use.
-$_WIN32_SDK_VERSION = 20348
-
-# The full version path for the Windows SDK. Some tools want the full version,
-# others just want the "inner" component, so we provide both.
-$WIN32_SDK_VERSION = "10.0.$_WIN32_SDK_VERSION.0"
-
 # Installation instructions borrowed from:
 #
 #   https://learn.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2022
@@ -106,8 +97,7 @@ $installArgs = @(
     '--add', 'Microsoft.VisualStudio.Component.VC.CoreIde',
     '--add', 'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-    '--add', 'Microsoft.VisualStudio.Component.Windows10SDK',
-    "--add", "Microsoft.VisualStudio.Component.Windows10SDK.$_WIN32_SDK_VERSION"
+    '--add', 'Microsoft.VisualStudio.Component.Windows10SDK'
 )
 $vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
 if ($vsProcess.ExitCode -ne 0) {
@@ -121,7 +111,7 @@ Write-Host "Testing VsDevCmd.bat..."
 $vsDevCmdPath = "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat"
 if (Test-Path $vsDevCmdPath) {
     Push-Location "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\Common7\Tools"
-    cmd /c "VsDevCmd.bat -clean_env -no_logo && VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=$WIN32_SDK_VERSION -no_logo && echo -- Testing VsDevCmd.bat -- success"
+    cmd /c "VsDevCmd.bat -clean_env -no_logo && VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -no_logo && echo -- Testing VsDevCmd.bat -- success"
     Pop-Location
     Write-Host "Build tools verification completed"
 } else {
