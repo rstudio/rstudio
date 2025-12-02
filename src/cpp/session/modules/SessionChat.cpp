@@ -1122,6 +1122,215 @@ void handleCancelExecution(const json::Object& params)
    }
 }
 
+// ============================================================================
+// Workspace File Content Handlers (for databot file operations)
+// ============================================================================
+
+// Convert file:// URI to file system path
+std::string uriToPath(const std::string& uri)
+{
+   // Handle file:// prefix
+   if (uri.find("file://") == 0)
+   {
+      std::string path = uri.substr(7);  // Remove "file://"
+
+      // URL decode (handle %20 for spaces, etc.)
+      path = core::http::util::urlDecode(path);
+
+      return path;
+   }
+
+   // If no file:// prefix, assume it's already a path
+   return uri;
+}
+
+// Find an open document by file path
+boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::string& path)
+{
+   std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
+   Error error = source_database::list(&docs);
+
+   if (error)
+   {
+      WLOG("Failed to list source documents: {}", error.getMessage());
+      return nullptr;
+   }
+
+   for (const auto& doc : docs)
+   {
+      if (doc->path() == path)
+      {
+         return doc;
+      }
+   }
+
+   return nullptr;
+}
+
+void handleReadFileContent(core::system::ProcessOperations& ops,
+                           const json::Value& requestId,
+                           const json::Object& params)
+{
+   DLOG("Handling workspace/readFileContent request");
+
+   // Extract URI parameter
+   std::string uri;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      return;
+   }
+
+   // Convert URI to path
+   std::string path = uriToPath(uri);
+
+   if (path.empty())
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+      return;
+   }
+
+   // Check if file is open in editor
+   auto doc = findOpenDocument(path);
+
+   json::Object result;
+
+   if (doc)
+   {
+      // File is open - read from editor buffer
+      result["content"] = doc->contents();
+      result["isModified"] = doc->dirty();
+      result["languageId"] = doc->type();
+
+      DLOG("Read file content from editor buffer: {} (modified: {})",
+           path, doc->dirty());
+   }
+   else
+   {
+      // File not open - read from disk
+      std::string content;
+      error = core::readStringFromFile(FilePath(path), &content);
+
+      if (error)
+      {
+         // Check if it's a "not found" error
+         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         {
+            sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
+         }
+         else if (error.getCode() == boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
+         }
+         return;
+      }
+
+      result["content"] = content;
+      result["isModified"] = false;
+      // No languageId for files not open in editor
+
+      DLOG("Read file content from disk: {}", path);
+   }
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+void handleWriteFileContent(core::system::ProcessOperations& ops,
+                            const json::Value& requestId,
+                            const json::Object& params)
+{
+   DLOG("Handling workspace/writeFileContent request");
+
+   // Extract parameters
+   std::string uri;
+   std::string content;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      return;
+   }
+
+   error = json::readObject(params, "content", content);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      return;
+   }
+
+   // Convert URI to path
+   std::string path = uriToPath(uri);
+
+   if (path.empty())
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+      return;
+   }
+
+   // Check if file is open in editor
+   auto doc = findOpenDocument(path);
+
+   json::Object result;
+
+   if (doc)
+   {
+      // File is open - update editor buffer
+      // This replaces the document contents and marks it as dirty
+      doc->setContents(content);
+      doc->setDirty(true);
+
+      // Update the document in the source database
+      error = source_database::put(doc);
+      if (error)
+      {
+         sendJsonRpcError(ops, requestId, -32603,
+                         "Failed to update editor buffer: " + path);
+         return;
+      }
+
+      result["success"] = true;
+
+      DLOG("Wrote file content to editor buffer: {}", path);
+   }
+   else
+   {
+      // File not open - write to disk
+      error = core::writeStringToFile(FilePath(path), content);
+
+      if (error)
+      {
+         if (error.getCode() == boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+         }
+         else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         {
+            // Parent directory doesn't exist
+            FilePath filePath(path);
+            std::string parentDir = filePath.getParent().getAbsolutePath();
+            sendJsonRpcError(ops, requestId, -32603,
+                           "Directory does not exist: " + parentDir);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Failed to write file: " + path);
+         }
+         return;
+      }
+
+      result["success"] = true;
+
+      DLOG("Wrote file content to disk: {}", path);
+   }
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -1167,6 +1376,14 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "protocol/getVersion")
    {
       handleGetProtocolVersion(ops, requestId, params);
+   }
+   else if (method == "workspace/readFileContent")
+   {
+      handleReadFileContent(ops, requestId, params);
+   }
+   else if (method == "workspace/writeFileContent")
+   {
+      handleWriteFileContent(ops, requestId, params);
    }
    else
    {
