@@ -961,15 +961,48 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // Extract the actual result and visibility flag from withVisible() output
    SEXP resultSEXP = R_NilValue;
    bool visible = false;
-   if (!error && withVisibleResultSEXP != R_NilValue && r::sexp::isList(withVisibleResultSEXP))
+
+   if (!error && withVisibleResultSEXP != R_NilValue)
    {
-      // withVisible returns list(value = ..., visible = TRUE/FALSE)
-      if (Rf_length(withVisibleResultSEXP) >= 2)
+      // withVisible() should always return a list with 2 elements
+      if (TYPEOF(withVisibleResultSEXP) != VECSXP)
       {
+         LOG_WARNING_MESSAGE("withVisible() returned unexpected type: " +
+                           std::to_string(TYPEOF(withVisibleResultSEXP)) +
+                           ", treating as visible NULL");
+         visible = true;  // Default to visible on unexpected result
+      }
+      else if (Rf_length(withVisibleResultSEXP) < 2)
+      {
+         LOG_WARNING_MESSAGE("withVisible() returned list with unexpected length: " +
+                           std::to_string(Rf_length(withVisibleResultSEXP)) +
+                           ", treating as visible NULL");
+         visible = true;
+      }
+      else
+      {
+         // withVisible returns list(value = ..., visible = TRUE/FALSE)
          resultSEXP = VECTOR_ELT(withVisibleResultSEXP, 0);  // value
          SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1); // visible flag
+
          if (visibleSEXP != R_NilValue)
-            visible = Rf_asLogical(visibleSEXP) == TRUE;
+         {
+            int logicalVal = Rf_asLogical(visibleSEXP);
+            if (logicalVal == NA_LOGICAL)
+            {
+               LOG_WARNING_MESSAGE("withVisible() returned NA for visibility flag, treating as visible");
+               visible = true;
+            }
+            else
+            {
+               visible = (logicalVal == TRUE);
+            }
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("withVisible() returned NULL visibility flag, treating as visible");
+            visible = true;
+         }
       }
    }
 
@@ -997,10 +1030,40 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
    // Print the result to trigger print methods (e.g., for htmlwidgets)
    // This mimics REPL behavior where results are automatically printed only if visible.
-   // Skip NULL results and invisible results (from invisible(), assignments, etc.).
-   if (!error && visible && resultSEXP != R_NilValue)
+   // The visibility flag correctly distinguishes all cases:
+   //   - NULL → visible=TRUE, prints "NULL"
+   //   - invisible(NULL) → visible=FALSE, prints nothing
+   //   - x <- value → visible=FALSE, prints nothing
+   if (!error && visible)
    {
-      r::sexp::printValue(resultSEXP);
+      // Call base::print() explicitly to capture errors from S3/S4 print methods.
+      // We use base::print (not unqualified print) to match REPL semantics - the
+      // REPL's auto-print uses Rf_PrintValue which cannot be masked by user code.
+      // Unlike r::sexp::printValue() which silently logs print errors, this allows
+      // us to surface them to the user, matching REPL behavior where print method
+      // errors are displayed (e.g., "Error in print.foo(x) : ...").
+      r::sexp::Protect printProtect;
+      SEXP printResult = R_NilValue;
+      Error printError = r::exec::RFunction("base::print")
+         .addParam(resultSEXP)
+         .call(&printResult, &printProtect);
+
+      if (printError)
+      {
+         // Surface print errors just like execution errors
+         std::string errorMsg = printError.getMessage();
+         if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
+            errorMsg = "Error in print: " + errorMsg;
+
+         std::string errorOutput = errorMsg + "\n";
+
+         // Fire signal first so callback captures it
+         module_context::events().onConsoleOutput(
+            module_context::ConsoleOutputError, errorOutput);
+
+         // Also write to console UI
+         module_context::consoleWriteError(errorOutput);
+      }
    }
 
    // Handle plots if requested
