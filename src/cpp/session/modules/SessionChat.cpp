@@ -1194,11 +1194,8 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
          return pDoc;
    }
 
-   // Method 2: Fallback to filesystem-aware comparison (handles symlinks)
-   // This is needed when path aliasing differs or for symlinked files
-   if (!inputPath.exists())
-      return nullptr;
-
+   // Method 2: Fallback to path comparison
+   // Handles: symlinks (when both exist), deleted files, path aliasing differences
    std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
    error = source_database::list(&docs);
    if (error)
@@ -1213,8 +1210,20 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
          continue;  // Skip untitled documents
 
       FilePath docPath = module_context::resolveAliasedPath(doc->path());
-      if (docPath.isEquivalentTo(inputPath))
-         return doc;
+
+      // Try filesystem-aware comparison first (handles symlinks when both exist)
+      if (inputPath.exists() && docPath.exists())
+      {
+         if (docPath.isEquivalentTo(inputPath))
+            return doc;
+      }
+      else
+      {
+         // Fallback: string comparison of absolute paths
+         // This works when file is open but deleted/moved on disk
+         if (docPath.getAbsolutePath() == inputPath.getAbsolutePath())
+            return doc;
+      }
    }
 
    return nullptr;
@@ -1338,10 +1347,9 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    if (doc)
    {
-      // File is open - update both source database AND disk
-      using core::system::FileChangeEvent;
+      // File is open - update source database and notify client via editor event
 
-      // 1. Update document contents
+      // 1. Update document contents in source database
       doc->setContents(content);
       doc->setDirty(true);
 
@@ -1357,31 +1365,45 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
       source_database::events().onDocUpdated(doc);
 
-      // 3. Write to disk to trigger client's external edit detection
-      error = core::writeStringToFile(FilePath(path), content);
-      if (error)
-      {
-         sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to write file: " + path);
-         return;
-      }
+      // 3. Calculate document dimensions for replace range
+      // Split content into lines to get lastRow and lastCol
+      std::vector<std::string> lines;
+      boost::split(lines, content, boost::is_any_of("\n"));
+      int lastRow = static_cast<int>(lines.size()) - 1;
+      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
 
-      // 4. Update last known write time to match disk
-      doc->updateLastKnownWriteTime();
-      error = source_database::put(doc, false);  // Update metadata only
-      if (error)
-      {
-         WLOG("Failed to update last write time: {}", error.getMessage());
-         // Non-fatal, continue
-      }
+      // 4. Send editor command to replace entire document content
+      // This updates the editor buffer with an undo point, without writing to disk
+      json::Object eventData;
+      eventData["type"] = "replace_ranges";
 
-      // 5. Emit file changed event to notify client
-      FileChangeEvent changeEvent(FileChangeEvent::FileModified, FileInfo(FilePath(path)));
-      module_context::enqueFileChangedEvent(changeEvent);
+      json::Object data;
+      data["id"] = doc->id();
+
+      // Create range covering entire document: [0, 0, lastRow, lastCol]
+      json::Array ranges;
+      json::Array range;
+      range.push_back(0);           // startRow
+      range.push_back(0);           // startCol
+      range.push_back(lastRow);     // endRow
+      range.push_back(lastCol);     // endCol
+      ranges.push_back(range);
+      data["ranges"] = ranges;
+
+      // Replacement text
+      json::Array text;
+      text.push_back(content);
+      data["text"] = text;
+
+      eventData["data"] = data;
+
+      // Emit the editor command event
+      ClientEvent event(client_events::kEditorCommand, eventData);
+      module_context::enqueClientEvent(event);
 
       result["success"] = true;
 
-      DLOG("Wrote file content to buffer and disk: {}", path);
+      DLOG("Sent editor command to replace document content: {}", path);
    }
    else
    {
