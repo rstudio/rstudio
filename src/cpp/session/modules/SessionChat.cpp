@@ -955,6 +955,19 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // and visible results are auto-printed. This is necessary because wrapping
    // multi-statement code in withVisible({...}) causes only the last statement's
    // result to be captured, losing intermediate htmlwidgets or other visible results.
+   //
+   // IMPORTANT ASSUMPTIONS:
+   // 1. This assumes complete, well-formed expressions. Incomplete expressions
+   //    (e.g., multi-line function definitions without braces on first line) will
+   //    fail to parse.
+   // 2. Expression-by-expression evaluation matches R REPL behavior but differs
+   //    from evaluate::evaluate() for some edge cases.
+   // 3. Each expression is evaluated independently in the global environment.
+   //
+   // Examples:
+   //   Supported:     x <- 1; y <- 2; x + y
+   //   Supported:     f <- function() { x <- 1; x + 1 }
+   //   NOT supported: f <- function()\n{\n  x <- 1\n}  (parse error)
    r::sexp::Protect protect;
 
    // Parse the code into expressions
@@ -970,15 +983,48 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    }
 
    // Evaluate each expression with withVisible() to capture visibility
+   // Declare these outside the block so they're available for error reporting
+   int numExpressions = 0;
+   int currentExpressionIndex = 0;
+   std::string currentExpressionText;
+
    if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
    {
-      int numExpressions = Rf_length(parsedSEXP);
+      numExpressions = Rf_length(parsedSEXP);
 
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
          SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
          SEXP withVisibleResultSEXP = R_NilValue;
+
+         // Store current expression index for error reporting
+         currentExpressionIndex = i;
+
+         // Deparse expression for error messages (only for multi-statement code)
+         if (numExpressions > 1)
+         {
+            SEXP deparsedSEXP = R_NilValue;
+            Error deparseError = r::exec::RFunction("deparse")
+               .addParam(exprSEXP)
+               .addParam("width.cutoff", 60)  // Limit width for readability
+               .call(&deparsedSEXP, &protect);
+
+            if (!deparseError && deparsedSEXP != R_NilValue &&
+                TYPEOF(deparsedSEXP) == STRSXP && Rf_length(deparsedSEXP) > 0)
+            {
+               currentExpressionText = r::sexp::asString(deparsedSEXP);
+               // If multi-line result, just take first line for brevity
+               size_t newlinePos = currentExpressionText.find('\n');
+               if (newlinePos != std::string::npos)
+                  currentExpressionText = currentExpressionText.substr(0, newlinePos) + " ...";
+            }
+            else
+            {
+               // Fallback if deparse fails
+               currentExpressionText = "<expression " + std::to_string(i + 1) + ">";
+            }
+         }
 
          // Evaluate this expression with withVisible()
          error = r::exec::RFunction("withVisible")
@@ -989,24 +1035,74 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
             break;
 
          // Extract result and visibility for this expression
-         if (withVisibleResultSEXP != R_NilValue && TYPEOF(withVisibleResultSEXP) == VECSXP &&
-             Rf_length(withVisibleResultSEXP) >= 2)
+         // withVisible() should return a list with two elements: value and visible
+         if (withVisibleResultSEXP == R_NilValue)
          {
-            SEXP exprResult = VECTOR_ELT(withVisibleResultSEXP, 0);
-            SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1);
-            bool exprVisible = (visibleSEXP != R_NilValue && Rf_asLogical(visibleSEXP) == TRUE);
+            // This shouldn't happen - withVisible() returned NULL
+            LOG_ERROR_MESSAGE("withVisible() returned NULL for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            continue;  // Skip to next expression
+         }
 
-            // Print visible results immediately (mimics REPL)
-            if (exprVisible)
+         if (TYPEOF(withVisibleResultSEXP) != VECSXP)
+         {
+            // Unexpected type - withVisible() should always return a list
+            LOG_ERROR_MESSAGE("withVisible() returned unexpected type " +
+               r::sexp::typeAsString(withVisibleResultSEXP) + " (expected list) for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            continue;  // Skip to next expression
+         }
+
+         if (Rf_length(withVisibleResultSEXP) < 2)
+         {
+            // Malformed result - withVisible() should return 2-element list
+            LOG_ERROR_MESSAGE("withVisible() returned list with length " +
+               std::to_string(Rf_length(withVisibleResultSEXP)) + " (expected 2) for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            continue;  // Skip to next expression
+         }
+
+         // All validations passed - extract result and visibility
+         SEXP exprResult = VECTOR_ELT(withVisibleResultSEXP, 0);
+         SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1);
+
+         // Validate visibility flag type
+         if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP)
+         {
+            LOG_ERROR_MESSAGE("withVisible() returned invalid visibility flag type for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            continue;  // Skip printing this result
+         }
+
+         int visibleValue = Rf_asLogical(visibleSEXP);
+         if (visibleValue == NA_LOGICAL)
+         {
+            // NA visibility - treat as FALSE but log warning
+            LOG_ERROR_MESSAGE("withVisible() returned NA for visibility flag, treating as FALSE for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            visibleValue = FALSE;
+         }
+
+         bool exprVisible = (visibleValue == TRUE);
+
+         // Print visible results immediately (mimics REPL)
+         if (exprVisible)
+         {
+            Error printError = r::exec::RFunction("print")
+               .addParam(exprResult)
+               .call();
+
+            if (printError)
             {
-               Error printError = r::exec::RFunction("print")
-                  .addParam(exprResult)
-                  .call();
+               // Print errors should be visible to users, not just logged
+               std::string printErrorMsg = "Error printing result: " + printError.getMessage();
+               LOG_ERROR_MESSAGE(printErrorMsg);
 
-               if (printError)
-               {
-                  LOG_ERROR_MESSAGE("Error printing expression: " + printError.getMessage());
-               }
+               // Also show to user via console (similar to how R handles print errors)
+               std::string userMsg = "Warning: " + printErrorMsg + "\n";
+               module_context::events().onConsoleOutput(
+                  module_context::ConsoleOutputError, userMsg);
+               module_context::consoleWriteError(userMsg);
             }
          }
       }
@@ -1019,9 +1115,35 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    if (error)
    {
       std::string errorMsg = error.getMessage();
-      // Ensure consistent "Error: " prefix
-      if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
-         errorMsg = "Error: " + errorMsg;
+
+      // Add expression context for multi-statement code
+      if (numExpressions > 1)
+      {
+         // Format: "Error in expression 3 of 5: original error message"
+         std::string contextPrefix = "Error in expression " +
+            std::to_string(currentExpressionIndex + 1) + " of " +
+            std::to_string(numExpressions);
+
+         // Optionally include the expression text if available
+         if (!currentExpressionText.empty())
+            contextPrefix += " (" + currentExpressionText + ")";
+
+         contextPrefix += ": ";
+
+         // Strip existing "Error: " or "Error in " prefix to avoid duplication
+         if (errorMsg.find("Error: ") == 0)
+            errorMsg = errorMsg.substr(7);
+         else if (errorMsg.find("Error in ") == 0)
+            errorMsg = errorMsg.substr(9);
+
+         errorMsg = contextPrefix + errorMsg;
+      }
+      else
+      {
+         // Single expression - ensure consistent "Error: " prefix
+         if (errorMsg.find("Error: ") != 0 && errorMsg.find("Error in ") != 0)
+            errorMsg = "Error: " + errorMsg;
+      }
 
       std::string errorOutput = errorMsg + "\n";
 
