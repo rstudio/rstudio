@@ -38,6 +38,7 @@
 #include <boost/regex.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -51,6 +52,7 @@
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -1316,6 +1318,376 @@ void handleCancelExecution(const json::Object& params)
    }
 }
 
+// ============================================================================
+// Workspace File Content Handlers (for databot file operations)
+// ============================================================================
+
+// Convert internal document type to standard language ID
+// Based on SessionCopilot.cpp:languageIdFromDocument()
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // R files: r_source, r_markdown, quarto_markdown all map to "r"
+   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
+      return "r";
+
+   // Special cases for Makefiles and Dockerfiles
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   std::string stem = docPath.getStem();
+   if (name == "Makefile" || name == "makefile")
+      return "makefile";
+   else if (stem == "Dockerfile")
+      return "dockerfile";
+
+   // Default: lowercase the internal type (cpp → cpp, python → python, etc.)
+   return boost::algorithm::to_lower_copy(pDoc->type());
+}
+
+// Convert file:// URI to file system path (cross-platform)
+std::string uriToPath(const std::string& uri)
+{
+   std::string filePrefix("file://");
+   if (uri.find(filePrefix) == 0)
+   {
+      // Windows uses file:/// for drive letters (e.g., file:///C:/path)
+      // Unix/Mac use file:// (e.g., file:///path)
+#ifdef _WIN32
+      if (uri.find(filePrefix + "/") == 0)
+         filePrefix = filePrefix + "/";
+#endif
+
+      std::string path = uri.substr(filePrefix.length());
+      path = core::http::util::urlDecode(path);
+      path = r::util::fixPath(path);  // Clean up double slashes
+
+      return path;
+   }
+
+   // If no file:// prefix, assume it's already a path
+   return uri;
+}
+
+// Find an open document by document ID
+// Used for untitled documents which have no file path
+boost::shared_ptr<source_database::SourceDocument> findOpenDocumentById(const std::string& docId)
+{
+   boost::shared_ptr<source_database::SourceDocument> pDoc(
+      new source_database::SourceDocument());
+   Error error = source_database::get(docId, pDoc);
+   if (error)
+   {
+      WLOG("Failed to get document by ID {}: {}", docId, error.getMessage());
+      return nullptr;
+   }
+   return pDoc;
+}
+
+// Find an open document by file path with proper alias/symlink handling
+// Note: Untitled documents (never saved) cannot be matched by path
+boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::string& path)
+{
+   if (path.empty())
+      return nullptr;  // Cannot match untitled documents by path
+
+   // Method 1: Use source_database::getId() - fast, handles aliased paths
+   // This converts the path to RStudio's internal aliased format and looks it up
+   FilePath inputPath = module_context::resolveAliasedPath(path);
+   std::string id;
+   Error error = source_database::getId(inputPath, &id);
+   if (!error)
+   {
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+      error = source_database::get(id, pDoc);
+      if (!error)
+         return pDoc;
+   }
+
+   // Method 2: Fallback to path comparison
+   // Handles: symlinks (when both exist), deleted files, path aliasing differences
+   std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
+   error = source_database::list(&docs);
+   if (error)
+   {
+      WLOG("Failed to list source documents: {}", error.getMessage());
+      return nullptr;
+   }
+
+   for (const auto& doc : docs)
+   {
+      if (doc->path().empty())
+         continue;  // Skip untitled documents
+
+      FilePath docPath = module_context::resolveAliasedPath(doc->path());
+
+      // Try filesystem-aware comparison first (handles symlinks when both exist)
+      if (inputPath.exists() && docPath.exists())
+      {
+         if (docPath.isEquivalentTo(inputPath))
+            return doc;
+      }
+      else
+      {
+         // Fallback: string comparison of absolute paths
+         // This works when file is open but deleted/moved on disk
+         if (docPath.getAbsolutePath() == inputPath.getAbsolutePath())
+            return doc;
+      }
+   }
+
+   return nullptr;
+}
+
+// Read file content from editor buffer if open, otherwise from disk
+// Handles aliased paths (~/file.R), symlinks, project-relative paths, and untitled documents
+void handleReadFileContent(core::system::ProcessOperations& ops,
+                           const json::Value& requestId,
+                           const json::Object& params)
+{
+   DLOG("Handling workspace/readFileContent request");
+
+   // Extract URI parameter
+   std::string uri;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      return;
+   }
+
+   boost::shared_ptr<source_database::SourceDocument> doc;
+
+   // Check for untitled: URI scheme
+   if (boost::starts_with(uri, "untitled:"))
+   {
+      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
+      doc = findOpenDocumentById(docId);
+      if (!doc)
+      {
+         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
+         return;
+      }
+
+      DLOG("Found untitled document by ID: {}", docId);
+   }
+   else
+   {
+      // Handle file:// URIs
+      std::string path = uriToPath(uri);
+
+      if (path.empty())
+      {
+         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+         return;
+      }
+
+      // Check if file is open in editor
+      doc = findOpenDocument(path);
+
+      if (!doc)
+      {
+         // File not open - read from disk
+         std::string content;
+         error = core::readStringFromFile(FilePath(path), &content);
+
+         if (error)
+         {
+            // Check if it's a "not found" error
+            if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+            {
+               sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
+            }
+            else if (error.getCode() == boost::system::errc::permission_denied)
+            {
+               sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+            }
+            else
+            {
+               sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
+            }
+            return;
+         }
+
+         json::Object result;
+         result["content"] = content;
+         result["isModified"] = false;
+         // No languageId for files not open in editor
+
+         DLOG("Read file content from disk: {}", path);
+         sendJsonRpcResponse(ops, requestId, result);
+         return;
+      }
+   }
+
+   // Common logic for open documents (both untitled and file-based)
+   json::Object result;
+   result["content"] = doc->contents();
+   result["isModified"] = doc->dirty();
+   result["languageId"] = languageIdFromDocument(doc);
+
+   DLOG("Read file content from editor buffer (modified: {})", doc->dirty());
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+// Write content to editor buffer if open, otherwise to disk
+// Handles aliased paths (~/file.R), symlinks, project-relative paths, and untitled documents
+void handleWriteFileContent(core::system::ProcessOperations& ops,
+                            const json::Value& requestId,
+                            const json::Object& params)
+{
+   DLOG("Handling workspace/writeFileContent request");
+
+   // Extract parameters
+   std::string uri;
+   std::string content;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      return;
+   }
+
+   error = json::readObject(params, "content", content);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      return;
+   }
+
+   boost::shared_ptr<source_database::SourceDocument> doc;
+   std::string path;  // Only needed for disk writes
+
+   // Check for untitled: URI scheme
+   if (boost::starts_with(uri, "untitled:"))
+   {
+      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
+      doc = findOpenDocumentById(docId);
+      if (!doc)
+      {
+         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
+         return;
+      }
+
+      DLOG("Found untitled document by ID: {}", docId);
+      // path stays empty - untitled documents can't be written to disk
+   }
+   else
+   {
+      // Handle file:// URIs
+      path = uriToPath(uri);
+      if (path.empty())
+      {
+         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+         return;
+      }
+
+      doc = findOpenDocument(path);
+   }
+
+   json::Object result;
+
+   if (doc)
+   {
+      // File/untitled doc is open - update source database and notify client via editor event
+
+      // 1. Update document contents in source database
+      doc->setContents(content);
+      doc->setDirty(true);
+
+      // 2. Write to source database with proper event firing
+      error = source_database::put(doc);
+      if (error)
+      {
+         sendJsonRpcError(ops, requestId, -32603,
+                         "Failed to update source database");
+         return;
+      }
+
+      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
+      source_database::events().onDocUpdated(doc);
+
+      // 3. Calculate document dimensions for replace range
+      // Split content into lines to get lastRow and lastCol
+      std::vector<std::string> lines;
+      boost::split(lines, content, boost::is_any_of("\n"));
+      int lastRow = static_cast<int>(lines.size()) - 1;
+      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
+
+      // 4. Send editor command to replace entire document content
+      // This updates the editor buffer with an undo point, without writing to disk
+      json::Object eventData;
+      eventData["type"] = "replace_ranges";
+
+      json::Object data;
+      data["id"] = doc->id();
+
+      // Create range covering entire document: [0, 0, lastRow, lastCol]
+      json::Array ranges;
+      json::Array range;
+      range.push_back(0);           // startRow
+      range.push_back(0);           // startCol
+      range.push_back(lastRow);     // endRow
+      range.push_back(lastCol);     // endCol
+      ranges.push_back(range);
+      data["ranges"] = ranges;
+
+      // Replacement text
+      json::Array text;
+      text.push_back(content);
+      data["text"] = text;
+
+      eventData["data"] = data;
+
+      // Emit the editor command event
+      ClientEvent event(client_events::kEditorCommand, eventData);
+      module_context::enqueClientEvent(event);
+
+      result["success"] = true;
+
+      DLOG("Sent editor command to replace document content");
+   }
+   else
+   {
+      // File not open - write to disk (only for file:// URIs)
+      if (path.empty())
+      {
+         // This shouldn't happen (untitled docs are always open or error earlier)
+         sendJsonRpcError(ops, requestId, -32603, "Cannot write to disk: not a file URI");
+         return;
+      }
+
+      error = core::writeStringToFile(FilePath(path), content);
+
+      if (error)
+      {
+         if (error.getCode() == boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+         }
+         else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         {
+            // Parent directory doesn't exist
+            FilePath filePath(path);
+            std::string parentDir = filePath.getParent().getAbsolutePath();
+            sendJsonRpcError(ops, requestId, -32603,
+                           "Directory does not exist: " + parentDir);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Failed to write file: " + path);
+         }
+         return;
+      }
+
+      result["success"] = true;
+
+      DLOG("Wrote file content to disk: {}", path);
+   }
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -1361,6 +1733,14 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "protocol/getVersion")
    {
       handleGetProtocolVersion(ops, requestId, params);
+   }
+   else if (method == "workspace/readFileContent")
+   {
+      handleReadFileContent(ops, requestId, params);
+   }
+   else if (method == "workspace/writeFileContent")
+   {
+      handleWriteFileContent(ops, requestId, params);
    }
    else
    {
