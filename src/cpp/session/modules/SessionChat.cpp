@@ -995,36 +995,23 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
+         // Check for cancellation before each expression
+         {
+            boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+            if (s_cancelledTrackingIds.count(trackingId) > 0)
+            {
+               s_cancelledTrackingIds.erase(trackingId);
+               error = Error(boost::system::errc::operation_canceled,
+                            "Execution cancelled", ERROR_LOCATION);
+               break;
+            }
+         }
+
          SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
          SEXP withVisibleResultSEXP = R_NilValue;
 
          // Store current expression index for error reporting
          currentExpressionIndex = i;
-
-         // Deparse expression for error messages (only for multi-statement code)
-         if (numExpressions > 1)
-         {
-            SEXP deparsedSEXP = R_NilValue;
-            Error deparseError = r::exec::RFunction("deparse")
-               .addParam(exprSEXP)
-               .addParam("width.cutoff", 60)  // Limit width for readability
-               .call(&deparsedSEXP, &protect);
-
-            if (!deparseError && deparsedSEXP != R_NilValue &&
-                TYPEOF(deparsedSEXP) == STRSXP && Rf_length(deparsedSEXP) > 0)
-            {
-               currentExpressionText = r::sexp::asString(deparsedSEXP);
-               // If multi-line result, just take first line for brevity
-               size_t newlinePos = currentExpressionText.find('\n');
-               if (newlinePos != std::string::npos)
-                  currentExpressionText = currentExpressionText.substr(0, newlinePos) + " ...";
-            }
-            else
-            {
-               // Fallback if deparse fails
-               currentExpressionText = "<expression " + std::to_string(i + 1) + ">";
-            }
-         }
 
          // Evaluate this expression with withVisible()
          error = r::exec::RFunction("withVisible")
@@ -1066,10 +1053,11 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          SEXP exprResult = VECTOR_ELT(withVisibleResultSEXP, 0);
          SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1);
 
-         // Validate visibility flag type
-         if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP)
+         // Validate visibility flag type and length
+         if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
+             Rf_length(visibleSEXP) == 0)
          {
-            LOG_ERROR_MESSAGE("withVisible() returned invalid visibility flag type for expression " +
+            LOG_ERROR_MESSAGE("withVisible() returned invalid visibility flag (NULL, wrong type, or zero-length) for expression " +
                std::to_string(i + 1) + " of " + std::to_string(numExpressions));
             continue;  // Skip printing this result
          }
@@ -1119,14 +1107,38 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       // Add expression context for multi-statement code
       if (numExpressions > 1)
       {
-         // Format: "Error in expression 3 of 5: original error message"
          std::string contextPrefix = "Error in expression " +
             std::to_string(currentExpressionIndex + 1) + " of " +
             std::to_string(numExpressions);
 
-         // Optionally include the expression text if available
-         if (!currentExpressionText.empty())
-            contextPrefix += " (" + currentExpressionText + ")";
+         // Try to deparse the failing expression (only on error, avoids S4 issues for successful code)
+         // If deparse fails (e.g., S4 objects like ggplot2), we just show expression number without text
+         if (currentExpressionIndex >= 0 && parsedSEXP != R_NilValue &&
+             TYPEOF(parsedSEXP) == EXPRSXP && currentExpressionIndex < Rf_length(parsedSEXP))
+         {
+            SEXP failedExprSEXP = VECTOR_ELT(parsedSEXP, currentExpressionIndex);
+            SEXP deparsedSEXP = R_NilValue;
+
+            // Try to deparse - if it fails, that's okay, we'll just skip the text
+            Error deparseError = r::exec::RFunction("deparse")
+               .addParam(failedExprSEXP)
+               .addParam("width.cutoff", 80)
+               .call(&deparsedSEXP, &protect);
+
+            // Only include expression text if deparse succeeded
+            if (!deparseError && deparsedSEXP != R_NilValue &&
+                TYPEOF(deparsedSEXP) == STRSXP && Rf_length(deparsedSEXP) > 0)
+            {
+               std::string exprText = r::sexp::asString(deparsedSEXP);
+               // Truncate if multi-line
+               size_t newlinePos = exprText.find('\n');
+               if (newlinePos != std::string::npos)
+                  exprText = exprText.substr(0, newlinePos) + " ...";
+
+               if (!exprText.empty())
+                  contextPrefix += " (" + exprText + ")";
+            }
+         }
 
          contextPrefix += ": ";
 
