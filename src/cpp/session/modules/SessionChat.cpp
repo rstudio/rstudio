@@ -38,6 +38,7 @@
 #include <boost/regex.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -51,6 +52,7 @@
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -1126,16 +1128,43 @@ void handleCancelExecution(const json::Object& params)
 // Workspace File Content Handlers (for databot file operations)
 // ============================================================================
 
-// Convert file:// URI to file system path
+// Convert internal document type to standard language ID
+// Based on SessionCopilot.cpp:languageIdFromDocument()
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // R files: r_source, r_markdown, quarto_markdown all map to "r"
+   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
+      return "r";
+
+   // Special cases for Makefiles and Dockerfiles
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   std::string stem = docPath.getStem();
+   if (name == "Makefile" || name == "makefile")
+      return "makefile";
+   else if (stem == "Dockerfile")
+      return "dockerfile";
+
+   // Default: lowercase the internal type (cpp → cpp, python → python, etc.)
+   return boost::algorithm::to_lower_copy(pDoc->type());
+}
+
+// Convert file:// URI to file system path (cross-platform)
 std::string uriToPath(const std::string& uri)
 {
-   // Handle file:// prefix
-   if (uri.find("file://") == 0)
+   std::string filePrefix("file://");
+   if (uri.find(filePrefix) == 0)
    {
-      std::string path = uri.substr(7);  // Remove "file://"
+      // Windows uses file:/// for drive letters (e.g., file:///C:/path)
+      // Unix/Mac use file:// (e.g., file:///path)
+#ifdef _WIN32
+      if (uri.find(filePrefix + "/") == 0)
+         filePrefix = filePrefix + "/";
+#endif
 
-      // URL decode (handle %20 for spaces, etc.)
+      std::string path = uri.substr(filePrefix.length());
       path = core::http::util::urlDecode(path);
+      path = r::util::fixPath(path);  // Clean up double slashes
 
       return path;
    }
@@ -1144,12 +1173,34 @@ std::string uriToPath(const std::string& uri)
    return uri;
 }
 
-// Find an open document by file path
+// Find an open document by file path with proper alias/symlink handling
+// Note: Untitled documents (never saved) cannot be matched by path
 boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::string& path)
 {
-   std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
-   Error error = source_database::list(&docs);
+   if (path.empty())
+      return nullptr;  // Cannot match untitled documents by path
 
+   // Method 1: Use source_database::getId() - fast, handles aliased paths
+   // This converts the path to RStudio's internal aliased format and looks it up
+   FilePath inputPath = module_context::resolveAliasedPath(path);
+   std::string id;
+   Error error = source_database::getId(inputPath, &id);
+   if (!error)
+   {
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+      error = source_database::get(id, pDoc);
+      if (!error)
+         return pDoc;
+   }
+
+   // Method 2: Fallback to filesystem-aware comparison (handles symlinks)
+   // This is needed when path aliasing differs or for symlinked files
+   if (!inputPath.exists())
+      return nullptr;
+
+   std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
+   error = source_database::list(&docs);
    if (error)
    {
       WLOG("Failed to list source documents: {}", error.getMessage());
@@ -1158,15 +1209,20 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
 
    for (const auto& doc : docs)
    {
-      if (doc->path() == path)
-      {
+      if (doc->path().empty())
+         continue;  // Skip untitled documents
+
+      FilePath docPath = module_context::resolveAliasedPath(doc->path());
+      if (docPath.isEquivalentTo(inputPath))
          return doc;
-      }
    }
 
    return nullptr;
 }
 
+// Read file content from editor buffer if open, otherwise from disk
+// Handles aliased paths (~/file.R), symlinks, and project-relative paths
+// Note: Untitled documents (never saved) cannot be accessed by file path URI
 void handleReadFileContent(core::system::ProcessOperations& ops,
                            const json::Value& requestId,
                            const json::Object& params)
@@ -1201,7 +1257,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
       // File is open - read from editor buffer
       result["content"] = doc->contents();
       result["isModified"] = doc->dirty();
-      result["languageId"] = doc->type();
+      result["languageId"] = languageIdFromDocument(doc);
 
       DLOG("Read file content from editor buffer: {} (modified: {})",
            path, doc->dirty());
@@ -1240,6 +1296,9 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+// Write content to editor buffer if open, otherwise to disk
+// Handles aliased paths (~/file.R), symlinks, and project-relative paths
+// Note: Untitled documents (never saved) cannot be accessed by file path URI
 void handleWriteFileContent(core::system::ProcessOperations& ops,
                             const json::Value& requestId,
                             const json::Object& params)
@@ -1279,23 +1338,50 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    if (doc)
    {
-      // File is open - update editor buffer
-      // This replaces the document contents and marks it as dirty
+      // File is open - update both source database AND disk
+      using core::system::FileChangeEvent;
+
+      // 1. Update document contents
       doc->setContents(content);
       doc->setDirty(true);
 
-      // Update the document in the source database
+      // 2. Write to source database with proper event firing
       error = source_database::put(doc);
       if (error)
       {
          sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to update editor buffer: " + path);
+                         "Failed to update source database: " + path);
          return;
       }
 
+      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
+      source_database::events().onDocUpdated(doc);
+
+      // 3. Write to disk to trigger client's external edit detection
+      error = core::writeStringToFile(FilePath(path), content);
+      if (error)
+      {
+         sendJsonRpcError(ops, requestId, -32603,
+                         "Failed to write file: " + path);
+         return;
+      }
+
+      // 4. Update last known write time to match disk
+      doc->updateLastKnownWriteTime();
+      error = source_database::put(doc, false);  // Update metadata only
+      if (error)
+      {
+         WLOG("Failed to update last write time: {}", error.getMessage());
+         // Non-fatal, continue
+      }
+
+      // 5. Emit file changed event to notify client
+      FileChangeEvent changeEvent(FileChangeEvent::FileModified, FileInfo(FilePath(path)));
+      module_context::enqueFileChangedEvent(changeEvent);
+
       result["success"] = true;
 
-      DLOG("Wrote file content to editor buffer: {}", path);
+      DLOG("Wrote file content to buffer and disk: {}", path);
    }
    else
    {
