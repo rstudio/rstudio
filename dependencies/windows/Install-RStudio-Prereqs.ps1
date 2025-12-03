@@ -86,18 +86,11 @@ Invoke-DownloadFile https://aka.ms/vs/17/release/vs_buildtools.exe vs_buildtools
 # into C:/Program Files (x86), so just use the "regular" C:/Program Files.
 Write-Host "Installing Visual Studio Build Tools..."
 $installArgs = @(
-    '--quiet',
-    '--wait',
-    '--norestart',
-    '--nocache',
+    '--quiet', '--wait', '--norestart', '--nocache',
     '--installPath', '"C:/Program Files/Microsoft Visual Studio/2022/BuildTools"',
-    '--add', 'Microsoft.VisualStudio.Workload.CoreEditor',
-    '--add', 'Microsoft.VisualStudio.Workload.NativeDesktop',
-    '--add', 'Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core',
-    '--add', 'Microsoft.VisualStudio.Component.VC.CoreIde',
-    '--add', 'Microsoft.VisualStudio.Component.VC.Redist.14.Latest',
+    '--add', 'Microsoft.VisualStudio.Workload.VCTools',
     '--add', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-    '--add', 'Microsoft.VisualStudio.Component.Windows10SDK'
+    '--add', 'Microsoft.VisualStudio.Component.Windows11SDK.26100'
 )
 $vsProcess = Start-Process -FilePath ".\vs_buildtools.exe" -ArgumentList $installArgs -Wait -NoNewWindow -PassThru
 if ($vsProcess.ExitCode -ne 0) {
