@@ -3922,7 +3922,7 @@ public class TextEditingTarget implements
                            @Override
                            public void onResponseReceived(FormatDocumentResult result)
                            {
-                              Debug.breakpoint();
+                              applyEdits(result);
                            }
 
                            @Override
