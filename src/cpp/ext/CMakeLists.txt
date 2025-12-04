@@ -85,6 +85,72 @@ function(dependency)
 endfunction()
 
 
+function(fetch)
+
+   set(_INDEX 0)
+   while(_INDEX LESS ${ARGC})
+
+      math(EXPR _INDEX0 "${_INDEX} + 0")
+      math(EXPR _INDEX1 "${_INDEX} + 1")
+      math(EXPR _INDEX  "${_INDEX} + 2")
+
+      list(GET ARGV ${_INDEX0} _NAME)
+      list(GET ARGV ${_INDEX1} _PREFIX)
+
+      if(${_PREFIX}_CUSTOM)
+         set(_SOURCE_SUBDIR "_ignored")
+      else()
+         set(_SOURCE_SUBDIR ".")
+      endif()
+
+      if(${_PREFIX}_ENABLED)
+         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
+            if(CMAKE_VERSION VERSION_GREATER "3.24")
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
+            else()
+               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
+            endif()
+         else()
+            set(${_PREFIX}_FETCHED TRUE)
+
+            FetchContent_Declare("${_NAME}"
+               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
+               GIT_TAG        "${${_PREFIX}_REVISION}"
+               GIT_SHALLOW    ON
+               SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
+               EXCLUDE_FROM_ALL)
+         endif()
+      endif()
+
+   endwhile()
+
+   set(_INDEX 0)
+   while(_INDEX LESS ${ARGC})
+
+      math(EXPR _INDEX0 "${_INDEX} + 0")
+      math(EXPR _INDEX1 "${_INDEX} + 1")
+      math(EXPR _INDEX  "${_INDEX} + 2")
+
+      list(GET ARGV ${_INDEX0} _NAME)
+      list(GET ARGV ${_INDEX1} _PREFIX)
+
+      if(${_PREFIX}_FETCHED)
+         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
+         set(_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+         set(CMAKE_CXX_FLAGS "${${_PREFIX}_CXXFLAGS} ${CMAKE_CXX_FLAGS}")
+         FetchContent_MakeAvailable("${_NAME}")
+         set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
+         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
+         set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
+         set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
+      endif()
+
+   endwhile()
+
+endfunction()
+
+
+
 # dtl
 dependency(DTL
    COMMENT    "dtl provides the functions for comparing two sequences have arbitrary type."
@@ -164,6 +230,16 @@ dependency(TL_EXPECTED
 set(EXPECTED_BUILD_TESTS OFF)
 
 
+# utfcpp
+dependency(UTFCPP
+   COMMENT    "UTF8-CPP: UTF-8 with C++ in a Portable Way"
+   VERSION    "4.0.8"
+   REPOSITORY "https://github.com/nemtrif/utfcpp"
+   REVISION   "f9319195dfddf369f68f18e7c0039b3f351797fd" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
 # websocketpp
 dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
@@ -198,71 +274,6 @@ dependency(ZLIB
    PLATFORMS  WIN32
 )
 
-function(fetch)
-
-   set(_INDEX 0)
-   while(_INDEX LESS ${ARGC})
-
-      math(EXPR _INDEX0 "${_INDEX} + 0")
-      math(EXPR _INDEX1 "${_INDEX} + 1")
-      math(EXPR _INDEX  "${_INDEX} + 2")
-
-      list(GET ARGV ${_INDEX0} _NAME)
-      list(GET ARGV ${_INDEX1} _PREFIX)
-
-      if(${_PREFIX}_CUSTOM)
-         set(_SOURCE_SUBDIR "_ignored")
-      else()
-         set(_SOURCE_SUBDIR ".")
-      endif()
-
-      if(${_PREFIX}_ENABLED)
-         if(RSTUDIO_USE_SYSTEM_DEPENDENCIES OR RSTUDIO_USE_SYSTEM_${_PREFIX})
-            if(CMAKE_VERSION VERSION_GREATER "3.24")
-               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED GLOBAL)
-            else()
-               find_package("${_NAME}" "${${_PREFIX}_VERSION}" REQUIRED)
-            endif()
-         else()
-            set(${_PREFIX}_FETCHED TRUE)
-
-            FetchContent_Declare("${_NAME}"
-               GIT_REPOSITORY "${${_PREFIX}_REPOSITORY}"
-               GIT_TAG        "${${_PREFIX}_REVISION}"
-               GIT_SHALLOW    ON
-               SOURCE_SUBDIR  "${_SOURCE_SUBDIR}"
-               EXCLUDE_FROM_ALL)
-         endif()
-      endif()
-
-   endwhile()
-
-   set(_INDEX 0)
-   while(_INDEX LESS ${ARGC})
-
-      math(EXPR _INDEX0 "${_INDEX} + 0")
-      math(EXPR _INDEX1 "${_INDEX} + 1")
-      math(EXPR _INDEX  "${_INDEX} + 2")
-
-      list(GET ARGV ${_INDEX0} _NAME)
-      list(GET ARGV ${_INDEX1} _PREFIX)
-
-      if(${_PREFIX}_FETCHED)
-         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION}")
-         set(_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-         set(CMAKE_CXX_FLAGS "${${_PREFIX}_CXXFLAGS} ${CMAKE_CXX_FLAGS}")
-         FetchContent_MakeAvailable("${_NAME}")
-         set(CMAKE_CXX_FLAGS "${_CMAKE_CXX_FLAGS}")
-         message(STATUS "Fetching dependency ${_NAME} ${${_PREFIX}_VERSION} - success")
-         set("${_PREFIX}_SOURCE_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-src" CACHE INTERNAL "")
-         set("${_PREFIX}_BINARY_DIR" "${CMAKE_BINARY_DIR}/_deps/${_NAME}-build" CACHE INTERNAL "")
-      endif()
-
-   endwhile()
-
-endfunction()
-
-
 fetch(
    dtl          DTL
    fmt          FMT
@@ -271,6 +282,7 @@ fetch(
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
    tl-expected  TL_EXPECTED
+   utfcpp       UTFCPP
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
@@ -302,6 +314,11 @@ endif()
 add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
 target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
 target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+
+
+# Create utfcpp target.
+add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
 
 
 # Create websocketpp target.

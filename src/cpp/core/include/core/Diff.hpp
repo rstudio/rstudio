@@ -27,107 +27,91 @@ namespace rstudio {
 namespace core {
 namespace diff {
 
+template <typename StringType>
 struct Edit
 {
-   std::size_t offset;
-   std::size_t size;
-   std::string value;
+   std::size_t offset = 0;
+   std::size_t size = 0;
+   StringType value;
 };
+
 
 // Given two strings, a 'source' and a 'target' string, compute a
 // set of 'edits' that could be used to transform from the 'source' to
 // the 'target' string. Note that the edits should be applied in reverse
 // order, as any edit could invalidate the offsets of edits performed
 // later in the string.
-inline std::vector<Edit> computeEdits(
-   const std::string& source,
-   const std::string& target)
+template <typename StringType>
+inline std::vector<Edit<StringType>> computeEdits(
+   const StringType& source,
+   const StringType& target)
 {
    // The vector of edits we've discovered.
-   std::vector<Edit> result;
-
-   // The current edit. This will be updated as we iterate over
-   // all of the computed edits in the diff.
-   Edit edit;
+   std::vector<Edit<StringType>> result;
 
    // The current position and offset; updated as we iterate over edits.
    std::size_t offset = 0;
-   bool isBuildingEdit = false;
 
    // Compute the diff.
-   dtl::Diff<char, std::string> diff(source, target);
+   dtl::Diff<typename StringType::value_type, StringType> diff(source, target);
    diff.compose();
 
    // Get a reference to the edits.
    auto ses = diff.getSes();
    auto items = ses.getSequence();
 
-   // Keep track of whether we're actively building an edit.
-   for (std::size_t i = 0, n = items.size(); i < n; i++)
+   std::size_t i = 0, n = items.size();
+   while (i < n)
    {
-      auto&& item = items[i];
-
-      char ch = item.first;
-      auto&& info = item.second;
-
-      if (isBuildingEdit)
+      if (items[i].second.type == dtl::SES_DELETE)
       {
-         if (info.type == dtl::SES_COMMON)
-         {
-            // If the next character would begin a new edit, just continue
-            // this one. This avoids collecting a series of tiny diffs.
-            if (i + 1 < n && items[i + 1].second.type != dtl::SES_COMMON)
-            {
-               edit.value += ch;
-               edit.size += 1;
-            }
-            else
-            {
-               isBuildingEdit = false;
-               result.push_back(edit);
-            }
-         }
+         Edit<StringType> edit;
+         edit.offset = offset;
 
-         else if (info.type == dtl::SES_ADD)
+         for (; i < n; i++)
          {
-            edit.value += ch;
-         }
+            if (items[i].second.type != dtl::SES_DELETE)
+               break;
 
-         else if (info.type == dtl::SES_DELETE)
-         {
+            offset += 1;
             edit.size += 1;
          }
+
+         for (; i < n; i++)
+         {
+            if (items[i].second.type != dtl::SES_ADD)
+               break;
+
+            edit.value += items[i].first;
+         }
+
+         result.push_back(edit);
+         continue;
       }
+
+      else if (items[i].second.type == dtl::SES_ADD)
+      {
+         Edit<StringType> edit;
+         edit.offset = offset;
+
+         for (; i < n; i++)
+         {
+            if (items[i].second.type != dtl::SES_ADD)
+               break;
+
+            edit.value += items[i].first;
+         }
+
+         result.push_back(edit);
+         continue;
+      }
+
       else
       {
-         if (info.type != dtl::SES_COMMON)
-         {
-            isBuildingEdit = true;
-            edit.size = 0;
-            edit.offset = offset;
-            edit.value = ch;
-         }
-      }
-
-      // Update the position and offset for non-addition edits.
-      if (info.type != dtl::SES_ADD)
-      {
+         i += 1;
          offset += 1;
+         continue;
       }
-   }
-
-   // If we have a leftover edit at the end, add it.
-   if (isBuildingEdit)
-   {
-      isBuildingEdit = false;
-      result.push_back(edit);
-   }
-
-   // Debugging.
-   for (auto&& item : result)
-   {
-      std::string value = string_utils::jsonLiteralEscape(item.value);
-      std::cerr << "(" << item.offset << ", " << item.size << ", \"" << value << "\")" << std::endl;
    }
 
    // Return the edits.

@@ -22,6 +22,7 @@
 
 #include <dtl/dtl.hpp>
 #include <gsl/gsl-lite.hpp>
+#include <utf8.h>
 
 #include <boost/utility.hpp>
 #include <boost/bind/bind.hpp>
@@ -892,14 +893,24 @@ Error formatDocument(
       if (error)
          LOG_ERROR(error);
 
+      // Compute edits with UTF-16 strings so that offsets are
+      // correctly translated when applied on client side
+      auto edits = core::diff::computeEdits(
+         utf8::utf8to16(original),
+         utf8::utf8to16(formatted));
+
+      for (auto&& edit : edits)
+      {
+         std::cerr << "(" << edit.offset << ", " << edit.size << ", \"" << utf8::utf16to8(edit.value) << "\")" << std::endl;
+      }
+
       json::Array resultJson;
-      auto edits = core::diff::computeEdits(original, formatted);
       for (auto&& edit : edits)
       {
          json::Object editJson;
          editJson["offset"] = static_cast<int>(edit.offset);
          editJson["size"] = static_cast<int>(edit.size);
-         editJson["value"] = edit.value;
+         editJson["value"] = utf8::utf16to8(edit.value);
          resultJson.push_back(editJson);
       }
       response.setResult(resultJson);

@@ -4274,25 +4274,28 @@ public class TextEditingTarget implements
          return;
       }
 
-      server_.formatDocument(
-            docUpdateSentinel_.getId(),
-            SourceServerOperations.FORMAT_CONTEXT_SAVE,
-            new ServerRequestCallback<FormatDocumentResult>()
-            {
-               @Override
-               public void onResponseReceived(FormatDocumentResult response)
+      docUpdateSentinel_.withSavedDoc(() ->
+      {
+         server_.formatDocument(
+               docUpdateSentinel_.getId(),
+               SourceServerOperations.FORMAT_CONTEXT_SAVE,
+               new ServerRequestCallback<FormatDocumentResult>()
                {
-                  applyEdits(response);
-                  onFormatted.execute();
-               }
+                  @Override
+                  public void onResponseReceived(FormatDocumentResult response)
+                  {
+                     applyEdits(response);
+                     onFormatted.execute();
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  onFormatted.execute();
-               }
-            });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     onFormatted.execute();
+                  }
+               });
+      });
    }
 
    @Handler

@@ -332,6 +332,7 @@ target_link_libraries(rstudio-core
    rstudio-shared-core
    rstudio-dtl
    rstudio-hunspell
+   rstudio-utfcpp
    rstudio-websocketpp
    ${Boost_LIBRARIES}
    ${SOCI_LIBRARIES}
@@ -377,6 +378,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core-synctex
       rstudio-dtl
       rstudio-hunspell
+      rstudio-utfcpp
       ${Boost_LIBRARIES}
       ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
