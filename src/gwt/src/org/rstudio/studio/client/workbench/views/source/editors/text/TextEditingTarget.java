@@ -4252,6 +4252,21 @@ public class TextEditingTarget implements
 
    private void applyEdits(FormatDocumentResult response)
    {
+      try
+      {
+         docDisplay_.startOperation();
+         applyEditsImpl(response);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      docDisplay_.endOperation();
+   }
+
+   private void applyEditsImpl(FormatDocumentResult response)
+   {
       List<FormatDocumentEdit> edits = response.asList();
       for (int i = 0, n = edits.size(); i < n; i++)
       {
