@@ -68,6 +68,7 @@ function(dependency)
    set(${_NAME}_ENABLED ${${_NAME}_ENABLED} CACHE INTERNAL "")
 
    string(REPLACE "." ";" _VERSION_LIST "${_VERSION}")
+   list(APPEND _VERSION_LIST 0 0 0)
    list(GET _VERSION_LIST 0 _VERSION_MAJOR)
    list(GET _VERSION_LIST 1 _VERSION_MINOR)
    list(GET _VERSION_LIST 2 _VERSION_PATCH)
@@ -84,15 +85,14 @@ function(dependency)
 endfunction()
 
 
-# tl-expected
-dependency(TL_EXPECTED
-   COMMENT    "Single header implementation of std::expected with functional-style extensions."
-   VERSION    "1.1.0"
-   REPOSITORY "https://github.com/TartanLlama/expected"
-   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
+# dtl
+dependency(DTL
+   COMMENT    "dtl provides the functions for comparing two sequences have arbitrary type."
+   VERSION    "1.21"
+   REPOSITORY "https://github.com/cubicdaiya/dtl"
+   REVISION   "32567bb9ec704f09040fb1ed7431a3d967e3df03" # pragma: allowlist secret
+   CUSTOM     TRUE
 )
-
-set(EXPECTED_BUILD_TESTS OFF)
 
 
 # fmt
@@ -114,6 +114,7 @@ dependency(GSL_LITE
    REVISION   "21751fb0473473e27ffb1f280543885ed65447a8" # pragma: allowlist secret
 )
 
+
 # gtest and gmock
 dependency(GTEST
    COMMENT    "Google Test is a C++ test framework based on the xUnit architecture."
@@ -131,6 +132,7 @@ if(WIN32)
    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif()
 
+
 # hunspell
 dependency(HUNSPELL
    COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
@@ -139,6 +141,7 @@ dependency(HUNSPELL
    REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
    CUSTOM     TRUE
 )
+
 
 # rapidjson
 dependency(RAPIDJSON
@@ -149,6 +152,18 @@ dependency(RAPIDJSON
    CUSTOM     TRUE
 )
 
+
+# tl-expected
+dependency(TL_EXPECTED
+   COMMENT    "Single header implementation of std::expected with functional-style extensions."
+   VERSION    "1.1.0"
+   REPOSITORY "https://github.com/TartanLlama/expected"
+   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
+)
+
+set(EXPECTED_BUILD_TESTS OFF)
+
+
 # websocketpp
 dependency(WEBSOCKETPP
    COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
@@ -157,6 +172,7 @@ dependency(WEBSOCKETPP
    REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
    CUSTOM     TRUE
 )
+
 
 # yaml-cpp
 dependency(YAML_CPP
@@ -248,6 +264,7 @@ endfunction()
 
 
 fetch(
+   dtl          DTL
    fmt          FMT
    gsl-lite     GSL_LITE
    gtest        GTEST
@@ -258,15 +275,10 @@ fetch(
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
 
-# Create rapidjson target.
-add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
-target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
-target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
 
-
-# Create websocketpp target.
-add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
-target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+# Create dtl target.
+add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
 
 
 # Create hunspell target.
@@ -284,3 +296,15 @@ if(WIN32)
 else()
    target_compile_options(rstudio-hunspell PRIVATE -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable)
 endif()
+
+
+# Create rapidjson target.
+add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
+target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
+target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+
+
+# Create websocketpp target.
+add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+

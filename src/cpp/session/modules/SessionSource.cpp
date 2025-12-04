@@ -20,6 +20,7 @@
 #include <map>
 #include <fstream>
 
+#include <dtl/dtl.hpp>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/utility.hpp>
@@ -28,6 +29,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <core/Diff.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
@@ -674,10 +676,11 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
 Error onFormatError(
       const Error& error,
+      const ErrorLocation& location,
       const json::JsonRpcFunctionContinuation& continuation)
 {
    if (error)
-      LOG_ERROR(error);
+      log::logError(error, location);
 
    json::JsonRpcResponse response;
    continuation(error, &response);
@@ -728,9 +731,9 @@ Error formatDocumentImpl(
       const json::JsonRpcFunctionContinuation& continuation,
       F&& callback)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
@@ -755,7 +758,7 @@ Error formatDocumentImpl(
          std::string airExePath;
          Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
          if (error)
-            return onError(error);
+            return onError(error, ERROR_LOCATION);
 
          error = module_context::processSupervisor().runProgram(
              airExePath,
@@ -764,7 +767,7 @@ Error formatDocumentImpl(
              callbacks);
 
          if (error)
-            return onError(error);
+            return onError(error, ERROR_LOCATION);
 
          return Success();
       }
@@ -778,7 +781,7 @@ Error formatDocumentImpl(
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       FilePath formatScriptPath = module_context::tempFile("rstudio-format-", "R");
       error = r::exec::RFunction(".rs.generateStylerFormatDocumentScript")
@@ -786,10 +789,10 @@ Error formatDocumentImpl(
             .addUtf8Param(formatScriptPath)
             .call();
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       else if (!formatScriptPath.exists())
-         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION));
+         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION), ERROR_LOCATION);
 
       // TODO: How should we handle the case where a formatter is already
       // running on the current file?
@@ -800,7 +803,7 @@ Error formatDocumentImpl(
                callbacks);
 
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       return Success();
    }
@@ -817,7 +820,7 @@ Error formatDocumentImpl(
                callbacks);
 
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
    
       return Success();
    }
@@ -825,7 +828,7 @@ Error formatDocumentImpl(
    {
       Error error(boost::system::errc::invalid_argument, ERROR_LOCATION);
       error.addProperty("type", formatType);
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
    }
 }
 
@@ -846,26 +849,62 @@ Error formatDocument(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
    
-   std::string documentId, documentPath;
+   std::string documentId;
    int context = kFormatContextUnknown;
-   error = json::readParams(request.params, &documentId, &documentPath, &context);
+   error = json::readParams(request.params, &documentId, &context);
    if (error)
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
  
+   // Get the path to the document in the source database, and then
+   // copy that to a temporary file to be used for formatting.
+   using source_database::SourceDocument;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(documentId, pDoc);
+   if (error)
+      return onError(error, ERROR_LOCATION);
+
+   std::string contents = pDoc->contents();
+   FilePath documentPath = module_context::tempFile("air-", ".R");
+   error = core::writeStringToFile(documentPath, contents);
+   if (error)
+      return onError(error, ERROR_LOCATION);
+
    return formatDocumentImpl(
             context,
-            module_context::resolveAliasedPath(documentPath),
+            documentPath,
             continuation,
             [=]()
    {
-      return json::JsonRpcResponse();
+      Error error;
+      json::JsonRpcResponse response;
+
+      std::string original = contents;
+
+      std::string formatted;
+      error = core::readStringFromFile(documentPath, &formatted);
+      if (error)
+         LOG_ERROR(error);
+
+      json::Array resultJson;
+      auto edits = core::diff::computeEdits(original, formatted);
+      for (auto&& edit : edits)
+      {
+         json::Object editJson;
+         editJson["offset"] = static_cast<int>(edit.offset);
+         editJson["size"] = static_cast<int>(edit.size);
+         editJson["value"] = edit.value;
+         resultJson.push_back(editJson);
+      }
+      response.setResult(resultJson);
+
+      return response;
    });
    
 }
@@ -874,9 +913,9 @@ Error formatCode(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
@@ -884,12 +923,12 @@ Error formatCode(
    std::string code;
    error = json::readParams(request.params, &code);
    if (error)
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
    
    FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
    error = writeStringToFile(documentPath, code);
    if (error)
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
    
    return formatDocumentImpl(documentPath, continuation, [=]()
    {
@@ -906,7 +945,6 @@ Error formatCode(
       
       json::JsonRpcResponse response;
       response.setResult(code);
-      
       return response;
    });
 }

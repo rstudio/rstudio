@@ -219,6 +219,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
@@ -3343,7 +3345,8 @@ public class TextEditingTarget implements
                      final TextFileType fileType =
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
-                     final Command saveCommand = new Command() {
+                     final Command saveCommand = new Command()
+                     {
                         @Override
                         public void execute()
                         {
@@ -3359,22 +3362,26 @@ public class TextEditingTarget implements
                               syncPublishPath(saveItem.getPath());
                            }
 
-                           fixupCodeBeforeSaving(() -> {
-                              docUpdateSentinel_.save(
-                                    saveItem.getPath(),
-                                    fileType.getTypeId(),
-                                    encoding,
-                                    true,
-                                    new SaveProgressIndicator(saveItem,
-                                                              fileType,
-                                                              false,
-                                                              executeOnSuccess));
-
-                              events_.fireEvent(
-                                    new SourceFileSavedEvent(getId(),
+                           fixupCodeBeforeSaving(() ->
+                           {
+                              maybeFormatOnUserInitiatedSave(() ->
+                              {
+                                 docUpdateSentinel_.save(
+                                       saveItem.getPath(),
+                                       fileType.getTypeId(),
+                                       encoding,
+                                       true,
+                                       new SaveProgressIndicator(saveItem,
+                                                                 fileType,
+                                                                 false,
+                                                                 executeOnSuccess));
+                                 events_.fireEvent(
+                                       new SourceFileSavedEvent(
+                                          getId(),
                                           saveItem.getPath()));
-                           });
+                              });
 
+                           });
 
                         }
 
@@ -3905,18 +3912,17 @@ public class TextEditingTarget implements
          {
             withReformatDependencies(() ->
             {
-               save(() ->
+               docUpdateSentinel_.withSavedDoc(() ->
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
-                        docUpdateSentinel_.getPath(),
                         SourceServerOperations.FORMAT_CONTEXT_COMMAND,
-                        new ServerRequestCallback<SourceDocument>()
+                        new ServerRequestCallback<FormatDocumentResult>()
                         {
                            @Override
-                           public void onResponseReceived(SourceDocument document)
+                           public void onResponseReceived(FormatDocumentResult result)
                            {
-                              revertEdits();
+                              Debug.breakpoint();
                            }
 
                            @Override
@@ -4244,13 +4250,61 @@ public class TextEditingTarget implements
       }
    }
 
+   private void applyEdits(FormatDocumentResult response)
+   {
+      List<FormatDocumentEdit> edits = response.asList();
+      for (int i = 0, n = edits.size(); i < n; i++)
+      {
+         FormatDocumentEdit edit = edits.get(n - i - 1);
+
+         Position lhs = docDisplay_.positionFromIndex(edit.offset);
+         Position rhs = docDisplay_.positionFromIndex(edit.offset + edit.size);
+         docDisplay_.replaceRange(
+            Range.fromPoints(lhs, rhs),
+            edit.value);
+      }
+   }
+
+   private void maybeFormatOnUserInitiatedSave(Command onFormatted)
+   {
+      // check for format on save
+      if (!isFormatOnSaveEnabled())
+      {
+         onFormatted.execute();
+         return;
+      }
+
+      server_.formatDocument(
+            docUpdateSentinel_.getId(),
+            SourceServerOperations.FORMAT_CONTEXT_SAVE,
+            new ServerRequestCallback<FormatDocumentResult>()
+            {
+               @Override
+               public void onResponseReceived(FormatDocumentResult response)
+               {
+                  applyEdits(response);
+                  onFormatted.execute();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  onFormatted.execute();
+               }
+            });
+   }
+
    @Handler
    void onSaveSourceDoc()
    {
       if (isSaving_)
          return;
 
-      saveThenExecute(null, true, postSaveCommand(true));
+      maybeFormatOnUserInitiatedSave(() ->
+      {
+         saveThenExecute(null, true, postSaveCommand(true));
+      });
    }
 
    @Handler
@@ -8319,34 +8373,8 @@ public class TextEditingTarget implements
                }
             }
             
-            // check for format on save
-            if (formatOnSave && isFormatOnSaveEnabled())
-            {
-               server_.formatDocument(
-                     docUpdateSentinel_.getId(),
-                     docUpdateSentinel_.getPath(),
-                     SourceServerOperations.FORMAT_CONTEXT_SAVE,
-                     new ServerRequestCallback<SourceDocument>()
-                     {
-                        @Override
-                        public void onResponseReceived(SourceDocument response)
-                        {
-                           revertEdits();
-                           onFinished.execute();
-                        }
 
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           Debug.logError(error);
-                           onFinished.execute();
-                        }
-                     });
-            }
-            else
-            {
-               onFinished.execute();
-            }
+            onFinished.execute();
          }
       };
    }
