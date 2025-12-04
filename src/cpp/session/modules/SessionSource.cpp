@@ -899,11 +899,6 @@ Error formatDocument(
          utf8::utf8to16(original),
          utf8::utf8to16(formatted));
 
-      for (auto&& edit : edits)
-      {
-         std::cerr << "(" << edit.offset << ", " << edit.size << ", \"" << utf8::utf16to8(edit.value) << "\")" << std::endl;
-      }
-
       json::Array resultJson;
       for (auto&& edit : edits)
       {

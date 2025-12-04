@@ -60,9 +60,15 @@ inline std::vector<Edit<StringType>> computeEdits(
    auto ses = diff.getSes();
    auto items = ses.getSequence();
 
+   // Iterate through and discover edits. We consider two types of edits:
+   //
+   // - A sequence of deletions, followed (optionally) by a sequence of additions,
+   // - A sequences of additions.
+   //
    std::size_t i = 0, n = items.size();
    while (i < n)
    {
+      // Handle deletion (+ additions).
       if (items[i].second.type == dtl::SES_DELETE)
       {
          Edit<StringType> edit;
@@ -89,6 +95,7 @@ inline std::vector<Edit<StringType>> computeEdits(
          continue;
       }
 
+      // Handle additions.
       else if (items[i].second.type == dtl::SES_ADD)
       {
          Edit<StringType> edit;
@@ -106,6 +113,7 @@ inline std::vector<Edit<StringType>> computeEdits(
          continue;
       }
 
+      // No edit in this location.
       else
       {
          i += 1;

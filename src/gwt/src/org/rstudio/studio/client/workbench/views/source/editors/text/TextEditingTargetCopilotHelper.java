@@ -374,7 +374,7 @@ public class TextEditingTargetCopilotHelper
          @Override
          public void run()
          {
-            // requestNextEditSuggestions();
+            requestNextEditSuggestions();
          }
       };
       
