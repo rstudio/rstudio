@@ -4310,7 +4310,7 @@ public class AceEditor implements DocDisplay
 
    public HandlerRegistration addGutterItem(int row, String className)
    {
-      LintItem item = LintItem.create(row, 0, null, className);
+      LintItem item = LintItem.create(row, className);
       return widget_.addGutterItem(item);
    }
 
