@@ -1942,7 +1942,8 @@ public class TextEditingTarget implements
                            @Override
                            public void onClick(ClickEvent event)
                            {
-                              docDisplay_.scrollToLine(completion.range.start.line, true);
+                              int scrollLine = completion.range.start.line - 5;
+                              docDisplay_.scrollToLine(scrollLine, false);
 
                               for (int line = completion.range.start.line;
                                    line <= completion.range.end.line;
