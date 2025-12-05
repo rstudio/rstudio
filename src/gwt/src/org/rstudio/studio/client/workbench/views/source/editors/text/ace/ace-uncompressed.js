@@ -52727,10 +52727,12 @@ var Gutter = /** @class */ (function () {
             var annoType = annotation.type;
             annoText = annoText ? lang.escapeHTML(annoText) : annotation.html || "";
             displayAnnoText = displayAnnoText ? displayAnnoText : annotation.html || "";
-            if (rowInfo.text.indexOf(annoText) === -1) {
-                rowInfo.text.push(annoText);
-                rowInfo.type.push(annoType);
-                rowInfo.displayText.push(displayAnnoText);
+            if (annotation.tooltip !== "none") {
+                if (rowInfo.text.indexOf(annoText) === -1) {
+                    rowInfo.text.push(annoText);
+                    rowInfo.type.push(annoType);
+                    rowInfo.displayText.push(displayAnnoText);
+                }
             }
             var className = annotation.className;
             if (className) {
