@@ -269,6 +269,184 @@ test_context("LruCache")
    }
 }
 
+test_context("MultiIndexLruCache")
+{
+   test_that("Can update the same key multiple times")
+   {
+      MultiIndexLruCache<std::string, int> cache(10);
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert("key", i);
+      }
+
+      expect_true(cache.size() == 1);
+
+      int val;
+      expect_true(cache.get("key", &val));
+      expect_true(val == 999);
+   }
+
+   test_that("Cache never grows past max size")
+   {
+      MultiIndexLruCache<int, int> cache(100);
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 100);
+
+      int val;
+      expect_true(cache.get(999, &val));
+      expect_true(val == 999);
+
+      expect_false(cache.get(100, &val));
+   }
+
+   test_that("Explicit cache removal works")
+   {
+      MultiIndexLruCache<int, int> cache(100);
+      for (int i = 0; i < 100; ++i)
+      {
+         cache.insert(5000, i);
+         cache.insert(i, i);
+      }
+
+      int val;
+      expect_false(cache.get(0, &val));
+
+      expect_true(cache.get(50, &val));
+      expect_true(val == 50);
+
+      cache.remove(50);
+
+      expect_false(cache.get(50, &val));
+      expect_true(cache.size() == 99);
+   }
+
+   test_that("Reads update the access time of the cache entry")
+   {
+      MultiIndexLruCache<int, int> cache(100);
+      cache.insert(5000, 1);
+
+      int val;
+      for (int i = 0; i < 1000; ++i)
+      {
+         expect_true(cache.get(5000, &val));
+         expect_true(val == 1);
+
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 100);
+      expect_true(cache.get(5000, &val));
+      expect_false(cache.get(900, &val));
+   }
+
+   test_that("Inserting beyond max size evicts oldest entries")
+   {
+      MultiIndexLruCache<int, int> cache(5);
+
+      for (int i = 0; i < 10; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 5);
+
+      int val;
+      for (int i = 0; i < 5; ++i)
+      {
+         expect_false(cache.get(i, &val));
+      }
+
+      for (int i = 5; i < 10; ++i)
+      {
+         expect_true(cache.get(i, &val));
+         expect_true(val == i);
+      }
+   }
+
+   test_that("Get by value works")
+   {
+      MultiIndexLruCache<int, std::string> cache(100);
+
+      for (int i = 0; i < 10; ++i)
+      {
+         cache.insert(i, "common");
+      }
+
+      for (int i = 10; i < 100; ++i)
+      {
+         cache.insert(i, "unique_" + std::to_string(i));
+      }
+
+      std::vector<int> keys;
+      cache.getByValue("common", &keys);
+
+      expect_true(keys.size() == 10);
+      for (int i = 0; i < 10; ++i)
+      {
+         expect_true(core::algorithm::contains(keys, i));
+      }
+   }
+
+   test_that("Remove by value only removes matching entries")
+   {
+      MultiIndexLruCache<int, std::string> cache(100);
+
+      for (int i = 0; i < 10; ++i)
+      {
+         cache.insert(i, "common");
+      }
+
+      for (int i = 10; i < 100; ++i)
+      {
+         cache.insert(i, "unique_" + std::to_string(i));
+      }
+
+      cache.removeByValue("common");
+
+      expect_true(cache.size() == 90);
+
+      std::vector<int> keys;
+      cache.getByValue("common", &keys);
+      expect_true(keys.size() == 0);
+   }
+
+   test_that("No values when explicitly removed")
+   {
+      MultiIndexLruCache<int, int> cache(100);
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      for (int i = 999; i >= 900; --i)
+      {
+         cache.remove(i);
+      }
+
+      expect_true(cache.size() == 0);
+   }
+
+   test_that("Clear empties the cache")
+   {
+      MultiIndexLruCache<int, int> cache(100);
+
+      for (int i = 0; i < 1000; ++i)
+      {
+         cache.insert(i, i);
+      }
+
+      expect_true(cache.size() == 100);
+
+      cache.clear();
+
+      expect_true(cache.size() == 0);
+   }
+}
+
 test_context("Options")
 {
    test_that("Options are properly serialized/deserialized")
