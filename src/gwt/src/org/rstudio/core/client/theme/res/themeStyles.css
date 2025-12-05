@@ -377,7 +377,7 @@ pre {
 .ace_breakpoint,
 .ace_pending-breakpoint,
 .ace_inactive-breakpoint,
-.ace_executing-line,
+.ace_executing-line {
 .ace_next-edit-suggestion {
    background-position: 12% center !important;
    background-repeat: no-repeat !important;
@@ -404,10 +404,7 @@ pre {
 }
 
 .ace_next-edit-suggestion {
-   background-image: EXECUTINGLINE !important;
-   background-size: 10px 10px !important;
-   background: rgba(128, 128, 128, 0.5);
-   cursor: pointer;
+   background: linear-gradient(to right, #1E77BC 4px, transparent 4px);
 }
 
 .ace_next-edit-suggestion-highlight {

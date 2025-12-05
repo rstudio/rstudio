@@ -3775,14 +3775,14 @@ public class AceEditor implements DocDisplay
       
       lineDebugMarkerId_ = createRangeHighlightMarker(
             startPos, endPos,
-            "ace_active_debug_line");
+            AceEditorGutterStyles.ACTIVE_DEBUG_LINE);
       
       if (executing)
       {
          executionLine_ = startPos.getRow();
          widget_.getEditor().getRenderer().addGutterDecoration(
                executionLine_,
-               "ace_executing-line");
+               AceEditorGutterStyles.EXECUTING_LINE);
       }
    }
 
@@ -3798,7 +3798,7 @@ public class AceEditor implements DocDisplay
       {
          widget_.getEditor().getRenderer().removeGutterDecoration(
                executionLine_,
-               "ace_executing-line");
+               AceEditorGutterStyles.EXECUTING_LINE);
          executionLine_ = null;
       }
    }
@@ -4307,6 +4307,12 @@ public class AceEditor implements DocDisplay
    }
 
    // ---- Annotation related operations
+
+   public HandlerRegistration addGutterItem(int row, String className)
+   {
+      LintItem item = LintItem.create(row, 0, null, className);
+      return widget_.addGutterItem(item);
+   }
 
    public HandlerRegistration addGutterItem(LintItem item)
    {

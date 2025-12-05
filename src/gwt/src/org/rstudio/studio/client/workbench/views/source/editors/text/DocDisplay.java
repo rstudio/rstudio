@@ -427,6 +427,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean hasBreakpoints();
 
    HandlerRegistration addGutterItem(LintItem item);
+   HandlerRegistration addGutterItem(int row, String className);
 
    void setAnnotations(JsArray<AceAnnotation> annotations);
    JsArray<AceAnnotation> getAnnotations();
