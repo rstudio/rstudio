@@ -13,6 +13,9 @@
  *
  */
 
+// Use C++11 API 
+#define UTF_CPP_CPLUSPLUS 201103L
+
 #include "SessionSource.hpp"
 #include "rmarkdown/NotebookChunkDefs.hpp"
 
