@@ -437,6 +437,14 @@ public class AceEditorNative extends JavaScriptObject
          that.insert(text);
       });
    }-*/;
+
+   public final native void startOperation() /*-{
+      this.startOperation();
+   }-*/;
+
+   public final native void endOperation() /*-{
+      this.endOperation();
+   }-*/;
    
    public final native boolean inMultiSelectMode() /*-{ return this.inMultiSelectMode === true; }-*/;
    public final native void exitMultiSelectMode() /*-{ this.exitMultiSelectMode(); }-*/;

@@ -2046,6 +2046,16 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().exitMultiSelectMode();
    }
 
+   public void startOperation()
+   {
+      widget_.getEditor().startOperation();
+   }
+
+   public void endOperation()
+   {
+      widget_.getEditor().endOperation();
+   }
+
    public void clearSelection()
    {
       widget_.getEditor().clearSelection();

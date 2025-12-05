@@ -40,6 +40,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+import jsinterop.base.JsArrayLike;
+
 /**
  * The server manages a "working list" of documents that are being edited by
  * the user. The working list must contain the current "live" contents of
@@ -60,6 +64,19 @@ public interface SourceServerOperations extends FilesServerOperations,
 {
    public static int FORMAT_CONTEXT_COMMAND = 1;
    public static int FORMAT_CONTEXT_SAVE = 2;
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class FormatDocumentEdit
+   {
+      public int offset;
+      public int size;
+      public String value;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+   public static interface FormatDocumentResult extends JsArrayLike<FormatDocumentEdit>
+   {
+   }
 
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -135,9 +152,8 @@ public interface SourceServerOperations extends FilesServerOperations,
     * via an external formatting tool.
     */
    void formatDocument(String id,
-                       String path,
                        int context,
-                       ServerRequestCallback<SourceDocument> requestCallback);
+                       ServerRequestCallback<FormatDocumentResult> requestCallback);
  
    /**
     * Format code with the active formatter.

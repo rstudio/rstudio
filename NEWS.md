@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 
 #### Posit Workbench
 -

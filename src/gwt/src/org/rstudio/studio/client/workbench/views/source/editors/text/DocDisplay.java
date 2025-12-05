@@ -160,6 +160,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void yankAfterCursor();
    void pasteLastYank();
 
+   void startOperation();
+   void endOperation();
+
    void clearSelection();
    void replaceSelection(String code);
    void replaceRange(Range range, String text);
