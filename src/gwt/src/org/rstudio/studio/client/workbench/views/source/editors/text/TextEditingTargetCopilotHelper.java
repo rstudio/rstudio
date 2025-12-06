@@ -326,10 +326,17 @@ public class TextEditingTargetCopilotHelper
                            JsArrayLike<CopilotCompletion> completions =
                                  Js.cast(result.asPropertyMap().get("items"));
                            
-                           events_.fireEvent(new CopilotEvent(
-                                 completions.getLength() == 0
-                                    ? CopilotEventType.COMPLETION_RECEIVED_NONE
-                                    : CopilotEventType.COMPLETION_RECEIVED_SOME));
+                           if (completions.getLength() == 0)
+                           {
+                              events_.fireEvent(new CopilotEvent(
+                                 CopilotEventType.COMPLETION_RECEIVED_NONE));
+                           }
+                           else
+                           {
+                              events_.fireEvent(new CopilotEvent(
+                                 CopilotEventType.COMPLETION_RECEIVED_SOME,
+                                 completions.getAt(0)));
+                           }
                            
                            // TODO: If multiple completions are available we should provide a way for 
                            // the user to view/select them. For now, use the last one.
@@ -430,7 +437,7 @@ public class TextEditingTargetCopilotHelper
                      @Override
                      public boolean test(Element el)
                      {
-                        return el.hasClassName("ace_next-edit-suggestion");
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
                      }
                   });
 
@@ -601,6 +608,9 @@ public class TextEditingTargetCopilotHelper
       // Save current request ID.
       final int id = nesId_;
 
+      // Notify the listeners.
+      events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_REQUESTED));
+
       // Make the request.
       server_.copilotNextEditSuggestions(
          target_.getId(),
@@ -624,7 +634,10 @@ public class TextEditingTargetCopilotHelper
                   response.result.edits.getLength() > 0;
 
                if (!hasEdits)
+               {
+                  events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_RECEIVED_NONE));
                   return;
+               }
 
                reset();
                CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
@@ -634,6 +647,10 @@ public class TextEditingTargetCopilotHelper
                completion.insertText = entry.text;
                completion.range = entry.range;
                completion.command = entry.command;
+
+               events_.fireEvent(new CopilotEvent(
+                  CopilotEventType.COMPLETION_RECEIVED_SOME,
+                  completion));
 
                // The completion data gets modified when doing partial (word-by-word)
                // completions, so we need to use a copy and preserve the original

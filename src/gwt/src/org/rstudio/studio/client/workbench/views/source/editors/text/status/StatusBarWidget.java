@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -23,7 +24,11 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -48,12 +53,12 @@ public class StatusBarWidget extends Composite
    public StatusBarWidget()
    {
       Binder binder = GWT.create(Binder.class);
-      HorizontalPanel panel = binder.createAndBindUi(this);
-      panel.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
-      panel.addStyleName("rstudio-themes-background");
+      panel_ = binder.createAndBindUi(this);
+      panel_.setVerticalAlignment(HorizontalPanel.ALIGN_TOP);
+      panel_.addStyleName("rstudio-themes-background");
 
-      panel.setCellWidth(scope_, "100%");
-      panel.setCellWidth(message_, "100%");
+      panel_.setCellWidth(scope_, "100%");
+      panel_.setCellWidth(message_, "100%");
 
       hideTimer_ = new Timer()
       {
@@ -80,9 +85,20 @@ public class StatusBarWidget extends Composite
       show(scopeIcon_);
       hide(message_);
 
-      initWidget(panel);
+      initWidget(panel_);
 
-      height_ = 16;
+      panel_.addDomHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            if (clickHandler_ != null)
+            {
+               clickHandler_.onClick(event);
+            }
+         }
+      }, ClickEvent.getType());
+
    }
 
    // NOTE: The 'show' + 'hide' methods here take advantage of the fact that
@@ -234,14 +250,13 @@ public class StatusBarWidget extends Composite
    }
    
    @Override
-   public void showStatus(StatusBarIconType type, String message)
+   public void showStatus(StatusBarIconType type, String message, ClickHandler clickHandler)
    {
       ImageResource resource = null;
       
       switch (type)
       {
       case TYPE_OK:
-         // TODO: Better icon?
          resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
          break;
       case TYPE_LOADING:
@@ -259,7 +274,26 @@ public class StatusBarWidget extends Composite
       }
       
       initMessage(message, false, resource);
+
+      clickHandler_ = clickHandler;
+      
+      Cursor cursor = clickHandler == null ? Cursor.AUTO : Cursor.POINTER;
+      panel_.getElement().getStyle().setCursor(cursor);
+
+      // GWT labels get 'cursor: default' styling, which we want to override here
+      NodeList<Element> labelEls = DomUtils.querySelectorAll(panel_.getElement(), ".gwt-Label");
+      for (int i = 0, n = labelEls.getLength(); i < n; i++)
+      {
+         Element labelEl = labelEls.getItem(i);
+         labelEl.getStyle().setCursor(cursor);
+      }
    };
+
+   @Override
+   public void showStatus(StatusBarIconType type, String message)
+   {
+      showStatus(type, message, null);
+   }
    
    @Override
    public void hideStatus()
@@ -389,12 +423,16 @@ public class StatusBarWidget extends Composite
       ImageResource slide2x();
    }
 
-   private static final Resources RES = GWT.create(Resources.class);
+   private final HorizontalPanel panel_;
+
    private final Timer hideTimer_;
    private final Timer hideProgressTimer_;
+   private ClickHandler clickHandler_;
 
-   private final int height_;
+   private final int height_ = 16;
    private HandlerRegistration handler_;
    private int scopeType_;
+
+   private static final Resources RES = GWT.create(Resources.class);
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

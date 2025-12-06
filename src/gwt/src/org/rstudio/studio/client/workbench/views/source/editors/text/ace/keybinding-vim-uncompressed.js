@@ -1,4 +1,15 @@
-define("ace/ext/hardwrap",["require","exports","module","ace/range","ace/editor","ace/config"], function(require, exports, module){"use strict";
+define("ace/ext/hardwrap",["require","exports","module","ace/range","ace/editor","ace/config"], function(require, exports, module){/**
+ * ## Text hard wrapping extension for automatic line breaking and text formatting.
+ *
+ * Provides intelligent line wrapping functionality that breaks long lines at configurable column limits while
+ * preserving indentation and optionally merging short adjacent lines. Supports both automatic wrapping during text
+ * input and manual formatting of selected text ranges.
+ *
+ * **Enable:** `editor.setOption("hardWrap", true)`
+ * or configure it during editor initialization in the options object.
+ * @module
+ */
+"use strict";
 var Range = require("../range").Range;
 function hardWrap(editor, options) {
     var max = options.column || editor.getOption("printMarginColumn");
@@ -3231,8 +3242,43 @@ var operators = {
     },
     indent: function (cm, args, ranges) {
         var vim = cm.state.vim;
-        if (cm.indentMore) {
-            var repeat = (vim.visualMode) ? args.repeat : 1;
+        var repeat = (vim.visualMode) ? args.repeat : 1;
+        if (vim.visualBlock) {
+            var tabSize = cm.getOption('tabSize');
+            var indent = cm.getOption('indentWithTabs') ? '\t' : ' '.repeat(tabSize);
+            var cursor;
+            for (var i = ranges.length - 1; i >= 0; i--) {
+                cursor = cursorMin(ranges[i].anchor, ranges[i].head);
+                if (args.indentRight) {
+                    cm.replaceRange(indent.repeat(repeat), cursor, cursor);
+                }
+                else {
+                    var text = cm.getLine(cursor.line);
+                    var end = 0;
+                    for (var j = 0; j < repeat; j++) {
+                        var ch = text[cursor.ch + end];
+                        if (ch == '\t') {
+                            end++;
+                        }
+                        else if (ch == ' ') {
+                            end++;
+                            for (var k = 1; k < indent.length; k++) {
+                                ch = text[cursor.ch + end];
+                                if (ch !== ' ')
+                                    break;
+                                end++;
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                    cm.replaceRange('', cursor, offsetCursor(cursor, 0, end));
+                }
+            }
+            return cursor;
+        }
+        else if (cm.indentMore) {
             for (var j = 0; j < repeat; j++) {
                 if (args.indentRight)
                     cm.indentMore();
@@ -3245,7 +3291,6 @@ var operators = {
             var endLine = vim.visualBlock ?
                 ranges[ranges.length - 1].anchor.line :
                 ranges[0].head.line;
-            var repeat = (vim.visualMode) ? args.repeat : 1;
             if (args.linewise) {
                 endLine--;
             }

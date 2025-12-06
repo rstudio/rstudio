@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 
-BRANCH=rstudio/kousa-dogwood
+BRANCH=rstudio/globemaster-allium
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do

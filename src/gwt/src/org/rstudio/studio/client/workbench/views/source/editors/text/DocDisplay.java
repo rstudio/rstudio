@@ -312,11 +312,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                boolean regexpModex);
 
    int getScrollLeft();
-   void scrollToX(int x);
-
    int getScrollTop();
-   void scrollToY(int y, int animateMs);
 
+   void scrollToX(int x);
+   void scrollToY(int y, int animateMs);
    void scrollToLine(int row, boolean center);
 
    void alignCursor(Position position, double ratio);
@@ -427,6 +426,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean hasBreakpoints();
 
    HandlerRegistration addGutterItem(LintItem item);
+   HandlerRegistration addGutterItem(int row, String className);
 
    void setAnnotations(JsArray<AceAnnotation> annotations);
    JsArray<AceAnnotation> getAnnotations();

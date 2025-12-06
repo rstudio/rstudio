@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.EditEvent;
@@ -1035,13 +1036,13 @@ public class AceEditorWidget extends Composite
       {
         editor_.getRenderer().addGutterDecoration(
                rowFromLine(line),
-               "ace_pending-breakpoint");
+               AceEditorGutterStyles.PENDING_BREAKPOINT);
       }
       else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
       {
          editor_.getRenderer().addGutterDecoration(
                rowFromLine(line),
-               "ace_inactive-breakpoint");
+               AceEditorGutterStyles.INACTIVE_BREAKPOINT);
       }
    }
 
@@ -1056,13 +1057,13 @@ public class AceEditorWidget extends Composite
       {
         editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line),
-               "ace_pending-breakpoint");
+               AceEditorGutterStyles.PENDING_BREAKPOINT);
       }
       else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
       {
          editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line),
-               "ace_inactive-breakpoint");
+               AceEditorGutterStyles.INACTIVE_BREAKPOINT);
       }
    }
 
@@ -1334,21 +1335,29 @@ public class AceEditorWidget extends Composite
    {
       String id = StringUtil.makeRandomId(16);
       externalGutterAnnotations_.set(id, item);
+      Timers.singleShot(() ->
+      {
+         renderMarkers();
+      });
+
       return new HandlerRegistration()
       {
          @Override
          public void removeHandler()
          {
             externalGutterAnnotations_.delete(id);
-            refresh();
-            editor_.getRenderer().forceImmediateRender();
+            Timers.singleShot(() ->
+            {
+               renderMarkers();
+            });
          }
       };
    }
 
-   private void refresh()
+   private void renderMarkers()
    {
       showLint(lint_);
+      editor_.getRenderer().forceImmediateRender();
    }
 
    private void removeMarkersInRange(Range range, List<AnchoredAceAnnotation> annotations)

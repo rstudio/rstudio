@@ -590,11 +590,11 @@ exports.handler.attach = function (editor) {
     editor.pushEmacsMark = function (p, activate) {
         var prevMark = this.session.$emacsMark;
         if (prevMark)
-            this.session.$emacsMarkRing.push(prevMark);
+            pushUnique(this.session.$emacsMarkRing, prevMark);
         if (!p || activate)
             this.setEmacsMark(p);
         else
-            this.session.$emacsMarkRing.push(p);
+            pushUnique(this.session.$emacsMarkRing, p);
     };
     editor.popEmacsMark = function () {
         var mark = this.emacsMark();
@@ -626,6 +626,13 @@ exports.handler.attach = function (editor) {
     editor.on('copy', this.onCopy);
     editor.on('paste', this.onPaste);
 };
+function pushUnique(ring, mark) {
+    var last = ring[ring.length - 1];
+    if (last && last.row === mark.row && last.column === mark.column) {
+        return;
+    }
+    ring.push(mark);
+}
 exports.handler.detach = function (editor) {
     editor.renderer.$blockCursor = false;
     editor.session.$selectLongWords = $formerLongWords;

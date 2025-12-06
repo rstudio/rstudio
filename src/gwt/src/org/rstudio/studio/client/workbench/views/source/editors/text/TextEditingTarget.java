@@ -71,6 +71,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -139,6 +140,7 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -1930,9 +1932,41 @@ public class TextEditingTarget implements
                      break;
                      
                   case COMPLETION_RECEIVED_SOME:
+
+                     ClickHandler handler = null;
+                     CopilotCompletion completion = (CopilotCompletion) event.getData();
+                     if (completion != null)
+                     {
+                        handler = new ClickHandler()
+                        {
+                           @Override
+                           public void onClick(ClickEvent event)
+                           {
+                              int scrollLine = completion.range.start.line - 5;
+                              docDisplay_.scrollToLine(scrollLine, false);
+
+                              for (int line = completion.range.start.line;
+                                   line <= completion.range.end.line;
+                                   line++)
+                              {
+                                 HandlerRegistration registration =
+                                    docDisplay_.addGutterItem(line, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+
+                                 Timers.singleShot(2000, () ->
+                                 {
+                                    registration.removeHandler();
+                                 });
+
+                              }
+                           }
+                        };
+                     }
+
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           constants_.copilotResponseReceived());
+                           constants_.copilotResponseReceived(),
+                           handler);
+
                      break;
                      
                   case COMPLETION_RECEIVED_NONE:
