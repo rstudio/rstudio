@@ -155,9 +155,9 @@ if [ -n "$CMAKE_BUILD_TYPE" ]; then
     ENV="$ENV CMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE"
 fi
 
-# adjust folder path when building debug
-if [ "$CMAKE_BUILD_TYPE" = "Debug" ]; then
-    FLAVOR_SUFFIX="-Debug"
+# adjust folder path when building with explicit build type
+if [ -n "$CMAKE_BUILD_TYPE" ]; then
+    FLAVOR_SUFFIX="-${CMAKE_BUILD_TYPE}"
 fi
 
 # remove previous image if it exists
