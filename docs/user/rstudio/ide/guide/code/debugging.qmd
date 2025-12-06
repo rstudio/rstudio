@@ -71,7 +71,7 @@ Editor breakpoints work by injecting some tracing code into the R function objec
 
 ![](images/breakpoint-environment.png){fig-alt="A screenshot of the RStudio Environment pane, indicating a breakpoint function with a red circle." width="450"}
 
-If the function object doesn't exist yet (for instance, because `source()` hasn't been called on the file), or the function object doesn't match the contents of the editor (for instance, because the file has changed since the last `source()`), the breakpoint will be deferred.
+If the function object doesn't exist yet (for instance, because `source()` hasn't been called on the file), or the function object doesn't match the contents of the editor (for instance, because the file has changed since the last `source()`), RStudio defers the breakpoint.
 
 ![](images/breakpoint-sourced.png){fig-alt="A screenshot of example R code and a warning that 'breakpoints will be activated when this file is sourced.'"}
 
@@ -79,11 +79,11 @@ The hollow red circle indicates that RStudio is aware of the breakpoint, but tha
 
 #### browser() breakpoints
 
-The R function [`browser()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/browser.html) halts execution and invokes an environment browser when it is called. A `browser()` call can be added anywhere in the code to stop at that point in the code for debugging. Here, for instance, it's used to halt when a function is about to return `TRUE`:
+The R function [`browser()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/browser.html) halts execution and invokes an environment browser when it is called. You can add a `browser()` call anywhere in the code to stop at that point for debugging. Here, for instance, it's used to halt when a function is about to return `TRUE`:
 
 ![](images/browser-debug.png){fig-alt="A screenshot of R code with a browser() call, along with the traceback."}
 
-Unlike an editor breakpoint, the `browser()` statement is actually part of the code, so it needs to be applied like any other code change in order to become active (by sourcing the containing document, rebuilding the containing package, reloading the Shiny application, etc.).
+Unlike an editor breakpoint, the `browser()` statement is actually part of the code, so you need to apply it like any other code change in order to become active (by sourcing the containing document, rebuilding the containing package, reloading the Shiny application, etc.).
 
 The environment browser invoked by `browser()` is the same one used in all of the other debugging facilities, so it can be considered the lowest-level debugging tool. Because the `browser()` statement requires no special tooling, it can be used in contexts where editor breakpoints won't work.
 
@@ -230,7 +230,7 @@ Breakpoints can be set in package code just as they can in free-standing R code.
 
 In order to debug effectively in your package, you'll also want to ensure that your package is compiled with the `--with-keep.source` option. This option is the default for new packages in RStudio; if you need to set it manually, it can be found in *Tools -\> Project Options -\> Build Tools*.
 
-![](images/debug-package-tools.png){alt=""}
+![](images/debug-package-tools.png){fig-alt="A screenshot of the Project Options dialog, with Build Tools selected and the Package Build Options showing the --with-keep.source option enabled."}
 
 When a breakpoint is set in a file inside a package, RStudio will automatically disable the breakpoint when the package is unloaded and enable the breakpoint when the package is loaded. If you're having trouble setting breakpoints in a package, make sure that the package was compiled with source information as described above and that its build is up-to-date.
 

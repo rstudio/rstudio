@@ -11,7 +11,7 @@ Given a specific directory, Find in Files allows recursively searching every fil
 
 ![](images/find-in-files.png){fig-alt="A screenshot of the Find in Files popup with the 'Find' text prompt."}
 
-**Find in Files** also allows for further customization of the search with regular expressions and filters for specific file types. Search results will display in the pane adjacent to the console. For each matching string, the following will be displayed:
+**Find in Files** also allows for further customization of the search with regular expressions and filters for specific file types. Search results will display in the pane adjacent to the console. For each matching string, RStudio displays the following:
 
 -   The file path
 
@@ -27,7 +27,7 @@ If the name of the source file or function is known, the "Go to File/Function" s
 
 ![](images/go-to-function.png){fig-alt="A screenshot of the Go to File/Function menu item on the Source pane of RStudio."}
 
-The **Go to File/Function** feature works from a constantly updated index of your source code. The specific source files to index are determined as follows:
+The **Go to File/Function** feature works from a constantly updated index of your source code. RStudio determines which source files to index as follows:
 
 1.  If an [RStudio Project](projects.html) is active, then all R source files within the project directory are indexed.
 
@@ -47,7 +47,7 @@ From either the source editor or the console, the following shortcuts provide ac
 
 -   Using <kbd>Ctrl+Click</kbd> (<kbd>Cmd+Click</kbd> on Mac) with the mouse
 
-It is possible to navigate to both user-defined own functions (defined in R source files) and any other function defined within an R package. For functions defined within packages, the code is displayed in a special **Source Viewer** pane, which is read-only.
+It is possible to navigate to both user-defined own functions (defined in R source files) and any other function defined within an R package. RStudio displays the code for functions defined within packages in a special **Source Viewer** pane, which is read-only.
 
 ## Navigating within a Source File
 
@@ -55,7 +55,7 @@ There are several ways to navigate through the code within a source file:
 
 -   The go to function definition feature described above also works for functions within the current source file (giving precedence to functions defined within the calling scope).
 
--   The **Jump to Line** command can be used to go to any line in the current file. Keyboard shortcut: **Alt+Shift+G** (Mac: **Option+Shift+Cmd+G**).
+-   The **Jump to Line** command can be used to go to any line in the current file. Keyboard shortcut: <kbd>Alt+Shift+G</kbd> (Mac: <kbd>Option+Shift+Cmd+G</kbd>).
 
 -   Use the function menu to quickly jump to functions by name.
 

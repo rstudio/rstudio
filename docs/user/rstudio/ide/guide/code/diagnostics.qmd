@@ -8,7 +8,7 @@ Diagnostics are a way to indicate stylistic issues or errors with the code.
 
 ## Enabling diagnostics
 
-Diagnostics can be enabled and options can be set within the **Global Options** > **Code Diagnostics** editing pane:
+You can enable diagnostics and set options within the **Global Options** > **Code Diagnostics** editing pane:
 
 ![](images/enable-diagnostics.png){fig-alt="A screenshot of the RStudio Global Options popup, selected on the Code > Diagnostics tab."}
 
@@ -30,7 +30,7 @@ For example, in the code sample below, RStudio detects that the function `add_nu
 
 ![](images/argument-missing-error.png){fig-alt="A screenshot of the RStudio error diagnostics suggesting that a function argument is missing."}
 
-Similarly, missing arguments (alongside extra, or missing, commas) are reported:
+Similarly, RStudio reports missing arguments (alongside extra, or missing, commas):
 
 ![](images/error-missing-comma.png){fig-alt="A screenshot of R code missing commas after each line, which returns an error 'exepcted , after expression'"}
 
@@ -52,7 +52,7 @@ In the following example, the variable `result` is assigned but never used or re
 
 The style diagnostic checks to see if your code conforms to [Hadley Wickham's style guide](http://adv-r.had.co.nz/Style.html), and reports style warnings when encountered. In particular, the diagnostics engine attempts to identify inappropriate use (or lack thereof) of whitespace.
 
-![](images/warning-whitespace.png){alt="" fig-alt="A screenshot of x<-2+1 without any spacing - RStudio provides a note for the style issue expecting whitespace"}
+![](images/warning-whitespace.png){fig-alt="A screenshot of x<-2+1 without any spacing - RStudio provides a note for the style issue expecting whitespace"}
 
 Currently, the style diagnostics feature is not user configurable; this may be addressed in an upcoming release.
 
@@ -64,7 +64,7 @@ The C / C++ diagnostics engine is powered by `libclang`, and is able to report c
 
 ## Viewing diagnostics
 
-When an error or warning is discovered, it is reported in two places:
+When RStudio discovers an error or warning, it reports it in two places:
 
 1.  The left gutter will show an icon related to the diagnostic's severity
 
