@@ -97,6 +97,9 @@ boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
 
+// Track whether session is closing (vs suspending/restarting)
+static bool s_sessionClosing = false;
+
 // ============================================================================
 // Suspension blocking
 // ============================================================================
@@ -359,7 +362,7 @@ std::map<std::string, NotificationHandler> s_notificationHandlers;
 // ============================================================================
 // Forward Declarations
 // ============================================================================
-Error startChatBackend();
+Error startChatBackend(bool resumeConversation = false);
 
 // ============================================================================
 // JSON-RPC Notification Handling
@@ -2767,7 +2770,7 @@ void onBackendExit(int exitCode)
    ));
 }
 
-Error startChatBackend()
+Error startChatBackend(bool resumeConversation)
 {
    // Check if already running
    if (s_chatBackendPid != -1)
@@ -2845,6 +2848,13 @@ Error startChatBackend()
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // Add resume-conversation flag if resuming after suspend/restart
+   if (resumeConversation)
+   {
+      args.push_back("--resume-conversation");
+      DLOG("Passing --resume-conversation to backend");
+   }
+
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
@@ -2916,7 +2926,7 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 Error chatStartBackend(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   Error error = startChatBackend();
+   Error error = startChatBackend(false);
 
    json::Object result;
    result["success"] = !error;
@@ -3193,6 +3203,16 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
    bool wasRunning = (s_chatBackendPid != -1);
    pSettings->set("chat_suspended", wasRunning);
 
+   // Persist whether to resume conversation
+   // Resume if backend was running AND not closing (i.e., suspend or restart)
+   bool shouldResumeConversation = wasRunning && !s_sessionClosing;
+   pSettings->set("chat_resume_conversation", shouldResumeConversation);
+
+   DLOG("Chat resume on next start: {}", shouldResumeConversation);
+
+   // Reset flag for next cycle
+   s_sessionClosing = false;
+
    // Request graceful shutdown and wait for backend to exit
    if (wasRunning)
    {
@@ -3265,12 +3285,13 @@ void onResume(const Settings& settings)
 
    // Check if we were suspended with chat backend running
    bool wasSuspended = settings.getBool("chat_suspended", false);
+   bool resumeConversation = settings.getBool("chat_resume_conversation", false);
 
    if (wasSuspended)
    {
-      DLOG("Restarting chat backend after resume");
+      DLOG("Restarting chat backend (resume conversation: {})", resumeConversation);
 
-      Error error = startChatBackend();
+      Error error = startChatBackend(resumeConversation);
       if (error)
          LOG_ERROR(error);
    }
@@ -3407,6 +3428,12 @@ Error initialize()
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+
+   // Register handler to detect session close (vs suspend/restart)
+   events().onQuit.connect([]() {
+      s_sessionClosing = true;
+      DLOG("Session closing - backend will NOT resume conversation on next start");
+   });
 
    // Register suspend/resume handlers
    addSuspendHandler(SuspendHandler(
