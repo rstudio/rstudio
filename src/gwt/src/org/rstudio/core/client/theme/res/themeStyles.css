@@ -403,11 +403,15 @@ pre {
    background-size: 10px 10px;
 }
 
-.ace_next-edit-suggestion {
-   background-image: EXECUTINGLINE !important;
-   background-size: 10px 10px !important;
-   background: rgba(128, 128, 128, 0.5);
-   cursor: pointer;
+.ace_next-edit-suggestion::before {
+   content: '';
+   position: absolute;
+   left: 0;
+   top: 0;
+   bottom: 0;
+   width: 4px;
+   background-color: #1E77BC;
+   pointer-events: none;
 }
 
 .ace_next-edit-suggestion-highlight {

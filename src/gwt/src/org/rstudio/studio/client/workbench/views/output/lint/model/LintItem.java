@@ -24,6 +24,19 @@ public class LintItem extends JavaScriptObject
 {
    protected LintItem() {}
    
+   public static final native LintItem create(int row, String className)
+   /*-{
+      return {
+         "start.row": row,
+         "start.column": 0,
+         "end.row": row,
+         "end.column": 0,
+         "type": "info",
+         "tooltip": "none",
+         "className": className
+      };
+   }-*/;
+
    public static final native LintItem create(int row,
                                               int column,
                                               String text,
@@ -153,6 +166,8 @@ public class LintItem extends JavaScriptObject
             annotation.text = item["text"];
          
          annotation.className = item.className;
+         annotation.tooltip = item.tooltip;
+
          aceAnnotations.push(annotation);
       }
       
