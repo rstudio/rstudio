@@ -94,6 +94,9 @@ std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
+// Track expected shutdown to distinguish from crashes
+bool s_expectedShutdown = false;
+
 // ============================================================================
 // Suspension blocking
 // ============================================================================
@@ -2725,6 +2728,27 @@ void onBackendExit(int exitCode)
       DLOG("Cleared chat backend busy state on process exit");
    }
 
+   // Determine if this was an expected exit based on shutdown state
+   bool cleanExit = (exitCode == 0);
+
+   // Classify exit as crash or expected shutdown:
+   // - Expected shutdown with exit code 0 = NOT a crash (silent)
+   // - Unexpected exit with exit code 0 = IS a crash (backend died unexpectedly)
+   // - Any non-zero exit code = IS a crash (error, version mismatch, etc.)
+   bool crashed = !s_expectedShutdown || !cleanExit;
+
+   if (s_expectedShutdown)
+   {
+      DLOG("Backend exited as expected: exitCode={}", exitCode);
+   }
+   else
+   {
+      WLOG("Backend exited unexpectedly: exitCode={}", exitCode);
+   }
+
+   // Clear expected shutdown state for next exit
+   s_expectedShutdown = false;
+
    // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
@@ -2733,10 +2757,10 @@ void onBackendExit(int exitCode)
    s_chatBackendOps.reset();
    s_chatBackendRestartCount = kMaxRestartAttempts;
 
-   // Notify client of unexpected backend exit
+   // Notify client of backend exit (with correct crashed flag)
    json::Object exitData;
    exitData["exit_code"] = exitCode;
-   exitData["crashed"] = true;
+   exitData["crashed"] = crashed;
    module_context::enqueClientEvent(ClientEvent(
       client_events::kChatBackendExit,
       exitData
@@ -3181,6 +3205,10 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
          // Use shorter grace period for suspend (0.5s instead of 1s)
          // to be more responsive while still allowing cleanup
          const int SUSPEND_GRACE_PERIOD_MS = 500;
+
+         // Mark this as an expected shutdown to prevent crash notification
+         s_expectedShutdown = true;
+
          requestBackendShutdown(*backendOps, "suspend", SUSPEND_GRACE_PERIOD_MS);
          DLOG("Sent graceful shutdown request, waiting up to {}ms", SUSPEND_GRACE_PERIOD_MS);
 
@@ -3211,6 +3239,8 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
       s_chatBackendOps.reset();
 
       // Force terminate if still running after grace period
+      // Note: s_expectedShutdown is already set, so onBackendExit() will
+      // correctly treat this as an expected shutdown (not a crash)
       if (s_chatBackendPid != -1)
       {
          Error error = core::system::terminateProcess(s_chatBackendPid);
@@ -3262,6 +3292,10 @@ void onShutdown(bool terminatedNormally)
       if (backendOps)
       {
          const int SHUTDOWN_GRACE_PERIOD_MS = 1000;
+
+         // Mark this as an expected shutdown to prevent crash notification
+         s_expectedShutdown = true;
+
          requestBackendShutdown(*backendOps, "close", SHUTDOWN_GRACE_PERIOD_MS);
          DLOG("Sent graceful shutdown request, waiting up to {}ms", SHUTDOWN_GRACE_PERIOD_MS);
 
@@ -3292,6 +3326,8 @@ void onShutdown(bool terminatedNormally)
       s_chatBackendOps.reset();
 
       // Force terminate if still running after grace period
+      // Note: s_expectedShutdown is already set, so onBackendExit() will
+      // correctly treat this as an expected shutdown (not a crash)
       if (s_chatBackendPid != -1)
       {
          Error error = core::system::terminateProcess(s_chatBackendPid);
