@@ -377,7 +377,7 @@ pre {
 .ace_breakpoint,
 .ace_pending-breakpoint,
 .ace_inactive-breakpoint,
-.ace_executing-line {
+.ace_executing-line,
 .ace_next-edit-suggestion {
    background-position: 12% center !important;
    background-repeat: no-repeat !important;
