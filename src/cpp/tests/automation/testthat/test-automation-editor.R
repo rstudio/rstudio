@@ -23,8 +23,10 @@ withr::defer(.rs.automation.deleteRemote())
       # make an edit, then save the document
       editor$gotoLine(4)
       editor$insert("# comment 4\x20\x20\x20")
+      Sys.sleep(1)
+
       remote$commands.execute("saveSourceDoc")
-      Sys.sleep(0.1)
+      Sys.sleep(1)
       
       # check that whitespace has been removed
       contents <- .rs.trimWhitespace(editor$getValue())
