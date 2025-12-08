@@ -201,7 +201,6 @@ list(APPEND BOOST_LIBS
    program_options
    random
    regex
-   system
    thread
    url
 )
@@ -220,9 +219,6 @@ if(UNIX)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
       endif()
-      if(NOT Boost_VERSION LESS 108900)
-         list(REMOVE_ITEM BOOST_LIBS system)
-      endif()
 
       # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
@@ -235,9 +231,6 @@ if(UNIX)
       find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
-      endif()
-      if(NOT Boost_VERSION LESS 108900)
-         list(REMOVE_ITEM BOOST_LIBS system)
       endif()
       find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
    endif()
@@ -261,9 +254,6 @@ else()
    set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-${RSTUDIO_BOOST_VERSION_MAJOR}_${RSTUDIO_BOOST_VERSION_MINOR}")
    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
-   if(NOT Boost_VERSION LESS 108900)
-      list(REMOVE_ITEM BOOST_LIBS system)
-   endif()
    foreach(BOOST_LIB ${BOOST_LIBS})
       list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-${BOOST_SUFFIX}")
    endforeach()
