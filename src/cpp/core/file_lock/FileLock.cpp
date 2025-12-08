@@ -300,6 +300,10 @@ void schedulePeriodicExecution(
       {
          timer.expires_after(std::chrono::milliseconds(interval.total_milliseconds()));
       }
+      catch (boost::system::system_error& e)
+      {
+         log::logError(Error(e.code(), ERROR_LOCATION));
+      }
       catch (std::exception& e)
       {
          log::logErrorMessage(

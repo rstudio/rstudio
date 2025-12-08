@@ -436,6 +436,11 @@ private:
                   boost::asio::placeholders::error)));
          return true;
       }
+      catch (boost::system::system_error& e)
+      {
+         log::logError(Error(e.code(), ERROR_LOCATION));
+         return false;
+      }
       catch (std::exception& e)
       {
          log::logErrorMessage(

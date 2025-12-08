@@ -842,6 +842,10 @@ private:
                this,
                boost::asio::placeholders::error));
       }
+      catch (boost::system::system_error& e)
+      {
+         log::logError(Error(e.code(), ERROR_LOCATION));
+      }
       CATCH_UNEXPECTED_EXCEPTION;
    }
 
