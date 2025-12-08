@@ -41,12 +41,12 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
    {
       this(type, null);
    }
-   
+
    public CopilotEventType getType()
    {
       return type_;
    }
-   
+
    public Object getData()
    {
       return data_;
