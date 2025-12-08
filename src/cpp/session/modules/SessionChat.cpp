@@ -53,6 +53,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/REventLoop.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -91,6 +92,13 @@ PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
 std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
+boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
+
+// Track expected shutdown to distinguish from crashes
+bool s_expectedShutdown = false;
+
+// Track whether session is closing (vs suspending/restarting)
+static bool s_sessionClosing = false;
 
 // ============================================================================
 // Suspension blocking
@@ -354,7 +362,7 @@ std::map<std::string, NotificationHandler> s_notificationHandlers;
 // ============================================================================
 // Forward Declarations
 // ============================================================================
-Error startChatBackend();
+Error startChatBackend(bool resumeConversation = false);
 
 // ============================================================================
 // JSON-RPC Notification Handling
@@ -478,6 +486,38 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
    if (error)
    {
       ELOG("Failed to send streaming output: {}", error.getMessage());
+   }
+}
+
+void requestBackendShutdown(core::system::ProcessOperations& ops,
+                            const std::string& reason,
+                            int gracePeriodMs = 5000)
+{
+   json::Object notification;
+   notification["jsonrpc"] = "2.0";
+   notification["method"] = "lifecycle/requestShutdown";
+
+   json::Object params;
+   params["reason"] = reason;
+   params["gracePeriodMs"] = gracePeriodMs;
+
+   notification["params"] = params;
+
+   std::string body = notification.write();
+   std::string message = fmt::format(
+       "Content-Length: {}\r\n\r\n{}",
+       body.size(),
+       body
+   );
+
+   DLOG("Requesting graceful backend shutdown: reason={}, gracePeriodMs={}",
+        reason, gracePeriodMs);
+
+   // Best-effort send - don't block if it fails
+   Error error = ops.writeToStdin(message, false);
+   if (error)
+   {
+      WLOG("Failed to send shutdown request: {}", error.getMessage());
    }
 }
 
@@ -2691,24 +2731,46 @@ void onBackendExit(int exitCode)
       DLOG("Cleared chat backend busy state on process exit");
    }
 
+   // Determine if this was an expected exit based on shutdown state
+   bool cleanExit = (exitCode == 0);
+
+   // Classify exit as crash or expected shutdown:
+   // - Expected shutdown with exit code 0 = NOT a crash (silent)
+   // - Unexpected exit with exit code 0 = IS a crash (backend died unexpectedly)
+   // - Any non-zero exit code = IS a crash (error, version mismatch, etc.)
+   bool crashed = !s_expectedShutdown || !cleanExit;
+
+   if (s_expectedShutdown)
+   {
+      DLOG("Backend exited as expected: exitCode={}", exitCode);
+   }
+   else
+   {
+      WLOG("Backend exited unexpectedly: exitCode={}", exitCode);
+   }
+
+   // Clear expected shutdown state for next exit
+   s_expectedShutdown = false;
+
    // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
    s_backendOutputBuffer.clear();
+   s_chatBackendOps.reset();
    s_chatBackendRestartCount = kMaxRestartAttempts;
 
-   // Notify client of unexpected backend exit
+   // Notify client of backend exit (with correct crashed flag)
    json::Object exitData;
    exitData["exit_code"] = exitCode;
-   exitData["crashed"] = true;
+   exitData["crashed"] = crashed;
    module_context::enqueClientEvent(ClientEvent(
       client_events::kChatBackendExit,
       exitData
    ));
 }
 
-Error startChatBackend()
+Error startChatBackend(bool resumeConversation)
 {
    // Check if already running
    if (s_chatBackendPid != -1)
@@ -2786,6 +2848,13 @@ Error startChatBackend()
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // Add resume-conversation flag if resuming after suspend/restart
+   if (resumeConversation)
+   {
+      args.push_back("--resume-conversation");
+      DLOG("Passing --resume-conversation to backend");
+   }
+
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
@@ -2794,6 +2863,7 @@ Error startChatBackend()
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = [](core::system::ProcessOperations& ops) {
       s_chatBackendPid = ops.getPid();
+      s_chatBackendOps = ops.shared_from_this();
       DLOG("Chat backend started with PID: {}", s_chatBackendPid);
    };
    callbacks.onStdout = onBackendStdout;
@@ -2856,7 +2926,7 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 Error chatStartBackend(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   Error error = startChatBackend();
+   Error error = startChatBackend(false);
 
    json::Object result;
    result["success"] = !error;
@@ -3127,18 +3197,76 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
 {
-   DLOG("Session suspension starting - terminating chat backend");
+   DLOG("Session suspension starting - requesting graceful backend shutdown");
 
    // Persist whether backend was running before suspension
    bool wasRunning = (s_chatBackendPid != -1);
    pSettings->set("chat_suspended", wasRunning);
 
-   // Terminate backend if running
+   // Persist whether to resume conversation
+   // Resume if backend was running AND not closing (i.e., suspend or restart)
+   bool shouldResumeConversation = wasRunning && !s_sessionClosing;
+   pSettings->set("chat_resume_conversation", shouldResumeConversation);
+
+   DLOG("Chat resume on next start: {}", shouldResumeConversation);
+
+   // Reset flag for next cycle
+   s_sessionClosing = false;
+
+   // Request graceful shutdown and wait for backend to exit
    if (wasRunning)
    {
-      Error error = core::system::terminateProcess(s_chatBackendPid);
-      if (error)
-         LOG_ERROR(error);
+      // Capture shared_ptr atomically to avoid race conditions
+      auto backendOps = s_chatBackendOps;
+
+      // Request graceful shutdown if we have ProcessOperations
+      if (backendOps)
+      {
+         // Use shorter grace period for suspend (0.5s instead of 1s)
+         // to be more responsive while still allowing cleanup
+         const int SUSPEND_GRACE_PERIOD_MS = 500;
+
+         // Mark this as an expected shutdown to prevent crash notification
+         s_expectedShutdown = true;
+
+         requestBackendShutdown(*backendOps, "suspend", SUSPEND_GRACE_PERIOD_MS);
+         DLOG("Sent graceful shutdown request, waiting up to {}ms", SUSPEND_GRACE_PERIOD_MS);
+
+         // Poll for backend exit with short intervals
+         // This allows event processing while still waiting for graceful shutdown
+         const int POLL_INTERVAL_MS = 50;
+         int elapsed = 0;
+
+         while (s_chatBackendPid != -1 && elapsed < SUSPEND_GRACE_PERIOD_MS)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+         }
+
+         if (s_chatBackendPid != -1)
+         {
+            DLOG("Backend did not exit within grace period, force terminating");
+         }
+         else
+         {
+            DLOG("Backend exited gracefully after {}ms", elapsed);
+         }
+      }
+
+      // Release ProcessOperations reference before force termination
+      s_chatBackendOps.reset();
+
+      // Force terminate if still running after grace period
+      // Note: s_expectedShutdown is already set, so onBackendExit() will
+      // correctly treat this as an expected shutdown (not a crash)
+      if (s_chatBackendPid != -1)
+      {
+         Error error = core::system::terminateProcess(s_chatBackendPid);
+         if (error)
+            LOG_ERROR(error);
+      }
 
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
@@ -3157,12 +3285,13 @@ void onResume(const Settings& settings)
 
    // Check if we were suspended with chat backend running
    bool wasSuspended = settings.getBool("chat_suspended", false);
+   bool resumeConversation = settings.getBool("chat_resume_conversation", false);
 
    if (wasSuspended)
    {
-      DLOG("Restarting chat backend after resume");
+      DLOG("Restarting chat backend (resume conversation: {})", resumeConversation);
 
-      Error error = startChatBackend();
+      Error error = startChatBackend(resumeConversation);
       if (error)
          LOG_ERROR(error);
    }
@@ -3170,28 +3299,69 @@ void onResume(const Settings& settings)
 
 void onShutdown(bool terminatedNormally)
 {
-   // Clear busy state
-   if (s_chatBusy)
-   {
-      s_chatBusy = false;
-   }
+   // Clear busy state and JSON-RPC state early
+   s_chatBusy = false;
+   s_backendOutputBuffer.clear();
 
-   // Terminate backend process
+   // Request graceful shutdown and wait for backend to exit
    if (s_chatBackendPid != -1)
    {
-      DLOG("Terminating chat backend process");
-      Error error = core::system::terminateProcess(s_chatBackendPid);
-      if (error)
-         LOG_ERROR(error);
+      // Capture shared_ptr atomically to avoid race conditions
+      auto backendOps = s_chatBackendOps;
+
+      // Request graceful shutdown if we have ProcessOperations
+      if (backendOps)
+      {
+         const int SHUTDOWN_GRACE_PERIOD_MS = 1000;
+
+         // Mark this as an expected shutdown to prevent crash notification
+         s_expectedShutdown = true;
+
+         requestBackendShutdown(*backendOps, "close", SHUTDOWN_GRACE_PERIOD_MS);
+         DLOG("Sent graceful shutdown request, waiting up to {}ms", SHUTDOWN_GRACE_PERIOD_MS);
+
+         // Poll for backend exit with short intervals
+         // This allows event processing while still waiting for graceful shutdown
+         const int POLL_INTERVAL_MS = 50;
+         int elapsed = 0;
+
+         while (s_chatBackendPid != -1 && elapsed < SHUTDOWN_GRACE_PERIOD_MS)
+         {
+            module_context::onBackgroundProcessing(false);
+            r::session::event_loop::processEvents();
+            boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+         }
+
+         if (s_chatBackendPid != -1)
+         {
+            DLOG("Backend did not exit within grace period, force terminating");
+         }
+         else
+         {
+            DLOG("Backend exited gracefully after {}ms", elapsed);
+         }
+      }
+
+      // Release ProcessOperations reference before force termination
+      s_chatBackendOps.reset();
+
+      // Force terminate if still running after grace period
+      // Note: s_expectedShutdown is already set, so onBackendExit() will
+      // correctly treat this as an expected shutdown (not a crash)
+      if (s_chatBackendPid != -1)
+      {
+         Error error = core::system::terminateProcess(s_chatBackendPid);
+         if (error)
+            LOG_ERROR(error);
+      }
+
       s_chatBackendPid = -1;
    }
 
    // Clear port and URL
    s_chatBackendPort = -1;
    s_chatBackendUrl.clear();
-
-   // Clear JSON-RPC state
-   s_backendOutputBuffer.clear();
 
    // Clear notification queue
    {
@@ -3258,6 +3428,12 @@ Error initialize()
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+
+   // Register handler to detect session close (vs suspend/restart)
+   events().onQuit.connect([]() {
+      s_sessionClosing = true;
+      DLOG("Session closing - backend will NOT resume conversation on next start");
+   });
 
    // Register suspend/resume handlers
    addSuspendHandler(SuspendHandler(
