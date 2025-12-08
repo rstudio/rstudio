@@ -4,7 +4,7 @@ if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
 SOCI_VERSION         <- Sys.getenv("SOCI_VERSION", unset = "4.0.3")
-BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.89.0")
+BOOST_VERSION        <- Sys.getenv("BOOST_VERSION", unset = "1.87.0")
 MSVC_TOOLSET_VERSION <- Sys.getenv("MSVC_TOOLSET_VERSION", unset = "143")
 CMAKE_GENERATOR      <- Sys.getenv("CMAKE_GENERATOR", unset = "Visual Studio 17 2022")
 

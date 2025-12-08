@@ -18,7 +18,7 @@
 set -e
 
 # The version of Boost to be downloaded and built.
-BOOST_VERSION=1.89.0
+BOOST_VERSION=1.87.0
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Boost ${BOOST_VERSION}"

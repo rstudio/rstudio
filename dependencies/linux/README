@@ -8,7 +8,7 @@ systems. Specific version requirements for various components include:
 
 - R 3.6.0
 - CMake 3.19.8 or newer
-- Boost 1.89.0
+- Boost 1.87.0
 - patchelf 0.9 [Required only for Desktop]
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
