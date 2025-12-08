@@ -421,29 +421,33 @@ private:
    bool scheduleRetry()
    {
       // set expiration
-      boost::system::error_code ec;
       try
       {
          auto interval = std::chrono::milliseconds(
             connectionRetryContext_.profile.retryInterval.total_milliseconds());
+
          connectionRetryContext_.retryTimer.expires_after(interval);
-      }
-      CATCH_UNEXPECTED_EXCEPTION;
-
-      // attempt to schedule retry timer (should always succeed but
-      // include error check to be paranoid/robust)
-      if (!ec)
-      {
-         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(*pStrand_, boost::bind(
-               &AsyncClient<SocketService>::handleConnectionRetryTimer,
-               AsyncClient<SocketService>::shared_from_this(),
-               boost::asio::placeholders::error)));
-
+         connectionRetryContext_.retryTimer.async_wait(
+            boost::asio::bind_executor(
+               *pStrand_,
+               boost::bind(
+                  &AsyncClient<SocketService>::handleConnectionRetryTimer,
+                  AsyncClient<SocketService>::shared_from_this(),
+                  boost::asio::placeholders::error)));
          return true;
       }
-      else
+      catch (std::exception& e)
       {
-         logError(Error(ec, ERROR_LOCATION));
+         log::logErrorMessage(
+            fmt::format("Unexpected exception: {}", e.what()),
+            ERROR_LOCATION);
+         return false;
+      }
+      catch (...)
+      {
+         log::logErrorMessage(
+            "Unexpected exception: <no information available>",
+            ERROR_LOCATION);
          return false;
       }
    }

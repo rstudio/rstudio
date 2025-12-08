@@ -300,7 +300,20 @@ void schedulePeriodicExecution(
       {
          timer.expires_after(std::chrono::milliseconds(interval.total_milliseconds()));
       }
-      CATCH_UNEXPECTED_EXCEPTION;
+      catch (std::exception& e)
+      {
+         log::logErrorMessage(
+            fmt::format("Unexpected exception: {}", e.what()),
+            ERROR_LOCATION);
+         return;
+      }
+      catch (...)
+      {
+         log::logErrorMessage(
+            "Unexpected exception: <no information available>",
+            ERROR_LOCATION);
+         return;
+      }
       
       timer.async_wait(boost::bind(
                           schedulePeriodicExecution,
