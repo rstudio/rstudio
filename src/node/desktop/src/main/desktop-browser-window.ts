@@ -243,6 +243,17 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     // calling event.preventDefault() prevents navigation
     this.window.webContents.on('will-navigate', (event, url) => {
+      // An iframe might try to force navigation to occur in the main frame;
+      // for example, via target="_top". Detect these scenarios and open the
+      // requested URL in an external window instead.
+      //
+      // https://github.com/rstudio/rstudio/issues/16624
+      if (event.frame?.origin !== event.initiator?.origin) {
+        event.preventDefault();
+        void shell.openExternal(url);
+        return;
+      }
+
       if (!this.allowNavigation(url)) {
         event.preventDefault();
       }
@@ -554,13 +565,13 @@ export class DesktopBrowserWindow extends EventEmitter {
     // Suppress Alt keyUp only if mouse was clicked while Alt was held
     // (likely multi-cursor operation)
     const suppressDueToMouse = this.mouseDownDuringAlt;
-    
+
     // Reset the flag
     this.mouseDownDuringAlt = false;
-    
+
     return suppressDueToMouse;
   }
-  
+
   notifyAltMouseDown(): void {
     // Called when mouse is clicked while Alt is held
     if (process.platform === 'win32' && this.altKeyDownTime > 0) {

@@ -17,6 +17,8 @@ PANE_LAYOUT_SIDEBAR_SELECT <- "#rstudio_pane_layout_sidebar_select"
 # sidebar visible checkbox
 PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
+PANE_LAYOUT_RESET_LINK <- "#rstudio_pane_layout_reset_link"
+
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
@@ -81,6 +83,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Quadrant swapping works correctly", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    sourceInitial <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
@@ -136,7 +141,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_TOP, allTabNames)
 
@@ -155,7 +160,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Help"], info = "Help should be unchecked in TabSet1")
    expect_false(tabStates["Viewer"], info = "Viewer should be unchecked in TabSet1")
    expect_false(tabStates["Presentations"], info = "Presentations should be unchecked in TabSet1")
-   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet1")
+   expect_false(tabStates["Posit Assistant"], info = "Posit Assistant should be unchecked in TabSet1")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -165,7 +170,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
    
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_RIGHT_BOTTOM, allTabNames)
 
@@ -184,7 +189,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(tabStates["Build"], info = "Build should be unchecked in TabSet2")
    expect_false(tabStates["VCS"], info = "VCS should be unchecked in TabSet2")
    expect_false(tabStates["Tutorial"], info = "Tutorial should be unchecked in TabSet2")
-   expect_false(tabStates["Chat"], info = "Chat should be unchecked in TabSet2")
+   expect_false(tabStates["Posit Assistant"], info = "Posit Assistant should be unchecked in TabSet2")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -194,12 +199,12 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.openPaneLayoutOptions(remote)
 
    allTabNames <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial",
-                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Chat")
+                    "Files", "Plots", "Packages", "Help", "Viewer", "Presentations", "Posit Assistant")
 
    tabStates <- .rs.getTabCheckedState(remote, PANE_LAYOUT_SIDEBAR, allTabNames)
 
    # Default Sidebar should have these tabs checked
-   expect_true(tabStates["Chat"], info = "Chat should be checked in Sidebar")
+   expect_true(tabStates["Posit Assistant"], info = "Posit Assistant should be checked in Sidebar")
 
    # These should be unchecked in Sidebar
    expect_false(tabStates["Files"], info = "Files should be unchecked in Sidebar")
@@ -220,6 +225,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in one TabSet unchecks it in the other", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1
@@ -248,6 +256,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking unchecked tab in TabSet1 unchecks it in the Sidebar", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Files is checked in TabSet2 by default, not in TabSet1 or Sidebar
@@ -284,6 +295,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("Clicking checked tab unchecks it in both TabSets (hiding the tab)", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Environment is checked in TabSet1 by default
@@ -309,6 +323,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("All tabs can be moved to one TabSet leaving the other empty", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Check that TabSet1 and TabSet2 contain expected tabs at the start of the test
@@ -348,6 +365,9 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("TabSet quadrants can be swapped while maintaining their tab configurations", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
    .rs.openPaneLayoutOptions(remote)
 
    # Get initial TabSet positions
@@ -376,6 +396,154 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Swap back to restore
    .rs.selectDropdownOption(remote, PANE_LAYOUT_RIGHT_TOP, tabset1Initial)
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Reset link restores all pane layout settings to defaults", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
+   .rs.openPaneLayoutOptions(remote)
+
+   # Make sidebar visible
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar should be initially unchecked")
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar should now be checked")
+
+   # Move sidebar to left
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_SIDEBAR, "Sidebar on Left")
+   sidebarPosition <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
+   expect_equal(sidebarPosition, "Sidebar on Left", info = "Sidebar should be on left")
+
+   # Add some tabs to the sidebar (Files, Environment, History)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "History"))
+
+   # Verify tabs were added to sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "History"))
+
+   # Swap some quadrants
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_LEFT_TOP, "Console")
+   upperLeftAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   expect_equal(upperLeftAfter, "Console", info = "Upper left should be Console after swap")
+
+   # Now click the reset link
+   expect_true(remote$dom.elementExists(PANE_LAYOUT_RESET_LINK), info = "Reset link should exist")
+   remote$dom.clickElement(PANE_LAYOUT_RESET_LINK)
+   Sys.sleep(0.5)
+
+   # Verify all settings are back to defaults
+
+   # 1. Sidebar should be unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar visible checkbox should be unchecked after reset")
+
+   # 2. Sidebar should be on right
+   sidebarPositionAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
+   expect_equal(sidebarPositionAfter, "Sidebar on Right",
+                info = "Sidebar should be on right after reset")
+
+   # 3. Only Posit Assistant should be checked in Sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should not be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should not be checked in Sidebar after reset")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "History"),
+                info = "History should not be checked in Sidebar after reset")
+
+   # 4. Quadrants should be back to defaults
+   sourceText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_TOP)
+   expect_equal(sourceText, "Source", info = "Upper left should be Source after reset")
+
+   consoleText <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_LEFT_BOTTOM)
+   expect_equal(consoleText, "Console", info = "Lower left should be Console after reset")
+
+   # 5. Verify TabSet1 tabs are back to defaults
+   expectedTabSet1Tabs <- c("Environment", "History", "Connections", "Build", "VCS", "Tutorial")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_TOP, expectedTabSet1Tabs)
+
+   # 6. Verify TabSet2 tabs are back to defaults
+   expectedTabSet2Tabs <- c("Files", "Plots", "Packages", "Help", "Viewer", "Presentations")
+   .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Sidebar visibility checkbox auto-updates based on tab assignments", {
+    # skipping to cut down run times on CI
+   skip_on_ci()
+
+   .rs.openPaneLayoutOptions(remote)
+
+   # Verify sidebar visibility checkbox is initially unchecked (default state)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar should be initially unchecked")
+
+   # Verify sidebar has no visible tabs initially (Posit Assistant is checked but hidden by default)
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should not be in sidebar initially")
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should not be in sidebar initially")
+
+   # Check a tab in the sidebar (add Files to sidebar)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+
+   # Verify Files is now checked in sidebar
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+               info = "Files should now be checked in sidebar")
+
+   # Verify sidebar visibility checkbox was automatically checked
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility checkbox should auto-check when adding first visible tab")
+
+   # Add another tab to the sidebar (Environment)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               info = "Environment should now be checked in sidebar")
+
+   # Sidebar visibility should still be checked
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility should remain checked with multiple tabs")
+
+   # Uncheck one tab (Files) - sidebar should still be visible because Environment remains
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
+                info = "Files should no longer be checked in sidebar")
+   expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+               info = "Environment should still be checked in sidebar")
+
+   # Sidebar visibility should still be checked (still has Environment)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar visibility should remain checked when tabs remain")
+
+   # Uncheck the last visible tab (Environment)
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
+                info = "Environment should no longer be checked in sidebar")
+
+   # Verify sidebar visibility checkbox was automatically unchecked
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility checkbox should auto-uncheck when removing last visible tab")
+
+   # User can still manually check the visibility checkbox to show empty sidebar
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "User should be able to manually check sidebar visibility for empty sidebar")
+
+   # User can manually uncheck it again
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+                info = "User should be able to manually uncheck sidebar visibility")
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")

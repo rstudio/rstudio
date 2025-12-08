@@ -20,13 +20,6 @@ function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
-# flags to pass to codesign executable
-set(CODESIGN_FLAGS
-   --options runtime
-   --timestamp
-   --force
-   --deep)
-
 # NOTE: we always attempt to sign a package build of RStudio
 # (even if it's just a development build) as our usages of
 # install_name_tool will invalidate existing signatures on
@@ -35,14 +28,27 @@ set(CODESIGN_FLAGS
 if(@RSTUDIO_CODESIGN_USE_CREDENTIALS@)
    echo("codesign: using RStudio's credentials")
    set(ENV{RSESSION_ENTITLEMENTS_TYPE} "ci")
-   list(APPEND CODESIGN_FLAGS
-      --sign 4D663D999011E80361D8848C8487D70E4C41DB60
-      --prefix org.rstudio.)
+   list(APPEND CODESIGN_FLAGS --sign 4D663D999011E80361D8848C8487D70E4C41DB60)
+   list(APPEND CODESIGN_FLAGS --prefix org.rstudio.)
 else()
    echo("codesign: using ad-hoc signature")
    set(ENV{RSESSION_ENTITLEMENTS_TYPE} "adhoc")
    list(APPEND CODESIGN_FLAGS --sign -)
 endif()
+
+# include keychain path if provided
+set(KEYCHAIN_PATH "$ENV{KEYCHAIN_PATH}")
+if(KEYCHAIN_PATH)
+   echo("codesign: using keychain at ${KEYCHAIN_PATH}")
+   execute_process(COMMAND "security find-identity ${KEYCHAIN_PATH}")
+   list(APPEND CODESIGN_FLAGS --keychain "${KEYCHAIN_PATH}")
+else()
+   echo("codesign: using default keychain search list")
+endif()
+
+# add other flags -- codesign can be picky about argument order
+list(APPEND CODESIGN_FLAGS --options runtime)
+list(APPEND CODESIGN_FLAGS --timestamp --force --deep)
 
 execute_process(
    COMMAND

@@ -536,29 +536,17 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("") // $NON-NLS-1$
     String projectSweaveOptionsDesc();
     
-    // showSidebar
-    @DefaultStringValue("Show Si_debar") // $NON-NLS-1$
-    String showSidebarMenuLabel();
-    
-    // hideSidebar
-    @DefaultStringValue("Hide Sideb_ar") // $NON-NLS-1$
-    String hideSidebarMenuLabel();
-    
     // toggleSidebar
-    @DefaultStringValue("Toggle Visibility of Sidebar") // $NON-NLS-1$
+    @DefaultStringValue("Show/Hide Sidebar") // $NON-NLS-1$
     String toggleSidebarLabel();
+    @DefaultStringValue("Show/Hide Sideb_ar") // $NON-NLS-1$
+    String toggleSidebarMenuLabel();
     
-    // moveSidebarLeft
-    @DefaultStringValue("Show Sidebar on Left") // $NON-NLS-1$
-    String moveSidebarLeftLabel();
-    @DefaultStringValue("Show Sidebar on Le_ft") // $NON-NLS-1$
-    String moveSidebarLeftMenuLabel();
-    
-    // moveSidebarRight
-    @DefaultStringValue("Show Sidebar on Right") // $NON-NLS-1$
-    String moveSidebarRightLabel();
-    @DefaultStringValue("Show Sidebar on Ri_ght") // $NON-NLS-1$
-    String moveSidebarRightMenuLabel();
+    // toggleSidebarLocation
+    @DefaultStringValue("Move Sidebar Location Left/Right") // $NON-NLS-1$
+    String toggleSidebarLocationLabel();
+    @DefaultStringValue("Move Sidebar Left/Right") // $NON-NLS-1$
+    String toggleSidebarLocationMenuLabel();
     
     // showToolbar
     @DefaultStringValue("Show _Toolbar") // $NON-NLS-1$
@@ -699,9 +687,9 @@ public interface CmdConstants extends Constants {
     String activateTutorialMenuLabel();
     
     // activateChat
-    @DefaultStringValue("Show Chat Pane") // $NON-NLS-1$
+    @DefaultStringValue("Show Posit Assistant Pane") // $NON-NLS-1$
     String activateChatLabel();
-    @DefaultStringValue("Show _Chat") // $NON-NLS-1$
+    @DefaultStringValue("Show Pos_it Assistant") // $NON-NLS-1$
     String activateChatMenuLabel();
     
     // activateBackgroundJobs
@@ -797,7 +785,7 @@ public interface CmdConstants extends Constants {
     // layoutZoomFiles
     @DefaultStringValue("Zoom Files") // $NON-NLS-1$
     String layoutZoomFilesLabel();
-    @DefaultStringValue("Zoom F_iles") // $NON-NLS-1$
+    @DefaultStringValue("Zoom _Files") // $NON-NLS-1$
     String layoutZoomFilesMenuLabel();
     
     // layoutZoomPlots
@@ -831,9 +819,9 @@ public interface CmdConstants extends Constants {
     String layoutZoomTutorialMenuLabel();
     
     // layoutZoomChat
-    @DefaultStringValue("Zoom Chat") // $NON-NLS-1$
+    @DefaultStringValue("Zoom Posit Assistant") // $NON-NLS-1$
     String layoutZoomChatLabel();
-    @DefaultStringValue("Zoom _Chat") // $NON-NLS-1$
+    @DefaultStringValue("Zoom Pos_it Assistant") // $NON-NLS-1$
     String layoutZoomChatMenuLabel();
     
     // layoutZoomBuild

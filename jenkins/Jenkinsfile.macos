@@ -101,8 +101,8 @@ pipeline {
 
       environment {
         AWS_ACCOUNT_ID = '749683154838'
+        KEYCHAIN_PATH = "${WORKSPACE}/buildagent.keychain"
         KEYCHAIN_PASSPHRASE = credentials('ide-keychain-passphrase')
-        BUILD_AGENT_TEMP = "${env.HOME}/tmp"
         MACOS_DEVELOPER_CERTIFICATE = credentials('MACOS_DEVELOPER_CERTIFICATE')
         MACOS_DEVELOPER_CERTIFICATE_KEY = credentials('MACOS_DEVELOPER_CERTIFICATE_KEY')
       }
@@ -113,24 +113,43 @@ pipeline {
         }
         script {
           sh '''
-            set -e
 
-            # Create a keychain to hold the Developer ID certificate for signing
-            if [ ! -f "${BUILD_AGENT_TEMP}/buildagent.keychain" ]; then
-              security create-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
-            else
-              echo "Using keychain: ${BUILD_AGENT_TEMP}/buildagent.keychain"
-            fi
+            #
+            # The keychain search list for the user is stored in:
+            #
+            #   ~/Library/Preferences/com.apple.security.plist
+            #
+            # If that directory does not exist, then the invocation of
+            #
+            #   security list-keychains -s <keychain>
+            #
+            # will silently fail. Ensure this directory exists.
+            #
+            mkdir -p ~/Library/Preferences
 
-            # Set a default keychain, and unlock it
-            security default-keychain -s ${BUILD_AGENT_TEMP}/buildagent.keychain
-            security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} ${BUILD_AGENT_TEMP}/buildagent.keychain
-
-            # Turn off timeout
-            security set-keychain-settings
+            # Set up a keychain to hold our credentials
+            security create-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
+            security unlock-keychain -p "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
+            security set-keychain-settings "${KEYCHAIN_PATH}"
 
             # Import the developer ID from Jenkins secrets
-            security import "${MACOS_DEVELOPER_CERTIFICATE}" -k ${BUILD_AGENT_TEMP}/buildagent.keychain -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}" -T /usr/bin/codesign
+            security import "${MACOS_DEVELOPER_CERTIFICATE}" \
+              -k "${KEYCHAIN_PATH}"                          \
+              -P "${MACOS_DEVELOPER_CERTIFICATE_KEY}"        \
+              -T /usr/bin/codesign
+            
+            # Allow access to keychain without prompting
+            security set-key-partition-list -S apple-tool:,apple: -s -k "${KEYCHAIN_PASSPHRASE}" "${KEYCHAIN_PATH}"
+
+            # Try to set this as the default keychain
+            security list-keychains -s "${KEYCHAIN_PATH}"
+            security default-keychain -s "${KEYCHAIN_PATH}"
+
+            # Validate the available identities
+            security list-keychains
+            security default-keychain
+            security find-identity
+            security find-identity "${KEYCHAIN_PATH}"
           '''
         }
         // Import the Developer ID certificate from Jenkins Secrets.

@@ -16,119 +16,128 @@
 #include <shared_core/Error.hpp>
 #include <core/text/DcfParser.hpp>
 
-#define RSTUDIO_NO_TESTTHAT_ALIASES
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace tests {
 
-TEST_CASE("DcfParser")
+TEST(DcfParserTest, ParseSimpleDcf)
 {
-   SECTION("Can parse simple dcf file")
-   {
-      std::string input = "Test: Value\nTest2: Value2\nHello: World";
+   std::string input = "Test: Value\nTest2: Value2\nHello: World";
 
-      std::map<std::string, std::string> fields;
-      std::string err;
+   std::map<std::string, std::string> fields;
+   std::string err;
 
-      REQUIRE_FALSE(text::parseDcfFile(input, true, &fields, &err));
-      CHECK(err.empty());
+   Error error = text::parseDcfFile(input, true, &fields, &err);
+   ASSERT_FALSE(error);
+   ASSERT_TRUE(err.empty());
 
-      REQUIRE(fields.size() == 3);
-      CHECK(fields["Test"] == "Value");
-      CHECK(fields["Test2"] == "Value2");
-      CHECK(fields["Hello"] == "World");
-   }
+   ASSERT_EQ(3u, fields.size());
+   ASSERT_EQ("Value", fields["Test"]);
+   ASSERT_EQ("Value2", fields["Test2"]);
+   ASSERT_EQ("World", fields["Hello"]);
+}
 
-   SECTION("Can parse single dcf as multi dcf file")
-   {
-      std::string input = "A: Apple\nB: Banana\nC: Car";
 
-      REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
-       {
-          auto copy = fields;
+TEST(DcfParserTest, ParseSingleAsMultiDcf)
+{
+   std::string input = "A: Apple\nB: Banana\nC: Car";
 
-          REQUIRE(copy.size() == 3);
-          CHECK(copy["A"] == "Apple");
-          CHECK(copy["B"] == "Banana");
-          CHECK(copy["C"] == "Car");
+   Error error = text::parseMultiDcfFile(input, true,
+    [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
+    {
+       auto copy = fields;
 
-          return Success();
-       }));
-   }
+       if (copy.size() != 3u) 
+          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+       if (copy["A"] != "Apple")
+          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+       if (copy["B"] != "Banana")
+          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+       if (copy["C"] != "Car") 
+          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-   SECTION("Can parse simple multi dcf file")
-   {
-      std::string input = "A: Apple\nB: Banana\nC: Car\n\n"
-            "A: Account\nB: Banker\nC: Cash";
+       return Success();
+    });
+   ASSERT_FALSE(error);
+}
 
-      int i = 0;
-      REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
-       {
-          auto copy = fields;
 
-          REQUIRE(copy.size() == 3);
-          CHECK(copy["A"] == (i == 0 ? "Apple" : "Account"));
-          CHECK(copy["B"] == (i == 0 ? "Banana" : "Banker"));
-          CHECK(copy["C"] == (i == 0 ? "Car" : "Cash"));
-          CHECK(lineNumber == (i == 0 ? 1 : 5));
+TEST(DcfParserTest, ParseSimpleMultiDcf)
+{
+   std::string input = "A: Apple\nB: Banana\nC: Car\n\n"
+         "A: Account\nB: Banker\nC: Cash";
 
-          ++i;
-          return Success();
-       }));
-   }
+   int i = 0;
+   Error error = text::parseMultiDcfFile(input, true,
+    [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
+    {
+       auto copy = fields;
 
-   SECTION("Can parse multi dcf file with trailing whitespace on blank line")
-   {
-      std::string input = "A: Apple\nB: Banana\nC: Car\n      \n"
-            "A: Account\nB: Banker\nC: Cash";
+   EXPECT_EQ(3u, copy.size());
+   EXPECT_EQ((i == 0 ? "Apple" : "Account"), copy["A"]);
+   EXPECT_EQ((i == 0 ? "Banana" : "Banker"), copy["B"]);
+   EXPECT_EQ((i == 0 ? "Car" : "Cash"), copy["C"]);
+   EXPECT_EQ((i == 0 ? 1 : 5), lineNumber);
 
-      int i = 0;
-      REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
-       {
-          auto copy = fields;
+       ++i;
+       return Success();
+    });
+   ASSERT_FALSE(error);
+}
 
-          REQUIRE(copy.size() == 3);
-          CHECK(copy["A"] == (i == 0 ? "Apple" : "Account"));
-          CHECK(copy["B"] == (i == 0 ? "Banana" : "Banker"));
-          CHECK(copy["C"] == (i == 0 ? "Car" : "Cash"));
-          CHECK(lineNumber == (i == 0 ? 1 : 5));
 
-          ++i;
-          return Success();
-       }));
-   }
+TEST(DcfParserTest, ParseMultiDcfWithTrailingWhitespace)
+{
+   std::string input = "A: Apple\nB: Banana\nC: Car\n      \n"
+         "A: Account\nB: Banker\nC: Cash";
 
-   SECTION("Can parse multi dcf file with indentation")
-   {
-      std::string input = "A: Apple\nB: Banana\nC: Car\n      \n"
-            "A: Account\nB: Banker\nC: Cash\n\n"
-            "A: This is a long paragraph\n"
-            " that has indentation. It is supposed to concat\n"
-            " together\n"
-            "#B: Ball\n"
-            "C: Cat\n\n\n";
+   int i = 0;
+   Error error = text::parseMultiDcfFile(input, true,
+    [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
+    {
+       auto copy = fields;
 
-      int i = 0;
-      REQUIRE_FALSE(text::parseMultiDcfFile(input, true,
-       [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
-       {
-          auto copy = fields;
+   EXPECT_EQ(3u, copy.size());
+   EXPECT_EQ((i == 0 ? "Apple" : "Account"), copy["A"]);
+   EXPECT_EQ((i == 0 ? "Banana" : "Banker"), copy["B"]);
+   EXPECT_EQ((i == 0 ? "Car" : "Cash"), copy["C"]);
+   EXPECT_EQ((i == 0 ? 1 : 5), lineNumber);
 
-          REQUIRE(copy.size() == (i != 2 ? 3 : 2));
-          CHECK(copy["A"] == (i == 0 ? "Apple" : i == 1 ? "Account" : "This is a long paragraph\nthat has indentation. It is supposed to concat\ntogether"));
-          CHECK(copy["B"] == (i == 0 ? "Banana" : i == 1 ? "Banker" : std::string()));
-          CHECK(copy["C"] == (i == 0 ? "Car" : i == 1 ? "Cash" : "Cat"));
-          CHECK(lineNumber == (i == 0 ? 1 : i == 1 ? 5 : 9));
+       ++i;
+       return Success();
+    });
+   ASSERT_FALSE(error);
+}
 
-          ++i;
-          return Success();
-       }));
-   }
+
+TEST(DcfParserTest, ParseMultiDcfWithIndentation)
+{
+   std::string input = "A: Apple\nB: Banana\nC: Car\n      \n"
+         "A: Account\nB: Banker\nC: Cash\n\n"
+         "A: This is a long paragraph\n"
+         " that has indentation. It is supposed to concat\n"
+         " together\n"
+         "#B: Ball\n"
+         "C: Cat\n\n\n";
+
+   int i = 0;
+   Error error = text::parseMultiDcfFile(input, true,
+    [&](int lineNumber, const std::map<std::string, std::string>& fields) -> Error
+    {
+       auto copy = fields;
+
+   EXPECT_EQ((i != 2 ? 3u : 2u), copy.size());
+   EXPECT_EQ((i == 0 ? "Apple" : i == 1 ? "Account" : "This is a long paragraph\nthat has indentation. It is supposed to concat\ntogether"), copy["A"]);
+   EXPECT_EQ((i == 0 ? "Banana" : i == 1 ? "Banker" : std::string()), copy["B"]);
+   EXPECT_EQ((i == 0 ? "Car" : i == 1 ? "Cash" : "Cat"), copy["C"]);
+   EXPECT_EQ((i == 0 ? 1 : i == 1 ? 5 : 9), lineNumber);
+
+       ++i;
+       return Success();
+    });
+   ASSERT_FALSE(error);
 }
 
 } // end namespace tests

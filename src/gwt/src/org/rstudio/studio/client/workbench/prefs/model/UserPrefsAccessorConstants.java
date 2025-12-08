@@ -1300,6 +1300,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showRmdRenderCommandDescription();
 
    /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   @DefaultStringValue("Rename in scope operates on:")
+   String rmdRenameInScopeBehaviorTitle();
+   @DefaultStringValue("Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.")
+   String rmdRenameInScopeBehaviorDescription();
+   @DefaultStringValue("Current chunk")
+   String rmdRenameInScopeBehaviorEnum_current();
+   @DefaultStringValue("All chunks")
+   String rmdRenameInScopeBehaviorEnum_all();
+
+   /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    @DefaultStringValue("Enable dragging text in code editor")
@@ -2174,6 +2186,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledDescription();
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   @DefaultStringValue("[Preview] Enable next-edit suggestions")
+   String copilotNesEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.")
+   String copilotNesEnabledDescription();
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    @DefaultStringValue("Display account and billing messages from GitHub Copilot")
@@ -2280,12 +2300,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleHighlightConditionsEnum_none();
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   @DefaultStringValue("Show Chat UI")
-   String showChatUiTitle();
-   @DefaultStringValue("Whether to show the experimental Chat UI")
-   String showChatUiDescription();
+   @DefaultStringValue("")
+   String paiTitle();
+   @DefaultStringValue("Experimental")
+   String paiDescription();
+
+   /**
+    * Experimental
+    */
+   @DefaultStringValue("")
+   String paiDownloadUriTitle();
+   @DefaultStringValue("Experimental")
+   String paiDownloadUriDescription();
 
 
 

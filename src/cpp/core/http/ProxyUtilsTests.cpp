@@ -17,121 +17,128 @@
 
 #include <core/system/Environment.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace http {
 namespace tests {
 
-test_context("ProxyUtilsTests")
+// Environment variables are not case sensitive on Windows.
+#ifndef _WIN32
+
+TEST(HttpTest, HttpProxyUrlPrefersLowerCase)
 {
-   test_that("httpProxyUrl prefers lower case http_proxy")
-   {
-      system::setenv("http_proxy", "http://proxy.example.com:8080");
-      system::setenv("HTTP_PROXY", "http://proxy2.example.com:8080");
+   system::setenv("http_proxy", "http://proxy.example.com:8080");
+   system::setenv("HTTP_PROXY", "http://proxy2.example.com:8080");
 
-      ProxyUtils utils;
-      auto url = utils.httpProxyUrl("example.com", "443");
-      REQUIRE(url.has_value());
-      REQUIRE(url->hostname() == "proxy.example.com");
-      REQUIRE(url->port() == 8080);
-   }
-
-   test_that("httpProxyUrl uses HTTP_PROXY if http_proxy is not set")
-   {
-      system::unsetenv("http_proxy");
-      system::setenv("HTTP_PROXY", "http://proxy.example.com:8080");
-
-      ProxyUtils utils;
-      auto url = utils.httpProxyUrl("example.com", "443");
-      REQUIRE(url.has_value());
-      REQUIRE(url->hostname() == "proxy.example.com");
-      REQUIRE(url->port() == 8080);
-   }
-
-   test_that("httpProxyUrl returns none if no proxy is set")
-   {
-      system::unsetenv("http_proxy");
-      system::unsetenv("HTTP_PROXY");
-
-      ProxyUtils utils;
-      auto url = utils.httpProxyUrl("example.com", "443");
-      REQUIRE_FALSE(url.has_value());
-   }
-
-   test_that("httpsProxyUrl prefers lower case https_proxy")
-   {
-      system::setenv("https_proxy", "http://proxy.example.com:8080");
-      system::setenv("HTTPS_PROXY", "http://proxy2.example.com:8080");
-
-      ProxyUtils utils;
-      auto url = utils.httpsProxyUrl("example.com", "443");
-      REQUIRE(url.has_value());
-      REQUIRE(url->hostname() == "proxy.example.com");
-      REQUIRE(url->port() == 8080);
-   }
-
-   test_that("httpsProxyUrl uses HTTPS_PROXY if https_proxy is not set")
-   {
-      system::unsetenv("https_proxy");
-      system::setenv("HTTPS_PROXY", "http://proxy.example.com:8080");
-
-      ProxyUtils utils;
-      auto url = utils.httpsProxyUrl("example.com", "443");
-      REQUIRE(url.has_value());
-      REQUIRE(url->hostname() == "proxy.example.com");
-      REQUIRE(url->port() == 8080);
-   }
-
-   test_that("httpsProxyUrl returns none if no proxy is set")
-   {
-      system::unsetenv("https_proxy");
-      system::unsetenv("HTTPS_PROXY");
-
-      ProxyUtils utils;
-      auto url = utils.httpsProxyUrl("example.com", "443");
-      REQUIRE_FALSE(url.has_value());
-   }
-
-   test_that("httpProxy returns none if address matches no_proxy rule")
-   {
-      system::setenv("http_proxy", "http://proxy.example.com:8080");
-      system::setenv("no_proxy", "example.com");
-
-      ProxyUtils utils;
-      auto url = utils.httpProxyUrl("example.com", "443");
-      REQUIRE_FALSE(url.has_value());
-   }
-
-   test_that("noProxyRules can be added")
-   {
-      ProxyUtils utils;
-
-      system::setenv("http_proxy", "http://proxy.example.com:8080");
-      system::setenv("no_proxy", "example.com");
-
-      auto rule = core::http::createNoProxyRule("127.0.0.1", "8787");
-      utils.addNoProxyRule(std::move(rule));
-
-      // proxy other URLs
-      REQUIRE(utils.httpProxyUrl("other.example.com", "443").has_value());
-      REQUIRE(utils.httpProxyUrl("other.example.com").has_value());
-
-      // proxy requests to localhost targeted at other ports
-      REQUIRE(utils.httpProxyUrl("127.0.0.1", "8788").has_value());
-      REQUIRE(utils.httpProxyUrl("127.0.0.1").has_value());
-
-      // don't proxy for example.com directly
-      REQUIRE_FALSE(utils.httpProxyUrl("example.com", "443").has_value());
-
-      // don't proxy localhost on this port
-      REQUIRE_FALSE(utils.httpProxyUrl("127.0.0.1", "8787").has_value());
-
-   }
+   ProxyUtils utils;
+   auto url = utils.httpProxyUrl("example.com", "443");
+   ASSERT_TRUE(url.has_value());
+   EXPECT_EQ("proxy.example.com", url->hostname());
+   EXPECT_EQ(8080, url->port());
 }
 
-} // end namespace tests
-} // end namespace http
-} // end namespace core
-} // end namespace rstudio
+#endif
+
+TEST(HttpTest, HttpProxyUrlFallsBackToUpperCase)
+{
+   system::unsetenv("http_proxy");
+   system::setenv("HTTP_PROXY", "http://proxy.example.com:8080");
+
+   ProxyUtils utils;
+   auto url = utils.httpProxyUrl("example.com", "443");
+   ASSERT_TRUE(url.has_value());
+   EXPECT_EQ("proxy.example.com", url->hostname());
+   EXPECT_EQ(8080, url->port());
+}
+
+TEST(HttpTest, HttpProxyUrlReturnsNoneWhenNotSet)
+{
+   system::unsetenv("http_proxy");
+   system::unsetenv("HTTP_PROXY");
+
+   ProxyUtils utils;
+   auto url = utils.httpProxyUrl("example.com", "443");
+   EXPECT_FALSE(url.has_value());
+}
+
+// Environment variables are not case sensitive on Windows.
+#ifndef _WIN32
+
+TEST(HttpTest, HttpsProxyUrlPrefersLowerCase)
+{
+   system::setenv("https_proxy", "http://proxy.example.com:8080");
+   system::setenv("HTTPS_PROXY", "http://proxy2.example.com:8080");
+
+   ProxyUtils utils;
+   auto url = utils.httpsProxyUrl("example.com", "443");
+   ASSERT_TRUE(url.has_value());
+   EXPECT_EQ("proxy.example.com", url->hostname());
+   EXPECT_EQ(8080, url->port());
+}
+
+#endif
+
+TEST(HttpTest, HttpsProxyUrlFallsBackToUpperCase)
+{
+   system::unsetenv("https_proxy");
+   system::setenv("HTTPS_PROXY", "http://proxy.example.com:8080");
+
+   ProxyUtils utils;
+   auto url = utils.httpsProxyUrl("example.com", "443");
+   ASSERT_TRUE(url.has_value());
+   EXPECT_EQ("proxy.example.com", url->hostname());
+   EXPECT_EQ(8080, url->port());
+}
+
+TEST(HttpTest, HttpsProxyUrlReturnsNoneWhenNotSet)
+{
+   system::unsetenv("https_proxy");
+   system::unsetenv("HTTPS_PROXY");
+
+   ProxyUtils utils;
+   auto url = utils.httpsProxyUrl("example.com", "443");
+   EXPECT_FALSE(url.has_value());
+}
+
+TEST(HttpTest, HttpProxyRespectsNoProxyRule)
+{
+   system::setenv("http_proxy", "http://proxy.example.com:8080");
+   system::setenv("no_proxy", "example.com");
+
+   ProxyUtils utils;
+   auto url = utils.httpProxyUrl("example.com", "443");
+   EXPECT_FALSE(url.has_value());
+}
+
+TEST(HttpTest, NoProxyRulesCanBeAdded)
+{
+   system::setenv("http_proxy", "http://proxy.example.com:8080");
+   system::setenv("no_proxy", "example.com");
+
+   // Create utils after setting environment variables
+   ProxyUtils utils;
+   
+   auto rule = core::http::createNoProxyRule("127.0.0.1:8787");
+   utils.addNoProxyRule(std::move(rule));
+
+   // proxy other URLs
+   EXPECT_TRUE(utils.httpProxyUrl("other.example.com", "443").has_value());
+   EXPECT_TRUE(utils.httpProxyUrl("other.example.com").has_value());
+
+   // proxy requests to localhost targeted at other ports
+   EXPECT_TRUE(utils.httpProxyUrl("127.0.0.1", "8788").has_value());
+   EXPECT_TRUE(utils.httpProxyUrl("127.0.0.1").has_value());
+
+   // don't proxy for example.com directly
+   EXPECT_FALSE(utils.httpProxyUrl("example.com", "443").has_value());
+
+   // don't proxy localhost on this port
+   EXPECT_FALSE(utils.httpProxyUrl("127.0.0.1", "8787").has_value());
+}
+
+} // namespace tests
+} // namespace http
+} // namespace core
+} // namespace rstudio

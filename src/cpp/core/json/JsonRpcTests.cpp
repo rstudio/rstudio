@@ -14,7 +14,7 @@
  */
 
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -82,274 +82,271 @@ json::Object s_object;
 } // anonymous namespace
 
 
-TEST_CASE("JsonRpc")
+TEST(JsonRpcTest, Initialize)
 {
-   SECTION("Initialize")
-   {
-      json::Object objectA;
-      objectA["1"] = 1;
-      objectA["2"] = 2;
+   json::Object objectA;
+   objectA["1"] = 1;
+   objectA["2"] = 2;
 
-      json::Object objectC;
-      objectC["1"] = "a";
-      objectC["2"] = "b";
+   json::Object objectC;
+   objectC["1"] = "a";
+   objectC["2"] = "b";
 
-      s_object["a"] = objectA;
-      s_object["b"] = 5;
-      s_object["c"] = objectC;
-   }
+   s_object["a"] = objectA;
+   s_object["b"] = 5;
+   s_object["c"] = objectC;
+}
 
-   SECTION("Null test")
-   {
-      std::string json = "{\"a\": 1, \"b\": null}";
+TEST(JsonRpcTest, NullTest)
+{
+   std::string json = "{\"a\": 1, \"b\": null}";
 
-      json::Value value;
-      REQUIRE(!value.parse(json));
+   json::Value value;
+   ASSERT_FALSE(value.parse(json));
 
-      REQUIRE(value.getType() == json::Type::OBJECT);
-      json::Object obj = value.getObject();
+   ASSERT_EQ(json::Type::OBJECT, value.getType());
+   json::Object obj = value.getObject();
 
-      REQUIRE(obj["a"].getType() == json::Type::INTEGER);
-      REQUIRE(obj["b"].getType() == json::Type::NULL_TYPE);
+   ASSERT_EQ(json::Type::INTEGER, obj["a"].getType());
+   ASSERT_EQ(json::Type::NULL_TYPE, obj["b"].getType());
 
-      std::string bVal;
-      REQUIRE_FALSE(json::getOptionalParam(obj, "b", std::string("DEFAULT"), &bVal));
-      REQUIRE(bVal == "DEFAULT");
+   std::string bVal;
+   ASSERT_FALSE(json::getOptionalParam(obj, "b", std::string("DEFAULT"), &bVal));
+   ASSERT_EQ(std::string("DEFAULT"), bVal);
 
-      REQUIRE(json::typeAsString(obj["b"]) == "<Null>");
-   }
+   ASSERT_EQ(std::string("<Null>"), json::typeAsString(obj["b"]));
+}
 
-   SECTION("readParams tests")
-   {
-      json::Array array;
-      array.push_back(1);
-      array.push_back(false);
-      array.push_back("Hello there");
+TEST(JsonRpcTest, ReadParamsTests)
+{
+   json::Array array;
+   array.push_back(1);
+   array.push_back(false);
+   array.push_back("Hello there");
 
-      int a;
-      bool b;
-      std::string c;
-      Error error = json::readParams(array, &a, &b, &c);
-      REQUIRE_FALSE(error);
-      REQUIRE(a == 1);
-      REQUIRE_FALSE(b);
-      REQUIRE(c == "Hello there");
+   int a;
+   bool b;
+   std::string c;
+   Error error = json::readParams(array, &a, &b, &c);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(1, a);
+   ASSERT_FALSE(b);
+   ASSERT_EQ(std::string("Hello there"), c);
 
-      error = json::readParams(array, &c, &b, &c);
-      REQUIRE(error);
+   error = json::readParams(array, &c, &b, &c);
+   ASSERT_TRUE(error);
 
-      error = json::readParams(array, &a, &a, &c);
-      REQUIRE(error);
+   error = json::readParams(array, &a, &a, &c);
+   ASSERT_TRUE(error);
 
-      error = json::readParams(array, &a, &b, &a);
-      REQUIRE(error);
+   error = json::readParams(array, &a, &b, &a);
+   ASSERT_TRUE(error);
 
-      a = 5;
-      b = true;
-      error = json::readParams(array, &a, &b);
-      REQUIRE_FALSE(error);
-      REQUIRE(a == 1);
-      REQUIRE_FALSE(b);
-   }
+   a = 5;
+   b = true;
+   error = json::readParams(array, &a, &b);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(1, a);
+   ASSERT_FALSE(b);
+}
 
-   SECTION("readObjectParam tests")
-   {
-      json::Array array;
-      json::Object obj;
-      obj["a"] = 1;
-      obj["b"] = true;
-      obj["c"] = "Hello there";
+TEST(JsonRpcTest, ReadObjectParamTests)
+{
+   json::Array array;
+   json::Object obj;
+   obj["a"] = 1;
+   obj["b"] = true;
+   obj["c"] = "Hello there";
 
-      array.push_back(obj);
-      array.push_back(1);
-      array.push_back(false);
-      array.push_back(obj);
+   array.push_back(obj);
+   array.push_back(1);
+   array.push_back(false);
+   array.push_back(obj);
 
-      int a;
-      bool b;
-      std::string c;
-      Error error = json::readObjectParam(array, 0,
-                                          "a", &a,
-                                          "b", &b,
-                                          "c", &c);
-      REQUIRE_FALSE(error);
-      REQUIRE(a == 1);
-      REQUIRE(b);
-      REQUIRE(c == "Hello there");
+   int a;
+   bool b;
+   std::string c;
+   Error error = json::readObjectParam(array, 0,
+                                      "a", &a,
+                                      "b", &b,
+                                      "c", &c);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(1, a);
+   ASSERT_TRUE(b);
+   ASSERT_EQ(std::string("Hello there"), c);
 
-      error = json::readObjectParam(array, 0,
-                                    "a", &b,
-                                    "b", &b,
-                                    "c", &c);
-      REQUIRE(error);
+   error = json::readObjectParam(array, 0,
+                                "a", &b,
+                                "b", &b,
+                                "c", &c);
+   ASSERT_TRUE(error);
 
-      error = json::readObjectParam(array, 1,
-                                    "a", &a,
-                                    "b", &b,
-                                    "c", &c);
-      REQUIRE(error);
+   error = json::readObjectParam(array, 1,
+                                "a", &a,
+                                "b", &b,
+                                "c", &c);
+   ASSERT_TRUE(error);
 
-      error = json::readObjectParam(array, 3,
-                                    "a", &a,
-                                    "b", &b,
-                                    "c", &c);
-      REQUIRE_FALSE(error);
-   }
+   error = json::readObjectParam(array, 3,
+                                "a", &a,
+                                "b", &b,
+                                "c", &c);
+   ASSERT_FALSE(error);
+}
 
-   SECTION("Can serialize / deserialize complex json object with helpers")
-   {
-      json::Object object;
-      object["a"] = true;
-      object["b"] = false;
-      object["c"] = 1000;
-      object["d"] = (uint64_t)18446744073709550615U;
-      object["e"] = 246.9;
-      object["f"] = std::string("Hello world");
+TEST(JsonRpcTest, CanSerializeDeserializeComplexJsonObjectWithHelpers)
+{
+   json::Object object;
+   object["a"] = true;
+   object["b"] = false;
+   object["c"] = 1000;
+   object["d"] = (uint64_t)18446744073709550615U;
+   object["e"] = 246.9;
+   object["f"] = std::string("Hello world");
 
-      json::Array simpleArray;
-      simpleArray.push_back(100);
-      simpleArray.push_back(200);
-      simpleArray.push_back(300);
-      object["g"] = simpleArray;
+   json::Array simpleArray;
+   simpleArray.push_back(100);
+   simpleArray.push_back(200);
+   simpleArray.push_back(300);
+   object["g"] = simpleArray;
 
-      json::Array objectArray;
+   json::Array objectArray;
 
-      json::Object obj1;
-      obj1["a1"] = "a1";
-      obj1["a2"] = 1;
+   json::Object obj1;
+   obj1["a1"] = "a1";
+   obj1["a2"] = 1;
 
-      json::Object obj2;
-      obj2["b1"] = "b1";
-      obj2["b2"] = 2;
+   json::Object obj2;
+   obj2["b1"] = "b1";
+   obj2["b2"] = 2;
 
-      objectArray.push_back(obj1);
-      objectArray.push_back(obj2);
+   objectArray.push_back(obj1);
+   objectArray.push_back(obj2);
 
-      object["h"] = objectArray;
+   object["h"] = objectArray;
 
-      json::Object obj3;
-      obj3["nestedValue"] = 9876.324;
-      json::Object obj4;
-      obj4["a"] = "Inner object a";
-      json::Array innerArray;
-      innerArray.push_back(1);
-      innerArray.push_back(5);
-      innerArray.push_back(json::Value(6));
-      obj4["b"] = innerArray;
-      obj4["c"] = 3;
-      obj3["inner"] = obj4;
-      object["i"] = obj3;
+   json::Object obj3;
+   obj3["nestedValue"] = 9876.324;
+   json::Object obj4;
+   obj4["a"] = "Inner object a";
+   json::Array innerArray;
+   innerArray.push_back(1);
+   innerArray.push_back(5);
+   innerArray.push_back(json::Value(6));
+   obj4["b"] = innerArray;
+   obj4["c"] = 3;
+   obj3["inner"] = obj4;
+   object["i"] = obj3;
 
-      std::string json = object.write();
+   std::string json = object.write();
 
-      json::Value value;
-      REQUIRE(!value.parse(json));
-      REQUIRE(value.getType() == json::Type::OBJECT);
+   json::Value value;
+   ASSERT_FALSE(value.parse(json));
+   ASSERT_EQ(json::Type::OBJECT, value.getType());
 
-      json::Object deserializedObject = value.getObject();
+   json::Object deserializedObject = value.getObject();
 
-      bool a, b;
-      int c;
-      uint64_t d;
-      double e;
-      std::string f;
-      json::Array g, h;
-      json::Object i;
+   bool a, b;
+   int c;
+   uint64_t d;
+   double e;
+   std::string f;
+   json::Array g, h;
+   json::Object i;
 
-      Error error = json::readObject(deserializedObject,
-                                     "a", a,
-                                     "b", b,
-                                     "c", c,
-                                     "d", d,
-                                     "e", e,
-                                     "f", f,
-                                     "g", g,
-                                     "h", h,
-                                     "i", i);
-      REQUIRE_FALSE(error);
-      REQUIRE(a);
-      REQUIRE_FALSE(b);
-      REQUIRE(c == 1000);
-      REQUIRE(d == 18446744073709550615U);
-      REQUIRE(e == Approx(246.9));
-      REQUIRE(f == "Hello world");
+   Error error = json::readObject(deserializedObject,
+                                 "a", a,
+                                 "b", b,
+                                 "c", c,
+                                 "d", d,
+                                 "e", e,
+                                 "f", f,
+                                 "g", g,
+                                 "h", h,
+                                 "i", i);
+   ASSERT_FALSE(error);
+   ASSERT_TRUE(a);
+   ASSERT_FALSE(b);
+   ASSERT_EQ(1000, c);
+   ASSERT_EQ(18446744073709550615U, d);
+   ASSERT_DOUBLE_EQ(246.9, e);
+   ASSERT_EQ(std::string("Hello world"), f);
 
-      REQUIRE(g[0].getInt() == 100);
-      REQUIRE(g[1].getInt() == 200);
-      REQUIRE(g[2].getInt() == 300);
+   ASSERT_EQ(100, g[0].getInt());
+   ASSERT_EQ(200, g[1].getInt());
+   ASSERT_EQ(300, g[2].getInt());
 
-      int g1, g2, g3;
-      error = json::readParams(g, &g1, &g2, &g3);
-      REQUIRE_FALSE(error);
-      REQUIRE(g1 == 100);
-      REQUIRE(g2 == 200);
-      REQUIRE(g3 == 300);
+   int g1, g2, g3;
+   error = json::readParams(g, &g1, &g2, &g3);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(100, g1);
+   ASSERT_EQ(200, g2);
+   ASSERT_EQ(300, g3);
 
-      json::Object h1, h2;
-      error = json::readParams(h, &h1, &h2);
-      REQUIRE_FALSE(error);
+   json::Object h1, h2;
+   error = json::readParams(h, &h1, &h2);
+   ASSERT_FALSE(error);
 
-      std::string a1;
-      int a2;
-      error = json::readObject(h1,
-                               "a1", a1,
-                               "a2", a2);
-      REQUIRE_FALSE(error);
-      REQUIRE(a1 == "a1");
-      REQUIRE(a2 == 1);
+   std::string a1;
+   int a2;
+   error = json::readObject(h1,
+                           "a1", a1,
+                           "a2", a2);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(std::string("a1"), a1);
+   ASSERT_EQ(1, a2);
 
-      std::string b1;
-      int b2;
-      error = json::readObject(h2,
-                               "b1", b1,
-                               "b2", b2);
-      REQUIRE_FALSE(error);
-      REQUIRE(b1 == "b1");
-      REQUIRE(b2 == 2);
+   std::string b1;
+   int b2;
+   error = json::readObject(h2,
+                           "b1", b1,
+                           "b2", b2);
+   ASSERT_FALSE(error);
+   ASSERT_EQ(std::string("b1"), b1);
+   ASSERT_EQ(2, b2);
 
-      double nestedValue;
-      json::Object innerObj;
+   double nestedValue;
+   json::Object innerObj;
 
-      error = json::readObject(i,
-                               "nestedValue", nestedValue,
-                               "inner", innerObj);
-      REQUIRE_FALSE(error);
-      REQUIRE(nestedValue == Approx(9876.324));
+   error = json::readObject(i,
+                           "nestedValue", nestedValue,
+                           "inner", innerObj);
+   ASSERT_FALSE(error);
+   ASSERT_DOUBLE_EQ(9876.324, nestedValue);
 
-      std::string innerA;
-      json::Array innerB;
-      int innerC;
+   std::string innerA;
+   json::Array innerB;
+   int innerC;
 
-      error = json::readObject(innerObj,
-                               "a", innerA,
-                               "b", innerB,
-                               "c", innerC);
+   error = json::readObject(innerObj,
+                           "a", innerA,
+                           "b", innerB,
+                           "c", innerC);
 
-      REQUIRE_FALSE(error);
-      REQUIRE(innerA == "Inner object a");
-      REQUIRE(innerB.getSize() == 3);
-      REQUIRE(innerB[0].getInt() == 1);
-      REQUIRE(innerB[1].getInt() == 5);
-      REQUIRE(innerB[2].getInt() == 6);
-      REQUIRE(innerC == 3);
-   }
+   ASSERT_FALSE(error);
+   ASSERT_EQ(std::string("Inner object a"), innerA);
+   ASSERT_EQ(3u, innerB.getSize());
+   ASSERT_EQ(1, innerB[0].getInt());
+   ASSERT_EQ(5, innerB[1].getInt());
+   ASSERT_EQ(6, innerB[2].getInt());
+   ASSERT_EQ(3, innerC);
+}
 
-   SECTION("Can set rpc response value from complex object")
-   {
-      json::Object object = createObject();
-      json::JsonRpcResponse jsonRpcResponse;
-      jsonRpcResponse.setResult(object);
-   }
+TEST(JsonRpcTest, CanSetRpcResponseValueFromComplexObject)
+{
+   json::Object object = createObject();
+   json::JsonRpcResponse jsonRpcResponse;
+   jsonRpcResponse.setResult(object);
+}
 
-   SECTION("Can convert to value properly")
-   {
-      json::Object root;
-      json::Value val = createValue();
-      root["a"] = val;
+TEST(JsonRpcTest, CanConvertToValueProperly)
+{
+   json::Object root;
+   json::Value val = createValue();
+   root["a"] = val;
 
-      json::JsonRpcResponse jsonRpcResponse;
-      jsonRpcResponse.setResult(root);
-   }
+   json::JsonRpcResponse jsonRpcResponse;
+   jsonRpcResponse.setResult(root);
 }
 
 } // namespace tests

@@ -281,8 +281,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       </menu>
 
       <menu label="_View">
-         <cmd refid="showSidebar"/>
-         <cmd refid="hideSidebar"/>
+         <cmd refid="toggleSidebar"/>
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
 
@@ -291,8 +290,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <menu label="P_anes">
             <cmd refid="layoutEndZoom"/>
             <cmd refid="newSourceColumn"/>
-            <cmd refid="moveSidebarLeft"/>
-            <cmd refid="moveSidebarRight"/>
             <separator/>
             <cmd refid="layoutConsoleOnLeft"/>
             <cmd refid="layoutConsoleOnRight"/>
@@ -356,13 +353,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
-         <cmd refid="activatePresentation2"/>
-         <cmd refid="activateTutorial"/>
          <cmd refid="activateChat"/>
-         <cmd refid="activateBackgroundJobs"/>
-         <cmd refid="activateWorkbenchJobs"/>
          <menu label="Show Other _Panes">
+            <cmd refid="activateTutorial"/>
             <cmd refid="activatePresentation"/>
+            <cmd refid="activatePresentation2"/>
             <cmd refid="activateCompilePDF"/>
             <cmd refid="activateFindInFiles"/>
             <cmd refid="activateSourceCpp"/>
@@ -370,6 +365,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="activateDeployContent"/>
             <cmd refid="activateMarkers"/>
             <cmd refid="activateSQLResults"/>
+            <cmd refid="activateBackgroundJobs"/>
+            <cmd refid="activateWorkbenchJobs"/>
             <cmd refid="activateDatabricks"/>
          </menu>
 
@@ -1387,24 +1384,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc=""/>
 
-   <cmd id="showSidebar"
-        menuLabel="Show Si_debar"
-        rebindable="false"/>
-
-   <cmd id="hideSidebar"
-        menuLabel="Hide Sideb_ar"
-        rebindable="false"/>
-
    <cmd id="toggleSidebar"
-        label="Toggle Visibility of Sidebar"/>
+        menuLabel="Show/Hide Sideb_ar"
+        checkable="true"
+        label="Show/Hide Sidebar"/>
 
-   <cmd id="moveSidebarLeft"
-        label="Show Sidebar on Left"
-        menuLabel="Show Sidebar on Le_ft"/>
-
-   <cmd id="moveSidebarRight"
-        label="Show Sidebar on Right"
-        menuLabel="Show Sidebar on Ri_ght"/>
+   <cmd id="toggleSidebarLocation"
+        menuLabel="Move Sidebar Left/Right"
+        label="Move Sidebar Location Left/Right"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"
@@ -1520,8 +1507,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"/>
 
    <cmd id="activateChat"
-        label="Show Chat Pane"
-        menuLabel="Show _Chat"
+        label="Show Posit Assistant Pane"
+        menuLabel="Show Pos_it Assistant"
         windowMode="main"/>
 
    <cmd id="activateBackgroundJobs"
@@ -1606,7 +1593,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="layoutZoomFiles"
         checkable="true"
         label="Zoom Files"
-        menuLabel="Zoom F_iles"
+        menuLabel="Zoom _Files"
         windowMode="main"/>
 
    <cmd id="layoutZoomPlots"
@@ -1641,8 +1628,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="layoutZoomChat"
         checkable="true"
-        label="Zoom Chat"
-        menuLabel="Zoom _Chat"
+        label="Zoom Posit Assistant"
+        menuLabel="Zoom Pos_it Assistant"
         windowMode="main"/>
 
    <cmd id="layoutZoomBuild"

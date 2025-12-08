@@ -353,9 +353,10 @@ Error evaluateString(const std::string& str,
    
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
-   
+
    // surround the string with try in silent mode so we can capture error text
-   std::string rCode = "base::try(" + str + ", silent = TRUE)";
+   // wrap in curly braces to properly handle multi-line code
+   std::string rCode = "base::try({" + str + "}, silent = TRUE)";
    
    // suppress warnings if requested
    if (flags & EvalFlagsSuppressWarnings)

@@ -24,13 +24,42 @@ public class LintItem extends JavaScriptObject
 {
    protected LintItem() {}
    
+   public static final native LintItem create(int row, String className)
+   /*-{
+      return {
+         "start.row": row,
+         "start.column": 0,
+         "end.row": row,
+         "end.column": 0,
+         "type": "info",
+         "tooltip": "none",
+         "className": className
+      };
+   }-*/;
+
+   public static final native LintItem create(int row,
+                                              int column,
+                                              String text,
+                                              String className)
+   /*-{
+      return {
+         "start.row": row,
+         "start.column": column,
+         "end.row": row,
+         "end.column": column,
+         "text": text,
+         "type": "info",
+         "className": className
+      };
+   }-*/;
+
    public static final native LintItem create(int startRow,
                                               int startColumn,
                                               int endRow,
                                               int endColumn,
                                               String text,
-                                              String type) /*-{
-      
+                                              String type)
+   /*-{
       return {
          "start.row": startRow,
          "start.column": startColumn,
@@ -39,7 +68,6 @@ public class LintItem extends JavaScriptObject
          "text": text,
          "type": type
       };
-                                
    }-*/;
    
    public final native int getStartRow() /*-{
@@ -85,6 +113,14 @@ public class LintItem extends JavaScriptObject
    public final native String getType() /*-{
       return this["type"];
    }-*/;
+
+   public native final void setClassName(String className) /*-{
+      this.className = className;
+   }-*/;
+
+   public final native String getClassName() /*-{
+      return this.className;
+   }-*/;
    
    public final Range asRange()
    {
@@ -100,11 +136,11 @@ public class LintItem extends JavaScriptObject
             getStartColumn(),
             getHtml(),
             getText(),
-            getType());
+            getType(),
+            getClassName());
    }
    
-   public static final native JsArray<AceAnnotation> asAceAnnotations(
-         JsArray<LintItem> items)
+   public static final native JsArray<AceAnnotation> asAceAnnotations(JsArray<LintItem> items)
    /*-{
       
       var aceAnnotations = [];
@@ -129,6 +165,9 @@ public class LintItem extends JavaScriptObject
          else 
             annotation.text = item["text"];
          
+         annotation.className = item.className;
+         annotation.tooltip = item.tooltip;
+
          aceAnnotations.push(annotation);
       }
       

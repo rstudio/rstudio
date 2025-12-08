@@ -172,11 +172,23 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (indexOfReplacedTab(tabs.get(idx)) >= 0)
+         int replacementIdx = indexOfReplacedTab(tabs.get(idx));
+         if (replacementIdx >= 0)
          {
-            tabs.set(idx, getReplacementTabs()[idx]);
+            tabs.set(idx, getReplacementTabs()[replacementIdx]);
          }
       }
+   }
+
+   // Get the display label for a pane identifier
+   // This allows internal identifiers to differ from display labels
+   public static String getPaneDisplayLabel(String paneId)
+   {
+      if (StringUtil.equals(paneId, PaneManager.CHAT_PANE))
+      {
+         return "Posit Assistant"; //$NON-NLS-1$
+      }
+      return paneId;
    }
 
    protected PaneConfig()
@@ -227,11 +239,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
+      JsArrayString sidebar = getSidebar();
 
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
-      
+      replaceObsoleteTabs(sidebar);
+
       // Presentation tab must always be at the end of the ts1 tabset (this
       // is so that activating it works even in the presence of optionally
       // visible tabs). This is normally an invariant but for a time during
@@ -249,7 +263,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          }
          else
          {
-            Debug.logToConsole("Invaliding tabset config (Presentation index)"); //$NON-NLS-1$
+            Debug.log("validateAndAutoCorrect: Invalid tabset config (Presentation index)"); //$NON-NLS-1$
             return false;
          }
       }
@@ -263,9 +277,28 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
-      if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
-            isSubset(allTabs, JsUtil.asIterable(ts2))))
+      ArrayList<String> unknownTabs = new ArrayList<>();
+      for (String tab : JsUtil.asIterable(ts1))
+      {
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      for (String tab : JsUtil.asIterable(ts2))
+      {
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      for (String tab : JsUtil.asIterable(sidebar))
+      {
+         if (!allTabs.contains(tab))
+            unknownTabs.add(tab);
+      }
+      if (!unknownTabs.isEmpty())
+      {
+         Debug.log("validateAndAutoCorrect: Invalid tabset config (Unknown tabs: " + 
+                   StringUtil.joinStrings(unknownTabs, ", ") + ")");
          return false;
+      }
 
       return true;
    }

@@ -72,7 +72,6 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.RepoValidationResult;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
@@ -160,6 +159,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
@@ -755,6 +755,25 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+
+   @Override
+   public void copilotNextEditSuggestions(String documentId,
+                                          String documentPath,
+                                          boolean isUntitled,
+                                          int cursorRow,
+                                          int cursorColumn,
+                                          ServerRequestCallback<CopilotNextEditSuggestionsResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .add(documentPath)
+            .add(isUntitled)
+            .add(cursorRow)
+            .add(cursorColumn)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_next_edit_suggestions", params, requestCallback);
    }
    
    @Override
@@ -2477,13 +2496,11 @@ public class RemoteServer implements Server
    }
    
    public void formatDocument(String id,
-                              String path,
                               int context,
-                              ServerRequestCallback<SourceDocument> requestCallback)
+                              ServerRequestCallback<FormatDocumentResult> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(id)
-            .add(path)
             .add(context)
             .get();
       
@@ -6884,13 +6901,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, String format, PresentationEditorLocation editorState,
-                            ServerRequestCallback<Boolean> requestCallback)
+   public void quartoPreview(String file,
+                             String format,
+                             JavaScriptObject editorState,
+                             ServerRequestCallback<Boolean> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      params.set(1, new JSONString(StringUtil.notNull(format)));
-      params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
+      JSONArray params = new JSONArrayBuilder()
+         .add(StringUtil.notNull(file))
+         .add(StringUtil.notNull(format))
+         .add(editorState)
+         .get();
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
    
@@ -6931,6 +6951,48 @@ public class RemoteServer implements Server
       
       sendRequest(RPC_SCOPE, "copilot_register_open_files", params, requestCallback);
    };
+
+   @Override
+   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_verify_installed", requestCallback);
+   };
+
+   @Override
+   public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_start_backend", requestCallback);
+   }
+
+   @Override
+   public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_backend_url", requestCallback);
+   }
+
+   @Override
+   public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_backend_status", requestCallback);
+   }
+
+   @Override
+   public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_check_for_updates", requestCallback);
+   }
+
+   @Override
+   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
+   }
+
+   @Override
+   public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_update_status", requestCallback);
+   }
 
    private boolean isAuthStatusRequest(RpcRequest request)
    {

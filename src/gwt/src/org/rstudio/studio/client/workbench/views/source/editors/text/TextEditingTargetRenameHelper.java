@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
@@ -15,20 +17,24 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.user.client.Timer;
 
 public class TextEditingTargetRenameHelper
 {
-   public TextEditingTargetRenameHelper(DocDisplay docDisplay)
+   public TextEditingTargetRenameHelper(DocDisplay docDisplay, UserPrefs prefs)
    {
       editor_ = (AceEditor) docDisplay;
+      ranges_ = new ArrayList<>();
       state_ = new Stack<>();
       protectedNamesList_ = new ArrayList<>();
-      ranges_ = new ArrayList<>();
+      renameChunkState_ = new RenameChunkState();
+      prefs_ = prefs;
    }
    
    public int renameInScope()
    {
       init();
+
       TextFileType type = editor_.getFileType();
       if (type.isR() || type.isRhtml() || type.isRmd() || type.isRnw() || type.isRpres())
          return renameInScopeR();
@@ -147,27 +153,72 @@ public class TextEditingTargetRenameHelper
          // apply the refactor across all R chunks.
          if (scope.isChunk())
          {
-            JsArray<Scope> scopeTree = editor_.getScopeTree();
-            for (int i = 0, n = scopeTree.length(); i < n; i++)
+            int count = renameChunkState_.nudge();
+            if (count == 0)
+               renameChunkState_.setCursorPosition(editor_.getCursorPosition());
+            
+            if (prefs_.rmdRenameInScopeBehavior().getValue().equals(UserPrefsAccessor.RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL))
+               count += 1;
+
+            if (count % 2 == 0)
             {
-               if (scopeTree.get(i).isChunk())
+               List<Range> ranges = renameChunkState_.getCurrentChunkRanges();
+               if (!ranges.isEmpty())
                {
-                  String headerLine = editor_.getLine(scopeTree.get(i).getPreamble().getRow());
-                  Map<String, String> chunkOptions = RChunkHeaderParser.parse(headerLine);
-                  String engine = chunkOptions.getOrDefault("engine", "r");
-                  if (engine.toLowerCase() == "\"r\"")
-                  {
-                     renameVariablesInScope(
-                           scopeTree.get(i),
-                           scopeTree.get(i).getBodyStart(),
-                           targetValue,
-                           targetType,
-                           false);
-                  }
+                  ranges_.clear();
+                  ranges_.addAll(ranges);
+                  return applyRanges();
+               }
+               else
+               {
+                  // rename in current chunk
+                  renameVariablesInScope(
+                     scope,
+                     scope.getPreamble(),
+                     targetValue,
+                     targetType,
+                     false);
+
+                  renameChunkState_.setCurrentChunkRanges(ranges_);
+                  return applyRanges();
                }
             }
-            
-            return applyRanges();
+            else
+            {
+               List<Range> ranges = renameChunkState_.getAllChunkRanges();
+               if (!ranges.isEmpty())
+               {
+                  ranges_.clear();
+                  ranges_.addAll(ranges);
+                  return applyRanges();
+               }
+               else
+               {
+                  // rename in all chunks
+                  JsArray<Scope> scopeTree = editor_.getScopeTree();
+                  for (int i = 0, n = scopeTree.length(); i < n; i++)
+                  {
+                     if (scopeTree.get(i).isChunk())
+                     {
+                        String headerLine = editor_.getLine(scopeTree.get(i).getPreamble().getRow());
+                        Map<String, String> chunkOptions = RChunkHeaderParser.parse(headerLine);
+                        String engine = chunkOptions.getOrDefault("engine", "r");
+                        if (engine.toLowerCase() == "\"r\"")
+                        {
+                           renameVariablesInScope(
+                                 scopeTree.get(i),
+                                 scopeTree.get(i).getBodyStart(),
+                                 targetValue,
+                                 targetType,
+                                 false);
+                        }
+                     }
+                  }
+
+                  renameChunkState_.setAllChunkRanges(ranges_);
+                  return applyRanges();
+               }
+            }
          }
          
          if (!cursor.moveToPosition(scope.getBodyStart(), true))
@@ -417,14 +468,52 @@ public class TextEditingTargetRenameHelper
    
    private int applyRanges()
    {
-      // Clear any old selection...
-      if (ranges_.size() > 0)
-         editor_.clearSelection();
+      // Exit early if we have no ranges.
+      if (ranges_.isEmpty())
+         return 0;
 
-      // ... and select all of the new ranges of tokens.
-      for (Range range : ranges_)
-         editor_.getNativeSelection().addRange(range, false);
+      // Clear any existing selection.
+      editor_.clearSelection();
 
+      // Figure out the relevant cursor position, for determining
+      // the primary selection. The most recently added range becomes
+      // the 'primary' selection range, so we'll need to add that last.
+      //
+      // Doing this is important so that actions which cancel the
+      // multi-select command, e.g. cursor movement, use the appropriate
+      // cursor position afterwards.
+      Position cursorPos = renameChunkState_.getCursorPosition();
+      if (cursorPos == null)
+         cursorPos = editor_.getCursorPosition();
+
+      // First, check if one of the selected ranges contains the last
+      // saved cursor position. If so, we'll want to preserve that.
+      int rangeIndex = 0;
+      for (int i = 0, n = ranges_.size(); i < n; i++)
+      {
+         Range range = ranges_.get(i);
+         if (range.contains(cursorPos))
+         {
+            rangeIndex = i;
+            break;
+         }
+      }
+      
+      // Select all 'secondary' ranges.
+      for (int i = 0, n = ranges_.size(); i < n; i++)
+      {
+         if (i != rangeIndex)
+         {
+            Range range = ranges_.get(i);
+            editor_.getNativeSelection().addRange(range, false);
+         }
+      }
+
+      // Now select the 'primary' range.
+      Range range = ranges_.get(rangeIndex);
+      editor_.getNativeSelection().addRange(range, false);
+
+      // Return the number of selected ranges.
       return ranges_.size();
    }
    
@@ -510,14 +599,88 @@ public class TextEditingTargetRenameHelper
       ranges_.add(range);
    }
    
+   private static class RenameChunkState
+   {
+      public RenameChunkState()
+      {
+         currentChunkRanges_ = new ArrayList<>();
+         allChunkRanges_ = new ArrayList<>();
+         renameCount_ = 0;
+         resetTimer_ = new Timer() 
+         {
+            @Override
+            public void run()
+            {
+               reset();
+            }
+         };
+      }
+
+      public int nudge()
+      {
+         resetTimer_.schedule(CHUNK_RENAME_TIMEOUT_MS);
+         return renameCount_++;
+      }
+
+      public List<Range> getCurrentChunkRanges()
+      {
+         return currentChunkRanges_;
+      }
+
+      public void setCurrentChunkRanges(List<Range> ranges)
+      {
+         currentChunkRanges_.clear();
+         currentChunkRanges_.addAll(ranges);
+      }
+
+      public List<Range> getAllChunkRanges()
+      {
+         return allChunkRanges_;
+      }
+
+      public void setAllChunkRanges(List<Range> ranges)
+      {
+         allChunkRanges_.clear();
+         allChunkRanges_.addAll(ranges);
+      }
+
+      public void setCursorPosition(Position cursorPosition)
+      {
+         cursorPosition_ = cursorPosition;
+      }
+
+      public Position getCursorPosition()
+      {
+         return cursorPosition_;
+      }
+
+      private void reset()
+      {
+         currentChunkRanges_.clear();
+         allChunkRanges_.clear();
+         cursorPosition_ = null;
+         renameCount_ = 0;
+      }
+
+      private int renameCount_;
+      private Position cursorPosition_;
+
+      private final List<Range> currentChunkRanges_;
+      private final List<Range> allChunkRanges_;
+      private final Timer resetTimer_;
+   }
+
    private final AceEditor editor_;
    private final List<Range> ranges_;
    private final Stack<Integer> state_;
    private final List<Set<String>> protectedNamesList_;
-   
+   private final RenameChunkState renameChunkState_;
+   private final UserPrefs prefs_;
+
    private static final int STATE_TOP_LEVEL = 1;
    private static final int STATE_DEFAULT = 2;
    private static final int STATE_FUNCTION_CALL = 3;
    private static final int STATE_FUNCTION_DEFINITION = 4;
 
+   private static final int CHUNK_RENAME_TIMEOUT_MS = 1000;
 }

@@ -179,10 +179,10 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    }
 
    // Include a code execution hyperlink as well
-   boost::algorithm::replace_all(
-            *pOutput,
-            "warnings()",
-            ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
+   *pOutput = boost::regex_replace(
+       *pOutput,
+       boost::regex("\\bwarnings\\(\\)"),
+       ANSI_HYPERLINK("ide:run", "warnings()", "warnings()"));
 }
 
 } // end anonymous namespace

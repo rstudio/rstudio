@@ -36,6 +36,13 @@ public class CopilotTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotTextDocument
+   {
+      String uri;
+      int version;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotRange
    {
       public CopilotPosition start;
@@ -45,6 +52,7 @@ public class CopilotTypes
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotCompletionCommand
    {
+      public String title;
       public String command;
       public String[] arguments;
    }
@@ -56,7 +64,7 @@ public class CopilotTypes
       public CopilotRange range;
       public CopilotCompletionCommand command;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotError
    {

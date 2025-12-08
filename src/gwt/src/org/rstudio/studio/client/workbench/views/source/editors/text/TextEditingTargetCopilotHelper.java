@@ -22,7 +22,10 @@ import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -38,6 +41,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResultEntry;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
@@ -48,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -64,15 +70,16 @@ public class TextEditingTargetCopilotHelper
    interface CopilotCommandBinder extends CommandBinder<Commands, TextEditingTargetCopilotHelper>
    {
    }
-   
-   class Completion
+
+   // A wrapper class for Copilot Completions, which is used to track partially-accepted completions.
+   private static class Completion
    {
-      public Completion(CopilotCompletion originalCompletion, String displayText)
+      public Completion(CopilotCompletion originalCompletion)
       {
          // Copilot includes trailing '```' for some reason in some cases,
          // remove those if we're inserting in an R document.
          this.insertText = postProcessCompletion(originalCompletion.insertText);
-         this.displayText = postProcessCompletion(displayText);
+         this.displayText = this.insertText;
 
          this.startLine = originalCompletion.range.start.line;
          this.startCharacter = originalCompletion.range.start.character;
@@ -93,14 +100,125 @@ public class TextEditingTargetCopilotHelper
       public int partialAcceptedLength;
    }
 
+   /**
+    * Shows an inline edit suggestion diff view for the given completion.
+    */
+   private void showEditSuggestion(CopilotCompletion completion)
+   {
+      // Note that we can accept the diff suggestion with Tab
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         canAcceptSuggestionWithTab_ = true;
+      });
+
+      // Highlight the range in the document associated with
+      // the edit suggestion
+      Range editRange = Range.create(
+         completion.range.start.line,
+         completion.range.start.character,
+         completion.range.end.line,
+         completion.range.end.character);
+
+      diffMarkerId_ = display_.addHighlight(editRange, "ace_next-edit-suggestion-highlight", "text");
+
+      // Get the original text from the document at the edit range
+      String originalText = display_.getCode(
+         Position.create(completion.range.start.line,
+                         completion.range.start.character),
+         Position.create(completion.range.end.line,
+                         completion.range.end.character));
+
+      // Get the replacement text from the completion
+      String replacementText = completion.insertText;
+
+      // Create the diff view widget
+      diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
+      {
+         @Override
+         protected void apply()
+         {
+            // Get edit range
+            Range range = Range.create(
+               completion.range.start.line,
+               completion.range.start.character,
+               completion.range.end.line,
+               completion.range.end.character);
+
+            // Move cursor to end of edit range
+            display_.setCursorPosition(range.getEnd());
+
+            // Perform the actual replacement
+            display_.replaceRange(range, completion.insertText);
+
+            // Reset and schedule another suggestion
+            reset();
+            nesTimer_.schedule(20);
+         }
+
+         @Override
+         protected void discard()
+         {
+            reset();
+         }
+
+         @Override
+         public double getLineHeight()
+         {
+            return display_.getLineHeight();
+         }
+      };
+
+      // Insert as line widget at the end row of the completion
+      int row = completion.range.end.line;
+
+      diffWidget_ = new PinnedLineWidget(
+         "copilot-diff",
+         display_,
+         diffView_.getWidget(),
+         row,
+         null,
+         null);
+   }
+
+   /**
+    * Resets any visible ghost text or inline diff view.
+    * Call this before presenting a new suggestion to ensure only one is shown at a time.
+    */
+   private void reset()
+   {
+      // Remove ghost text
+      display_.removeGhostText();
+      completionTimer_.cancel();
+      activeCompletion_ = null;
+
+      // Detach inline diff view
+      if (diffWidget_ != null)
+      {
+         diffWidget_.detach();
+         diffWidget_ = null;
+      }
+
+      if (diffView_ != null)
+      {
+         diffView_.detach();
+         diffView_ = null;
+      }
+
+      if (diffMarkerId_ != -1)
+      {
+         display_.removeHighlight(diffMarkerId_);
+         diffMarkerId_ = -1;
+      }
+   }
+
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       binder_.bind(commands_, this);
-      
+
       target_ = target;
       display_ = target.getDocDisplay();
-      
+
       registrations_ = new HandlerRegistrations();
       
       completionTimer_ = new Timer()
@@ -208,11 +326,17 @@ public class TextEditingTargetCopilotHelper
                            JsArrayLike<CopilotCompletion> completions =
                                  Js.cast(result.asPropertyMap().get("items"));
                            
-                           
-                           events_.fireEvent(new CopilotEvent(
-                                 completions.getLength() == 0
-                                    ? CopilotEventType.COMPLETION_RECEIVED_NONE
-                                    : CopilotEventType.COMPLETION_RECEIVED_SOME));
+                           if (completions.getLength() == 0)
+                           {
+                              events_.fireEvent(new CopilotEvent(
+                                 CopilotEventType.COMPLETION_RECEIVED_NONE));
+                           }
+                           else
+                           {
+                              events_.fireEvent(new CopilotEvent(
+                                 CopilotEventType.COMPLETION_RECEIVED_SOME,
+                                 completions.getAt(0)));
+                           }
                            
                            // TODO: If multiple completions are available we should provide a way for 
                            // the user to view/select them. For now, use the last one.
@@ -224,8 +348,10 @@ public class TextEditingTargetCopilotHelper
                               // The completion data gets modified when doing partial (word-by-word)
                               // completions, so we need to use a copy and preserve the original
                               // (which we need to send back to the server as-is in some language-server methods).
-                              activeCompletion_ = new Completion(completion, computeGhostText(completion.insertText));
+                              CopilotCompletion normalized = normalizeCompletion(completion);
 
+                              reset();
+                              activeCompletion_ = new Completion(normalized);
                               display_.setGhostText(activeCompletion_.displayText);
                               server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                            }
@@ -238,6 +364,24 @@ public class TextEditingTargetCopilotHelper
                         }
                      });
             });
+         }
+      };
+
+      suspendTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            completionRequestsSuspended_ = false;
+         }
+      };
+
+      nesTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            requestNextEditSuggestions();
          }
       };
       
@@ -273,8 +417,44 @@ public class TextEditingTargetCopilotHelper
       {
          registrations_.addAll(
 
+               display_.addValueChangeHandler((event) ->
+               {
+                  nesTimer_.schedule(300);
+               }),
+
+               // click handler for next-edit suggestion gutter icon. we use a capturing
+               // event handler here so we can intercept the event before Ace does.
+               DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
+               {
+                  if (event.getButton() != NativeEvent.BUTTON_LEFT)
+                     return;
+
+                  Element target = event.getEventTarget().cast();
+
+                  // Check for clicks on the next-edit suggestion gutter icon.
+                  Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+                     }
+                  });
+
+                  if (nesEl != null)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     display_.applyGhostText();
+                     return;
+                  }
+               }),
+
                display_.addCursorChangedHandler((event) ->
                {
+                  // Eagerly reset Tab acceptance flag
+                  canAcceptSuggestionWithTab_ = false;
+
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
                      return;
@@ -285,11 +465,8 @@ public class TextEditingTargetCopilotHelper
                      return;
                            
                   // Allow one-time suppression of cursor change handler
-                  if (suppressCursorChangeHandler_)
-                  {
-                     suppressCursorChangeHandler_ = false;
+                  if (completionRequestsSuspended_)
                      return;
-                  }
                   
                   // Don't do anything if we have a selection.
                   if (display_.hasSelection())
@@ -315,6 +492,23 @@ public class TextEditingTargetCopilotHelper
                   @Override
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
+                     // Let diff view accept on Tab if applicable
+                     if (diffView_ != null)
+                     {
+                        NativeEvent event = keyEvent.getNativeEvent();
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           diffView_.apply();
+                           return;
+                        }
+                     }
+
+                     // Respect suppression flag
+                     if (completionRequestsSuspended_)
+                        return;
+
                      // If ghost text is being displayed, accept it on a Tab key press.
                      // TODO: Let user choose keybinding for accepting ghost text?
                      if (activeCompletion_ == null)
@@ -331,7 +525,7 @@ public class TextEditingTargetCopilotHelper
                      if (activeCompletion_.displayText.startsWith(key))
                      {
                         updateCompletion(key);
-                        suppressCursorChangeHandler_ = true;
+                        temporarilySuspendCompletionRequests();
                         return;
                      }
 
@@ -341,16 +535,24 @@ public class TextEditingTargetCopilotHelper
                         event.stopPropagation();
                         event.preventDefault();
 
+                        // Otherwise, accept the ghost text
                         Range aceRange = Range.create(
                               activeCompletion_.startLine,
                               activeCompletion_.startCharacter,
                               activeCompletion_.endLine,
                               activeCompletion_.endCharacter);
                         display_.replaceRange(aceRange, activeCompletion_.insertText);
-                        server_.copilotDidAcceptCompletion(activeCompletion_.originalCompletion.command,
-                                                           new VoidServerRequestCallback());
 
-                        activeCompletion_ = null;
+                        Position cursorPos = Position.create(
+                           activeCompletion_.endLine,
+                           activeCompletion_.endCharacter + activeCompletion_.insertText.length());
+                        display_.setCursorPosition(cursorPos);
+
+                        server_.copilotDidAcceptCompletion(
+                           activeCompletion_.originalCompletion.command,
+                           new VoidServerRequestCallback());
+
+                        reset();
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
                      {
@@ -382,7 +584,106 @@ public class TextEditingTargetCopilotHelper
          );
 
       }
-      
+   }
+
+   private void requestNextEditSuggestions()
+   {
+      if (!prefs_.copilotNesEnabled().getGlobalValue())
+         return;
+
+      if (completionRequestsSuspended_)
+         return;
+
+      target_.withSavedDoc(() ->
+      {
+         requestNextEditSuggestionsImpl();
+      });
+   }
+
+   private void requestNextEditSuggestionsImpl()
+   {
+      // Invalidate any prior requests.
+      nesId_ += 1;
+
+      // Save current request ID.
+      final int id = nesId_;
+
+      // Notify the listeners.
+      events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_REQUESTED));
+
+      // Make the request.
+      server_.copilotNextEditSuggestions(
+         target_.getId(),
+         StringUtil.notNull(target_.getPath()),
+         StringUtil.isNullOrEmpty(target_.getPath()),
+         display_.getCursorRow(),
+         display_.getCursorColumn(),
+         new ServerRequestCallback<CopilotNextEditSuggestionsResponse>()
+         {
+            @Override
+            public void onResponseReceived(CopilotNextEditSuggestionsResponse response)
+            {
+               // Check for invalidated request.
+               if (id != nesId_)
+                  return;
+
+               // Check for edits
+               boolean hasEdits =
+                  response.result != null &&
+                  response.result.edits != null &&
+                  response.result.edits.getLength() > 0;
+
+               if (!hasEdits)
+               {
+                  events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_RECEIVED_NONE));
+                  return;
+               }
+
+               reset();
+               CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
+
+               // Construct a Copilot completion object from the response
+               CopilotCompletion completion = new CopilotCompletion();
+               completion.insertText = entry.text;
+               completion.range = entry.range;
+               completion.command = entry.command;
+
+               events_.fireEvent(new CopilotEvent(
+                  CopilotEventType.COMPLETION_RECEIVED_SOME,
+                  completion));
+
+               // The completion data gets modified when doing partial (word-by-word)
+               // completions, so we need to use a copy and preserve the original
+               // (which we need to send back to the server as-is in some language-server methods).
+               CopilotCompletion normalized = normalizeCompletion(completion);
+               activeCompletion_ = new Completion(normalized);
+
+               if (normalized.range.start.line == normalized.range.end.line &&
+                   normalized.range.start.character == normalized.range.end.character)
+               {
+                  // If the start position and end position match, then display
+                  // the suggestion using ghost text at that position.
+                  Position position = Position.create(
+                     normalized.range.start.line,
+                     normalized.range.start.character);
+                  display_.setGhostText(activeCompletion_.displayText, position);
+
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  return;
+               }
+               else
+               {
+                  // Otherwise, show the suggestion as an inline diff view.
+                  showEditSuggestion(completion);
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
    }
    
    @Handler
@@ -428,7 +729,7 @@ public class TextEditingTargetCopilotHelper
       
       Timers.singleShot(() ->
       {
-         suppressCursorChangeHandler_ = true;
+         temporarilySuspendCompletionRequests();
          display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
          display_.setGhostText(activeCompletion_.displayText);
          server_.copilotDidAcceptPartialCompletion(activeCompletion_.originalCompletion, 
@@ -482,7 +783,7 @@ public class TextEditingTargetCopilotHelper
       });
    }
    
-   private String postProcessCompletion(String text)
+   private static String postProcessCompletion(String text)
    {
       // Exclude chunk markers from completion results
       int endChunkIndex = text.indexOf("\n```");
@@ -502,24 +803,69 @@ public class TextEditingTargetCopilotHelper
       return copilot_.isEnabled();
    }
    
-   private String computeGhostText(String completionText)
+   // A Copilot completion will often overlap region(s) of the document.
+   // Try to avoid presenting this overlap, so that only the relevant
+   // portion of the completed text is presented to the user.
+   private CopilotCompletion normalizeCompletion(CopilotCompletion completion)
    {
-      // If the completion includes existing text (i.e. at the beginning of the completion) 
-      // remove that duplicated prefix from the ghost text.
-      String currentLine = display_.getLine(display_.getCursorRow());
-      String currentLineBeforeCursor = StringUtil.substring(currentLine, 0, display_.getCursorColumn());
-
-      // find the common prefix between the current line and the completion text
-      int commonPrefixLength = 0;
-      for (int i = 0; i < Math.min(currentLineBeforeCursor.length(), completionText.length()); i++)
+      try
       {
-         if (currentLineBeforeCursor.charAt(i) != completionText.charAt(i))
-            break;
-         commonPrefixLength++;
+         return normalizeCompletionImpl(completion);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         return completion;
+      }
+   }
+
+   private CopilotCompletion normalizeCompletionImpl(CopilotCompletion completion)
+   {
+      // Remove any overlap from the start of the completion.
+      int lhs = 0;
+      {
+         int row = completion.range.start.line;
+         int col = completion.range.start.character;
+         String line = display_.getLine(row);
+
+         for (; col + lhs < line.length(); lhs++)
+         {
+            char clhs = completion.insertText.charAt(lhs);
+            char crhs = line.charAt(col + lhs);
+            if (clhs != crhs)
+               break;
+         }
       }
 
-      // remove the common prefix from the completion text and return it as the ghost text
-      return completionText.substring(commonPrefixLength);
+      // Remove any overlap from the end of the completion.
+      // Only do this part for single-line completions.
+      int rhs = 0;
+      if (completion.range.start.line == completion.range.end.line)
+      {
+         int row = completion.range.end.line;
+         int col = completion.range.end.character;
+         String line = display_.getLine(row);
+
+         for (; col - rhs > 0; rhs++)
+         {
+            char clhs = completion.insertText.charAt(completion.insertText.length() - rhs - 1);
+            char crhs = line.charAt(col - rhs - 1);
+            if (clhs != crhs)
+               break;
+         }
+      }
+
+      CopilotCompletion normalized = JsUtil.clone(completion);
+      normalized.insertText = normalized.insertText.substring(lhs, normalized.insertText.length() - rhs);
+      normalized.range.start.character += lhs;
+      normalized.range.end.character -= rhs;
+      return normalized;
+   }
+
+   private void temporarilySuspendCompletionRequests()
+   {
+      completionRequestsSuspended_ = true;
+      suspendTimer_.schedule(1200);
    }
 
    @Inject
@@ -541,17 +887,24 @@ public class TextEditingTargetCopilotHelper
    private final TextEditingTarget target_;
    private final DocDisplay display_;
    private final Timer completionTimer_;
+   private final Timer suspendTimer_;
+   private final Timer nesTimer_;
+   private int nesId_ = 0;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    
    private int requestId_;
-   private boolean suppressCursorChangeHandler_;
+   private boolean completionRequestsSuspended_;
    private boolean copilotDisabledInThisDocument_;
-   
+
+   private AceEditorDiffView diffView_;
+   private PinnedLineWidget diffWidget_;
+   private int diffMarkerId_ = -1;
+   private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
-   
-   
+
+
    // Injected ----
    private Copilot copilot_;
    private EventBus events_;

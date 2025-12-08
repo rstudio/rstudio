@@ -388,6 +388,7 @@ public class ElementIds
    public final static String PROJECT_MENUBUTTON = "project_menubutton";
    public final static String PROJECT_MENUBUTTON_TOOLBAR_SUFFIX = "toolbar";
    public final static String PROJECT_MENUBUTTON_MENUBAR_SUFFIX = "menubar";
+   public final static String SIDEBAR_TOGGLE_BUTTON = "sidebar_toggle_button";
 
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
@@ -791,6 +792,7 @@ public class ElementIds
    public final static String PANE_LAYOUT_RIGHT_BOTTOM_SELECT = "pane_layout_right_bottom_select";
    public final static String PANE_LAYOUT_SIDEBAR_SELECT = "pane_layout_sidebar_select";
    public final static String PANE_LAYOUT_SIDEBAR_VISIBLE = "pane_layout_sidebar_visible";
+   public final static String PANE_LAYOUT_RESET_LINK = "pane_layout_reset_link";
 
    // TextEntryModalDialog
    public final static String TEXT_ENTRY = "text_entry";

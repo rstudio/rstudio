@@ -469,6 +469,9 @@ struct SchemaVersion {
       static const std::map<std::string, int>& versionMap();
 };
 
+// Stream operator for SchemaVersion
+std::ostream& operator<<(std::ostream& os, const rstudio::core::database::SchemaVersion& version);
+
 class SchemaUpdater
 {
 public:

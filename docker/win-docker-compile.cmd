@@ -87,6 +87,9 @@ docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_PROJECT_ROOT C:/rstudio
 docker exec %CONTAINER_ID% cmd.exe /C setx /M RSTUDIO_DOCKER_DEVELOPMENT_BUILD 1
 
 docker exec %CONTAINER_ID% cmd.exe /C ^
+    "cd C:\rstudio\src\gwt && ant clean"
+
+docker exec %CONTAINER_ID% cmd.exe /C ^
     "cd C:\rstudio\package\win32 && make-package.bat"
 
 docker exec %CONTAINER_ID% cmd.exe /C "mkdir C:\package"

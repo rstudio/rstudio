@@ -32,15 +32,35 @@ shopt -s dotglob
 
 codesign_args=("$@")
 
+retry () {
+
+	local status=0
+
+	for _ in 1 2 3; do
+
+		if "$@"; then
+			status=0
+			break
+		else
+			status=$?
+			sleep 1
+		fi
+
+	done
+
+	return "${status}"
+
+}
+
 codesign-binary () {
 
-	codesign "${codesign_args[@]}" "$@"
+	retry codesign "${codesign_args[@]}" "$@"
 
 }
 
 codesign-file () {
 
-	codesign "${codesign_args[@]}" --entitlements entitlements/default.plist "$@"
+	retry codesign "${codesign_args[@]}" --entitlements entitlements/default.plist "$@"
 
 }
 

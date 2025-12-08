@@ -2207,6 +2207,29 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   public PrefValue<String> rmdRenameInScopeBehavior()
+   {
+      return enumeration(
+         "rmd_rename_in_scope_behavior",
+         _constants.rmdRenameInScopeBehaviorTitle(), 
+         _constants.rmdRenameInScopeBehaviorDescription(), 
+         new String[] {
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT,
+            RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL
+         },
+         "all",
+         new String[] {
+            _constants.rmdRenameInScopeBehaviorEnum_current(),
+            _constants.rmdRenameInScopeBehaviorEnum_all()
+         });
+   }
+
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_CURRENT = "current";
+   public final static String RMD_RENAME_IN_SCOPE_BEHAVIOR_ALL = "all";
+
+   /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    public PrefValue<Boolean> enableTextDrag()
@@ -3726,6 +3749,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   public PrefValue<Boolean> copilotNesEnabled()
+   {
+      return bool(
+         "copilot_nes_enabled",
+         _constants.copilotNesEnabledTitle(), 
+         _constants.copilotNesEnabledDescription(), 
+         false);
+   }
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    public PrefValue<Boolean> copilotShowMessages()
@@ -3900,15 +3935,27 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   public PrefValue<Boolean> showChatUi()
+   public PrefValue<Boolean> pai()
    {
       return bool(
-         "show_chat_ui",
-         _constants.showChatUiTitle(), 
-         _constants.showChatUiDescription(), 
+         "pai",
+         _constants.paiTitle(), 
+         _constants.paiDescription(), 
          false);
+   }
+
+   /**
+    * Experimental
+    */
+   public PrefValue<String> paiDownloadUri()
+   {
+      return string(
+         "pai_download_uri",
+         _constants.paiDownloadUriTitle(), 
+         _constants.paiDownloadUriDescription(), 
+         "");
    }
 
    public void syncPrefs(String layer, JsObject source)
@@ -4219,6 +4266,8 @@ public class UserPrefsAccessor extends Prefs
          terminalWeblinks().setValue(layer, source.getBool("terminal_weblinks"));
       if (source.hasKey("show_rmd_render_command"))
          showRmdRenderCommand().setValue(layer, source.getBool("show_rmd_render_command"));
+      if (source.hasKey("rmd_rename_in_scope_behavior"))
+         rmdRenameInScopeBehavior().setValue(layer, source.getString("rmd_rename_in_scope_behavior"));
       if (source.hasKey("enable_text_drag"))
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
@@ -4433,6 +4482,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("copilot_nes_enabled"))
+         copilotNesEnabled().setValue(layer, source.getBool("copilot_nes_enabled"));
       if (source.hasKey("copilot_show_messages"))
          copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
       if (source.hasKey("copilot_project_workspace"))
@@ -4455,8 +4506,10 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
-      if (source.hasKey("show_chat_ui"))
-         showChatUi().setValue(layer, source.getBool("show_chat_ui"));
+      if (source.hasKey("pai"))
+         pai().setValue(layer, source.getBool("pai"));
+      if (source.hasKey("pai_download_uri"))
+         paiDownloadUri().setValue(layer, source.getString("pai_download_uri"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4614,6 +4667,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
       prefs.add(showRmdRenderCommand());
+      prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
       prefs.add(alwaysShownFiles());
@@ -4721,6 +4775,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(copilotNesEnabled());
       prefs.add(copilotShowMessages());
       prefs.add(copilotProjectWorkspace());
       prefs.add(projectName());
@@ -4732,7 +4787,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
-      prefs.add(showChatUi());
+      prefs.add(pai());
+      prefs.add(paiDownloadUri());
       return prefs;
    }
    

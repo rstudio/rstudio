@@ -18,6 +18,12 @@
 
 #include <map>
 #include <deque>
+#include <vector>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/member.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
@@ -166,6 +172,158 @@ private:
 
    boost::shared_ptr<Node> frontNode_;
    boost::shared_ptr<Node> backNode_;
+
+   boost::mutex mutex_;
+};
+
+template <typename KeyType, typename ValueType>
+class MultiIndexLruCache
+{
+public:
+   MultiIndexLruCache(unsigned int maxSize) : maxSize_(maxSize) {}
+   virtual ~MultiIndexLruCache() {}
+
+   void insert(const KeyType& key,
+               const ValueType& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto& keyIndex = cache_.template get<ByKey>();
+         auto it = keyIndex.find(key);
+         if (it != keyIndex.end())
+         {
+            // entry for this key already exists - we are updating the value instead of inserting it
+            // we need to move it to the front so that this entry's LRU "time" is effectively updated
+            keyIndex.modify(it, [&value](Entry& e){ e.value = value; });
+            
+            auto& seqIndex = cache_.template get<BySeq>();
+            seqIndex.relocate(seqIndex.begin(), cache_.template project<BySeq>(it));
+         }
+         else
+         {
+            if (cache_.size() >= maxSize_)
+            {
+               // the cache has reached maximum size
+               // remove the oldest item from the cache which is at the back of the node chain
+               auto& seqIndex = cache_.template get<BySeq>();
+               seqIndex.pop_back();
+            }
+
+            // create a new node and store it
+            auto& seqIndex = cache_.template get<BySeq>();
+            seqIndex.push_front(Entry(key, value));
+         }
+      }
+      END_LOCK_MUTEX
+   }
+
+   bool get(const KeyType& key,
+            ValueType* pValue)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto& keyIndex = cache_.template get<ByKey>();
+         auto it = keyIndex.find(key);
+         if (it == keyIndex.end())
+            return false;
+
+         // remove and reinsert node to update its last access time
+         auto& seqIndex = cache_.template get<BySeq>();
+         seqIndex.relocate(seqIndex.begin(), cache_.template project<BySeq>(it));
+
+         *pValue = it->value;
+         return true;
+      }
+      END_LOCK_MUTEX
+
+      return false;
+   }
+
+   void getByValue(const ValueType& value, std::vector<KeyType>* pKeys)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto& valIndex = cache_.template get<ByValue>();
+         auto range = valIndex.equal_range(value);
+         for (auto it = range.first; it != range.second; ++it)
+         {
+            pKeys->push_back(it->key);
+         }
+      }
+      END_LOCK_MUTEX
+   }
+
+   void remove(const KeyType& key)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto& keyIndex = cache_.template get<ByKey>();
+         keyIndex.erase(key);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void removeByValue(const ValueType& value)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         auto& valIndex = cache_.template get<ByValue>();
+         valIndex.erase(value);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void clear()
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         cache_.clear();
+      }
+      END_LOCK_MUTEX
+   }
+
+   size_t size()
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         return cache_.size();
+      }
+      END_LOCK_MUTEX
+
+      return 0;
+   }
+
+private:
+   struct Entry
+   {
+      Entry(const KeyType& key, const ValueType& value) :
+         key(key), value(value) {}
+
+      KeyType key;
+      ValueType value;
+   };
+
+   struct BySeq {};
+   struct ByKey {};
+   struct ByValue {};
+
+   typedef boost::multi_index::multi_index_container<
+      Entry,
+      boost::multi_index::indexed_by<
+         boost::multi_index::sequenced<boost::multi_index::tag<BySeq>>,
+         boost::multi_index::ordered_unique<
+            boost::multi_index::tag<ByKey>,
+            boost::multi_index::member<Entry, KeyType, &Entry::key>
+         >,
+         boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<ByValue>,
+            boost::multi_index::member<Entry, ValueType, &Entry::value>
+         >
+      >
+   > Cache;
+
+   unsigned int maxSize_;
+   Cache cache_;
 
    boost::mutex mutex_;
 };

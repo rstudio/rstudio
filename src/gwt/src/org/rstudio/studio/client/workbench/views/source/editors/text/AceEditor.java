@@ -157,6 +157,8 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpHandler;
@@ -2044,6 +2046,16 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().exitMultiSelectMode();
    }
 
+   public void startOperation()
+   {
+      widget_.getEditor().startOperation();
+   }
+
+   public void endOperation()
+   {
+      widget_.getEditor().endOperation();
+   }
+
    public void clearSelection()
    {
       widget_.getEditor().clearSelection();
@@ -2701,6 +2713,11 @@ public class AceEditor implements DocDisplay
       return useVimMode_ && widget_.getEditor().isVimInInsertMode();
    }
 
+   public void setMargin(int top, int bottom, int left, int right)
+   {
+      widget_.getEditor().getRenderer().setMargin(top, bottom, left, right);
+   }
+
    public void setPadding(int padding)
    {
       widget_.getEditor().getRenderer().setPadding(padding);
@@ -2786,6 +2803,11 @@ public class AceEditor implements DocDisplay
    public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
    {
       return widget_.addAttachHandler(handler);
+   }
+
+   public HandlerRegistration addLoadHandler(LoadHandler handler)
+   {
+      return widget_.addHandler(handler, LoadEvent.getType());
    }
 
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
@@ -3258,6 +3280,24 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
+   public int addHighlight(Range range, String className)
+   {
+      return getSession().addMarker(range, className, "text", false);
+   }
+
+   @Override
+   public int addHighlight(Range range, String className, String highlightType)
+   {
+      return getSession().addMarker(range, className, highlightType, false);
+   }
+
+   @Override
+   public void removeHighlight(int markerId)
+   {
+      getSession().removeMarker(markerId);
+   }
+
+   @Override
    public void highlightDebugLocation(SourcePosition startPosition,
                                       SourcePosition endPosition,
                                       boolean executing)
@@ -3603,6 +3643,11 @@ public class AceEditor implements DocDisplay
       return widget_;
    }
 
+   public Element getElement()
+   {
+      return widget_.getElement();
+   }
+
    public HandlerRegistration addKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addKeyDownHandler(handler);
@@ -3730,14 +3775,14 @@ public class AceEditor implements DocDisplay
       
       lineDebugMarkerId_ = createRangeHighlightMarker(
             startPos, endPos,
-            "ace_active_debug_line");
+            AceEditorGutterStyles.ACTIVE_DEBUG_LINE);
       
       if (executing)
       {
          executionLine_ = startPos.getRow();
          widget_.getEditor().getRenderer().addGutterDecoration(
                executionLine_,
-               "ace_executing-line");
+               AceEditorGutterStyles.EXECUTING_LINE);
       }
    }
 
@@ -3753,7 +3798,7 @@ public class AceEditor implements DocDisplay
       {
          widget_.getEditor().getRenderer().removeGutterDecoration(
                executionLine_,
-               "ace_executing-line");
+               AceEditorGutterStyles.EXECUTING_LINE);
          executionLine_ = null;
       }
    }
@@ -4263,6 +4308,17 @@ public class AceEditor implements DocDisplay
 
    // ---- Annotation related operations
 
+   public HandlerRegistration addGutterItem(int row, String className)
+   {
+      LintItem item = LintItem.create(row, className);
+      return widget_.addGutterItem(item);
+   }
+
+   public HandlerRegistration addGutterItem(LintItem item)
+   {
+      return widget_.addGutterItem(item);
+   }
+
    public JsArray<AceAnnotation> getAnnotations()
    {
       return widget_.getAnnotations();
@@ -4272,7 +4328,7 @@ public class AceEditor implements DocDisplay
    {
       widget_.setAnnotations(annotations);
    }
-   
+
    public JsMap<Marker> getMarkers(boolean inFront)
    {
       return widget_.getMarkers(inFront);
@@ -4682,7 +4738,12 @@ public class AceEditor implements DocDisplay
    
    public void setGhostText(String text)
    {
-      widget_.getEditor().setGhostText(text);
+      setGhostText(text, null);
+   }
+
+   public void setGhostText(String text, Position position)
+   {
+      widget_.getEditor().setGhostText(text, position);
    }
    
    public void applyGhostText()
@@ -4698,6 +4759,16 @@ public class AceEditor implements DocDisplay
    public void removeGhostText()
    {
       widget_.getEditor().removeGhostText();
+   }
+
+   public int getLineCount()
+   {
+      return widget_.getEditor().getSession().getLength();
+   }
+
+   public double getLineHeight()
+   {
+      return widget_.getEditor().getRenderer().getLineHeight();
    }
 
    private static class BackgroundTokenizer

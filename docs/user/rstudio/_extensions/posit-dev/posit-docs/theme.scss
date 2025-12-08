@@ -4,201 +4,144 @@
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
 
 // import shared colors
-@import '_posit-colors';
+@import "_posit-colors";
 
 /*-- scss:variables --*/
 $primary: $posit-blue;
+
+/* ======== General Styles ======== */
 
 // Feature preview heading colors
 $preview-header: #ee6331; /* posit orange, contrast: 8.45 */
 $preview-header-border: darken($preview-header, 5%);
 
-// scss-docs-end color-variables
-
 // Typography
-// Font, line-height, and color for body text, headings, and more.
-
-//scss-font-start font-variables
-$font-family-sans-serif: "Open Sans", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial,
-  sans-serif, system-ui;
+$font-family-sans-serif: "Open Sans", "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+  "Liberation Sans", Arial, sans-serif, system-ui;
 $font-family-monospace: "Source Code Pro", monospace;
 $font-family-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 $font-size-base: 1rem;
-// scss-docs-end font-variables
-
-//font and body color
-$body-color: $posit-dark-gray-1;
-
-// scss-docs-start font-sizes
-$h1-font-size: 44px;
-$h2-font-size: 28px;
-
-h1 {
-  size: $h1-font-size;
-}
-h2 {
-  size: $h2-font-size;
-}
-// scss-docs-end font-sizes
+$line-height-base: 1.7;
 
 // Headings
-// scss-docs-start headings-variables
-$headings-font-weight: 400 !important;
-// scss-docs-end headings-variables
+$headings-font-weight: 400 !default;
 
-//  Customize the navbar
+// Font and body color
+$body-color: $posit-dark-gray-2;
+
+// Navbar customization
 $navbar-bg: #ffffff;
-$navbar-fg: #888888;
-$navbar-hl: #000000;
-$navbar-brand: $body-color;
+$navbar-fg: $posit-light-gray-3;
+$navbar-hl: $primary;
+$navbar-brand: $posit-dark-gray-2;
 $navbar-brand-hl: $navbar-brand;
-//$navbar-brand-font-size: 14px !default;
+$navbar-brand-font-size: 1rem !default;
 
-// scss-docs-start list-group-variables
-$list-group-color: $primary !default;
-// scss-docs-end list-group-variables
+// Callouts
+$callout-color-note: $posit-blue;
+$callout-color-warning: $posit-orange;
+$callout-color-important: $posit-burgundy;
 
-// CSS overrides
-
-// Body
-//
-// Settings for the `<body>` element.
-
-/* Body font */
-body {
-  font-weight: 400 !important;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-// Nav and footer
+// Tables
+$table-hover-bg: $posit-light-blue-2 !default;
+$table-striped-bg: $posit-light-blue-1 !default;
 
 /* Navbar */
-
 .navbar {
-  box-shadow:
-    0 0 0.2rem #0000001a,
-    0 0.1rem 0.4rem #0003;
-  transition:
-    transform 0.25s cubic-bezier(0.1, 0.7, 0.1, 1),
-    box-shadow 0.25s;
-}
-
-.navbar-title {
-  font-family: $font-family-sans-serif;
-  font-size: $font-size-base;
-  font-weight: 500;
+  border-bottom: 1px solid $posit-light-blue-1;
 }
 
 /* Style for the version included in the website title */
 .navbar-title small {
   font-size: 14px;
   display: block;
-  padding-left: 1em;
-}
-
-.nav-link {
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  color: $posit-dark-gray-1 !important;
-}
-
-.navbar-nav .nav-link.active,
-.navbar-nav .nav-link.show {
-  color: #000000 !important;
-  font-weight: 700 !important;
 }
 
 /* Adds separation between nav bar links and site title */
 .navbar-collapse {
-  margin-left: 50px !important;
+  margin-left: 2ch;
+}
+
+/* Adds weight to selected active item in the navbar */
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link.show {
+  font-weight: 600;
+}
+
+/* Sidebar */
+.sidebar-navigation a {
+  // font-weight: 500;
+}
+
+#quarto-sidebar strong {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+div.sidebar-item-container .active,
+div.sidebar-item-container .show > .nav-link,
+div.sidebar-item-container .sidebar-link > code {
+  background-color: #f4f4f7;
+  border-radius: 5px;
+  margin-bottom: 2px;
+  margin-left: -5px;
+  padding: 6px;
+}
+
+div.sidebar-item-container .active,
+div.sidebar-item-container .show > .nav-link,
+div.sidebar-item-container .sidebar-link > code {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.sidebar-navigation li a {
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+/* Mini TOC */
+.sidebar nav[role="doc-toc"] > ul li a {
+  font-size: 1rem;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar nav[role="doc-toc"] ul > li > ul > li > a.active {
+  font-weight: 700;
+  border-left: 2px solid #447099 !important;
 }
 
 /* Footer */
-
-.nav-footer {
-  border-top: solid #0000001a 0.01em;
-}
-
-.nav-footer .nav-footer-center {
-  min-height: min-content;
-}
-
-/* Footer icons */
-
-/* Full Posit logo - currently, unused */
-#footer-right-full-posit-logo {
-  width: 70px;
-  min-width: 70px;
-}
-
-/* Posit guide book */
-#footer-right-logo {
-  width: 24px;
-  min-width: 24px;
-  margin-left: -3px !important;
-  margin-right: -3px !important;
-  padding-top: 1px;
-}
-
-/* Posit icon fullcolor */
 #footer-right-posit-logo {
-  width: 18px;
-  min-width: 18px;
-  margin-left: -10px !important;
 }
 
-/* Posit logo - footer
-#footer-logo {
-  width: 70px;
-  min-width: 70px;
-}
-*/
-
-.bi-question-circle-fill {
-  font-size: 18px !important;
+.nav-footer-left .footer-items,
+.nav-item {
+  padding-right: 11px;
 }
 
-.bi-lightbulb-fill {
-  font-size: 18px !important;
+.posit-footer-logo {
+  margin-right: -10px;
+  // margin-right: 5px; #Positron uses this to align the logo with the text
 }
 
-.bi-cookie {
-  font-size: 18px !important;
-
-}
-
-// Footnotes
-
-.footnote-back {
-  font-size: 16px !important;
-  font-weight: 900px !important;
-  color: $posit-dark-blue-1;
-}
-
-// Tabs and pills
-
-/* Tabs */
-
+/* Tabs and Pills */
 .nav-tabs .nav-link {
   text-transform: none !important;
   font-family: $font-family-sans-serif;
-  color: $posit-gray !important;
+  color: $navbar-fg;
 }
 
 .nav-tabs .nav-link.active,
 .nav-tabs .nav-item.show .nav-link {
-  color: #000000 !important;
+  color: $primary !important;
   font-weight: 700 !important;
-  text-decoration: underline 1px $posit-orange !important;
 }
 
 .nav-tabs .nav-link:hover,
 .nav-link:focus {
   color: $posit-blue !important;
 }
-
-/* Pills */
 
 .nav-pills {
   border: none !important;
@@ -211,6 +154,7 @@ body {
     border: none !important;
     flex-direction: row;
     justify-content: center;
+
     .nav-link {
       cursor: pointer;
     }
@@ -248,98 +192,50 @@ body {
   color: #ffffff !important;
 }
 
-// Sidebar and toc
-
-/* Left nav */
-.sidebar-item-container .active {
-  font-weight: 500;
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: $headings-font-weight !important;
 }
 
-/* Left nav - letter spacing */
-.sidebar-navigation li a {
-  letter-spacing: 0.03em;
-  font-size: 16px;
-}
-
-/* Left nav - letter spacing */
-.sidebar-navigation li a {
+/* Body */
+body {
   letter-spacing: -0.2px;
-  line-height: normal;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Mini TOC */
-.sidebar nav[role="doc-toc"] > ul li a {
-  text-transform: none !important;
-  font-family: $font-family-sans-serif;
-  font-weight: 500 !important;
-  letter-spacing: -0.2px !important;
+/* Code */
+div.sourceCode {
+  background-color: lighten($posit-light-gray-3, 55%) !important;
 }
 
-.sidebar nav[role="doc-toc"] ul > li > a.active,
-.sidebar nav[role="doc-toc"] ul > li > ul > li > a.active {
-  font-weight: 700 !important;
+.code-with-filename .code-with-filename-file {
+  padding: 0.25rem;
+  border: none !important;
+  box-shadow: 0px 0px 2px rgba(5, 10, 15, 0.14), 0px 2px 4px rgba(29, 31, 33, 0.16);
 }
 
-// Lists
-
-/* List disc colors */
-li::marker {
-  color: $primary;
+div.sourceCode,
+pre.console {
+  border: none !important;
+  box-shadow: 0px 0px 2px rgba(5, 10, 15, 0.14), 0px 2px 4px rgba(29, 31, 33, 0.16);
+  margin-top: 2rem;
+  margin-bottom: 2.5rem;
+  padding: 0.25rem;
 }
 
-// Callouts
-
-.callout.callout-style-default:not(.no-icon) div.callout-title-container {
-  color: $posit-dark-gray-1 !important;
+p code.sourceCode,
+li code.sourceCode,
+td code.sourceCode {
+  background-color: lighten($posit-light-gray-3, 55%) !important;
 }
 
-/* Note */
-
-div.callout-note.callout {
-  border-left-color: $posit-blue !important;
+/* Footnotes */
+a.footnote-back {
+  font-weight: 900;
+  font-size: 1.1rem;
 }
 
-div.callout-note .callout-icon::before {
-  // base64 -i _extensions/posit-docs/assets/images/info-circle.svg
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzE3MjEyQiIgY2xhc3M9ImJpIGJpLWluZm8tY2lyY2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik04IDE1QTcgNyAwIDEgMSA4IDFhNyA3IDAgMCAxIDAgMTRtMCAxQTggOCAwIDEgMCA4IDBhOCA4IDAgMCAwIDAgMTYiLz4KICA8cGF0aCBkPSJtOC45MyA2LjU4OC0yLjI5LjI4Ny0uMDgyLjM4LjQ1LjA4M2MuMjk0LjA3LjM1Mi4xNzYuMjg4LjQ2OWwtLjczOCAzLjQ2OGMtLjE5NC44OTcuMTA1IDEuMzE5LjgwOCAxLjMxOS41NDUgMCAxLjE3OC0uMjUyIDEuNDY1LS41OThsLjA4OC0uNDE2Yy0uMi4xNzYtLjQ5Mi4yNDYtLjY4Ni4yNDYtLjI3NSAwLS4zNzUtLjE5My0uMzA0LS41MzN6TTkgNC41YTEgMSAwIDEgMS0yIDAgMSAxIDAgMCAxIDIgMCIvPgo8L3N2Zz4=") !important;
-}
-
-div.callout-note.callout-style-default > .callout-header {
-  background-color: #dce7f2 !important;
-}
-
-/* Warning */
-div.callout-warning.callout {
-  border-left-color: $posit-orange !important;
-}
-
-div.callout-warning .callout-icon::before {
-  // base64 -i _extensions/posit-docs/assets/images/exclamation-triangle.svg
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzQ1MUYxMiIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLXRyaWFuZ2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPgogIDxwYXRoIGQ9Ik03LjkzOCAyLjAxNkEuMTMuMTMgMCAwIDEgOC4wMDIgMmEuMTMuMTMgMCAwIDEgLjA2My4wMTYuMTUuMTUgMCAwIDEgLjA1NC4wNTdsNi44NTcgMTEuNjY3Yy4wMzYuMDYuMDM1LjEyNC4wMDIuMTgzYS4yLjIgMCAwIDEtLjA1NC4wNi4xLjEgMCAwIDEtLjA2Ni4wMTdIMS4xNDZhLjEuMSAwIDAgMS0uMDY2LS4wMTcuMi4yIDAgMCAxLS4wNTQtLjA2LjE4LjE4IDAgMCAxIC4wMDItLjE4M0w3Ljg4NCAyLjA3M2EuMTUuMTUgMCAwIDEgLjA1NC0uMDU3bTEuMDQ0LS40NWExLjEzIDEuMTMgMCAwIDAtMS45NiAwTC4xNjUgMTMuMjMzYy0uNDU3Ljc3OC4wOTEgMS43NjcuOTggMS43NjdoMTMuNzEzYy44ODkgMCAxLjQzOC0uOTkuOTgtMS43Njd6Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDEyYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNS45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
-}
-
-div.callout-warning.callout-style-default > .callout-header {
-  background-color: #fad8ca !important;
-}
-
-/* Important */
-
-div.callout-important.callout {
-  border-left-color: $posit-burgundy !important;
-}
-
-div.callout-important .callout-icon::before {
-  // base64 -i _extensions/posit-docs/assets/images/exclamation-circle.svg
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iIzJFMTcxRiIgY2xhc3M9ImJpIGJpLWV4Y2xhbWF0aW9uLWNpcmNsZSIgdmlld0JveD0iMCAwIDE2IDE2Ij4KICA8cGF0aCBkPSJNOCAxNUE3IDcgMCAxIDEgOCAxYTcgNyAwIDAgMSAwIDE0bTAgMUE4IDggMCAxIDAgOCAwYTggOCAwIDAgMCAwIDE2Ii8+CiAgPHBhdGggZD0iTTcuMDAyIDExYTEgMSAwIDEgMSAyIDAgMSAxIDAgMCAxLTIgME03LjEgNC45OTVhLjkwNS45MDUgMCAxIDEgMS44IDBsLS4zNSAzLjUwN2EuNTUyLjU1MiAwIDAgMS0xLjEgMHoiLz4KPC9zdmc+") !important;
-}
-
-div.callout-important.callout-style-default > .callout-header {
-  background-color: #f2dae3 !important;
-}
-
-// Specialty headers
-
-/* the feature PREVIEW header */
+/* Feature Preview Header */
 .preview-header > h1:after,
 .preview-header > h2:after,
 .preview-header > h3:after,
@@ -370,10 +266,7 @@ div span.preview-feature {
   text-transform: uppercase;
 }
 
-// Specialty lists
-
-/* Callout steps for images with multiple items/steps shown in single image */
-
+/* Callout Steps */
 ol.groovyAlpha {
   list-style: none;
   counter-reset: list-counter;
@@ -398,8 +291,56 @@ ol.groovyAlpha li > p:before {
   vertical-align: middle;
 }
 
-// Mermaid diagrams
+/* Keyboard Shortcuts */
+kbd {
+  padding: 0.2rem 0.4rem;
+}
 
-#mermaid-1 .nodeLabel {
-  font-weight: 700!important;
+/* Version Toast */
+#version-toast {
+  background-color: $posit-white;
+  color: $body-color;
+
+  .toast-header {
+    background-color: $primary;
+    color: #ffffff;
+  }
+
+  .btn-close {
+    filter: invert(1);
+  }
+}
+
+/* Mermaid Diagrams */
+[id^="mermaid-"] {
+  .cluster rect {
+    fill: none !important;
+    font-size: $font-size-base;
+  }
+
+  foreignObject {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-base;
+
+    &:has(.edgeLabel) {
+      background-color: transparent;
+
+      .edgeLabel,
+      .labelBkg {
+        background-color: transparent !important;
+        font-size: $font-size-base;
+      }
+
+      p {
+        margin-inline: auto !important;
+        max-width: max-content;
+        border-radius: 8px;
+        padding: 0 0.75rem;
+        color: $posit-dark-blue-2;
+        font-size: $font-size-base;
+      }
+    }
+  }
 }

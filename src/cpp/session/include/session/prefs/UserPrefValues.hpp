@@ -267,6 +267,9 @@ namespace prefs {
 #define kTerminalRendererDom "dom"
 #define kTerminalWeblinks "terminal_weblinks"
 #define kShowRmdRenderCommand "show_rmd_render_command"
+#define kRmdRenameInScopeBehavior "rmd_rename_in_scope_behavior"
+#define kRmdRenameInScopeBehaviorCurrent "current"
+#define kRmdRenameInScopeBehaviorAll "all"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
 #define kAlwaysShownFiles "always_shown_files"
@@ -443,6 +446,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kCopilotNesEnabled "copilot_nes_enabled"
 #define kCopilotShowMessages "copilot_show_messages"
 #define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
@@ -463,7 +467,8 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
-#define kShowChatUi "show_chat_ui"
+#define kPai "pai"
+#define kPaiDownloadUri "pai_download_uri"
 
 class UserPrefValues: public Preferences
 {
@@ -1388,6 +1393,12 @@ public:
    core::Error setShowRmdRenderCommand(bool val);
 
    /**
+    * Controls whether the Rename in Scope command acts only upon the current chunk, or upon all chunks in the document. Multiple executions of the command will toggle between the two selection types.
+    */
+   std::string rmdRenameInScopeBehavior();
+   core::Error setRmdRenameInScopeBehavior(std::string val);
+
+   /**
     * Whether to enable moving text on the editing surface by clicking and dragging it.
     */
    bool enableTextDrag();
@@ -2030,6 +2041,12 @@ public:
    core::Error setCopilotIndexingEnabled(bool val);
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   bool copilotNesEnabled();
+   core::Error setCopilotNesEnabled(bool val);
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    bool copilotShowMessages();
@@ -2096,10 +2113,16 @@ public:
    core::Error setConsoleHighlightConditions(std::string val);
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   bool showChatUi();
-   core::Error setShowChatUi(bool val);
+   bool pai();
+   core::Error setPai(bool val);
+
+   /**
+    * Experimental
+    */
+   std::string paiDownloadUri();
+   core::Error setPaiDownloadUri(std::string val);
 
 };
 

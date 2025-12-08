@@ -46,6 +46,7 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -70,6 +71,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -138,6 +140,7 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -218,6 +221,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
@@ -597,6 +602,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
       presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
+      renameHelper_ = new TextEditingTargetRenameHelper(docDisplay_, prefs_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -1926,9 +1932,41 @@ public class TextEditingTarget implements
                      break;
                      
                   case COMPLETION_RECEIVED_SOME:
+
+                     ClickHandler handler = null;
+                     CopilotCompletion completion = (CopilotCompletion) event.getData();
+                     if (completion != null)
+                     {
+                        handler = new ClickHandler()
+                        {
+                           @Override
+                           public void onClick(ClickEvent event)
+                           {
+                              int scrollLine = completion.range.start.line - 5;
+                              docDisplay_.scrollToLine(scrollLine, false);
+
+                              for (int line = completion.range.start.line;
+                                   line <= completion.range.end.line;
+                                   line++)
+                              {
+                                 HandlerRegistration registration =
+                                    docDisplay_.addGutterItem(line, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+
+                                 Timers.singleShot(2000, () ->
+                                 {
+                                    registration.removeHandler();
+                                 });
+
+                              }
+                           }
+                        };
+                     }
+
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           constants_.copilotResponseReceived());
+                           constants_.copilotResponseReceived(),
+                           handler);
+
                      break;
                      
                   case COMPLETION_RECEIVED_NONE:
@@ -3341,7 +3379,8 @@ public class TextEditingTarget implements
                      final TextFileType fileType =
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
-                     final Command saveCommand = new Command() {
+                     final Command saveCommand = new Command()
+                     {
                         @Override
                         public void execute()
                         {
@@ -3357,22 +3396,26 @@ public class TextEditingTarget implements
                               syncPublishPath(saveItem.getPath());
                            }
 
-                           fixupCodeBeforeSaving(() -> {
-                              docUpdateSentinel_.save(
-                                    saveItem.getPath(),
-                                    fileType.getTypeId(),
-                                    encoding,
-                                    true,
-                                    new SaveProgressIndicator(saveItem,
-                                                              fileType,
-                                                              false,
-                                                              executeOnSuccess));
-
-                              events_.fireEvent(
-                                    new SourceFileSavedEvent(getId(),
+                           fixupCodeBeforeSaving(() ->
+                           {
+                              maybeFormatOnUserInitiatedSave(() ->
+                              {
+                                 docUpdateSentinel_.save(
+                                       saveItem.getPath(),
+                                       fileType.getTypeId(),
+                                       encoding,
+                                       true,
+                                       new SaveProgressIndicator(saveItem,
+                                                                 fileType,
+                                                                 false,
+                                                                 executeOnSuccess));
+                                 events_.fireEvent(
+                                       new SourceFileSavedEvent(
+                                          getId(),
                                           saveItem.getPath()));
-                           });
+                              });
 
+                           });
 
                         }
 
@@ -3606,9 +3649,10 @@ public class TextEditingTarget implements
    {
       boolean canAutosave =
             !isSaving_ &&
-            ModalDialogTracker.numModalsShowing() == 0 &&
             prefs_.autoSaveOnBlur().getValue() &&
+            ModalDialogTracker.numModalsShowing() == 0 &&
             getPath() != null &&
+            dirtyState_.getValue() &&
             !docDisplay_.hasActiveCollabSession();
             
       if (!canAutosave)
@@ -3902,18 +3946,17 @@ public class TextEditingTarget implements
          {
             withReformatDependencies(() ->
             {
-               save(() ->
+               docUpdateSentinel_.withSavedDoc(() ->
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
-                        docUpdateSentinel_.getPath(),
                         SourceServerOperations.FORMAT_CONTEXT_COMMAND,
-                        new ServerRequestCallback<SourceDocument>()
+                        new ServerRequestCallback<FormatDocumentResult>()
                         {
                            @Override
-                           public void onResponseReceived(SourceDocument document)
+                           public void onResponseReceived(FormatDocumentResult result)
                            {
-                              revertEdits();
+                              applyEdits(result);
                            }
 
                            @Override
@@ -3980,9 +4023,9 @@ public class TextEditingTarget implements
    @Handler
    void onRenameInScope()
    {
-      withActiveEditor((disp) ->
+      withActiveEditor((editor) ->
       {
-         renameInScope(disp);
+         renameInScope(editor);
       });
    }
 
@@ -3994,7 +4037,7 @@ public class TextEditingTarget implements
       final JsArray<AceFold> folds = display.getFolds();
       display.unfoldAll();
 
-      int matches = (new TextEditingTargetRenameHelper(display)).renameInScope();
+      int matches = renameHelper_.renameInScope();
       if (matches <= 0)
       {
          if (!display.getSelectionValue().isEmpty())
@@ -4105,6 +4148,11 @@ public class TextEditingTarget implements
    void onShowDiagnosticsActiveDocument()
    {
       lintManager_.lint(true, true, false);
+   }
+
+   public LintManager getLintManager()
+   {
+      return lintManager_;
    }
 
    public void withSavedDoc(Command onsaved)
@@ -4236,13 +4284,79 @@ public class TextEditingTarget implements
       }
    }
 
+   private void applyEdits(FormatDocumentResult response)
+   {
+      try
+      {
+         docDisplay_.startOperation();
+         applyEditsImpl(response);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      docDisplay_.endOperation();
+   }
+
+   private void applyEditsImpl(FormatDocumentResult response)
+   {
+      List<FormatDocumentEdit> edits = response.asList();
+      for (int i = 0, n = edits.size(); i < n; i++)
+      {
+         FormatDocumentEdit edit = edits.get(n - i - 1);
+
+         Position lhs = docDisplay_.positionFromIndex(edit.offset);
+         Position rhs = docDisplay_.positionFromIndex(edit.offset + edit.size);
+         docDisplay_.replaceRange(
+            Range.fromPoints(lhs, rhs),
+            edit.value);
+      }
+   }
+
+   private void maybeFormatOnUserInitiatedSave(Command onFormatted)
+   {
+      // check for format on save
+      if (!isFormatOnSaveEnabled())
+      {
+         onFormatted.execute();
+         return;
+      }
+
+      docUpdateSentinel_.withSavedDoc(() ->
+      {
+         server_.formatDocument(
+               docUpdateSentinel_.getId(),
+               SourceServerOperations.FORMAT_CONTEXT_SAVE,
+               new ServerRequestCallback<FormatDocumentResult>()
+               {
+                  @Override
+                  public void onResponseReceived(FormatDocumentResult response)
+                  {
+                     applyEdits(response);
+                     onFormatted.execute();
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     onFormatted.execute();
+                  }
+               });
+      });
+   }
+
    @Handler
    void onSaveSourceDoc()
    {
       if (isSaving_)
          return;
 
-      saveThenExecute(null, true, postSaveCommand(true));
+      maybeFormatOnUserInitiatedSave(() ->
+      {
+         saveThenExecute(null, true, postSaveCommand(true));
+      });
    }
 
    @Handler
@@ -7385,20 +7499,26 @@ public class TextEditingTarget implements
             
                          
             // see if we should be using quarto preview
-            if (useQuartoPreview())
+            if (useQuarto())
             {    
                // command to execute quarto preview
-               Command quartoPreviewCmd = new Command() {
+               Command quartoPreviewCmd = new Command()
+               {
                   @Override
                   public void execute()
                   {
                      // quarto preview can reject the preview (e.g. if it turns
                      // out this file is part of a website or book project)
                      String format = quartoFormat();
+                     JsObject editorState = isQuartoRevealJs(format)
+                        ? presentationEditorLocation().cast()
+                        : JsObject.createJsObject();
+
+                     editorState.setBoolean("is_shiny_doc", isShinyDoc());
                      server_.quartoPreview(
                         docUpdateSentinel_.getPath(), 
                         format, 
-                        isQuartoRevealJs(format) ? presentationEditorLocation() : null,
+                        editorState,
                         new SimpleRequestCallback<Boolean>() {
                            @Override
                            public void onResponseReceived(Boolean previewed)
@@ -7541,11 +7661,11 @@ public class TextEditingTarget implements
    }
    
    
-   private boolean useQuartoPreview()
+   private boolean useQuarto()
    {
-      return (session_.getSessionInfo().getQuartoConfig().enabled &&
-            (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) &&
-            !isShinyDoc() && !isRmdNotebook());
+      return
+         session_.getSessionInfo().getQuartoConfig().enabled &&
+         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT;
    }
     
    
@@ -8305,34 +8425,8 @@ public class TextEditingTarget implements
                }
             }
             
-            // check for format on save
-            if (formatOnSave && isFormatOnSaveEnabled())
-            {
-               server_.formatDocument(
-                     docUpdateSentinel_.getId(),
-                     docUpdateSentinel_.getPath(),
-                     SourceServerOperations.FORMAT_CONTEXT_SAVE,
-                     new ServerRequestCallback<SourceDocument>()
-                     {
-                        @Override
-                        public void onResponseReceived(SourceDocument response)
-                        {
-                           revertEdits();
-                           onFinished.execute();
-                        }
 
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           Debug.logError(error);
-                           onFinished.execute();
-                        }
-                     });
-            }
-            else
-            {
-               onFinished.execute();
-            }
+            onFinished.execute();
          }
       };
    }
@@ -9506,6 +9600,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
+   private final TextEditingTargetRenameHelper renameHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;

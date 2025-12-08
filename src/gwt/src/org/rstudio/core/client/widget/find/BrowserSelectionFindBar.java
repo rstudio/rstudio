@@ -50,7 +50,7 @@ public class BrowserSelectionFindBar extends FindBar
 
       txtFind_.addKeyUpHandler(event ->
       {
-         String value = txtFind_.getValue();
+         String value = getSearchValue();
          if (StringUtil.isNullOrEmpty(value))
          {
             node_ = null;
@@ -130,7 +130,7 @@ public class BrowserSelectionFindBar extends FindBar
 
    public void findNext()
    {
-      String searchText = getValue();
+      String searchText = getSearchValue();
 
       Node node = root_;
       int offset = 0;

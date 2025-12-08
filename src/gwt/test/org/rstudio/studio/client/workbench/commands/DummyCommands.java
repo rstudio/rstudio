@@ -1570,27 +1570,12 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand showSidebar() {
-        return null;
-    }
-
-    @Override
-    public AppCommand hideSidebar() {
-        return null;
-    }
-
-    @Override
     public AppCommand toggleSidebar() {
         return null;
     }
 
     @Override
-    public AppCommand moveSidebarLeft() {
-        return null;
-    }
-
-    @Override
-    public AppCommand moveSidebarRight() {
+    public AppCommand toggleSidebarLocation() {
         return null;
     }
 

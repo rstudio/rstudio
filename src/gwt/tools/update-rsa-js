@@ -28,6 +28,20 @@ wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/rsa.js >> rsa.js
 echo "// ==== File: base64.js" >> rsa.js
 wget --quiet -O - http://www-cs-students.stanford.edu/~tjw/jsbn/base64.js >> rsa.js
 
+patch rsa.js <<EOF
+--- src/gwt/tools/rsa.js.old    2025-10-15 16:53:26.381394212 -0500
++++ src/gwt/tools/rsa.js        2025-10-15 16:53:33.266275028 -0500
+@@ -826,7 +826,7 @@
+   var slop;
+   for(i = 0; i < s.length; ++i) {
+     if(s.charAt(i) == b64padchar) break;
+-    v = b64map.indexOf(s.charAt(i));
++    var v = b64map.indexOf(s.charAt(i));
+     if(v < 0) continue;
+     if(k == 0) {
+       ret += int2char(v >> 2);
+EOF
+
 CC_OPTS="--compilation_level ADVANCED_OPTIMIZATIONS"
 java -jar "compiler/compiler.jar" $CC_OPTS --js rsa.js --js encrypt-bootstrap.js --js_output_file "$INSTALL_DIR/../www/js/encrypt.min.js"
 

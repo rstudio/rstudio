@@ -437,6 +437,14 @@ public class AceEditorNative extends JavaScriptObject
          that.insert(text);
       });
    }-*/;
+
+   public final native void startOperation() /*-{
+      this.startOperation();
+   }-*/;
+
+   public final native void endOperation() /*-{
+      this.endOperation();
+   }-*/;
    
    public final native boolean inMultiSelectMode() /*-{ return this.inMultiSelectMode === true; }-*/;
    public final native void exitMultiSelectMode() /*-{ this.exitMultiSelectMode(); }-*/;
@@ -722,8 +730,8 @@ public class AceEditorNative extends JavaScriptObject
       return this.renderer.$ghostText;
    }-*/;
    
-   public final native void setGhostText(String text) /*-{
-      this.setGhostText(text);
+   public final native void setGhostText(String text, Position position) /*-{
+      this.setGhostText(text, position);
    }-*/;
    
    public final void applyGhostText()
