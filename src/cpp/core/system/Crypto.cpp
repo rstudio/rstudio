@@ -56,8 +56,6 @@ namespace crypto {
 
 namespace {
 
-std::recursive_mutex s_openssl_mutex;
-
 template <typename T, typename Deleter>
 std::unique_ptr<T, Deleter> make_unique_ptr(T* ptr, Deleter deleter) {
     return std::unique_ptr<T, Deleter>(ptr, deleter);
@@ -191,8 +189,6 @@ Error rsaSign(const std::string& message,
               const std::string& pemPrivateKey,
               std::string* pOutSignature)
 {
-   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
-
    // create a sha256 hash of the message first which is what we will sign
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
@@ -252,8 +248,6 @@ Error rsaVerify(const std::string& message,
                 const std::string& signature,
                 const std::string& pemPublicKey)
 {
-   std::lock_guard<std::recursive_mutex> guard(s_openssl_mutex);
-
    // create a sha256 hash of the message first which is what we will verify
    // this prevents attackers from being able to back into creating a valid message
    std::string hash;
