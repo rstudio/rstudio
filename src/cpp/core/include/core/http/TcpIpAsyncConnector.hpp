@@ -20,7 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/placeholders.hpp>
 
@@ -82,7 +82,7 @@ public:
       {
          // start a timer that will cancel any outstanding asynchronous operations
          // when it elapses if the connection operation has not succeeded
-         pConnectionTimer_.reset(new boost::asio::deadline_timer(service_, timeout));
+         pConnectionTimer_.reset(new boost::asio::system_timer(service_, std::chrono::milliseconds(timeout.total_milliseconds())));
          pConnectionTimer_->async_wait(boost::bind(&TcpIpAsyncConnector::onConnectionTimeout,
                                                    TcpIpAsyncConnector::shared_from_this(),
                                                    boost::asio::placeholders::error));
@@ -267,7 +267,7 @@ private:
    bool isConnected_;
    bool hasFailed_;
    boost::mutex mutex_;
-   boost::shared_ptr<boost::asio::deadline_timer> pConnectionTimer_;
+   boost::shared_ptr<boost::asio::system_timer> pConnectionTimer_;
 };
 
 } // namespace http

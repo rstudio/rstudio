@@ -222,7 +222,7 @@
       return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
    
    # Otherwise, look for compatible browsers on the PATH.
-   browsers <- c("chromium", "google-chrome")
+   browsers <- c("chromium-browser", "chromium", "google-chrome")
    for (browser in browsers)
    {
       exe <- Sys.which(browser)

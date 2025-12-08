@@ -101,8 +101,9 @@ bool ExponentialBackoff::next()
          maxNumRetries_ = totalNumTries_ + 2;
       }
 
-      boost::shared_ptr<boost::asio::deadline_timer> timer =
-            boost::make_shared<boost::asio::deadline_timer>(ioContext_, timeout);
+      auto timer = boost::make_shared<boost::asio::system_timer>(
+         ioContext_,
+         std::chrono::milliseconds(timeout.total_milliseconds()));
 
       timer->async_wait([=](const boost::system::error_code& error) mutable
       {

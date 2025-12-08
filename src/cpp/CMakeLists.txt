@@ -201,7 +201,6 @@ list(APPEND BOOST_LIBS
    program_options
    random
    regex
-   system
    thread
    url
 )
