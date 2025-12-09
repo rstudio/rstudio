@@ -2880,6 +2880,7 @@ Error startChatBackend(bool resumeConversation)
    processOpts.detachSession = true;
 #else
    processOpts.detachProcess = true;
+   processOpts.useAsyncStdinWrites = true;  // Prevent pipe buffer deadlocks on Windows
 #endif
    processOpts.workingDir = positAiPath;
    processOpts.environment = environment;

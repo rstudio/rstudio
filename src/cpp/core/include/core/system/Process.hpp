@@ -100,6 +100,7 @@ struct ProcessOptions
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
+        useAsyncStdinWrites(false),
         cols(kDefaultCols),
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
@@ -171,6 +172,11 @@ struct ProcessOptions
 
    // create the process with CREATE_BREAKAWAY_FROM_JOB
    bool breakawayFromJob;
+
+   // Use overlapped I/O with timeout for stdin writes to prevent pipe buffer deadlocks
+   // Set this to true for services that send high-frequency notifications via stdin.
+   // Defaults to false for backward compatibility.
+   bool useAsyncStdinWrites;
 #endif
 
    // interactive terminal shell

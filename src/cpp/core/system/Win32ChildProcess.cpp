@@ -264,14 +264,116 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
       else
       {
          DWORD dwWritten;
-         BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                                     input.data(),
-                                     static_cast<DWORD>(input.length()),
-                                     &dwWritten,
-                                     nullptr);
-         if (!bSuccess)
+
+         // Use overlapped I/O with timeout to prevent deadlocks
+         if (options().useAsyncStdinWrites)
          {
-            return LAST_SYSTEM_ERROR();
+            // Create event for overlapped operation
+            OVERLAPPED overlapped = {0};
+            overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+            if (overlapped.hEvent == NULL)
+            {
+               return LAST_SYSTEM_ERROR();
+            }
+
+            // Attempt write
+            BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                       input.data(),
+                                       static_cast<DWORD>(input.length()),
+                                       &dwWritten,
+                                       &overlapped);
+
+            if (!bSuccess)
+            {
+               DWORD lastError = GetLastError();
+
+               if (lastError == ERROR_IO_PENDING)
+               {
+                  // Wait with timeout (5 seconds)
+                  DWORD waitResult = WaitForSingleObject(overlapped.hEvent, 5000);
+
+                  if (waitResult == WAIT_TIMEOUT)
+                  {
+                     // Timeout - cancel the I/O operation
+                     CancelIo(pImpl_->hStdInWrite);
+
+                     // Wait for cancellation to complete (100ms should be sufficient)
+                     DWORD cancelWait = WaitForSingleObject(overlapped.hEvent, 100);
+                     if (cancelWait == WAIT_TIMEOUT)
+                     {
+                        // Cancellation didn't complete - log error but must still clean up
+                        LOG_ERROR_MESSAGE("CancelIo did not complete within timeout - pipe may be in inconsistent state");
+                     }
+
+                     // Get the final result to clean up internal state
+                     DWORD dwBytesTransferred;
+                     GetOverlappedResult(pImpl_->hStdInWrite, &overlapped, &dwBytesTransferred, FALSE);
+
+                     CloseHandle(overlapped.hEvent);
+                     return systemError(boost::system::errc::timed_out,
+                                       "Write to stdin timed out after 5 seconds",
+                                       ERROR_LOCATION);
+                  }
+                  else if (waitResult == WAIT_OBJECT_0)
+                  {
+                     // Operation completed - get the result
+                     if (!GetOverlappedResult(pImpl_->hStdInWrite, &overlapped, &dwWritten, FALSE))
+                     {
+                        CloseHandle(overlapped.hEvent);
+                        return LAST_SYSTEM_ERROR();
+                     }
+                  }
+                  else
+                  {
+                     // Wait failed
+                     CloseHandle(overlapped.hEvent);
+                     return LAST_SYSTEM_ERROR();
+                  }
+               }
+               else
+               {
+                  // Write failed immediately
+                  CloseHandle(overlapped.hEvent);
+                  return systemError(lastError, ERROR_LOCATION);
+               }
+            }
+            // If bSuccess is TRUE, write completed synchronously - dwWritten is valid
+
+            // Validate that the complete write succeeded (detect partial writes)
+            if (dwWritten != static_cast<DWORD>(input.length()))
+            {
+               CloseHandle(overlapped.hEvent);
+               return systemError(boost::system::errc::io_error,
+                                 "Partial write to stdin: " +
+                                 std::to_string(dwWritten) + " of " +
+                                 std::to_string(input.length()) + " bytes written",
+                                 ERROR_LOCATION);
+            }
+
+            CloseHandle(overlapped.hEvent);
+         }
+         else
+         {
+            // Standard synchronous write
+            BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                       input.data(),
+                                       static_cast<DWORD>(input.length()),
+                                       &dwWritten,
+                                       nullptr);
+            if (!bSuccess)
+            {
+               return LAST_SYSTEM_ERROR();
+            }
+
+            // Validate complete write (detect partial writes)
+            if (dwWritten != static_cast<DWORD>(input.length()))
+            {
+               return systemError(boost::system::errc::io_error,
+                                 "Partial write to stdin: " +
+                                 std::to_string(dwWritten) + " of " +
+                                 std::to_string(input.length()) + " bytes written",
+                                 ERROR_LOCATION);
+            }
          }
       }
    }
