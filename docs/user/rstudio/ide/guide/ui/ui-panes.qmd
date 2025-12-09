@@ -1,18 +1,22 @@
 ---
 title: "Pane Layout"
-date-meta: 2022-12-12
+date-meta: 2025-12-1
 ---
 
-The RStudio user interface has 4 primary panes:
+The RStudio user interface has 4 primary panes and an optional sidebar pane:
 
 -  **Source pane**\
 -  **Console pane**\
 -  **Environment pane**, containing the **Environment**, **History**, **Connections**, **Build**, **VCS** , and **Tutorial** tabs\
--  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Viewer**, and **Presentation** tabs
+-  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Viewer**, and **Presentation** tabs\
+-  **Sidebar pane**, initially empty and hidden but can be configured to show any of the tabs from the **Environment pane** or the **Output pane**, and can be displayed to the right (default) or left of the other panes
 
 Each pane can be minimized or maximized within the column by clicking the minimize/maximize buttons ![](images/min-max.png){width="30" fig-alt="The min-max button which shows a collapsed or expanded Window."}.
 
-![](images/rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the four RStudio panes, labeled Source, Environments, Console, and Output."}
+![](images/rstudio-panes-labeled.png){fig-alt="A screenshot of the four RStudio panes, labeled Source, Environments, Console, and Output, and the Sidebar toggle button"}
+Clicking the Sidebar toggle button displays the Sidebar pane.
+
+![](images/rstudio-panes-sidebar.png){fig-alt="A screenshot of the four RStudio panes and the default empty Sidebar"}
 
 The documentation below provides information based on the default layout/options of each pane. The specific components within each pane and overall arrangement of panes can be modified by opening the **Tools \> Global Options** \> **pane Layout**.
 
@@ -143,6 +147,10 @@ The VCS tab will change based on the version control system you have enabled for
 
 -   Creating or selecting a specific branch
 
+### Tutorial
+
+The tutorial tab is used to load interactive `learnr` tutorials. These tutorials provide an interactive environment to step through lessons that package authors or educators have written.
+
 ## Output pane
 
 By default, the **Output pane** is the bottom-right pane and displays various outputs such as plots, HTML content, or on-disk files. It contains the Files, Plots, R Packages, Help, Tutorial, Viewer, and Presentation tabs.
@@ -175,10 +183,6 @@ Additionally, sections of code can be highlighted and executed in the R console 
 
 ![](images/help-pane-console.png){fig-alt="The help pane and R console, where an example code snippet from the examples for paste function has been executed in the R console."}
 
-### Tutorial
-
-The tutorial tab is used to load interactive `learnr` tutorials. These tutorials provide an interactive environment to step through lessons that package authors or educators have written.
-
 ### Viewer
 
 The viewer tab is used to display web content such as Shiny apps, Quarto generated web pages, or interactive `htmlwidgets` like `plotly` graphs.
@@ -186,3 +190,7 @@ The viewer tab is used to display web content such as Shiny apps, Quarto generat
 ### Presentation
 
 The Presentation tab is used to display HTML slides generated via Quarto's `revealjs` format.
+
+## Sidebar pane
+
+By default, the Sidebar pane is hidden, and can be displayed using the Sidebar toggle button or View / Show Sidebar. The Sidebar can be configured to display on the left, if desired, and to show any of the tabs from the Environment or Output panes.
