@@ -2880,7 +2880,12 @@ Error startChatBackend(bool resumeConversation)
    processOpts.detachSession = true;
 #else
    processOpts.detachProcess = true;
-   processOpts.useAsyncStdinWrites = true;  // Prevent pipe buffer deadlocks on Windows
+   // Enable async stdin writes with timeout to prevent pipe buffer deadlocks on Windows.
+   // The chat backend receives high-frequency notification messages via stdin that can
+   // fill the 64KB pipe buffer while rsession is blocked reading stdout, causing a
+   // classic pipe deadlock. Async writes with timeout allow detecting and recovering
+   // from this condition. This is scoped to chat only to minimize regression risk.
+   processOpts.useAsyncStdinWrites = true;
 #endif
    processOpts.workingDir = positAiPath;
    processOpts.environment = environment;

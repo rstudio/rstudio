@@ -53,6 +53,13 @@ const boost::posix_time::milliseconds kCheckSubprocDelay =
 const boost::posix_time::milliseconds kCheckCwdDelay =
                                          boost::posix_time::milliseconds(2000);
 
+// Timeout for asynchronous stdin writes when useAsyncStdinWrites is enabled.
+// This prevents deadlocks in high-frequency notification scenarios (e.g., chat).
+const DWORD kAsyncStdinWriteTimeoutMs = 5000;
+
+// Timeout for CancelIo operation to complete during async stdin write cancellation
+const DWORD kAsyncStdinCancelTimeoutMs = 100;
+
 std::string findOnPath(const std::string& exe,
                        const std::string& appendExt = "")
 {
@@ -161,6 +168,55 @@ Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
             return systemError(error, ERROR_LOCATION);
          }
       }
+   }
+
+   return Success();
+}
+
+// Creates a pipe with overlapped I/O support for the write handle.
+// This is required for async stdin writes with timeout to work correctly.
+// Standard CreatePipe() does not support overlapped I/O.
+Error createOverlappedPipe(HANDLE* pReadHandle, HANDLE* pWriteHandle)
+{
+   // Generate unique pipe name using process ID and a counter
+   static std::atomic<int> counter(0);
+   std::string pipeName = "\\\\.\\pipe\\rstudio_stdin_" +
+                         std::to_string(::GetCurrentProcessId()) + "_" +
+                         std::to_string(counter++);
+
+   // Create named pipe for reading (child process side)
+   // Use FILE_FLAG_FIRST_PIPE_INSTANCE to ensure the pipe name is unique
+   *pReadHandle = ::CreateNamedPipeA(
+       pipeName.c_str(),
+       PIPE_ACCESS_INBOUND | FILE_FLAG_FIRST_PIPE_INSTANCE,
+       PIPE_TYPE_BYTE | PIPE_WAIT,
+       1,                    // Max instances
+       0,                    // Default output buffer size
+       0,                    // Default input buffer size
+       0,                    // Default timeout
+       nullptr);             // Default security
+
+   if (*pReadHandle == INVALID_HANDLE_VALUE)
+   {
+      return LAST_SYSTEM_ERROR();
+   }
+
+   // Create write end with overlapped I/O support (parent process side)
+   *pWriteHandle = ::CreateFileA(
+       pipeName.c_str(),
+       GENERIC_WRITE,
+       0,                    // No sharing
+       nullptr,              // Default security
+       OPEN_EXISTING,
+       FILE_FLAG_OVERLAPPED, // Enable overlapped I/O for async writes
+       nullptr);             // No template file
+
+   if (*pWriteHandle == INVALID_HANDLE_VALUE)
+   {
+      DWORD lastError = ::GetLastError();
+      ::CloseHandle(*pReadHandle);
+      *pReadHandle = INVALID_HANDLE_VALUE;
+      return systemError(lastError, ERROR_LOCATION);
    }
 
    return Success();
@@ -289,20 +345,29 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
                if (lastError == ERROR_IO_PENDING)
                {
-                  // Wait with timeout (5 seconds)
-                  DWORD waitResult = WaitForSingleObject(overlapped.hEvent, 5000);
+                  // Wait with timeout
+                  DWORD waitResult = WaitForSingleObject(overlapped.hEvent, kAsyncStdinWriteTimeoutMs);
 
                   if (waitResult == WAIT_TIMEOUT)
                   {
                      // Timeout - cancel the I/O operation
                      CancelIo(pImpl_->hStdInWrite);
 
-                     // Wait for cancellation to complete (100ms should be sufficient)
-                     DWORD cancelWait = WaitForSingleObject(overlapped.hEvent, 100);
+                     // Wait for cancellation to complete
+                     DWORD cancelWait = WaitForSingleObject(overlapped.hEvent, kAsyncStdinCancelTimeoutMs);
                      if (cancelWait == WAIT_TIMEOUT)
                      {
-                        // Cancellation didn't complete - log error but must still clean up
-                        LOG_ERROR_MESSAGE("CancelIo did not complete within timeout - pipe may be in inconsistent state");
+                        // Cancellation didn't complete - pipe is in inconsistent state
+                        LOG_ERROR_MESSAGE("CancelIo did not complete within timeout - pipe is in inconsistent state");
+
+                        // Try to clean up, but pipe is likely unusable now
+                        DWORD dwBytesTransferred;
+                        GetOverlappedResult(pImpl_->hStdInWrite, &overlapped, &dwBytesTransferred, FALSE);
+                        CloseHandle(overlapped.hEvent);
+
+                        return systemError(boost::system::errc::io_error,
+                                          "Failed to cancel stdin write - pipe is in inconsistent state",
+                                          ERROR_LOCATION);
                      }
 
                      // Get the final result to clean up internal state
@@ -311,7 +376,8 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
                      CloseHandle(overlapped.hEvent);
                      return systemError(boost::system::errc::timed_out,
-                                       "Write to stdin timed out after 5 seconds",
+                                       "Write to stdin timed out after " +
+                                       std::to_string(kAsyncStdinWriteTimeoutMs) + " ms",
                                        ERROR_LOCATION);
                   }
                   else if (waitResult == WAIT_OBJECT_0)
@@ -337,7 +403,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
                   return systemError(lastError, ERROR_LOCATION);
                }
             }
-            // If bSuccess is TRUE, write completed synchronously - dwWritten is valid
+            // else: bSuccess is TRUE, write completed synchronously - dwWritten is valid
 
             // Validate that the complete write succeeded (detect partial writes)
             if (dwWritten != static_cast<DWORD>(input.length()))
@@ -350,11 +416,12 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
                                  ERROR_LOCATION);
             }
 
+            // Success - clean up event handle
             CloseHandle(overlapped.hEvent);
          }
          else
          {
-            // Standard synchronous write
+            // Standard synchronous write (preserves original behavior for non-chat scenarios)
             BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
                                        input.data(),
                                        static_cast<DWORD>(input.length()),
@@ -364,16 +431,8 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
             {
                return LAST_SYSTEM_ERROR();
             }
-
-            // Validate complete write (detect partial writes)
-            if (dwWritten != static_cast<DWORD>(input.length()))
-            {
-               return systemError(boost::system::errc::io_error,
-                                 "Partial write to stdin: " +
-                                 std::to_string(dwWritten) + " of " +
-                                 std::to_string(input.length()) + " bytes written",
-                                 ERROR_LOCATION);
-            }
+            // Note: Original code did not check for partial writes in synchronous mode.
+            // Preserving this behavior to minimize regression risk.
          }
       }
    }
@@ -506,10 +565,22 @@ Error ChildProcess::run()
    }
 
    // Standard input pipe
+   // Use overlapped I/O pipe if async writes are enabled, otherwise use standard pipe
    HANDLE hStdInRead;
-   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, nullptr, 0))
+   if (options_.useAsyncStdinWrites)
    {
-      return LAST_SYSTEM_ERROR();
+      // Create pipe with overlapped I/O support for async writes with timeout
+      error = createOverlappedPipe(&hStdInRead, &pImpl_->hStdInWrite);
+      if (error)
+         return error;
+   }
+   else
+   {
+      // Standard synchronous pipe (preserves existing behavior for non-chat scenarios)
+      if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, nullptr, 0))
+      {
+         return LAST_SYSTEM_ERROR();
+      }
    }
    CloseHandleOnExitScope closeStdIn(&hStdInRead, ERROR_LOCATION);
    if (!::SetHandleInformation(hStdInRead,
