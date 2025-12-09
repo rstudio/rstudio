@@ -1,0 +1,146 @@
+/*
+ * SessionLSP.cpp
+ *
+ * Copyright (C) 2025 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+#include "SessionLSP.hpp"
+
+#include <session/SessionModuleContext.hpp>
+
+using namespace rstudio;
+using namespace rstudio::core;
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace lsp {
+
+namespace {
+
+std::string uriFromDocumentPath(const std::string& path)
+{
+   return fmt::format("file://{}", path);
+}
+
+std::string uriFromDocumentId(const std::string& id)
+{
+   return fmt::format("rstudio-document://{}", id);
+}
+
+std::string uriFromDocumentImpl(const std::string& id,
+                                const std::string& path,
+                                bool isUntitled)
+{
+   FilePath resolvedPath = module_context::resolveAliasedPath(path);
+   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
+}
+
+std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
+}
+
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
+      return "r";
+
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   std::string stem = docPath.getStem();
+   if (name == "Makefile" || name == "makefile")
+      return "makefile";
+   else if (stem == "Dockerfile")
+      return "dockerfile";
+   
+   return boost::algorithm::to_lower_copy(pDoc->type());
+}
+
+int64_t versionFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return 0;
+}
+
+void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   TextDocumentItem textDocument {
+      .text       = pDoc->contents(),
+      .languageId = languageIdFromDocument(pDoc),
+      .uri        = uriFromDocument(pDoc),
+      .version    = versionFromDocument(pDoc)
+   };
+
+   DidOpenTextDocumentParams params {
+      .textDocument = textDocument
+   };
+
+   events().didOpen(params);
+}
+
+void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
+                  std::string replacement,
+                  int offset,
+                  int length)
+{
+   // TODO: Update document version here.
+   Range range = createRange(
+      core::string_utils::offsetToPosition(pDoc->contents(), offset),
+      core::string_utils::offsetToPosition(pDoc->contents(), offset + length));
+
+   std::vector<TextDocumentContentChangeEvent> contentChanges;
+   contentChanges.push_back({
+      .text  = replacement,
+      .range = range,
+   });
+
+   VersionedTextDocumentIdentifier textDocument {
+      .uri     = uriFromDocument(pDoc),
+      .version = versionFromDocument(pDoc),
+   };
+
+   DidChangeTextDocumentParams params {
+      .textDocument   = textDocument,
+      .contentChanges = contentChanges,
+   };
+
+   events().didChange(params);
+}
+
+void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   TextDocumentIdentifier textDocument {
+      .uri = uriFromDocument(pDoc),
+   };
+
+   DidCloseTextDocumentParams params {
+      .textDocument = textDocument,
+   };
+
+   events().didClose(params);
+}
+
+} // end anonymous namespace
+
+Error initialize()
+{
+   source_database::events().onDocAdded.connect(onDocAdded);
+   source_database::events().onDocChanged.connect(onDocChanged);
+   source_database::events().onDocPendingRemove.connect(onDocRemoved);
+
+   return Success();
+}
+
+} // end namespace lsp
+} // end namespace modules
+} // end namespace session
+} // end namespace rstudio

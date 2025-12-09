@@ -218,13 +218,14 @@ core::Error detectExtendedType(const core::FilePath& filePath, std::string* pExt
 // source database events
 struct Events : boost::noncopyable
 {
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocUpdated;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, boost::shared_ptr<SourceDocument>)> onDocRenamed;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocReopened;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocAdded;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocPendingRemove;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>                onDocRemoved;
-   RSTUDIO_BOOST_SIGNAL<void()>                                                      onRemoveAll;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>, std::string, int, int)> onDocChanged;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                        onDocUpdated;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, boost::shared_ptr<SourceDocument>)>    onDocRenamed;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                        onDocReopened;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                        onDocAdded;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                        onDocPendingRemove;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>                   onDocRemoved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                                         onRemoveAll;
 };
 
 Events& events();

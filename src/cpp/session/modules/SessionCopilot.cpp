@@ -45,6 +45,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionLSP.hpp"
+
 #include "session-config.h"
 
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
@@ -542,7 +544,6 @@ std::string uriFromDocumentPath(const std::string& path)
 {
    return fmt::format("file://{}", path);
 }
-
 
 std::string uriFromDocumentId(const std::string& id)
 {
@@ -1283,23 +1284,9 @@ void docClosed(const std::string& uri)
    sendNotification("textDocument/didClose", paramsJson);
 }
 
-void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-   
-   if (!isIndexableDocument(pDoc))
-      return;
-   
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
-}
-
 // Send a textDocument/didChange notification with diff
 void didChangeIncremental(const std::string& uri,
-                          const std::string& languageId,
-                          collection::Range range,
+                          const lsp::Range& range,
                           const std::string& text)
 {
    if (s_knownDocuments.count(uri) == 0)
@@ -1310,19 +1297,18 @@ void didChangeIncremental(const std::string& uri,
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
    textDocumentJson["version"] = updateVersionForDocument(uri);
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
 
    json::Object startJson;
-   startJson["line"] = static_cast<uint64_t>(range.begin().row);
-   startJson["character"] = static_cast<uint64_t>(range.begin().column);
+   startJson["line"] = static_cast<uint64_t>(range.start.line);
+   startJson["character"] = static_cast<uint64_t>(range.start.character);
 
    json::Object endJson;
-   endJson["line"] = static_cast<uint64_t>(range.end().row);
-   endJson["character"] = static_cast<uint64_t>(range.end().column);
+   endJson["line"] = static_cast<uint64_t>(range.end.line);
+   endJson["character"] = static_cast<uint64_t>(range.end.character);
 
    json::Object rangeJson;
    rangeJson["start"] = startJson;
@@ -1424,16 +1410,38 @@ void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
              contentsFromDocument(pDoc));
 }
 
-void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
+void didOpen(lsp::DidOpenTextDocumentParams params)
+{
+   if (!ensureAgentRunning())
+      return;
+   
+   // TODO: Check if we are permitted to index this document.
+   docOpened(
+      params.textDocument.uri,
+      params.textDocument.languageId,
+      params.textDocument.text);
+}
+
+void didChange(lsp::DidChangeTextDocumentParams params)
 {
    if (!ensureAgentRunning())
       return;
 
-   // we didn't tell Copilot about this document, so skip this
-   if (!isIndexableDocument(pDoc))
+   for (auto&& contentChange : params.contentChanges)
+   {
+      didChangeIncremental(
+         params.textDocument.uri,
+         contentChange.range,
+         contentChange.text);
+   }
+}
+
+void didClose(lsp::DidCloseTextDocumentParams params)
+{
+   if (!ensureAgentRunning())
       return;
 
-   docClosed(uriFromDocument(pDoc));
+   docClosed(params.textDocument.uri);
 }
 
 void onBackgroundProcessing(bool isIdle)
@@ -1696,10 +1704,13 @@ void onUserPrefsChanged(const std::string& layer,
 
 void onDeferredInit(bool newSession)
 {
-   source_database::events().onDocAdded.connect(onDocAdded);
+   lsp::events().didOpen.connect(didOpen);
+   lsp::events().didChange.connect(didChange);
+   lsp::events().didClose.connect(didClose);
+
+   // should see if we can remove these two
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocReopened.connect(onDocReopened);
-   source_database::events().onDocPendingRemove.connect(onDocRemoved);
 }
 
 void onShutdown(bool)
@@ -1709,32 +1720,6 @@ void onShutdown(bool)
 
    // Shut down the agent.
    stopAgentSync();
-}
-
-void onSourceFileDiff(module_context::DocumentDiff diff)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   // Resolve source document from id
-   auto pDoc = boost::make_shared<source_database::SourceDocument>();
-   Error error = source_database::get(diff.docId, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // Convert from absolute location in the file to a line/column range.
-   collection::Range range(
-         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset), 
-         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset + diff.length));
-
-   // Notify Copilot of the change
-   didChangeIncremental(uriFromDocument(pDoc),
-                        languageIdFromDocument(pDoc),
-                        range,
-                        diff.replacement);
 }
 
 // Primarily intended for debugging / exploration.
@@ -2229,7 +2214,6 @@ Error initialize()
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
-   events().onSourceFileDiff.connect(onSourceFileDiff);
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while
