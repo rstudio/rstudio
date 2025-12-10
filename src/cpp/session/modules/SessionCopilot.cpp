@@ -563,22 +563,6 @@ std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocum
    return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
-std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
-      return "r";
-
-   FilePath docPath(pDoc->path());
-   std::string name = docPath.getFilename();
-   std::string stem = docPath.getStem();
-   if (name == "Makefile" || name == "makefile")
-      return "makefile";
-   else if (stem == "Dockerfile")
-      return "dockerfile";
-   
-   return boost::algorithm::to_lower_copy(pDoc->type());
-}
-
 template <typename F>
 bool waitFor(F&& callback)
 {
@@ -1220,22 +1204,6 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    return error == Success();
 }
 
-std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   std::string contents = pDoc->contents();
-   
-   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
-   // into producing R completions in a SQL context
-   // https://github.com/rstudio/rstudio/issues/13432
-   if (pDoc->type() == kSourceDocumentTypeSQL)
-   {
-      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
-      contents = boost::regex_replace(contents, rePreview, "\n");
-   }
-   
-   return contents;
-}
-
 void docOpened(const std::string& uri,
                const std::string& languageId,
                const std::string& contents)
@@ -1246,16 +1214,16 @@ void docOpened(const std::string& uri,
       return;
    }
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = updateVersionForDocument(uri);
-   textDocumentJson["text"] = contents;
+   lsp::DidOpenTextDocumentParams params = {
+      .textDocument = {
+         .uri        = uri,
+         .languageId = languageId,
+         .version    = updateVersionForDocument(uri),
+         .text       = contents
+      }
+   };
 
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
+   sendNotification("textDocument/didOpen", lsp::toJson(params));
 }
 
 void docClosed(const std::string& uri)
@@ -1378,22 +1346,6 @@ void onMonitoringDisabled()
 }
 
 } // end namespace file_monitor
-
-void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   if (!isIndexableDocument(pDoc))
-      return;
-
-   // We generally handle changes to the document via onSourceFileDiff(), but in the case 
-   // where a new document is created but not yet saved, we get this onDocUpdated() call
-   // and use it to tell Copilot about the new document.
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
-}
 
 void didOpen(lsp::DidOpenTextDocumentParams params)
 {
@@ -1692,9 +1644,6 @@ void onDeferredInit(bool newSession)
    lsp::events().didOpen.connect(didOpen);
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
-
-   // should see if we can remove these two
-   source_database::events().onDocUpdated.connect(onDocUpdated);
 }
 
 void onShutdown(bool)

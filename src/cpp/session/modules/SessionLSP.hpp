@@ -17,6 +17,7 @@
 #define RSTUDIO_SESSION_MODULES_LSP_HPP
 
 #include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/collection/Position.hpp>
@@ -26,6 +27,16 @@ namespace session {
 namespace modules {
 namespace lsp {
 
+template <typename T>
+core::json::Array toJson(const std::vector<T>& values)
+{
+   core::json::Array json;
+   for (auto&& value : values)
+      json.push_back(toJson(value));
+   return json;
+}
+
+
 using DocumentUri = std::string;
 
 struct Position
@@ -34,11 +45,29 @@ struct Position
    uint64_t character;
 };
 
+inline core::json::Object toJson(const Position& position)
+{
+   core::json::Object json;
+   json["line"] = position.line;
+   json["character"] = position.character;
+   return json;
+}
+
+
 struct Range
 {
    Position start;
    Position end;
 };
+
+inline core::json::Object toJson(const Range& range)
+{
+   core::json::Object json;
+   json["start"] = toJson(range.start);
+   json["end"] = toJson(range.end);
+   return json;
+}
+
 
 struct TextDocumentItem
 {
@@ -48,10 +77,29 @@ struct TextDocumentItem
    std::string text;
 };
 
+inline core::json::Object toJson(const TextDocumentItem& item)
+{
+   core::json::Object json;
+   json["uri"] = item.uri;
+   json["languageId"] = item.languageId;
+   json["version"] = item.version;
+   json["text"] = item.text;
+   return json;
+}
+
+
 struct TextDocumentIdentifier
 {
    DocumentUri uri;
 };
+
+inline core::json::Object toJson(const TextDocumentIdentifier& textDocument)
+{
+   core::json::Object json;
+   json["uri"] = textDocument.uri;
+   return json;
+}
+
 
 struct VersionedTextDocumentIdentifier : public TextDocumentIdentifier
 {
@@ -59,16 +107,42 @@ struct VersionedTextDocumentIdentifier : public TextDocumentIdentifier
    int64_t version;
 };
 
+inline core::json::Object toJson(const VersionedTextDocumentIdentifier& textDocument)
+{
+   core::json::Object json;
+   json["uri"] = textDocument.uri;
+   json["version"] = textDocument.version;
+   return json;
+}
+
+
 struct TextDocumentContentChangeEvent
 {
    Range range;
    std::string text;
 };
 
+inline core::json::Object toJson(const TextDocumentContentChangeEvent& event)
+{
+   core::json::Object json;
+   json["range"] = toJson(event.range);
+   json["text"] = event.text;
+   return json;
+}
+
+
 struct DidOpenTextDocumentParams
 {
    TextDocumentItem textDocument;
 };
+
+inline core::json::Object toJson(const DidOpenTextDocumentParams& params)
+{
+   core::json::Object json;
+   json["textDocument"] = toJson(params.textDocument);
+   return json;
+}
+
 
 struct DidChangeTextDocumentParams
 {
@@ -76,25 +150,27 @@ struct DidChangeTextDocumentParams
    std::vector<TextDocumentContentChangeEvent> contentChanges;
 };
 
+inline core::json::Object toJson(const DidChangeTextDocumentParams& params)
+{
+   core::json::Object json;
+   json["textDocument"] = toJson(params.textDocument);
+   json["contentChanges"] = toJson(params.contentChanges);
+   return json;
+}
+
+
 struct DidCloseTextDocumentParams
 {
    TextDocumentIdentifier textDocument;
 };
 
-struct Events : boost::noncopyable
+inline core::json::Object toJson(const DidCloseTextDocumentParams& params)
 {
-   RSTUDIO_BOOST_SIGNAL<void(DidOpenTextDocumentParams)>   didOpen;
-   RSTUDIO_BOOST_SIGNAL<void(DidChangeTextDocumentParams)> didChange;
-   RSTUDIO_BOOST_SIGNAL<void(DidCloseTextDocumentParams)>  didClose;
-};
-
-inline Events& events()
-{
-   static Events instance;
-   return instance;
+   core::json::Object json;
+   json["textDocument"] = toJson(params.textDocument);
+   return json;
 }
 
-core::Error initialize();
 
 inline Range createRange(const core::collection::Position& start,
                          const core::collection::Position& end)
@@ -125,6 +201,23 @@ inline Range createRange(const core::collection::Range& other)
 
    return range;
 }
+
+
+struct Events : boost::noncopyable
+{
+   RSTUDIO_BOOST_SIGNAL<void(DidOpenTextDocumentParams)>   didOpen;
+   RSTUDIO_BOOST_SIGNAL<void(DidChangeTextDocumentParams)> didChange;
+   RSTUDIO_BOOST_SIGNAL<void(DidCloseTextDocumentParams)>  didClose;
+};
+
+inline Events& events()
+{
+   static Events instance;
+   return instance;
+}
+
+
+core::Error initialize();
 
 } // end namespace lsp
 } // end namespace modules
