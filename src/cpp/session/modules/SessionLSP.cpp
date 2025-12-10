@@ -27,7 +27,12 @@ namespace lsp {
 
 namespace {
 
-std::map<lsp::DocumentUri, int64_t> s_docVersions;
+struct Document
+{
+   int64_t version = 0;
+};
+
+std::map<lsp::DocumentUri, Document> s_openDocuments;
 
 std::string uriFromDocumentPath(const std::string& path)
 {
@@ -71,12 +76,12 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 int64_t versionFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
-   return s_docVersions.count(uri) ? s_docVersions[uri] : 0;
+   return s_openDocuments.count(uri) ? s_openDocuments[uri].version : 0;
 }
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   s_docVersions[uriFromDocument(pDoc)] = 0;
+   s_openDocuments[uriFromDocument(pDoc)].version = 0;
 
    TextDocumentItem textDocument {
       .uri        = uriFromDocument(pDoc),
@@ -92,12 +97,12 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    events().didOpen(params);
 }
 
-void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
+void onDocContentsChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
                   std::string replacement,
                   int offset,
                   int length)
 {
-   s_docVersions[uriFromDocument(pDoc)] += 1;
+   s_openDocuments[uriFromDocument(pDoc)].version += 1;
 
    Range range = createRange(
       core::string_utils::offsetToPosition(pDoc->contents(), offset),
@@ -124,7 +129,7 @@ void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
 
 void onDocRemovedImpl(const std::string& uri)
 {
-   s_docVersions.erase(uri);
+   s_openDocuments.erase(uri);
 
    TextDocumentIdentifier textDocument {
       .uri = uri,
@@ -145,7 +150,7 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
-   if (s_docVersions.count(uri))
+   if (s_openDocuments.count(uri))
       return;
 
    onDocAdded(pDoc);
@@ -160,7 +165,7 @@ void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
 void onRemoveAll()
 {
    std::vector<DocumentUri> uris;
-   for (auto&& entry : s_docVersions)
+   for (auto&& entry : s_openDocuments)
       uris.push_back(entry.first);
 
    for (auto&& uri : uris)
@@ -172,7 +177,7 @@ void onRemoveAll()
 Error initialize()
 {
    source_database::events().onDocAdded.connect(onDocAdded);
-   source_database::events().onDocChanged.connect(onDocChanged);
+   source_database::events().onDocContentsChanged.connect(onDocContentsChanged);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocReopened.connect(onDocReopened);

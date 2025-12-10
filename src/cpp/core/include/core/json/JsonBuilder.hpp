@@ -46,10 +46,23 @@ public:
    {
       json::Object object;
       for (auto&& value : values)
-      {
-         object[value.first] = value.second.value_;
-      }
+         if (!value.second.ignore_)
+            object[value.first] = value.second.value_;
       value_ = object;
+   }
+
+   static JSON Optional(const std::string& value)
+   {
+      JSON result(value);
+      result.ignore_ = value.empty();
+      return result;
+   }
+
+   static JSON Optional(const core::json::Value& value)
+   {
+      JSON result(value);
+      result.ignore_ = value.isNull();
+      return result;
    }
 
    static JSON Array(std::initializer_list<JSON> values)
@@ -58,7 +71,8 @@ public:
 
       json::Array array;
       for (auto&& value : values)
-         array.push_back(value.value_);
+         if (!value.ignore_)
+            array.push_back(value.value_);
       json.value_ = array;
 
       return json;
@@ -82,6 +96,7 @@ public:
 
 private:
    json::Value value_;
+   bool ignore_ = false;
 };
 
 } // end namespace json

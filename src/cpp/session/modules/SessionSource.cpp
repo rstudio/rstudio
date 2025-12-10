@@ -659,7 +659,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
          return error;
 
       if (hasChanges)
-         source_database::events().onDocChanged(pDoc, replacement, offset, length);
+         source_database::events().onDocContentsChanged(pDoc, replacement, offset, length);
 
       // write to the source database (don't worry about writing document
       // contents if those have not changed)

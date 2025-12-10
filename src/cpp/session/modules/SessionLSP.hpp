@@ -112,19 +112,15 @@ struct InitializeParams
 
 inline core::json::Object toJson(const InitializeParams& params)
 {
-   core::json::Object json;
-   json["processId"] = params.processId;
-   json["clientInfo"] = toJson(params.clientInfo);
-   if (!params.locale.empty())
-      json["locale"] = params.locale;
-   if (!params.rootUri.empty())
-      json["rootUri"] = params.rootUri;
-   if (!params.initializationOptions.isNull())
-      json["initializationOptions"] = params.initializationOptions;
-   json["capabilities"] = params.capabilities;
-   if (!params.workspaceFolders.empty())
-      json["workspaceFolders"] = toJson(params.workspaceFolders);
-   return json;
+   return JSON {
+      { "processId", params.processId },
+      { "clientInfo", toJson(params.clientInfo) },
+      { "locale", JSON::Optional(params.locale) },
+      { "rootUri", JSON::Optional(params.rootUri) },
+      { "initializationOptions", JSON::Optional(params.initializationOptions) },
+      { "capabilities", params.capabilities },
+      { "workspaceFolders", JSON::Optional(toJson(params.workspaceFolders)) }
+   };
 }
 
 
