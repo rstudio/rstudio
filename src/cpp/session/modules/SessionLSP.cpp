@@ -162,24 +162,20 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    events().didOpen(params);
 }
 
-void onDocContentsChanged(
-   boost::shared_ptr<source_database::SourceDocument> pDoc,
-   std::string replacement,
-   int offset,
-   int length)
+void onDocChanged(const source_database::SourceDocumentChangedEvent& event)
 {
-   std::string uri = uriFromDocument(pDoc);
+   std::string uri = uriFromDocument(event.sourceDocument);
    auto&& document = s_documents[uri];
    document.version += 1;
 
    Range range = createRange(
-      core::string_utils::offsetToPosition(pDoc->contents(), offset),
-      core::string_utils::offsetToPosition(pDoc->contents(), offset + length));
+      core::string_utils::offsetToPosition(event.contents, event.offset),
+      core::string_utils::offsetToPosition(event.contents, event.offset + event.length));
 
    std::vector<TextDocumentContentChangeEvent> contentChanges;
    contentChanges.push_back({
       .range = range,
-      .text  = replacement,
+      .text  = event.text,
    });
 
    VersionedTextDocumentIdentifier textDocument {
@@ -346,7 +342,7 @@ void didClose(DidCloseTextDocumentParams params)
 Error initialize()
 {
    source_database::events().onDocAdded.connect(onDocAdded);
-   source_database::events().onDocContentsChanged.connect(onDocContentsChanged);
+   source_database::events().onDocChanged.connect(onDocChanged);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocReopened.connect(onDocReopened);

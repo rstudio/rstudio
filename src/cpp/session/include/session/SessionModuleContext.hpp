@@ -341,7 +341,6 @@ struct firstNonEmpty
   }
 };
 
-
 // session events
 struct Events : boost::noncopyable
 {

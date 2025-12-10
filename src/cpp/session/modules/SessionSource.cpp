@@ -636,8 +636,18 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // to attempt a 'full' document save rather than just a diff-based save
    try
    {
+      // get current state of document
       std::string contents(pDoc->contents());
-      
+
+      // construct change event with original state of document
+      SourceDocumentChangedEvent event {
+         .sourceDocument = pDoc,
+         .contents = contents,
+         .text = replacement,
+         .offset = offset,
+         .length = length,
+      };
+
       // NOTE: this flag denotes whether the front-end successfully
       // constructed a diff to be saved; we leave this in while still
       // going down this code path just to ensure that any code that
@@ -658,8 +668,9 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      if (hasChanges)
-         source_database::events().onDocContentsChanged(pDoc, replacement, offset, length);
+      // notify listeners of changes -- note that the LSP specification asks
+      // for notifications even if the edit was a no-op
+      source_database::events().onDocChanged(event);
 
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
