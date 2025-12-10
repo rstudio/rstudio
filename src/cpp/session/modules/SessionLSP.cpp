@@ -177,7 +177,7 @@ void onRemoveAll()
 
 } // end anonymous namespace
 
-core::Error documentFromUri(
+core::Error sourceDocumentFromUri(
    const std::string& uri,
    boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -203,6 +203,24 @@ core::Error documentFromUri(
    }
 }
 
+std::string uriFromSourceDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (pDoc->isUntitled())
+   {
+      return fmt::format("{}{}", kRStudioDocumentPrefix, pDoc->id());
+   }
+   else
+   {
+      FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+      return uriFromDocumentPath(docPath);
+   }
+}
+
+std::string uriFromDocumentPath(const core::FilePath path)
+{
+   std::string absolutePath = path.getAbsolutePath();
+   return fmt::format("{}{}", kFilePrefix, absolutePath);
+}
 
 Error initialize()
 {

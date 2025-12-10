@@ -284,9 +284,13 @@ inline Events& events()
    return instance;
 }
 
-core::Error documentFromUri(
+core::Error sourceDocumentFromUri(
    const std::string& uri,
    boost::shared_ptr<source_database::SourceDocument> pDoc);
+
+std::string uriFromSourceDocument(boost::shared_ptr<source_database::SourceDocument> pDoc);
+
+std::string uriFromDocumentPath(const core::FilePath path);
 
 core::Error initialize();
 

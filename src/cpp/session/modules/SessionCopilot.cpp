@@ -540,29 +540,6 @@ bool isCopilotIndexingEnabled()
    return prefs::userPrefs().copilotIndexingEnabled();
 }
 
-std::string uriFromDocumentPath(const std::string& path)
-{
-   return fmt::format("file://{}", path);
-}
-
-std::string uriFromDocumentId(const std::string& id)
-{
-   return fmt::format("rstudio-document://{}", id);
-}
-
-std::string uriFromDocumentImpl(const std::string& id,
-                                const std::string& path,
-                                bool isUntitled)
-{
-   FilePath resolvedPath = module_context::resolveAliasedPath(path);
-   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
-   
-}
-std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
-{
-   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
-}
-
 template <typename F>
 bool waitFor(F&& callback)
 {
@@ -1121,7 +1098,7 @@ Error startAgent()
    std::string workspaceFolderURI;
    if (prefs::userPrefs().copilotProjectWorkspace() && projects::projectContext().hasProject())
    {
-      workspaceFolderURI = uriFromDocumentPath(projects::projectContext().directory().getAbsolutePath());
+      workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
    }
 
    json::Object workspaceJson;
@@ -1312,9 +1289,10 @@ void indexFile(const core::FileInfo& info)
    
    DLOG("Indexing document: {}", info.absolutePath());
    
-   docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
-             languageId,
-             contents);
+   docOpened(
+      lsp::uriFromDocumentPath(documentPath),
+      languageId,
+      contents);
 }
 
 } // end anonymous namespace
@@ -1345,7 +1323,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
       return;
    
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
-   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
       LOG_ERROR(error);
 
@@ -1364,7 +1342,7 @@ void didChange(lsp::DidChangeTextDocumentParams params)
       return;
 
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
-   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
       LOG_ERROR(error);
 
@@ -1386,7 +1364,7 @@ void didClose(lsp::DidCloseTextDocumentParams params)
       return;
 
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
-   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
       LOG_ERROR(error);
 
@@ -1829,7 +1807,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   auto uri = uriFromDocument(pDoc);
+   auto uri = lsp::uriFromSourceDocument(pDoc);
    docJson["uri"] = uri;
    docJson["version"] = currentVersionForDocument(uri);
 
@@ -1909,7 +1887,7 @@ Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   auto uri = uriFromDocument(pDoc);
+   auto uri = lsp::uriFromSourceDocument(pDoc);
    docJson["uri"] = uri;
    docJson["version"] = currentVersionForDocument(uri);
 
@@ -2033,7 +2011,7 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    {
       lsp::DidFocusTextDocumentParams params = {
          .textDocument = {
-            .uri = uriFromDocument(pDoc),
+            .uri = lsp::uriFromSourceDocument(pDoc),
          }
       };
       
