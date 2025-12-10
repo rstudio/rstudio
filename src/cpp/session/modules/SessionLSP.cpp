@@ -139,21 +139,19 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
    return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
-int64_t versionFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
-{
-   std::string uri = uriFromDocument(pDoc);
-   return s_documents.count(uri) ? s_documents[uri].version : 0;
-}
-
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
-   s_documents[uri].opened = true;
+   auto&& document = s_documents[uri];
+   if (document.opened)
+      return;
+
+   document.opened = true;
 
    TextDocumentItem textDocument {
       .uri        = uri,
       .languageId = languageIdFromDocument(pDoc),
-      .version    = versionFromDocument(pDoc),
+      .version    = document.version,
       .text       = pDoc->contents(),
    };
 
@@ -171,7 +169,8 @@ void onDocContentsChanged(
    int length)
 {
    std::string uri = uriFromDocument(pDoc);
-   s_documents[uri].version += 1;
+   auto&& document = s_documents[uri];
+   document.version += 1;
 
    Range range = createRange(
       core::string_utils::offsetToPosition(pDoc->contents(), offset),
@@ -184,8 +183,8 @@ void onDocContentsChanged(
    });
 
    VersionedTextDocumentIdentifier textDocument {
-      .uri     = uriFromDocument(pDoc),
-      .version = versionFromDocument(pDoc),
+      .uri     = uri,
+      .version = document.version,
    };
 
    DidChangeTextDocumentParams params {
@@ -198,7 +197,11 @@ void onDocContentsChanged(
 
 void onDocRemovedImpl(const std::string& uri)
 {
-   s_documents[uri].opened = false;
+   auto&& document = s_documents[uri];
+   if (!document.opened)
+      return;
+
+   document.opened = false;
 
    TextDocumentIdentifier textDocument {
       .uri = uri,
@@ -218,10 +221,6 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   std::string uri = uriFromDocument(pDoc);
-   if (s_documents.count(uri))
-      return;
-
    onDocAdded(pDoc);
 }
 
@@ -318,6 +317,31 @@ int64_t documentVersionFromUri(const std::string& uri)
    return s_documents[uri].version;
 }
 
+namespace {
+
+void logEvent(const std::string& event, const core::json::Value& json)
+{
+   std::cerr << ">>> " << event << std::endl;
+   json.writeFormatted(std::cerr);
+   std::cerr << std::endl << std::endl;
+}
+
+void didOpen(DidOpenTextDocumentParams params)
+{
+   logEvent("textDocument/didOpen", toJson(params));
+}
+
+void didChange(DidChangeTextDocumentParams params)
+{
+   logEvent("textDocument/didChange", toJson(params));
+}
+
+void didClose(DidCloseTextDocumentParams params)
+{
+   logEvent("textDocument/didClose", toJson(params));
+}
+
+} // end anonymous namespace
 
 Error initialize()
 {
@@ -327,6 +351,10 @@ Error initialize()
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocReopened.connect(onDocReopened);
    source_database::events().onRemoveAll.connect(onRemoveAll);
+
+   events().didOpen.connect(didOpen);
+   events().didChange.connect(didChange);
+   events().didClose.connect(didClose);
 
    return Success();
 }
