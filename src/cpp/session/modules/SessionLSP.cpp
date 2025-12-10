@@ -183,12 +183,12 @@ core::Error documentFromUri(
 {
    if (boost::algorithm::starts_with(uri, kRStudioDocumentPrefix))
    {
-      std::string id = uri.substr(strlen(kRStudioDocumentPrefix) + 1);
+      std::string id = uri.substr(strlen(kRStudioDocumentPrefix));
       return source_database::get(id, pDoc);
    }
    else if (boost::algorithm::starts_with(uri, kFilePrefix))
    {
-      std::string path = uri.substr(strlen(kFilePrefix) + 1);
+      FilePath path(uri.substr(strlen(kFilePrefix)));
 
       std::string id;
       Error error = source_database::getId(path, &id);
