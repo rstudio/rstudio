@@ -404,8 +404,10 @@ Error ChildProcess::run()
    }
 
    // Standard input pipe
+   // Use 256KB buffer to prevent pipe buffer saturation under high-frequency writes
    HANDLE hStdInRead;
-   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, nullptr, 0))
+   SECURITY_ATTRIBUTES saStdIn = {sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+   if (!::CreatePipe(&hStdInRead, &pImpl_->hStdInWrite, &saStdIn, 256 * 1024))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -418,8 +420,10 @@ Error ChildProcess::run()
    }
 
    // Standard output pipe
+   // Use 256KB buffer to prevent backend from blocking on stdout writes
    HANDLE hStdOutWrite;
-   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, nullptr, 0))
+   SECURITY_ATTRIBUTES saStdOut = {sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+   if (!::CreatePipe(&pImpl_->hStdOutRead, &hStdOutWrite, &saStdOut, 256 * 1024))
    {
       return LAST_SYSTEM_ERROR();
    }
@@ -432,8 +436,10 @@ Error ChildProcess::run()
    }
 
    // Standard error pipe
+   // Use 256KB buffer to prevent backend from blocking on stderr writes
    HANDLE hStdErrWrite;
-   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, nullptr, 0))
+   SECURITY_ATTRIBUTES saStdErr = {sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+   if (!::CreatePipe(&pImpl_->hStdErrRead, &hStdErrWrite, &saStdErr, 256 * 1024))
    {
       return LAST_SYSTEM_ERROR();
    }
