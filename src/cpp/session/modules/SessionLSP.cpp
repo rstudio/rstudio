@@ -27,6 +27,8 @@ namespace lsp {
 
 namespace {
 
+std::map<lsp::DocumentUri, int64_t> s_docVersions;
+
 std::string uriFromDocumentPath(const std::string& path)
 {
    return fmt::format("file://{}", path);
@@ -68,11 +70,14 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 
 int64_t versionFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
 {
-   return 0;
+   std::string uri = uriFromDocument(pDoc);
+   return s_docVersions.count(uri) ? s_docVersions[uri] : 0;
 }
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   s_docVersions[uriFromDocument(pDoc)] = 0;
+
    TextDocumentItem textDocument {
       .text       = pDoc->contents(),
       .languageId = languageIdFromDocument(pDoc),
@@ -92,6 +97,8 @@ void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
                   int offset,
                   int length)
 {
+   s_docVersions[uriFromDocument(pDoc)] += 1;
+
    // TODO: Update document version here.
    Range range = createRange(
       core::string_utils::offsetToPosition(pDoc->contents(), offset),
@@ -118,6 +125,8 @@ void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
 
 void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   s_docVersions.erase(uriFromDocument(pDoc));
+
    TextDocumentIdentifier textDocument {
       .uri = uriFromDocument(pDoc),
    };
@@ -129,6 +138,12 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
    events().didClose(params);
 }
 
+void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   onDocRemoved(pDoc);
+   onDocAdded(pDoc);
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -136,6 +151,7 @@ Error initialize()
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocChanged.connect(onDocChanged);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
+   source_database::events().onDocReopened.connect(onDocReopened);
 
    return Success();
 }

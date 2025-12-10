@@ -1395,21 +1395,6 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
              contentsFromDocument(pDoc));
 }
 
-void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   if (!isIndexableDocument(pDoc))
-      return;
-
-   docClosed(uriFromDocument(pDoc));
-
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
-}
-
 void didOpen(lsp::DidOpenTextDocumentParams params)
 {
    if (!ensureAgentRunning())
@@ -1710,7 +1695,6 @@ void onDeferredInit(bool newSession)
 
    // should see if we can remove these two
    source_database::events().onDocUpdated.connect(onDocUpdated);
-   source_database::events().onDocReopened.connect(onDocReopened);
 }
 
 void onShutdown(bool)
