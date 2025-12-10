@@ -79,10 +79,10 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    s_docVersions[uriFromDocument(pDoc)] = 0;
 
    TextDocumentItem textDocument {
-      .text       = pDoc->contents(),
-      .languageId = languageIdFromDocument(pDoc),
       .uri        = uriFromDocument(pDoc),
-      .version    = versionFromDocument(pDoc)
+      .languageId = languageIdFromDocument(pDoc),
+      .version    = versionFromDocument(pDoc),
+      .text       = pDoc->contents(),
    };
 
    DidOpenTextDocumentParams params {
@@ -99,15 +99,14 @@ void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
 {
    s_docVersions[uriFromDocument(pDoc)] += 1;
 
-   // TODO: Update document version here.
    Range range = createRange(
       core::string_utils::offsetToPosition(pDoc->contents(), offset),
       core::string_utils::offsetToPosition(pDoc->contents(), offset + length));
 
    std::vector<TextDocumentContentChangeEvent> contentChanges;
    contentChanges.push_back({
-      .text  = replacement,
       .range = range,
+      .text  = replacement,
    });
 
    VersionedTextDocumentIdentifier textDocument {

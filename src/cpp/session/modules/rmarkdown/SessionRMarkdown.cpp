@@ -127,7 +127,7 @@ std::string utf8ToConsole(const std::string& string)
       // as well as for single-byte upper ASCII
       if (n == -1 || (n == 1 && static_cast<unsigned char>(buffer[0]) > 127))
       {
-         output << "\\u{" << std::hex << wide[i] << "}";
+         output << "\\u{" << std::hex << static_cast<uint32_t>(wide[i]) << "}";
       }
       else
       {

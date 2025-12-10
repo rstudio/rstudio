@@ -22,8 +22,12 @@ set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 # require position independent code for CMake targets
 set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 
-# use C++17
-set(CMAKE_CXX_STANDARD 17)
+# use C++20 on Windows; C++17 elsewhere
+if(WIN32)
+  set(CMAKE_CXX_STANDARD 20)
+else()
+  set(CMAKE_CXX_STANDARD 17)
+endif()
 
 # use colored output by default
 if(NOT DEFINED ENV{JENKINS_URL})

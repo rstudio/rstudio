@@ -19,8 +19,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 #include <map>
-#include <ostream>
+#include <sstream>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -330,7 +331,7 @@ std::string utf8ToSystem(const std::string& str,
             // latter is accepted by Python, and since the reticulate
             // REPL uses the same conversion routines we prefer the
             // format compatible with both parsers
-            output << "\\u" << std::hex << wide[i];
+            output << "\\u" << std::hex << static_cast<uint32_t>(wide[i]);
          }
          else
          {
