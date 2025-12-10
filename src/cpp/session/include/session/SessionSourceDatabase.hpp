@@ -22,9 +22,10 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <core/BoostSignals.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include <core/BoostSignals.hpp>
 
 #include <r/RSexp.hpp>
 
