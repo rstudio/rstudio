@@ -33,31 +33,94 @@ namespace {
 struct Document
 {
    int64_t version = 0;
+   bool opened = false;
 };
 
-std::map<lsp::DocumentUri, Document> s_openDocuments;
+std::map<lsp::DocumentUri, Document> s_documents;
 
-std::string uriFromDocumentPath(const std::string& path)
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+std::map<std::string, std::string> s_extToLanguageIdMap = {
+   { ".abap",  "abap" },
+   { ".bash",  "shellscript" },
+   { ".bat",   "bat" },
+   { ".bib",   "bibtex" },
+   { ".c",     "c" },
+   { ".cc",    "cpp" },
+   { ".clj",   "clojure"},
+   { ".coffee","coffeescript" },
+   { ".cpp",   "cpp" },
+   { ".cs",    "csharp" },
+   { ".css",   "css" },
+   { ".dart",  "dart" },
+   { ".diff",  "diff" },
+// { "",       "dockerfile" }, (special handling due to lack of extension)
+   { ".erl",   "erlang" },
+   { ".etx",   "tex" },
+   { ".ex",    "elixir" },
+   { ".fs",    "fsharp" },
+   { ".go",    "go" },
+   { ".groovy","groovy" },
+   { ".h",     "c" },
+   { ".hbs",   "handlebars" },
+   { ".hpp",   "cpp" },
+   { ".html",  "html" },
+   { ".ini",   "ini" },
+   { ".jade",  "jade" },
+   { ".java",  "java" },
+   { ".js",    "javascript" },
+   { ".jsx",   "javascriptreact" },
+   { ".json",  "json" },
+   { ".less",  "less" },
+   { ".lua",   "lua" },
+   { ".m",     "objective-c" },
+   { ".md",    "markdown" },
+   { ".mjs",   "javascript" },
+   { ".ps",    "powershell" },
+   { ".mk",    "makefile" }, // (special handling for extensionless "makefile" / "Makefile")
+   { ".mm",    "objective-cpp" },
+   { ".php",   "php" },
+   { ".pl",    "perl" },
+   { ".pl6",   "perl6" },
+   { ".pug",   "jade" },
+   { ".py",    "python" },
+   { ".qmd",   "quarto" },
+   { ".r",     "r" },
+   { ".razor", "razor" },
+   { ".rb",    "ruby" },
+   { ".rmd",   "r" },
+   { ".rnb",   "r" },
+   { ".rnw",   "r" },
+   { ".rs",    "rust" },
+   { ".sass",  "sass" },
+   { ".sc",    "scala" },
+   { ".scala", "scala" },
+   { ".scss",  "scss" },
+   { ".sh",    "shellscript" },
+   { ".shader","shaderlab" },
+   { ".sql",   "sql" },
+   { ".swift", "swift" },
+   { ".tex",   "latex" },
+   { ".toml",  "toml" },
+   { ".ts",    "typescript" },
+   { ".tsx",   "typescriptreact" },
+   { ".vb",    "vb" },
+   { ".xml",   "xml" },
+   { ".xsl",   "xsl" },
+   { ".yml",   "yaml" },
+};
+
+std::map<std::string, std::string> makeLanguageIdToExtMap()
 {
-   return fmt::format("file://{}", path);
+   std::map<std::string, std::string> map;
+   for (auto&& entry : s_extToLanguageIdMap)
+      map[entry.second] = entry.first;
+   return map;
 }
 
-std::string uriFromDocumentId(const std::string& id)
+std::map<std::string, std::string>& languageIdToExtMap()
 {
-   return fmt::format("rstudio-document://{}", id);
-}
-
-std::string uriFromDocumentImpl(const std::string& id,
-                                const std::string& path,
-                                bool isUntitled)
-{
-   FilePath resolvedPath = module_context::resolveAliasedPath(path);
-   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
-}
-
-std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
-{
-   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
+   static auto instance = makeLanguageIdToExtMap();
+   return instance;
 }
 
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -79,15 +142,16 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 int64_t versionFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
-   return s_openDocuments.count(uri) ? s_openDocuments[uri].version : 0;
+   return s_documents.count(uri) ? s_documents[uri].version : 0;
 }
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   s_openDocuments[uriFromDocument(pDoc)].version = 0;
+   std::string uri = uriFromDocument(pDoc);
+   s_documents[uri].opened = true;
 
    TextDocumentItem textDocument {
-      .uri        = uriFromDocument(pDoc),
+      .uri        = uri,
       .languageId = languageIdFromDocument(pDoc),
       .version    = versionFromDocument(pDoc),
       .text       = pDoc->contents(),
@@ -100,12 +164,14 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
    events().didOpen(params);
 }
 
-void onDocContentsChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
-                  std::string replacement,
-                  int offset,
-                  int length)
+void onDocContentsChanged(
+   boost::shared_ptr<source_database::SourceDocument> pDoc,
+   std::string replacement,
+   int offset,
+   int length)
 {
-   s_openDocuments[uriFromDocument(pDoc)].version += 1;
+   std::string uri = uriFromDocument(pDoc);
+   s_documents[uri].version += 1;
 
    Range range = createRange(
       core::string_utils::offsetToPosition(pDoc->contents(), offset),
@@ -132,7 +198,7 @@ void onDocContentsChanged(boost::shared_ptr<source_database::SourceDocument> pDo
 
 void onDocRemovedImpl(const std::string& uri)
 {
-   s_openDocuments.erase(uri);
+   s_documents[uri].opened = false;
 
    TextDocumentIdentifier textDocument {
       .uri = uri,
@@ -153,7 +219,7 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
-   if (s_openDocuments.count(uri))
+   if (s_documents.count(uri))
       return;
 
    onDocAdded(pDoc);
@@ -168,7 +234,7 @@ void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
 void onRemoveAll()
 {
    std::vector<DocumentUri> uris;
-   for (auto&& entry : s_openDocuments)
+   for (auto&& entry : s_documents)
       uris.push_back(entry.first);
 
    for (auto&& uri : uris)
@@ -203,7 +269,7 @@ core::Error sourceDocumentFromUri(
    }
 }
 
-std::string uriFromSourceDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
+std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (pDoc->isUntitled())
    {
@@ -221,6 +287,37 @@ std::string uriFromDocumentPath(const core::FilePath path)
    std::string absolutePath = path.getAbsolutePath();
    return fmt::format("{}{}", kFilePrefix, absolutePath);
 }
+
+std::string languageIdFromExtension(const std::string& ext)
+{
+   if (s_extToLanguageIdMap.count(ext))
+   {
+      return s_extToLanguageIdMap[ext];
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
+std::string extensionFromLanguageId(const std::string& languageId)
+{
+   auto&& map = languageIdToExtMap();
+   if (map.count(languageId))
+   {
+      return map[languageId];
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
+int64_t documentVersionFromUri(const std::string& uri)
+{
+   return s_documents[uri].version;
+}
+
 
 Error initialize()
 {

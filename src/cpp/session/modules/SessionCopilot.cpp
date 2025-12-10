@@ -89,90 +89,6 @@ namespace copilot {
 
 namespace {
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
-std::map<std::string, std::string> s_extToLanguageIdMap = {
-   { ".abap",  "abap" },
-   { ".bash",  "shellscript" },
-   { ".bat",   "bat" },
-   { ".bib",   "bibtex" },
-   { ".c",     "c" },
-   { ".cc",    "cpp" },
-   { ".clj",   "clojure"},
-   { ".coffee","coffeescript" },
-   { ".cpp",   "cpp" },
-   { ".cs",    "csharp" },
-   { ".css",   "css" },
-   { ".dart",  "dart" },
-   { ".diff",  "diff" },
-// { "",       "dockerfile" }, (special handling due to lack of extension)
-   { ".erl",   "erlang" },
-   { ".etx",   "tex" },
-   { ".ex",    "elixir" },
-   { ".fs",    "fsharp" },
-   { ".go",    "go" },
-   { ".groovy","groovy" },
-   { ".h",     "c" },
-   { ".hbs",   "handlebars" },
-   { ".hpp",   "cpp" },
-   { ".html",  "html" },
-   { ".ini",   "ini" },
-   { ".jade",  "jade" },
-   { ".java",  "java" },
-   { ".js",    "javascript" },
-   { ".jsx",   "javascriptreact" },
-   { ".json",  "json" },
-   { ".less",  "less" },
-   { ".lua",   "lua" },
-   { ".m",     "objective-c" },
-   { ".md",    "markdown" },
-   { ".mjs",   "javascript" },
-   { ".ps",    "powershell" },
-   { ".mk",    "makefile" }, // (special handling for extensionless "makefile" / "Makefile")
-   { ".mm",    "objective-cpp" },
-   { ".php",   "php" },
-   { ".pl",    "perl" },
-   { ".pl6",   "perl6" },
-   { ".pug",   "jade" },
-   { ".py",    "python" },
-   { ".qmd",   "quarto" },
-   { ".r",     "r" },
-   { ".razor", "razor" },
-   { ".rb",    "ruby" },
-   { ".rmd",   "r" },
-   { ".rnb",   "r" },
-   { ".rnw",   "r" },
-   { ".rs",    "rust" },
-   { ".sass",  "sass" },
-   { ".sc",    "scala" },
-   { ".scala", "scala" },
-   { ".scss",  "scss" },
-   { ".sh",    "shellscript" },
-   { ".shader","shaderlab" },
-   { ".sql",   "sql" },
-   { ".swift", "swift" },
-   { ".tex",   "latex" },
-   { ".toml",  "toml" },
-   { ".ts",    "typescript" },
-   { ".tsx",   "typescriptreact" },
-   { ".vb",    "vb" },
-   { ".xml",   "xml" },
-   { ".xsl",   "xsl" },
-   { ".yml",   "yaml" },
-};
-
-std::map<std::string, std::string> makeLanguageIdToExtMap()
-{
-   std::map<std::string, std::string> map;
-   for (auto&& entry : s_extToLanguageIdMap)
-      map[entry.second] = entry.first;
-   return map;
-}
-
-std::map<std::string, std::string>& languageIdToExtMap()
-{
-   static auto instance = makeLanguageIdToExtMap();
-   return instance;
-}
 
 struct CopilotRequest
 {
@@ -312,47 +228,6 @@ projects::RProjectCopilotOptions s_copilotProjectOptions;
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
 
-// The language server protocol states:
-//
-// ...open notification must not be sent more than once without a corresponding close notification 
-// send before. This means open and close notification must be balanced and the max open count
-// for a particular textDocument is one.
-//
-// Track documents Copilot knows about via textDocument/didOpen. Remove them when
-// textDocument/didClose is sent (or the agent is stopped).
-//
-// Also tracks an incrementing version number for each document.
-//
-std::unordered_map<std::string, int> s_knownDocuments;
-
-// Set/update the version for a given URI. IMPORTANT: will increment the version number each time
-// it is called.
-int updateVersionForDocument(const std::string& uri)
-{
-   // If the document is already known, increment its version.
-   auto it = s_knownDocuments.find(uri);
-   if (it != s_knownDocuments.end())
-   {
-      it->second++;
-      return it->second;
-   }
-   
-   // Otherwise, add it with initial version
-   s_knownDocuments[uri] = kCopilotDefaultDocumentVersion;
-   return s_knownDocuments[uri];
-}
-
-int currentVersionForDocument(const std::string& uri)
-{
-   // If the document is known, return its version.
-   auto it = s_knownDocuments.find(uri);
-   if (it != s_knownDocuments.end())
-      return it->second;
-
-   // Otherwise, return the default version.
-   return kCopilotDefaultDocumentVersion;
-}
-
 int copilotLogLevel()
 {
    return s_copilotLogLevel;
@@ -392,7 +267,8 @@ bool isIndexableFile(const FilePath& documentPath)
    // We previously used module_context::isTextFile(), but because this
    // relies on invoking /usr/bin/file, this can be dreadfully slow if
    // the project contains a large number of files without a known type.
-   return s_extToLanguageIdMap.count(ext);
+   std::string languageId = lsp::languageIdFromExtension(ext);
+   return !languageId.empty();
 }
 
 bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
@@ -410,7 +286,8 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->isUntitled())
    {
       std::string type = pDoc->type();
-      return languageIdToExtMap().count(type);
+      std::string ext = lsp::extensionFromLanguageId(type);
+      return !ext.empty();
    }
    
    // Otherwise, check for known files / extensions.
@@ -950,8 +827,6 @@ void onExit(int status)
 
 void stopAgent()
 {
-   s_knownDocuments.clear();
-
    if (s_agentPid == -1)
    {
       setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
@@ -1182,20 +1057,15 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 }
 
 void docOpened(const std::string& uri,
+               int64_t version,
                const std::string& languageId,
                const std::string& contents)
 {
-   if (s_knownDocuments.count(uri) > 0)
-   {
-      // already told Copilot about this document, so skip this
-      return;
-   }
-
    lsp::DidOpenTextDocumentParams params = {
       .textDocument = {
          .uri        = uri,
          .languageId = languageId,
-         .version    = updateVersionForDocument(uri),
+         .version    = version,
          .text       = contents
       }
    };
@@ -1205,22 +1075,6 @@ void docOpened(const std::string& uri,
 
 void docClosed(const std::string& uri)
 {
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      // Check if this is an untitled (unsaved) document; if so then it's likely an empty unsaved
-      // file that was never edited (Copilot isn't told about a new file until it gets modified)
-      // so the warning is unnecessary
-      if (uri.find("rstudio-document://") == 0)
-      {
-         return;
-      }
-      
-      WLOG("Tried to close unknown document '{}'.", uri);
-      return;
-   }
-
-   s_knownDocuments.erase(uri);
-
    lsp::DidCloseTextDocumentParams params = {
       .textDocument = {
          .uri = uri,
@@ -1232,15 +1086,10 @@ void docClosed(const std::string& uri)
 
 // Send a textDocument/didChange notification with diff
 void didChangeIncremental(const std::string& uri,
+                          int version,
                           const lsp::Range& range,
                           const std::string& text)
 {
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      DLOG("Ignoring diff for unknown document '{}'.", uri);
-      return;
-   }
-
    lsp::TextDocumentContentChangeEvent event = {
       .range = range,
       .text = text,
@@ -1249,7 +1098,7 @@ void didChangeIncremental(const std::string& uri,
    lsp::DidChangeTextDocumentParams params = {
       .textDocument = {
          .uri = uri,
-         .version = updateVersionForDocument(uri),
+         .version = version,
       },
       .contentChanges = {
          {
@@ -1277,10 +1126,10 @@ void indexFile(const core::FileInfo& info)
    if (!isIndexableFile(documentPath))
       return;
    
-   std::string languageId;
    std::string ext = documentPath.getExtensionLowerCase();
-   if (s_extToLanguageIdMap.count(ext))
-      languageId = s_extToLanguageIdMap[ext];
+   std::string languageId = lsp::languageIdFromExtension(ext);
+   if (languageId.empty())
+      return;
       
    std::string contents;
    Error error = core::readStringFromFile(documentPath, &contents);
@@ -1289,8 +1138,10 @@ void indexFile(const core::FileInfo& info)
    
    DLOG("Indexing document: {}", info.absolutePath());
    
+   std::string uri = lsp::uriFromDocumentPath(documentPath);
    docOpened(
-      lsp::uriFromDocumentPath(documentPath),
+      uri,
+      lsp::documentVersionFromUri(uri),
       languageId,
       contents);
 }
@@ -1332,6 +1183,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 
    docOpened(
       params.textDocument.uri,
+      params.textDocument.version,
       params.textDocument.languageId,
       params.textDocument.text);
 }
@@ -1353,6 +1205,7 @@ void didChange(lsp::DidChangeTextDocumentParams params)
    {
       didChangeIncremental(
          params.textDocument.uri,
+         params.textDocument.version,
          contentChange.range,
          contentChange.text);
    }
@@ -1807,9 +1660,9 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   auto uri = lsp::uriFromSourceDocument(pDoc);
+   auto uri = lsp::uriFromDocument(pDoc);
    docJson["uri"] = uri;
-   docJson["version"] = currentVersionForDocument(uri);
+   docJson["version"] = lsp::documentVersionFromUri(uri);
 
    json::Object contextJson;
    contextJson["triggerKind"] = autoInvoked ? 
@@ -1887,9 +1740,9 @@ Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   auto uri = lsp::uriFromSourceDocument(pDoc);
+   auto uri = lsp::uriFromDocument(pDoc);
    docJson["uri"] = uri;
-   docJson["version"] = currentVersionForDocument(uri);
+   docJson["version"] = lsp::documentVersionFromUri(uri);
 
    json::Object contextJson;
    contextJson["triggerKind"] = kCopilotCompletionTriggerAutomatic;
@@ -2011,7 +1864,7 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    {
       lsp::DidFocusTextDocumentParams params = {
          .textDocument = {
-            .uri = lsp::uriFromSourceDocument(pDoc),
+            .uri = lsp::uriFromDocument(pDoc),
          }
       };
       
