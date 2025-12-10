@@ -277,7 +277,7 @@ std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> p
    }
 }
 
-std::string uriFromDocumentPath(const core::FilePath path)
+std::string uriFromDocumentPath(const core::FilePath& path)
 {
    std::string absolutePath = path.getAbsolutePath();
    return fmt::format("{}{}", kFilePrefix, absolutePath);
@@ -317,9 +317,9 @@ namespace {
 
 void logEvent(const std::string& event, const core::json::Value& json)
 {
-   std::cerr << ">>> " << event << std::endl;
-   json.writeFormatted(std::cerr);
-   std::cerr << std::endl << std::endl;
+   // std::cerr << ">>> " << event << std::endl;
+   // json.writeFormatted(std::cerr);
+   // std::cerr << std::endl << std::endl;
 }
 
 void didOpen(DidOpenTextDocumentParams params)
