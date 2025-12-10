@@ -485,7 +485,8 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
    Error error = ops.writeToStdin(message, false);
    if (error)
    {
-      ELOG("Failed to send streaming output: {}", error.getMessage());
+      ELOG("[sendStreamingOutput]: Failed to send streaming output: {} (error code: {})",
+           error.getMessage(), error.getCode());
    }
 }
 
