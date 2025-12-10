@@ -21,6 +21,7 @@
 
 #include <core/BoostSignals.hpp>
 #include <core/collection/Position.hpp>
+#include <core/json/JsonBuilder.hpp>
 
 namespace rstudio {
 namespace session {
@@ -36,7 +37,6 @@ core::json::Array toJson(const std::vector<T>& values)
    return json;
 }
 
-
 using DocumentUri = std::string;
 
 struct Position
@@ -47,10 +47,10 @@ struct Position
 
 inline core::json::Object toJson(const Position& position)
 {
-   core::json::Object json;
-   json["line"] = position.line;
-   json["character"] = position.character;
-   return json;
+   return JSON {
+      { "line", position.line },
+      { "character", position.character }
+   };
 }
 
 
@@ -62,9 +62,68 @@ struct Range
 
 inline core::json::Object toJson(const Range& range)
 {
+   return JSON {
+      { "start", toJson(range.start) },
+      { "end", toJson(range.end) }
+   };
+}
+
+
+struct ClientInfo
+{
+   std::string name;
+   std::string version;
+};
+
+inline core::json::Object toJson(const ClientInfo& clientInfo)
+{
+   return JSON {
+      { "name", clientInfo.name },
+      { "version", clientInfo.version },
+   };
+}
+
+
+struct WorkspaceFolder
+{
+   std::string uri;
+   std::string name;
+};
+
+inline core::json::Object toJson(const WorkspaceFolder& folder)
+{
+   return JSON {
+      { "uri", folder.uri },
+      { "name", folder.name }
+   };
+}
+
+
+struct InitializeParams
+{
+   int processId;
+   ClientInfo clientInfo;
+   std::string locale;
+   DocumentUri rootUri;
+   core::json::Value initializationOptions;
+   core::json::Object capabilities;
+   std::vector<WorkspaceFolder> workspaceFolders;
+};
+
+inline core::json::Object toJson(const InitializeParams& params)
+{
    core::json::Object json;
-   json["start"] = toJson(range.start);
-   json["end"] = toJson(range.end);
+   json["processId"] = params.processId;
+   json["clientInfo"] = toJson(params.clientInfo);
+   if (!params.locale.empty())
+      json["locale"] = params.locale;
+   if (!params.rootUri.empty())
+      json["rootUri"] = params.rootUri;
+   if (!params.initializationOptions.isNull())
+      json["initializationOptions"] = params.initializationOptions;
+   json["capabilities"] = params.capabilities;
+   if (!params.workspaceFolders.empty())
+      json["workspaceFolders"] = toJson(params.workspaceFolders);
    return json;
 }
 
@@ -79,12 +138,12 @@ struct TextDocumentItem
 
 inline core::json::Object toJson(const TextDocumentItem& item)
 {
-   core::json::Object json;
-   json["uri"] = item.uri;
-   json["languageId"] = item.languageId;
-   json["version"] = item.version;
-   json["text"] = item.text;
-   return json;
+   return JSON {
+      { "uri", item.uri },
+      { "languageId", item.languageId },
+      { "version", item.version },
+      { "text", item.text }
+   };
 }
 
 
@@ -95,9 +154,9 @@ struct TextDocumentIdentifier
 
 inline core::json::Object toJson(const TextDocumentIdentifier& textDocument)
 {
-   core::json::Object json;
-   json["uri"] = textDocument.uri;
-   return json;
+   return JSON {
+      { "uri", textDocument.uri }
+   };
 }
 
 
@@ -109,10 +168,10 @@ struct VersionedTextDocumentIdentifier : public TextDocumentIdentifier
 
 inline core::json::Object toJson(const VersionedTextDocumentIdentifier& textDocument)
 {
-   core::json::Object json;
-   json["uri"] = textDocument.uri;
-   json["version"] = textDocument.version;
-   return json;
+   return JSON {
+      { "uri", textDocument.uri },
+      { "version", textDocument.version }
+   };
 }
 
 
@@ -124,10 +183,10 @@ struct TextDocumentContentChangeEvent
 
 inline core::json::Object toJson(const TextDocumentContentChangeEvent& event)
 {
-   core::json::Object json;
-   json["range"] = toJson(event.range);
-   json["text"] = event.text;
-   return json;
+   return JSON {
+      { "range", toJson(event.range) },
+      { "text", event.text }
+   };
 }
 
 
@@ -138,9 +197,9 @@ struct DidOpenTextDocumentParams
 
 inline core::json::Object toJson(const DidOpenTextDocumentParams& params)
 {
-   core::json::Object json;
-   json["textDocument"] = toJson(params.textDocument);
-   return json;
+   return JSON {
+      { "textDocument", toJson(params.textDocument) }
+   };
 }
 
 
@@ -152,10 +211,10 @@ struct DidChangeTextDocumentParams
 
 inline core::json::Object toJson(const DidChangeTextDocumentParams& params)
 {
-   core::json::Object json;
-   json["textDocument"] = toJson(params.textDocument);
-   json["contentChanges"] = toJson(params.contentChanges);
-   return json;
+   return JSON {
+      { "textDocument", toJson(params.textDocument) },
+      { "contentChanges", toJson(params.contentChanges) }
+   };
 }
 
 
@@ -166,40 +225,44 @@ struct DidCloseTextDocumentParams
 
 inline core::json::Object toJson(const DidCloseTextDocumentParams& params)
 {
-   core::json::Object json;
-   json["textDocument"] = toJson(params.textDocument);
-   return json;
+   return JSON {
+      { "textDocument", toJson(params.textDocument) }
+   };
+}
+
+
+// Not part of the LSP specification, but used by Copilot.
+struct DidFocusTextDocumentParams
+{
+   TextDocumentIdentifier textDocument;
+};
+
+inline core::json::Object toJson(const DidFocusTextDocumentParams& params)
+{
+   return JSON {
+      { "textDocument", toJson(params.textDocument) }
+   };
 }
 
 
 inline Range createRange(const core::collection::Position& start,
                          const core::collection::Position& end)
 {
-   Range range;
-
-   range.start.line = start.row;
-   range.start.character = start.column;
-
-   range.end.line = end.row;
-   range.end.character = end.column;
-
-   return range;
+   return {
+      .start = {
+         .line = start.row,
+         .character = start.column,
+      },
+      .end = {
+         .line = end.row,
+         .character = end.column,
+      }
+   };
 }
 
 inline Range createRange(const core::collection::Range& other)
 {
-   auto&& start = other.begin();
-   auto&& end = other.end();
-
-   Range range;
-
-   range.start.line = start.row;
-   range.start.character = start.column;
-
-   range.end.line = end.row;
-   range.end.character = end.column;
-
-   return range;
+   return createRange(other.begin(), other.end());
 }
 
 

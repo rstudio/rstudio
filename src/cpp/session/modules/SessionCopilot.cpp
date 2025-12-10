@@ -1242,14 +1242,15 @@ void docClosed(const std::string& uri)
       return;
    }
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
    s_knownDocuments.erase(uri);
-   sendNotification("textDocument/didClose", paramsJson);
+
+   lsp::DidCloseTextDocumentParams params = {
+      .textDocument = {
+         .uri = uri,
+      }
+   };
+
+   sendNotification("textDocument/didClose", lsp::toJson(params));
 }
 
 // Send a textDocument/didChange notification with diff
@@ -1263,34 +1264,25 @@ void didChangeIncremental(const std::string& uri,
       return;
    }
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["version"] = updateVersionForDocument(uri);
+   lsp::TextDocumentContentChangeEvent event = {
+      .range = range,
+      .text = text,
+   };
 
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
+   lsp::DidChangeTextDocumentParams params = {
+      .textDocument = {
+         .uri = uri,
+         .version = updateVersionForDocument(uri),
+      },
+      .contentChanges = {
+         {
+            .range = range,
+            .text = text,
+         }
+      }
+   };
 
-   json::Object startJson;
-   startJson["line"] = static_cast<uint64_t>(range.start.line);
-   startJson["character"] = static_cast<uint64_t>(range.start.character);
-
-   json::Object endJson;
-   endJson["line"] = static_cast<uint64_t>(range.end.line);
-   endJson["character"] = static_cast<uint64_t>(range.end.character);
-
-   json::Object rangeJson;
-   rangeJson["start"] = startJson;
-   rangeJson["end"] = endJson;
-
-   json::Object contentChangeJson;
-   contentChangeJson["range"] = rangeJson;
-   contentChangeJson["text"] = text;
-
-   json::Array contentChangesJsonArray;
-   contentChangesJsonArray.push_back(contentChangeJson);
-   paramsJson["contentChanges"] = contentChangesJsonArray;
-
-   sendNotification("textDocument/didChange", paramsJson);
+   sendNotification("textDocument/didChange", lsp::toJson(params));
 }
 
 namespace file_monitor {
@@ -2013,14 +2005,17 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    
    // If document is NOT indexable we tell Copilot that no file has focus via an empty request.
    // This is to prevent Copilot from attempting to read the contents of the file.
-   json::Object textDocumentJson;
+   json::Object paramsJson;
    if (isIndexableDocument(pDoc))
    {
-      textDocumentJson["uri"] = uriFromDocument(pDoc);
+      lsp::DidFocusTextDocumentParams params = {
+         .textDocument = {
+            .uri = uriFromDocument(pDoc),
+         }
+      };
+      
+      paramsJson = lsp::toJson(params);
    }
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didFocus", paramsJson);
    return Success();
