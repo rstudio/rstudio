@@ -123,12 +123,12 @@ void onDocChanged(boost::shared_ptr<source_database::SourceDocument> pDoc,
    events().didChange(params);
 }
 
-void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
+void onDocRemovedImpl(const std::string& uri)
 {
-   s_docVersions.erase(uriFromDocument(pDoc));
+   s_docVersions.erase(uri);
 
    TextDocumentIdentifier textDocument {
-      .uri = uriFromDocument(pDoc),
+      .uri = uri,
    };
 
    DidCloseTextDocumentParams params {
@@ -138,10 +138,34 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
    events().didClose(params);
 }
 
+void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   onDocRemovedImpl(uriFromDocument(pDoc));
+}
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string uri = uriFromDocument(pDoc);
+   if (s_docVersions.count(uri))
+      return;
+
+   onDocAdded(pDoc);
+}
+
 void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    onDocRemoved(pDoc);
    onDocAdded(pDoc);
+}
+
+void onRemoveAll()
+{
+   std::vector<DocumentUri> uris;
+   for (auto&& entry : s_docVersions)
+      uris.push_back(entry.first);
+
+   for (auto&& uri : uris)
+      onDocRemovedImpl(uri);
 }
 
 } // end anonymous namespace
@@ -151,7 +175,9 @@ Error initialize()
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocChanged.connect(onDocChanged);
    source_database::events().onDocPendingRemove.connect(onDocRemoved);
+   source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocReopened.connect(onDocReopened);
+   source_database::events().onRemoveAll.connect(onRemoveAll);
 
    return Success();
 }
