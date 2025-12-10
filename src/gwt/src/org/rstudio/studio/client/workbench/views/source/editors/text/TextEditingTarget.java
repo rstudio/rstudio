@@ -8437,17 +8437,28 @@ public class TextEditingTarget implements
       if (fileType_ == null || !fileType_.isR())
          return false;
       
+      // Check document-specific preference first.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
-      
-      String codeFormatter = prefs_.codeFormatter().getValue();
-      if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
+
+      // Check format on save preference.
+      if (!prefs_.reformatOnSave().getValue())
+         return false;
+
+      // If the default formatter has been selected, and the user has opted-in to
+      // using Air for formatting, then use Air if the project has an air.toml file.
+      String formatter = prefs_.codeFormatter().getValue();
+      if (StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE))
       {
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         return hasAirToml;
+         if (prefs_.useAirFormatter().getValue())
+         {
+            boolean hasAirToml = session_.getSessionInfo().hasAirToml();
+            return hasAirToml;
+         }
       }
-      
-      return prefs_.reformatOnSave().getValue();
+
+      // Otherwise, format on save only if a non-default formatter is selected.
+      return !StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE);
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
