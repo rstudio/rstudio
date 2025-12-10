@@ -1344,7 +1344,14 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
    if (!ensureAgentRunning())
       return;
    
-   // TODO: Check if we are permitted to index this document.
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!isIndexableDocument(pDoc))
+      return;
+
    docOpened(
       params.textDocument.uri,
       params.textDocument.languageId,
@@ -1354,6 +1361,14 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 void didChange(lsp::DidChangeTextDocumentParams params)
 {
    if (!ensureAgentRunning())
+      return;
+
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!isIndexableDocument(pDoc))
       return;
 
    for (auto&& contentChange : params.contentChanges)
@@ -1368,6 +1383,14 @@ void didChange(lsp::DidChangeTextDocumentParams params)
 void didClose(lsp::DidCloseTextDocumentParams params)
 {
    if (!ensureAgentRunning())
+      return;
+
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::documentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!isIndexableDocument(pDoc))
       return;
 
    docClosed(params.textDocument.uri);

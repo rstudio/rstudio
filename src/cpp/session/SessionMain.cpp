@@ -222,6 +222,7 @@
 #include "modules/SessionFonts.hpp"
 #include "modules/SessionSystemResources.hpp"
 #include "modules/SessionPPM.hpp"
+#include "modules/SessionLSP.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -727,6 +728,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
+      (modules::lsp::initialize)
       (modules::copilot::initialize)
       (modules::chat::initialize)
       (modules::automation::initialize)

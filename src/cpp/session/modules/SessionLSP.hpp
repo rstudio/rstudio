@@ -23,6 +23,8 @@
 #include <core/collection/Position.hpp>
 #include <core/json/JsonBuilder.hpp>
 
+#include <session/SessionSourceDatabase.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -156,10 +158,17 @@ inline core::json::Object toJson(const TextDocumentIdentifier& textDocument)
 }
 
 
-struct VersionedTextDocumentIdentifier : public TextDocumentIdentifier
+struct VersionedTextDocumentIdentifier
 {
    DocumentUri uri;
    int64_t version;
+
+   operator TextDocumentIdentifier() const
+   {
+      return TextDocumentIdentifier {
+         .uri = uri,
+      };
+   }
 };
 
 inline core::json::Object toJson(const VersionedTextDocumentIdentifier& textDocument)
@@ -275,6 +284,9 @@ inline Events& events()
    return instance;
 }
 
+core::Error documentFromUri(
+   const std::string& uri,
+   boost::shared_ptr<source_database::SourceDocument> pDoc);
 
 core::Error initialize();
 

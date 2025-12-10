@@ -20,6 +20,9 @@
 using namespace rstudio;
 using namespace rstudio::core;
 
+#define kRStudioDocumentPrefix "rstudio-document://"
+#define kFilePrefix "file://"
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -173,6 +176,33 @@ void onRemoveAll()
 }
 
 } // end anonymous namespace
+
+core::Error documentFromUri(
+   const std::string& uri,
+   boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (boost::algorithm::starts_with(uri, kRStudioDocumentPrefix))
+   {
+      std::string id = uri.substr(strlen(kRStudioDocumentPrefix) + 1);
+      return source_database::get(id, pDoc);
+   }
+   else if (boost::algorithm::starts_with(uri, kFilePrefix))
+   {
+      std::string path = uri.substr(strlen(kFilePrefix) + 1);
+
+      std::string id;
+      Error error = source_database::getId(path, &id);
+      if (error)
+         return error;
+
+      return source_database::get(id, pDoc);
+   }
+   else
+   {
+      return Error(boost::system::errc::protocol_error, ERROR_LOCATION);
+   }
+}
+
 
 Error initialize()
 {
