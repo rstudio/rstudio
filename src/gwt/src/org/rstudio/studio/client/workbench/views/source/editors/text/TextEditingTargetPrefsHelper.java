@@ -109,20 +109,12 @@ public class TextEditingTargetPrefsHelper
       releaseOnDismiss.add(prefs.marginColumn().bind(
             (arg) ->
             {
-               docDisplay.setPrintMarginColumn(arg);
+               docDisplay.syncMarginPrefs();
             }));
       releaseOnDismiss.add(prefs.marginColumnSoftWrap().bind(
             (arg) ->
             {
-               if (arg)
-               {
-                  int column = prefs.marginColumn().getValue();
-                  docDisplay.setWrapLimitRange(column, column);
-               }
-               else
-               {
-                  docDisplay.setWrapLimitRange(null, null);
-               }
+               docDisplay.syncMarginPrefs();
             }));
       releaseOnDismiss.add(prefs.showInvisibles().bind(
             (arg) ->

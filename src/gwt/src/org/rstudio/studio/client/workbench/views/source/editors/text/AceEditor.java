@@ -955,6 +955,7 @@ public class AceEditor implements DocDisplay
       updateKeyboardHandlers();
       syncCompletionPrefs();
       syncDiagnosticsPrefs();
+      syncMarginPrefs();
 
       snippets_.ensureSnippetsLoaded();
       getSession().setEditorMode(
@@ -962,8 +963,6 @@ public class AceEditor implements DocDisplay
             false);
 
       handlers_.fireEvent(new EditorModeChangedEvent(getModeId()));
-
-      syncWrapLimit();
    }
 
    @Override
@@ -1001,48 +1000,23 @@ public class AceEditor implements DocDisplay
             userPrefs_.backgroundDiagnosticsDelayMs().getValue());
    }
 
-   private void syncWrapLimit()
+   @Override
+   public void syncMarginPrefs()
    {
-      // bail if there is no filetype yet
       if (fileType_ == null)
          return;
 
-      // We originally observed that large word-wrapped documents
-      // would cause Chrome on Linux to freeze (bug #3207), eventually
-      // running of of memory. Running the profiler indicated that the
-      // time was being spent inside wrap width calculations in Ace.
-      // Looking at the Ace bug database there were other wrapping problems
-      // that were solvable by changing the wrap mode from "free" to a
-      // specific range. So, for Chrome on Linux we started syncing the
-      // wrap limit to the user-specified margin width.
-      //
-      // Unfortunately, this caused another problem whereby the ace
-      // horizontal scrollbar would show up over the top of the editor
-      // and the console (bug #3428). We tried reverting the fix to
-      // #3207 and sure enough this solved the horizontal scrollbar
-      // problem _and_ no longer froze Chrome (so perhaps there was a
-      // bug in Chrome).
-      //
-      // In the meantime we added user pref to soft wrap to the margin
-      // column, essentially allowing users to opt-in to the behavior
-      // we used to fix the bug. So the net is:
-      //
-      // (1) To fix the horizontal scrollbar problem we reverted
-      //     the wrap mode behavior we added from Chrome (under the
-      //     assumption that the issue has been fixed in Chrome)
-      //
-      // (2) We added another check for desktop mode (since we saw
-      //     the problem in both Chrome and Safari) to prevent the
-      //     application of the problematic wrap mode setting.
-      //
-      // Perhaps there is an ace issue here as well, so the next time
-      // we sync to Ace tip we should see if we can bring back the
-      // wrapping option for Chrome (note the repro for this
-      // is having a soft-wrapping source document in the editor that
-      // exceed the horizontal threshold)
+      int marginColumn = userPrefs_.marginColumn().getValue();
+      setPrintMarginColumn(marginColumn);
 
-      // NOTE: we no longer do this at all since we observed the
-      // scrollbar problem on desktop as well
+      if (userPrefs_.marginColumnSoftWrap().getValue())
+      {
+         setWrapLimitRange(null, marginColumn);
+      }
+      else
+      {
+         setWrapLimitRange(null, null);
+      }
    }
 
    private void updateKeyboardHandlers()
@@ -2726,7 +2700,6 @@ public class AceEditor implements DocDisplay
    public void setPrintMarginColumn(int column)
    {
       widget_.getEditor().getRenderer().setPrintMarginColumn(column);
-      syncWrapLimit();
    }
 
    @Override
