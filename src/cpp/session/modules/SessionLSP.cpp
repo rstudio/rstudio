@@ -33,7 +33,6 @@ namespace {
 struct Document
 {
    int64_t version = 0;
-   bool opened = false;
 };
 
 std::map<lsp::DocumentUri, Document> s_documents;
@@ -143,15 +142,12 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
    auto&& document = s_documents[uri];
-   if (document.opened)
-      return;
-
-   document.opened = true;
+   document.version = 0;
 
    TextDocumentItem textDocument {
       .uri        = uri,
       .languageId = languageIdFromDocument(pDoc),
-      .version    = document.version,
+      .version    = 0,
       .text       = pDoc->contents(),
    };
 
@@ -193,11 +189,7 @@ void onDocChanged(const source_database::SourceDocumentChangedEvent& event)
 
 void onDocRemovedImpl(const std::string& uri)
 {
-   auto&& document = s_documents[uri];
-   if (!document.opened)
-      return;
-
-   document.opened = false;
+   s_documents.erase(uri);
 
    TextDocumentIdentifier textDocument {
       .uri = uri,
