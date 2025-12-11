@@ -209,6 +209,12 @@ void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   // Check for cases where onDocUpdated is called without a prior
+   // onDocAdded (e.g., when loading documents from disk at startup).
+   std::string uri = uriFromDocument(pDoc);
+   if (s_documents.count(uri))
+      return;
+
    onDocAdded(pDoc);
 }
 
