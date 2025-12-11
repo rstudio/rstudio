@@ -23,6 +23,9 @@ set(RSTUDIO_CMAKE_COMPILER_INCLUDED YES)
 set(CMAKE_POSITION_INDEPENDENT_CODE Yes)
 
 # use C++20 on Windows; C++17 elsewhere
+#
+# primarily for designated initializer support; other compilers provide it
+# as an extension even in C++17 mode, but MSVC requires us to opt-in to C++20
 if(WIN32)
   set(CMAKE_CXX_STANDARD 20)
 else()
