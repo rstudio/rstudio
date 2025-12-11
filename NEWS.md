@@ -10,7 +10,8 @@
 ### Fixed
 #### RStudio
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
-
+- ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
+ 
 #### Posit Workbench
 - 
 
