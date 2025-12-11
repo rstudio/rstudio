@@ -59,7 +59,8 @@ class WorkbenchTabPanel
                  HasEnsureVisibleHandlers,
                  HasEnsureHeightHandlers
 {
-   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName, Commands commands)
+   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName,
+                            boolean showTitleWhenNoTabs, Commands commands)
    {
       final int UTILITY_AREA_SIZE = 52;
       panel_ = new LayoutPanel();
@@ -83,18 +84,21 @@ class WorkbenchTabPanel
                                  UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
-      // Create sidebar title for when there are no tabs
-      sidebarTitlePanel_ = new HTML(constants_.sidebarTitleText());
-      sidebarTitlePanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
-      sidebarTitlePanel_.addStyleName(ThemeStyles.INSTANCE.title());
-      Style titleStyle = sidebarTitlePanel_.getElement().getStyle();
-      titleStyle.setLineHeight(22, Unit.PX);
-      titleStyle.setPaddingLeft(8, Unit.PX);
-      titleStyle.setProperty("display", "flex");
-      titleStyle.setProperty("alignItems", "center");
-      panel_.add(sidebarTitlePanel_);
-      panel_.setWidgetLeftRight(sidebarTitlePanel_, 0, Unit.PX, UTILITY_AREA_SIZE, Unit.PX);
-      panel_.setWidgetTopHeight(sidebarTitlePanel_, 0, Unit.PX, 22, Unit.PX);
+      // Create title for when there are no tabs
+      if (showTitleWhenNoTabs)
+      {
+         sidebarTitlePanel_ = new HTML(constants_.sidebarTitleText());
+         sidebarTitlePanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
+         sidebarTitlePanel_.addStyleName(ThemeStyles.INSTANCE.title());
+         Style titleStyle = sidebarTitlePanel_.getElement().getStyle();
+         titleStyle.setLineHeight(22, Unit.PX);
+         titleStyle.setPaddingLeft(8, Unit.PX);
+         titleStyle.setProperty("display", "flex");
+         titleStyle.setProperty("alignItems", "center");
+         panel_.add(sidebarTitlePanel_);
+         panel_.setWidgetLeftRight(sidebarTitlePanel_, 0, Unit.PX, UTILITY_AREA_SIZE, Unit.PX);
+         panel_.setWidgetTopHeight(sidebarTitlePanel_, 0, Unit.PX, 22, Unit.PX);
+      }
 
       // Create empty state widget for when there are no tabs
       if (commands != null)

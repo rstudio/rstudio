@@ -2407,7 +2407,7 @@ public class PaneManager
 
       // Only pass commands to sidebar for the empty state feature
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
-         isSidebar ? commands_ : null);
+         isSidebar, isSidebar ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;

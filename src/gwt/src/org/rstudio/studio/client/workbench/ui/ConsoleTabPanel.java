@@ -79,7 +79,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab backgroundJobsTab,
                           WorkbenchTab workbenchJobsTab)
    {
-      super(owner, parentWindow, "ConsoleTabSet", null);
+      super(owner, parentWindow, "ConsoleTabSet", false, null);
       owner_ = owner;
       consolePane_ = consolePane;
       compilePdfTab_ = compilePdfTab;
