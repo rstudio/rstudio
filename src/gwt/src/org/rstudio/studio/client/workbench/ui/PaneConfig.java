@@ -267,13 +267,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             return false;
          }
       }
-      
-      // if we don't have Presentation2 then provide it 
-      if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
-      {
-         ts2.set(ts2.length(), PaneManager.PRESENTATIONS_PANE);
-      }
-
 
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
@@ -301,16 +294,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       }
 
       return true;
-   }
-   
-   private final boolean hasPresentation2(JsArrayString tabs)
-   {
-      for (int idx = 0; idx < tabs.length(); idx++)
-      {
-         if (tabs.get(idx).equals(PaneManager.PRESENTATIONS_PANE))
-            return true;
-      }
-      return false;
    }
 
    private static boolean isSubset(Set<String> set, Iterable<String> possibleSubset)
