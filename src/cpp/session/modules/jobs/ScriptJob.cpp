@@ -142,17 +142,17 @@ void ScriptJob::start()
        encoding = spec_.encoding();
    
    // form the command to send to R
-   std::string fmt = R"EOF(
-attach(NULL, name = 'tools:rstudio');
-sys.source('{}', envir = as.environment('tools:rstudio'));
-.rs.sourceWithProgress(
-   script = '{}',
-   encoding = '{}',
-   con = stdout(),
-   importRdata = {},
-   exportRdata = {}
-)
-)EOF";
+   constexpr auto fmt = R"EOF(
+      attach(NULL, name = 'tools:rstudio');
+      sys.source('{}', envir = as.environment('tools:rstudio'));
+      .rs.sourceWithProgress(
+         script = '{}',
+         encoding = '{}',
+         con = stdout(),
+         importRdata = {},
+         exportRdata = {}
+      )
+   )EOF";
    
    std::string modulePath =  session::options()
          .modulesRSourcePath()
