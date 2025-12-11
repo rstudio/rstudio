@@ -290,7 +290,7 @@ core::Error sourceDocumentFromUri(
 
 std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc);
 
-std::string uriFromDocumentPath(const core::FilePath path);
+std::string uriFromDocumentPath(const core::FilePath& path);
 
 std::string languageIdFromExtension(const std::string& ext);
 
