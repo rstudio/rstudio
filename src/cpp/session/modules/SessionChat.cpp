@@ -105,6 +105,13 @@ static bool s_sessionClosing = false;
 // ============================================================================
 static bool s_chatBusy = false;
 
+// ============================================================================
+// Error Messages
+// ============================================================================
+// NOTE: This must match EXECUTION_CANCELED_ERROR constant in
+// @databot/core/errors/constants.ts: "Execution canceled by user"
+static const char* const kExecutionCanceledError = "Execution canceled by user";
+
 
 // Selective imports from chat modules to avoid namespace pollution
 namespace chat_constants = rstudio::session::modules::chat::constants;
@@ -148,10 +155,10 @@ using chat_staticfiles::handleAIChatRequest;
 // Execution Tracking (for cancellation support)
 // ============================================================================
 // R is single-threaded, so only one execution can be active at a time,
-// but we need to track cancelled IDs to handle pre-cancellation of queued requests
+// but we need to track canceled IDs to handle pre-cancellation of queued requests
 boost::mutex s_executionTrackingMutex;
 std::string s_currentTrackingId;  // Empty string when not executing
-std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
+std::set<std::string> s_canceledTrackingIds;  // TrackingIds that have been canceled
 
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
@@ -160,7 +167,7 @@ std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been can
 // from onBackgroundProcessing (main thread only) to ensure thread safety
 //
 // Lifecycle management prevents unbounded growth and stale notifications:
-// - Track active executions to filter notifications for completed/cancelled requests
+// - Track active executions to filter notifications for completed/canceled requests
 // - Queue size limit prevents memory exhaustion from noisy executions
 // - Automatic cleanup when weak_ptr expires (backend died)
 
@@ -623,7 +630,7 @@ void clearNotificationsForExecution(const std::string& trackingId)
       {
          remaining.push(notif);
       }
-      // Drop notifications for cancelled trackingId
+      // Drop notifications for canceled trackingId
    }
 
    s_notificationQueue = remaining;
@@ -1053,25 +1060,25 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    DLOG("Executing code for trackingId: {}", trackingId);
 
-   // Track if execution was cancelled (for response field)
-   bool wasCancelled = false;
+   // Track if execution was canceled (for response field)
+   bool wasCanceled = false;
 
-   // Check if this request was already cancelled (pre-cancellation of queued request)
+   // Check if this request was already canceled (pre-cancellation of queued request)
    // and register tracking ID for cancellation support
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
-      // Check if already cancelled
-      if (s_cancelledTrackingIds.count(trackingId) > 0)
+      // Check if already canceled
+      if (s_canceledTrackingIds.count(trackingId) > 0)
       {
-         wasCancelled = true;
-         s_cancelledTrackingIds.erase(trackingId);
+         wasCanceled = true;
+         s_canceledTrackingIds.erase(trackingId);
 
          // Return a response indicating cancellation
          json::Object result;
          result["output"] = "";
-         result["error"] = "Execution cancelled";
-         result["cancelled"] = true;
+         result["error"] = kExecutionCanceledError;
+         result["canceled"] = true;
          result["plots"] = json::Array();
          result["executionTime"] = 0;
 
@@ -1162,12 +1169,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-            if (s_cancelledTrackingIds.count(trackingId) > 0)
+            if (s_canceledTrackingIds.count(trackingId) > 0)
             {
-               wasCancelled = true;
-               s_cancelledTrackingIds.erase(trackingId);
+               wasCanceled = true;
+               s_canceledTrackingIds.erase(trackingId);
                error = Error(boost::system::errc::operation_canceled,
-                            "Execution cancelled", ERROR_LOCATION);
+                            kExecutionCanceledError, ERROR_LOCATION);
                break;
             }
          }
@@ -1407,13 +1414,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Disconnect context
    execContext.disconnect();
 
-   // Check if this execution was cancelled (handles R interrupts that don't go through C++ checks)
+   // Check if this execution was canceled (handles R interrupts that don't go through C++ checks)
    // Do this BEFORE clearing the tracking ID
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-      if (s_cancelledTrackingIds.count(trackingId) > 0)
+      if (s_canceledTrackingIds.count(trackingId) > 0)
       {
-         wasCancelled = true;
+         wasCanceled = true;
       }
    }
 
@@ -1421,8 +1428,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
       s_currentTrackingId.clear();
-      // Also clean up from cancelled set in case cancel arrived during execution
-      s_cancelledTrackingIds.erase(trackingId);
+      // Also clean up from canceled set in case cancel arrived during execution
+      s_canceledTrackingIds.erase(trackingId);
    }
 
    // Calculate execution time in milliseconds
@@ -1435,7 +1442,7 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    json::Object result;
    result["output"] = execContext.getOutput();
    result["error"] = execContext.getError();
-   result["cancelled"] = wasCancelled;
+   result["canceled"] = wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
@@ -1463,20 +1470,20 @@ void handleCancelExecution(const json::Object& params)
       return;
    }
 
-   // Add to cancelled set and check if currently executing
+   // Add to canceled set and check if currently executing
    bool shouldInterrupt = false;
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
-      // Always add to cancelled set - handles pre-cancellation of queued requests
-      s_cancelledTrackingIds.insert(trackingId);
+      // Always add to canceled set - handles pre-cancellation of queued requests
+      s_canceledTrackingIds.insert(trackingId);
 
       // Check if this is currently executing
       shouldInterrupt = !s_currentTrackingId.empty() &&
                         s_currentTrackingId == trackingId;
    }
 
-   // Clear any queued notifications for this cancelled execution
+   // Clear any queued notifications for this canceled execution
    clearNotificationsForExecution(trackingId);
 
    if (shouldInterrupt)
@@ -2069,7 +2076,7 @@ void onBackgroundProcessing(bool isIdle)
          {
             toProcess.push_back(notif);
          }
-         // Notifications for inactive executions are dropped (completed/cancelled)
+         // Notifications for inactive executions are dropped (completed/canceled)
       }
    }
 
