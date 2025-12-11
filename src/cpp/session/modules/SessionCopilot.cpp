@@ -1139,9 +1139,10 @@ void indexFile(const core::FileInfo& info)
    DLOG("Indexing document: {}", info.absolutePath());
    
    std::string uri = lsp::uriFromDocumentPath(documentPath);
+   auto version = lsp::documentVersionFromUri(uri);
    docOpened(
       uri,
-      lsp::documentVersionFromUri(uri),
+      version,
       languageId,
       contents);
 }
