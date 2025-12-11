@@ -22,9 +22,10 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <core/BoostSignals.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include <core/BoostSignals.hpp>
 
 #include <r/RSexp.hpp>
 
@@ -215,16 +216,25 @@ core::Error getId(const core::FilePath& path, std::string* pId);
 core::Error rename(const core::FilePath& from, const core::FilePath& to);
 core::Error detectExtendedType(const core::FilePath& filePath, std::string* pExtendedType);
 
-// source database events
+struct SourceDocumentChangedEvent
+{
+   boost::shared_ptr<SourceDocument> sourceDocument;
+   std::string contents;
+   std::string text;
+   int offset;
+   int length;
+};
+
 struct Events : boost::noncopyable
 {
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocUpdated;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, boost::shared_ptr<SourceDocument>)> onDocRenamed;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocReopened;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocAdded;
-   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                     onDocPendingRemove;
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>                onDocRemoved;
-   RSTUDIO_BOOST_SIGNAL<void()>                                                      onRemoveAll;
+   RSTUDIO_BOOST_SIGNAL<void(const SourceDocumentChangedEvent&)>                      onDocChanged;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                      onDocUpdated;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, boost::shared_ptr<SourceDocument>)>  onDocRenamed;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                      onDocReopened;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                      onDocAdded;
+   RSTUDIO_BOOST_SIGNAL<void(boost::shared_ptr<SourceDocument>)>                      onDocPendingRemove;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)>                 onDocRemoved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                                       onRemoveAll;
 };
 
 Events& events();

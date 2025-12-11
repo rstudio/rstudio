@@ -86,7 +86,9 @@ TEST(ChatStaticFiles, ValidateAndResolvePathAllowsValidRelativePaths)
    FilePath canonicalTestFile;
    Error canonError = system::realPath(testFile, &canonicalTestFile);
    if (!canonError)
+   {
       EXPECT_EQ(result.getAbsolutePath(), canonicalTestFile.getAbsolutePath());
+   }
 
    // Cleanup
    tempDir.removeIfExists();
@@ -148,7 +150,9 @@ TEST(ChatStaticFiles, ValidateAndResolvePathHandlesUrlEncoding)
    FilePath canonicalTestFile;
    Error canonError = system::realPath(testFile, &canonicalTestFile);
    if (!canonError)
+   {
       EXPECT_EQ(result.getAbsolutePath(), canonicalTestFile.getAbsolutePath());
+   }
 
    // Cleanup
    tempDir.removeIfExists();
@@ -178,7 +182,9 @@ TEST(ChatStaticFiles, ValidateAndResolvePathCanonicalizesPathsWithDotDot)
    FilePath canonicalTestFile;
    Error canonError = system::realPath(testFile, &canonicalTestFile);
    if (!canonError)
+   {
       EXPECT_EQ(result.getAbsolutePath(), canonicalTestFile.getAbsolutePath());
+   }
 
    // Cleanup
    tempDir.removeIfExists();
