@@ -105,6 +105,13 @@ static bool s_sessionClosing = false;
 // ============================================================================
 static bool s_chatBusy = false;
 
+// ============================================================================
+// Error Messages
+// ============================================================================
+// NOTE: This must match EXECUTION_CANCELED_ERROR constant in
+// @databot/core/errors/constants.ts: "Execution canceled by user"
+static const char* const kExecutionCanceledError = "Execution canceled by user";
+
 
 // Selective imports from chat modules to avoid namespace pollution
 namespace chat_constants = rstudio::session::modules::chat::constants;
@@ -148,10 +155,10 @@ using chat_staticfiles::handleAIChatRequest;
 // Execution Tracking (for cancellation support)
 // ============================================================================
 // R is single-threaded, so only one execution can be active at a time,
-// but we need to track cancelled IDs to handle pre-cancellation of queued requests
+// but we need to track canceled IDs to handle pre-cancellation of queued requests
 boost::mutex s_executionTrackingMutex;
 std::string s_currentTrackingId;  // Empty string when not executing
-std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been cancelled
+std::set<std::string> s_canceledTrackingIds;  // TrackingIds that have been canceled
 
 // ============================================================================
 // Streaming Output Notification Queue with Lifecycle Management
@@ -160,7 +167,7 @@ std::set<std::string> s_cancelledTrackingIds;  // TrackingIds that have been can
 // from onBackgroundProcessing (main thread only) to ensure thread safety
 //
 // Lifecycle management prevents unbounded growth and stale notifications:
-// - Track active executions to filter notifications for completed/cancelled requests
+// - Track active executions to filter notifications for completed/canceled requests
 // - Queue size limit prevents memory exhaustion from noisy executions
 // - Automatic cleanup when weak_ptr expires (backend died)
 
@@ -184,6 +191,45 @@ struct PendingNotification
 static boost::mutex s_notificationQueueMutex;
 static std::queue<PendingNotification> s_notificationQueue;
 static std::set<std::string> s_activeTrackingIds;  // Active executions
+
+// ============================================================================
+// Deferred Code Execution Queue
+// ============================================================================
+// Code execution requests are queued and processed outside the poll() callback
+// context. This allows the poll() callback to return quickly, enabling
+// subsequent poll() calls to read cancellation messages from the pipe while
+// R code is executing.
+
+struct PendingExecutionRequest
+{
+   boost::weak_ptr<core::system::ProcessOperations> weakOps;
+   json::Value requestId;
+   std::string code;
+   std::string trackingId;
+   bool captureOutput;
+   bool capturePlot;
+   int timeout;
+
+   PendingExecutionRequest(
+      boost::weak_ptr<core::system::ProcessOperations> ops,
+      const json::Value& reqId,
+      const std::string& c,
+      const std::string& tid,
+      bool capture,
+      bool plot,
+      int to)
+      : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
+        captureOutput(capture), capturePlot(plot), timeout(to)
+   {
+   }
+};
+
+static boost::mutex s_pendingExecutionMutex;
+static std::queue<PendingExecutionRequest> s_pendingExecutionQueue;
+static bool s_executionScheduled = false;
+
+// Forward declaration
+void processPendingExecution();
 
 // ============================================================================
 // Code Execution Context (for console output capture)
@@ -584,7 +630,7 @@ void clearNotificationsForExecution(const std::string& trackingId)
       {
          remaining.push(notif);
       }
-      // Drop notifications for cancelled trackingId
+      // Drop notifications for canceled trackingId
    }
 
    s_notificationQueue = remaining;
@@ -897,30 +943,69 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+// Forward declaration for executeCodeImpl
+void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
+                     const json::Value& requestId,
+                     const std::string& code,
+                     const std::string& trackingId,
+                     bool captureOutput,
+                     bool capturePlot,
+                     int timeout);
+
+// Process pending execution requests from the queue
+void processPendingExecution()
+{
+   PendingExecutionRequest request(
+      boost::weak_ptr<core::system::ProcessOperations>(),
+      json::Value(), "", "", false, false, 0);
+
+   {
+      boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+      s_executionScheduled = false;
+
+      if (s_pendingExecutionQueue.empty())
+         return;
+
+      request = s_pendingExecutionQueue.front();
+      s_pendingExecutionQueue.pop();
+   }
+
+   // Execute the code (may take a long time - but we're outside poll callback!)
+   executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
+                   request.trackingId, request.captureOutput, request.capturePlot,
+                   request.timeout);
+
+   // Schedule next request if queued
+   {
+      boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+      if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+      {
+         s_executionScheduled = true;
+         module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(1),
+            processPendingExecution,
+            false);
+      }
+   }
+}
+
+// Handle runtime/executeCode request by queueing for deferred execution
 void handleExecuteCode(core::system::ProcessOperations& ops,
                        const json::Value& requestId,
                        const json::Object& params)
 {
-   DLOG("Handling runtime/executeCode request");
+   DLOG("Handling runtime/executeCode request (queueing for deferred execution)");
 
-   // Extract required parameters
-   std::string language;
-   std::string code;
-   std::string trackingId;
-
-   Error error = json::readObject(params,
-      "language", language,
-      "code", code,
-      "trackingId", trackingId);
+   // Extract and validate parameters
+   std::string language, code, trackingId;
+   Error error = json::readObject(params, "language", language, "code", code, "trackingId", trackingId);
 
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602,
-         "Invalid params: " + error.getMessage());
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: " + error.getMessage());
       return;
    }
 
-   // Validate language (only R supported currently)
    if (language != "r")
    {
       sendJsonRpcError(ops, requestId, -32602,
@@ -928,32 +1013,72 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       return;
    }
 
-   // Extract optional options object
+   // Extract optional options
    json::Object options;
-   json::readObject(params, "options", options);  // Ignore error if missing
-
-   bool captureOutput = true;
-   bool capturePlot = false;
+   json::readObject(params, "options", options);
+   bool captureOutput = true, capturePlot = false;
    int timeout = 30000;
-
    json::readObject(options, "captureOutput", captureOutput);
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "timeout", timeout);
 
-   // Check if this request was already cancelled (pre-cancellation of queued request)
+   // Queue the request for deferred execution
+   {
+      boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+      s_pendingExecutionQueue.push(PendingExecutionRequest(
+         ops.getWeakPtr(), requestId, code, trackingId,
+         captureOutput, capturePlot, timeout));
+
+      if (!s_executionScheduled)
+      {
+         s_executionScheduled = true;
+         module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(1),
+            processPendingExecution,
+            false);  // idleOnly=false - run immediately
+      }
+   }
+
+   DLOG("Queued execution for trackingId: {}", trackingId);
+}
+
+void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
+                     const json::Value& requestId,
+                     const std::string& code,
+                     const std::string& trackingId,
+                     bool captureOutput,
+                     bool capturePlot,
+                     int timeout)
+{
+   if (!pOps)
+   {
+      WLOG("Chat backend died before execution could start for trackingId: {}", trackingId);
+      return;
+   }
+
+   core::system::ProcessOperations& ops = *pOps;
+
+   DLOG("Executing code for trackingId: {}", trackingId);
+
+   // Track if execution was canceled (for response field)
+   bool wasCanceled = false;
+
+   // Check if this request was already canceled (pre-cancellation of queued request)
    // and register tracking ID for cancellation support
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
-      // Check if already cancelled
-      if (s_cancelledTrackingIds.count(trackingId) > 0)
+      // Check if already canceled
+      if (s_canceledTrackingIds.count(trackingId) > 0)
       {
-         s_cancelledTrackingIds.erase(trackingId);
+         wasCanceled = true;
+         s_canceledTrackingIds.erase(trackingId);
 
          // Return a response indicating cancellation
          json::Object result;
          result["output"] = "";
-         result["error"] = "Execution cancelled";
+         result["error"] = kExecutionCanceledError;
+         result["canceled"] = true;
          result["plots"] = json::Array();
          result["executionTime"] = 0;
 
@@ -971,6 +1096,9 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
    // Record start time
    auto startTime = std::chrono::steady_clock::now();
+
+   // Error variable for R execution
+   Error error;
 
    // Create execution context with streaming support
    // Pass shared_ptr for safe access from background thread
@@ -1041,11 +1169,12 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
-            if (s_cancelledTrackingIds.count(trackingId) > 0)
+            if (s_canceledTrackingIds.count(trackingId) > 0)
             {
-               s_cancelledTrackingIds.erase(trackingId);
+               wasCanceled = true;
+               s_canceledTrackingIds.erase(trackingId);
                error = Error(boost::system::errc::operation_canceled,
-                            "Execution cancelled", ERROR_LOCATION);
+                            kExecutionCanceledError, ERROR_LOCATION);
                break;
             }
          }
@@ -1285,12 +1414,22 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    // Disconnect context
    execContext.disconnect();
 
+   // Check if this execution was canceled (handles R interrupts that don't go through C++ checks)
+   // Do this BEFORE clearing the tracking ID
+   {
+      boost::mutex::scoped_lock lock(s_executionTrackingMutex);
+      if (s_canceledTrackingIds.count(trackingId) > 0)
+      {
+         wasCanceled = true;
+      }
+   }
+
    // Clear tracking ID - execution complete
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
       s_currentTrackingId.clear();
-      // Also clean up from cancelled set in case cancel arrived during execution
-      s_cancelledTrackingIds.erase(trackingId);
+      // Also clean up from canceled set in case cancel arrived during execution
+      s_canceledTrackingIds.erase(trackingId);
    }
 
    // Calculate execution time in milliseconds
@@ -1303,6 +1442,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::Object result;
    result["output"] = execContext.getOutput();
    result["error"] = execContext.getError();
+   result["canceled"] = wasCanceled;
    result["plots"] = plotsArray;
    result["executionTime"] = executionTime;
 
@@ -1330,20 +1470,20 @@ void handleCancelExecution(const json::Object& params)
       return;
    }
 
-   // Add to cancelled set and check if currently executing
+   // Add to canceled set and check if currently executing
    bool shouldInterrupt = false;
    {
       boost::mutex::scoped_lock lock(s_executionTrackingMutex);
 
-      // Always add to cancelled set - handles pre-cancellation of queued requests
-      s_cancelledTrackingIds.insert(trackingId);
+      // Always add to canceled set - handles pre-cancellation of queued requests
+      s_canceledTrackingIds.insert(trackingId);
 
       // Check if this is currently executing
       shouldInterrupt = !s_currentTrackingId.empty() &&
                         s_currentTrackingId == trackingId;
    }
 
-   // Clear any queued notifications for this cancelled execution
+   // Clear any queued notifications for this canceled execution
    clearNotificationsForExecution(trackingId);
 
    if (shouldInterrupt)
@@ -1936,7 +2076,7 @@ void onBackgroundProcessing(bool isIdle)
          {
             toProcess.push_back(notif);
          }
-         // Notifications for inactive executions are dropped (completed/cancelled)
+         // Notifications for inactive executions are dropped (completed/canceled)
       }
    }
 
