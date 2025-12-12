@@ -297,14 +297,6 @@
    }
    else
    {
-      # inject the browser calls
-      suppressMessages(trace(
-          what = functionName,
-          where = envir,
-          at = lapply(strsplit(as.character(steps), ","), as.numeric),
-          tracer = browser,
-          print = FALSE))
-
       # unlock the binding if necessary to inject the source references;
       # bindings are often locked in package environments
       if (bindingIsLocked(functionName, envir))
@@ -313,6 +305,17 @@
          on.exit(lockBinding(functionName, envir), add = TRUE)
       }
       
+      # inject the browser calls
+      suppressMessages(
+         trace(
+            what = functionName,
+            where = envir,
+            at = lapply(strsplit(as.character(steps), ","), as.numeric),
+            tracer = browser,
+            print = FALSE
+         )
+      )
+
       # remap the source references so that the code injected by trace() is
       # mapped back to the line on which the breakpoint was set.  We need to
       # assign directly to the @.Data internal slot since assignment to the
@@ -373,6 +376,10 @@
       f <- as.character(matched[["generic"]])
       class <- eval(matched[["class"]], envir = globalenv())
       getS3method(f, class@name)
+   }
+   else if (inherits(s7generic, "S7_generic"))
+   {
+      eval(matched, envir = globalenv())
    }
 })
 
@@ -645,17 +652,26 @@
       return(FALSE)
    
    expr <- match.call(S7::method, expr)
-   generic <- match.fun(expr[["generic"]])
+   generic <- eval(expr[["generic"]], envir = globalenv())
    if (!is.function(generic))
       return(FALSE)
    
    s7generic <- S7:::as_generic(generic)
    s7class <- eval(expr[["class"]], envir = globalenv())
-   if (!inherits(s7generic, "S7_S3_generic"))
+   if (inherits(s7generic, "S7_S3_generic"))
+   {
+      methodName <- paste(s7generic$name, s7class@name, sep = ".")
+      methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
+   }
+   else if (inherits(s7generic, "S7_generic"))
+   {
+      methodName <- s7class@name
+      methodEnvir <- s7generic@methods
+   }
+   else
+   {
       return(FALSE)
-   
-   methodName <- paste(s7generic$name, s7class@name, sep = ".")
-   methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
+   }
    
    .rs.setFunctionBreakpoints(
       functionName = methodName,
