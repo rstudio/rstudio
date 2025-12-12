@@ -667,7 +667,7 @@ core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator &row, const 
       return core::Success();
    }
 
-   auto timestampAsOptionalDouble = core::safe_convert::stringTo<int64_t>(timestampAsOptionalString.value());
+   auto timestampAsOptionalDouble = core::safe_convert::stringTo<double>(timestampAsOptionalString.value());
    if( timestampAsOptionalDouble.has_value() )
    {
       *result = core::date_time::timeFromMillisecondsSinceEpoch(timestampAsOptionalDouble.value());
@@ -720,7 +720,7 @@ core::Error Rowset::getISO8601StrValue(RowsetIterator & row, const std::string& 
    catch(const std::bad_cast & e)
    {
       return core::Error(boost::system::errc::invalid_argument,
-         "Could not convert field " + columnName + " from ISO 8601 string to ptime (" + e.what() + ")", ERROR_LOCATION);
+         "Could not convert field " + columnName + " from ISO 8601 string to ptime", ERROR_LOCATION);
    }
 
    if( result->value().is_not_a_date_time() )
