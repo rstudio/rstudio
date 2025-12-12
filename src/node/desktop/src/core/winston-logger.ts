@@ -20,7 +20,7 @@ import { Console } from 'winston/lib/winston/transports';
 import LogOptions from '../main/log-options';
 import { getenv } from './environment';
 import { safeError } from './err';
-import { Logger, showDiagnosticsOutput, normalizeToWinstonLevel } from './logger';
+import { Logger, showDiagnosticsOutput } from './logger';
 
 const { combine, printf, timestamp, json } = winston.format;
 
@@ -151,8 +151,9 @@ export class WinstonLogger implements Logger {
   }
 
   log(level: string, message: string): void {
-    // log to default log locations
-    this.logger.log(level, message);
+    // Normalize level for the active logger type (syslog uses 'warning', npm uses 'warn')
+    const normalizedLevel = this.normalizeLevel(level, this.usingSyslog);
+    this.logger.log(normalizedLevel, message);
   }
 
   logError(err: unknown): void {
