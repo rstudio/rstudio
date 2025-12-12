@@ -20,7 +20,7 @@ import { Console } from 'winston/lib/winston/transports';
 import LogOptions from '../main/log-options';
 import { getenv } from './environment';
 import { safeError } from './err';
-import { Logger, showDiagnosticsOutput } from './logger';
+import { Logger, showDiagnosticsOutput, normalizeToWinstonLevel } from './logger';
 
 const { combine, printf, timestamp, json } = winston.format;
 
@@ -35,6 +35,8 @@ export class WinstonLogger implements Logger {
 
   constructor(logOptions: LogOptions) {
     const level = this.readLogLevelOverride(logOptions.getLogLevel());
+    // Normalize to Winston-compatible level (handles 'trace' -> 'debug', 'WARNING' -> 'warn', etc.)
+    const winstonLevel = normalizeToWinstonLevel(level);
     const format =
       logOptions.getLogMessageFormat() === 'pretty'
         ? printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
@@ -45,7 +47,7 @@ export class WinstonLogger implements Logger {
     let optionError;
 
     this.logger = winston.createLogger({
-      level: level,
+      level: winstonLevel,
       format: messageFormat,
       defaultMeta: { service: 'rdesktop' },
     });
@@ -111,7 +113,8 @@ export class WinstonLogger implements Logger {
   }
 
   setLogLevel(level: string): void {
-    this.logger.level = level;
+    // Normalize to Winston-compatible level
+    this.logger.level = normalizeToWinstonLevel(level);
   }
 
   log(level: string, message: string): void {

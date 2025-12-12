@@ -110,12 +110,12 @@ export function setLoggerLevel(level: string): void {
 }
 
 /**
- * Convert a command-line log level string (e.g. 'WARN' or 'WARNING') to Winston log level.
- * Winston uses npm levels: error, warn, info, http, verbose, debug, silly
+ * Convert a command-line log level string (e.g. 'WARN' or 'WARNING') to internal log level.
+ * Returns 'trace' for TRACE even though Winston doesn't support it - we'll map it later.
  *
  * @param level Command-line string representation of log level
  * @param defaultLevel Default logging level if unable to parse input
- * @returns Winston log level string (error, warn, info, debug)
+ * @returns Log level string (error, warn, info, debug, trace)
  */
 export function parseCommandLineLogLevel(level: string, defaultLevel: string): string {
   level = level.toUpperCase();
@@ -131,22 +131,50 @@ export function parseCommandLineLogLevel(level: string, defaultLevel: string): s
     case 'DEBUG':
       return 'debug';
     case 'TRACE':
-      // Winston doesn't have a trace level, map to debug
-      return 'debug';
+      return 'trace';
     default:
       return defaultLevel;
   }
 }
 
 /**
- * Convert Winston log level to C++ Logger level for rsession.
+ * Normalize C++ log level names to Winston-compatible levels.
+ * Converts uppercase C++ names (ERROR, WARNING, TRACE) to Winston equivalents.
+ * Passes through other Winston levels (http, verbose, silly) unchanged.
+ * Maps 'trace' to 'debug' since Winston doesn't have a trace level.
+ *
+ * @param level Log level string (may be C++ format or Winston format)
+ * @returns Winston-compatible level
+ */
+export function normalizeToWinstonLevel(level: string): string {
+  const normalized = level.toLowerCase();
+
+  // Handle C++ level names that need conversion
+  if (normalized === 'warning') {
+    return 'warn';
+  }
+  if (normalized === 'err') {
+    return 'error';
+  }
+  if (normalized === 'trace') {
+    // Winston doesn't have trace, map to debug
+    return 'debug';
+  }
+
+  // Pass through everything else (error, warn, info, debug, http, verbose, silly, etc.)
+  // Winston will validate these levels
+  return normalized;
+}
+
+/**
+ * Convert internal log level to C++ Logger level for rsession.
  * C++ Logger expects: ERROR, WARNING, INFO, DEBUG, TRACE, OFF
  *
- * @param winstonLevel Winston log level (error, warn, info, debug, etc.)
- * @returns C++ Logger level string (ERROR, WARNING, INFO, DEBUG)
+ * @param level Internal log level (error, warn, info, debug, trace, etc.)
+ * @returns C++ Logger level string (ERROR, WARNING, INFO, DEBUG, TRACE)
  */
-export function winstonLevelToCppLevel(winstonLevel: string): string {
-  switch (winstonLevel.toLowerCase()) {
+export function levelToCppLevel(level: string): string {
+  switch (level.toLowerCase()) {
     case 'error':
       return 'ERROR';
     case 'warn':
@@ -154,6 +182,9 @@ export function winstonLevelToCppLevel(winstonLevel: string): string {
     case 'info':
       return 'INFO';
     case 'debug':
+      return 'DEBUG';
+    case 'trace':
+      return 'TRACE';
     case 'verbose':
     case 'silly':
       return 'DEBUG';
