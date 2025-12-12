@@ -343,21 +343,6 @@
    return(functionName)
 })
 
-.rs.addFunction("isS7MethodDefinitionCall", function(call)
-{
-   if (is.character(call))
-      call <- parse(text = call)[[1L]]
-   
-   if (!is.call(call))
-      return(FALSE)
-   
-   if (!"S7" %in% loadedNamespaces())
-      return(FALSE)
-   
-   method <- eval(call[[1L]], envir = globalenv())
-   identical(method, S7::method)
-})
-
 .rs.addFunction("getUntracedFunctionS7Method", function(functionName,
                                                         fileName,
                                                         packageName)
