@@ -9,7 +9,7 @@ Expert data scientists keep all the files associated with a given project togeth
 
 RStudio projects are associated with R working directories. 
 
-RStudio projects can be created:
+You can create RStudio projects:
 
 -   In a brand new directory
 
@@ -27,7 +27,7 @@ When a new project is created, RStudio:
 
 1.  Creates a project file (with an .Rproj extension) within the project directory. This file contains various project options (discussed below) and can also be used as a shortcut for opening the project directly from the filesystem.
 
-2.  Creates a hidden directory (named .Rproj.user) where project-specific temporary files (e.g. auto-saved source documents, window-state, etc.) are stored. This directory is also automatically added to .Rbuildignore, .gitignore, etc. if required.
+2.  Creates a hidden directory (named .Rproj.user) where RStudio stores project-specific temporary files (e.g. auto-saved source documents, window-state, etc.). RStudio also automatically adds this directory to .Rbuildignore, .gitignore, etc. if required.
 
 3.  Loads the project into RStudio and display its name in the Projects toolbar (which is located on the far right side of the main toolbar)
 
@@ -89,7 +89,7 @@ You can work with more than one RStudio project at a time by simply opening each
 
 2.  Opening multiple project files via the system shell (i.e. double-clicking on the project file).
 
-### Project options
+### Project Options
 
 There are several options that can be set on a per-project basis to customize the behavior of RStudio. You can edit these options using the **Project Options** command on the **Project** menu:
 
