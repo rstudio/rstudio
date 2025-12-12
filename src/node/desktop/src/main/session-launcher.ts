@@ -21,7 +21,7 @@ import { getenv, setenv, unsetenv } from '../core/environment';
 import { Err, safeError, success } from '../core/err';
 import { FilePath } from '../core/file-path';
 import { readStringArrayFromFile } from '../core/file-serializer';
-import { logger } from '../core/logger';
+import { logger, winstonLevelToCppLevel } from '../core/logger';
 import { kRStudioInitialProject } from '../core/r-user-data';
 import { generateShortenedUuid, localPeer } from '../core/system';
 
@@ -111,7 +111,7 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
   }
 
   const rsessionOptions = new LogOptions('rsession');
-  env['RS_LOG_LEVEL'] = env['RS_LOG_LEVEL'] ?? rsessionOptions.getLogLevel().toUpperCase();
+  env['RS_LOG_LEVEL'] = env['RS_LOG_LEVEL'] ?? winstonLevelToCppLevel(rsessionOptions.getLogLevel());
 
   logger().logDebug(`Launching rsession: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
   logger().logDebug(`R_HOME: ${getenv('R_HOME')}`);
