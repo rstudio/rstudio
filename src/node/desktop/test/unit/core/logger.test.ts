@@ -16,14 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import {
-  NullLogger,
-  logger,
-  parseCommandLineLogLevel,
-  setLogger,
-  levelToCppLevel,
-  normalizeToWinstonLevel,
-} from '../../../src/core/logger';
+import { NullLogger, logger, parseCommandLineLogLevel, setLogger, levelToCppLevel } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 
 describe('Logger', () => {
@@ -59,34 +52,6 @@ describe('Logger', () => {
 
     // Test invalid input falls back to default
     assert.equal(parseCommandLineLogLevel('INVALID', 'warn'), 'warn');
-  });
-
-  it('log levels can be normalized to Winston-compatible levels', () => {
-    // Test lowercase levels (already Winston-compatible, pass through)
-    assert.equal(normalizeToWinstonLevel('error'), 'error');
-    assert.equal(normalizeToWinstonLevel('warn'), 'warn');
-    assert.equal(normalizeToWinstonLevel('info'), 'info');
-    assert.equal(normalizeToWinstonLevel('debug'), 'debug');
-
-    // Test C++ level names that need conversion
-    assert.equal(normalizeToWinstonLevel('WARNING'), 'warn');
-    assert.equal(normalizeToWinstonLevel('warning'), 'warn');
-    assert.equal(normalizeToWinstonLevel('ERR'), 'error');
-    assert.equal(normalizeToWinstonLevel('err'), 'error');
-
-    // Test C++ uppercase levels that match Winston names (pass through)
-    assert.equal(normalizeToWinstonLevel('ERROR'), 'error');
-    assert.equal(normalizeToWinstonLevel('INFO'), 'info');
-    assert.equal(normalizeToWinstonLevel('DEBUG'), 'debug');
-
-    // Test TRACE (maps to debug since Winston doesn't have trace)
-    assert.equal(normalizeToWinstonLevel('trace'), 'debug');
-    assert.equal(normalizeToWinstonLevel('TRACE'), 'debug');
-
-    // Test that other Winston levels pass through
-    assert.equal(normalizeToWinstonLevel('http'), 'http');
-    assert.equal(normalizeToWinstonLevel('verbose'), 'verbose');
-    assert.equal(normalizeToWinstonLevel('silly'), 'silly');
   });
 
   it('log levels can be converted to C++ Logger levels', () => {
