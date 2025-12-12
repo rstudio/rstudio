@@ -33,10 +33,18 @@ export class WinstonLogger implements Logger {
   // track file transport so we can close it
   fileTransport: winston.transports.FileTransportInstance | null = null;
 
+  // track if we're using syslog (affects level normalization)
+  usingSyslog = false;
+
   constructor(logOptions: LogOptions) {
     const level = this.readLogLevelOverride(logOptions.getLogLevel());
-    // Normalize to Winston-compatible level (handles 'trace' -> 'debug', 'WARNING' -> 'warn', etc.)
-    const winstonLevel = normalizeToWinstonLevel(level);
+    const loggerType = logOptions.getLoggerType();
+    const useSyslog = loggerType === 'syslog' && process.platform === 'linux';
+
+    // Normalize to Winston-compatible level
+    // Syslog uses 'warning', npm levels use 'warn'
+    const winstonLevel = this.normalizeLevel(level, useSyslog);
+
     const format =
       logOptions.getLogMessageFormat() === 'pretty'
         ? printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
@@ -54,22 +62,21 @@ export class WinstonLogger implements Logger {
 
     let consoleLogging = false;
     let logTransport;
-    if (logOptions.getLoggerType() === 'stderr') {
+    if (loggerType === 'stderr') {
       logTransport = new Console();
       consoleLogging = true;
     }
 
-    if (logOptions.getLoggerType() === 'syslog') {
-      if (process.platform === 'linux') {
-        logTransport = new Syslog({
-          protocol: 'unix',
-          path: '/dev/log',
-          app_name: 'rdesktop',
-        });
-        this.logger.levels = winston.config.syslog.levels;
-      } else {
-        optionError = 'syslog not supported';
-      }
+    if (useSyslog) {
+      logTransport = new Syslog({
+        protocol: 'unix',
+        path: '/dev/log',
+        app_name: 'rdesktop',
+      });
+      this.logger.levels = winston.config.syslog.levels;
+      this.usingSyslog = true;
+    } else if (loggerType === 'syslog') {
+      optionError = 'syslog not supported';
     }
 
     if (!logTransport) {
@@ -108,13 +115,39 @@ export class WinstonLogger implements Logger {
     return defaultLevel;
   }
 
+  /**
+   * Normalize log level for Winston, handling syslog vs npm levels.
+   * Syslog uses 'warning', npm levels use 'warn'.
+   */
+  normalizeLevel(level: string, useSyslog: boolean): string {
+    const normalized = level.toLowerCase();
+
+    // Handle C++ level names that need conversion
+    if (normalized === 'err') {
+      return 'error';
+    }
+
+    // WARN/WARNING - depends on whether we're using syslog
+    if (normalized === 'warn' || normalized === 'warning') {
+      return useSyslog ? 'warning' : 'warn';
+    }
+
+    // TRACE - Winston doesn't have trace in either level set
+    if (normalized === 'trace') {
+      return 'debug';
+    }
+
+    // Pass through everything else (error, info, debug, http, verbose, silly, etc.)
+    return normalized;
+  }
+
   logLevel(): string {
     return this.logger.level;
   }
 
   setLogLevel(level: string): void {
     // Normalize to Winston-compatible level
-    this.logger.level = normalizeToWinstonLevel(level);
+    this.logger.level = this.normalizeLevel(level, this.usingSyslog);
   }
 
   log(level: string, message: string): void {
