@@ -77,7 +77,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push(PaneManager.BUILD_PANE);
       tabSet1.push(PaneManager.VCS_PANE);
       tabSet1.push(PaneManager.TUTORIAL_PANE);
-      tabSet1.push(PaneManager.CHAT_PANE);
       tabSet1.push(PaneManager.PRESENTATION_PANE);
       
       JsArrayString tabSet2 = createArray().cast();
