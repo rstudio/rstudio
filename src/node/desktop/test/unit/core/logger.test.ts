@@ -32,9 +32,25 @@ describe('Logger', () => {
     assert.deepEqual(f, fetched);
   });
   it('log level can be parsed from string representation', () => {
+    // Test abbreviated forms (backwards compatibility)
     assert.equal(parseCommandLineLogLevel('ERR', 'silly'), 'error');
-    assert.equal(parseCommandLineLogLevel('WARN', 'silly'), 'warn');
+    assert.equal(parseCommandLineLogLevel('WARN', 'silly'), 'warning');
     assert.equal(parseCommandLineLogLevel('INFO', 'silly'), 'info');
     assert.equal(parseCommandLineLogLevel('DEBUG', 'silly'), 'debug');
+
+    // Test full names
+    assert.equal(parseCommandLineLogLevel('ERROR', 'silly'), 'error');
+    assert.equal(parseCommandLineLogLevel('WARNING', 'silly'), 'warning');
+
+    // Test TRACE support
+    assert.equal(parseCommandLineLogLevel('TRACE', 'silly'), 'trace');
+
+    // Test case insensitivity
+    assert.equal(parseCommandLineLogLevel('error', 'silly'), 'error');
+    assert.equal(parseCommandLineLogLevel('warning', 'silly'), 'warning');
+    assert.equal(parseCommandLineLogLevel('trace', 'silly'), 'trace');
+
+    // Test invalid input falls back to default
+    assert.equal(parseCommandLineLogLevel('INVALID', 'warn'), 'warn');
   });
 });

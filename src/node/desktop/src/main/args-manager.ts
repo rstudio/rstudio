@@ -81,7 +81,7 @@ export class ArgsManager {
       console.log('  --version-json     Display versions of major components in JSON format');
       console.log('  --run-diagnostics  Run diagnostics and save in a file');
       console.log('  --log-level        Sets the verbosity of the logging');
-      console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
+      console.log('                     --log-level=ERROR|WARNING|INFO|DEBUG|TRACE');
       // prettier-ignore
       console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');

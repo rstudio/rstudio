@@ -120,13 +120,17 @@ export function parseCommandLineLogLevel(level: string, defaultLevel: string): s
   level = level.toUpperCase();
   switch (level) {
     case 'ERR':
+    case 'ERROR':
       return 'error';
     case 'WARN':
-      return 'warn';
+    case 'WARNING':
+      return 'warning';
     case 'INFO':
       return 'info';
     case 'DEBUG':
       return 'debug';
+    case 'TRACE':
+      return 'trace';
     default:
       return defaultLevel;
   }
