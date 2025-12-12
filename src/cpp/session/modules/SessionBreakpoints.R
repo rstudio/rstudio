@@ -373,7 +373,7 @@
    
    # Check if this appears to be an invocation of `S7::method`.
    S7 <- asNamespace("S7")
-   method <- eval(expr[[1L]], envir = globalenv())
+   method <- .rs.safeEval(expr[[1L]], envir = globalenv())
    if (!identical(method, S7$method))
       return(NULL)
    
@@ -655,7 +655,7 @@
    if (!is.call(expr) || length(expr) < 3L)
       return(FALSE)
    
-   method <- eval(expr[[1L]], envir = globalenv())
+   method <- .rs.safeEval(expr[[1L]], envir = globalenv())
    if (!identical(method, S7::method))
       return(FALSE)
    
@@ -670,7 +670,7 @@
       return(FALSE)
    
    methodName <- paste(s7generic$name, s7class@name, sep = ".")
-   methodEnvir <- .BaseNamespaceEnv$.__S3MethodsTable__.
+   methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
    
    .rs.setFunctionBreakpoints(
       functionName = methodName,
