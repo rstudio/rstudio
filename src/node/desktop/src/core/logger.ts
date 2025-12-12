@@ -110,24 +110,56 @@ export function setLoggerLevel(level: string): void {
 }
 
 /**
- * Convert a command-line log level string (e.g. 'WARN') to enum type string.
+ * Convert a command-line log level string (e.g. 'WARN' or 'WARNING') to internal log level.
+ * Returns 'trace' for TRACE even though Winston doesn't support it - we'll map it later.
  *
  * @param level Command-line string representation of log level
  * @param defaultLevel Default logging level if unable to parse input
- * @returns string enum value for logging level
+ * @returns Log level string (error, warn, info, debug, trace)
  */
 export function parseCommandLineLogLevel(level: string, defaultLevel: string): string {
   level = level.toUpperCase();
   switch (level) {
     case 'ERR':
+    case 'ERROR':
       return 'error';
     case 'WARN':
+    case 'WARNING':
       return 'warn';
     case 'INFO':
       return 'info';
     case 'DEBUG':
       return 'debug';
+    case 'TRACE':
+      return 'trace';
     default:
       return defaultLevel;
+  }
+}
+
+/**
+ * Convert internal log level to C++ Logger level for rsession.
+ * C++ Logger expects: ERROR, WARNING, INFO, DEBUG, TRACE, OFF
+ *
+ * @param level Internal log level (error, warn, info, debug, trace, etc.)
+ * @returns C++ Logger level string (ERROR, WARNING, INFO, DEBUG, TRACE)
+ */
+export function levelToCppLevel(level: string): string {
+  switch (level.toLowerCase()) {
+    case 'error':
+      return 'ERROR';
+    case 'warn':
+      return 'WARNING';
+    case 'info':
+      return 'INFO';
+    case 'debug':
+      return 'DEBUG';
+    case 'trace':
+      return 'TRACE';
+    case 'verbose':
+    case 'silly':
+      return 'DEBUG';
+    default:
+      return 'WARNING';
   }
 }
