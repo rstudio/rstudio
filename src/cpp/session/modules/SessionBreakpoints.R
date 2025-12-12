@@ -15,18 +15,18 @@
 
 # given a function name and filename, find the environment that contains a
 # function with the given name that originated from the given file.
-.rs.addFunction("getEnvironmentOfFunction", function(
-   objName, fileName, packageName)
+.rs.addFunction("getEnvironmentOfFunction", function(objName,
+                                                     fileName,
+                                                     packageName)
 {
    objName <- .rs.unquote(objName)
    
    # assume fileName is UTF-8 encoded unless it's already got a labelled
    # encoding
-   if (Encoding(fileName) == "unknown") {
+   if (Encoding(fileName) == "unknown")
       Encoding(fileName) <- "UTF-8"
-   }
 
-   isPackage <- nchar(packageName) > 0
+   isPackage <- nzchar(packageName)
 
    # when searching specifically for a function in a package, search from the
    # package namespace to the global environment (considers package imports and
@@ -255,9 +255,10 @@
       }
 
       list(
-         name=.rs.scalar(functionName),
-         line=.rs.scalar(lineNumber),
-         at=.rs.scalar(paste(steps, collapse=",")))
+         name = .rs.scalar(functionName),
+         line = .rs.scalar(lineNumber),
+         at = .rs.scalar(paste(steps, collapse = ","))
+      )
    })
 
 })
@@ -265,11 +266,10 @@
 # this function is used to get the steps in the given function that are
 # associated with the given line number, using the function's source
 # references.
-.rs.addFunction("getSteps", function(
-   functionName,
-   fileName,
-   packageName,
-   lineNumbers)
+.rs.addFunction("getSteps", function(functionName,
+                                     fileName,
+                                     packageName,
+                                     lineNumbers)
 {
    .rs.getFunctionSteps(
                   .rs.getUntracedFunction(functionName, fileName, packageName),
@@ -277,10 +277,9 @@
                   lineNumbers)
 })
 
-.rs.addFunction("setFunctionBreakpoints", function(
-   functionName,
-   envir,
-   steps)
+.rs.addFunction("setFunctionBreakpoints", function(functionName,
+                                                   envir,
+                                                   steps)
 {
    functionName <- .rs.unquote(functionName)
    if (length(steps) == 0 || all(nchar(steps) == 0))
@@ -298,14 +297,6 @@
    }
    else
    {
-      # inject the browser calls
-      suppressMessages(trace(
-          what = functionName,
-          where = envir,
-          at = lapply(strsplit(as.character(steps), ","), as.numeric),
-          tracer = browser,
-          print = FALSE))
-
       # unlock the binding if necessary to inject the source references;
       # bindings are often locked in package environments
       if (bindingIsLocked(functionName, envir))
@@ -314,6 +305,17 @@
          on.exit(lockBinding(functionName, envir), add = TRUE)
       }
       
+      # inject the browser calls
+      suppressMessages(
+         trace(
+            what = functionName,
+            where = envir,
+            at = lapply(strsplit(as.character(steps), ","), as.numeric),
+            tracer = browser,
+            print = FALSE
+         )
+      )
+
       # remap the source references so that the code injected by trace() is
       # mapped back to the line on which the breakpoint was set.  We need to
       # assign directly to the @.Data internal slot since assignment to the
@@ -323,7 +325,7 @@
          body(envir[[functionName]]@original)
       )
       
-      # we also need to manually remap source references for registered S3 methods
+      # we also need to manually remap source refs for registered S3 methods
       s3methods <- envir$.__S3MethodsTable__.
       if (is.function(s3methods[[functionName]]))
       {
@@ -344,15 +346,63 @@
    return(functionName)
 })
 
-.rs.addFunction("getUntracedFunction", function(
-   functionName, fileName, packageName)
+.rs.addFunction("getUntracedFunctionS7Method", function(functionName,
+                                                        fileName,
+                                                        packageName)
+{
+   # Check if the S7 package is loaded
+   if (!"S7" %in% loadedNamespaces())
+      return(NULL)
+   
+   # Try to parse functionName as an expression
+   expr <- parse(text = functionName)[[1L]]
+   if (!is.call(expr) || length(expr) < 3L)
+      return(NULL)
+   
+   # Check if this appears to be an invocation of `S7::method`.
+   S7 <- asNamespace("S7")
+   method <- .rs.safeEval(expr[[1L]], envir = globalenv())
+   if (!identical(method, S7$method))
+      return(NULL)
+   
+   # It looks like an S7 method. Let's see if we can figure out
+   # where the actual definition lives.
+   matched <- match.call(method, expr)
+   generic <- eval(matched[["generic"]], envir = globalenv())
+   s7generic <- S7$as_generic(generic)
+   
+   if (inherits(s7generic, "S7_S3_generic"))
+   {
+      f <- as.character(matched[["generic"]])
+      class <- eval(matched[["class"]], envir = globalenv())
+      getS3method(f, class@name)
+   }
+   else if (inherits(s7generic, "S7_generic"))
+   {
+      eval(matched, envir = globalenv())
+   }
+})
+
+.rs.addFunction("getUntracedFunction", function(functionName,
+                                                fileName,
+                                                packageName)
 {
    functionName <- .rs.unquote(functionName)
+   
+   # If this appears to be an S7 method definition, we need
+   # to look up the actual underlying function by hand.
+   method <- tryCatch(
+      .rs.getUntracedFunctionS7Method(functionName, fileName, packageName),
+      error = function(cnd) NULL
+   )
+   
+   if (is.function(method))
+      return(.rs.untraced(method))
+   
    envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
    if (is.null(envir))
-   {
       return(NULL)
-   }
+   
    .rs.untraced(get(functionName, mode = "function", envir = envir))
 })
 
@@ -584,3 +634,65 @@
    vapply(parsed, as.character, FUN.VALUE = character(1))
 })
 
+
+.rs.addFunction("setBreakpointImpl", function(functionName,
+                                              fileName,
+                                              packageName,
+                                              steps)
+{
+   if (!"S7" %in% loadedNamespaces())
+      return(FALSE)
+   
+   expr <- parse(text = functionName)[[1L]]
+   if (!is.call(expr) || length(expr) < 3L)
+      return(FALSE)
+   
+   method <- .rs.safeEval(expr[[1L]], envir = globalenv())
+   if (!identical(method, S7::method))
+      return(FALSE)
+   
+   expr <- match.call(S7::method, expr)
+   generic <- eval(expr[["generic"]], envir = globalenv())
+   if (!is.function(generic))
+      return(FALSE)
+   
+   s7generic <- S7:::as_generic(generic)
+   s7class <- eval(expr[["class"]], envir = globalenv())
+   if (inherits(s7generic, "S7_S3_generic"))
+   {
+      methodName <- paste(s7generic$name, s7class@name, sep = ".")
+      methodEnvir <- environment(generic)[[".__S3MethodsTable__."]]
+   }
+   else if (inherits(s7generic, "S7_generic"))
+   {
+      methodName <- s7class@name
+      methodEnvir <- s7generic@methods
+   }
+   else
+   {
+      return(FALSE)
+   }
+   
+   .rs.setFunctionBreakpoints(
+      functionName = methodName,
+      envir = methodEnvir,
+      steps = steps
+   )
+})
+
+.rs.addFunction("setBreakpoint", function(functionName,
+                                          fileName,
+                                          packageName,
+                                          steps)
+{
+   ok <- tryCatch(
+      .rs.setBreakpointImpl(functionName, fileName, packageName, steps),
+      error = function(cnd) FALSE
+   )
+   
+   if (!identical(ok, FALSE))
+      return(TRUE)
+   
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
+   .rs.setFunctionBreakpoints(functionName, envir, steps)
+})

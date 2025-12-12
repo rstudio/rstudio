@@ -249,37 +249,21 @@ bool setBreakpoint(const std::string& functionName,
                    const std::string& packageName,
                    const json::Array& steps)
 {
-   SEXP env = nullptr;
-   Protect protect;
-   Error error = r::exec::RFunction(".rs.getEnvironmentOfFunction",
-                                    functionName,
-                                    fileName,
-                                    packageName)
-                                    .call(&env, &protect);
+   Error error = r::exec::RFunction(".rs.setBreakpoint")
+         .addUtf8Param(functionName)
+         .addUtf8Param(fileName)
+         .addUtf8Param(packageName)
+         .addParam(steps)
+         .call();
+
    if (error)
    {
-      LOG_ERROR(error);
+      // don't log errors here; attempts to set breakpoints can fail
+      // in a myriad of ways, and the errors are not actionable
       return false;
    }
 
-   // if we found a function in the requested environment, set the breakpoint
-   if (TYPEOF(env) == ENVSXP)
-   {
-      error = r::exec::RFunction(".rs.setFunctionBreakpoints",
-                                 functionName,
-                                 env,
-                                 steps).call();
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
-      // successfully set a breakpoint
-      return true;
-   }
-
-   // did not find the function in the environment
-   return false;
+   return true;
 }
 
 // Set a breakpoint on a function, potentially on multiple copies:
@@ -317,8 +301,7 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    if (projectContext.config().buildType == r_util::kBuildTypePackage)
    {
       projPackageName = projectContext.packageInfo().name();
-      set |= setBreakpoint(
-               functionName, fileName, projPackageName, steps);
+      set |= setBreakpoint(functionName, fileName, projPackageName, steps);
    }
 
    // If a package name was specified, try to set a breakpoint in that package's
