@@ -2334,6 +2334,28 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    response[["value"]]
 })
 
+.rs.addFunction("safeEval", function(expr, envir)
+{
+   # Allow evaluation of symbols
+   if (is.symbol(expr))
+      return(eval(expr, envir))
+   
+   # Allow evaluation of `::` calls
+   ok <-
+      is.call(expr) &&
+      length(expr) == 3L &&
+      is.symbol(expr[[1L]]) &&
+      as.character(expr[[1L]]) %in% c("::", ":::") &&
+      is.symbol(expr[[2L]]) &&
+      is.symbol(expr[[3L]])
+   
+   if (ok)
+      return(eval(expr, envir))
+   
+   # Disallow other evaluation
+   NULL
+})
+
 # Hooks -------------------------------------------------------------------
 
 assign(".rs.downloadFile", utils::download.file, envir = .rs.toolsEnv())
