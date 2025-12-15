@@ -1822,6 +1822,12 @@ public class Source implements InsertSourceEvent.Handler,
          docType = FileTypeRegistry.R;
       else if (event.getType() == NewDocumentWithCodeEvent.SQL)
          docType = FileTypeRegistry.SQL;
+      else if (event.getType() == NewDocumentWithCodeEvent.PYTHON)
+         docType = FileTypeRegistry.PYTHON;
+      else if (event.getType() == NewDocumentWithCodeEvent.QUARTO)
+         docType = FileTypeRegistry.QUARTO;
+      else if (event.getType() == NewDocumentWithCodeEvent.TEXT)
+         docType = FileTypeRegistry.TEXT;
       else
          docType = FileTypeRegistry.RMARKDOWN;
 

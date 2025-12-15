@@ -30,6 +30,9 @@ public class NewDocumentWithCodeEvent
    public final static String SQL = "sql";
    public final static String R_SCRIPT = "r_script";
    public final static String R_NOTEBOOK = "r_notebook";
+   public final static String PYTHON = "python";
+   public final static String QUARTO = "quarto_markdown";
+   public final static String TEXT = "text";
 
    public interface Handler extends EventHandler
    {

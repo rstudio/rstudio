@@ -1524,6 +1524,33 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
    return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
+// Map databot languageId values to RStudio document types
+// Used by workspace/insertIntoNewFile to create documents with correct type
+// NOTE: These values must match the constants in NewDocumentWithCodeEvent.java:
+//   R_SCRIPT = "r_script", R_NOTEBOOK = "r_notebook", SQL = "sql"
+// The GWT client defaults to R Markdown if the type doesn't match these constants.
+std::string documentTypeFromLanguageId(const std::string& languageId)
+{
+   if (languageId == "r")
+      return "r_script";  // Must match NewDocumentWithCodeEvent.R_SCRIPT
+   else if (languageId == "python")
+      return "python";
+   else if (languageId == "sql")
+      return "sql";
+   else if (languageId == "markdown" || languageId == "rmd" || languageId == "rmarkdown")
+      return "r_markdown";
+   else if (languageId == "quarto" || languageId == "qmd")
+      return "quarto_markdown";
+   else if (languageId == "cpp" || languageId == "c++")
+      return "cpp";
+   else if (languageId == "javascript" || languageId == "js")
+      return "js";
+   else if (languageId == "shell" || languageId == "sh" || languageId == "bash")
+      return "sh";
+   else
+      return "text";  // Default to plain text
+}
+
 // Convert file:// URI to file system path (cross-platform)
 std::string uriToPath(const std::string& uri)
 {
@@ -1869,6 +1896,53 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleInsertIntoNewFile(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling workspace/insertIntoNewFile request");
+
+   // Extract parameters
+   std::string languageId;
+   std::string content;
+
+   Error error = json::readObject(params, "languageId", languageId);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: languageId required");
+      return;
+   }
+
+   error = json::readObject(params, "content", content);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      return;
+   }
+
+   // Map languageId to RStudio document type
+   std::string documentType = documentTypeFromLanguageId(languageId);
+
+   // Build event data for kNewDocumentWithCode
+   json::Object eventData;
+   eventData["type"] = documentType;
+   eventData["code"] = content;
+   eventData["row"] = 0;      // Position cursor at start
+   eventData["column"] = 0;
+   eventData["execute"] = false;  // Don't auto-execute
+
+   // Fire client event to create new document
+   ClientEvent event(client_events::kNewDocumentWithCode, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Created new {} document with {} bytes of content", documentType, content.size());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -1922,6 +1996,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "workspace/writeFileContent")
    {
       handleWriteFileContent(ops, requestId, params);
+   }
+   else if (method == "workspace/insertIntoNewFile")
+   {
+      handleInsertIntoNewFile(ops, requestId, params);
    }
    else
    {
