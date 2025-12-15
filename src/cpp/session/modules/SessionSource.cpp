@@ -268,7 +268,12 @@ Error newDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type));
 
    if (json::isType<std::string>(jsonContents))
+   {
       pDoc->setContents(jsonContents.getString());
+      // Mark as dirty if content is non-empty (unsaved content)
+      if (!jsonContents.getString().empty())
+         pDoc->setDirty(true);
+   }
 
    pDoc->editProperties(properties);
 
