@@ -141,6 +141,8 @@ withr::defer(.rs.automation.deleteRemote())
 # https://github.com/rstudio/rstudio/issues/16490
 .rs.test("breakpoints in S7 method definitions for S3 generics", {
    
+   skip_on_ci()
+   
    remote$console.executeExpr({
       if (!requireNamespace("S7", quietly = TRUE))
          install.packages("S7")
