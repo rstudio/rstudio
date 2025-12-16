@@ -82,6 +82,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent.AskForRestartData;
+import org.rstudio.studio.client.events.InsertAtCursorEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
@@ -217,6 +218,7 @@ public class Source implements InsertSourceEvent.Handler,
                                RefreshObjectExplorerEvent.Handler,
                                CloseObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
+                               InsertAtCursorEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
                                RequestDocumentSaveEvent.Handler,
@@ -474,6 +476,7 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
+      events_.addHandler(InsertAtCursorEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
@@ -3019,6 +3022,23 @@ public class Source implements InsertSourceEvent.Handler,
          docDisplay.replaceRange(range, text);
       }
       docDisplay.focus();
+   }
+
+   @Override
+   public void onInsertAtCursor(final InsertAtCursorEvent event)
+   {
+      dispatchEditorEvent(event.getData().getId(), new CommandWithArg<DocDisplay>()
+      {
+         @Override
+         public void execute(DocDisplay docDisplay)
+         {
+            if (docDisplay == null)
+               return;
+
+            docDisplay.insertCode(event.getData().getContent());
+            docDisplay.focus();
+         }
+      });
    }
 
    private boolean apiEventTargetIsConsole(String id)

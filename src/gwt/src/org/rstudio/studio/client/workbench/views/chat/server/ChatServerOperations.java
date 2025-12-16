@@ -26,4 +26,6 @@ public interface ChatServerOperations
    public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback);
    public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback);
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
+
+   public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
 }
