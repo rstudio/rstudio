@@ -14,7 +14,6 @@
  */
 
 // Use C++11 API 
-#include <boost/algorithm/string/replace.hpp>
 #define UTF_CPP_CPLUSPLUS 201103L
 
 #include "SessionSource.hpp"
@@ -28,8 +27,9 @@
 #include <gsl/gsl-lite.hpp>
 #include <utf8.h>
 
-#include <boost/utility.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/utility.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>

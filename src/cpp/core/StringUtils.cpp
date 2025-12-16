@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <string>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -37,7 +38,6 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
-#include <string>
 
 #ifdef _WIN32
 # include <windows.h>
