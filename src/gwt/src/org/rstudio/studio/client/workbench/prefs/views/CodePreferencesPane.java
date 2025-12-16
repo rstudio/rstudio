@@ -274,7 +274,18 @@ public class CodePreferencesPane extends PreferencesPane
          reformatOnSaveCommand_.setText(prefs.codeFormatterExternalCommand().getGlobalValue());
       
       VerticalPanel nonePanel = new VerticalPanel();
-      nonePanel.add(checkboxPref(prefs_.useAirFormatter()));
+      CheckBox useAirFormatter = checkboxPref(prefs_.useAirFormatter());
+      CheckBox reformatOnSave = checkboxPref(prefs_.reformatOnSave());
+
+      reformatOnSave.setVisible(useAirFormatter.getValue());
+      useAirFormatter.addValueChangeHandler((event) ->
+      {
+         reformatOnSave.setVisible(event.getValue());
+      });
+
+      nonePanel.add(useAirFormatter);
+      nonePanel.add(reformatOnSave);
+      nonePanel.add(spacedBefore(new HorizontalPanel()));
       nonePanel.add(HelpLink.createExternal("Formatting with Air", "https://posit-dev.github.io/air/"));
 
       VerticalPanel externalPanel = new VerticalPanel();

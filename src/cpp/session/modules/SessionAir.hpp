@@ -29,6 +29,7 @@ namespace modules {
 namespace air {
 
 bool hasAirToml(const core::FilePath& projectDir);
+core::FilePath findAirToml(const core::FilePath& documentPath);
 
 core::Error initialize();
 

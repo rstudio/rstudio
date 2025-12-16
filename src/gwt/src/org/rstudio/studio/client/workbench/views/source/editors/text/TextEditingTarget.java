@@ -221,6 +221,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
@@ -3931,9 +3932,19 @@ public class TextEditingTarget implements
    {
       withActiveEditor((editor) ->
       {
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         onReformatDocumentImpl(editor);
+      });
+   }
+
+   void onReformatDocumentImpl(DocDisplay editor)
+   {
+      withFormatContext((context) ->
+      {
+         boolean useBuiltinFormatter =
+            StringUtil.equals(prefs_.codeFormatter().getValue(), UserPrefsAccessor.CODE_FORMATTER_NONE) &&
+            !context.air;
+
+         if (useBuiltinFormatter)
          {
             Range currentRange = editor.getSelectionRange();
             editor.setSelectionRange(Range.fromPoints(
@@ -3971,21 +3982,46 @@ public class TextEditingTarget implements
       });
    }
 
+   private void withFormatContext(CommandWithArg<FormatContext> command)
+   {
+      server_.formatContext(
+         getId(),
+         getPath(),
+         new ServerRequestCallback<FormatContext>()
+      {
+         @Override
+         public void onResponseReceived(FormatContext context)
+         {
+            command.execute(context);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            command.execute(new FormatContext());
+         }
+      });
+   }
+
    @Handler
    void onReformatCode()
    {
       withActiveEditor((editor) ->
       {
-         // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(editor))
-         {
-            showRModeWarning(commands_.reformatCode().getLabel());
-            return;
-         }
+         onReformatCodeImpl(editor);
+      });
+   }
 
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+   void onReformatCodeImpl(DocDisplay editor)
+   {
+      withFormatContext((context) ->
+      {
+         boolean useBuiltinFormatter =
+            StringUtil.equals(prefs_.codeFormatter().getValue(), UserPrefsAccessor.CODE_FORMATTER_NONE) &&
+            !context.air;
+
+         if (useBuiltinFormatter)
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
          }
@@ -8442,23 +8478,7 @@ public class TextEditingTarget implements
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
 
       // Check format on save preference.
-      if (!prefs_.reformatOnSave().getValue())
-         return false;
-
-      // If the default formatter has been selected, and the user has opted-in to
-      // using Air for formatting, then use Air if the project has an air.toml file.
-      String formatter = prefs_.codeFormatter().getValue();
-      if (StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE))
-      {
-         if (prefs_.useAirFormatter().getValue())
-         {
-            boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-            return hasAirToml;
-         }
-      }
-
-      // Otherwise, format on save only if a non-default formatter is selected.
-      return !StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE);
+      return prefs_.reformatOnSave().getValue();
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)

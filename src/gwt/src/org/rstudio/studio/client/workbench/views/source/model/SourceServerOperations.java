@@ -78,6 +78,13 @@ public interface SourceServerOperations extends FilesServerOperations,
    {
    }
 
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+   public static class FormatContext
+   {
+      public boolean air;
+   }
+
+
    /**
     * Create a new, empty document, without a path but with a unique ID, and
     * appends it to the current working list.
@@ -147,6 +154,10 @@ public interface SourceServerOperations extends FilesServerOperations,
                          boolean retryWrite,
                          ServerRequestCallback<String> requestCallback);
    
+   void formatContext(String id,
+                      String path,
+                      ServerRequestCallback<FormatContext> requestCallback);
+
    /**
     * Given the path to a document on disk, request that it be reformatted
     * via an external formatting tool.

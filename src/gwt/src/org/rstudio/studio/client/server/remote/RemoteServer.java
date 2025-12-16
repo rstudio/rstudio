@@ -2495,6 +2495,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
    
+   public void formatContext(String id,
+                             String path,
+                             ServerRequestCallback<FormatContext> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+         .add(id)
+         .add(path)
+         .get();
+
+      sendRequest(RPC_SCOPE, FORMAT_CONTEXT, params, requestCallback);
+   }
+
    public void formatDocument(String id,
                               int context,
                               ServerRequestCallback<FormatDocumentResult> requestCallback)
@@ -7186,6 +7198,7 @@ public class RemoteServer implements Server
    private static final String OPEN_DOCUMENT = "open_document";
    private static final String SAVE_DOCUMENT = "save_document";
    private static final String SAVE_DOCUMENT_DIFF = "save_document_diff";
+   private static final String FORMAT_CONTEXT = "format_context";
    private static final String FORMAT_DOCUMENT = "format_document";
    private static final String FORMAT_CODE = "format_code";
    private static final String CHECK_FOR_EXTERNAL_EDIT = "check_for_external_edit";

@@ -32,6 +32,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/Diff.hpp>
 #include <core/Log.hpp>
@@ -39,6 +40,7 @@
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/json/JsonBuilder.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
@@ -790,6 +792,8 @@ Error formatDocumentImpl(
       }
       else
       {
+         json::JsonRpcResponse response = callback();
+         continuation(Success(), &response);
          return Success();
       }
    }
@@ -860,6 +864,32 @@ Error formatDocumentImpl(
       documentPath,
       continuation,
       std::forward<F>(callback));
+}
+
+Error formatContext(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
+{
+   std::string id;
+   std::string path;
+   Error error = json::readParams(request.params, &id, &path);
+   if (error || path.empty())
+   {
+      continuation(error, nullptr);
+      return error;
+   }
+
+   FilePath documentPath = module_context::resolveAliasedPath(path);
+   FilePath airPath = modules::air::findAirToml(documentPath);
+
+   json::Object contextJson = JSON {
+      { "air", airPath.exists() }
+   };
+
+   json::JsonRpcResponse response;
+   response.setResult(contextJson);
+   continuation(Success(), &response);
+   return Success();
 }
 
 Error formatDocument(
@@ -1886,6 +1916,7 @@ Error initialize()
    using namespace rstudio::r::function_hook;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerAsyncRpcMethod, "format_context", formatContext))
       (bind(registerAsyncRpcMethod, "format_document", formatDocument))
       (bind(registerAsyncRpcMethod, "format_code", formatCode))
       (bind(registerRpcMethod, "new_document", newDocument))

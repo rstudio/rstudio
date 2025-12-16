@@ -17,8 +17,11 @@
 
 #include <boost/bind.hpp>
 
+#include <shared_core/FilePath.hpp>
+
 #include <core/Exec.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -38,6 +41,55 @@ bool hasAirToml(const FilePath& projectPath)
    }
 
    return false;
+}
+
+FilePath findAirToml(const core::FilePath& documentPath)
+{
+   // If the document lives within the active project, then first
+   // check for air.toml in the project directory.
+   if (projects::projectContext().hasProject())
+   {
+      FilePath projectPath = projects::projectContext().directory();
+      if (documentPath.isWithin(projectPath))
+      {
+         for (auto&& suffix : { "air.toml", ".air.toml" })
+         {
+            FilePath airPath = projectPath.completePath(suffix);
+            if (airPath.exists())
+               return airPath;
+         }
+
+         return FilePath();
+      }
+   }
+
+   // Otherwise, the user might be editing a file that belongs to
+   // a different project. Check and see if the document lives in
+   // a path that contains an air.toml in a parent directory somewhere.
+   //
+   // Avoid traversing into or beyond the home directory.
+   FilePath parentPath = documentPath.getParent();
+   FilePath homePath = module_context::userHomePath();
+   FilePath homeParent = homePath.getParent();
+   while (true)
+   {
+      for (auto&& suffix : { "air.toml", ".air.toml" })
+      {
+         FilePath airPath = parentPath.completePath(suffix);
+         if (airPath.exists())
+            return airPath;
+      }
+
+      if (parentPath.getParent() == homeParent)
+         return FilePath();
+
+      auto&& path = parentPath.getAbsolutePath();
+      auto count = std::count(path.begin(), path.end(), '/');
+      if (count <= 2)
+         return FilePath();
+
+      parentPath = parentPath.getParent();
+   }
 }
 
 core::Error initialize()
