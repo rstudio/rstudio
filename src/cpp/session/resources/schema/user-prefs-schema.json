@@ -1094,6 +1094,7 @@
                 "type": "string"
             },
             "default": [
+                ".air.toml",
                 ".circleci",
                 ".env",
                 ".gitattributes",
