@@ -1987,6 +1987,26 @@ void handleInsertAtCursor(core::system::ProcessOperations& ops,
       return;
    }
 
+   // Validate document is a text-editable type (not a data viewer, profiler, etc.)
+   // Non-text document types don't have text editors that support cursor insertion.
+   // These types use non-text EditingTargets on the GWT side (e.g., DataEditingTarget,
+   // ProfilerEditingTarget) which don't have DocDisplay/insertCode support.
+   // The type IDs match the FileType.getTypeId() values from GWT FileType classes.
+   std::string docType = pDoc->type();
+   if (docType == "r_dataframe" ||     // DataFrameType - data viewer (View())
+       docType == "r_prof" ||           // ProfilerType - profiler results
+       docType == "object_explorer" ||  // ObjectExplorerFileType - object explorer
+       docType == "urlcontent" ||       // UrlContentType - URL content viewer
+       docType == "r_code_browser")     // CodeBrowserType - read-only code browser
+   {
+      DLOG("Document {} is a non-text type ({}), cannot insert at cursor",
+           s_focusedDocumentId, docType);
+      json::Object result;
+      result["success"] = false;
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
+   }
+
    // Build editor command event data for insert_at_cursor
    json::Object eventData;
    eventData["type"] = "insert_at_cursor";
