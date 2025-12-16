@@ -14,6 +14,7 @@
  */
 
 // Use C++11 API 
+#include <boost/algorithm/string/replace.hpp>
 #define UTF_CPP_CPLUSPLUS 201103L
 
 #include "SessionSource.hpp"
@@ -983,7 +984,13 @@ Error formatCode(
    error = writeStringToFile(documentPath, code);
    if (error)
       return onError(error, ERROR_LOCATION);
-   
+
+   // compute the common indent, so we can preserve it after formatting
+   std::string indent = string_utils::getCommonPrefix(code);
+   auto it = indent.find_last_not_of(" \t");
+   if (it != std::string::npos)
+      indent = indent.substr(0, it - 1);
+
    return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
    {
       std::string code;
@@ -996,6 +1003,13 @@ Error formatCode(
          code = code.substr(0, code.length() - 2);
       else if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
+      
+      // add back in the indent we computed
+      if (!indent.empty())
+      {
+         code = indent + code;
+         boost::algorithm::replace_all(code, "\n", "\n" + indent);
+      }
       
       json::JsonRpcResponse response;
       response.setResult(code);

@@ -37,10 +37,11 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
+#include <string>
 
 #ifdef _WIN32
-#include <windows.h>
-#include <winnls.h>
+# include <windows.h>
+# include <winnls.h>
 #endif
 
 #ifndef CP_ACP
@@ -803,6 +804,82 @@ bool extractCommentHeader(const std::string& contents,
    
    // report success to the user
    return true;
+}
+
+std::string getCommonPrefix(const std::string& code)
+{
+   // Split into lines
+   std::vector<std::string> lines = core::algorithm::split(code, "\n");
+
+   // Remove whitespace-only lines
+   core::algorithm::expel_if(lines, [](const std::string& line)
+   {
+      return std::all_of(line.begin(), line.end(), ::isspace);
+   });
+
+   // Check edge cases
+   if (lines.size() == 0)
+      return "";
+
+   if (lines.size() == 1)
+      return lines[0];
+
+   std::size_t offset = 0;
+   std::string prefix;
+   while (true)
+   {
+      // Track whether the offset remained in-bounds
+      // for some string in the provided list.
+      bool inBounds = false;
+
+      // Get the first character at the current offset.
+      char lhs;
+      if (offset < lines[0].length())
+      {
+         inBounds = true;
+         lhs = lines[0][offset];
+      }
+      else
+      {
+         lhs = ' ';
+      }
+
+      // Now, iterate over the rest of the characters in each line,
+      // and check if they match at the current offset.
+      for (std::size_t i = 1, n = lines.size(); i < n; i++)
+      {
+         char rhs;
+         if (offset < lines[i].length())
+         {
+            inBounds = true;
+            rhs = lines[i][offset];
+         }
+         else
+         {
+            rhs = ' ';
+         }
+
+         // If the characters do not match, then we bail.
+         if (lhs != rhs)
+         {
+            return prefix;
+         }
+      }
+
+      // If the offset computed was out-of-bounds for all
+      // of the provided lines, then we're done.
+      if (!inBounds)
+      {
+         return prefix;
+      }
+
+      // If we got here, all the characters at this offset matched.
+      // Add it to the computed prefix, and keep looking.
+      offset++;
+      prefix += lhs;
+   }
+
+   return prefix;
 }
 
 std::string extractIndent(const std::string& line)
