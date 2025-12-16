@@ -878,7 +878,7 @@ Error formatContext(
    {
       json::JsonRpcResponse response;
       response.setResult(JSON { { "air", false } });
-      continuation(error, nullptr);
+      continuation(error, &response);
       return error;
    }
 
