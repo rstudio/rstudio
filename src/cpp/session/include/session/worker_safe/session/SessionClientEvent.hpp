@@ -35,6 +35,7 @@ extern const int kConsolePrompt;
 extern const int kConsoleWriteOutput;
 extern const int kConsoleWriteError;
 extern const int kShowErrorMessage;
+extern const int kShowMessage;
 extern const int kShowHelp;
 extern const int kBrowseUrl;
 extern const int kShowEditor;
@@ -280,7 +281,11 @@ ClientEvent browseUrlEvent(const std::string& url,
    
 ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message);
-   
+
+ClientEvent showMessageEvent(int type,
+                             const std::string& caption,
+                             const std::string& message);
+
 } // namespace session
 } // namespace rstudio
 

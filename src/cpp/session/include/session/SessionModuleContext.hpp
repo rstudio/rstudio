@@ -482,6 +482,9 @@ void consoleWriteError(const std::string& message);
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
 
+// show a message dialog (convenience wrapper for enquing kShowMessage)
+void showMessage(int type, const std::string& title, const std::string& message);
+
 void showFile(const core::FilePath& filePath,
               const std::string& window = "_blank");
 

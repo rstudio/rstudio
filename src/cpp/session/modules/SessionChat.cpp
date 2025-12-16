@@ -2209,6 +2209,41 @@ void handleLoggerLog(const json::Object& params)
    }
 }
 
+void handleUIShowMessage(const json::Object& params)
+{
+   std::string type;
+   std::string message;
+
+   if (json::readObject(params, "type", type))
+   {
+      WLOG("ui/showMessage notification missing 'type' field");
+      return;
+   }
+
+   if (json::readObject(params, "message", message))
+   {
+      WLOG("ui/showMessage notification missing 'message' field");
+      return;
+   }
+
+   // Map type string to MessageDisplay constants (MSG_INFO=1, MSG_WARNING=2, MSG_ERROR=3)
+   int messageType;
+   if (type == "info")
+      messageType = 1;  // MSG_INFO
+   else if (type == "warning")
+      messageType = 2;  // MSG_WARNING
+   else if (type == "error")
+      messageType = 3;  // MSG_ERROR
+   else
+   {
+      WLOG("ui/showMessage: unknown type '{}'", type);
+      return;
+   }
+
+   // Show dialog with hardcoded caption per spec
+   module_context::showMessage(messageType, "Posit Assistant", message);
+}
+
 void handleSetBusyStatus(const json::Object& params)
 {
    bool busy = false;
@@ -3743,6 +3778,7 @@ Error initialize()
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
+   registerNotificationHandler("ui/showMessage", handleUIShowMessage);
    registerNotificationHandler("chat/setBusyStatus", handleSetBusyStatus);
    registerNotificationHandler("runtime/cancelExecution", handleCancelExecution);
 
