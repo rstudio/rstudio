@@ -60,6 +60,7 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    public static final String TYPE_REPLACE_RANGES = "replace_ranges";
    public static final String TYPE_SET_SELECTION_RANGES = "set_selection_ranges";
    public static final String TYPE_EDITOR_CONTEXT = "editor_context";
+   public static final String TYPE_INSERT_AT_CURSOR = "insert_at_cursor";
 
    // Boilerplate ----
 

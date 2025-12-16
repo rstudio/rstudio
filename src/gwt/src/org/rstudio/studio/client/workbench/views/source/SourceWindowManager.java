@@ -14,22 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import org.rstudio.core.client.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.SingleShotTimer;
+import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -49,7 +46,12 @@ import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEve
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteFocusedEvent;
 import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
-import org.rstudio.studio.client.events.*;
+import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
+import org.rstudio.studio.client.events.EditorCommandEvent;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.events.InsertAtCursorEvent;
+import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -66,15 +68,42 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
-import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.EnsureVisibleSourceWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.events.MaximizeSourceWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollToPositionEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceWindowParams;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class SourceWindowManager implements PopoutDocEvent.Handler,
@@ -86,6 +115,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             DocTabDragStartedEvent.Handler,
                                             DocWindowChangedEvent.Handler,
                                             DocTabClosedEvent.Handler,
+                                            DocTabActivatedEvent.Handler,
                                             AllSatellitesClosingEvent.Handler,
                                             ShinyApplicationStatusEvent.Handler,
                                             CollabEditStartedEvent.Handler,
@@ -134,6 +164,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(SatelliteClosedEvent.TYPE, this);
          events_.addHandler(SatelliteFocusedEvent.TYPE, this);
          events_.addHandler(DocTabClosedEvent.TYPE, this);
+         events_.addHandler(DocTabActivatedEvent.TYPE, this);
          events_.addHandler(CollabEditStartedEvent.TYPE, this);
          events_.addHandler(CollabEditEndedEvent.TYPE, this);
          events_.addHandler(DocFocusedEvent.TYPE, this);
@@ -659,6 +690,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          SetSelectionRangesEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new SetSelectionRangesEvent(data));
       }
+      else if (type == EditorCommandEvent.TYPE_INSERT_AT_CURSOR)
+      {
+         InsertAtCursorEvent.Data data = event.getData();
+         fireEventForDocument(data.getId(), new InsertAtCursorEvent(data));
+      }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
    }
@@ -811,6 +847,17 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }
 
    @Override
+   public void onDocTabActivated(DocTabActivatedEvent event)
+   {
+      // notify Chat of the activated document so insertAtCursor works
+      // even when documents are activated without getting focus (e.g., after closing another tab)
+      if (event.getId() != null)
+      {
+         server_.chatDocFocused(event.getId(), new VoidServerRequestCallback());
+      }
+   }
+
+   @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
       fireEventToAllSourceWindows(event);
@@ -864,10 +911,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          @Override
          public void execute()
          {
-            // notify Copilot of the focused document
+            // notify Copilot and Chat of the focused document
             if (event.getId() != null)
             {
                server_.copilotDocFocused(event.getId(), new VoidServerRequestCallback());
+               server_.chatDocFocused(event.getId(), new VoidServerRequestCallback());
             }
 
             // ignore this event if it's from main window but the main window
