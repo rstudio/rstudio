@@ -78,7 +78,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    {
    }
 
-   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Array")
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class FormatContext
    {
       public boolean air;

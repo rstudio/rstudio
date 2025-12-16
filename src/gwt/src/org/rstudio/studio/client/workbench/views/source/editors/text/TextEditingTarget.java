@@ -3936,15 +3936,23 @@ public class TextEditingTarget implements
       });
    }
 
+   private boolean useBuiltinFormatter(FormatContext context)
+   {
+      String formatter = prefs_.codeFormatter().getValue();
+      if (!formatter.equals(UserPrefsAccessor.CODE_FORMATTER_NONE))
+         return false;
+
+      if (prefs_.useAirFormatter().getValue() && context.air)
+         return false;
+
+      return true;
+   }
+
    void onReformatDocumentImpl(DocDisplay editor)
    {
       withFormatContext((context) ->
       {
-         boolean useBuiltinFormatter =
-            StringUtil.equals(prefs_.codeFormatter().getValue(), UserPrefsAccessor.CODE_FORMATTER_NONE) &&
-            !context.air;
-
-         if (useBuiltinFormatter)
+         if (useBuiltinFormatter(context))
          {
             Range currentRange = editor.getSelectionRange();
             editor.setSelectionRange(Range.fromPoints(
@@ -4017,11 +4025,7 @@ public class TextEditingTarget implements
    {
       withFormatContext((context) ->
       {
-         boolean useBuiltinFormatter =
-            StringUtil.equals(prefs_.codeFormatter().getValue(), UserPrefsAccessor.CODE_FORMATTER_NONE) &&
-            !context.air;
-
-         if (useBuiltinFormatter)
+         if (useBuiltinFormatter(context))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
          }

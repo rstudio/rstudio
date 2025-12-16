@@ -875,6 +875,8 @@ Error formatContext(
    Error error = json::readParams(request.params, &id, &path);
    if (error || path.empty())
    {
+      json::JsonRpcResponse response;
+      response.setResult(JSON { { "air", false } });
       continuation(error, nullptr);
       return error;
    }
@@ -982,7 +984,7 @@ Error formatCode(
    if (error)
       return onError(error, ERROR_LOCATION);
    
-   return formatDocumentImpl(documentPath, continuation, [=]()
+   return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
    {
       std::string code;
       Error error = readStringFromFile(documentPath, &code);
