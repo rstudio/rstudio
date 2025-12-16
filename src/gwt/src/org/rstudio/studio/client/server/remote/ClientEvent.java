@@ -25,6 +25,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleWritePrompt = "console_write_prompt";
    public static final String ConsoleWriteInput = "console_write_input";
    public static final String ShowErrorMessage = "show_error_message";
+   public static final String ShowMessage = "show_message";
    public static final String ShowHelp = "show_help";
    public static final String BrowseUrl = "browse_url";
    public static final String ShowEditor = "show_editor";
