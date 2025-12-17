@@ -165,12 +165,22 @@ Error ConsoleProcessSocket::ensureServerRunning()
          }
          catch (websocketpp::exception const& e)
          {
-            // fail if this isn't the code we're expecting
-            // (we're only trying to deal with address in use errors here)
-            if (e.code() != websocketpp::transport::asio::error::pass_through)
+            // check for unexpected (non-passthrough errors)
+            auto&& ec = e.code();
+            if (ec.category() == websocketpp::transport::error::get_category())
             {
-               return systemError(boost::system::errc::invalid_argument,
-                                  e.what(), ERROR_LOCATION);
+               if (ec.value() != websocketpp::transport::error::pass_through)
+               {
+                  return Error(ec, ERROR_LOCATION);
+               }
+            }
+
+            if (ec.category() == websocketpp::transport::asio::error::get_category())
+            {
+               if (ec.value() != websocketpp::transport::asio::error::pass_through)
+               {
+                  return Error(ec, ERROR_LOCATION);
+               }
             }
 
             // try another random port
