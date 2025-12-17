@@ -23,6 +23,8 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -808,23 +810,41 @@ bool extractCommentHeader(const std::string& contents,
 
 std::string getCommonPrefix(const std::string& code)
 {
-   // Split into lines
-   std::vector<std::string> lines = core::algorithm::split(code, "\n");
+   // Build a vector of string views pointing to lines in the original string
+   // This avoids copying the string data
+   std::vector<std::string_view> lines;
+   std::string_view codeView(code);
+   
+   std::string_view::size_type start = 0;
+   std::string_view::size_type end = codeView.find('\n', start);
+   
+   while (end != std::string_view::npos)
+   {
+      std::string_view line = codeView.substr(start, end - start);
+      lines.push_back(line);
+      start = end + 1;
+      end = codeView.find('\n', start);
+   }
+   
+   // Add the final line (if any)
+   if (start < codeView.length())
+   {
+      lines.push_back(codeView.substr(start));
+   }
 
    // Remove whitespace-only lines
-   core::algorithm::expel_if(lines, [](const std::string& line)
-   {
-      return std::all_of(line.begin(), line.end(), ::isspace);
-   });
+   lines.erase(
+      std::remove_if(lines.begin(), lines.end(),
+         [](std::string_view line)
+         {
+            return std::all_of(line.begin(), line.end(), ::isspace);
+         }),
+      lines.end());
 
    // Check edge cases
-   if (lines.size() == 0)
+   if (lines.size() < 2)
    {
       return "";
-   }
-   else if (lines.size() == 1)
-   {
-      return lines[0];
    }
 
    std::size_t offset = 0;

@@ -707,43 +707,6 @@ Error onFormatError(
    return error;
 }
 
-bool canUseAirFormatter(int context, const FilePath& documentPath)
-{
-   if (context == kFormatContextCommand)
-   {
-      // always enabled for command invocations
-      return true;
-   }
-   else if (context == kFormatContextSave)
-   {
-      // enable on save if user has opted in
-      if (prefs::userPrefs().useAirFormatter())
-      {
-         if (projects::projectContext().hasProject())
-         {
-            using namespace modules::air;
-            return hasAirToml(projects::projectContext().directory());
-         }
-         else
-         {
-            // TODO: Air has not yet formalized whether global air.toml
-            // files will be supported, or (if they are) where those files
-            // should be located.
-            return false;
-         }
-      }
-      else
-      {
-         return false;
-      }
-   }
-   else
-   {
-      // disabled
-      return false;
-   }
-}
-
 template <typename F>
 Error formatDocumentImpl(
       int context,
@@ -773,30 +736,21 @@ Error formatDocumentImpl(
    std::string formatType = prefs::userPrefs().codeFormatter();
    if (formatType == kCodeFormatterNone)
    {
-      if (canUseAirFormatter(context, documentPath))
-      {
-         std::string airExePath;
-         Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
-         if (error)
-            return onError(error, ERROR_LOCATION);
+      std::string airExePath;
+      Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+      if (error)
+         return onError(error, ERROR_LOCATION);
 
-         error = module_context::processSupervisor().runProgram(
-             airExePath,
-             {"format", documentPath.getAbsolutePath()},
-             options,
-             callbacks);
+      error = module_context::processSupervisor().runProgram(
+          airExePath,
+          {"format", documentPath.getAbsolutePath()},
+          options,
+          callbacks);
 
-         if (error)
-            return onError(error, ERROR_LOCATION);
+      if (error)
+         return onError(error, ERROR_LOCATION);
 
-         return Success();
-      }
-      else
-      {
-         json::JsonRpcResponse response = callback();
-         continuation(Success(), &response);
-         return Success();
-      }
+      return Success();
    }
    else if (formatType == kCodeFormatterStyler)
    {
@@ -883,10 +837,10 @@ Error formatContext(
    }
 
    FilePath documentPath = module_context::resolveAliasedPath(path);
-   FilePath airPath = modules::air::findAirToml(documentPath);
+   FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
 
    json::Object contextJson = JSON {
-      { "air", airPath.exists() }
+      { "air", airTomlPath.exists() }
    };
 
    json::JsonRpcResponse response;
@@ -992,36 +946,29 @@ Error formatCode(
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   // Only compute and preserve indent if the air formatter will be used
-   std::string indent;
-   std::string formatType = prefs::userPrefs().codeFormatter();
-   bool usingAirFormatter = (formatType == kCodeFormatterNone && 
-                             canUseAirFormatter(kFormatContextCommand, documentPath));
+   // Figure out if we're going to use the air formatter.
+   bool usingAirFormatter =
+      prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
+      prefs::userPrefs().useAirFormatter();
    
+   // Preserve the common indent if we're using the air formatter.
+   std::string indent;
    if (usingAirFormatter)
    {
-      // compute the common indent, so we can preserve it after formatting
+      // Compute the common prefix for this code, and then trim
+      // non-whitespace characters from the end.
       indent = string_utils::getCommonPrefix(code);
       auto it = indent.find_last_not_of(" \t");
       if (it != std::string::npos)
          indent = indent.substr(0, it - 1);
       
-      // Copy air.toml or .air.toml from project root if it exists
-      if (projects::projectContext().hasProject())
+      // Copy air.toml or .air.toml from project root if it exists.
+      FilePath airTomlPath = modules::air::getAirTomlPath(projects::projectContext().directory());
+      if (airTomlPath.exists())
       {
-         FilePath projectDir = projects::projectContext().directory();
-         for (const std::string& filename : { "air.toml", ".air.toml" })
-         {
-            FilePath airTomlPath = projectDir.completePath(filename);
-            if (airTomlPath.exists())
-            {
-               FilePath targetPath = tempDir.completePath(filename);
-               Error copyError = airTomlPath.copy(targetPath, true);
-               if (copyError)
-                  LOG_ERROR(copyError);
-               break; // Only copy one of them
-            }
-         }
+         Error copyError = airTomlPath.copy(tempDir.completePath("air.toml"), true);
+         if (copyError)
+            LOG_ERROR(copyError);
       }
    }
 

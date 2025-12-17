@@ -42,6 +42,38 @@ bool isAirTomlFile(const FilePath& filePath)
    return filename == "air.toml" || filename == ".air.toml";
 }
 
+FilePath findProjectAirToml()
+{
+   if (!projects::projectContext().hasProject())
+      return FilePath();
+   
+   FilePath projectDir = projects::projectContext().directory();
+   for (const std::string& filename : { "air.toml", ".air.toml" })
+   {
+      FilePath airTomlPath = projectDir.completePath(filename);
+      if (airTomlPath.exists())
+         return airTomlPath;
+   }
+   
+   return FilePath();
+}
+
+void fireMonitoredFileChangedEvent(const FilePath& filePath, 
+                                   core::system::FileChangeEvent::Type type)
+{
+   // Get the relative (aliased) path
+   std::string path = module_context::createAliasedPath(filePath);
+   
+   // Create the event data
+   json::Object eventData;
+   eventData["path"] = path;
+   eventData["type"] = static_cast<int>(type);
+   
+   // Emit the client event
+   ClientEvent clientEvent(client_events::kMonitoredFileChanged, eventData);
+   module_context::enqueClientEvent(clientEvent);
+}
+
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    for (const auto& event : events)
@@ -49,38 +81,34 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
       FilePath filePath(event.fileInfo().absolutePath());
       
       // Only process air.toml or .air.toml files
-      if (!isAirTomlFile(filePath))
-         continue;
-      
-      // Get the relative (aliased) path
-      std::string path = module_context::createAliasedPath(filePath);
-      
-      // Create the event data
-      json::Object eventData;
-      eventData["path"] = path;
-      eventData["type"] = static_cast<int>(event.type());
-      
-      // Emit the client event
-      ClientEvent clientEvent(client_events::kMonitoredFileChanged, eventData);
-      module_context::enqueClientEvent(clientEvent);
+      if (isAirTomlFile(filePath))
+         fireMonitoredFileChangedEvent(filePath, event.type());
    }
+}
+
+void onClientInit()
+{
+   // Notify client of existing air.toml during client initialization
+   FilePath airTomlPath = findProjectAirToml();
+   if (airTomlPath.exists())
+      fireMonitoredFileChangedEvent(airTomlPath, core::system::FileChangeEvent::FileModified);
 }
 
 } // end anonymous namespace
 
-bool hasAirToml(const FilePath& projectPath)
+FilePath getAirTomlPath(const FilePath& projectPath)
 {
    for (auto&& suffix : { "air.toml", ".air.toml" })
    {
-      FilePath airPath = projectPath.completePath(suffix);
-      if (airPath.exists())
-         return true;
+      FilePath airTomlPath = projectPath.completePath(suffix);
+      if (airTomlPath.exists())
+         return airTomlPath;
    }
 
-   return false;
+   return FilePath();
 }
 
-FilePath findAirToml(const core::FilePath& documentPath)
+FilePath findAirTomlPath(const core::FilePath& documentPath)
 {
    // If the document lives within the active project, then first
    // check for air.toml in the project directory.
@@ -89,14 +117,9 @@ FilePath findAirToml(const core::FilePath& documentPath)
       FilePath projectPath = projects::projectContext().directory();
       if (documentPath.isWithin(projectPath))
       {
-         for (auto&& suffix : { "air.toml", ".air.toml" })
-         {
-            FilePath airPath = projectPath.completePath(suffix);
-            if (airPath.exists())
-               return airPath;
-         }
-
-         return FilePath();
+         FilePath airPath = findProjectAirToml();
+         if (!airPath.isEmpty())
+            return airPath;
       }
    }
 
@@ -138,6 +161,9 @@ core::Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   // Subscribe to client init event to notify client of existing air.toml
+   events().onClientInit.connect(onClientInit);
 
    // Subscribe to file monitor for air.toml changes
    if (projects::projectContext().hasProject())

@@ -1383,8 +1383,13 @@ public class AceEditorWidget extends Composite
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();
-      removeMarkers((annotation, marker) -> {
-         return range.contains(annotation.row(), annotation.column());
+      removeMarkers(new BiPredicate<AceAnnotation, Marker>()
+      {
+         @Override
+         public boolean test(AceAnnotation annotation, Marker marker)
+         {
+            return range.contains(annotation.row(), annotation.column());
+         }
       });
    }
 
