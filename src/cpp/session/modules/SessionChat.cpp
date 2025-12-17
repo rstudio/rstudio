@@ -3166,6 +3166,7 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("-p");
    args.push_back(boost::lexical_cast<std::string>(s_chatBackendPort));
    args.push_back("--json"); // Enable JSON-RPC mode
+   args.push_back("--logger-type=file"); // Log to file instead of using rstudio logging
 
    // Add workspace path argument
    FilePath workspacePath = dirs::getInitialWorkingDirectory();
