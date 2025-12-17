@@ -819,10 +819,13 @@ std::string getCommonPrefix(const std::string& code)
 
    // Check edge cases
    if (lines.size() == 0)
+   {
       return "";
-
-   if (lines.size() == 1)
+   }
+   else if (lines.size() == 1)
+   {
       return lines[0];
+   }
 
    std::size_t offset = 0;
    std::string prefix;
@@ -862,7 +865,7 @@ std::string getCommonPrefix(const std::string& code)
          // If the characters do not match, then we bail.
          if (lhs != rhs)
          {
-            return prefix;
+            break;
          }
       }
 
@@ -870,7 +873,7 @@ std::string getCommonPrefix(const std::string& code)
       // of the provided lines, then we're done.
       if (!inBounds)
       {
-         return prefix;
+         break;
       }
 
       // If we got here, all the characters at this offset matched.

@@ -84,6 +84,11 @@ FilePath findAirToml(const core::FilePath& documentPath)
          return FilePath();
 
       auto&& path = parentPath.getAbsolutePath();
+
+#ifdef _WIN32
+      std::replace(path.begin(), path.end(), '\\', '/');
+#endif
+
       auto count = std::count(path.begin(), path.end(), '/');
       if (count <= 2)
          return FilePath();
