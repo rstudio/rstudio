@@ -846,6 +846,10 @@ std::string getCommonPrefix(const std::string& code)
    {
       return "";
    }
+   else if (lines.size() == 1)
+   {
+      return std::string(lines[0]);
+   }
 
    std::size_t offset = 0;
    std::string prefix;

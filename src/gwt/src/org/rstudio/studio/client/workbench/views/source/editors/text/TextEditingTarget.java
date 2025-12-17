@@ -1942,11 +1942,11 @@ public class TextEditingTarget implements
                      if (type == MonitoredFileChangedEvent.FILE_ADDED || 
                          type == MonitoredFileChangedEvent.FILE_MODIFIED)
                      {
-                        hasAirToml_ = true;
+                        hasProjectAirToml_ = true;
                      }
                      else if (type == MonitoredFileChangedEvent.FILE_REMOVED)
                      {
-                        hasAirToml_ = false;
+                        hasProjectAirToml_ = false;
                      }
                   }
                }
@@ -3035,7 +3035,7 @@ public class TextEditingTarget implements
 
    public boolean hasAirToml()
    {
-      return hasAirToml_;
+      return hasProjectAirToml_;
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
@@ -4065,7 +4065,7 @@ public class TextEditingTarget implements
          if (path.startsWith(projectPath + "/") || path.equals(projectPath))
          {
             // Create FormatContext locally using cached value
-            FormatContext context = createFormatContext(hasAirToml_);
+            FormatContext context = createFormatContext(hasProjectAirToml_);
             command.execute(context);
             return;
          }
@@ -9741,7 +9741,7 @@ public class TextEditingTarget implements
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;
    private ProjectConfig projConfig_;
-   private boolean hasAirToml_ = false;
+   private boolean hasProjectAirToml_ = false;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
