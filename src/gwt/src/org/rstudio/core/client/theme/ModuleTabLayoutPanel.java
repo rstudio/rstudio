@@ -214,6 +214,8 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
                return;
 
             Element tabBarParent = tabBar.getParentElement();
+            if (tabBarParent == null)
+               return;
 
             // Enable scroll container
             tabBarParent.getStyle().setOverflowX(Overflow.HIDDEN);
@@ -224,9 +226,24 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
             // Sink wheel events (same pattern as DocTabLayoutPanel)
             DOM.sinkBitlessEvent(tabBar, "mousewheel");
             DOM.sinkBitlessEvent(tabBar, "wheel");
-            Event.setEventListener(tabBar, new WheelEventListener());
+            wheelEventListener_ = new WheelEventListener();
+            Event.setEventListener(tabBar, wheelEventListener_);
          }
       });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      // Clean up wheel event listener to prevent memory leaks
+      Element tabBar = getTabBarElement();
+      if (tabBar != null && wheelEventListener_ != null)
+      {
+         Event.setEventListener(tabBar, null);
+      }
+      wheelEventListener_ = null;
+
+      super.onUnload();
    }
 
    private boolean isWithinTopBand(NativeEvent event)
@@ -262,6 +279,9 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          return;
 
       Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
+
       int contentWidth = getTabsContentWidth(tabBar);
       int parentWidth = tabBarParent.getOffsetWidth();
 
@@ -292,6 +312,8 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       if (tabBar == null)
          return 0;
       Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return 0;
       int contentWidth = getTabsContentWidth(tabBar);
       int effectiveViewport = tabBarParent.getOffsetWidth() - BUTTON_AREA_WIDTH;
       return Math.max(0, contentWidth - effectiveViewport);
@@ -303,6 +325,8 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       if (tabBar == null)
          return;
       Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
       int currentScroll = tabBarParent.getScrollLeft();
       int targetScroll = currentScroll + delta;
       scrollTo(targetScroll, animate);
@@ -314,6 +338,8 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       if (tabBar == null)
          return;
       Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
 
       int maxScroll = getMaxScroll();
       int newScroll = Math.max(0, Math.min(targetScroll, maxScroll));
@@ -449,6 +475,8 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
       Element selectedTab = tabWidget.getElement();
       Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
 
       // Use getRelativePosition for more accurate positioning relative to scroll container
       // (matches the pattern used in DocTabLayoutPanel)
@@ -513,4 +541,5 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    private final WindowFrame owner_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
    private Animation currentAnimation_;
+   private WheelEventListener wheelEventListener_;
 }
