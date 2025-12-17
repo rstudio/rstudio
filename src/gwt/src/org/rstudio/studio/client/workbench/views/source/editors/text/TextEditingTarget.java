@@ -4077,7 +4077,11 @@ public class TextEditingTarget implements
                }
                
                String selection = editor.getTextForRange(range);
-               server_.formatCode(selection, new ServerRequestCallback<String>()
+               server_.formatCode(
+                  getId(),
+                  getPath(),
+                  selection,
+                  new ServerRequestCallback<String>()
                {
                   @Override
                   public void onResponseReceived(String response)
