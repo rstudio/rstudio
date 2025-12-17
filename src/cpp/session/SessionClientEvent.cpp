@@ -218,7 +218,6 @@ const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
 const int kCopilotStatusChanged = 202;
 const int kChatBackendExit = 203;
-const int kMonitoredFileChanged = 204;
 
 }
 
@@ -611,8 +610,6 @@ std::string ClientEvent::typeName() const
          return "copilot_status_changed";
       case client_events::kChatBackendExit:
          return "chat_backend_exit";
-      case client_events::kMonitoredFileChanged:
-         return "monitored_file_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " +
                              safe_convert::numberToString(type_));

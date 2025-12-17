@@ -80,7 +80,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.files.events.MonitoredFileChangedEvent;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.GWT;
@@ -99,7 +100,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                                  NewProjectFolderEvent.Handler,
                                  OpenProjectEvent.Handler,
                                  RequestOpenProjectEvent.Handler,
-                                 MonitoredFileChangedEvent.Handler
+                                 FileChangeEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
 
@@ -150,7 +151,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       eventBus.addHandler(NewProjectFolderEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
-      eventBus.addHandler(MonitoredFileChangedEvent.TYPE, this);
+      eventBus.addHandler(FileChangeEvent.TYPE, this);
 
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -339,11 +340,10 @@ public class Projects implements OpenProjectFileEvent.Handler,
    }
 
    @Override
-   public void onMonitoredFileChanged(MonitoredFileChangedEvent event)
+   public void onFileChange(FileChangeEvent event)
    {
-      MonitoredFileChangedEvent.Data data = event.getData();
-      String path = data.getPath();
-      int type = data.getType();
+      FileChange fileChange = event.getFileChange();
+      FileSystemItem file = fileChange.getFile();
       
       // Check if this is an air.toml file at the project root
       WorkbenchContext workbenchContext = pWorkbenchContext_.get();
@@ -351,37 +351,27 @@ public class Projects implements OpenProjectFileEvent.Handler,
       if (projectDir == null)
          return;
       
-      String projectPath = projectDir.getPath();
-      String filename = path.substring(path.lastIndexOf('/') + 1);
+      String filename = file.getName();
       
       // Check if the file is air.toml or .air.toml
       if (!filename.equals("air.toml") && !filename.equals(".air.toml"))
          return;
       
-      // Check if the path is at the project root
-      // Path could be relative (just "air.toml") or absolute/aliased
-      boolean isAtProjectRoot = false;
-      if (path.equals("air.toml") || path.equals(".air.toml"))
-      {
-         // Relative path - must be at project root
-         isAtProjectRoot = true;
-      }
-      else if (path.equals(projectPath + "/air.toml") || 
-               path.equals(projectPath + "/.air.toml"))
-      {
-         // Absolute/aliased path matching project root
-         isAtProjectRoot = true;
-      }
+      // Check if the file is at the project root
+      String filePath = file.getPath();
+      String projectPath = projectDir.getPath();
+      boolean isAtProjectRoot = filePath.equals(projectPath + "/air.toml") ||
+                                filePath.equals(projectPath + "/.air.toml");
       
       if (isAtProjectRoot)
       {
          // Update the existence state based on the change type
-         if (type == MonitoredFileChangedEvent.FILE_ADDED || 
-             type == MonitoredFileChangedEvent.FILE_MODIFIED)
+         int type = fileChange.getType();
+         if (type == FileChange.ADD || type == FileChange.MODIFIED)
          {
             hasProjectAirToml_ = true;
          }
-         else if (type == MonitoredFileChangedEvent.FILE_REMOVED)
+         else if (type == FileChange.DELETE)
          {
             hasProjectAirToml_ = false;
          }

@@ -21,11 +21,11 @@
 #include <shared_core/FilePath.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileInfo.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionClientEvent.hpp>
 
 using namespace rstudio::core;
 
@@ -35,12 +35,6 @@ namespace modules {
 namespace air {
 
 namespace {
-
-bool isAirTomlFile(const FilePath& filePath)
-{
-   std::string filename = filePath.getFilename();
-   return filename == "air.toml" || filename == ".air.toml";
-}
 
 FilePath getProjectAirTomlPath()
 {
@@ -54,40 +48,18 @@ FilePath getProjectAirTomlPath()
    }
 }
 
-void fireMonitoredFileChangedEvent(const FilePath& filePath, 
-                                   core::system::FileChangeEvent::Type type)
-{
-   // Get the relative (aliased) path
-   std::string path = module_context::createAliasedPath(filePath);
-   
-   // Create the event data
-   json::Object eventData;
-   eventData["path"] = path;
-   eventData["type"] = static_cast<int>(type);
-   
-   // Emit the client event
-   ClientEvent clientEvent(client_events::kMonitoredFileChanged, eventData);
-   module_context::enqueClientEvent(clientEvent);
-}
-
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
-{
-   for (const auto& event : events)
-   {
-      FilePath filePath(event.fileInfo().absolutePath());
-      
-      // Only process air.toml or .air.toml files
-      if (isAirTomlFile(filePath))
-         fireMonitoredFileChangedEvent(filePath, event.type());
-   }
-}
-
 void onClientInit()
 {
    // Notify client of existing air.toml during client initialization
    FilePath airTomlPath = getProjectAirTomlPath();
    if (airTomlPath.exists())
-      fireMonitoredFileChangedEvent(airTomlPath, core::system::FileChangeEvent::FileModified);
+   {
+      FileInfo fileInfo(airTomlPath);
+      core::system::FileChangeEvent changeEvent(
+         core::system::FileChangeEvent::FileModified,
+         fileInfo);
+      module_context::enqueFileChangedEvent(changeEvent);
+   }
 }
 
 } // end anonymous namespace
@@ -160,14 +132,6 @@ core::Error initialize()
 
    // Subscribe to client init event to notify client of existing air.toml
    events().onClientInit.connect(onClientInit);
-
-   // Subscribe to file monitor for air.toml changes
-   if (projects::projectContext().hasProject())
-   {
-      projects::FileMonitorCallbacks callbacks;
-      callbacks.onFilesChanged = onFilesChanged;
-      projects::projectContext().subscribeToFileMonitor("Air", callbacks);
-   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()
