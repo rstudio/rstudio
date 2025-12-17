@@ -865,7 +865,7 @@ std::string getCommonPrefix(const std::string& code)
          // If the characters do not match, then we bail.
          if (lhs != rhs)
          {
-            break;
+            return prefix;
          }
       }
 
@@ -873,7 +873,7 @@ std::string getCommonPrefix(const std::string& code)
       // of the provided lines, then we're done.
       if (!inBounds)
       {
-         break;
+         return prefix;
       }
 
       // If we got here, all the characters at this offset matched.
@@ -882,6 +882,7 @@ std::string getCommonPrefix(const std::string& code)
       prefix += lhs;
    }
 
+   // Appease the compiler.
    return prefix;
 }
 

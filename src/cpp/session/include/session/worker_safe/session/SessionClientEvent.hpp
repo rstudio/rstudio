@@ -219,6 +219,7 @@ extern const int kConsoleWritePendingError;
 extern const int kConsoleWritePendingWarning;
 extern const int kCopilotStatusChanged;
 extern const int kChatBackendExit;
+extern const int kMonitoredFileChanged;
 
 }
    

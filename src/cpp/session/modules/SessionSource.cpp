@@ -980,16 +980,50 @@ Error formatCode(
    if (error)
       return onError(error, ERROR_LOCATION);
    
-   FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
+   // Create a temporary directory using a path computed by tempFile
+   FilePath tempDir = module_context::tempFile("rstudio-format-", "");
+   error = tempDir.ensureDirectory();
+   if (error)
+      return onError(error, ERROR_LOCATION);
+   
+   // Write the code to document.R in the temporary directory
+   FilePath documentPath = tempDir.completePath("document.R");
    error = writeStringToFile(documentPath, code);
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   // compute the common indent, so we can preserve it after formatting
-   std::string indent = string_utils::getCommonPrefix(code);
-   auto it = indent.find_last_not_of(" \t");
-   if (it != std::string::npos)
-      indent = indent.substr(0, it - 1);
+   // Only compute and preserve indent if the air formatter will be used
+   std::string indent;
+   std::string formatType = prefs::userPrefs().codeFormatter();
+   bool usingAirFormatter = (formatType == kCodeFormatterNone && 
+                             canUseAirFormatter(kFormatContextCommand, documentPath));
+   
+   if (usingAirFormatter)
+   {
+      // compute the common indent, so we can preserve it after formatting
+      indent = string_utils::getCommonPrefix(code);
+      auto it = indent.find_last_not_of(" \t");
+      if (it != std::string::npos)
+         indent = indent.substr(0, it - 1);
+      
+      // Copy air.toml or .air.toml from project root if it exists
+      if (projects::projectContext().hasProject())
+      {
+         FilePath projectDir = projects::projectContext().directory();
+         for (const std::string& filename : { "air.toml", ".air.toml" })
+         {
+            FilePath airTomlPath = projectDir.completePath(filename);
+            if (airTomlPath.exists())
+            {
+               FilePath targetPath = tempDir.completePath(filename);
+               Error copyError = airTomlPath.copy(targetPath, true);
+               if (copyError)
+                  LOG_ERROR(copyError);
+               break; // Only copy one of them
+            }
+         }
+      }
+   }
 
    return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
    {
@@ -1004,12 +1038,17 @@ Error formatCode(
       else if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
       
-      // add back in the indent we computed
+      // add back in the indent we computed (only if air formatter was used)
       if (!indent.empty())
       {
          code = indent + code;
          boost::algorithm::replace_all(code, "\n", "\n" + indent);
       }
+      
+      // Clean up the temporary directory
+      Error removeError = tempDir.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
       
       json::JsonRpcResponse response;
       response.setResult(code);

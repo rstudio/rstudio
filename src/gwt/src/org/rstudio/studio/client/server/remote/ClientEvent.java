@@ -208,6 +208,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RunAutomation = "run_automation";
    public static final String CopilotStatusChanged = "copilot_status_changed";
    public static final String ChatBackendExit = "chat_backend_exit";
+   public static final String MonitoredFileChanged = "monitored_file_changed";
 
    protected ClientEvent()
    {

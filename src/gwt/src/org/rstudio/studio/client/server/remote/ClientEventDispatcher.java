@@ -187,6 +187,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.MonitoredFileChangedEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
@@ -1194,6 +1195,11 @@ public class ClientEventDispatcher
          {
             ChatBackendExitEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ChatBackendExitEvent(data.getExitCode(), data.getCrashed()));
+         }
+         else if (type == ClientEvent.MonitoredFileChanged)
+         {
+            MonitoredFileChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new MonitoredFileChangedEvent(data));
          }
          else
          {

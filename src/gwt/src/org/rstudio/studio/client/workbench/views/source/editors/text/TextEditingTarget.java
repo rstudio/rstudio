@@ -152,6 +152,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTr
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.events.MonitoredFileChangedEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobRunScriptEvent;
@@ -1895,7 +1896,62 @@ public class TextEditingTarget implements
                   }
                }
             });
-      
+
+      events_.addHandler(
+            this,
+            MonitoredFileChangedEvent.TYPE,
+            new MonitoredFileChangedEvent.Handler()
+            {
+               @Override
+               public void onMonitoredFileChanged(MonitoredFileChangedEvent event)
+               {
+                  MonitoredFileChangedEvent.Data data = event.getData();
+                  String path = data.getPath();
+                  int type = data.getType();
+                  
+                  // Check if this is an air.toml file at the project root
+                  FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+                  if (projectDir == null)
+                     return;
+                  
+                  String projectPath = projectDir.getPath();
+                  String filename = path.substring(path.lastIndexOf('/') + 1);
+                  
+                  // Check if the file is air.toml or .air.toml
+                  if (!filename.equals("air.toml") && !filename.equals(".air.toml"))
+                     return;
+                  
+                  // Check if the path is at the project root
+                  // Path could be relative (just "air.toml") or absolute/aliased
+                  boolean isAtProjectRoot = false;
+                  if (path.equals("air.toml") || path.equals(".air.toml"))
+                  {
+                     // Relative path - must be at project root
+                     isAtProjectRoot = true;
+                  }
+                  else if (path.equals(projectPath + "/air.toml") || 
+                           path.equals(projectPath + "/.air.toml"))
+                  {
+                     // Absolute/aliased path matching project root
+                     isAtProjectRoot = true;
+                  }
+                  
+                  if (isAtProjectRoot)
+                  {
+                     // Update the existence state based on the change type
+                     if (type == MonitoredFileChangedEvent.FILE_ADDED || 
+                         type == MonitoredFileChangedEvent.FILE_MODIFIED)
+                     {
+                        hasAirToml_ = true;
+                     }
+                     else if (type == MonitoredFileChangedEvent.FILE_REMOVED)
+                     {
+                        hasAirToml_ = false;
+                     }
+                  }
+               }
+            });
+
       events_.addHandler(
             this,
             CopilotEvent.TYPE,
@@ -2977,6 +3033,11 @@ public class TextEditingTarget implements
          return "";
    }
 
+   public boolean hasAirToml()
+   {
+      return hasAirToml_;
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
@@ -3992,9 +4053,28 @@ public class TextEditingTarget implements
 
    private void withFormatContext(CommandWithArg<FormatContext> command)
    {
+      String path = getPath();
+      
+      // If this is a project file, we can use the cached hasAirToml_ value
+      // to build FormatContext without an RPC call
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         String projectPath = projectDir.getPath();
+         // Check if the file is within the project directory
+         if (path.startsWith(projectPath + "/") || path.equals(projectPath))
+         {
+            // Create FormatContext locally using cached value
+            FormatContext context = createFormatContext(hasAirToml_);
+            command.execute(context);
+            return;
+         }
+      }
+      
+      // For non-project files or when project info is unavailable, make RPC call
       server_.formatContext(
          getId(),
-         getPath(),
+         path,
          new ServerRequestCallback<FormatContext>()
       {
          @Override
@@ -4007,10 +4087,16 @@ public class TextEditingTarget implements
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            command.execute(new FormatContext());
+            command.execute(createFormatContext(false));
          }
       });
    }
+
+   private native FormatContext createFormatContext(boolean air) /*-{
+      return {
+         air: air
+      };
+   }-*/;
 
    @Handler
    void onReformatCode()
@@ -9655,6 +9741,7 @@ public class TextEditingTarget implements
    private MathJax mathjax_;
    private InlinePreviewer inlinePreviewer_;
    private ProjectConfig projConfig_;
+   private boolean hasAirToml_ = false;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
