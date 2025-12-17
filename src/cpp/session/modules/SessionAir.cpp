@@ -78,6 +78,10 @@ FilePath getAirTomlPath(const FilePath& projectPath)
 
 FilePath findAirTomlPath(const core::FilePath& documentPath)
 {
+   // Early check for empty document paths
+   if (documentPath.isEmpty())
+      return FilePath();
+
    // If the document lives within the active project, then first
    // check for air.toml in the project directory.
    if (projects::projectContext().hasProject())
@@ -111,7 +115,7 @@ FilePath findAirTomlPath(const core::FilePath& documentPath)
       if (parentPath.getParent() == homeParent)
          return FilePath();
 
-      auto&& path = parentPath.getAbsolutePath();
+      auto path = parentPath.getAbsolutePath();
 
 #ifdef _WIN32
       std::replace(path.begin(), path.end(), '\\', '/');

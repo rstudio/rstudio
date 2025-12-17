@@ -4053,6 +4053,12 @@ public class TextEditingTarget implements
 
    void onReformatCodeImpl(DocDisplay editor)
    {
+      if (!DocumentMode.isSelectionInRMode(editor))
+      {
+         showRModeWarning(commands_.reformatCode().getLabel());
+         return;
+      }
+
       withFormatContext((context) ->
       {
          if (useBuiltinFormatter(context))

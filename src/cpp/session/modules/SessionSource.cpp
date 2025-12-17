@@ -929,11 +929,16 @@ Error formatCode(
    
    Error error;
    
-   std::string code;
-   error = json::readParams(request.params, &code);
+   std::string id, path, code;
+   error = json::readParams(request.params, &id, &path, &code);
    if (error)
       return onError(error, ERROR_LOCATION);
    
+   // Resolve the document path if available
+   FilePath documentPath;
+   if (!path.empty())
+      documentPath = module_context::resolveAliasedPath(path);
+
    // Create a temporary directory using a path computed by tempFile
    FilePath tempDir = module_context::tempFile("rstudio-format-", "");
    error = tempDir.ensureDirectory();
@@ -941,8 +946,8 @@ Error formatCode(
       return onError(error, ERROR_LOCATION);
    
    // Write the code to document.R in the temporary directory
-   FilePath documentPath = tempDir.completePath("document.R");
-   error = writeStringToFile(documentPath, code);
+   FilePath codePath = tempDir.completePath("document.R");
+   error = writeStringToFile(codePath, code);
    if (error)
       return onError(error, ERROR_LOCATION);
 
@@ -963,7 +968,7 @@ Error formatCode(
          indent = indent.substr(0, it);
       
       // Copy air.toml or .air.toml from project root if it exists.
-      FilePath airTomlPath = modules::air::getAirTomlPath(projects::projectContext().directory());
+      FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
       if (airTomlPath.exists())
       {
          Error copyError = airTomlPath.copy(tempDir.completePath("air.toml"), true);
@@ -972,10 +977,10 @@ Error formatCode(
       }
    }
 
-   return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
+   return formatDocumentImpl(kFormatContextCommand, codePath, continuation, [=]()
    {
       std::string code;
-      Error error = readStringFromFile(documentPath, &code);
+      Error error = readStringFromFile(codePath, &code);
       if (error)
          LOG_ERROR(error);
       
