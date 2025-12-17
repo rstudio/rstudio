@@ -16,6 +16,7 @@ package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
@@ -413,14 +414,22 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    @Override
    public void selectTab(int index)
    {
+      // Cancel any ongoing scroll animation BEFORE selection to prevent timing conflicts
+      if (currentAnimation_ != null)
+      {
+         currentAnimation_.cancel();
+         currentAnimation_ = null;
+      }
+
       super.selectTab(Math.max(0, Math.min(index, getWidgetCount() - 1)));
       if (index == 0)
          owner_.addStyleName(styles_.firstTabSelected());
       else
          owner_.removeStyleName(styles_.firstTabSelected());
 
-      // Scroll selected tab into view
-      ensureSelectedTabIsVisible(!reducedMotion());
+      // Use scheduleFinally to ensure scroll adjustment happens AFTER all
+      // layout changes settle (runs later than scheduleDeferred)
+      Scheduler.get().scheduleFinally(() -> ensureSelectedTabIsVisible(!reducedMotion()));
    }
 
    private void ensureSelectedTabIsVisible(boolean animate)
@@ -441,7 +450,10 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       Element selectedTab = tabWidget.getElement();
       Element tabBarParent = tabBar.getParentElement();
 
-      int tabLeft = selectedTab.getOffsetLeft();
+      // Use getRelativePosition for more accurate positioning relative to scroll container
+      // (matches the pattern used in DocTabLayoutPanel)
+      Point tabPosition = DomUtils.getRelativePosition(tabBarParent, selectedTab);
+      int tabLeft = tabPosition.x;
       int tabRight = tabLeft + selectedTab.getOffsetWidth();
       int scrollLeft = tabBarParent.getScrollLeft();
       int viewportWidth = tabBarParent.getOffsetWidth() - BUTTON_AREA_WIDTH;
