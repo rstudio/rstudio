@@ -56,6 +56,8 @@ public:
       username_ = request.username_;
       requestSequence_ = request.requestSequence_;
       startTime_ = request.startTime_;
+      handlerStartTime_ = request.handlerStartTime_;
+      handlerEndTime_ = request.handlerEndTime_;
    }
 
 public:
@@ -177,6 +179,12 @@ public:
    boost::posix_time::ptime startTime() const { return startTime_; }
    void setStartTime(boost::posix_time::ptime time) { startTime_ = time; }
 
+   boost::posix_time::ptime handlerStartTime() const { return handlerStartTime_; }
+   void setHandlerStartTime(boost::posix_time::ptime time) { handlerStartTime_ = time; }
+
+   boost::posix_time::ptime handlerEndTime() const { return handlerEndTime_; }
+   void setHandlerEndTime(boost::posix_time::ptime time) { handlerEndTime_ = time; }
+
    const std::string debugInfo() const
    {
       return std::string(uri() + " (" + username() + ":" + std::to_string(requestSequence()) + ")");
@@ -188,9 +196,25 @@ public:
       if (startTime().is_not_a_date_time())
          return debugInfo();
 
-      boost::posix_time::time_duration requestTime = boost::posix_time::microsec_clock::universal_time() - startTime();
-      return debugInfo() + " in " + std::to_string(requestTime.total_seconds()) + "." +
-                                    std::to_string(requestTime.total_milliseconds() % 1000) + "s";
+      boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+      boost::posix_time::time_duration requestTime = now - startTime();
+      boost::posix_time::ptime handlerStart = handlerStartTime();
+      boost::posix_time::ptime handlerEnd = handlerEndTime();
+      std::string queueTimeStr, postHandlerTimeStr;
+      if (!handlerStart.is_not_a_date_time())
+      {
+         boost::posix_time::time_duration queueTime = handlerStart - startTime();
+         if (queueTime.total_seconds() > 0 || queueTime.total_milliseconds() > 100)
+             queueTimeStr = " queued: " + std::to_string(queueTime.total_seconds()) + "." + std::to_string(queueTime.total_milliseconds() % 1000) + "s ";
+      }
+      if (!handlerEnd.is_not_a_date_time())
+      {
+         boost::posix_time::time_duration postHandlerTime = now - handlerEnd;
+         if (postHandlerTime.total_seconds() > 0 || postHandlerTime.total_milliseconds() > 100)
+             postHandlerTimeStr = " after handler: " + std::to_string(postHandlerTime.total_seconds()) + "." + std::to_string(postHandlerTime.total_milliseconds() % 1000) + "s";
+      }
+      return debugInfo() + queueTimeStr + " in " + std::to_string(requestTime.total_seconds()) + "." +
+                                                  std::to_string(requestTime.total_milliseconds() % 1000) + "s" + postHandlerTimeStr;
    }
 
    const std::string debugInfoResponse(const Response& response) const;
@@ -221,8 +245,10 @@ private:
    int remoteUid_;
    std::string username_;
    std::string handlerPrefix_;
-   long requestSequence_;
+   long requestSequence_ = 0;
    boost::posix_time::ptime startTime_;
+   boost::posix_time::ptime handlerStartTime_;
+   boost::posix_time::ptime handlerEndTime_;
    
    // cookies, form fields, and query string are parsed on demand
    mutable bool parsedCookies_;

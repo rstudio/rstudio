@@ -40,6 +40,18 @@ struct ConnectionInfo {
    int requestSequence;
 };
 
+static constexpr size_t MAX_SLOW_REQUESTS = 50;
+
+struct SlowRequestInfo {
+   std::string requestUri, username;
+   int requestSequence;
+   boost::posix_time::time_duration requestTime;      // total time for request
+   boost::posix_time::time_duration queuedTime;       // time spent waiting for handler to be called
+   boost::posix_time::time_duration handlerTime;      // time spent in initial request handler
+   boost::posix_time::time_duration postHandlerTime;  // time spent in callbacks after handler
+   std::string responseError;
+};
+
 struct ServerInfo {
    long numRequests;
    long numStreaming;
@@ -48,6 +60,7 @@ struct ServerInfo {
    std::string maxUrl;
    boost::posix_time::time_duration totalTime;
    boost::posix_time::time_duration elapsedTime;
+   std::vector<SlowRequestInfo> *pSlowRequests;
 };
 
 class AsyncServer
