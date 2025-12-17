@@ -17,12 +17,15 @@
 #include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionConsoleProcessSocketPacket.hpp>
 
-#include "http/SessionTcpIpHttpConnectionListener.hpp"
-
 #include <boost/make_shared.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include "http/SessionTcpIpHttpConnectionListener.hpp"
+
+#include "websocketpp/transport/asio/base.hpp"
+#include "websocketpp/transport/base/connection.hpp"
 
 
 namespace rstudio {
@@ -165,26 +168,16 @@ Error ConsoleProcessSocket::ensureServerRunning()
          }
          catch (websocketpp::exception const& e)
          {
-            // check for unexpected (non-passthrough errors)
             auto&& ec = e.code();
-            if (ec.category() == websocketpp::transport::error::get_category())
+            if (ec == websocketpp::transport::error::pass_through ||
+                ec == websocketpp::transport::asio::error::pass_through)
             {
-               if (ec.value() != websocketpp::transport::error::pass_through)
-               {
-                  return Error(ec, ERROR_LOCATION);
-               }
+               port = 3000 + (rand() % 5000);
             }
-
-            if (ec.category() == websocketpp::transport::asio::error::get_category())
+            else
             {
-               if (ec.value() != websocketpp::transport::asio::error::pass_through)
-               {
-                  return Error(ec, ERROR_LOCATION);
-               }
+               return Error(ec, ERROR_LOCATION);
             }
-
-            // try another random port
-            port = 3000 + (rand() % 5000);
          }
       }
       while (++portRetries < 20);
