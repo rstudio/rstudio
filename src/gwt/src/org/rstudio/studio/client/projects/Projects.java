@@ -80,6 +80,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.events.MonitoredFileChangedEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.GWT;
@@ -97,7 +98,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
                                  NewProjectFromVcsEvent.Handler,
                                  NewProjectFolderEvent.Handler,
                                  OpenProjectEvent.Handler,
-                                 RequestOpenProjectEvent.Handler
+                                 RequestOpenProjectEvent.Handler,
+                                 MonitoredFileChangedEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
 
@@ -148,6 +150,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       eventBus.addHandler(NewProjectFolderEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
+      eventBus.addHandler(MonitoredFileChangedEvent.TYPE, this);
 
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -332,6 +335,56 @@ public class Projects implements OpenProjectFileEvent.Handler,
                event.getCallContext());
 
          createNewProject(newProject, saveChanges);
+      }
+   }
+
+   @Override
+   public void onMonitoredFileChanged(MonitoredFileChangedEvent event)
+   {
+      MonitoredFileChangedEvent.Data data = event.getData();
+      String path = data.getPath();
+      int type = data.getType();
+      
+      // Check if this is an air.toml file at the project root
+      WorkbenchContext workbenchContext = pWorkbenchContext_.get();
+      FileSystemItem projectDir = workbenchContext.getActiveProjectDir();
+      if (projectDir == null)
+         return;
+      
+      String projectPath = projectDir.getPath();
+      String filename = path.substring(path.lastIndexOf('/') + 1);
+      
+      // Check if the file is air.toml or .air.toml
+      if (!filename.equals("air.toml") && !filename.equals(".air.toml"))
+         return;
+      
+      // Check if the path is at the project root
+      // Path could be relative (just "air.toml") or absolute/aliased
+      boolean isAtProjectRoot = false;
+      if (path.equals("air.toml") || path.equals(".air.toml"))
+      {
+         // Relative path - must be at project root
+         isAtProjectRoot = true;
+      }
+      else if (path.equals(projectPath + "/air.toml") || 
+               path.equals(projectPath + "/.air.toml"))
+      {
+         // Absolute/aliased path matching project root
+         isAtProjectRoot = true;
+      }
+      
+      if (isAtProjectRoot)
+      {
+         // Update the existence state based on the change type
+         if (type == MonitoredFileChangedEvent.FILE_ADDED || 
+             type == MonitoredFileChangedEvent.FILE_MODIFIED)
+         {
+            hasProjectAirToml_ = true;
+         }
+         else if (type == MonitoredFileChangedEvent.FILE_REMOVED)
+         {
+            hasProjectAirToml_ = false;
+         }
       }
    }
 
@@ -883,6 +936,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
       showProjectOptions(ProjectPreferencesDialog.RENV, true);
    }
 
+   public boolean hasProjectAirToml()
+   {
+      return hasProjectAirToml_;
+   }
+
    public void showProjectOptions(final int initialPane, boolean showPaneChooser)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
@@ -1233,9 +1291,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
    private final Provider<UserPrefs> pUserPrefs_;
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
+   private boolean hasProjectAirToml_ = false;
 
    // This string cannot be localized, currently, because it is hardcoded as "none" in the C++ code
    // #define kProjectNone           "none"
    public static final String NONE = "none"; // constants_.noneLabel();
    public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
+
 }

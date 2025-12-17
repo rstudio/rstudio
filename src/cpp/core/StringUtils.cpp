@@ -842,7 +842,7 @@ std::string getCommonPrefix(const std::string& code)
       lines.end());
 
    // Check edge cases
-   if (lines.size() < 2)
+   if (lines.empty())
    {
       return "";
    }

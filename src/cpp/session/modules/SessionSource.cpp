@@ -958,9 +958,9 @@ Error formatCode(
       // Compute the common prefix for this code, and then trim
       // non-whitespace characters from the end.
       indent = string_utils::getCommonPrefix(code);
-      auto it = indent.find_last_not_of(" \t");
+      auto it = indent.find_first_not_of(" \t");
       if (it != std::string::npos)
-         indent = indent.substr(0, it - 1);
+         indent = indent.substr(0, it);
       
       // Copy air.toml or .air.toml from project root if it exists.
       FilePath airTomlPath = modules::air::getAirTomlPath(projects::projectContext().directory());
