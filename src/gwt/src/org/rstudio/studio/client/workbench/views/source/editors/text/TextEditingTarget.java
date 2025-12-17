@@ -4393,6 +4393,27 @@ public class TextEditingTarget implements
          return;
       }
 
+      // Only format files within the current project folder
+      String path = getPath();
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         String projectPath = projectDir.getPath();
+         // Check if the file is within the project directory
+         if (!path.startsWith(projectPath + "/") && !path.equals(projectPath))
+         {
+            // File is not within the project folder, skip formatting
+            onFormatted.execute();
+            return;
+         }
+      }
+      else
+      {
+         // No project or no path, skip formatting
+         onFormatted.execute();
+         return;
+      }
+
       docUpdateSentinel_.withSavedDoc(() ->
       {
          server_.formatDocument(
