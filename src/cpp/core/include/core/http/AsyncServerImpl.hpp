@@ -232,6 +232,12 @@ public:
          serverInfo.maxUrl = maxUrl_;
          serverInfo.totalTime = totalTime_;
          serverInfo.elapsedTime = now - statsStartTime_;
+         serverInfo.pSlowRequests = pSlowRequests_;
+         pSlowRequests_ = pNextSlowRequests_;
+         pSlowRequests_->clear();
+
+         // Since this is only used by this polling handler that runs single-threaded, we should be ok resetting this here
+         pNextSlowRequests_ = serverInfo.pSlowRequests;
 
          if (reset)
          {
@@ -285,6 +291,23 @@ public:
          if (logIdleIntervals_ != 0 && (idleIntervalCount_ % logIdleIntervals_) == 0)
             LOG_INFO_MESSAGE(serverName_ + " status - no requests for: " +
                              std::to_string(((idleIntervalCount_ * statsMonitorSeconds_)/60)) + " minutes");
+      }
+
+      if (serverInfo.pSlowRequests)
+      {
+         for (const SlowRequestInfo& slowRequest : *(serverInfo.pSlowRequests))
+         {
+            LOG_INFO_MESSAGE(serverName_ + " status - slow uri: " + slowRequest.requestUri + " (" +
+                             slowRequest.username + ":" + std::to_string(slowRequest.requestSequence) + "): in queue: " +
+                             std::to_string(slowRequest.queuedTime.total_seconds()) + "." +
+                             std::to_string(slowRequest.queuedTime.total_milliseconds() % 1000) + "s" + " handler: " +
+                             std::to_string(slowRequest.handlerTime.total_seconds()) + "." +
+                             std::to_string(slowRequest.handlerTime.total_milliseconds() % 1000) + "s" + " post: " +
+                             std::to_string(slowRequest.postHandlerTime.total_seconds()) + "." +
+                             std::to_string(slowRequest.postHandlerTime.total_milliseconds() % 1000) + "s total: " +
+                             std::to_string(slowRequest.requestTime.total_seconds()) + "." +
+                             std::to_string(slowRequest.requestTime.total_milliseconds() % 1000) + "s");
+         }
       }
 
       boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
@@ -531,6 +554,35 @@ private:
                   }
                   else
                      numStreaming_++;
+
+                  boost::posix_time::ptime handlerStart = connection->request().handlerStartTime();
+                  boost::posix_time::ptime handlerEnd = connection->request().handlerEndTime();
+                  if (!handlerStart.is_not_a_date_time() && !handlerEnd.is_not_a_date_time())
+                  {
+                     boost::posix_time::time_duration handlerTime = handlerEnd - handlerStart;
+                     boost::posix_time::time_duration queueTime = handlerStart - startTime;
+                     boost::posix_time::time_duration postHandlerTime = now - handlerEnd;
+
+                     boost::posix_time::time_duration slowThreshold = boost::posix_time::milliseconds(150);
+                     boost::posix_time::time_duration slowPostThreshold = boost::posix_time::milliseconds(500);
+                     // Track slow requests - the first 50 for each poll interval so we see a sample, excluding streaming async responses
+                     if (handlerTime > slowThreshold || queueTime > slowThreshold || (!isStreaming && postHandlerTime > slowPostThreshold))
+                     {
+                        if (pSlowRequests_->size() < MAX_SLOW_REQUESTS)
+                        {
+                           SlowRequestInfo info;
+
+                           info.requestUri = connection->request().uri();
+                           info.username = connection->request().username();
+                           info.requestSequence = connection->requestSequence();
+                           info.queuedTime = queueTime;
+                           info.handlerTime = handlerTime;
+                           info.postHandlerTime = postHandlerTime;
+                           info.requestTime = now - startTime;
+                           pSlowRequests_->push_back(info);
+                        }
+                     }
+                  }
                }
                else
                   debugMsg = "Request start time is before current time?";
@@ -673,7 +725,8 @@ private:
                 method != "HEAD" &&
                 method != "PUT" &&
                 method != "OPTIONS" &&
-                method != "PATCH")
+                method != "PATCH" &&
+                method != "DELETE")
             {
                // invalid method - fail out
                LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
@@ -775,7 +828,13 @@ private:
          // call handler if we have one
          if (handlerFunc)
          {
+            if (statsMonitorSeconds_ != 0)
+               pRequest->setHandlerStartTime(boost::posix_time::microsec_clock::universal_time());
+
             visitHandler(handlerFunc.get(), pAsyncConnection);
+
+            if (statsMonitorSeconds_ != 0)
+               pRequest->setHandlerEndTime(boost::posix_time::microsec_clock::universal_time());
 
             if (statsProvider_)
                statsProvider_->httpEndHandler(*pAsyncConnection);
@@ -857,6 +916,7 @@ private:
          {
             {
                boost::unique_lock<boost::mutex> lock(scheduledCommandMutex_);
+
                // execute all commands
                std::for_each(scheduledCommands_.begin(),
                            scheduledCommands_.end(),
@@ -1000,6 +1060,11 @@ private:
    // Number of stats monitor intervals to wait before logging idle server info messages (0 to disable)
    int logIdleIntervals_ = 60;
    boost::shared_ptr<AsyncServerStatsProvider> statsProvider_;
+   // Two small buffers where we store slow requests to be logged on the stats interval
+   std::vector<SlowRequestInfo> slowRequests1_;
+   std::vector<SlowRequestInfo> slowRequests2_;
+   std::vector<SlowRequestInfo>* pSlowRequests_ = &slowRequests1_;
+   std::vector<SlowRequestInfo>* pNextSlowRequests_ = &slowRequests2_;
 };
 
 } // namespace http

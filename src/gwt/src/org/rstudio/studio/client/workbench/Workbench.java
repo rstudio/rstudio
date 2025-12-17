@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.InstallRtoolsEvent;
 import org.rstudio.studio.client.workbench.events.QuotaStatusEvent;
 import org.rstudio.studio.client.workbench.events.ShowErrorMessageEvent;
+import org.rstudio.studio.client.workbench.events.ShowMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
@@ -80,6 +81,7 @@ import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
 import org.rstudio.studio.client.workbench.model.AdminNotification;
 import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
 import org.rstudio.studio.client.workbench.model.ErrorMessage;
+import org.rstudio.studio.client.workbench.model.ShowMessage;
 import org.rstudio.studio.client.workbench.model.QuotaStatus;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -105,6 +107,7 @@ import com.google.inject.Provider;
 
 public class Workbench implements BusyEvent.Handler,
                                   ShowErrorMessageEvent.Handler,
+                                  ShowMessageEvent.Handler,
                                   UserPromptEvent.Handler,
                                   ShowWarningBarEvent.Handler,
                                   BrowseUrlEvent.Handler,
@@ -178,6 +181,7 @@ public class Workbench implements BusyEvent.Handler,
       // edit
       eventBus.addHandler(BusyEvent.TYPE, this);
       eventBus.addHandler(ShowErrorMessageEvent.TYPE, this);
+      eventBus.addHandler(ShowMessageEvent.TYPE, this);
       eventBus.addHandler(UserPromptEvent.TYPE, this);
       eventBus.addHandler(ShowWarningBarEvent.TYPE, this);
       eventBus.addHandler(BrowseUrlEvent.TYPE, this);
@@ -278,6 +282,15 @@ public class Workbench implements BusyEvent.Handler,
       globalDisplay_.showErrorMessage(errorMessage.getTitle(),
                                       errorMessage.getMessage());
 
+   }
+
+   @Override
+   public void onShowMessage(ShowMessageEvent event)
+   {
+      ShowMessage showMessage = event.getShowMessage();
+      globalDisplay_.showMessage(showMessage.getType(),
+                                 showMessage.getCaption(),
+                                 showMessage.getMessage());
    }
 
    @Override

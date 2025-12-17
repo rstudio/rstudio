@@ -106,6 +106,11 @@ static bool s_sessionClosing = false;
 static bool s_chatBusy = false;
 
 // ============================================================================
+// Focused document tracking for insertAtCursor
+// ============================================================================
+static std::string s_focusedDocumentId;
+
+// ============================================================================
 // Error Messages
 // ============================================================================
 // NOTE: This must match EXECUTION_CANCELED_ERROR constant in
@@ -1943,6 +1948,87 @@ void handleInsertIntoNewFile(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleInsertAtCursor(core::system::ProcessOperations& ops,
+                          const json::Value& requestId,
+                          const json::Object& params)
+{
+   DLOG("Handling workspace/insertAtCursor request");
+
+   // Extract content parameter
+   std::string content;
+   Error error = json::readObject(params, "content", content);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      return;
+   }
+
+   // Check if we have a focused document
+   if (s_focusedDocumentId.empty())
+   {
+      DLOG("No focused document for insertAtCursor");
+      json::Object result;
+      result["success"] = false;
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
+   }
+
+   // Verify the document still exists in the source database
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(s_focusedDocumentId, pDoc);
+   if (error)
+   {
+      DLOG("Focused document {} no longer exists", s_focusedDocumentId);
+      // Clear the stale ID
+      s_focusedDocumentId.clear();
+      json::Object result;
+      result["success"] = false;
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
+   }
+
+   // Validate document is a text-editable type (not a data viewer, profiler, etc.)
+   // Non-text document types don't have text editors that support cursor insertion.
+   // These types use non-text EditingTargets on the GWT side (e.g., DataEditingTarget,
+   // ProfilerEditingTarget) which don't have DocDisplay/insertCode support.
+   // The type IDs match the FileType.getTypeId() values from GWT FileType classes.
+   std::string docType = pDoc->type();
+   if (docType == "r_dataframe" ||     // DataFrameType - data viewer (View())
+       docType == "r_prof" ||           // ProfilerType - profiler results
+       docType == "object_explorer" ||  // ObjectExplorerFileType - object explorer
+       docType == "urlcontent" ||       // UrlContentType - URL content viewer
+       docType == "r_code_browser")     // CodeBrowserType - read-only code browser
+   {
+      DLOG("Document {} is a non-text type ({}), cannot insert at cursor",
+           s_focusedDocumentId, docType);
+      json::Object result;
+      result["success"] = false;
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
+   }
+
+   // Build editor command event data for insert_at_cursor
+   json::Object eventData;
+   eventData["type"] = "insert_at_cursor";
+
+   json::Object data;
+   data["id"] = s_focusedDocumentId;
+   data["content"] = content;
+   eventData["data"] = data;
+
+   // Fire client event to insert at cursor
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   module_context::enqueClientEvent(event);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Sent insert_at_cursor command for document {} with {} bytes",
+        s_focusedDocumentId, content.size());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -2000,6 +2086,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "workspace/insertIntoNewFile")
    {
       handleInsertIntoNewFile(ops, requestId, params);
+   }
+   else if (method == "workspace/insertAtCursor")
+   {
+      handleInsertAtCursor(ops, requestId, params);
    }
    else
    {
@@ -2117,6 +2207,41 @@ void handleLoggerLog(const json::Object& params)
       // so log them as errors to ensure visibility
       ELOG("[ai] [{}] {}", level, message);
    }
+}
+
+void handleUIShowMessage(const json::Object& params)
+{
+   std::string type;
+   std::string message;
+
+   if (json::readObject(params, "type", type))
+   {
+      WLOG("ui/showMessage notification missing 'type' field");
+      return;
+   }
+
+   if (json::readObject(params, "message", message))
+   {
+      WLOG("ui/showMessage notification missing 'message' field");
+      return;
+   }
+
+   // Map type string to MessageDisplay constants (MSG_INFO=1, MSG_WARNING=2, MSG_ERROR=3)
+   int messageType;
+   if (type == "info")
+      messageType = 1;  // MSG_INFO
+   else if (type == "warning")
+      messageType = 2;  // MSG_WARNING
+   else if (type == "error")
+      messageType = 3;  // MSG_ERROR
+   else
+   {
+      WLOG("ui/showMessage: unknown type '{}'", type);
+      return;
+   }
+
+   // Show dialog with hardcoded caption per spec
+   module_context::showMessage(messageType, "Posit Assistant", message);
 }
 
 void handleSetBusyStatus(const json::Object& params)
@@ -3133,6 +3258,18 @@ Error startChatBackend(bool resumeConversation)
 // RPC Methods
 // ============================================================================
 
+Error chatDocFocused(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string documentId;
+   Error error = core::json::readParams(request.params, &documentId);
+   if (error)
+      return error;
+
+   s_focusedDocumentId = documentId;
+   return Success();
+}
+
 Error chatVerifyInstalled(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -3641,6 +3778,7 @@ Error initialize()
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
+   registerNotificationHandler("ui/showMessage", handleUIShowMessage);
    registerNotificationHandler("chat/setBusyStatus", handleSetBusyStatus);
    registerNotificationHandler("runtime/cancelExecution", handleCancelExecution);
 
@@ -3670,6 +3808,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
+      (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))
       (bind(sourceModuleRFile, "SessionChat.R"))
       ;

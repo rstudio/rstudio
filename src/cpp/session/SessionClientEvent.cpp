@@ -218,6 +218,7 @@ const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
 const int kCopilotStatusChanged = 202;
 const int kChatBackendExit = 203;
+const int kShowMessage = 204;
 
 }
 
@@ -248,8 +249,10 @@ std::string ClientEvent::typeName() const
          return "console_output";
       case client_events::kConsoleWriteError: 
          return "console_error";
-      case client_events::kShowErrorMessage: 
+      case client_events::kShowErrorMessage:
          return "show_error_message";
+      case client_events::kShowMessage:
+         return "show_message";
       case client_events::kShowHelp: 
          return "show_help";
       case client_events::kBrowseUrl: 
@@ -646,8 +649,16 @@ ClientEvent showErrorMessageEvent(const std::string& title,
    return ClientEvent(client_events::kShowErrorMessage, errorMessage);
 }
 
+ClientEvent showMessageEvent(int type,
+                             const std::string& caption,
+                             const std::string& message)
+{
+   json::Object obj;
+   obj["type"] = type;
+   obj["caption"] = caption;
+   obj["message"] = message;
+   return ClientEvent(client_events::kShowMessage, obj);
+}
 
-   
-   
 } // namespace session
 } // namespace rstudio

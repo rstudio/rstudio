@@ -28,6 +28,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
@@ -50,7 +51,7 @@ import jsinterop.base.JsArrayLike;
  * the tab (within a tolerance of a few seconds of latency) regardless of
  * whether the user has actually hit save. 
  */
-public interface SourceServerOperations extends FilesServerOperations, 
+public interface SourceServerOperations extends FilesServerOperations,
                                                 CodeToolsServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
@@ -60,7 +61,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 ObjectExplorerServerOperations,
                                                 TestServerOperations,
                                                 CryptoServerOperations,
-                                                CopilotServerOperations
+                                                CopilotServerOperations,
+                                                ChatServerOperations
 {
    public static int FORMAT_CONTEXT_COMMAND = 1;
    public static int FORMAT_CONTEXT_SAVE = 2;
