@@ -670,6 +670,17 @@ public class FileTypeRegistry
       return null;
    }
 
+   public FileType getTypeForExt(String ext)
+   {
+      if (StringUtil.isNullOrEmpty(ext))
+         return null;
+
+      return fileTypesByFileExtension_.get(
+         ext.charAt(0) == '.'
+            ? ext.toLowerCase()
+            : "." + ext.toLowerCase());
+   }
+
    public TextFileType getTextTypeForFile(FileSystemItem file)
    {
       FileType type = getTypeForFile(file);

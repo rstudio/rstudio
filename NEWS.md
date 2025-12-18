@@ -3,6 +3,7 @@
 ### New
 #### RStudio
 - ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
+- (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
 
 #### Posit Workbench
 -
