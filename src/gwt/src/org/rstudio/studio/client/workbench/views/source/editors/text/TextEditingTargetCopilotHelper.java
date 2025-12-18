@@ -343,14 +343,14 @@ public class TextEditingTargetCopilotHelper
                            }
 
                            events_.fireEvent(new CopilotEvent(
-                                 completions.size() == 0
+                                 completions.isEmpty()
                                     ? CopilotEventType.COMPLETION_RECEIVED_NONE
                                     : CopilotEventType.COMPLETION_RECEIVED_SOME));
                            
                            // TODO: If multiple completions are available we should provide a way for 
                            // the user to view/select them. For now, use the last one.
                            // https://github.com/rstudio/rstudio/issues/16055
-                           if (completions.size() > 0)
+                           if (!completions.isEmpty())
                            {
                               CopilotCompletion completion = completions.get(completions.size() - 1);
 
