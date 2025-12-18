@@ -2030,6 +2030,44 @@ void handleInsertAtCursor(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleOpenDocument(core::system::ProcessOperations& ops,
+                        const json::Value& requestId,
+                        const json::Object& params)
+{
+   DLOG("Handling ui/openDocument request");
+
+   // Extract path parameter
+   std::string path;
+   Error error = json::readObject(params, "path", path);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid params: path required");
+      return;
+   }
+
+   // Convert URI to path if needed (handles file:// URIs)
+   std::string filePath = uriToPath(path);
+
+   if (filePath.empty())
+   {
+      sendJsonRpcError(ops, requestId, -32602, "Invalid path: " + path);
+      return;
+   }
+
+   // Resolve aliased paths (e.g., ~/file.R)
+   FilePath resolvedPath = module_context::resolveAliasedPath(filePath);
+
+   // Open the file in the editor
+   module_context::editFile(resolvedPath);
+
+   // Return success
+   json::Object result;
+   result["success"] = true;
+
+   DLOG("Opened document: {}", resolvedPath.getAbsolutePath());
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleGetProtocolVersion(core::system::ProcessOperations& ops,
                                const json::Value& requestId,
                                const json::Object& params)
@@ -2091,6 +2129,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "workspace/insertAtCursor")
    {
       handleInsertAtCursor(ops, requestId, params);
+   }
+   else if (method == "ui/openDocument")
+   {
+      handleOpenDocument(ops, requestId, params);
    }
    else
    {
