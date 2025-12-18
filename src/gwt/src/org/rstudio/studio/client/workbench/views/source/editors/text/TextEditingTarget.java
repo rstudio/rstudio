@@ -2977,9 +2977,9 @@ public class TextEditingTarget implements
          return "";
    }
 
-   public boolean hasAirToml()
+   public String getAirTomlPath()
    {
-      return RStudioGinjector.INSTANCE.getProjects().hasProjectAirToml();
+      return RStudioGinjector.INSTANCE.getProjects().getAirTomlPath();
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
@@ -3947,8 +3947,11 @@ public class TextEditingTarget implements
       if (!formatter.equals(UserPrefsAccessor.CODE_FORMATTER_NONE))
          return false;
 
-      if (prefs_.useAirFormatter().getValue() && context.air)
-         return false;
+      if (prefs_.useAirFormatter().getValue())
+      {
+         boolean hasAirToml = context.air != null && context.air.path != null;
+         return hasAirToml;
+      }
 
       return true;
    }
@@ -3974,7 +3977,6 @@ public class TextEditingTarget implements
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
-                        SourceServerOperations.FORMAT_CONTEXT_COMMAND,
                         new ServerRequestCallback<FormatDocumentResult>()
                         {
                            @Override
@@ -4004,12 +4006,12 @@ public class TextEditingTarget implements
       FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
       if (projectDir != null && path != null)
       {
-         String projectPath = projectDir.getPath();
          // Check if the file is within the project directory
+         String projectPath = projectDir.getPath();
          if (path.startsWith(projectPath + "/") || path.equals(projectPath))
          {
             // Create FormatContext locally using cached value from Projects
-            FormatContext context = createFormatContext(hasAirToml());
+            FormatContext context = createFormatContext(getAirTomlPath());
             command.execute(context);
             return;
          }
@@ -4031,14 +4033,16 @@ public class TextEditingTarget implements
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            command.execute(createFormatContext(false));
+            command.execute(createFormatContext(getAirTomlPath()));
          }
       });
    }
 
-   private native FormatContext createFormatContext(boolean air) /*-{
+   private native FormatContext createFormatContext(String airTomlPath) /*-{
       return {
-         air: air
+         air: {
+            path: airTomlPath
+         }
       };
    }-*/;
 
@@ -4428,7 +4432,6 @@ public class TextEditingTarget implements
       {
          server_.formatDocument(
                docUpdateSentinel_.getId(),
-               SourceServerOperations.FORMAT_CONTEXT_SAVE,
                new ServerRequestCallback<FormatDocumentResult>()
                {
                   @Override

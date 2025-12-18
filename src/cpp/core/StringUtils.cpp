@@ -810,8 +810,7 @@ bool extractCommentHeader(const std::string& contents,
 
 std::string getCommonPrefix(const std::string& code)
 {
-   // Build a vector of string views pointing to lines in the original string
-   // This avoids copying the string data
+   // Split the code into views of each line
    std::vector<std::string_view> lines;
    std::string_view codeView(code);
    

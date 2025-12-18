@@ -339,8 +339,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       }
    }
 
-   @Override
-   public void onFileChange(FileChangeEvent event)
+   private void handleAirTomlFileChange(FileChangeEvent event)
    {
       FileChange fileChange = event.getFileChange();
       FileSystemItem file = fileChange.getFile();
@@ -369,13 +368,19 @@ public class Projects implements OpenProjectFileEvent.Handler,
          int type = fileChange.getType();
          if (type == FileChange.ADD || type == FileChange.MODIFIED)
          {
-            hasProjectAirToml_ = true;
+            airTomlPath_ = filePath;
          }
          else if (type == FileChange.DELETE)
          {
-            hasProjectAirToml_ = false;
+            airTomlPath_ = null;
          }
       }
+   }
+
+   @Override
+   public void onFileChange(FileChangeEvent event)
+   {
+      handleAirTomlFileChange(event);
    }
 
    @Override
@@ -926,9 +931,9 @@ public class Projects implements OpenProjectFileEvent.Handler,
       showProjectOptions(ProjectPreferencesDialog.RENV, true);
    }
 
-   public boolean hasProjectAirToml()
+   public String getAirTomlPath()
    {
-      return hasProjectAirToml_;
+      return airTomlPath_;
    }
 
    public void showProjectOptions(final int initialPane, boolean showPaneChooser)
@@ -1281,7 +1286,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
    private final Provider<UserPrefs> pUserPrefs_;
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
-   private boolean hasProjectAirToml_ = false;
+
+   private String airTomlPath_;
 
    // This string cannot be localized, currently, because it is hardcoded as "none" in the C++ code
    // #define kProjectNone           "none"

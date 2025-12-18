@@ -64,9 +64,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 CopilotServerOperations,
                                                 ChatServerOperations
 {
-   public static int FORMAT_CONTEXT_COMMAND = 1;
-   public static int FORMAT_CONTEXT_SAVE = 2;
-
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class FormatDocumentEdit
    {
@@ -81,9 +78,15 @@ public interface SourceServerOperations extends FilesServerOperations,
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class FormatContextAir
+   {
+      public String path;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class FormatContext
    {
-      public boolean air;
+      public FormatContextAir air;
    }
 
 
@@ -165,7 +168,6 @@ public interface SourceServerOperations extends FilesServerOperations,
     * via an external formatting tool.
     */
    void formatDocument(String id,
-                       int context,
                        ServerRequestCallback<FormatDocumentResult> requestCallback);
  
    /**

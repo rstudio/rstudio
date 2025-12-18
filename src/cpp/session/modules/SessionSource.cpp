@@ -84,17 +84,18 @@ namespace {
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
 module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
 
-struct FormatContext
+struct FormatData
 {
    FilePath codeDir;
    FilePath codePath;
    std::string indent;
 };
 
-Error prepareFormatContext(
+Error prepareFormatData(
    const FilePath& documentPath,
    const std::string& code,
-   FormatContext* pContext)
+   bool computeIndent,
+   FormatData* pData)
 {
    // Create a temporary directory using a path computed by tempFile
    FilePath codeDir = module_context::tempFile("rstudio-format-", "");
@@ -119,12 +120,15 @@ Error prepareFormatContext(
    {
       // Compute the common prefix for this code, and then trim
       // non-whitespace characters from the end.
-      indent = string_utils::getCommonPrefix(code);
-      auto it = indent.find_first_not_of(" \t");
-      if (it != std::string::npos)
-         indent = indent.substr(0, it);
-      
-      // Copy air.toml or .air.toml from project root if it exists.
+      if (computeIndent)
+      {
+         indent = string_utils::getCommonPrefix(code);
+         auto it = indent.find_first_not_of(" \t");
+         if (it != std::string::npos)
+            indent = indent.substr(0, it);
+      }
+
+      // Copy the air.toml file associated with the document, if one exists.
       FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
       if (airTomlPath.exists())
       {
@@ -134,9 +138,9 @@ Error prepareFormatContext(
       }
    }
 
-   pContext->codeDir = codeDir;
-   pContext->codePath = codePath;
-   pContext->indent = indent;
+   pData->codeDir = codeDir;
+   pData->codePath = codePath;
+   pData->indent = indent;
 
    return Success();
 }
@@ -868,8 +872,18 @@ Error formatContext(
    Error error = json::readParams(request.params, &id, &path);
    if (error || path.empty())
    {
+      json::Object contextJson = JSON {
+         {
+            "air", JSON {
+               {
+                  "path", json::Value()
+               }
+            }
+         }
+      };
+
       json::JsonRpcResponse response;
-      response.setResult(JSON { { "air", false } });
+      response.setResult(JSON { { "air", json::Value() } });
       continuation(error, &response);
       return error;
    }
@@ -878,7 +892,13 @@ Error formatContext(
    FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
 
    json::Object contextJson = JSON {
-      { "air", airTomlPath.exists() }
+      {
+         "air", JSON {
+            {
+               "path", module_context::createAliasedPath(airTomlPath)
+            }
+         }
+      }
    };
 
    json::JsonRpcResponse response;
@@ -915,14 +935,13 @@ Error formatDocument(
    std::string contents = pDoc->contents();
 
    // Initialize format context
-   FormatContext context;
-   error = prepareFormatContext(documentPath, contents, &context);
+   FormatData data;
+   error = prepareFormatData(documentPath, contents, false, &data);
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   FilePath codeDir = context.codeDir;
-   FilePath codePath = context.codePath;
-   std::string indent = context.indent;
+   FilePath codeDir = data.codeDir;
+   FilePath codePath = data.codePath;
    return formatDocumentImpl(codePath, continuation, [=]()
    {
       Error error;
@@ -983,14 +1002,14 @@ Error formatCode(
       documentPath = module_context::resolveAliasedPath(path);
 
    // Initialize format context
-   FormatContext context;
-   error = prepareFormatContext(documentPath, code, &context);
+   FormatData data;
+   error = prepareFormatData(documentPath, code, true, &data);
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   FilePath codePath = context.codePath;
-   std::string indent = context.indent;
-   FilePath codeDir = context.codeDir;
+   FilePath codePath = data.codePath;
+   std::string indent = data.indent;
+   FilePath codeDir = data.codeDir;
    return formatDocumentImpl(codePath, continuation, [=]()
    {
       std::string code;
