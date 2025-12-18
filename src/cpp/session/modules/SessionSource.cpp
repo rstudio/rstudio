@@ -20,7 +20,6 @@
 #include "rmarkdown/NotebookChunkDefs.hpp"
 
 #include <string>
-#include <map>
 #include <fstream>
 
 #include <dtl/dtl.hpp>
@@ -73,10 +72,6 @@ extern "C" const char *locale2charset(const char *);
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
-#define kFormatContextUnknown 0
-#define kFormatContextCommand 1
-#define kFormatContextSave    2
-
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -88,6 +83,63 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
 module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
+
+struct FormatContext
+{
+   FilePath codeDir;
+   FilePath codePath;
+   std::string indent;
+};
+
+Error prepareFormatContext(
+   const FilePath& documentPath,
+   const std::string& code,
+   FormatContext* pContext)
+{
+   // Create a temporary directory using a path computed by tempFile
+   FilePath codeDir = module_context::tempFile("rstudio-format-", "");
+   Error error = codeDir.ensureDirectory();
+   if (error)
+      return error;
+   
+   // Write the code to document.R in the temporary directory
+   FilePath codePath = codeDir.completePath("document.R");
+   error = writeStringToFile(codePath, code);
+   if (error)
+      return error;
+
+   // Figure out if we're going to use the air formatter.
+   bool usingAirFormatter =
+      prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
+      prefs::userPrefs().useAirFormatter();
+   
+   // Preserve the common indent if we're using the air formatter.
+   std::string indent;
+   if (usingAirFormatter)
+   {
+      // Compute the common prefix for this code, and then trim
+      // non-whitespace characters from the end.
+      indent = string_utils::getCommonPrefix(code);
+      auto it = indent.find_first_not_of(" \t");
+      if (it != std::string::npos)
+         indent = indent.substr(0, it);
+      
+      // Copy air.toml or .air.toml from project root if it exists.
+      FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
+      if (airTomlPath.exists())
+      {
+         Error copyError = airTomlPath.copy(codeDir.completePath("air.toml"), true);
+         if (copyError)
+            LOG_ERROR(copyError);
+      }
+   }
+
+   pContext->codeDir = codeDir;
+   pContext->codePath = codePath;
+   pContext->indent = indent;
+
+   return Success();
+}
 
 Error sourceDatabaseError(Error error)
 {
@@ -709,7 +761,6 @@ Error onFormatError(
 
 template <typename F>
 Error formatDocumentImpl(
-      int context,
       const FilePath& documentPath,
       const json::JsonRpcFunctionContinuation& continuation,
       F&& callback)
@@ -808,19 +859,6 @@ Error formatDocumentImpl(
    }
 }
 
-template <typename F>
-Error formatDocumentImpl(
-      const FilePath& documentPath,
-      const json::JsonRpcFunctionContinuation& continuation,
-      F&& callback)
-{
-   return formatDocumentImpl(
-      kFormatContextUnknown,
-      documentPath,
-      continuation,
-      std::forward<F>(callback));
-}
-
 Error formatContext(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
@@ -861,8 +899,7 @@ Error formatDocument(
    Error error;
    
    std::string documentId;
-   int context = kFormatContextUnknown;
-   error = json::readParams(request.params, &documentId, &context);
+   error = json::readParams(request.params, &documentId);
    if (error)
       return onError(error, ERROR_LOCATION);
  
@@ -874,32 +911,38 @@ Error formatDocument(
    if (error)
       return onError(error, ERROR_LOCATION);
 
+   FilePath documentPath = module_context::resolveAliasedPath(pDoc->path());
    std::string contents = pDoc->contents();
-   FilePath documentPath = module_context::tempFile("air-", ".R");
-   error = core::writeStringToFile(documentPath, contents);
+
+   // Initialize format context
+   FormatContext context;
+   error = prepareFormatContext(documentPath, contents, &context);
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   return formatDocumentImpl(
-            context,
-            documentPath,
-            continuation,
-            [=]()
+   FilePath codeDir = context.codeDir;
+   FilePath codePath = context.codePath;
+   std::string indent = context.indent;
+   return formatDocumentImpl(codePath, continuation, [=]()
    {
       Error error;
       json::JsonRpcResponse response;
 
-      std::string original = contents;
-
+      // Read the newly-formatted document
       std::string formatted;
-      error = core::readStringFromFile(documentPath, &formatted);
+      error = core::readStringFromFile(codePath, &formatted);
       if (error)
          LOG_ERROR(error);
+
+      // Clean up the temporary directory
+      Error removeError = codeDir.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
 
       // Compute edits with UTF-16 strings so that offsets are
       // correctly translated when applied on client side
       auto edits = core::diff::computeEdits(
-         utf8::utf8to16(original),
+         utf8::utf8to16(contents),
          utf8::utf8to16(formatted));
 
       json::Array resultJson;
@@ -939,45 +982,16 @@ Error formatCode(
    if (!path.empty())
       documentPath = module_context::resolveAliasedPath(path);
 
-   // Create a temporary directory using a path computed by tempFile
-   FilePath tempDir = module_context::tempFile("rstudio-format-", "");
-   error = tempDir.ensureDirectory();
-   if (error)
-      return onError(error, ERROR_LOCATION);
-   
-   // Write the code to document.R in the temporary directory
-   FilePath codePath = tempDir.completePath("document.R");
-   error = writeStringToFile(codePath, code);
+   // Initialize format context
+   FormatContext context;
+   error = prepareFormatContext(documentPath, code, &context);
    if (error)
       return onError(error, ERROR_LOCATION);
 
-   // Figure out if we're going to use the air formatter.
-   bool usingAirFormatter =
-      prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
-      prefs::userPrefs().useAirFormatter();
-   
-   // Preserve the common indent if we're using the air formatter.
-   std::string indent;
-   if (usingAirFormatter)
-   {
-      // Compute the common prefix for this code, and then trim
-      // non-whitespace characters from the end.
-      indent = string_utils::getCommonPrefix(code);
-      auto it = indent.find_first_not_of(" \t");
-      if (it != std::string::npos)
-         indent = indent.substr(0, it);
-      
-      // Copy air.toml or .air.toml from project root if it exists.
-      FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
-      if (airTomlPath.exists())
-      {
-         Error copyError = airTomlPath.copy(tempDir.completePath("air.toml"), true);
-         if (copyError)
-            LOG_ERROR(copyError);
-      }
-   }
-
-   return formatDocumentImpl(kFormatContextCommand, codePath, continuation, [=]()
+   FilePath codePath = context.codePath;
+   std::string indent = context.indent;
+   FilePath codeDir = context.codeDir;
+   return formatDocumentImpl(codePath, continuation, [=]()
    {
       std::string code;
       Error error = readStringFromFile(codePath, &code);
@@ -998,7 +1012,7 @@ Error formatCode(
       }
       
       // Clean up the temporary directory
-      Error removeError = tempDir.removeIfExists();
+      Error removeError = codeDir.removeIfExists();
       if (removeError)
          LOG_ERROR(removeError);
       
@@ -1105,7 +1119,8 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    return Success();
 }
 
-Error insertDocument(std::string path, int insertIndex) {
+Error insertDocument(std::string path, int insertIndex)
+{
    FilePath documentPath = module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(documentPath))
       return systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION);
