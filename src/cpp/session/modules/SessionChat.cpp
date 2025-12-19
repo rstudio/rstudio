@@ -3217,14 +3217,19 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace");
    args.push_back(workspacePath.getAbsolutePath());
 
-   // Create storage base path: {XDG_DATA_HOME}/ai-data/
-   FilePath storagePath = xdg::userDataDir().completePath("ai-data");
+   // Create storage base path: {XDG_DATA_HOME}/pai/
+   FilePath storagePath = xdg::userDataDir().completePath("pai");
    error = storagePath.ensureDirectory();
    if (error)
       return(error);
 
    args.push_back("--storage");
    args.push_back(storagePath.getAbsolutePath());
+
+   // Pass config file path (config is in pai/, but working dir is pai/bin/)
+   FilePath configPath = storagePath.completePath("paconfig.json");
+   args.push_back("--config");
+   args.push_back(configPath.getAbsolutePath());
 
    // Generate a persistent ID for this workspace directory
    std::string workspacePathStr = workspacePath.getAbsolutePath();

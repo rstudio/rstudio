@@ -22,13 +22,13 @@ namespace chat {
 namespace constants {
 
 // Installation paths
-const char* const kPositAiDirName = "ai";
+const char* const kPositAiDirName = "pai/bin";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-const char* const kProtocolVersion = "4.0";
+const char* const kProtocolVersion = "5.0";
 
 } // namespace constants
 } // namespace chat
