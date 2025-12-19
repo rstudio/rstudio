@@ -1710,8 +1710,8 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
    
    else if (type == module_context::ConsoleOutputNormal)
    {
+      static boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
       boost::smatch match;
-      boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
       
       // start capturing debug output when R outputs "debug: "
       if (output == "debug: ")
