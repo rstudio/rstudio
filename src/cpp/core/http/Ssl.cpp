@@ -288,14 +288,16 @@ void initializeSslContext(boost::asio::ssl::context* pContext,
          ec.clear();
       }
 
-      pContext->set_default_verify_paths(ec);
-      if (ec)
+      if (certificateAuthority.empty())
       {
-         LOG_ERROR(Error(ec, "Could not set default certificate verification paths on SSL context", ERROR_LOCATION));
-         ec.clear();
+         pContext->set_default_verify_paths(ec);
+         if (ec)
+         {
+            LOG_ERROR(Error(ec, "Could not set default certificate verification paths on SSL context", ERROR_LOCATION));
+            ec.clear();
+         }
       }
-
-      if (!certificateAuthority.empty())
+      else
       {
          boost::asio::const_buffer buff(certificateAuthority.data(), certificateAuthority.size());
          pContext->add_certificate_authority(buff, ec);

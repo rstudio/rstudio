@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.rstudio.core.client.Debug;
@@ -323,27 +325,34 @@ public class TextEditingTargetCopilotHelper
                            }
                            
                            // Otherwise, handle the response.
-                           JsArrayLike<CopilotCompletion> completions =
+                           JsArrayLike<CopilotCompletion> jsCompletions =
                                  Js.cast(result.asPropertyMap().get("items"));
                            
-                           if (completions.getLength() == 0)
+                           // Create a filtered list of the completions we were provided.
+                           //
+                           // Normally, we'd just use .asList() and .removeIf(), but apparently
+                           // the implementation of the List interface backend here doesn't
+                           // actually support .removeIf(), so we do it by hand.
+                           List<CopilotCompletion> completions = new ArrayList<>();
+                           for (int i = 0, n = jsCompletions.getLength(); i < n; i++)
                            {
-                              events_.fireEvent(new CopilotEvent(
-                                 CopilotEventType.COMPLETION_RECEIVED_NONE));
+                              if (isValidCompletion(jsCompletions.getAt(i)))
+                              {
+                                 completions.add(jsCompletions.getAt(i));
+                              }
                            }
-                           else
-                           {
-                              events_.fireEvent(new CopilotEvent(
-                                 CopilotEventType.COMPLETION_RECEIVED_SOME,
-                                 completions.getAt(0)));
-                           }
+
+                           events_.fireEvent(new CopilotEvent(
+                                 completions.isEmpty()
+                                    ? CopilotEventType.COMPLETION_RECEIVED_NONE
+                                    : CopilotEventType.COMPLETION_RECEIVED_SOME));
                            
                            // TODO: If multiple completions are available we should provide a way for 
                            // the user to view/select them. For now, use the last one.
                            // https://github.com/rstudio/rstudio/issues/16055
-                           if (completions.getLength() > 0)
+                           if (!completions.isEmpty())
                            {
-                              CopilotCompletion completion = completions.getAt(completions.getLength() - 1);
+                              CopilotCompletion completion = completions.get(completions.size() - 1);
 
                               // The completion data gets modified when doing partial (word-by-word)
                               // completions, so we need to use a copy and preserve the original
@@ -400,6 +409,24 @@ public class TextEditingTargetCopilotHelper
          manageHandlers();
       });
       
+   }
+
+   private boolean isValidCompletion(CopilotCompletion completion)
+   {
+      // Skip this completion if the insertion text matches
+      // what we already have in the document.
+      String existingText = display_.getCode(
+            Position.create(
+               completion.range.start.line,
+               completion.range.start.character),
+            Position.create(
+               completion.range.end.line,
+               completion.range.end.character));
+      if (existingText.equals(completion.insertText))
+         return false;
+
+      // Otherwise, assume it's a valid completion.
+      return true;
    }
    
    private void manageHandlers()
@@ -856,9 +883,24 @@ public class TextEditingTargetCopilotHelper
       }
 
       CopilotCompletion normalized = JsUtil.clone(completion);
-      normalized.insertText = normalized.insertText.substring(lhs, normalized.insertText.length() - rhs);
-      normalized.range.start.character += lhs;
-      normalized.range.end.character -= rhs;
+      int n = normalized.insertText.length();
+
+      if (lhs >= n - rhs)
+      {
+         // The completion is entirely overlapping the existing text.
+         Position cursorPos = display_.getCursorPosition();
+         normalized.insertText = "";
+         normalized.range.start.line = cursorPos.getRow();
+         normalized.range.start.character = cursorPos.getColumn();
+         normalized.range.end.line = cursorPos.getRow();
+         normalized.range.end.character = cursorPos.getColumn();
+      }
+      else
+      {
+         normalized.insertText = StringUtil.substring(normalized.insertText, lhs, n - rhs);
+         normalized.range.start.character += lhs;
+         normalized.range.end.character -= rhs;
+      }
       return normalized;
    }
 
