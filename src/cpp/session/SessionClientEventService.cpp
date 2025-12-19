@@ -193,7 +193,7 @@ void ClientEventService::run()
       using namespace boost::posix_time;
       time_duration maxRequestSec = seconds(50);
       time_duration batchDelay = milliseconds(20);
-      time_duration maxTotalBatchDelay = seconds(2);
+      time_duration maxTotalBatchDelay = milliseconds(100);
 
       // make much shorter for desktop mode
       if (options().programMode() == kSessionProgramModeDesktop)
