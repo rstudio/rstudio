@@ -84,6 +84,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
+import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
@@ -394,6 +395,7 @@ public interface RStudioGinjector extends Ginjector
    SourceWindow getSourceWindow();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
+   Projects getProjects();
    ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
    AceThemes getAceThemes();
    AddinsCommandManager getAddinsCommandManager();

@@ -64,9 +64,6 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 CopilotServerOperations,
                                                 ChatServerOperations
 {
-   public static int FORMAT_CONTEXT_COMMAND = 1;
-   public static int FORMAT_CONTEXT_SAVE = 2;
-
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class FormatDocumentEdit
    {
@@ -79,6 +76,19 @@ public interface SourceServerOperations extends FilesServerOperations,
    public static interface FormatDocumentResult extends JsArrayLike<FormatDocumentEdit>
    {
    }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class FormatContextAir
+   {
+      public String path;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class FormatContext
+   {
+      public FormatContextAir air;
+   }
+
 
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -149,18 +159,23 @@ public interface SourceServerOperations extends FilesServerOperations,
                          boolean retryWrite,
                          ServerRequestCallback<String> requestCallback);
    
+   void formatContext(String id,
+                      String path,
+                      ServerRequestCallback<FormatContext> requestCallback);
+
    /**
     * Given the path to a document on disk, request that it be reformatted
     * via an external formatting tool.
     */
    void formatDocument(String id,
-                       int context,
                        ServerRequestCallback<FormatDocumentResult> requestCallback);
  
    /**
     * Format code with the active formatter.
     */
-   void formatCode(String code,
+   void formatCode(String id,
+                   String path,
+                   String code,
                    ServerRequestCallback<String> requestCallback);
    
 

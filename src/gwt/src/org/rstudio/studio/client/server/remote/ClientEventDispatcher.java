@@ -124,7 +124,6 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.AdminNotificationEvent;
 import org.rstudio.studio.client.workbench.events.BrowseUrlEvent;
@@ -150,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;

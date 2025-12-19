@@ -531,6 +531,10 @@ public class DocUpdateSentinel
          actually sent to the server. */
       final ChangeTracker thisChangeTracker = changeTracker_.fork();
 
+      // we only want to know about changes that happen during this save operation,
+      // so we reset the forked change tracker to its initial state.
+      thisChangeTracker.reset();
+
       final String newContents = docDisplay_.getCode();
       String oldContents = sourceDoc_.getContents();
       final String hash = sourceDoc_.getHash();

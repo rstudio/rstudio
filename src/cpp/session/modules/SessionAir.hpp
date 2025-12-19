@@ -28,7 +28,8 @@ namespace session {
 namespace modules {
 namespace air {
 
-bool hasAirToml(const core::FilePath& projectDir);
+core::FilePath getAirTomlPath(const core::FilePath& projectPath);
+core::FilePath findAirTomlPath(const core::FilePath& documentPath);
 
 core::Error initialize();
 

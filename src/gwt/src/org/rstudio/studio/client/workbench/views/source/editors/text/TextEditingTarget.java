@@ -221,6 +221,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
@@ -1894,7 +1895,7 @@ public class TextEditingTarget implements
                   }
                }
             });
-      
+
       events_.addHandler(
             this,
             CopilotEvent.TYPE,
@@ -2976,6 +2977,11 @@ public class TextEditingTarget implements
          return "";
    }
 
+   public String getAirTomlPath()
+   {
+      return RStudioGinjector.INSTANCE.getProjects().getAirTomlPath();
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
@@ -3931,9 +3937,30 @@ public class TextEditingTarget implements
    {
       withActiveEditor((editor) ->
       {
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         onReformatDocumentImpl(editor);
+      });
+   }
+
+   private boolean useBuiltinFormatter(FormatContext context)
+   {
+      String formatter = prefs_.codeFormatter().getValue();
+      if (!formatter.equals(UserPrefsAccessor.CODE_FORMATTER_NONE))
+         return false;
+
+      if (prefs_.useAirFormatter().getValue())
+      {
+         boolean hasAirToml = context.air != null && context.air.path != null;
+         return hasAirToml;
+      }
+
+      return true;
+   }
+
+   void onReformatDocumentImpl(DocDisplay editor)
+   {
+      withFormatContext((context) ->
+      {
+         if (useBuiltinFormatter(context))
          {
             Range currentRange = editor.getSelectionRange();
             editor.setSelectionRange(Range.fromPoints(
@@ -3950,7 +3977,6 @@ public class TextEditingTarget implements
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
-                        SourceServerOperations.FORMAT_CONTEXT_COMMAND,
                         new ServerRequestCallback<FormatDocumentResult>()
                         {
                            @Override
@@ -3971,21 +3997,75 @@ public class TextEditingTarget implements
       });
    }
 
+   private void withFormatContext(CommandWithArg<FormatContext> command)
+   {
+      String path = getPath();
+      
+      // If this is a project file, we can use the cached hasProjectAirToml value
+      // to build FormatContext without an RPC call
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         // Check if the file is within the project directory
+         String projectPath = projectDir.getPath();
+         if (path.startsWith(projectPath + "/") || path.equals(projectPath))
+         {
+            // Create FormatContext locally using cached value from Projects
+            FormatContext context = createFormatContext(getAirTomlPath());
+            command.execute(context);
+            return;
+         }
+      }
+      
+      // For non-project files or when project info is unavailable, make RPC call
+      server_.formatContext(
+         getId(),
+         path,
+         new ServerRequestCallback<FormatContext>()
+      {
+         @Override
+         public void onResponseReceived(FormatContext context)
+         {
+            command.execute(context);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            command.execute(createFormatContext(getAirTomlPath()));
+         }
+      });
+   }
+
+   private native FormatContext createFormatContext(String airTomlPath) /*-{
+      return {
+         air: {
+            path: airTomlPath
+         }
+      };
+   }-*/;
+
    @Handler
    void onReformatCode()
    {
       withActiveEditor((editor) ->
       {
-         // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(editor))
-         {
-            showRModeWarning(commands_.reformatCode().getLabel());
-            return;
-         }
+         onReformatCodeImpl(editor);
+      });
+   }
 
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+   void onReformatCodeImpl(DocDisplay editor)
+   {
+      if (!DocumentMode.isSelectionInRMode(editor))
+      {
+         showRModeWarning(commands_.reformatCode().getLabel());
+         return;
+      }
+
+      withFormatContext((context) ->
+      {
+         if (useBuiltinFormatter(context))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
          }
@@ -4001,7 +4081,11 @@ public class TextEditingTarget implements
                }
                
                String selection = editor.getTextForRange(range);
-               server_.formatCode(selection, new ServerRequestCallback<String>()
+               server_.formatCode(
+                  getId(),
+                  getPath(),
+                  selection,
+                  new ServerRequestCallback<String>()
                {
                   @Override
                   public void onResponseReceived(String response)
@@ -4323,11 +4407,31 @@ public class TextEditingTarget implements
          return;
       }
 
+      // Only format files within the current project folder
+      String path = getPath();
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         String projectPath = projectDir.getPath();
+         // Check if the file is within the project directory
+         if (!path.startsWith(projectPath + "/") && !path.equals(projectPath))
+         {
+            // File is not within the project folder, skip formatting
+            onFormatted.execute();
+            return;
+         }
+      }
+      else
+      {
+         // No project or no path, skip formatting
+         onFormatted.execute();
+         return;
+      }
+
       docUpdateSentinel_.withSavedDoc(() ->
       {
          server_.formatDocument(
                docUpdateSentinel_.getId(),
-               SourceServerOperations.FORMAT_CONTEXT_SAVE,
                new ServerRequestCallback<FormatDocumentResult>()
                {
                   @Override
@@ -8442,23 +8546,7 @@ public class TextEditingTarget implements
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
 
       // Check format on save preference.
-      if (!prefs_.reformatOnSave().getValue())
-         return false;
-
-      // If the default formatter has been selected, and the user has opted-in to
-      // using Air for formatting, then use Air if the project has an air.toml file.
-      String formatter = prefs_.codeFormatter().getValue();
-      if (StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE))
-      {
-         if (prefs_.useAirFormatter().getValue())
-         {
-            boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-            return hasAirToml;
-         }
-      }
-
-      // Otherwise, format on save only if a non-default formatter is selected.
-      return !StringUtil.equals(formatter, UserPrefsAccessor.CODE_FORMATTER_NONE);
+      return prefs_.reformatOnSave().getValue();
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)

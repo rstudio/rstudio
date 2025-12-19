@@ -681,12 +681,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       }
    }
 
-   if (projects::projectContext().hasProject())
-   {
-      using namespace modules::air;
-      sessionInfo["has_air_toml"] = hasAirToml(projects::projectContext().directory());
-   }
-
    module_context::events().onSessionInfo(&sessionInfo);
 
    // create response  (we always set kEventsPending to false so that the client

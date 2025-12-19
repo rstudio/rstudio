@@ -361,8 +361,13 @@
    documentPath <- chartr("\\", "/", documentPath)
    writeLines(contents, con = documentPath)
    
-   # Open that document in the attached editor.
+   self$editor.openDocument(documentPath)
+})
+
+.rs.automation.addRemoteFunction("editor.openDocument", function(documentPath)
+{
    self$console.executeExpr({
+      file.create(!!documentPath, showWarnings = FALSE)
       .rs.api.documentOpen(!!documentPath)
    })
    
