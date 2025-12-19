@@ -2327,7 +2327,7 @@ Error launchChildProcess(std::string path,
          Error error = systemError(errno, ERROR_LOCATION);
          // Use safe logger in 'after fork before exec'
          safeLogToSyslog(path, log::LogLevel::ERR, error.asString());
-         ::exit(EXIT_FAILURE);
+         ::_exit(EXIT_FAILURE);
       }
 
       Error error = runProcess(path, runAsUser, config, configFilter);
@@ -2335,7 +2335,7 @@ Error launchChildProcess(std::string path,
       {
          // Use safe logger in 'after fork before exec'
          safeLogToSyslog(path, log::LogLevel::ERR, error.asString());
-         ::exit(EXIT_FAILURE);
+         ::_exit(EXIT_FAILURE);
       }
    }
 
