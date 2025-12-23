@@ -150,6 +150,9 @@ FilePath xdgDefaultDir(
  *    An optional path component to append to the computed path. This parameter differs
  *    from 'file' in that its existence is not checked or considered when attempting
  *    to resolve an XDG path.
+
+ * @param createDirectory
+ *    When set to true, try to create the directory before moving on to the default. Ignored if file is specified.
  */
 FilePath resolveXdgPath(
       const std::string& rstudioEnvVar,
@@ -162,7 +165,8 @@ FilePath resolveXdgPath(
       const boost::optional<std::string>& user,
       const boost::optional<FilePath>& homeDir,
       const boost::optional<std::string>& file = boost::none,
-      const std::string& suffix = std::string())
+      const std::string& suffix = std::string(),
+      bool createDirectory = false)
 {
    // If the RStudio-specific environment variable is provided, use it.
    std::string rstudioEnvValue = getenv(rstudioEnvVar);
@@ -184,7 +188,10 @@ FilePath resolveXdgPath(
    // Compute the file we're searching for in the XDG directory
    std::string targetFile = kRStudioDataFolderName;
    if (file)
+   {
       targetFile = fmt::format("{}/{}", kRStudioDataFolderName, file.get());
+      createDirectory = false;
+   }
          
    // Build list of directories to search.
    std::vector<FilePath> xdgPaths;
@@ -221,6 +228,14 @@ FilePath resolveXdgPath(
          // This is the common case so not logging here
          // DLOGF("Using pre-existing XDG path: {} => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
          return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
+      }
+      else if (createDirectory)
+      {
+         Error error = resolvedXdgPath.ensureDirectory();
+         if (!error)
+            return resolveXdgDirImpl(resolvedXdgPath, user, homeDir, suffix);
+         else
+            DLOGF("Skipping XDG {} env var that points to non-existent path => {}", xdgEnvVar, resolvedXdgPath.getAbsolutePath());
       }
    }
    
@@ -291,7 +306,10 @@ FilePath userDataDir(
 #endif
          "~/.local/share",
          user,
-         homeDir
+         homeDir,
+         boost::none,
+         std::string(),
+         true // Try to create the directory if it does not exist before moving to the default
    );
 }
 
