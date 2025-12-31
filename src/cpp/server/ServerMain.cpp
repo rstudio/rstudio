@@ -104,6 +104,7 @@ Error initialize(const boost::optional<system::User>& serverUser);
 Error startup();
 bool reloadConfiguration();
 void startShutdown();
+void addProcsToShutdown(std::vector<core::system::ProcessInfo> *pChildren);
 std::set<std::string> interruptProcs();
 void shutdown();
 bool requireLocalR();
@@ -439,12 +440,24 @@ Error waitForSignals()
       {
          LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
 
+         // don't restart any processMonitor child processes
+         overlay::startShutdown();
+
          Error error;
+
+         // get list of child processes
+         std::vector<system::ProcessInfo> procInfos;
+         error = core::system::getChildProcesses(&procInfos, false);
+         if (error)
+         {
+            LOG_ERROR(error);
+            break;
+         }
+
+         overlay::addProcsToShutdown(&procInfos);
 
          // Stop serving requests first so we aren't trying to do that during shutdown
          s_pHttpServer->stop();
-
-         overlay::startShutdown();
 
          // send SIGTERM signal to specific Workbench child processes
          // this way user processes will not receive the signal until it traverses the tree
@@ -456,15 +469,6 @@ Error waitForSignals()
          };
          std::set<std::string> overlayProcs = overlay::interruptProcs();
          interruptProcs.insert(overlayProcs.begin(), overlayProcs.end());
-
-         // get list of child processes
-         std::vector<system::ProcessInfo> procInfos;
-         error = core::system::getChildProcesses(&procInfos, false);
-         if (error)
-         {
-            LOG_ERROR(error);
-            break;
-         }
 
          // pull out pids matching our process names
          std::vector<pid_t> pids;
@@ -527,7 +531,7 @@ Error waitForSignals()
             LOG_WARNING_MESSAGE("Continuing with shutdown despite remaining child processes: " + stuckProcInfo);
          }
 
-         // call overlay shutdown
+         // the overlay shuts down monitored processes that failed to stop
          overlay::shutdown();
 
          // clear the signal mask
@@ -864,6 +868,7 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // execute any database commands if passed
       if (!options.dbCommand().empty())
       {
          Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
@@ -1099,7 +1104,12 @@ int main(int argc, char * const argv[])
       // wait for signals
       error = waitForSignals();
       if (error)
+      {
+         LOG_DEBUG_MESSAGE("Wait for signals failed: " + error.asString());
+
          return core::system::exitFailure(error, ERROR_LOCATION);
+      }
+      LOG_DEBUG_MESSAGE("Successfully exiting rserver");
 
       // NOTE: we never get here because waitForSignals waits forever
       return EXIT_SUCCESS;
