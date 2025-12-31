@@ -61,24 +61,26 @@ public:
    void add(int type, const std::string& data);
    void notifyInterrupt();
    
-   std::vector<std::string> pendingInput() const { return pendingInput_; }
-
    // reset to all but the last prompt
    void reset();
    
-   // get actions in their wire-representation (two identically sized arrays, 
-   // one for type and one for data)
-   void asJson(core::json::Object* pActions) const;
+   // get actions in their wire-representation
+   // (two identically sized arrays, one for type and one for data)
+   void asJson(core::json::Object* pActions);
    
+   core::Error saveToFile(const core::FilePath& filePath);
    core::Error loadFromFile(const core::FilePath& filePath);
-   core::Error saveToFile(const core::FilePath& filePath) const;
+
+   std::vector<std::string> pendingInput() const { return pendingInput_; }
 
 private:
+   void flush();
+
    // protect data using a mutex because background threads (e.g.
    // console output capture threads) can interact with console actions
    mutable boost::mutex mutex_;
+   ConsoleAction buffer_;
    boost::circular_buffer<ConsoleAction> actions_;
-   ConsoleAction action_;
    std::vector<std::string> pendingInput_;
 };
 

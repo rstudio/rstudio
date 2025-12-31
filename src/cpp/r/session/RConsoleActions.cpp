@@ -15,8 +15,6 @@
 
 #include <r/session/RConsoleActions.hpp>
 
-#include <algorithm>
-
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/algorithm/string/split.hpp>
@@ -74,7 +72,44 @@ void ConsoleActions::setCapacity(int capacity)
    }
    END_LOCK_MUTEX
 }
-   
+
+void ConsoleActions::flush()
+{
+   // NOTE: helper method assumes mutex is already locked
+
+   // iterate over buffer data in chunks, split via newlines
+   std::size_t lhs = 0;
+   std::size_t rhs = buffer_.data.find('\n');
+   while (rhs != std::string::npos)
+   {
+      // consume this line of data in chunks
+      for (; lhs + kChunkSize < rhs; lhs += kChunkSize)
+      {
+         // consume a chunk of data
+         ConsoleAction action;
+         action.type = buffer_.type;
+         action.data = buffer_.data.substr(lhs, kChunkSize);
+         actions_.push_back(action);
+      }
+
+      // consume any remaining data on this line
+      if (lhs < rhs)
+      {
+         ConsoleAction action;
+         action.type = buffer_.type;
+         action.data = buffer_.data.substr(lhs, rhs - lhs + 1);
+         actions_.push_back(action);
+      }
+      
+      // advance to next line
+      lhs = rhs + 1;
+      rhs = buffer_.data.find('\n', lhs);
+   }
+
+   // now trim the buffer data to any remaining partial line
+   buffer_.data = buffer_.data.substr(lhs);
+}
+
 void ConsoleActions::add(int type, const std::string& data)
 {
    LOCK_MUTEX(mutex_)
@@ -96,44 +131,21 @@ void ConsoleActions::add(int type, const std::string& data)
          return;
       }
 
-      // if we've received more output of the same type, we can append that data
+      // if we've received more output of the same type, then
+      // we'll append that to our action buffer
       bool isOutputType = type == kConsoleActionOutput || kConsoleActionOutputError;
-      if (isOutputType && type == action_.type)
+      if (isOutputType && type == buffer_.type)
       {
-         action_.data.append(data);
+         buffer_.data.append(data);
       }
       else
       {
-         // the output type has changed; push the pending action
-         if (!action_.data.empty())
-            actions_.push_back(action_);
+         // the output type has changed; flush our buffer
+         flush();
          
          // update the action with the newly-provided data
-         action_.type = type;
-         action_.data = data;
-      }
-      
-      // consume chunks of data if available
-      std::size_t offset = 0;
-      while (true)
-      {
-         // the remaining data in the buffer is less than the chunk size;
-         // now, substring that data to remove any data we've committed
-         if (action_.data.length() < offset + kChunkSize)
-         {
-            if (offset > 0)
-               action_.data = action_.data.substr(offset);
-            break;
-         }
-         
-         // consume chunk of data
-         ConsoleAction action;
-         action.type = action_.type;
-         action.data = action_.data.substr(offset, kChunkSize);
-         actions_.push_back(action);
-         
-         // update offset, indicating data we've committed
-         offset += kChunkSize;
+         buffer_.type = type;
+         buffer_.data = data;
       }
    }
    END_LOCK_MUTEX
@@ -154,32 +166,38 @@ void ConsoleActions::reset()
    {
       // clear the existing actions
       actions_.clear();
-      action_.data.clear();
+      buffer_.data.clear();
    }
    END_LOCK_MUTEX
 }
    
-void ConsoleActions::asJson(json::Object* pActions) const
+void ConsoleActions::asJson(json::Object* pActions) 
 {
    LOCK_MUTEX(mutex_)
    {
       // clear inbound
       pActions->clear();
 
+      // flush any pending console output
+      flush();
+
       // copy actions and insert into destination
       json::Array actionsType;
       json::Array actionsData;
       
+      // push all the information from our buffer of completion 
       for (auto&& action : actions_)
       {
          actionsType.push_back(json::Value(action.type));
          actionsData.push_back(json::Value(action.data));
       }
       
-      if (!action_.data.empty())
+      // if there's anything leftover in the action buffer,
+      // add that now as well
+      if (!buffer_.data.empty())
       {
-         actionsType.push_back(json::Value(action_.type));
-         actionsData.push_back(json::Value(action_.data));
+         actionsType.push_back(json::Value(buffer_.type));
+         actionsData.push_back(json::Value(buffer_.data));
       }
       
       pActions->operator[](kActionType) = actionsType;
@@ -238,7 +256,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
    return Success();
 }
    
-Error ConsoleActions::saveToFile(const core::FilePath& filePath) const
+Error ConsoleActions::saveToFile(const core::FilePath& filePath)
 {
    // write actions
    json::Object actionsObject;

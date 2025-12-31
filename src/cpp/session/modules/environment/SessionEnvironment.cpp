@@ -1710,8 +1710,8 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
    
    else if (type == module_context::ConsoleOutputNormal)
    {
+      static boost::regex reDebugAtPosition("debug at ([^#]*+)#([^:]++): ");
       boost::smatch match;
-      boost::regex reDebugAtPosition("debug at ([^#]*)#([^:]+): ");
       
       // start capturing debug output when R outputs "debug: "
       if (output == "debug: ")
@@ -1721,7 +1721,8 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       }
       
       // emitted when browsing with srcref
-      else if (boost::regex_match(output, match, reDebugAtPosition))
+      else if (boost::algorithm::starts_with(output, "debug at ") &&
+               boost::regex_match(output, match, reDebugAtPosition))
       {
          std::string lineText = match[2];
          auto lineNumber = safe_convert::stringTo<int>(lineText);
@@ -1734,7 +1735,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
       }
       
       // emitted by R when a 'browser()' statement is encountered
-      else if (output.find("Called from: ") == 0)
+      else if (boost::algorithm::starts_with(output, "Called from: "))
       {
          pLineDebugState->lastDebugLine = 0;
          pLineDebugState->lastDebugText = "browser()";
