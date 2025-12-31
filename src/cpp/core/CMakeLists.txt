@@ -87,6 +87,7 @@ set(CORE_SOURCE_FILES
    http/Response.cpp
    http/SocketProxy.cpp
    http/Ssl.cpp
+   http/SslContextCache.cpp
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
