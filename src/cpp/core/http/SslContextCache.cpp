@@ -24,7 +24,6 @@ namespace core {
 namespace http {
 namespace ssl {
 
-// Static member initialization
 std::mutex SslContextCache::cacheMutex_;
 std::map<SslContextCache::ContextKey, boost::shared_ptr<boost::asio::ssl::context>> 
    SslContextCache::contextCache_;
@@ -35,7 +34,7 @@ boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
 {
    ContextKey key{verify, certificateAuthority};
 
-   // Check cache first (with read lock)
+   // Check cache first - common path, could use a read-lock here
    {
       std::lock_guard<std::mutex> lock(cacheMutex_);
       auto it = contextCache_.find(key);
