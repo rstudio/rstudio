@@ -26,6 +26,7 @@
 #include <core/http/Ssl.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 #include <core/http/ProxyUtils.hpp>
+#include <core/http/SslContextCache.hpp>
 
 using namespace boost::placeholders;
 
@@ -47,7 +48,7 @@ public:
                        const std::string& hostname = std::string(),
                        const std::string& verifyAddress = std::string())
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioContext),
-       sslContext_(boost::asio::ssl::context::sslv23_client),
+       sslContext_(rstudio::core::http::ssl::SslContextCache::getContext(verify, certificateAuthority)),
        address_(address),
        port_(port),
        verify_(verify),
@@ -55,11 +56,9 @@ public:
        connectionTimeout_(connectionTimeout),
        verifyAddress_(verifyAddress)
    {
-      ssl::initializeSslContext(&sslContext_, verify, certificateAuthority);
-
       // use scoped ptr so we can call the constructor after we've configured
       // the ssl::context (immediately above)
-      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioContext, sslContext_));
+      ptrSslStream_.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(ioContext, *sslContext_));
 
       ssl::initializeSslStream(ptrSslStream_.get(), (hostname.empty() ? address_.c_str() : hostname.c_str()));
    }
@@ -248,7 +247,7 @@ private:
    }
 
 private:
-   boost::asio::ssl::context sslContext_;
+   boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::scoped_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > ptrSslStream_;
    std::string address_;
    std::string port_;
