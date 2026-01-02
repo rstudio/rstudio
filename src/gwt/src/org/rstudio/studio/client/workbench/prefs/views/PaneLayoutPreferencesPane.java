@@ -54,19 +54,26 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class PaneLayoutPreferencesPane extends PreferencesPane {
-   class ExclusiveSelectionMaintainer {
-      class ListChangeHandler implements ChangeHandler {
-         ListChangeHandler(int whichList) {
+public class PaneLayoutPreferencesPane extends PreferencesPane
+{
+   class ExclusiveSelectionMaintainer
+   {
+      class ListChangeHandler implements ChangeHandler
+      {
+         ListChangeHandler(int whichList)
+         {
             whichList_ = whichList;
          }
 
-         public void onChange(ChangeEvent event) {
+         public void onChange(ChangeEvent event)
+         {
             int selectedIndex = lists_[whichList_].getSelectedIndex();
 
-            for (int i = 0; i < lists_.length; i++) {
+            for (int i = 0; i < lists_.length; i++)
+            {
                if (i != whichList_
-                     && lists_[i].getSelectedIndex() == selectedIndex) {
+                   && lists_[i].getSelectedIndex() == selectedIndex)
+               {
                   lists_[i].setSelectedIndex(notSelectedIndex());
                }
             }
@@ -74,7 +81,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
             updateTabSetPositions();
          }
 
-         private Integer notSelectedIndex() {
+         private Integer notSelectedIndex()
+         {
             boolean[] seen = new boolean[4];
             for (ListBox listBox : lists_)
                seen[listBox.getSelectedIndex()] = true;
@@ -87,7 +95,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          private final int whichList_;
       }
 
-      ExclusiveSelectionMaintainer(ListBox[] lists) {
+      ExclusiveSelectionMaintainer(ListBox[] lists)
+      {
          lists_ = lists;
          for (int i = 0; i < lists.length; i++)
             lists[i].addChangeHandler(new ListChangeHandler(i));
@@ -97,26 +106,30 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
    }
 
    class ModuleList extends Composite implements ValueChangeHandler<Boolean>,
-         HasValueChangeHandlers<ArrayList<Boolean>> {
-      ModuleList(String width) {
+                                                 HasValueChangeHandlers<ArrayList<Boolean>>
+   {
+      ModuleList(String width)
+      {
          this(width, SCROLL_PANEL_HEIGHT);
       }
 
-      ModuleList(String width, int height) {
+      ModuleList(String width, int height)
+      {
          checkBoxes_ = new ArrayList<>();
          moduleIds_ = new ArrayList<>();
          FlowPanel flowPanel = new FlowPanel();
-         for (String module : PaneConfig.getAllTabs()) {
+         for (String module : PaneConfig.getAllTabs())
+         {
             CheckBox checkBox = new CheckBox(PaneConfig.getPaneDisplayLabel(module), false);
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
             moduleIds_.add(module);
             flowPanel.add(checkBox);
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
-               checkBox.setVisible(false);
+              checkBox.setVisible(false);
             if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
-                  !userPrefs_.pai().getGlobalValue())
-               checkBox.setVisible(false);
+                !userPrefs_.pai().getGlobalValue())
+              checkBox.setVisible(false);
          }
 
          ScrollPanel scrollPanel = new ScrollPanelWithClick();
@@ -127,57 +140,67 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          initWidget(scrollPanel);
       }
 
-      public void onValueChange(ValueChangeEvent<Boolean> event) {
+      public void onValueChange(ValueChangeEvent<Boolean> event)
+      {
          ValueChangeEvent.fire(this, getSelectedIndices());
       }
 
-      public ArrayList<Boolean> getSelectedIndices() {
+      public ArrayList<Boolean> getSelectedIndices()
+      {
          ArrayList<Boolean> results = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
             results.add(checkBox.getValue());
          return results;
       }
 
-      public void setSelectedIndices(ArrayList<Boolean> selected) {
+      public void setSelectedIndices(ArrayList<Boolean> selected)
+      {
          for (int i = 0; i < selected.size(); i++)
             checkBoxes_.get(i).setValue(selected.get(i), false);
       }
 
-      public ArrayList<String> getValue() {
+      public ArrayList<String> getValue()
+      {
          ArrayList<String> value = new ArrayList<>();
-         for (int i = 0; i < checkBoxes_.size(); i++) {
+         for (int i = 0; i < checkBoxes_.size(); i++)
+         {
             if (checkBoxes_.get(i).getValue())
                value.add(moduleIds_.get(i));
          }
          return value;
       }
 
-      public ArrayList<String> getVisibleValue() {
+      public ArrayList<String> getVisibleValue()
+      {
          ArrayList<String> value = new ArrayList<>();
-         for (int i = 0; i < checkBoxes_.size(); i++) {
+         for (int i = 0; i < checkBoxes_.size(); i++)
+         {
             if (checkBoxes_.get(i).getValue() && checkBoxes_.get(i).isVisible())
                value.add(moduleIds_.get(i));
          }
          return value;
       }
 
-      public void setValue(ArrayList<String> tabs) {
+      public void setValue(ArrayList<String> tabs)
+      {
          for (int i = 0; i < checkBoxes_.size(); i++)
             checkBoxes_.get(i).setValue(tabs.contains(moduleIds_.get(i)), false);
       }
 
-      public boolean presentationVisible() {
+      public boolean presentationVisible()
+      {
          if (checkBoxes_.size() <= 0)
             return false;
 
          int lastIndex = checkBoxes_.size() - 1;
          CheckBox lastCheckBox = checkBoxes_.get(lastIndex);
          return StringUtil.equals(moduleIds_.get(lastIndex), "Presentation") &&
-               lastCheckBox.isVisible();
+                                  lastCheckBox.isVisible();
       }
 
       public HandlerRegistration addValueChangeHandler(
-            ValueChangeHandler<ArrayList<Boolean>> handler) {
+            ValueChangeHandler<ArrayList<Boolean>> handler)
+      {
          return addHandler(handler, ValueChangeEvent.getType());
       }
 
@@ -185,10 +208,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       private final ArrayList<String> moduleIds_;
    }
 
+
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
-         UserPrefs userPrefs,
-         Provider<PaneManager> pPaneManager) {
+                                    UserPrefs userPrefs,
+                                    Provider<PaneManager> pPaneManager)
+   {
       res_ = res;
       userPrefs_ = userPrefs;
       paneManager_ = pPaneManager.get();
@@ -198,26 +223,27 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       additionalColumnCount_ = paneConfig.getAdditionalSourceColumns();
 
       add(new Label(constants_.paneLayoutText(),
-            true));
+         true));
 
       columnToolbar_ = new Toolbar(constants_.columnToolbarLabel());
       columnToolbar_.setStyleName(res_.styles().newSection());
       columnToolbar_.setHeight("20px");
 
       ToolbarButton addButton = new ToolbarButton(
-            constants_.addButtonText(),
-            constants_.addButtonLabel(),
-            res_.iconAddSourcePane());
+         constants_.addButtonText(),
+         constants_.addButtonLabel(),
+         res_.iconAddSourcePane());
       if (displayColumnCount_ > PaneManager.MAX_COLUMN_COUNT - 1 ||
-            !userPrefs.allowSourceColumns().getGlobalValue())
+         !userPrefs.allowSourceColumns().getGlobalValue())
          addButton.setEnabled(false);
 
       ToolbarButton removeButton = new ToolbarButton(
-            constants_.removeButtonText(), constants_.removeButtonLabel(),
-            res_.iconRemoveSourcePane());
+         constants_.removeButtonText(), constants_.removeButtonLabel(),
+         res_.iconRemoveSourcePane());
       removeButton.setEnabled(additionalColumnCount_ > 0);
 
-      addButton.addClickHandler(event -> {
+      addButton.addClickHandler(event ->
+      {
          dirty_ = true;
          updateTable(displayColumnCount_ + 1);
 
@@ -227,7 +253,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
             removeButton.setEnabled(true);
       });
 
-      removeButton.addClickHandler(event -> {
+      removeButton.addClickHandler(event ->
+      {
          dirty_ = true;
          updateTable(displayColumnCount_ - 1);
 
@@ -251,8 +278,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
 
       // Create and position Sidebar Visible checkbox
       sidebarVisibleCheckbox_ = new FormCheckBox(
-            constants_.sidebarVisible(),
-            ElementIds.getUniqueElementId(ElementIds.PANE_LAYOUT_SIDEBAR_VISIBLE));
+         constants_.sidebarVisible(),
+         ElementIds.getUniqueElementId(ElementIds.PANE_LAYOUT_SIDEBAR_VISIBLE));
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("position", "absolute");
       sidebarVisibleCheckbox_.getElement().getStyle().setProperty("top", "0");
       toolbarWrapper.add(sidebarVisibleCheckbox_);
@@ -277,8 +304,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right panel");
       ElementIds.assignElementId(rightBottom_.getElement(), ElementIds.PANE_LAYOUT_RIGHT_BOTTOM_SELECT);
 
-      visiblePanes_ = new ListBox[] { leftTop_, leftBottom_, rightTop_, rightBottom_ };
-      for (ListBox lb : visiblePanes_) {
+      visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
+      for (ListBox lb : visiblePanes_)
+      {
          for (String value : visiblePanes)
             lb.addItem(value);
       }
@@ -287,9 +315,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          userPrefs.panes().setGlobalValue(PaneConfig.createDefault(), false);
 
       JsArrayString origPanes = userPrefs.panes().getGlobalValue().getQuadrants();
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 4; i++)
+      {
          boolean success = selectByValue(visiblePanes_[i], origPanes.get(i));
-         if (!success) {
+         if (!success)
+         {
             Debug.log("Bad config! Falling back to a reasonable default");
             leftTop_.setSelectedIndex(0);
             leftBottom_.setSelectedIndex(1);
@@ -312,7 +342,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
       hiddenTabSetModuleList_ = new ModuleList(defaultPaneWidth);
       hiddenTabSetModuleList_.setValue(toArrayList(
-            userPrefs.panes().getGlobalValue().getHiddenTabSet()));
+               userPrefs.panes().getGlobalValue().getHiddenTabSet()));
       sidebarModuleList_ = new ModuleList(defaultPaneWidth, TABLE_HEIGHT * 2 - 55);
       sidebarModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getSidebar()));
 
@@ -340,14 +370,16 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       sidebarLocation_.addChangeHandler(event -> {
          dirty_ = true;
          // Force complete grid rebuild to reposition sidebar
-         if (grid_ != null) {
+         if (grid_ != null)
+         {
             remove(grid_);
             grid_ = null;
          }
          updateTable(displayColumnCount_);
 
          // Ensure reset panel stays at the bottom after grid rebuild
-         if (resetPanel_ != null) {
+         if (resetPanel_ != null)
+         {
             remove(resetPanel_);
             add(resetPanel_);
          }
@@ -356,36 +388,44 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       // Now update the table which will set the correct widths
       updateTable(additionalColumnCount_);
 
-      visiblePanePanels_ = new VerticalPanel[] { leftTopPanel_, leftBottomPanel_,
-            rightTopPanel_, rightBottomPanel_ };
+      visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
+                                            rightTopPanel_, rightBottomPanel_};
 
-      ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>() {
-         public void onValueChange(ValueChangeEvent<ArrayList<Boolean>> e) {
+      ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
+      {
+         public void onValueChange(ValueChangeEvent<ArrayList<Boolean>> e)
+         {
             dirty_ = true;
 
             ModuleList source = (ModuleList) e.getSource();
             ModuleList other = (source == tabSet1ModuleList_)
-                  ? tabSet2ModuleList_
-                  : tabSet1ModuleList_;
+                               ? tabSet2ModuleList_
+                               : tabSet1ModuleList_;
 
             // an index should only be on for one of these lists,
             ArrayList<Boolean> indices = source.getSelectedIndices();
             ArrayList<Boolean> otherIndices = other.getSelectedIndices();
             ArrayList<Boolean> hiddenIndices = hiddenTabSetModuleList_.getSelectedIndices();
             ArrayList<Boolean> sidebarIndices = sidebarModuleList_.getSelectedIndices();
-            if (!PaneConfig.isValidConfig(source.getValue())) {
+            if (!PaneConfig.isValidConfig(source.getValue()))
+            {
                // when the configuration is invalid, we must reset sources to the prior valid
                // configuration based on the values of the other lists
                for (int i = 0; i < indices.size(); i++)
                   indices.set(i, !(otherIndices.get(i) || hiddenIndices.get(i) || sidebarIndices.get(i)));
                source.setSelectedIndices(indices);
-            } else {
-               for (int i = 0; i < indices.size(); i++) {
-                  if (indices.get(i)) {
+            }
+            else
+            {
+               for (int i = 0; i < indices.size(); i++)
+               {
+                  if (indices.get(i))
+                  {
                      otherIndices.set(i, false);
                      hiddenIndices.set(i, false);
                      sidebarIndices.set(i, false);
-                  } else if (!otherIndices.get(i) && !sidebarIndices.get(i))
+                  }
+                  else if (!otherIndices.get(i) && !sidebarIndices.get(i))
                      hiddenIndices.set(i, true);
                }
                other.setSelectedIndices(otherIndices);
@@ -416,7 +456,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
                   tabSet1Indices.set(i, false);
                   tabSet2Indices.set(i, false);
                   hiddenIndices.set(i, false);
-               } else if (!tabSet1Indices.get(i) && !tabSet2Indices.get(i))
+               }
+               else if (!tabSet1Indices.get(i) && !tabSet2Indices.get(i))
                   hiddenIndices.set(i, true);
             }
 
@@ -449,7 +490,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       add(resetPanel_);
    }
 
-   private void resetToDefaults() {
+   private void resetToDefaults()
+   {
       // Get default configuration
       PaneConfig defaultConfig = PaneConfig.createDefault();
 
@@ -469,7 +511,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       sidebarLocation_.setSelectedIndex("left".equals(defaultConfig.getSidebarLocation()) ? 0 : 1);
 
       // Force complete grid rebuild to reposition sidebar if needed
-      if (grid_ != null) {
+      if (grid_ != null)
+      {
          remove(grid_);
          grid_ = null;
       }
@@ -483,7 +526,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       updateSidebarVisibilityCheckbox();
 
       // Ensure reset panel stays at the bottom after grid rebuild
-      if (resetPanel_ != null) {
+      if (resetPanel_ != null)
+      {
          remove(resetPanel_);
          add(resetPanel_);
       }
@@ -492,7 +536,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       dirty_ = true;
    }
 
-   private String updateTable(int newCount) {
+   private String updateTable(int newCount)
+   {
       // nothing has changed since the last update
       if (grid_ != null && displayColumnCount_ == newCount)
          return "";
@@ -500,17 +545,16 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       // Check if sidebar should be on the left
       boolean sidebarOnLeft = (sidebarLocation_ != null && sidebarLocation_.getSelectedIndex() == 0);
 
-      // Calculate total column units: source columns + 2 quadrant pairs + 1 sidebar
-      // (same size as quadrant pair)
+      // Calculate total column units: source columns + 2 quadrant pairs + 1 sidebar (same size as quadrant pair)
       // Each quadrant pair takes 2 units, sidebar takes 2 units
       double columnCount = newCount + (2 * GRID_PANE_COUNT) + GRID_PANE_COUNT;
-      double columnWidthValue = (double) TABLE_WIDTH / columnCount;
+      double columnWidthValue = (double)TABLE_WIDTH / columnCount;
       double cellWidthValue = columnWidthValue * GRID_PANE_COUNT;
       double sidebarWidthValue = cellWidthValue; // Sidebar same width as quadrants
 
-      // If the column width is bigger than MAX_COLUMN_WIDTH, give space back to the
-      // panes
-      if (newCount > 0 && Math.min(columnWidthValue, MAX_COLUMN_WIDTH) != columnWidthValue) {
+      // If the column width is bigger than MAX_COLUMN_WIDTH, give space back to the panes
+      if (newCount > 0 && Math.min(columnWidthValue, MAX_COLUMN_WIDTH) != columnWidthValue)
+      {
          double extra = (newCount * (columnWidthValue - MAX_COLUMN_WIDTH)) / GRID_PANE_COUNT;
          cellWidthValue += extra;
          columnWidthValue = MAX_COLUMN_WIDTH;
@@ -529,7 +573,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       rightBottom_.setWidth(selectWidth);
 
       // create grid
-      if (grid_ == null) {
+      if (grid_ == null)
+      {
          grid_ = new FlexTable();
          grid_.addStyleName(res_.styles().paneLayoutTable());
          grid_.setCellSpacing(GRID_CELL_SPACING);
@@ -541,7 +586,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          int topColumn = 0;
 
          // If sidebar is on the left, add it first
-         if (sidebarOnLeft) {
+         if (sidebarOnLeft)
+         {
             grid_.setWidget(0, topColumn, createSidebarPane());
             grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
             grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
@@ -550,7 +596,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          }
 
          // Add source columns
-         for (int i = 0; i < newCount; i++, topColumn++) {
+         for (int i = 0; i < newCount; i++, topColumn++)
+         {
             ScrollPanel sp = createColumn();
             grid_.setWidget(0, topColumn, sp);
             grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
@@ -568,7 +615,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          grid_.getCellFormatter().setWidth(0, topColumn, cellWidth);
 
          // If sidebar is on the right, add it after the quadrants
-         if (!sidebarOnLeft) {
+         if (!sidebarOnLeft)
+         {
             grid_.setWidget(0, ++topColumn, createSidebarPane());
             grid_.getFlexCellFormatter().setRowSpan(0, topColumn, 2);
             grid_.getCellFormatter().setStyleName(0, topColumn, res_.styles().paneLayoutTable());
@@ -576,13 +624,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          }
 
          int bottomColumn = 0;
-         grid_.setWidget(1, bottomColumn,
-               leftBottomPanel_ = createPane(leftBottom_, ElementIds.PANE_LAYOUT_LEFT_BOTTOM));
+         grid_.setWidget(1, bottomColumn, leftBottomPanel_ = createPane(leftBottom_, ElementIds.PANE_LAYOUT_LEFT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
          grid_.getCellFormatter().setWidth(1, bottomColumn, cellWidth);
 
-         grid_.setWidget(1, ++bottomColumn,
-               rightBottomPanel_ = createPane(rightBottom_, ElementIds.PANE_LAYOUT_RIGHT_BOTTOM));
+         grid_.setWidget(1, ++bottomColumn, rightBottomPanel_ = createPane(rightBottom_, ElementIds.PANE_LAYOUT_RIGHT_BOTTOM));
          grid_.getCellFormatter().setStyleName(1, bottomColumn, res_.styles().paneLayoutTable());
          grid_.getCellFormatter().setWidth(1, bottomColumn, cellWidth);
 
@@ -590,8 +636,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          displayColumnCount_ = newCount;
 
          // Update the array to reference the new panels
-         visiblePanePanels_ = new VerticalPanel[] { leftTopPanel_, leftBottomPanel_,
-               rightTopPanel_, rightBottomPanel_ };
+         visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
+                                                   rightTopPanel_, rightBottomPanel_};
 
          // Re-attach module lists to the new panels
          updateTabSetPositions();
@@ -602,15 +648,18 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          sidebarModuleList_.setWidth(sidebarWidth);
 
          // Update sidebar location dropdown width
-         if (sidebarLocation_ != null) {
+         if (sidebarLocation_ != null)
+         {
             String dropdownWidth = (Double.parseDouble(sidebarWidth.replace("px", "")) - GRID_SELECT_PADDING) + "px";
             sidebarLocation_.setWidth(dropdownWidth);
          }
 
          // Position toolbar to align with source columns or first quadrant
-         if (columnToolbar_ != null) {
+         if (columnToolbar_ != null)
+         {
             double leftMargin = 0;
-            if (sidebarOnLeft) {
+            if (sidebarOnLeft)
+            {
                // If sidebar is on left, shift toolbar to start after it
                leftMargin = sidebarWidthValue + GRID_CELL_SPACING + GRID_CELL_PADDING;
             }
@@ -618,16 +667,19 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          }
 
          // Position checkbox to align with sidebar column (using absolute positioning)
-         if (sidebarVisibleCheckbox_ != null) {
+         if (sidebarVisibleCheckbox_ != null)
+         {
             double checkboxLeft = 0;
-            if (sidebarOnLeft) {
+            if (sidebarOnLeft)
+            {
                // Sidebar is on left, checkbox should be at the start
                checkboxLeft = 0;
-            } else {
-               // Sidebar is on right, shift checkbox to start after source columns and
-               // quadrants
+            }
+            else
+            {
+               // Sidebar is on right, shift checkbox to start after source columns and quadrants
                checkboxLeft = (newCount * columnWidthValue) + (2 * cellWidthValue) +
-                     ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+                              ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
             }
             sidebarVisibleCheckbox_.getElement().getStyle().setProperty("left", checkboxLeft + "px");
          }
@@ -647,7 +699,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          grid_.removeCell(0, sourceColumnStart);
 
       // when the number of columns has increased, add columns
-      for (int i = 0; i < difference; i++) {
+      for (int i = 0; i < difference; i++)
+      {
          ScrollPanel sp = createColumn();
          grid_.insertCell(0, sourceColumnStart);
          grid_.setWidget(0, sourceColumnStart, sp);
@@ -663,14 +716,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       sidebarModuleList_.setWidth(sidebarWidth);
 
       // Update sidebar location dropdown width
-      if (sidebarLocation_ != null) {
+      if (sidebarLocation_ != null)
+      {
          String dropdownWidth = (Double.parseDouble(sidebarWidth.replace("px", "")) - GRID_SELECT_PADDING) + "px";
          sidebarLocation_.setWidth(dropdownWidth);
       }
 
       // Update sidebar column width
-      int sidebarCol = sidebarOnLeft ? 0 : (newCount + 2); // If left: first column, if right: after source columns +
-                                                           // quadrants
+      int sidebarCol = sidebarOnLeft ? 0 : (newCount + 2); // If left: first column, if right: after source columns + quadrants
       grid_.getCellFormatter().setWidth(0, sidebarCol, sidebarWidth);
 
       // ensure grid maintains proper dimensions
@@ -678,9 +731,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       grid_.setHeight(TABLE_HEIGHT + "px");
 
       // Position toolbar to align with source columns or first quadrant
-      if (columnToolbar_ != null) {
+      if (columnToolbar_ != null)
+      {
          double leftMargin = 0;
-         if (sidebarOnLeft) {
+         if (sidebarOnLeft)
+         {
             // If sidebar is on left, shift toolbar to start after it
             leftMargin = Double.parseDouble(sidebarWidth.replace("px", "")) + GRID_CELL_SPACING + GRID_CELL_PADDING;
          }
@@ -688,18 +743,21 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       }
 
       // Position checkbox to align with sidebar column (using absolute positioning)
-      if (sidebarVisibleCheckbox_ != null) {
+      if (sidebarVisibleCheckbox_ != null)
+      {
          double checkboxLeft = 0;
-         if (sidebarOnLeft) {
+         if (sidebarOnLeft)
+         {
             // Sidebar is on left, checkbox should be at the start
             checkboxLeft = 0;
-         } else {
-            // Sidebar is on right, shift checkbox to start after source columns and
-            // quadrants
+         }
+         else
+         {
+            // Sidebar is on right, shift checkbox to start after source columns and quadrants
             double colWidth = Double.parseDouble(columnWidth.replace("px", ""));
             double cellW = Double.parseDouble(cellWidth.replace("px", ""));
             checkboxLeft = (newCount * colWidth) + (2 * cellW) +
-                  ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
+                           ((newCount + 2) * (GRID_CELL_SPACING + GRID_CELL_PADDING));
          }
          sidebarVisibleCheckbox_.getElement().getStyle().setProperty("left", checkboxLeft + "px");
       }
@@ -707,14 +765,16 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       return cellWidth;
    }
 
-   private VerticalPanel createPane(ListBox listBox, String paneId) {
+   private VerticalPanel createPane(ListBox listBox, String paneId)
+   {
       VerticalPanel vp = new VerticalPanel();
       vp.add(listBox);
       ElementIds.assignElementId(vp.getElement(), paneId);
       return vp;
    }
 
-   private ScrollPanel createColumn() {
+   private ScrollPanel createColumn()
+   {
       VerticalPanel verticalPanel = new VerticalPanel();
       FormLabel label = new FormLabel();
       label.setText(UserPrefsAccessor.Panes.QUADRANTS_SOURCE);
@@ -728,15 +788,17 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       return sp;
    }
 
-   private VerticalPanel createSidebarPane() {
+   private VerticalPanel createSidebarPane()
+   {
       VerticalPanel vp = new VerticalPanel();
 
       // Add the dropdown for sidebar location
-      if (sidebarLocation_ != null) {
+      if (sidebarLocation_ != null)
+      {
          vp.add(sidebarLocation_);
          // Set width to match other dropdowns
-         String selectWidth = (sidebarLocation_.getOffsetWidth() > 0) ? sidebarLocation_.getOffsetWidth() + "px"
-               : "100%";
+         String selectWidth = (sidebarLocation_.getOffsetWidth() > 0) ?
+            sidebarLocation_.getOffsetWidth() + "px" : "100%";
          sidebarLocation_.setWidth(selectWidth);
       }
 
@@ -748,9 +810,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       return vp;
    }
 
-   private static boolean selectByValue(ListBox listBox, String value) {
-      for (int i = 0; i < listBox.getItemCount(); i++) {
-         if (listBox.getValue(i) == value) {
+   private static boolean selectByValue(ListBox listBox, String value)
+   {
+      for (int i = 0; i < listBox.getItemCount(); i++)
+      {
+         if (listBox.getValue(i) == value)
+         {
             listBox.setSelectedIndex(i);
             return true;
          }
@@ -760,19 +825,23 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
    }
 
    @Override
-   public ImageResource getIcon() {
+   public ImageResource getIcon()
+   {
       return new ImageResource2x(res_.iconPanes2x());
    }
-
+   
    @Override
-   protected void initialize(UserPrefs prefs) {
+   protected void initialize(UserPrefs prefs)
+   {
    }
 
    @Override
-   public RestartRequirement onApply(UserPrefs rPrefs) {
+   public RestartRequirement onApply(UserPrefs rPrefs)
+   {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
 
-      if (dirty_) {
+      if (dirty_)
+      {
          JsArrayString panes = JsArrayString.createArray().cast();
          panes.push(leftTop_.getValue(leftTop_.getSelectedIndex()));
          panes.push(leftBottom_.getValue(leftBottom_.getSelectedIndex()));
@@ -790,14 +859,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
          JsArrayString sidebar = JsArrayString.createArray().cast();
          for (String tab : sidebarModuleList_.getValue())
             sidebar.push(tab);
-
+   
          JsArrayString hiddenTabSet = JsArrayString.createArray().cast();
          for (String tab : hiddenTabSetModuleList_.getValue())
             hiddenTabSet.push(tab);
-
+         
          // Determine implicit preference for console top/bottom location
-         // This needs to be saved so that when the user executes the
-         // Console on Left/Right commands we know whether to position
+         // This needs to be saved so that when the user executes the 
+         // Console on Left/Right commands we know whether to position 
          // the Console on the Top or Bottom
          PaneConfig prevConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
@@ -812,14 +881,16 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
             consoleRightOnTop = false;
 
          if (displayColumnCount_ != additionalColumnCount_)
-            additionalColumnCount_ = paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
+            additionalColumnCount_ =
+               paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
 
          // Get sidebar visibility from checkbox
          boolean sidebarVisible = sidebarVisibleCheckbox_.getValue();
 
          // Get the selected sidebar location from dropdown
          String sidebarLocation = "right"; // default
-         if (sidebarLocation_ != null) {
+         if (sidebarLocation_ != null)
+         {
             int selectedIndex = sidebarLocation_.getSelectedIndex();
             sidebarLocation = (selectedIndex == 0) ? "left" : "right";
          }
@@ -840,12 +911,15 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
    }
 
    @Override
-   public String getName() {
+   public String getName()
+   {
       return constants_.paneLayoutLabel();
    }
 
-   private void updateTabSetPositions() {
-      for (int i = 0; i < visiblePanes_.length; i++) {
+   private void updateTabSetPositions()
+   {
+      for (int i = 0; i < visiblePanes_.length; i++)
+      {
          String value = visiblePanes_[i].getValue(visiblePanes_[i].getSelectedIndex());
          if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
             visiblePanePanels_[i].add(tabSet1ModuleList_);
@@ -854,41 +928,48 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
       }
    }
 
-   private void updateTabSetLabels() {
+   private void updateTabSetLabels()
+   {
       // If no tabs are values in a tabset pane, give the pane a generic name,
-      // otherwise the name is created from the selected values
-      String itemText1 = tabSet1ModuleList_.getValue().isEmpty() ? "TabSet"
-            : StringUtil.join(tabSet1ModuleList_.getValue(), ", ");
-      String itemText2 = tabSet2ModuleList_.getValue().isEmpty() ? "TabSet"
-            : StringUtil.join(tabSet2ModuleList_.getValue(), ", ");
+      // otherwise the name is created from the selected values 
+      String itemText1 = tabSet1ModuleList_.getValue().isEmpty() ?
+         "TabSet" : StringUtil.join(tabSet1ModuleList_.getValue(), ", "); 
+      String itemText2 = tabSet2ModuleList_.getValue().isEmpty() ?
+         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", "); 
       if (StringUtil.equals(itemText1, "Presentation") && !tabSet1ModuleList_.presentationVisible())
          itemText1 = "TabSet";
 
-      for (ListBox pane : visiblePanes_) {
+      for (ListBox pane : visiblePanes_)
+      {
          pane.setItemText(2, itemText1);
          pane.setItemText(3, itemText2);
       }
    }
 
-   private boolean hasSidebarTabs() {
+   private boolean hasSidebarTabs()
+   {
       return !sidebarModuleList_.getVisibleValue().isEmpty();
    }
 
-   private void updateSidebarVisibilityCheckbox() {
+   private void updateSidebarVisibilityCheckbox()
+   {
       boolean hasTabs = hasSidebarTabs();
       boolean currentlyVisible = sidebarVisibleCheckbox_.getValue();
 
       // Auto-check when adding first tab to hidden sidebar
-      if (hasTabs && !currentlyVisible) {
+      if (hasTabs && !currentlyVisible)
+      {
          sidebarVisibleCheckbox_.setValue(true, false);
       }
       // Auto-uncheck when removing last tab from visible sidebar
-      else if (!hasTabs && currentlyVisible) {
+      else if (!hasTabs && currentlyVisible)
+      {
          sidebarVisibleCheckbox_.setValue(false, false);
       }
    }
 
-   private ArrayList<String> toArrayList(JsArrayString strings) {
+   private ArrayList<String> toArrayList(JsArrayString strings)
+   {
       ArrayList<String> results = new ArrayList<>();
       for (int i = 0; strings != null && i < strings.length(); i++)
          results.add(strings.get(i));
