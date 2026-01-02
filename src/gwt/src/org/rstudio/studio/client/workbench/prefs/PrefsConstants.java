@@ -16,593 +16,1184 @@ package org.rstudio.studio.client.workbench.prefs;
 
 public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String verifyKey();
+
     String zoteroVerifyKeyFailedMessage();
+
     String zoteroWebApiKey();
+
     String verifyingKey();
+
     String zotero();
+
     String zoteroKeyVerified();
+
     String useLibraries();
+
     String error();
+
     String selectOneZoteroLibrary();
+
     String defaultInParentheses();
+
     String myLibrary();
+
     String selectedLibraries();
+
     String condaEnvironment();
+
     String virtualEnvironment();
+
     String pythonInterpreter();
+
     String system();
+
     String virtualEnvironmentPlural();
+
     String condaEnvironmentPlural();
+
     String pythonInterpreterPlural();
+
     String select();
+
     String noneAvailableParentheses();
+
     String editorThemePreview();
+
     String spellingPrefsTitle();
+
     String spellingPrefsDescription();
+
     String rsaKeyFileTitle();
+
     String rsaKeyFileDescription();
+
     String haveRSAKeyTitle();
+
     String haveRSAKeyDescription();
+
     String errorChangingSettingCaption();
+
     String tabKeyErrorMessage();
+
     String tabKeyFocusOnMessage();
+
     String tabKeyFocusOffMessage();
+
     String toggleScreenReaderErrorMessage();
+
     String toggleScreenReaderConfirmCaption();
+
     String toggleScreenReaderMessageConfirmDialog(String value);
+
     String disable();
+
     String enable();
+
     String announceScreenReaderStateMessage(String shortcut);
+
     String screenReaderStateEnabled(String screenReaderLabel);
+
     String screenReaderStateDisabled(String screenReaderLabel);
+
     String onClearUserPrefsYesLabel();
+
     String cancel();
+
     String onClearUserPrefsRestartR();
+
     String onClearUserPrefsResponseCaption();
+
     String onClearUserPrefsResponseMessage(String path);
+
     String onClearUserPrefsCaption();
+
     String onClearUserPrefsMessage();
+
     String usingZotero();
+
     String zoteroLibrary();
+
     String web();
+
     String local();
+
     String noneParentheses();
+
     String general();
+
     String lineEndingConversion();
+
     String useDefaultParentheses();
+
     String none();
+
     String platformNative();
+
     String posixLF();
+
     String windowsCRLF();
+
     String options();
+
     String generalHeaderPanel();
+
     String chkScreenReaderLabel();
+
     String typingStatusDelayLabel();
+
     String maxOutputLabel();
+
     String displayLabel();
+
     String reducedMotionLabel();
+
     String chkTabMovesFocusLabel();
+
     String generalPanelLabel();
+
     String helpRStudioAccessibilityLinkLabel();
+
     String announcementsLabel();
+
     String tabHeaderPanel();
+
     String generalPanelText();
+
     String announcementsPanelText();
+
     String appearanceRStudioThemeLabel();
+
     String appearanceZoomLabelZoom();
+
     String fontFaceEditorFontLabel();
+
     String appearanceEditorFontLabel();
+
     String appearanceEditorFontSizeLabel();
+
     String appearanceEditorLineHeightLabel();
+
     String appearanceEditorThemeLabel();
+
     String addThemeButtonLabel();
+
     String addThemeButtonCaption();
+
     String removeThemeButtonLabel();
+
     String addThemeUserActionLabel();
+
     String setThemeWarningMessage(String name, String currentTheme);
+
     String themeWarningMessageDarkLabel();
+
     String themeWarningMessageLightLabel();
+
     String showThemeExistsDialogLabel(String inputFileName);
+
     String globalDisplayThemeExistsCaption();
+
     String cantAddThemeMessage();
+
     String cantAddThemeErrorCaption();
+
     String cantAddThemeGlobalMessage();
+
     String showCantRemoveThemeDialogMessage(String themeName, String errorMessage);
+
     String showCantRemoveErrorMessage();
+
     String showCantRemoveActiveThemeDialog(String themeName);
+
     String showCantRemoveThemeCaption();
+
     String showRemoveThemeWarningMessage(String themeName);
+
     String showRemoveThemeGlobalMessage();
+
     String showDuplicateThemeErrorMessage(String themeName);
+
     String showDuplicateThemeDuplicateGlobalMessage();
+
     String showDuplicateThemeWarningMessage(String themeName);
+
     String showDuplicateThemeGlobalMessage();
+
     String appearanceLabel();
+
     String editorFontLabel();
+
     String headerPDFGenerationLabel();
+
     String perProjectNoteLabel();
+
     String perProjectHeaderLabel();
+
     String chkUseTinytexLabel();
+
     String chkCleanTexi2DviOutputLabel();
+
     String chkEnableShellEscapeLabel();
+
     String insertNumberedLatexSectionsLabel();
+
     String previewingOptionsHeaderLabel();
+
     String alwaysEnableRnwConcordanceLabel();
+
     String pdfPreviewSelectWidgetLabel();
+
     String pdfPreviewHelpButtonTitle();
+
     String preferencesPaneTitle();
+
     String pdfNoPreviewOption();
+
     String pdfPreviewSumatraOption();
+
     String pdfPreviewRStudioViewerOption();
+
     String pdfPreviewSystemViewerOption();
+
     String consoleExecutionLabel();
+
     String consoleDiscardPendingConsoleInputOnErrorLabel();
+
     String consoleDisplayLabel();
+
     String consoleHighlightLabel();
+
     String consoleSyntaxHighlightingLabel();
+
     String consoleDifferentColorLabel();
+
     String consoleLimitVariableLabel();
+
     String consoleLimitOutputLengthLabel();
+
     String consoleMaxLinesLabel();
+
     String consoleANSIEscapeCodesLabel();
+
     String consoleColorModeANSIOption();
+
     String consoleColorModeRemoveANSIOption();
+
     String consoleColorModeIgnoreANSIOption();
+
     String consoleLabel();
+
     String debuggingHeaderLabel();
+
     String debuggingExpandTracebacksLabel();
+
     String otherHeaderCaption();
+
     String otherDoubleClickLabel();
+
     String warnAutoSuspendPausedLabel();
+
     String numSecondsToDelayWarningLabel();
+
     String rSessionsTitle();
+
     String rVersionTitle();
+
     String rVersionChangeTitle();
+
     String rChangeVersionMessage();
+
     String rQuitReOpenMessage();
+
     String rVersionLoadingText();
+
     String rRestoreLabel();
+
     String rDefaultDirectoryTitle();
+
     String rRestorePreviousTitle();
+
     String rRestorePreviousOpenTitle();
+
     String rRunProfileTitle();
+
     String workspaceCaption();
+
     String workspaceLabel();
+
     String saveWorkSpaceLabel();
+
     String saveWorkAlways();
+
     String saveWorkNever();
+
     String saveWorkAsk();
+
     String historyCaption();
+
     String alwaysSaveHistoryLabel();
+
     String removeDuplicatesLabel();
+
     String otherCaption();
+
     String otherWrapAroundLabel();
+
     String otherNotifyMeLabel();
+
     String otherSendReportsLabel();
+
     String graphicsDeviceCaption();
+
     String graphicsAntialiasingLabel();
+
     String antialiasingDefaultOption();
+
     String antialiasingNoneOption();
+
     String antialiasingGrayOption();
+
     String antialiasingSubpixelOption();
+
     String serverHomePageLabel();
+
     String serverHomePageActiveSessionsOption();
+
     String serverHomePageAlwaysOption();
+
     String serverHomePageNeverOption();
+
     String reUseIdleSessionLabel();
+
     String desktopCaption();
+
     String advancedDebuggingCaption();
+
     String advancedDebuggingLabel();
+
     String advancedOsIntegrationCaption();
+
     String advancedRenderingEngineLabel();
+
     String renderingEngineAutoDetectOption();
+
     String renderingEngineDesktopOption();
+
     String renderingEngineLinuxDesktopOption();
+
     String renderingEngineSoftwareOption();
+
     String useGpuExclusionListLabel();
+
     String useGpuDriverBugWorkaroundsLabel();
+
     String clipboardMonitoringLabel();
+
     String otherLabel();
+
     String experimentalLabel();
+
     String englishLabel();
+
     String frenchLabel();
+
     String otherShowLastDotValueLabel();
+
     String helpFontSizeLabel();
+
     String generalTabListLabel();
+
     String generalTabListBasicOption();
+
     String generalTabListGraphicsOption();
+
     String generalTabListAdvancedOption();
+
     String graphicsBackEndDefaultOption();
+
     String graphicsBackEndQuartzOption();
+
     String graphicsBackEndWindowsOption();
+
     String graphicsBackEndCairoOption();
+
     String graphicsBackEndCairoPNGOption();
+
     String graphicsBackEndAGGOption();
+
     String graphicsBackendLabel();
+
     String graphicsBackendUserAction();
+
     String browseLabel();
+
     String directoryLabel();
+
     String codePaneLabel();
+
     String packageManagementTitle();
+
     String packagesInfoBarText();
+
     String packagesRenvInfoBarText();
+
     String cranMirrorTextBoxTitle();
+
     String cranMirrorChangeLabel();
+
     String secondaryReposTitle();
+
     String chkEnablePackagesTitle();
+
     String useSecurePackageDownloadTitle();
+
     String useSecurePackageTitle();
+
     String useInternetTitle();
+
     String managePackagesTitle();
+
     String developmentTitle();
+
     String cppDevelopmentTitle();
+
     String useDevtoolsLabel();
+
     String developmentSaveLabel();
+
     String developmentNavigateLabel();
+
     String developmentHideLabel();
+
     String developmentCleanupLabel();
+
     String developmentViewLabel();
+
     String developmentCppTemplate();
+
     String developmentEmptyLabel();
+
     String developmentUseLFLabel();
+
     String tabPackagesPanelTitle();
+
     String managementPanelTitle();
+
     String developmentManagementPanelTitle();
+
     String cppPanelTitle();
+
     String chooseMirrorDialogMessage();
+
     String showDisconnectErrorCaption();
+
     String showDisconnectErrorMessage();
+
     String progressIndicatorMessage();
+
     String progressIndicatorError();
+
     String customLabel();
+
     String mirrorsLabel();
+
     String headerLabel();
+
     String buttonAddLabel();
+
     String buttonRemoveLabel();
+
     String buttonUpLabel();
+
     String buttonDownLabel();
+
     String developingPkgHelpLink();
+
     String secondaryReposDialog();
+
     String validateSyncLabel();
+
     String showErrorRepoMessage();
+
     String alreadyIncludedMessage();
+
     String validateAsyncProgress();
+
     String onResponseReceived();
+
     String nameLabel();
+
     String urlLabel();
+
     String reposLabel();
+
     String secondaryRepoLabel();
+
     String paneLayoutText();
+
     String columnToolbarLabel();
+
     String addButtonText();
+
     String addButtonLabel();
+
     String removeButtonText();
+
     String removeButtonLabel();
+
     String createGridLabel();
+
     String createColumnLabel();
+
     String paneLayoutLabel();
+
     String accountListLabel();
+
     String connectButtonLabel();
+
     String reconnectButtonLabel();
+
     String disconnectButtonLabel();
+
     String missingPkgPanelMessage();
+
     String installPkgsMessage();
+
     String withRSConnectLabel();
+
     String chkEnableRSConnectLabel();
+
     String checkBoxWithHelpTitle();
+
     String settingsHeaderLabel();
+
     String chkEnablePublishingLabel();
+
     String showPublishDiagnosticsLabel();
+
     String sSLCertificatesHeaderLabel();
+
     String publishCheckCertificatesLabel();
+
     String usePublishCaBundleLabel();
+
     String caBundlePath();
+
     String helpLinkTroubleshooting();
+
     String publishingPaneHeader();
+
     String showErrorCaption();
+
     String showErrorMessage();
+
     String removeAccountGlobalDisplay();
+
     String removeAccountMessage(String name, String server);
+
     String onConfirmDisconnectYesLabel();
+
     String onConfirmDisconnectNoLabel();
+
     String disconnectingErrorMessage();
+
     String getAccountCountLabel();
+
     String pythonPreferencesText();
+
     String overrideText();
+
     String headerPythonLabel();
+
     String mismatchWarningBarText();
+
     String progressIndicatorText();
+
     String tbPythonInterpreterText();
+
     String tbPythonActionText();
+
     String onDependencyErrorMessage();
+
     String invalidReasonLabel();
+
     String helpRnwButtonLabel();
+
     String cbAutoUseProjectInterpreter();
+
     String cbAutoUseProjectInterpreterMessage();
+
     String tabPanelCaption();
+
     String clearLabel();
+
     String unknownType();
+
     String virtualEnvironmentType();
+
     String condaEnvironmentType();
+
     String systemInterpreterType();
+
     String quartoPreviewLabel();
+
     String enableQuartoPreviewCheckboxLabel();
+
     String helpLinkCaption();
+
     String rMarkdownHeaderLabel();
+
     String documentOutlineHeaderLabel();
+
     String rMarkdownShowLabel();
+
     String rMarkdownSoftWrapLabel();
+
     String docOutlineDisplayLabel();
+
     String docOutlineSectionsOption();
+
     String docOutlineSectionsNamedChunksOption();
+
     String docOutlineSectionsAllChunksOption();
+
     String rmdViewerModeLabel();
+
     String rmdViewerModeWindowOption();
+
     String rmdViewerModeViewerPaneOption();
+
     String rmdViewerModeNoneOption();
+
     String rmdInlineOutputLabel();
+
     String latexPreviewWidgetLabel();
+
     String latexPreviewWidgetNeverOption();
+
     String latexPreviewWidgetPopupOption();
+
     String latexPreviewWidgetInlineOption();
+
     String knitWorkingDirLabel();
+
     String knitWorkingDirDocumentOption();
+
     String knitWorkingDirCurrentOption();
+
     String knitWorkingDirProjectOption();
+
     String rNotebooksCaption();
+
     String autoExecuteSetupChunkLabel();
+
     String notebookHideConsoleLabel();
+
     String helpRStudioLinkLabel();
+
     String advancedHeaderLabel();
+
     String advancedEnableChunkLabel();
+
     String advancedShowInlineLabel();
+
     String advancedDisplayRender();
+
     String visualModeGeneralCaption();
+
     String visualModeUseVisualEditorLabel();
+
     String visualModeHelpLink();
+
     String visualModeHeaderLabel();
+
     String visualEditorShowOutlineLabel();
+
     String visualEditorShowMarginLabel();
+
     String visualModeContentWidthLabel();
+
     String visualModeFontSizeLabel();
+
     String visualModeOptionsMarkdownCaption();
+
     String visualModeListSpacingLabel();
+
     String visualModeWrapLabel();
+
     String visualModeWrapHelpLabel();
+
     String visualModeOptionsLabel();
+
     String visualModeReferencesLabel();
+
     String visualModeCanonicalLabel();
+
     String visualModeCanonicalMessageCaption();
+
     String visualModeCanonicalPreferenceMessage();
+
     String markdownPerFileOptionsHelpLink();
+
     String citationsLabel();
+
     String citationsHelpLink();
+
     String zoteroHeaderLabel();
+
     String zoteroDataDirLabel();
+
     String zoteroDataDirNotDectedLabel();
+
     String zoteroUseBetterBibtexLabel();
+
     String tabPanelTitle();
+
     String tabPanelBasic();
+
     String tabPanelAdvanced();
+
     String tabPanelVisual();
+
     String tabPanelCitations();
+
     String webOption();
+
     String showLinkNumbersLabel();
+
     String chkVcsEnabledLabel();
+
     String globalDisplayEnable();
+
     String globalDisplayDisable();
+
     String globalDisplayVC(String displayEnable);
+
     String globalDisplayVCMessage();
+
     String gitExePathMessage(String gitPath);
+
     String gitGlobalDisplay();
+
     String gitExePathLabel();
+
     String gitExePathNotFoundLabel();
+
     String svnExePathLabel();
+
     String terminalPathLabel();
+
     String gitSVNPaneHeader();
+
     String spellingPreferencesPaneHeader();
+
     String ignoreHeader();
+
     String ignoreWordsUppercaseLabel();
+
     String ignoreWordsNumbersLabel();
+
     String checkingHeader();
+
     String realTimeSpellcheckingCheckboxLabel();
+
     String kUserDictionaryLabel();
+
     String kUserDictionaryWordsLabel(String kUserDictionary, String entries);
+
     String editUserDictLabel();
+
     String editUserDictCaption();
+
     String editUserDictSaveCaption();
+
     String spellingPaneLabel();
+
     String editDialog();
+
     String saveDialog();
+
     String cancelButton();
+
     String shellHeaderLabel();
+
     String initialDirectoryLabel();
+
     String projectDirectoryOption();
+
     String currentDirectoryOption();
+
     String homeDirectoryOption();
+
     String terminalShellLabel();
+
     String shellExePathMessage(String shellExePath);
+
     String shellExeCaption();
+
     String customShellPathLabel();
+
     String customShellChooserEmptyLabel();
+
     String customShellOptionsLabel();
+
     String perfLabel();
+
     String chkTerminalLocalEchoLabel();
+
     String chkTerminalLocalEchoTitle();
+
     String chkTerminalWebsocketLabel();
+
     String chkTerminalWebsocketTitle();
+
     String displayHeaderLabel();
+
     String chkHardwareAccelerationLabel();
+
     String chkAudibleBellLabel();
+
     String chkWebLinksLabel();
+
     String helpLinkLabel();
+
     String miscLabel();
+
     String autoClosePrefLabel();
+
     String closePaneOption();
+
     String doNotClosePaneOption();
+
     String shellExitsPaneOption();
+
     String chkCaptureEnvLabel();
+
     String chkCaptureEnvTitle();
+
     String shutdownLabel();
+
     String busyModeLabel();
+
     String busyWhitelistLabel();
+
     String terminalPaneLabel();
+
     String tabGeneralPanelLabel();
+
     String tabClosingPanelLabel();
+
     String busyModeAlwaysOption();
+
     String busyModeNeverOption();
+
     String busyModeListOption();
+
     String chkPythonIntegration();
+
     String chkPythonIntegrationTitle();
+
     String confirmRemoveCaption();
+
     String confirmRemoveMessage(String repo);
+
     String modernThemeLabel();
+
     String skyThemeLabel();
+
     String generalHeaderLabel();
+
     String codeFormattingHeaderLabel();
+
     String useFormatterLabel();
+
     String syntaxHeaderLabel();
+
     String editSnippetsButtonLabel();
+
     String listSpacingTight();
+
     String listSpacingSpaced();
+
     String editingWrapNone();
+
     String editingWrapColumn();
+
     String editingWrapSentence();
+
     String refLocationBlock();
+
     String refLocationSection();
+
     String refLocationDocument();
+
     String editingDiagOtherLabel();
+
     String editingDiagShowLabel();
+
     String editingDiagnosticsPanel();
+
     String editingDisplayPanel();
+
     String editingEditShortcuts();
+
     String editingExecutionLabel();
+
     String editingHeaderLabel();
+
     String editingOtherLabel();
+
     String editingOtherTip();
+
     String editingSavePanel();
+
     String editingSavePanelAction();
+
     String editingSavePanelAutosave();
+
     String editingSerializationLabel();
+
     String editingSnippetHelpTitle();
+
     String editingSnippetsLabel();
+
     String editingTabPanel();
+
     String editingTabPanelCompletionPanel();
+
     String editingTabPanelDiagnosticsPanel();
+
     String editingTabPanelDisplayPanel();
+
     String editingTabPanelFormattingPanel();
+
     String editingTabPanelSavePanel();
+
     String editingCompletionPanel();
+
     String editingHeader();
+
     String editingKeyboardShortcuts();
+
     String editingKeyboardText();
+
     String editingRadioCustomized();
+
     String editingFilterWidget();
+
     String editingResetText();
+
     String editingGlobalDisplay();
+
     String editingGlobalCaption();
+
     String editingGlobalMessage();
+
     String editingProgressMessage();
+
     String editingCancelShortcuts();
+
     String editingTabWidthLabel();
+
     String editorScrollMultiplier();
+
     String editorScrollMultiplierDesc();
+
     String editingAutoDetectIndentationLabel();
+
     String editingAutoDetectIndentationDesc();
+
     String editingInsertMatchingLabel();
+
     String editingUseNativePipeOperatorLabel();
+
     String editingProjectOverrideInfoText();
+
     String editProjectPreferencesButtonLabel();
+
     String editingReindentOnPasteLabel();
+
     String editingVerticallyAlignArgumentsIndentLabel();
+
     String editingContinueCommentsOnNewlineLabel();
+
     String editingContinueCommentsOnNewlineDesc();
+
     String editingHighlightWebLinkLabel();
+
     String editingHighlightWebLinkDesc();
+
     String editingSurroundSelectionLabel();
+
     String editingKeybindingsLabel();
+
     String editingFocusConsoleAfterExecLabel();
+
     String editingExecutionBehaviorLabel();
+
     String displayHighlightSelectedWordLabel();
+
     String displayHighlightSelectedLineLabel();
+
     String displayShowLineNumbersLabel();
+
     String displayRelativeLineNumbersLabel();
+
     String displayShowMarginLabel();
+
     String displayShowInvisiblesLabel();
+
     String displayShowIndentGuidesLabel();
+
     String displayBlinkingCursorLabel();
+
     String displayScrollPastEndOfDocumentLabel();
+
     String displayEnableTextDragLabel();
+
     String displayFoldStyleLabel();
+
     String savingAutoAppendNewLineLabel();
+
     String savingStripTrailingWhitespaceLabel();
+
     String savingRestoreSourceDocumentCursorPositionLabel();
+
     String savingDefaultEncodingLabel();
+
     String savingSaveBeforeSourcingLabel();
+
     String savingAutoSaveOnBlurLabel();
+
     String savingAutoSaveOnIdleLabel();
+
     String savingAutoSaveIdleMsLabel();
+
     String completionCodeCompletionLabel();
+
     String completionCodeCompletionOtherLabel();
+
     String completionConsoleCodeCompletionLabel();
+
     String completionInsertParensAfterFunctionCompletion();
+
     String completionShowFunctionSignatureTooltipsLabel();
+
     String completionShowHelpTooltipOnIdleLabel();
+
     String completionInsertSpacesAroundEqualsLabel();
+
     String completionTabCompletionLabel();
+
     String completionTabMultilineCompletionLabel();
+
     String completionCodeCompletionCharactersLabel();
+
     String completionCodeCompletionDelayLabel();
+
     String diagnosticsShowDiagnosticsRLabel();
+
     String diagnosticsInRFunctionCallsLabel();
+
     String diagnosticsCheckArgumentsToRFunctionCallsLabel();
+
     String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
+
     String diagnosticsWarnIfNoSuchVariableInScopeLabel();
+
     String diagnosticsWarnVariableDefinedButNotUsedLabel();
+
     String diagnosticsStyleDiagnosticsLabel();
+
     String diagnosticsAutoDiscoverPackageDependenciesLabel();
+
     String diagnosticsShowDiagnosticsCppLabel();
+
     String diagnosticsShowDiagnosticsYamlLabel();
+
     String diagnosticsShowDiagnosticsOtherLabel();
+
     String diagnosticsOnSaveLabel();
+
     String diagnosticsBackgroundDiagnosticsLabel();
+
     String diagnosticsBackgroundDiagnosticsDelayMsLabel();
+
     String fullProjectPathInWindowTitleLabel();
+
     String autohideMenubarLabel();
+
     String textRenderingLabel();
+
     String geometricPrecision();
+
     String copilotLoadingMessage();
+
     String copilotDiagnosticReportProgressLabel();
+
     String copilotSignedInAsLabel(String user);
+
     String copilotShowErrorLabel();
+
     String copilotSignInLabel();
+
     String copilotSignOutLabel();
+
     String copilotActivateLabel();
+
     String copilotRefreshLabel();
+
     String copilotDiagnosticsLabel();
+
     String copilotProjectOptionsLabel();
+
     String copilotTermsOfServiceLinkLabel();
+
     String copilotTermsOfServiceLabel();
+
     String copilotDisplayName();
+
     String copilotPaneName();
+
     String copilotIndexingHeader();
+
     String copilotCompletionsHeader();
+
     String copilotCompletionsDelayLabel();
+
     String copilotDisabledByAdmin();
+
     String copilotStatusDialogCaption();
+
     String copilotUnexpectedError();
+
     String copilotStartupError();
+
     String copilotDisabledInProject();
+
     String copilotAgentNotRunning();
+
     String copilotAgentNotEnabled();
+
     String copilotAccountNotActivated(String name);
+
     String copilotNotSignedIn();
+
     String copilotUnknownResponse(String response);
+
     String gitSignCommitLabel();
+
     String sidebarLocationLeft();
+
     String sidebarLocationRight();
+
     String sidebarVisible();
+
     String resetPaneLayoutToDefaults();
+
     String restoreDefaultPaneAndTabLayoutCaption();
+
     String restoreDefaultPaneAndTabLayoutMessage();
+
+    String sourceColumnPlacementNote();
 }
