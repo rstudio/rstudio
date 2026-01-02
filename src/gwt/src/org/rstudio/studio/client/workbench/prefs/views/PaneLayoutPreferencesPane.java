@@ -259,12 +259,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane {
 
       add(toolbarWrapper);
 
-      Label columnNote = new Label(constants_.sourceColumnPlacementNote());
-      columnNote.getElement().getStyle().setColor("#666");
-      columnNote.getElement().getStyle().setFontStyle(com.google.gwt.dom.client.Style.FontStyle.ITALIC);
-      columnNote.getElement().getStyle().setMarginLeft(10, com.google.gwt.dom.client.Style.Unit.PX);
-      add(columnNote);
-
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
