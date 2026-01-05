@@ -2383,7 +2383,6 @@ bool isHttpsUrl(const std::string& url)
    return boost::starts_with(url, "https://");
 }
 
-// Download manifest from URL specified in pai_download_uri preference
 Error downloadManifest(json::Object* pManifest)
 {
    if (!pManifest)
@@ -2445,27 +2444,8 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI from preference
-   std::string downloadUri = prefs::userPrefs().paiDownloadUri();
-
-   // Trim whitespace from the URL
-   boost::algorithm::trim(downloadUri);
-
-   if (downloadUri.empty())
-   {
-      return systemError(boost::system::errc::operation_not_permitted,
-                        "pai_download_uri preference not set",
-                        ERROR_LOCATION);
-   }
-
-   // Validate HTTPS
-   if (!isHttpsUrl(downloadUri))
-   {
-      WLOG("Manifest download URL must use HTTPS, rejecting: {}", downloadUri);
-      return systemError(boost::system::errc::protocol_error,
-                        "Manifest URL must use HTTPS protocol",
-                        ERROR_LOCATION);
-   }
+   // Get download URI via redirector
+   std::string downloadUri = "https://www.rstudio.org/links/posit-assistant-manifest";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
@@ -2825,10 +2805,9 @@ Error checkForUpdatesOnStartup()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   // Eligibility check: require both preferences
-   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   if (!prefs::userPrefs().pai())
    {
-      DLOG("Update check skipped: pai preferences not configured");
+      DLOG("Update check skipped: posit assistant not configured");
       return Success();
    }
 
@@ -3389,10 +3368,9 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   // Guard: Require both preferences to be set
-   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   if (!prefs::userPrefs().pai())
    {
-      // Return empty/negative response - don't reveal feature exists
+      // Return empty/negative response - don't reveal feature
       json::Object result;
       result["updateAvailable"] = false;
       result["noCompatibleVersion"] = false;
@@ -3421,8 +3399,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   // Guard: Require both preferences to be set
-   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   if (!prefs::userPrefs().pai())
    {
       return systemError(boost::system::errc::operation_not_permitted,
                         "Feature not enabled",
@@ -3555,8 +3532,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   // Guard: Require both preferences to be set
-   if (!prefs::userPrefs().pai() || prefs::userPrefs().paiDownloadUri().empty())
+   if (!prefs::userPrefs().pai())
    {
       // Return idle status - don't reveal feature exists
       json::Object result;

@@ -3946,18 +3946,6 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
-   /**
-    * Experimental
-    */
-   public PrefValue<String> paiDownloadUri()
-   {
-      return string(
-         "pai_download_uri",
-         _constants.paiDownloadUriTitle(), 
-         _constants.paiDownloadUriDescription(), 
-         "");
-   }
-
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4508,8 +4496,6 @@ public class UserPrefsAccessor extends Prefs
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
       if (source.hasKey("pai"))
          pai().setValue(layer, source.getBool("pai"));
-      if (source.hasKey("pai_download_uri"))
-         paiDownloadUri().setValue(layer, source.getString("pai_download_uri"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4788,7 +4774,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
       prefs.add(pai());
-      prefs.add(paiDownloadUri());
       return prefs;
    }
    
