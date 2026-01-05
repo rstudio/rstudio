@@ -51,14 +51,6 @@ public interface UserStateAccessorConstants extends Constants {
     * 
     */
    @DefaultStringValue("")
-   String remoteSessionTitle();
-   @DefaultStringValue("")
-   String remoteSessionDescription();
-
-   /**
-    * 
-    */
-   @DefaultStringValue("")
    String rendererTitle();
    @DefaultStringValue("")
    String rendererDescription();

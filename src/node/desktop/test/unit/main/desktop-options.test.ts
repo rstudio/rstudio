@@ -70,9 +70,6 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
     assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
     assert.equal(options.accessibility(), properties.view.default.accessibility);
-    assert.equal(options.lastRemoteSessionUrl(), properties.remote_session.default.lastRemoteSessionUrl);
-    assert.deepEqual(options.authCookies(), properties.remote_session.default.authCookies);
-    assert.deepEqual(options.tempAuthCookies(), properties.remote_session.default.tempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
@@ -94,9 +91,6 @@ describe('DesktopOptions', () => {
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
     const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
-    const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
-    const newAuthCookies = ['test', 'Autht', 'Cookies'];
-    const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
 
     const newRBinDir = 'C:/R/bin/x64';
@@ -113,9 +107,6 @@ describe('DesktopOptions', () => {
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
     options.setDisableRendererAccessibility(newDisableRendererAccessibility);
-    options.setLastRemoteSessionUrl(newLastRemoteSessionUrl);
-    options.setAuthCookies(newAuthCookies);
-    options.setTempAuthCookies(newTempAuthCookies);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
     options.setPeferR64(newPeferR64);
     options.setRExecutablePath(newRExecPath);
@@ -126,9 +117,6 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
     assert.equal(options.disableRendererAccessibility(), newDisableRendererAccessibility);
-    assert.equal(options.lastRemoteSessionUrl(), newLastRemoteSessionUrl);
-    assert.deepEqual(options.authCookies(), newAuthCookies);
-    assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), normalizeSeparatorsNative(newRBinDir));
