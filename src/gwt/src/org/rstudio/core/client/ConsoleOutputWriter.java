@@ -117,6 +117,7 @@ public class ConsoleOutputWriter
          }
       }
 
+      // TODO: Can we defer this computation until it's actually needed?
       int oldLineCount = DomUtils.countLines(appendTarget, true);
       if (StringUtil.equals(className, OUTPUT_ERROR_CLASS))
          virtualConsole_.submit(text, VirtualConsole.Type.STDERR, isError, ariaLiveAnnounce);

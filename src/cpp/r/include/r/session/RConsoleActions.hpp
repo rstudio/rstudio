@@ -74,6 +74,8 @@ public:
    std::vector<std::string> pendingInput() const { return pendingInput_; }
 
 private:
+
+   // NOTE: helper method assumes mutex is already locked
    void flush();
 
    // protect data using a mutex because background threads (e.g.
