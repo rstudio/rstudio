@@ -77,31 +77,6 @@
                 "enableSplashScreen": true
             }
         },
-        "remote_session": {
-            "type": "object",
-            "properties": {
-                "lastRemoteSessionUrl": {
-                    "type": "string"
-                },
-                "authCookies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "tempAuthCookies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "default": {
-                "lastRemoteSessionUrl": "",
-                "authCookies": [],
-                "tempAuthCookies": []
-            }
-        },
         "renderer": {
             "type": "object",
             "properties": {

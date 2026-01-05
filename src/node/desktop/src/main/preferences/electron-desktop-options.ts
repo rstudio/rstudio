@@ -49,10 +49,6 @@ const kAccessibility = 'view.accessibility';
 const kEnableSplashScreen = 'view.enableSplashScreen';
 const kDisableRendererAccessibility = 'view.disableRendererAccessibility';
 
-const kLastRemoteSessionUrl = 'session.lastRemoteSessionUrl';
-const kAuthCookies = 'session.authCookies';
-const kTempAuthCookies = 'session.tempAuthCookies';
-
 const kIgnoredUpdateVersions = 'general.ignoredUpdateVersions';
 
 const kRendererEngine = 'renderer.engine';
@@ -223,30 +219,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public disableRendererAccessibility(): boolean {
     return this.config.get(kDisableRendererAccessibility, properties.view.default.disableRendererAccessibility);
-  }
-
-  public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
-    this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
-  }
-
-  public lastRemoteSessionUrl(): string {
-    return this.config.get(kLastRemoteSessionUrl, properties.remote_session.default.lastRemoteSessionUrl);
-  }
-
-  public setAuthCookies(authCookies: string[]): void {
-    this.config.set(kAuthCookies, authCookies);
-  }
-
-  public authCookies(): string[] {
-    return this.config.get(kAuthCookies, properties.remote_session.default.authCookies);
-  }
-
-  public setTempAuthCookies(tempAuthCookies: string[]): void {
-    this.config.set(kTempAuthCookies, tempAuthCookies);
-  }
-
-  public tempAuthCookies(): string[] {
-    return this.config.get(kTempAuthCookies, properties.remote_session.default.tempAuthCookies);
   }
 
   public setIgnoredUpdateVersions(ignoredUpdateVersions: string[]): void {

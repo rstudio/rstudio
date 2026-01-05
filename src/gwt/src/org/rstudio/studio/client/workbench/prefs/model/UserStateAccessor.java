@@ -132,36 +132,6 @@ public class UserStateAccessor extends Prefs
    /**
     * 
     */
-   public PrefValue<RemoteSession> remoteSession()
-   {
-      return object(
-         "remote_session",
-         _constants.remoteSessionTitle(), 
-         _constants.remoteSessionDescription(), 
-         null);
-   }
-
-   public static class RemoteSession extends JavaScriptObject
-   {
-      protected RemoteSession() {} 
-
-      public final native String getLastRemoteSessionUrl() /*-{
-         return this && this.lastRemoteSessionUrl || "";
-      }-*/;
-
-      public final native JsArrayString getAuthCookies() /*-{
-         return this && this.authCookies || [];
-      }-*/;
-
-      public final native JsArrayString getTempAuthCookies() /*-{
-         return this && this.tempAuthCookies || [];
-      }-*/;
-
-   }
-
-   /**
-    * 
-    */
    public PrefValue<Renderer> renderer()
    {
       return object(
@@ -713,8 +683,6 @@ public class UserStateAccessor extends Prefs
          font().setValue(layer, source.getObject("font"));
       if (source.hasKey("view"))
          view().setValue(layer, source.getObject("view"));
-      if (source.hasKey("remote_session"))
-         remoteSession().setValue(layer, source.getObject("remote_session"));
       if (source.hasKey("renderer"))
          renderer().setValue(layer, source.getObject("renderer"));
       if (source.hasKey("platform"))
@@ -776,7 +744,6 @@ public class UserStateAccessor extends Prefs
       prefs.add(general());
       prefs.add(font());
       prefs.add(view());
-      prefs.add(remoteSession());
       prefs.add(renderer());
       prefs.add(platform());
       prefs.add(contextId());

@@ -37,10 +37,6 @@ namespace prefs {
 #define kViewAccessibility "accessibility"
 #define kViewDisableRendererAccessibility "disableRendererAccessibility"
 #define kViewEnableSplashScreen "enableSplashScreen"
-#define kRemoteSession "remote_session"
-#define kRemoteSessionLastRemoteSessionUrl "lastRemoteSessionUrl"
-#define kRemoteSessionAuthCookies "authCookies"
-#define kRemoteSessionTempAuthCookies "tempAuthCookies"
 #define kRenderer "renderer"
 #define kRendererEngine "engine"
 #define kRendererUseGpuExclusionList "useGpuExclusionList"
@@ -137,12 +133,6 @@ public:
     */
    core::json::Object view();
    core::Error setView(core::json::Object val);
-
-   /**
-    * 
-    */
-   core::json::Object remoteSession();
-   core::Error setRemoteSession(core::json::Object val);
 
    /**
     * 

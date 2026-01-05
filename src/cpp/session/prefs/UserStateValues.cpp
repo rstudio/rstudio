@@ -65,19 +65,6 @@ core::Error UserStateValues::setView(core::json::Object val)
 /**
  * 
  */
-core::json::Object UserStateValues::remoteSession()
-{
-   return readPref<core::json::Object>("remote_session");
-}
-
-core::Error UserStateValues::setRemoteSession(core::json::Object val)
-{
-   return writePref("remote_session", val);
-}
-
-/**
- * 
- */
 core::json::Object UserStateValues::renderer()
 {
    return readPref<core::json::Object>("renderer");
@@ -432,7 +419,6 @@ std::vector<std::string> UserStateValues::allKeys()
       kGeneral,
       kFont,
       kView,
-      kRemoteSession,
       kRenderer,
       kPlatform,
       kContextId,
