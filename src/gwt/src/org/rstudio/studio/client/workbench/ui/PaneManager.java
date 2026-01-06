@@ -203,6 +203,190 @@ public class PaneManager
 
    }
 
+   private class ZoomedColumnStateValue extends JSObjectStateValue
+   {
+      public ZoomedColumnStateValue()
+      {
+         super("workbench-pane", "ColumnZoom", ClientState.PROJECT_PERSISTENT,
+               session_.getSessionInfo().getClientState(), true);
+         finishInit(session_.getSessionInfo().getClientState());
+      }
+
+      @Override
+      protected void onInit(final JsObject value)
+      {
+         if (value == null)
+            return;
+
+         if (!value.hasKey(ZOOMED_COLUMN_KEY))
+            return;
+
+         // Delay to ensure all client state is ready.
+         // Note: We only restore the prior sizes here, we do NOT call zoomColumn()
+         // because MainSplitPanel has already restored the zoomed layout. Calling
+         // zoomColumn() would toggle the zoom state (unzoom instead of staying zoomed).
+         // The prior sizes are needed so that when the user clicks unzoom, we can
+         // restore the columns to their pre-zoom sizes.
+         //
+         // Use a repeating timer with retry logic because getZoomedColumn() may return
+         // null during transitional layout states (e.g., when panel width is 0). On
+         // slower machines or heavier sessions, a single-shot timer might miss.
+         new Timer()
+         {
+            private int attempts_ = 0;
+            private static final int MAX_ATTEMPTS = 10;
+            private static final int RETRY_DELAY_MS = 200;
+
+            @Override
+            public void run()
+            {
+               attempts_++;
+               String columnName = value.getString(ZOOMED_COLUMN_KEY);
+
+               // Check if user has already interacted with zoom during the delay.
+               // If zoomedColumn_ is already set, don't overwrite their action.
+               if (zoomedColumn_ != null)
+                  return; // Don't reschedule - user action takes precedence
+
+               // Check if the column is still zoomed (user hasn't manually unzoomed).
+               String currentZoomed = getZoomedColumn();
+
+               // If getZoomedColumn() returns null (transitional state), retry
+               if (currentZoomed == null && attempts_ < MAX_ATTEMPTS)
+               {
+                  schedule(RETRY_DELAY_MS);
+                  return;
+               }
+
+               // If current zoomed column doesn't match saved state, don't restore
+               if (!StringUtil.equals(currentZoomed, columnName))
+                  return;
+
+               if (value.hasKey(WIDGET_SIZE_KEY))
+                  widgetSizePriorToZoom_ = value.getDouble(WIDGET_SIZE_KEY);
+               if (value.hasKey(SIDEBAR_SIZE_KEY))
+                  sidebarSizePriorToZoom_ = value.getDouble(SIDEBAR_SIZE_KEY);
+               if (value.hasKey(LEFT_SIZES_KEY))
+               {
+                  leftWidgetSizePriorToZoom_.clear();
+                  String leftSizesStr = value.getString(LEFT_SIZES_KEY);
+                  if (!StringUtil.isNullOrEmpty(leftSizesStr))
+                  {
+                     for (String s : leftSizesStr.split(","))
+                     {
+                        try
+                        {
+                           leftWidgetSizePriorToZoom_.add(Double.parseDouble(s));
+                        }
+                        catch (NumberFormatException e)
+                        {
+                           // ignore invalid entries
+                        }
+                     }
+                  }
+               }
+               zoomedColumn_ = columnName;
+               // Update UI state (checkmarks, button states) to reflect zoom state
+               manageLayoutCommands();
+            }
+         }.schedule(200);
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         final JsObject object = JsObject.createJsObject();
+         if (zoomedColumn_ != null)
+         {
+            object.setString(ZOOMED_COLUMN_KEY, zoomedColumn_);
+            if (widgetSizePriorToZoom_ >= 0)
+               object.setDouble(WIDGET_SIZE_KEY, widgetSizePriorToZoom_);
+            if (sidebarSizePriorToZoom_ >= 0)
+               object.setDouble(SIDEBAR_SIZE_KEY, sidebarSizePriorToZoom_);
+            if (!leftWidgetSizePriorToZoom_.isEmpty())
+            {
+               StringBuilder sb = new StringBuilder();
+               for (int i = 0; i < leftWidgetSizePriorToZoom_.size(); i++)
+               {
+                  if (i > 0)
+                     sb.append(",");
+                  sb.append(leftWidgetSizePriorToZoom_.get(i));
+               }
+               object.setString(LEFT_SIZES_KEY, sb.toString());
+            }
+         }
+         lastValue_ = object;
+         return object;
+      }
+
+      @Override
+      protected boolean hasChanged()
+      {
+         if (lastValue_ == null)
+            return true;
+
+         JsObject oldValue = lastValue_;
+         JsObject newValue = getValue();
+
+         boolean oldHasKey = oldValue.hasKey(ZOOMED_COLUMN_KEY);
+         boolean newHasKey = newValue.hasKey(ZOOMED_COLUMN_KEY);
+
+         // If zoom state changed (one has key, other doesn't), state changed
+         if (oldHasKey != newHasKey)
+            return true;
+
+         // If neither has zoom, state hasn't changed
+         if (!oldHasKey && !newHasKey)
+            return false;
+
+         // Both have zoom - check if column changed
+         if (!StringUtil.equals(oldValue.getString(ZOOMED_COLUMN_KEY),
+                                newValue.getString(ZOOMED_COLUMN_KEY)))
+            return true;
+
+         // Same column zoomed - check if any size fields changed
+         if (hasDoubleChanged(oldValue, newValue, WIDGET_SIZE_KEY))
+            return true;
+
+         if (hasDoubleChanged(oldValue, newValue, SIDEBAR_SIZE_KEY))
+            return true;
+
+         if (hasStringChanged(oldValue, newValue, LEFT_SIZES_KEY))
+            return true;
+
+         return false;
+      }
+
+      private boolean hasDoubleChanged(JsObject oldVal, JsObject newVal, String key)
+      {
+         boolean oldHas = oldVal.hasKey(key);
+         boolean newHas = newVal.hasKey(key);
+         if (oldHas != newHas)
+            return true;
+         if (!oldHas)
+            return false;
+         return !MathUtil.isEqual(oldVal.getDouble(key), newVal.getDouble(key), 0.0001);
+      }
+
+      private boolean hasStringChanged(JsObject oldVal, JsObject newVal, String key)
+      {
+         boolean oldHas = oldVal.hasKey(key);
+         boolean newHas = newVal.hasKey(key);
+         if (oldHas != newHas)
+            return true;
+         if (!oldHas)
+            return false;
+         return !StringUtil.equals(oldVal.getString(key), newVal.getString(key));
+      }
+
+      private static final String ZOOMED_COLUMN_KEY = "ZoomedColumn";
+      private static final String WIDGET_SIZE_KEY = "WidgetSize";
+      private static final String SIDEBAR_SIZE_KEY = "SidebarSize";
+      private static final String LEFT_SIZES_KEY = "LeftSizes";
+
+      private JsObject lastValue_ = null;
+   }
+
    private LogicalWindow getWindowForTab(Tab tab)
    {
       switch (tab)
@@ -568,6 +752,7 @@ public class PaneManager
       manageChatCommands();
 
       new ZoomedTabStateValue();
+      new ZoomedColumnStateValue();
    }
 
    LogicalWindow getLogicalWindow(WindowFrame frame)
@@ -1081,6 +1266,16 @@ public class PaneManager
       }
       else if (!showSidebar && sidebar_ != null)
       {
+         // If sidebar is zoomed, clear the zoom state before hiding.
+         // Use getZoomedColumn() instead of zoomedColumn_ because the latter may
+         // not be set yet (e.g., state restoration hasn't run) or may be out of sync.
+         if (StringUtil.equals(getZoomedColumn(), SIDEBAR_COLUMN))
+         {
+            zoomedColumn_ = null;
+            widgetSizePriorToZoom_ = -1;
+            sidebarSizePriorToZoom_ = -1;
+            leftWidgetSizePriorToZoom_.clear();
+         }
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
@@ -1496,6 +1691,7 @@ public class PaneManager
       widgetSizePriorToZoom_ = -1;
       sidebarSizePriorToZoom_ = -1;
       leftWidgetSizePriorToZoom_.clear();
+      zoomedColumn_ = null;
       panel_.setSplitterEnabled(enableSplitter);
       manageLayoutCommands();
    }
@@ -2082,6 +2278,11 @@ public class PaneManager
             (leftWidgetSizePriorToZoom_.size() != additionalSourceCount_))
          {
             // no prior position to restore to, just show defaults
+            // Clear zoom state to avoid stale metadata being persisted
+            zoomedColumn_ = null;
+            widgetSizePriorToZoom_ = -1;
+            sidebarSizePriorToZoom_ = -1;
+            leftWidgetSizePriorToZoom_.clear();
             restoreColumnLayout();
             return;
          }
@@ -2155,9 +2356,11 @@ public class PaneManager
          widgetSizePriorToZoom_ = -1;
          sidebarSizePriorToZoom_ = -1;
          leftWidgetSizePriorToZoom_.clear();
+         zoomedColumn_ = null;
       }
       else
       {
+         zoomedColumn_ = columnId;
          if (widgetSizePriorToZoom_ < 0)
          {
             if (sidebarOnRight)
@@ -2756,6 +2959,7 @@ public class PaneManager
    private double sidebarSizePriorToZoom_ = -1;
    private boolean isAnimating_ = false;
    private final ArrayList<Double> leftWidgetSizePriorToZoom_ = new ArrayList<>();
+   private String zoomedColumn_ = null;  // "left", "right", "sidebar", or null
 
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
