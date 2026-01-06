@@ -111,6 +111,9 @@ namespace prefs {
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
 #define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
+#define kPositAssistant "posit_assistant"
+#define kPositAssistantLastUpdateCheck "lastUpdateCheck"
+#define kPositAssistantRstudioVersionChecked "rstudioVersionChecked"
 
 class UserStateValues: public Preferences
 {
@@ -295,6 +298,12 @@ public:
     */
    bool quartoWebsiteSyncEditor();
    core::Error setQuartoWebsiteSyncEditor(bool val);
+
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   core::json::Object positAssistant();
+   core::Error setPositAssistant(core::json::Object val);
 
 };
 

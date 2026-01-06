@@ -413,6 +413,19 @@ core::Error UserStateValues::setQuartoWebsiteSyncEditor(bool val)
    return writePref("quarto_website_sync_editor", val);
 }
 
+/**
+ * State related to the Posit Assistant feature.
+ */
+core::json::Object UserStateValues::positAssistant()
+{
+   return readPref<core::json::Object>("posit_assistant");
+}
+
+core::Error UserStateValues::setPositAssistant(core::json::Object val)
+{
+   return writePref("posit_assistant", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
@@ -446,6 +459,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kZoteroApiKey,
       kZoteroDataDir,
       kQuartoWebsiteSyncEditor,
+      kPositAssistant,
    });
 }
    

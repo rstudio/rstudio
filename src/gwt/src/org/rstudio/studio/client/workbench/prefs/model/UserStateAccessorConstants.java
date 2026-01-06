@@ -263,6 +263,14 @@ public interface UserStateAccessorConstants extends Constants {
    @DefaultStringValue("Sync source editor to Quarto website preview navigation.")
    String quartoWebsiteSyncEditorDescription();
 
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   @DefaultStringValue("Posit Assistant State")
+   String positAssistantTitle();
+   @DefaultStringValue("State related to the Posit Assistant feature.")
+   String positAssistantDescription();
+
 
 
 }
