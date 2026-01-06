@@ -45,7 +45,7 @@ This page provides the release notes associated with each release of RStudio and
 - (rstudio-pro#9550): Added `POSIT_PRODUCT` environment variable with value "WORKBENCH" to all Sessions and jobs
 - (rstudio-pro#9585): Added revocation logic for Session RPC cookies when a session ends (exit, suspension, or halt) or when the related user account is locked, ensuring immediate invalidation of credentials
 - (rstudio-pro#9169): Added `use-legacy-homepage` option to allow Admins to set the legacy home page as the default during the deprecation window
-- (rstudio-pro#9065, rstudio-pro#9074): Added support for Custom OAuth Managed Credentials
+- (rstudio-pro#9065, rstudio-pro#9074): Added support for custom OAuth managed credentials
 - (rstudio-pro#8840): Added support for launching sessions with projects that the Workbench node cannot find, in case the project exists on the session node
 - (rstudio-pro#5913): Added support for Managed Credentials in Workbench Jobs
 - (rstudio-pro#9224): Added support for projects in `get_session` and `launch_session` Workbench APIs
