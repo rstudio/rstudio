@@ -421,6 +421,12 @@ public:
    /**
     * @brief Gets the weakly canonical representation of this file path.
     *
+    *    The operation is equivalent to normalizing the result of:
+    *
+    *      canonical(<head>) / <tail>
+    *
+    *    where <head> is the portion of the path that exists, and <tail> is the remaining portion that does not.
+    *
     * @return The weakly canonical representation of this file path.
     */
    std::string getWeaklyCanonicalPath() const;
