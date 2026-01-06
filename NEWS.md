@@ -23,7 +23,7 @@
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.403.0
+- Copilot Language Server 1.406.0
 - Electron 38.7.0
 - Node.js 22.21.1 (copilot completions)
 - Node.js 22.20.0 (vscode server)
