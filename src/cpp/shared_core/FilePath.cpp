@@ -934,7 +934,7 @@ std::string FilePath::getCanonicalPath() const
    catch (boost::filesystem::filesystem_error& e)
    {
       logError(m_impl->Path, e, ERROR_LOCATION);
-      return getLexicallyNormalPath();
+      return getWeaklyCanonicalPath();
    }
 }
 
