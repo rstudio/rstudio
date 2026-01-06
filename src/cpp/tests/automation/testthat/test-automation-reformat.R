@@ -90,5 +90,3 @@ remote$console.executeExpr({
 })
 
 remote$project.close()
-
-project.close()
