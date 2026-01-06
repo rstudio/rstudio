@@ -926,8 +926,16 @@ std::string FilePath::getCanonicalPath() const
 {
    if (isEmpty())
       return std::string();
-   else
+
+   try
+   {
       return BOOST_FS_PATH2STR(boost::filesystem::canonical(m_impl->Path));
+   }
+   catch (boost::filesystem::filesystem_error& e)
+   {
+      logError(m_impl->Path, e, ERROR_LOCATION);
+      return getLexicallyNormalPath();
+   }
 }
 
 Error FilePath::getChildren(std::vector<FilePath>& out_filePaths) const
