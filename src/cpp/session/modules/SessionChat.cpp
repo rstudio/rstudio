@@ -63,6 +63,9 @@
 #include <session/SessionUrlPorts.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "../SessionDirs.hpp"
 #include "environment/EnvironmentUtils.hpp"
@@ -2377,6 +2380,107 @@ struct UpdateState
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
 
+// Check if we should skip the update check due to throttling
+// Returns true if we should skip (recently checked with same RStudio version)
+bool shouldSkipUpdateCheck()
+{
+   json::Object positAssistantState = prefs::userState().positAssistant();
+
+   // Check if RStudio version has changed since last check
+   auto versionIt = positAssistantState.find(kPositAssistantRstudioVersionChecked);
+   if (versionIt == positAssistantState.end())
+   {
+      DLOG("No previous RStudio version recorded, will check for updates");
+      return false;
+   }
+
+   std::string lastVersion = (*versionIt).getValue().getString();
+   if (lastVersion.empty() || lastVersion != std::string(RSTUDIO_VERSION))
+   {
+      DLOG("RStudio version changed ({} -> {}), will check for updates",
+           lastVersion, RSTUDIO_VERSION);
+      return false;
+   }
+
+   // Check timestamp of last update check
+   auto timestampIt = positAssistantState.find(kPositAssistantLastUpdateCheck);
+   if (timestampIt == positAssistantState.end())
+   {
+      DLOG("No previous update check timestamp, will check for updates");
+      return false;
+   }
+
+   std::string lastCheckStr = (*timestampIt).getValue().getString();
+   if (lastCheckStr.empty())
+   {
+      DLOG("Empty update check timestamp, will check for updates");
+      return false;
+   }
+
+   // Parse the timestamp and check if an hour has passed
+   try
+   {
+      boost::posix_time::ptime lastCheck =
+         boost::posix_time::from_iso_string(lastCheckStr);
+      boost::posix_time::ptime now =
+         boost::posix_time::second_clock::universal_time();
+
+      boost::posix_time::time_duration elapsed = now - lastCheck;
+
+      // Handle clock skew: if elapsed time is negative, the stored timestamp
+      // is in the future. Don't skip in this case.
+      if (elapsed.is_negative())
+      {
+         DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
+         return false;
+      }
+
+      // Skip if less than 1 hour has passed
+      if (elapsed.hours() < 1)
+      {
+         DLOG("Update check throttled: only {} minutes since last check",
+              elapsed.total_seconds() / 60);
+         return true;
+      }
+
+      DLOG("Over 1 hour since last update check, will check for updates");
+      return false;
+   }
+   catch (const std::exception& e)
+   {
+      WLOG("Failed to parse update check timestamp '{}': {}",
+           lastCheckStr, e.what());
+      return false;
+   }
+}
+
+// Save the update check state (timestamp and RStudio version)
+void saveUpdateCheckState()
+{
+   json::Object positAssistantState = prefs::userState().positAssistant();
+
+   // Store current UTC time as ISO string
+   boost::posix_time::ptime now =
+      boost::posix_time::second_clock::universal_time();
+   positAssistantState[kPositAssistantLastUpdateCheck] =
+      boost::posix_time::to_iso_string(now);
+
+   // Store current RStudio version
+   positAssistantState[kPositAssistantRstudioVersionChecked] =
+      std::string(RSTUDIO_VERSION);
+
+   Error error = prefs::userState().setPositAssistant(positAssistantState);
+   if (error)
+   {
+      WLOG("Failed to save update check state: {}", error.getMessage());
+   }
+   else
+   {
+      DLOG("Saved update check state: timestamp={}, version={}",
+           boost::posix_time::to_iso_string(now), RSTUDIO_VERSION);
+   }
+}
+
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
 {
@@ -2822,6 +2926,20 @@ Error checkForUpdatesOnStartup()
    }
 
    s_updateState.currentVersion = installedVersion;
+
+   // Check if we should skip due to throttling
+   // Skip check if:
+   // - Posit Assistant IS installed (version != "0.0.0")
+   // - AND RStudio version hasn't changed
+   // - AND less than 1 hour since last check
+   if (installedVersion != "0.0.0" && shouldSkipUpdateCheck())
+   {
+      DLOG("Update check skipped: throttled (checked within last hour)");
+      return Success();
+   }
+
+   // Record that we attempted an update check (prevents hammering server on failures)
+   saveUpdateCheckState();
 
    // Download manifest (silent failure)
    json::Object manifest;

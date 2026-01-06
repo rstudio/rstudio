@@ -675,6 +675,32 @@ public class UserStateAccessor extends Prefs
          false);
    }
 
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   public PrefValue<PositAssistant> positAssistant()
+   {
+      return object(
+         "posit_assistant",
+         _constants.positAssistantTitle(), 
+         _constants.positAssistantDescription(), 
+         null);
+   }
+
+   public static class PositAssistant extends JavaScriptObject
+   {
+      protected PositAssistant() {} 
+
+      public final native String getLastUpdateCheck() /*-{
+         return this && this.lastUpdateCheck || "";
+      }-*/;
+
+      public final native String getRstudioVersionChecked() /*-{
+         return this && this.rstudioVersionChecked || "";
+      }-*/;
+
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("general"))
@@ -737,6 +763,8 @@ public class UserStateAccessor extends Prefs
          zoteroDataDir().setValue(layer, source.getString("zotero_data_dir"));
       if (source.hasKey("quarto_website_sync_editor"))
          quartoWebsiteSyncEditor().setValue(layer, source.getBool("quarto_website_sync_editor"));
+      if (source.hasKey("posit_assistant"))
+         positAssistant().setValue(layer, source.getObject("posit_assistant"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -771,6 +799,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
       prefs.add(quartoWebsiteSyncEditor());
+      prefs.add(positAssistant());
       return prefs;
    }
    
