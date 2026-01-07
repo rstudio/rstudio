@@ -198,19 +198,11 @@ void ConsoleActions::asJson(json::Object* pActions)
       json::Array actionsType;
       json::Array actionsData;
       
-      // push all the information from our buffer of completion 
+      // pull from existing actions
       for (auto&& action : actions_)
       {
          actionsType.push_back(json::Value(action.type));
          actionsData.push_back(json::Value(action.data));
-      }
-      
-      // if there's anything leftover in the action buffer,
-      // add that now as well
-      if (!buffer_.data.empty())
-      {
-         actionsType.push_back(json::Value(buffer_.type));
-         actionsData.push_back(json::Value(buffer_.data));
       }
       
       pActions->operator[](kActionType) = actionsType;
