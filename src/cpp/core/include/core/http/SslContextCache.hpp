@@ -78,7 +78,8 @@ private:
 
    static boost::shared_ptr<boost::asio::ssl::context> createContext(
       bool verify,
-      const std::string& certificateAuthority);
+      const std::string& certificateAuthority,
+      bool *pCacheable);
 
    static std::mutex cacheMutex_;
    static std::map<ContextKey, boost::shared_ptr<boost::asio::ssl::context>> contextCache_;

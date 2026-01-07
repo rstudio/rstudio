@@ -45,11 +45,13 @@ boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
    }
 
    // Create new context (outside lock to minimize contention)
-   auto pContext = createContext(verify, certificateAuthority);
+   bool cacheable = true;
+   auto pContext = createContext(verify, certificateAuthority, &cacheable);
 
    int size = 0;
 
    // Add to cache
+   if (cacheable)
    {
       std::lock_guard<std::mutex> lock(cacheMutex_);
       size = contextCache_.size();
@@ -62,23 +64,29 @@ boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
       contextCache_[key] = pContext;
    }
 
-   LOG_DEBUG_MESSAGE("Created new SSL context (verify=" + 
-                     std::string(verify ? "true" : "false") + 
-                     ", customCA=" + 
-                     std::string(certificateAuthority.empty() ? "false" : "true") + ") - cache size: " + std::to_string(size));
-
+   if (cacheable)
+      LOG_DEBUG_MESSAGE("Created new SSL context (verify=" +
+                        std::string(verify ? "true" : "false") +
+                        ", customCA=" +
+                        std::string(certificateAuthority.empty() ? "false" : "true") + ") - cache size: " + std::to_string(size));
+   else
+      LOG_DEBUG_MESSAGE("Error creating new SSL context - not caching (verify=" +
+                        std::string(verify ? "true" : "false") +
+                        ", customCA=" +
+                        std::string(certificateAuthority.empty() ? "false" : "true") + ") - cache size: " + std::to_string(size));
 
    return pContext;
 }
 
 boost::shared_ptr<boost::asio::ssl::context> SslContextCache::createContext(
    bool verify,
-   const std::string& certificateAuthority)
+   const std::string& certificateAuthority,
+   bool *pCacheable)
 {
    auto pContext = boost::make_shared<boost::asio::ssl::context>(
       boost::asio::ssl::context::sslv23_client);
 
-   initializeSslContext(pContext.get(), verify, certificateAuthority);
+   *pCacheable = initializeSslContext(pContext.get(), verify, certificateAuthority);
 
    return pContext;
 }
