@@ -15,6 +15,7 @@
 - ([#16733](https://github.com/rstudio/rstudio/issues/16733)): Fixed an issue where a Presentation tab would be added to TabSet2 when it was assigned to the Sidebar
 - ([#8531](https://github.com/rstudio/rstudio/issues/8531)): Fixed an issue where table chunk outputs did not use all available space when printing
 - ([#16740](https://github.com/rstudio/rstudio/issues/16740)): Fixed an issue with opening files from operating system file manager when RStudio had a secondary window open
+- ([#16688](https://github.com/rstudio/rstudio/issues/16688)): Fixed an issue with pane layout when exiting RStudio with a zoomed column region
  
 #### Posit Workbench
 - 
