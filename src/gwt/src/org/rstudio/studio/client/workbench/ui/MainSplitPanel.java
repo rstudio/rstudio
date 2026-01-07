@@ -200,10 +200,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             State state = value == null ? null : (State)value.cast();
             int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
 
+            // Don't restore state if it represents a zoomed column layout (issue #16688)
+            // This avoids broken zoom state on restart - instead use defaults
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
-                state.getSplitterCount() == expectedCount)
+                state.getSplitterCount() == expectedCount &&
+                !isZoomedColumnState(state))
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
@@ -828,7 +831,52 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          }
       }
    }
-   
+
+   /**
+    * Check if the saved state represents a zoomed column layout.
+    * We detect this to avoid restoring broken zoom state on restart (issue #16688).
+    */
+   private boolean isZoomedColumnState(State state)
+   {
+      if (state == null || !state.hasSplitterPos() || !state.hasPanelWidth())
+         return false;
+
+      int[] widths = state.getSplitterPos();
+      int panelWidth = state.getPanelWidth();
+
+      if (widths.length == 0 || panelWidth <= 0)
+         return false;
+
+      // Check if any single column takes up almost the entire panel width
+      // This catches sidebar zoom and right column zoom
+      for (int width : widths)
+      {
+         if (width > panelWidth - 50)
+            return true;
+      }
+
+      // Check for left column zoom: right-side columns are collapsed
+      // Right widget is always the last stored width
+      int rightWidth = widths[widths.length - 1];
+      boolean rightCollapsed = rightWidth < 20;
+
+      // If sidebar is on the right, it's the second-to-last width
+      boolean sidebarOnRight = sidebar_ != null && !"left".equals(sidebarLocation_);
+      boolean sidebarCollapsed = true; // Default true if no sidebar on right
+
+      if (sidebarOnRight && widths.length >= 2)
+      {
+         int sidebarWidth = widths[widths.length - 2];
+         sidebarCollapsed = sidebarWidth < 20;
+      }
+
+      // If right (and sidebar if on right) are collapsed, left column is zoomed
+      if (rightCollapsed && sidebarCollapsed)
+         return true;
+
+      return false;
+   }
+
    private Map<Widget, Double> widgetPercentages_ = new HashMap<>();
    private Integer previousOffsetWidth_ = null;
    private boolean isTogglingSidebar_ = false;
