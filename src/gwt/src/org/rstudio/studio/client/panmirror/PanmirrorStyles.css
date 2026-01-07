@@ -1,6 +1,10 @@
 @charset "UTF-8";
 
-@external ProseMirror, pm-editing-root-node, body;
+@external body;
+@external pagedtable;
+@external pm-background-color;
+@external pm-editing-root-node;
+@external ProseMirror;
 
 .ProseMirror:focus-visible {
    outline-style: none !important;
