@@ -117,6 +117,7 @@ trap cleanup EXIT
 # Start running automation.
 DISPLAY="${XVFBDISPLAY}" npm run automation &
 NPMPID="$!"
+TIMED_OUT=0
 
 
 # Wait for automation to finish running.
@@ -125,7 +126,7 @@ NPMPID="$!"
 # the process cannot be interrupted in that scenario.
 # Instead, we loop and wait for poll for exit.
 set +x
-for _i in `seq 1 1800`; do
+for _i in $(seq 1 1800); do
 	if kill -0 "${NPMPID}" 2> /dev/null; then
 		sleep 1
 	else
@@ -137,10 +138,16 @@ set -x
 if kill -0 "${NPMPID}" 2> /dev/null; then
 	echo "ERROR: automation timed out; terminating process"
 	kill "${NPMPID}"
+	TIMED_OUT=1
 fi
 
 
 pkill rsession 2> /dev/null
 cat rstudio-automation-results.xml
-exit 0
+
+if [ "${TIMED_OUT}" -eq 1 ]; then
+	exit 124
+else
+	exit 0
+fi
 
