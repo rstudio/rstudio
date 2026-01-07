@@ -456,13 +456,22 @@
    # the constructed arguments to processx which launches
    # the program directly rather than through a shell
    args <- c(
+
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", browserDataDir),
+
+      # recommended flags for automation in Docker environments
+      if (.rs.platform.isLinux) c(
+         "--disable-dev-shm-usage",
+         "--renderer-process-limit=1"
+      ),
+
       if (mode == "desktop") c(
          "--automation-agent",
          "--no-sandbox"
       ),
+
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
@@ -470,6 +479,7 @@
          "--disable-features=PrivacySandboxSettings4",
          "http://localhost:8788"
       )
+
    )
    
    # On Linux, try to make sure we're using an existing display.
