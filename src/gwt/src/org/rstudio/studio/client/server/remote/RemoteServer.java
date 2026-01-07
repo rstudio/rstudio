@@ -7014,6 +7014,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "chat_doc_focused", documentId, requestCallback);
    }
 
+   @Override
+   public void chatGetVersion(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_get_version", requestCallback);
+   }
+
    private boolean isAuthStatusRequest(RpcRequest request)
    {
       return request.getMethod().equals(AUTH_STATUS);

@@ -115,6 +115,11 @@ static bool s_chatBusy = false;
 static std::string s_focusedDocumentId;
 
 // ============================================================================
+// Posit Assistant version tracking for About dialog
+// ============================================================================
+static std::string s_positAssistantVersion;
+
+// ============================================================================
 // Error Messages
 // ============================================================================
 // NOTE: This must match EXECUTION_CANCELED_ERROR constant in
@@ -2088,6 +2093,9 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
         clientProtocolVersion.empty() ? "unknown" : clientProtocolVersion,
         clientVersion.empty() ? "unknown" : clientVersion);
 
+   // Store the client version for later retrieval via chat_get_version RPC
+   s_positAssistantVersion = clientVersion.empty() ? "unknown" : clientVersion;
+
    // Build response
    json::Object result;
    result["protocolVersion"] = kProtocolVersion;
@@ -3481,6 +3489,16 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error chatGetVersion(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   // Return empty string if version not yet received (backend never started)
+   // Return "unknown" if backend started but didn't provide version
+   // Otherwise return the actual version string
+   pResponse->setResult(s_positAssistantVersion);
+   return Success();
+}
+
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -3949,6 +3967,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_start_backend", chatStartBackend))
       (bind(registerRpcMethod, "chat_get_backend_url", chatGetBackendUrl))
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
+      (bind(registerRpcMethod, "chat_get_version", chatGetVersion))
       (bind(registerRpcMethod, "chat_check_for_updates", chatCheckForUpdates))
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
