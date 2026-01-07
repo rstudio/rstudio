@@ -107,8 +107,17 @@ void ConsoleActions::flush()
       rhs = buffer_.data.find('\n', lhs);
    }
 
-   // now trim the buffer data to any remaining partial line
-   buffer_.data = buffer_.data.substr(lhs);
+   // push any remaining partial line
+   if (lhs < buffer_.data.size())
+   {
+      ConsoleAction action;
+      action.type = buffer_.type;
+      action.data = buffer_.data.substr(lhs);
+      actions_.push_back(action);
+   }
+
+   // clear buffer to finish
+   buffer_.data.clear();
 }
 
 void ConsoleActions::add(int type, const std::string& data)
