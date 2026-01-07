@@ -929,7 +929,7 @@
    if (.rs.platform.isLinux)
    {
       # Sanitize label name.
-      label <- gsub("[^[:alnum:]]", "_", label)
+      label <- gsub("[^[:alnum:]]", "_", format(label))
       
       # Use 'xwd' to capture a screenshot from the display.
       name <- sprintf("rstudio-automation-%s.%s", label, format(Sys.time(), "%F.%s"))
