@@ -19,14 +19,28 @@
 
 #include <boost/make_shared.hpp>
 
+namespace {
+   struct ContextKey
+   {
+      bool verify;
+      std::string certificateAuthority;
+
+      bool operator<(const ContextKey& other) const
+      {
+         if (verify != other.verify)
+            return verify < other.verify;
+         return certificateAuthority < other.certificateAuthority;
+      }
+   };
+
+   std::mutex s_cacheMutex;
+   std::map<ContextKey, boost::shared_ptr<boost::asio::ssl::context>> s_contextCache;
+}
+
 namespace rstudio {
 namespace core {
 namespace http {
 namespace ssl {
-
-std::mutex SslContextCache::cacheMutex_;
-std::map<SslContextCache::ContextKey, boost::shared_ptr<boost::asio::ssl::context>> 
-   SslContextCache::contextCache_;
 
 boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
    bool verify,
@@ -36,9 +50,9 @@ boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
 
    // Check cache first - common path, could use a read-lock here
    {
-      std::lock_guard<std::mutex> lock(cacheMutex_);
-      auto it = contextCache_.find(key);
-      if (it != contextCache_.end())
+      std::lock_guard<std::mutex> lock(s_cacheMutex);
+      auto it = s_contextCache.find(key);
+      if (it != s_contextCache.end())
       {
          return it->second;
       }
@@ -53,15 +67,15 @@ boost::shared_ptr<boost::asio::ssl::context> SslContextCache::getContext(
    // Add to cache
    if (cacheable)
    {
-      std::lock_guard<std::mutex> lock(cacheMutex_);
-      size = contextCache_.size();
+      std::lock_guard<std::mutex> lock(s_cacheMutex);
+      size = s_contextCache.size();
       // Double-check in case another thread created it while we were creating ours
-      auto it = contextCache_.find(key);
-      if (it != contextCache_.end())
+      auto it = s_contextCache.find(key);
+      if (it != s_contextCache.end())
       {
          return it->second;
       }
-      contextCache_[key] = pContext;
+      s_contextCache[key] = pContext;
    }
 
    if (cacheable)
@@ -98,14 +112,14 @@ void SslContextCache::removeCertFromCache(bool verify, const std::string& certAu
    {
       ContextKey key{verify, certAuthority};
 
-      std::lock_guard<std::mutex> lock(cacheMutex_);
-      auto it = contextCache_.find(key);
-      if (it != contextCache_.end())
+      std::lock_guard<std::mutex> lock(s_cacheMutex);
+      auto it = s_contextCache.find(key);
+      if (it != s_contextCache.end())
       {   
          found = true; 
-         contextCache_.erase(it);
+         s_contextCache.erase(it);
       }
-      size = contextCache_.size();
+      size = s_contextCache.size();
    }
 
    // Logging after the mutex is released
@@ -117,8 +131,8 @@ void SslContextCache::removeCertFromCache(bool verify, const std::string& certAu
 
 void SslContextCache::clearCache()
 {
-   std::lock_guard<std::mutex> lock(cacheMutex_);
-   contextCache_.clear();
+   std::lock_guard<std::mutex> lock(s_cacheMutex);
+   s_contextCache.clear();
    LOG_DEBUG_MESSAGE("Cleared SSL context cache");
 }
 

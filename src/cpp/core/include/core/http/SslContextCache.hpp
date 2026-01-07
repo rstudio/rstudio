@@ -63,26 +63,11 @@ public:
    static void removeCertFromCache(bool verify, const std::string& certAuthority);
 
 private:
-   struct ContextKey
-   {
-      bool verify;
-      std::string certificateAuthority;
-
-      bool operator<(const ContextKey& other) const
-      {
-         if (verify != other.verify)
-            return verify < other.verify;
-         return certificateAuthority < other.certificateAuthority;
-      }
-   };
 
    static boost::shared_ptr<boost::asio::ssl::context> createContext(
       bool verify,
       const std::string& certificateAuthority,
       bool *pCacheable);
-
-   static std::mutex cacheMutex_;
-   static std::map<ContextKey, boost::shared_ptr<boost::asio::ssl::context>> contextCache_;
 };
 
 } // namespace ssl
