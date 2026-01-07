@@ -9,3 +9,10 @@
 .ProseMirror .body {
    padding-top: 2px !important;
 }
+
+/* Override width: auto from Quarto's table-styles.css for chunk output tables */
+/* https://github.com/rstudio/rstudio/issues/8531 */
+.ProseMirror .pm-background-color .pagedtable table {
+   width: 100%;
+   table-layout: auto;
+}
