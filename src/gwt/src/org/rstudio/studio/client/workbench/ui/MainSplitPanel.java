@@ -200,10 +200,13 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             State state = value == null ? null : (State)value.cast();
             int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
 
+            // Don't restore state if it represents a zoomed column layout (issue #16688)
+            // This avoids broken zoom state on restart - instead use defaults
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
-                state.getSplitterCount() == expectedCount)
+                state.getSplitterCount() == expectedCount &&
+                !isZoomedColumnState(state))
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
@@ -828,7 +831,34 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          }
       }
    }
-   
+
+   /**
+    * Check if the saved state represents a zoomed column layout.
+    * A zoomed state is when one column takes up (almost) the entire panel width.
+    * We detect this to avoid restoring broken zoom state on restart (issue #16688).
+    */
+   private boolean isZoomedColumnState(State state)
+   {
+      if (state == null || !state.hasSplitterPos() || !state.hasPanelWidth())
+         return false;
+
+      int[] widths = state.getSplitterPos();
+      int panelWidth = state.getPanelWidth();
+
+      if (widths.length == 0 || panelWidth <= 0)
+         return false;
+
+      // Check if any single column takes up almost the entire panel width
+      // (within 50px to account for splitters and small rounding)
+      for (int width : widths)
+      {
+         if (width > panelWidth - 50)
+            return true;
+      }
+
+      return false;
+   }
+
    private Map<Widget, Double> widgetPercentages_ = new HashMap<>();
    private Integer previousOffsetWidth_ = null;
    private boolean isTogglingSidebar_ = false;
