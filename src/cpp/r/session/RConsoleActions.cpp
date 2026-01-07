@@ -94,7 +94,7 @@ void ConsoleActions::flush()
 
       // consume any remaining data on this line
       // (include the newline character)
-      if (lhs < rhs)
+      if (lhs <= rhs)
       {
          ConsoleAction action;
          action.type = buffer_.type;
