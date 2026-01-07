@@ -115,11 +115,9 @@ export class GwtCallback extends EventEmitter {
       return;
     }
 
-    const escapedPath = filePath.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
-
     try {
       const webContent = this.mainWindow.window.webContents;
-      await webContent.executeJavaScript(`window.desktopHooks.openFile("${escapedPath}")`);
+      await webContent.executeJavaScript(`window.desktopHooks.openFile(${JSON.stringify(filePath)})`);
       raiseAndActivateWindow(this.mainWindow.window);
     } catch (error: unknown) {
       logger().logError(safeError(error));
