@@ -48,7 +48,14 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { parseFilter, findRepoRoot, getAppPath, handleLocaleCookies, resolveAliasedPath } from './utils';
+import {
+  parseFilter,
+  findRepoRoot,
+  getAppPath,
+  handleLocaleCookies,
+  resolveAliasedPath,
+  raiseAndActivateWindow,
+} from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -97,6 +104,25 @@ export class GwtCallback extends EventEmitter {
 
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
+
+  /**
+   * Opens a file in the main window and activates it.
+   * This should be called from the main process (e.g., application.ts, args-manager.ts).
+   * Fixes issue #16740 by ensuring files always open in the main window, not satellite windows.
+   */
+  async openFileInMainWindow(filePath: string): Promise<void> {
+    if (!filePath) {
+      return;
+    }
+
+    try {
+      const webContent = this.mainWindow.window.webContents;
+      await webContent.executeJavaScript(`window.desktopHooks.openFile(${JSON.stringify(filePath)})`);
+      raiseAndActivateWindow(this.mainWindow.window);
+    } catch (error: unknown) {
+      logger().logError(safeError(error));
+    }
+  }
 
   getFonts(monospace: boolean) {
     if (this.hasFontConfig) {
@@ -171,6 +197,11 @@ export class GwtCallback extends EventEmitter {
       } else {
         void shell.openExternal(url);
       }
+    });
+
+    ipcMain.on('desktop_open_file', async (_event, filePath: string) => {
+      // Delegate to the shared method that handles opening files in the main window
+      await this.openFileInMainWindow(filePath);
     });
 
     ipcMain.handle(
