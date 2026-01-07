@@ -93,6 +93,7 @@ void ConsoleActions::flush()
       }
 
       // consume any remaining data on this line
+      // (include the newline character)
       if (lhs < rhs)
       {
          ConsoleAction action;
