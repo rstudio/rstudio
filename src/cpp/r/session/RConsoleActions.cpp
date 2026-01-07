@@ -133,7 +133,10 @@ void ConsoleActions::add(int type, const std::string& data)
 
       // if we've received more output of the same type, then
       // we'll append that to our action buffer
-      bool isOutputType = type == kConsoleActionOutput || kConsoleActionOutputError;
+      bool isOutputType =
+         type == kConsoleActionOutput ||
+         type == kConsoleActionOutputError;
+
       if (isOutputType && type == buffer_.type)
       {
          buffer_.data.append(data);
