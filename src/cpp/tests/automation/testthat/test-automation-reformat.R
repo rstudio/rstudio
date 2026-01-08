@@ -24,6 +24,7 @@ remote$console.executeExpr({
 
 .rs.test("styler: documents can be reformatted on save", {
    
+   skip_on_ci()
    if (!remote$package.isInstalled("styler"))
       skip("styler is not installed")
    
