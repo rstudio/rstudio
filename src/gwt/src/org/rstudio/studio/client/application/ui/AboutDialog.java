@@ -14,21 +14,15 @@
  */
 
 package org.rstudio.studio.client.application.ui;
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
-
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -36,6 +30,12 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class AboutDialog extends ModalDialogBase
 {
@@ -48,11 +48,19 @@ public class AboutDialog extends ModalDialogBase
 
       ThemedButton copyVersionButton = new ThemedButton(constants_.copyVersionButtonTitle(), (ClickEvent) ->
       {
-         Clipboard.setText("RStudio " + info.version + " " +
+         String versionText = "RStudio " + info.version + " " +
             "\"" + info.release_name + "\" " + info.build_type +
             " (" + info.commit + ", " + info.date + ") " +
             constants_.forText() + info.os + "\n" +
-            Window.Navigator.getUserAgent() + quartoDetails());
+            Window.Navigator.getUserAgent() + quartoDetails();
+         
+         // Append Posit Assistant version if available
+         if (!positAssistantVersion_.isEmpty())
+         {
+            versionText += ", Posit Assistant " + positAssistantVersion_;
+         }
+         
+         Clipboard.setText(versionText);
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, constants_.versionCopiedText(),
                  constants_.versionInformationCopiedText());
       });
@@ -129,6 +137,7 @@ public class AboutDialog extends ModalDialogBase
             // Only display if we got a non-empty version
             if (version != null && !version.isEmpty())
             {
+               positAssistantVersion_ = version;
                contents_.appendToUserAgent(", Posit Assistant " + version);
             }
          }
@@ -146,5 +155,6 @@ public class AboutDialog extends ModalDialogBase
    private Session session_;
    private UserPrefs userPrefs_;
    private ChatServerOperations chatServer_;
+   private String positAssistantVersion_ = "";
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
