@@ -238,27 +238,6 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(getFeatureDependencies("rmarkdown"));
       
-      // update rsconnect version if necessary
-      // TODO: Remove after a future release when required 'rsconnect' version
-      // is updated globally.
-      if (isQuartoManuscript)
-      {
-         for (int i = 0, n = deps.size(); i < n; i++)
-         {
-            Dependency dep = deps.get(i);
-            if (StringUtil.equals(dep.getName(), "rsconnect"))
-            {
-               int compare = Version.compare(dep.getVersion(), "1.0.2");
-               if (compare < 0)
-               {
-                  deps.remove(i);
-                  deps.add(Dependency.cranPackage("rsconnect", "1.0.2"));
-                  break;
-               }
-            }
-         }
-      }
-
       withDependencies(
         constants_.publishingPaneHeader(),
         userAction,
