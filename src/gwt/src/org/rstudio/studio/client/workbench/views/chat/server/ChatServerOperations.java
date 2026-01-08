@@ -22,6 +22,7 @@ public interface ChatServerOperations
    public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback);
+   public void chatGetVersion(ServerRequestCallback<String> requestCallback);
 
    public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback);
    public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback);
