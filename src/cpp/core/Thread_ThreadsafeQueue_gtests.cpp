@@ -240,7 +240,7 @@ TEST_F(ThreadsafeQueueTest, MultipleProducersSingleConsumer)
     std::vector<std::thread> producers;
     for (int p = 0; p < numProducers; ++p)
     {
-        producers.emplace_back([this, p, itemsPerProducer, &producersFinished]() {
+        producers.emplace_back([this, p, &producersFinished]() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> dis(1, 10);
@@ -259,7 +259,7 @@ TEST_F(ThreadsafeQueueTest, MultipleProducersSingleConsumer)
     }
     
     // Single consumer thread
-    std::thread consumer([this, &consumedItems, &producersFinished, numProducers]() {
+    std::thread consumer([this, &consumedItems, &producersFinished]() {
         int value;
         while (producersFinished < numProducers || !queue_->isEmpty())
         {
@@ -312,7 +312,7 @@ TEST_F(ThreadsafeQueueTest, SingleProducerMultipleConsumers)
     std::vector<std::vector<int>> consumedByThread(numConsumers);
     
     // Single producer thread
-    std::thread producer([this, totalItems, &producerDone]() {
+    std::thread producer([this, &producerDone]() {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> dis(1, 5);
@@ -398,7 +398,7 @@ TEST_F(ThreadsafeQueueTest, HighContentionMultipleProducersConsumers)
     std::vector<std::thread> producers;
     for (int p = 0; p < numProducers; ++p)
     {
-        producers.emplace_back([this, p, itemsPerProducer, &producersFinished]() {
+        producers.emplace_back([this, p, &producersFinished]() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> dis(1, 3);
@@ -420,8 +420,7 @@ TEST_F(ThreadsafeQueueTest, HighContentionMultipleProducersConsumers)
     std::vector<std::thread> consumers;
     for (int c = 0; c < numConsumers; ++c)
     {
-        consumers.emplace_back([this, c, &consumedByThread, &totalConsumed, 
-                               &producersFinished, numProducers]() {
+        consumers.emplace_back([this, c, &consumedByThread, &totalConsumed, &producersFinished]() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> dis(1, 3);
@@ -526,7 +525,7 @@ TEST_F(ThreadsafeQueueTest, TimedWaitStressTest)
     std::vector<std::thread> producers;
     for (int p = 0; p < numProducers; ++p)
     {
-        producers.emplace_back([this, p, itemsPerProducer]() {
+        producers.emplace_back([this, p]() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_int_distribution<> dis(1, 20);
