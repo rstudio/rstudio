@@ -205,11 +205,16 @@
          return(0L)
       
       objectId <- attr(x, "id", exact = TRUE)
-      response <- self$client$Runtime.callFunctionOn(
-         functionDeclaration = "function() { return this.length; }",
-         objectId = objectId
+      response <- .rs.tryCatch(
+         self$client$Runtime.callFunctionOn(
+            functionDeclaration = "function() { return this.length; }",
+            objectId = objectId
+         )
       )
-      
+
+      if (inherits(response, "error"))
+         return(0L)
+
       .rs.automation.wrapJsResponse(self, response, objectId)
       
    })

@@ -58,9 +58,9 @@
    if (wait)
    {
       Sys.sleep(0.1)
-      editorEl <- self$js.querySelector("#rstudio_console_input")
       .rs.waitUntil("console is no longer busy", function()
       {
+         editorEl <- self$js.querySelector("#rstudio_console_input")
          !grepl("rstudio-console-busy", editorEl$className)
       }, swallowErrors = TRUE)
    }
