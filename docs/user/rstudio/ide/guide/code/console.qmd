@@ -33,6 +33,18 @@ The same keyboard shortcut can quickly search for commands that match a given pr
 
 ![](images/previous-commands.png){fig-alt="A screenshot of the R console in RStudio, showing a filtered list of executed commands that match 'glimpse'"}
 
+## Find in Console
+
+RStudio provides a Find bar for searching through Console output. This is useful for locating specific results, error messages, or any text that has been printed to the Console.
+
+To open the Find bar, press <kbd>Ctrl+F</kbd> (<kbd>Cmd+F</kbd> on macOS) while the Console pane is focused, or click the magnifying glass icon in the Console toolbar. A search bar will appear at the top of the Console pane where you can type your search term.
+
+The Find bar supports the following features:
+
+- **Case-sensitive search** --- Toggle case sensitivity to match text exactly as typed.
+- **Navigate matches** --- Use the arrow buttons or press <kbd>Enter</kbd> to move to the next match, and <kbd>Shift+Enter</kbd> to move to the previous match.
+- **Close the Find bar** --- Press <kbd>Esc</kbd> to close the Find bar and return focus to the Console.
+
 ## Console title bar
 
 The screenshot below illustrates a few additional capabilities provided by the Console title bar:
@@ -54,6 +66,8 @@ Beyond the history and code-completion oriented keyboard shortcuts described abo
 -   <kbd>Ctrl+1</kbd> --- Move focus to the Source Editor
 
 -   <kbd>Ctrl+2</kbd> --- Move focus to the Console
+
+-   <kbd>Ctrl+F</kbd> --- Open the [Find bar](#find-in-console) to search Console output
 
 -   <kbd>Ctrl+L</kbd> --- Clear the Console
 
