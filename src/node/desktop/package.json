@@ -80,7 +80,6 @@
     "net-ipc": "2.2.1",
     "node-abi": "4.12.0",
     "node-addon-api": "8.5.0",
-    "node-system-fonts": "1.0.1",
     "properties-reader": "2.3.0",
     "semver": "7.7.2",
     "uuid": "11.1.0",

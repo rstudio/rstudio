@@ -32,7 +32,6 @@ import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
-import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
 import { pathToFileURL } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
@@ -124,34 +123,16 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  getFonts(monospace: boolean) {
-    if (this.hasFontConfig) {
-      let command: string = '';
-      if (monospace) {
-        command = 'fc-list :spacing=mono family | sort';
-      } else {
-        command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
-      }
-
-      const result = execSync(command, { encoding: 'utf-8' });
-      return result.trim().split('\n');
-    } else if (platform() === 'win32') {
-      return desktop.win32ListMonospaceFonts();
+  getFontsLinux(monospace: boolean): string[] {
+    let command: string = '';
+    if (monospace) {
+      command = 'fc-list :spacing=mono family | sort';
     } else {
-      const result = findFontsSync({ monospace: monospace }).map((fd) => {
-        if (process.platform === 'darwin') {
-          return monospace ? fd.postscriptName : fd.family;
-        } else {
-          return fd.family;
-        }
-      });
-
-      const fontList = [...new Set<string>(result)];
-      fontList.sort((lhs, rhs) => {
-        return lhs.localeCompare(rhs);
-      });
-      return fontList;
+      command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
     }
+
+    const result = execSync(command, { encoding: 'utf-8' });
+    return result.trim().split('\n');
   }
 
   constructor(public mainWindow: MainWindow) {
@@ -167,14 +148,23 @@ export class GwtCallback extends EventEmitter {
       }
     }
 
-    // https://github.com/foliojs/font-manager/issues/15
-    // the fork did not correct usage of Fontconfig
-    // getAvailableFontsSync() incorrectly sets the monospace property
     try {
       const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
       if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
-        this.monospaceFonts = this.getFonts(true);
-        this.proportionalFonts = this.getFonts(false);
+        if (this.hasFontConfig) {
+          // Linux with fontconfig
+          this.monospaceFonts = this.getFontsLinux(true);
+          this.proportionalFonts = this.getFontsLinux(false);
+        } else if (platform() === 'win32') {
+          this.monospaceFonts = desktop.win32ListMonospaceFonts();
+          // Windows doesn't have a proportional font list API
+          this.proportionalFonts = [];
+        } else if (platform() === 'darwin') {
+          // macOS: single-pass enumeration for both font types
+          const fonts = desktop.macOSListFonts();
+          this.monospaceFonts = fonts.monospace.sort((a, b) => a.localeCompare(b));
+          this.proportionalFonts = fonts.proportional.sort((a, b) => a.localeCompare(b));
+        }
       }
     } catch (err: unknown) {
       logger().logError(safeError(err));
