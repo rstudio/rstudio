@@ -1,7 +1,7 @@
 #
 # AppCommands.R
 #
-# Copyright (C) 2025 by Posit Software, PBC
+# Copyright (C) 2026 by Posit Software, PBC
 #
 # Unless you have received this program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
@@ -232,6 +232,7 @@
    projectSweaveOptions = "projectSweaveOptions",
    setWorkingDirToProjectDir = "setWorkingDirToProjectDir",
    consoleClear = "consoleClear",
+   consoleFind = "consoleFind",
    interruptR = "interruptR",
    restartR = "restartR",
    restartRClearOutput = "restartRClearOutput",
@@ -328,6 +329,8 @@
    showToolbar = "showToolbar",
    hideToolbar = "hideToolbar",
    toggleToolbar = "toggleToolbar",
+   toggleSidebar = "toggleSidebar",
+   toggleSidebarLocation = "toggleSidebarLocation",
    zoomActualSize = "zoomActualSize",
    zoomIn = "zoomIn",
    zoomOut = "zoomOut",
@@ -495,6 +498,8 @@
    tutorialRefresh = "tutorialRefresh",
    tutorialStop = "tutorialStop",
    tutorialHome = "tutorialHome",
+   activateChat = "activateChat",
+   layoutZoomChat = "layoutZoomChat",
    activateViewer = "activateViewer",
    layoutZoomViewer = "layoutZoomViewer",
    viewerPopout = "viewerPopout",
@@ -528,6 +533,7 @@
    signOut = "signOut",
    loadServerHome = "loadServerHome",
    clearBuild = "clearBuild",
+   findBuild = "findBuild",
    buildAll = "buildAll",
    buildIncremental = "buildIncremental",
    buildFull = "buildFull",
@@ -618,6 +624,8 @@
    layoutConsoleOnLeft = "layoutConsoleOnLeft",
    layoutConsoleOnRight = "layoutConsoleOnRight",
    paneLayout = "paneLayout",
+   restoreDefaultPaneAndTabLayout = "restoreDefaultPaneAndTabLayout",
+   restoreDefaultPaneAndTabLayoutNoPrompt = "restoreDefaultPaneAndTabLayoutNoPrompt",
    maximizeConsole = "maximizeConsole",
    maximizeSource = "maximizeSource",
    maximizeTabSet1 = "maximizeTabSet1",
@@ -625,10 +633,12 @@
    toggleEditorTokenInfo = "toggleEditorTokenInfo",
    layoutZoomLeftColumn = "layoutZoomLeftColumn",
    layoutZoomRightColumn = "layoutZoomRightColumn",
+   layoutZoomSidebar = "layoutZoomSidebar",
    focusLeftSeparator = "focusLeftSeparator",
    focusRightSeparator = "focusRightSeparator",
    focusCenterSeparator = "focusCenterSeparator",
    focusSourceColumnSeparator = "focusSourceColumnSeparator",
+   focusSidebarSeparator = "focusSidebarSeparator",
    showFileMenu = "showFileMenu",
    showEditMenu = "showEditMenu",
    showCodeMenu = "showCodeMenu",

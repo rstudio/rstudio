@@ -13,10 +13,9 @@
  *
  */
 
-import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webContents, webUtils } from 'electron';
+import { ipcRenderer, OpenDialogReturnValue, SaveDialogReturnValue, webUtils } from 'electron';
 import { logString } from './logger-bridge';
 import { createAliasedPath, normalizeSeparators } from '../ui/utils';
-import { safeError } from '../core/err';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -411,28 +410,12 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_project_directory', projectDirectory);
     },
 
-    openFile: async (path: string) => {
+    openFile: (path: string) => {
       if (!path) {
         return;
       }
-      const webcontents = webContents.getAllWebContents();
-
-      if (webcontents.length) {
-        path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
-
-        // use first window that has the desktop hooks (the splash screen, for example, does NOT have them)
-        for (const webcontent of webcontents) {
-          const hasHooks: boolean = await webcontent.executeJavaScript('!!window.desktopHooks');
-          if (hasHooks) {
-            try {
-              await webcontent.executeJavaScript(`window.desktopHooks.openFile("${path}")`);
-            } catch (error: unknown) {
-              logString('err', safeError(error).message);
-            }
-            break;
-          }
-        }
-      }
+      // Send to main process to open in main window and activate it
+      ipcRenderer.send('desktop_open_file', path);
     },
 
     openProjectInNewWindow: (projectFilePath: string) => {

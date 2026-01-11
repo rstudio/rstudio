@@ -70,3 +70,13 @@ export declare function openExternal(path: string): void;
  */
 export declare function win32ListMonospaceFonts(): string[];
 
+/**
+ * (macOS only)
+ *
+ * List all fonts available on the system in a single pass.
+ * Returns an object with monospace and proportional font family names.
+ */
+export declare function macOSListFonts(): {
+  monospace: string[];
+  proportional: string[];
+};

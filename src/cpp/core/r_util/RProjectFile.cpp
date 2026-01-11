@@ -1439,7 +1439,7 @@ FilePath projectFromDirectory(const FilePath& path)
 {
    // canonicalize the path; this handles the case (among others) where the incoming
    // path ends with a "/"; without removing that, the matching logic below fails
-   FilePath directoryPath(path.getCanonicalPath());
+   FilePath directoryPath(path.getWeaklyCanonicalPath());
 
    // first use simple heuristic of a case sentitive match between
    // directory name and project file name

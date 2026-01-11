@@ -367,7 +367,8 @@
 .rs.automation.addRemoteFunction("editor.openDocument", function(documentPath)
 {
    self$console.executeExpr({
-      file.create(!!documentPath, showWarnings = FALSE)
+      if (!file.exists(!!documentPath))
+         file.create(!!documentPath, showWarnings = FALSE)
       .rs.api.documentOpen(!!documentPath)
    })
    

@@ -132,36 +132,6 @@ public class UserStateAccessor extends Prefs
    /**
     * 
     */
-   public PrefValue<RemoteSession> remoteSession()
-   {
-      return object(
-         "remote_session",
-         _constants.remoteSessionTitle(), 
-         _constants.remoteSessionDescription(), 
-         null);
-   }
-
-   public static class RemoteSession extends JavaScriptObject
-   {
-      protected RemoteSession() {} 
-
-      public final native String getLastRemoteSessionUrl() /*-{
-         return this && this.lastRemoteSessionUrl || "";
-      }-*/;
-
-      public final native JsArrayString getAuthCookies() /*-{
-         return this && this.authCookies || [];
-      }-*/;
-
-      public final native JsArrayString getTempAuthCookies() /*-{
-         return this && this.tempAuthCookies || [];
-      }-*/;
-
-   }
-
-   /**
-    * 
-    */
    public PrefValue<Renderer> renderer()
    {
       return object(
@@ -705,6 +675,32 @@ public class UserStateAccessor extends Prefs
          false);
    }
 
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   public PrefValue<PositAssistant> positAssistant()
+   {
+      return object(
+         "posit_assistant",
+         _constants.positAssistantTitle(), 
+         _constants.positAssistantDescription(), 
+         null);
+   }
+
+   public static class PositAssistant extends JavaScriptObject
+   {
+      protected PositAssistant() {} 
+
+      public final native String getLastUpdateCheck() /*-{
+         return this && this.lastUpdateCheck || "";
+      }-*/;
+
+      public final native String getRstudioVersionChecked() /*-{
+         return this && this.rstudioVersionChecked || "";
+      }-*/;
+
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("general"))
@@ -713,8 +709,6 @@ public class UserStateAccessor extends Prefs
          font().setValue(layer, source.getObject("font"));
       if (source.hasKey("view"))
          view().setValue(layer, source.getObject("view"));
-      if (source.hasKey("remote_session"))
-         remoteSession().setValue(layer, source.getObject("remote_session"));
       if (source.hasKey("renderer"))
          renderer().setValue(layer, source.getObject("renderer"));
       if (source.hasKey("platform"))
@@ -769,6 +763,8 @@ public class UserStateAccessor extends Prefs
          zoteroDataDir().setValue(layer, source.getString("zotero_data_dir"));
       if (source.hasKey("quarto_website_sync_editor"))
          quartoWebsiteSyncEditor().setValue(layer, source.getBool("quarto_website_sync_editor"));
+      if (source.hasKey("posit_assistant"))
+         positAssistant().setValue(layer, source.getObject("posit_assistant"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -776,7 +772,6 @@ public class UserStateAccessor extends Prefs
       prefs.add(general());
       prefs.add(font());
       prefs.add(view());
-      prefs.add(remoteSession());
       prefs.add(renderer());
       prefs.add(platform());
       prefs.add(contextId());
@@ -804,6 +799,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
       prefs.add(quartoWebsiteSyncEditor());
+      prefs.add(positAssistant());
       return prefs;
    }
    

@@ -32,6 +32,7 @@
 #ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # include <Carbon/Carbon.h>
+# include <CoreText/CoreText.h>
 #endif
 
 #ifdef _WIN32
@@ -374,6 +375,120 @@ public:
 private:
    TValue value_;
 };
+
+// Helper to convert CFStringRef to std::string
+std::string cfStringToStdString(CFStringRef cfStr)
+{
+   if (!cfStr)
+      return std::string();
+
+   CFIndex length = CFStringGetLength(cfStr);
+   CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+   std::vector<char> buffer(maxSize);
+
+   if (CFStringGetCString(cfStr, buffer.data(), maxSize, kCFStringEncodingUTF8))
+      return std::string(buffer.data());
+
+   return std::string();
+}
+
+// Single-pass font enumeration that populates both monospace and proportional lists
+// Enumerates system fonts, returning:
+// - monospaceFonts: PostScript names (e.g., "Menlo-Regular") for individual font faces
+// - proportionalFonts: Family names (e.g., "Lucida Grande") for UI font matching
+void macOSListFontsImpl(std::vector<std::string>& monospaceFonts,
+                        std::vector<std::string>& proportionalFonts)
+{
+   std::set<std::string> monospaceSet;
+   std::set<std::string> proportionalSet;
+
+   // Create a font collection containing all available fonts
+   CFReleaseHandle<CTFontCollectionRef> collection = CTFontCollectionCreateFromAvailableFonts(nullptr);
+   if (!collection.value())
+      return;
+
+   // Get all font descriptors from the collection
+   CFReleaseHandle<CFArrayRef> descriptors = CTFontCollectionCreateMatchingFontDescriptors(collection);
+   if (!descriptors.value())
+      return;
+
+   CFIndex count = CFArrayGetCount(descriptors);
+
+   for (CFIndex i = 0; i < count; i++)
+   {
+      CTFontDescriptorRef descriptor = (CTFontDescriptorRef)CFArrayGetValueAtIndex(descriptors, i);
+      if (!descriptor)
+         continue;
+
+      // Get PostScript name (individual face names like "Menlo-Regular")
+      CFReleaseHandle<CFStringRef> postScriptName =
+         (CFStringRef)CTFontDescriptorCopyAttribute(descriptor, kCTFontNameAttribute);
+      if (!postScriptName.value())
+         continue;
+
+      std::string postScriptNameStr = cfStringToStdString(postScriptName);
+
+      // Skip hidden fonts (starting with '.')
+      if (!postScriptNameStr.empty() && postScriptNameStr[0] == '.')
+         continue;
+
+      // Skip vertically-oriented fonts (starting with '@')
+      if (!postScriptNameStr.empty() && postScriptNameStr[0] == '@')
+         continue;
+
+      // Get symbolic traits to check font characteristics
+      CFReleaseHandle<CFDictionaryRef> traits =
+         (CFDictionaryRef)CTFontDescriptorCopyAttribute(descriptor, kCTFontTraitsAttribute);
+
+      CTFontSymbolicTraits symbolicTraits = 0;
+      if (traits.value())
+      {
+         CFNumberRef symbolicTraitsNum =
+            (CFNumberRef)CFDictionaryGetValue(traits, kCTFontSymbolicTrait);
+         if (symbolicTraitsNum)
+         {
+            int32_t traitsValue = 0;
+            CFNumberGetValue(symbolicTraitsNum, kCFNumberSInt32Type, &traitsValue);
+            symbolicTraits = (CTFontSymbolicTraits)traitsValue;
+         }
+      }
+
+      // Skip symbol/ornament fonts (like Wingdings)
+      if (symbolicTraits & kCTFontClassMaskTrait)
+      {
+         CTFontStylisticClass fontClass = symbolicTraits & kCTFontClassMaskTrait;
+         if (fontClass == kCTFontSymbolicClass || fontClass == kCTFontOrnamentalsClass)
+            continue;
+      }
+
+      // Skip italic fonts - the old node-system-fonts behavior filtered these out
+      // due to its matching algorithm penalizing italic mismatches
+      if (symbolicTraits & kCTFontItalicTrait)
+         continue;
+
+      // Check if monospace and add to appropriate set
+      if (symbolicTraits & kCTFontMonoSpaceTrait)
+      {
+         // Monospace fonts use PostScript names for the font picker
+         monospaceSet.insert(postScriptNameStr);
+      }
+      else
+      {
+         // Proportional fonts use family names for UI font availability checking
+         CFReleaseHandle<CFStringRef> familyName =
+            (CFStringRef)CTFontDescriptorCopyAttribute(descriptor, kCTFontFamilyNameAttribute);
+         if (familyName.value())
+         {
+            std::string familyNameStr = cfStringToStdString(familyName);
+            if (!familyNameStr.empty())
+               proportionalSet.insert(familyNameStr);
+         }
+      }
+   }
+
+   monospaceFonts = std::vector<std::string>(monospaceSet.begin(), monospaceSet.end());
+   proportionalFonts = std::vector<std::string>(proportionalSet.begin(), proportionalSet.end());
+}
 
 #endif
 
@@ -794,6 +909,29 @@ Napi::Value win32ListMonospaceFonts(const Napi::CallbackInfo& info)
    return result;
 }
 
+Napi::Value macOSListFonts(const Napi::CallbackInfo& info)
+{
+   std::vector<std::string> monospaceFonts;
+   std::vector<std::string> proportionalFonts;
+
+#ifdef __APPLE__
+   macOSListFontsImpl(monospaceFonts, proportionalFonts);
+#endif
+
+   auto monospaceArray = Napi::Array::New(info.Env(), monospaceFonts.size());
+   for (size_t i = 0, n = monospaceFonts.size(); i < n; i++)
+      monospaceArray[i] = Napi::String::From(info.Env(), monospaceFonts[i]);
+
+   auto proportionalArray = Napi::Array::New(info.Env(), proportionalFonts.size());
+   for (size_t i = 0, n = proportionalFonts.size(); i < n; i++)
+      proportionalArray[i] = Napi::String::From(info.Env(), proportionalFonts[i]);
+
+   auto result = Napi::Object::New(info.Env());
+   result.Set("monospace", monospaceArray);
+   result.Set("proportional", proportionalArray);
+   return result;
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -817,6 +955,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("searchRegistryForDefaultInstallationOfR", rstudio::desktop::searchRegistryForDefaultInstallationOfR);
    RS_EXPORT_FUNCTION("openExternal", rstudio::desktop::openExternal);
    RS_EXPORT_FUNCTION("win32ListMonospaceFonts", rstudio::desktop::win32ListMonospaceFonts);
+   RS_EXPORT_FUNCTION("macOSListFonts", rstudio::desktop::macOSListFonts);
 
    return exports;
 

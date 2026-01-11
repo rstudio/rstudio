@@ -24,6 +24,10 @@ remote$console.executeExpr({
 
 .rs.test("styler: documents can be reformatted on save", {
    
+   skip_on_ci()
+   if (!remote$package.isInstalled("styler"))
+      skip("styler is not installed")
+   
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(TRUE)
       .rs.uiPrefs$codeFormatter$set("styler")
@@ -46,6 +50,15 @@ remote$console.executeExpr({
 })
 
 .rs.test("air: documents can be reformatted on save", {
+   
+   # make sure 'air' is installed
+   remote$console.executeExpr({
+      writeLines(Sys.which("air"))
+   })
+   
+   output <- remote$console.getOutput(1L)
+   if (!nzchar(output))
+      skip("air is not installed")
    
    remote$console.executeExpr({
       .rs.uiPrefs$reformatOnSave$set(TRUE)
@@ -90,5 +103,3 @@ remote$console.executeExpr({
 })
 
 remote$project.close()
-
-project.close()

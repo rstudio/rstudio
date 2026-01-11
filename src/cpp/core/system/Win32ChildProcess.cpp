@@ -418,6 +418,13 @@ Error ChildProcess::run()
    {
       return LAST_SYSTEM_ERROR();
    }
+   // Ensure parent-side handle is not inheritable to prevent child processes from inheriting it
+   if (!::SetHandleInformation(pImpl_->hStdInWrite,
+                               HANDLE_FLAG_INHERIT,
+                               0))
+   {
+      return LAST_SYSTEM_ERROR();
+   }
 
    // Standard output pipe
    // Use 256KB buffer to prevent backend from blocking on stdout writes
@@ -434,6 +441,13 @@ Error ChildProcess::run()
    {
       return LAST_SYSTEM_ERROR();
    }
+   // Ensure parent-side handle is not inheritable to prevent child processes from inheriting it
+   if (!::SetHandleInformation(pImpl_->hStdOutRead,
+                               HANDLE_FLAG_INHERIT,
+                               0))
+   {
+      return LAST_SYSTEM_ERROR();
+   }
 
    // Standard error pipe
    // Use 256KB buffer to prevent backend from blocking on stderr writes
@@ -447,6 +461,13 @@ Error ChildProcess::run()
    if (!::SetHandleInformation(hStdErrWrite,
                                HANDLE_FLAG_INHERIT,
                                HANDLE_FLAG_INHERIT))
+   {
+      return LAST_SYSTEM_ERROR();
+   }
+   // Ensure parent-side handle is not inheritable to prevent child processes from inheriting it
+   if (!::SetHandleInformation(pImpl_->hStdErrRead,
+                               HANDLE_FLAG_INHERIT,
+                               0))
    {
       return LAST_SYSTEM_ERROR();
    }

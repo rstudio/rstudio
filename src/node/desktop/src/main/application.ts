@@ -21,7 +21,6 @@ import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { generateRandomPort } from '../core/system';
-import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { DesktopActivation } from './activation-overlay';
 import { appState, AppState, getEventBus } from './app-state';
 import { ApplicationLaunch } from './application-launch';
@@ -246,10 +245,10 @@ export class Application implements AppState {
           if (this.gwtCallback == null || !this.gwtCallback.initialized) {
             // wait for main window to load
             getEventBus().once('main-window-loaded', () => {
-              void getDesktopBridge().openFile(resolvedPath);
+              void this.gwtCallback?.openFileInMainWindow(resolvedPath);
             });
           } else {
-            void getDesktopBridge().openFile(resolvedPath);
+            void this.gwtCallback.openFileInMainWindow(resolvedPath);
           }
         })
         .catch((error: unknown) => logger().logError(error));

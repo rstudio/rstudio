@@ -468,7 +468,6 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
 #define kPai "pai"
-#define kPaiDownloadUri "pai_download_uri"
 
 class UserPrefValues: public Preferences
 {
@@ -2117,12 +2116,6 @@ public:
     */
    bool pai();
    core::Error setPai(bool val);
-
-   /**
-    * Experimental
-    */
-   std::string paiDownloadUri();
-   core::Error setPaiDownloadUri(std::string val);
 
 };
 

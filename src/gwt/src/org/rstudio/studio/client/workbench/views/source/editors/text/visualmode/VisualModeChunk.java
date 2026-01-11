@@ -548,6 +548,10 @@ public class VisualModeChunk
 
          // Add output decoration to host if necessary
          syncOutputClass();
+
+         // Trigger resize so paged tables recalculate column layout for new container width
+         // (deferred to ensure element has its final layout width)
+         Scheduler.get().scheduleDeferred(() -> widget.onResize());
       }
    }
    

@@ -37,10 +37,6 @@ namespace prefs {
 #define kViewAccessibility "accessibility"
 #define kViewDisableRendererAccessibility "disableRendererAccessibility"
 #define kViewEnableSplashScreen "enableSplashScreen"
-#define kRemoteSession "remote_session"
-#define kRemoteSessionLastRemoteSessionUrl "lastRemoteSessionUrl"
-#define kRemoteSessionAuthCookies "authCookies"
-#define kRemoteSessionTempAuthCookies "tempAuthCookies"
 #define kRenderer "renderer"
 #define kRendererEngine "engine"
 #define kRendererUseGpuExclusionList "useGpuExclusionList"
@@ -115,6 +111,9 @@ namespace prefs {
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
 #define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
+#define kPositAssistant "posit_assistant"
+#define kPositAssistantLastUpdateCheck "lastUpdateCheck"
+#define kPositAssistantRstudioVersionChecked "rstudioVersionChecked"
 
 class UserStateValues: public Preferences
 {
@@ -137,12 +136,6 @@ public:
     */
    core::json::Object view();
    core::Error setView(core::json::Object val);
-
-   /**
-    * 
-    */
-   core::json::Object remoteSession();
-   core::Error setRemoteSession(core::json::Object val);
 
    /**
     * 
@@ -305,6 +298,12 @@ public:
     */
    bool quartoWebsiteSyncEditor();
    core::Error setQuartoWebsiteSyncEditor(bool val);
+
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   core::json::Object positAssistant();
+   core::Error setPositAssistant(core::json::Object val);
 
 };
 

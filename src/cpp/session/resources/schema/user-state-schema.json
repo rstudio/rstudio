@@ -77,31 +77,6 @@
                 "enableSplashScreen": true
             }
         },
-        "remote_session": {
-            "type": "object",
-            "properties": {
-                "lastRemoteSessionUrl": {
-                    "type": "string"
-                },
-                "authCookies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "tempAuthCookies": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "default": {
-                "lastRemoteSessionUrl": "",
-                "authCookies": [],
-                "tempAuthCookies": []
-            }
-        },
         "renderer": {
             "type": "object",
             "properties": {
@@ -403,6 +378,23 @@
             "default": false,
             "title": "Quarto Website Sync Editor",
             "description": "Sync source editor to Quarto website preview navigation."
+        },
+        "posit_assistant": {
+            "type": "object",
+            "properties": {
+                "lastUpdateCheck": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The timestamp of the last Posit Assistant update check."
+                },
+                "rstudioVersionChecked": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The RStudio version that was last checked for Posit Assistant updates."
+                }
+            },
+            "title": "Posit Assistant State",
+            "description": "State related to the Posit Assistant feature."
         }
     }
 }
