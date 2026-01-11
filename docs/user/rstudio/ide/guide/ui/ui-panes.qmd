@@ -20,7 +20,7 @@ Clicking the Sidebar toggle button displays the Sidebar pane.
 
 The documentation below provides information based on the default layout/options of each pane. The specific components within each pane and overall arrangement of panes can be modified by opening the **Tools \> Global Options** \> **pane Layout**.
 
-Additional source "columns" can be added to the left of the four primary panes. RStudio uses a fixed four-pane layout. The Source pane currently supports splitting only leftward within its allocated region. Arbitrary editor placement (for example, placing multiple Source panes to the right of the Console) is not supported. To add additional source columns, from the RStudio menu: **Global Options** \> **Pane Layout** \> **Add Source Column**, which provides the ability to work on two (or more) source files at a time within the Source Pane.
+Additional source "columns" can be added to the left of the four primary panes. Arbitrary editor placement (for example, placing source columns to the right of the primary panes) is not supported. To add additional source columns, from the RStudio menu: **Global Options** \> **Pane Layout** \> **Add Source Column**, which provides the ability to work on two (or more) source files at a time within the Source Pane.
 
 ![](images/pane-layout.png){fig-alt="Screenshot of the Tools > Global Options > pane Layout page inside RStudio."}
 
