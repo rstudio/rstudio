@@ -939,13 +939,29 @@ public class TextEditingTargetCopilotHelper
 
       if (lhs >= n - rhs)
       {
-         // The completion is entirely overlapping the existing text.
-         Position cursorPos = display_.getCursorPosition();
-         normalized.insertText = "";
-         normalized.range.start.line = cursorPos.getRow();
-         normalized.range.start.character = cursorPos.getColumn();
-         normalized.range.end.line = cursorPos.getRow();
-         normalized.range.end.character = cursorPos.getColumn();
+         // The matched prefix and suffix cover the entire insertText.
+         // Only discard as "entirely overlapping" if the range length also matches,
+         // otherwise the completion represents a deletion (range longer) or
+         // insertion (range shorter) which is meaningful.
+         boolean rangeMatchesLength = false;
+         if (completion.range.start.line == completion.range.end.line)
+         {
+            int rangeLength = completion.range.end.character - completion.range.start.character;
+            rangeMatchesLength = (rangeLength == n);
+         }
+
+         if (rangeMatchesLength)
+         {
+            // The completion is entirely overlapping the existing text.
+            Position cursorPos = display_.getCursorPosition();
+            normalized.insertText = "";
+            normalized.range.start.line = cursorPos.getRow();
+            normalized.range.start.character = cursorPos.getColumn();
+            normalized.range.end.line = cursorPos.getRow();
+            normalized.range.end.character = cursorPos.getColumn();
+         }
+         // else: range length differs from insertText length, so this completion
+         // represents a meaningful change (deletion or insertion). Return unchanged.
       }
       else
       {
