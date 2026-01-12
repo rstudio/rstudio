@@ -62,7 +62,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
                   ? RESOURCES.styles().link() + " " + RESOURCES.styles().linkUnderlined()
                   : RESOURCES.styles().link();
 
-               sb.append(NAME_TEMPLATE.render(classNames, value.asString()));
+               sb.append(NAME_TEMPLATE.render(classNames, value));
             }
           }
 
@@ -99,7 +99,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
    interface NameTemplate extends SafeHtmlTemplates
    {
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
-      SafeHtml render(String className, String title);
+      SafeHtml render(String className, SafeHtml value);
    }
 
    interface IconTemplate extends SafeHtmlTemplates
