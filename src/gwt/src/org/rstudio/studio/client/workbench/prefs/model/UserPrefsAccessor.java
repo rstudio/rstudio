@@ -2254,6 +2254,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   public PrefValue<Boolean> deleteToTrash()
+   {
+      return bool(
+         "delete_to_trash",
+         _constants.deleteToTrashTitle(), 
+         _constants.deleteToTrashDescription(), 
+         true);
+   }
+
+   /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    public PrefValue<JsArrayString> alwaysShownFiles()
@@ -4260,6 +4272,8 @@ public class UserPrefsAccessor extends Prefs
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
          showHiddenFiles().setValue(layer, source.getBool("show_hidden_files"));
+      if (source.hasKey("delete_to_trash"))
+         deleteToTrash().setValue(layer, source.getBool("delete_to_trash"));
       if (source.hasKey("always_shown_files"))
          alwaysShownFiles().setValue(layer, source.getObject("always_shown_files"));
       if (source.hasKey("always_shown_extensions"))
@@ -4656,6 +4670,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
+      prefs.add(deleteToTrash());
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());

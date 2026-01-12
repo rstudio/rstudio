@@ -1328,6 +1328,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showHiddenFilesDescription();
 
    /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   @DefaultStringValue("Delete files to Trash/Recycle Bin")
+   String deleteToTrashTitle();
+   @DefaultStringValue("Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.")
+   String deleteToTrashDescription();
+
+   /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    @DefaultStringValue("Files always shown in the Files Pane")

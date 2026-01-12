@@ -1462,6 +1462,16 @@
    clear = function() { .rs.clearUserPref("show_hidden_files") }
 )
 
+# Delete files to Trash/Recycle Bin
+#
+# Whether to move deleted files to the system Trash/Recycle Bin instead of
+# permanently deleting them.
+.rs.uiPrefs$deleteToTrash <- list(
+   get = function() { .rs.getUserPref("delete_to_trash") },
+   set = function(value) { .rs.setUserPref("delete_to_trash", value) },
+   clear = function() { .rs.clearUserPref("delete_to_trash") }
+)
+
 # Files always shown in the Files Pane
 #
 # List of file names (case sensitive) that are always shown in the Files Pane,
