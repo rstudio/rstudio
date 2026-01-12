@@ -79,6 +79,8 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String createNewBlankFileText();
     String synchronizeWorkingDirectoryLabel();
     String showHiddenFilesLabel();
+    String deleteToTrashLabel();
+    String deleteToRecycleBinLabel();
     String moreText();
     String moreFileCommandsLabel();
     String folderText();

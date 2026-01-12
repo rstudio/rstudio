@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -24,6 +25,7 @@ import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -116,6 +118,12 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(new UserPrefMenuItem<>(prefs.showHiddenFiles(), true, constants_.showHiddenFilesLabel(), prefs));
+      if (Desktop.isDesktop())
+      {
+         String label = BrowseCap.isWindows() ? constants_.deleteToRecycleBinLabel() :
+                                                constants_.deleteToTrashLabel();
+         moreMenu.addItem(new UserPrefMenuItem<>(prefs.deleteToTrash(), true, label, prefs));
+      }
 
       moreButton_ = new ToolbarMenuButton(
             constants_.moreText(),

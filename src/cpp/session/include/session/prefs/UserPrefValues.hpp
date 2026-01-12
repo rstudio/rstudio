@@ -272,6 +272,7 @@ namespace prefs {
 #define kRmdRenameInScopeBehaviorAll "all"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kDeleteToTrash "delete_to_trash"
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
@@ -1408,6 +1409,12 @@ public:
     */
    bool showHiddenFiles();
    core::Error setShowHiddenFiles(bool val);
+
+   /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   bool deleteToTrash();
+   core::Error setDeleteToTrash(bool val);
 
    /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
