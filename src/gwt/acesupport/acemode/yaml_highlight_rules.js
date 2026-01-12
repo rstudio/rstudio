@@ -32,6 +32,7 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
 
    var oop = require("ace/lib/oop");
    var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+   var Colors = require("mode/colors");
 
    var makeNumberRule = function(suffix) {
       return {
@@ -48,6 +49,10 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
 
       var rules = {};
 
+      var builtInColors = Colors.builtInColors;
+      var colorStringTokens = Colors.colorStringTokens;
+      var colorValueTokens = Colors.colorValueTokens;
+
       var makeKeywordRule = function(suffix) {
         return {
             token: ["constant.language.boolean", "text"],
@@ -55,7 +60,58 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
         }
       }
 
+      // Unquoted named color rules for use in list/dictionary contexts
+      // Note: We don't support unquoted hex colors (#rrggbb) since '#' starts a comment in YAML
+      rules["#unquoted-color"] = [
+         // unquoted named colors (e.g., red, steelblue4)
+         {
+            token: "text",
+            regex: "[a-z]+[0-9]*(?=\\s*(?:$|#|,|\\]|\\}|:))",
+            onMatch: function(value, state, stack, line) {
+               var rgb = builtInColors.get(value);
+               if (rgb === undefined)
+                  return this.token;
+               else
+                  return colorValueTokens(value, "#" + rgb);
+            }
+         }
+      ];
+
       rules["#string"] = [
+         // hex color #rrggbb or #rrggbbaa in quotes
+         {
+            token: "string",
+            regex: '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
+            onMatch: function(value, state, stack, line) {
+               var quote = value.substring(0, 1);
+               var col = value.substring(1, value.length - 1);
+               return colorStringTokens(quote, col, col);
+            }
+         },
+         // hex color #rgb in quotes
+         {
+            token: "string",
+            regex: '(["\'])(#[0-9a-fA-F]{3})(\\1)',
+            onMatch: function(value, state, stack, line) {
+               var quote = value.substring(0, 1);
+               var col = value.substring(1, value.length - 1);
+               return colorStringTokens(quote, col, col);
+            }
+         },
+         // named colors in quotes (e.g., "red", "blue")
+         {
+            token: "string",
+            regex: '(["\'])([a-z]+[0-9]*)(\\1)',
+            onMatch: function(value, state, stack, line) {
+               var quote = value.substring(0, 1);
+               var content = value.substring(1, value.length - 1);
+               var rgb = builtInColors.get(content);
+               if (rgb === undefined)
+                  return this.token;
+               else
+                  return colorStringTokens(quote, content, "#" + rgb);
+            }
+         },
          {
             token: "string",
             regex: "'",
@@ -113,6 +169,18 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          },
          {
             include: "#string"
+         },
+         // unquoted named colors (e.g., red, steelblue4)
+         {
+            token: "text",
+            regex: "[a-z]+[0-9]*(?=\\s*(?:$|#))",
+            onMatch: function(value, state, stack, line) {
+               var rgb = builtInColors.get(value);
+               if (rgb === undefined)
+                  return this.token;
+               else
+                  return colorValueTokens(value, "#" + rgb);
+            }
          },
          {
             token: "string", // multi line string start
@@ -186,6 +254,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          {
             include: "#string"
          },
+         {
+            include: "#unquoted-color"
+         },
          makeNumberRule ("(?=(?:$|[,\\]]))"),
          makeKeywordRule("(?=(?:$|[,\\]]))"),
          {
@@ -220,6 +291,9 @@ define("mode/yaml_highlight_rules", ["require", "exports", "module"], function (
          },
          {
             include: "#string"
+         },
+         {
+            include: "#unquoted-color"
          },
          makeNumberRule ("(?=(?:$|[:,}]))"),
          makeKeywordRule("(?=(?:$|[:,}]))"),
