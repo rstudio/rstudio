@@ -574,7 +574,14 @@ public class ThemeColorExtractor
          // Join class names with spaces to create a compound selector
          // e.g., "ace_constant ace_numeric" creates <div class="ace_constant ace_numeric">
          // which matches CSS like .ace_constant.ace_numeric { color: ... }
-         String classNamesStr = String.join(" ", classNames);
+         StringBuilder sb = new StringBuilder();
+         for (int i = 0; i < classNames.length; i++)
+         {
+            if (i > 0)
+               sb.append(' ');
+            sb.append(classNames[i]);
+         }
+         String classNamesStr = sb.toString();
          String color = DomUtils.extractCssValue(classNamesStr, "color");
          if (color != null && !color.isEmpty())
          {
