@@ -907,7 +907,7 @@ public class TextEditingTargetCopilotHelper
          int col = completion.range.start.character;
          String line = display_.getLine(row);
 
-         for (; col + lhs < line.length(); lhs++)
+         for (; lhs < completion.insertText.length() && col + lhs < line.length(); lhs++)
          {
             char clhs = completion.insertText.charAt(lhs);
             char crhs = line.charAt(col + lhs);
@@ -925,7 +925,7 @@ public class TextEditingTargetCopilotHelper
          int col = completion.range.end.character;
          String line = display_.getLine(row);
 
-         for (; col - rhs > 0; rhs++)
+         for (; rhs < completion.insertText.length() && col - rhs > 0; rhs++)
          {
             char clhs = completion.insertText.charAt(completion.insertText.length() - rhs - 1);
             char crhs = line.charAt(col - rhs - 1);
