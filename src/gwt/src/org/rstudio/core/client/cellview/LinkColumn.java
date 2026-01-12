@@ -18,7 +18,10 @@ import java.util.List;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 
-import com.google.gwt.cell.client.ClickableTextCell;
+import static com.google.gwt.dom.client.BrowserEvents.CLICK;
+import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
+
+import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -47,14 +50,14 @@ public abstract class LinkColumn<T> extends Column<T, String>
                      final OperationWithInput<T> onClicked,
                      final boolean alwaysUnderline)
    {
-      super(new ClickableTextCell()
+      super(new AbstractCell<String>(CLICK, KEYDOWN)
       {
          // render anchor using custom styles. detect selection and
          // add selected style to invert text color
          @Override
-         protected void render(Context context,
-                               SafeHtml value,
-                               SafeHtmlBuilder sb)
+         public void render(Context context,
+                            String value,
+                            SafeHtmlBuilder sb)
          {
             if (value != null)
             {
@@ -99,7 +102,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
    interface NameTemplate extends SafeHtmlTemplates
    {
       @Template("<div class=\"{0}\" title=\"{1}\">{1}</div>")
-      SafeHtml render(String className, SafeHtml value);
+      SafeHtml render(String className, String value);
    }
 
    interface IconTemplate extends SafeHtmlTemplates
