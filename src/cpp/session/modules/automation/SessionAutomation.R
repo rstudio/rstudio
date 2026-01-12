@@ -690,16 +690,26 @@
                                                reportFile = NULL,
                                                automationMode = NULL)
 {
-   .rs.alog('
-      Preparing to run automation.
-      - projectRoot:    %s
-      - reportFile:     %s
-      - automationMode: %s
-   ', projectRoot, reportFile, automationMode)
-   
+   # Use rlang to print back traces.
+   options(error = rlang::trace_back)
+
    # Resolve the automation mode.
    automationMode <- .rs.automation.resolveMode(automationMode)
-   
+
+   fmt <- '
+      Preparing to run automation.
+      - projectRoot:     %s
+      - reportFile:      %s
+      - automationMode:  %s
+   '
+
+   .rs.alog(
+      fmt,
+      .rs.nullCoalesce(projectRoot, "<unset>"),
+      .rs.nullCoalesce(reportFile, "<unset>"),
+      .rs.nullCoalesce(automationMode, "<unset>")
+   )
+
    # Move to the project root directory.
    owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
