@@ -1,4 +1,4 @@
-## RStudio 2026.02.0 "Globemaster Allium" Release Notes
+## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
 #### RStudio
