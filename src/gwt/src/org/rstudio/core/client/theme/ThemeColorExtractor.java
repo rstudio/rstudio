@@ -171,7 +171,7 @@ public class ThemeColorExtractor
 
          // Extended syntax tokens
          colors.put("--rstudio-syntax-variable", extractSyntaxColor("ace_variable", foreground));
-         colors.put("--rstudio-syntax-punctuation", extractSyntaxColor("ace_punctuation", foreground));
+         colors.put("--rstudio-syntax-punctuation", extractPunctuationColor(foreground));
          colors.put("--rstudio-syntax-constant", extractSyntaxColorMultiClass(
                new String[]{"ace_constant", "ace_language"}, foreground));
          colors.put("--rstudio-syntax-class-name", extractSyntaxColorMultiClass(
@@ -592,6 +592,54 @@ public class ThemeColorExtractor
       {
          Debug.logException(e);
       }
+      return fallback;
+   }
+
+   /**
+    * Extract punctuation/bracket color with proper fallback chain.
+    * Braces/brackets in ACE are tokenized as paren.keyword.operator and styled by .ace_keyword.ace_operator.
+    * Most themes don't define .ace_punctuation explicitly, so we try multiple extraction paths:
+    * 1. Try .ace_paren.ace_keyword.ace_operator (exact match for how ACE tokenizes braces)
+    * 2. Try .ace_keyword.ace_operator (what themes actually define)
+    * 3. Try .ace_punctuation (for themes that do define it)
+    * 4. Fall back to foreground color
+    *
+    * @param fallback Fallback color if extraction fails
+    * @return The extracted color value
+    */
+   private static String extractPunctuationColor(String fallback)
+   {
+      try
+      {
+         // First try: exact match for how ACE tokenizes braces
+         String color = extractSyntaxColorMultiClass(
+               new String[]{"ace_paren", "ace_keyword", "ace_operator"}, null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+
+         // Second try: what themes actually define for operators
+         color = extractSyntaxColorMultiClass(
+               new String[]{"ace_keyword", "ace_operator"}, null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+
+         // Third try: plain punctuation class (for themes that do define it)
+         color = extractSyntaxColor("ace_punctuation", null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      // Final fallback to foreground color
       return fallback;
    }
 }
