@@ -609,7 +609,7 @@ TEST(LoggingTest, FileLogRotationsCap)
       std::string logContents;
       ASSERT_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-      std::string logStr = "Log line " + safe_convert::numberToString(49 - i) + "\n";
+      std::string logStr = "Log line " + safe_convert::numberToString(49 - i);
       ASSERT_TRUE(boost::contains(logContents, logStr));
    }
 
@@ -661,7 +661,7 @@ TEST(LoggingTest, FileLogRotationsCapCanBeDisabled)
       std::string logContents;
       ASSERT_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
-      std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + "\n";
+      std::string logStr = "Log line " + safe_convert::numberToString(99 - i);
       ASSERT_TRUE(boost::contains(logContents, logStr));
    }
 }
