@@ -438,6 +438,10 @@ namespace prefs {
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
+#define kRstudioAssistant "rstudio_assistant"
+#define kRstudioAssistantNone "none"
+#define kRstudioAssistantPositAi "posit_ai"
+#define kRstudioAssistantCopilot "copilot"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2015,6 +2019,12 @@ public:
     */
    bool disableRendererAccessibility();
    core::Error setDisableRendererAccessibility(bool val);
+
+   /**
+    * Select which AI assistant to use for code suggestions and assistance.
+    */
+   std::string rstudioAssistant();
+   core::Error setRstudioAssistant(std::string val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

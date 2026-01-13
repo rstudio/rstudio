@@ -64,7 +64,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             TerminalPreferencesPane terminal,
                             AccessibilityPreferencesPane accessibility,
                             PythonPreferencesPane python,
-                            CopilotPreferencesPane copilot,
+                            AssistantPreferencesPane assistant,
                             ApplicationQuit quit,
                             GlobalDisplay globalDisplay,
                             UserPrefs userPrefs,
@@ -90,7 +90,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   publishing,
                   terminal,
                   accessibility,
-                  copilot));
+                  assistant));
       
       session_ = session;
       server_ = server;

@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.SingleShotTimer;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FormLabel;
@@ -47,7 +48,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
-import org.rstudio.studio.client.workbench.prefs.views.CopilotPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.AssistantPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 
 import com.google.gwt.aria.client.Roles;
@@ -390,7 +391,8 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return new ImageResource2x(CopilotPreferencesPane.RES.iconCopilotLight2x());
+      // TODO: Replace with proper Copilot icon
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
    }
 
    @Override
@@ -453,7 +455,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    private final CopilotServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
-   private static final CopilotPreferencesPane.Resources RES = CopilotPreferencesPane.RES;
+   private static final AssistantPreferencesPane.Resources RES = AssistantPreferencesPane.RES;
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
    

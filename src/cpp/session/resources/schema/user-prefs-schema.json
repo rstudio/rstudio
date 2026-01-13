@@ -1768,6 +1768,14 @@
             "title": "Disable Electron accessibility support",
             "description": "Disable Electron accessibility support."
         },
+        "rstudio_assistant": {
+            "type": "string",
+            "enum": ["none", "posit_ai", "copilot"],
+            "enumReadable": ["(None)", "Posit AI", "GitHub Copilot"],
+            "default": "none",
+            "title": "AI Assistant",
+            "description": "Select which AI assistant to use for code suggestions and assistance."
+        },
         "copilot_enabled": {
             "type": "boolean",
             "default": false,

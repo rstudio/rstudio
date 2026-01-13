@@ -2396,6 +2396,15 @@
    clear = function() { .rs.clearUserPref("disable_renderer_accessibility") }
 )
 
+# AI Assistant
+#
+# Select which AI assistant to use for code suggestions and assistance.
+.rs.uiPrefs$rstudioAssistant <- list(
+   get = function() { .rs.getUserPref("rstudio_assistant") },
+   set = function(value) { .rs.setUserPref("rstudio_assistant", value) },
+   clear = function() { .rs.clearUserPref("rstudio_assistant") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.

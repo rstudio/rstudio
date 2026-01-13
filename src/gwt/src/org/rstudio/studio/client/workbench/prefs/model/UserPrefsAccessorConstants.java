@@ -2146,6 +2146,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String disableRendererAccessibilityDescription();
 
    /**
+    * Select which AI assistant to use for code suggestions and assistance.
+    */
+   @DefaultStringValue("AI Assistant")
+   String rstudioAssistantTitle();
+   @DefaultStringValue("Select which AI assistant to use for code suggestions and assistance.")
+   String rstudioAssistantDescription();
+   @DefaultStringValue("(None)")
+   String rstudioAssistantEnum_none();
+   @DefaultStringValue("Posit AI")
+   String rstudioAssistantEnum_posit_ai();
+   @DefaultStringValue("GitHub Copilot")
+   String rstudioAssistantEnum_copilot();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")
