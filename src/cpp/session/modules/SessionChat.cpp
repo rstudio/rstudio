@@ -1119,17 +1119,19 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    ChatExecContext execContext(captureOutput, trackingId, ops.shared_from_this());
    execContext.connect();
 
-   // Record the display list length before execution so we can detect if
+   // Record the current plot before execution so we can detect if
    // plotting actually occurred (to avoid capturing stale plots)
-   int displayListLengthBefore = 0;
+   r::sexp::Protect plotBeforeProtect;
+   SEXP plotBeforeSEXP = R_NilValue;
    if (capturePlot)
    {
-      r::sexp::Protect lenProtect;
-      SEXP lenSEXP = R_NilValue;
-      Error lenError = r::exec::RFunction(".rs.chat.getDisplayListLength").call(
-         &lenSEXP, &lenProtect);
-      if (!lenError && lenSEXP != R_NilValue && Rf_isInteger(lenSEXP) && Rf_length(lenSEXP) > 0)
-         displayListLengthBefore = INTEGER(lenSEXP)[0];
+      Error plotBeforeError = r::exec::RFunction(".rs.chat.getRecordedPlot").call(
+         &plotBeforeSEXP, &plotBeforeProtect);
+      // If there's an error, plotBeforeSEXP will remain R_NilValue (which is fine)
+      if (plotBeforeError)
+      {
+         LOG_DEBUG_MESSAGE("Failed to record plot before execution: " + plotBeforeError.getMessage());
+      }
    }
 
    // Echo source code with prompts (like evaluate does)
@@ -1365,13 +1367,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    json::Array plotsArray;
    if (capturePlot)
    {
-      // Use R helper for plot capture, passing the display list length from before
+      // Use R helper for plot capture, passing the recorded plot from before
       // execution so it can detect if a NEW plot was created (vs. stale plot)
       r::sexp::Protect plotProtect;
       SEXP plotSEXP = R_NilValue;
 
       r::exec::RFunction captureFunc(".rs.chat.captureCurrentPlot");
-      captureFunc.addParam("displayListLengthBefore", displayListLengthBefore);
+      captureFunc.addParam("plotBefore", plotBeforeSEXP);
       Error plotError = captureFunc.call(&plotSEXP, &plotProtect);
 
       if (!plotError && plotSEXP != R_NilValue && r::sexp::isList(plotSEXP))
@@ -1467,7 +1469,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    sendJsonRpcResponse(ops, requestId, result);
 
    // Fire change detection event to trigger environment refresh
-   module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+   // Use ChangeSourceREPL if a plot was captured so the Plots pane gets activated
+   module_context::ChangeSource changeSource = !plotsArray.isEmpty()
+      ? module_context::ChangeSourceREPL
+      : module_context::ChangeSourceRPC;
+   module_context::events().onDetectChanges(changeSource);
 }
 
 void handleCancelExecution(const json::Object& params)
