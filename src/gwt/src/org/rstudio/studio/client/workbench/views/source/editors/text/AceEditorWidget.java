@@ -699,6 +699,15 @@ public class AceEditorWidget extends Composite
    {
       if (editor_ != null)
       {
+         // Check for and recover from corrupt mouse handler state.
+         // This can happen if an exception occurs during mouse event handling.
+         // See: https://github.com/rstudio/rstudio/issues/13436
+         if (editor_.isMouseHandlerStateCorrupt())
+         {
+            Debug.log("Recovering from corrupt Ace mouse handler state");
+            editor_.resetMouseHandlerState();
+         }
+
          if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue())
             editor_.getRenderer().forceScrollbarUpdate();
          editor_.getRenderer().updateFontSize();
