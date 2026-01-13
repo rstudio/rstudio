@@ -261,7 +261,17 @@ public class XTermNative extends JavaScriptObject
          }
          if (clickableLinks) {
             try {
-               nativeTerm_.rstudioLinksAddon_ = new $wnd.WebLinksAddon.WebLinksAddon();
+               // Custom handler to open URLs in the system browser
+               var linkHandler = function(event, uri) {
+                  // Use desktop bridge if available (RStudio Desktop),
+                  // otherwise fall back to window.open (RStudio Server)
+                  if ($wnd.desktop && $wnd.desktop.browseUrl) {
+                     $wnd.desktop.browseUrl(uri);
+                  } else {
+                     $wnd.open(uri, '_blank');
+                  }
+               };
+               nativeTerm_.rstudioLinksAddon_ = new $wnd.WebLinksAddon.WebLinksAddon(linkHandler);
                nativeTerm_.loadAddon(nativeTerm_.rstudioLinksAddon_);
             } catch (error) {
                console.error("Error loading WebLinksAddon: " + error);
