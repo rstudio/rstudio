@@ -2154,7 +2154,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rstudioAssistantDescription();
    @DefaultStringValue("(None)")
    String rstudioAssistantEnum_none();
-   @DefaultStringValue("Posit AI")
+   @DefaultStringValue("Posit Assistant")
    String rstudioAssistantEnum_posit_ai();
    @DefaultStringValue("GitHub Copilot")
    String rstudioAssistantEnum_copilot();

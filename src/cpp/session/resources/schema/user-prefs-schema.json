@@ -1771,7 +1771,7 @@
         "rstudio_assistant": {
             "type": "string",
             "enum": ["none", "posit_ai", "copilot"],
-            "enumReadable": ["(None)", "Posit AI", "GitHub Copilot"],
+            "enumReadable": ["(None)", "Posit Assistant", "GitHub Copilot"],
             "default": "none",
             "title": "AI Assistant",
             "description": "Select which AI assistant to use for code suggestions and assistance."

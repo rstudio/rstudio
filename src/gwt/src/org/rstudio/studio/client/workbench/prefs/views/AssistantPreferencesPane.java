@@ -177,7 +177,6 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
-      cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
       cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
       cbCopilotProjectWorkspace_ = checkboxPref(prefs_.copilotProjectWorkspace(), true);
@@ -258,6 +257,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Add container for dynamic content
       add(assistantDetailsPanel_);
 
+      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      copilotTosPanel_ = new VerticalPanel();
+      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
+      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
+      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spaced(linkCopilotTos_));
+      add(copilotTosPanel_);
+
       // Set up panel swapping based on assistant selection
       ChangeHandler assistantChangedHandler = new ChangeHandler()
       {
@@ -268,14 +275,17 @@ public class AssistantPreferencesPane extends PreferencesPane
             if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
+               copilotTosPanel_.setVisible(false);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
+               copilotTosPanel_.setVisible(false);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
             {
                assistantDetailsPanel_.setWidget(copilotPanel_);
+               copilotTosPanel_.setVisible(true);
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
@@ -312,8 +322,6 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       if (session_.getSessionInfo().getCopilotEnabled())
       {
-         panel.add(cbCopilotEnabled_);
-
          HorizontalPanel statusPanel = new HorizontalPanel();
          statusPanel.add(lblCopilotStatus_);
          for (SmallButton button : statusButtons_)
@@ -330,10 +338,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
          panel.add(cbCopilotShowMessages_);
          panel.add(cbCopilotProjectWorkspace_);
-
-         // Terms of Service at bottom of Copilot panel
-         panel.add(spacedBefore(lblCopilotTos_));
-         panel.add(spaced(linkCopilotTos_));
       }
       else
       {
@@ -345,59 +349,6 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    private void initModel()
    {
-      cbCopilotEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            boolean enabled = event.getValue();
-            
-            if (enabled)
-            {
-               server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
-               {
-                  @Override
-                  public void onResponseReceived(Boolean isInstalled)
-                  {
-                     if (isInstalled)
-                     {
-                        // Eagerly change the preference here, so that we can
-                        // respond to changes in the agent status.
-                        prefs_.copilotEnabled().setGlobalValue(true);
-                        prefs_.writeUserPrefs((completed) ->
-                        {
-                           refresh();
-                        });
-                     }
-                     else
-                     {
-                        // Copilot language server not found so revert the checkbox state.
-                        cbCopilotEnabled_.setValue(false);
-                     }
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // Error when verifying copilot language server installation, revert the checkbox state.
-                     Debug.logError(error);
-                     cbCopilotEnabled_.setValue(false);
-                  }
-               });
-            }
-            else
-            {
-               // Eagerly change the preference here, so that we can
-               // respond to changes in the agent status.
-               prefs_.copilotEnabled().setGlobalValue(false);
-               prefs_.writeUserPrefs((completed) ->
-               {
-                  refresh();
-               });
-            }
-         }
-      });
-      
       selCopilotCompletionsTrigger_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -703,12 +654,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel nonePanel_;
    private VerticalPanel positAiPanel_;
    private VerticalPanel copilotPanel_;
+   private VerticalPanel copilotTosPanel_;
 
    // UI
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblCopilotStatus_;
-   private final CheckBox cbCopilotEnabled_;
    private final CheckBox cbCopilotIndexingEnabled_;
    private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbCopilotProjectWorkspace_;
