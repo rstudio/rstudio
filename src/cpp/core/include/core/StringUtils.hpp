@@ -314,6 +314,8 @@ bool extractCommentHeader(const std::string& contents,
                           const std::string& reCommentPrefix,
                           std::string* pHeader);
 
+std::string getCommonPrefix(const std::string& code);
+
 std::string extractIndent(const std::string& line);
 
 std::string formatDouble(const double d, const int precision);

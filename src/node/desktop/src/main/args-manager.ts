@@ -13,19 +13,18 @@
  *
  */
 
-import { app, webContents } from 'electron';
+import { app } from 'electron';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { enableDiagnosticsOutput, logger, setLogger } from '../core/logger';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { WinstonLogger } from '../core/winston-logger';
-import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { Application } from './application';
+import { appState } from './app-state';
 import LogOptions from './log-options';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions } from './utils';
-import { activateWindow } from './window-utils';
 import { resolveProjectFile } from './application-launch';
 import { existsSync } from 'fs';
 import { safeError } from '../core/err';
@@ -81,7 +80,7 @@ export class ArgsManager {
       console.log('  --version-json     Display versions of major components in JSON format');
       console.log('  --run-diagnostics  Run diagnostics and save in a file');
       console.log('  --log-level        Sets the verbosity of the logging');
-      console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
+      console.log('                     --log-level=ERROR|WARNING|INFO|DEBUG|TRACE');
       // prettier-ignore
       console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
@@ -142,9 +141,7 @@ export class ArgsManager {
           app
             .whenReady()
             .then(() => {
-              void getDesktopBridge().openFile(path.resolve(arg));
-              const name = webContents.getAllWebContents()[0].mainFrame.name;
-              activateWindow(name);
+              void appState().gwtCallback?.openFileInMainWindow(path.resolve(arg));
             })
             .catch((error: unknown) => {
               logger().logError(error);

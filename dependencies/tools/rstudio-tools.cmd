@@ -50,14 +50,11 @@ call :add-vstools-to-path
 :: Try to help RStudio find an appropriate version of Java
 call :set-java-home
 
-:: The version of the Windows SDK to use when building.
-set WIN32_SDK_VERSION=1.0.20348.0
-
 :: Node version used when building the product
 set RSTUDIO_NODE_VERSION=22.13.1
 
 :: Node version installed with the product
-set RSTUDIO_INSTALLED_NODE_VERSION=22.18.0
+set RSTUDIO_INSTALLED_NODE_VERSION=22.21.1
 
 :: The base URL where RStudio build tools are available for download.
 set RSTUDIO_BUILDTOOLS=https://rstudio-buildtools.s3.amazonaws.com

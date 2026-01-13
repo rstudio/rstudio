@@ -650,14 +650,8 @@
                                            column = 0,
                                            execute = FALSE)
 {
-   type <- switch(
-      type,
-      rmd       = "r_markdown",
-      rmarkdown = "r_markdown",
-      sql       = "sql",
-      "r_script"
-   )
-
+   type <- .rs.nullCoalesce(type, "r")
+   
    payload <- list(
       type    = .rs.scalar(type),
       code    = .rs.scalar(paste(code, collapse = "\n")),

@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -51,8 +52,12 @@ public class ChunkOutputCodeUi extends ChunkOutputUi
       wrapper_.add(outputWidget);
       wrapped_ = true;
 
-      lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
+      lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE,
             display_, wrapper_, def.getRow(), def, lineWidgetHost);
+
+      // Trigger resize so paged tables recalculate column layout for new container width
+      // (delayed to ensure Ace has finished layout)
+      Scheduler.get().scheduleDeferred(() -> outputWidget_.onResize());
    }
    
    public ChunkOutputCodeUi(ChunkOutputPanmirrorUi visual, DocDisplay display, 

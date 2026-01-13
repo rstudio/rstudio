@@ -618,7 +618,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
          eventJson["id"] = s_pPreview->jobId();
          module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
          // can we render in-place?
-         if  (s_pPreview->render(previewFilePath, format, editorState))
+         if (s_pPreview->render(previewFilePath, format, editorState))
          {
            return Success();
          }

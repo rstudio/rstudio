@@ -77,7 +77,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push(PaneManager.BUILD_PANE);
       tabSet1.push(PaneManager.VCS_PANE);
       tabSet1.push(PaneManager.TUTORIAL_PANE);
-      tabSet1.push(PaneManager.CHAT_PANE);
       tabSet1.push(PaneManager.PRESENTATION_PANE);
       
       JsArrayString tabSet2 = createArray().cast();
@@ -172,11 +171,23 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (indexOfReplacedTab(tabs.get(idx)) >= 0)
+         int replacementIdx = indexOfReplacedTab(tabs.get(idx));
+         if (replacementIdx >= 0)
          {
-            tabs.set(idx, getReplacementTabs()[idx]);
+            tabs.set(idx, getReplacementTabs()[replacementIdx]);
          }
       }
+   }
+
+   // Get the display label for a pane identifier
+   // This allows internal identifiers to differ from display labels
+   public static String getPaneDisplayLabel(String paneId)
+   {
+      if (StringUtil.equals(paneId, PaneManager.CHAT_PANE))
+      {
+         return "Posit Assistant"; //$NON-NLS-1$
+      }
+      return paneId;
    }
 
    protected PaneConfig()
@@ -255,13 +266,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             return false;
          }
       }
-      
-      // if we don't have Presentation2 then provide it 
-      if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
-      {
-         ts2.set(ts2.length(), PaneManager.PRESENTATIONS_PANE);
-      }
-
 
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
@@ -289,16 +293,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       }
 
       return true;
-   }
-   
-   private final boolean hasPresentation2(JsArrayString tabs)
-   {
-      for (int idx = 0; idx < tabs.length(); idx++)
-      {
-         if (tabs.get(idx).equals(PaneManager.PRESENTATIONS_PANE))
-            return true;
-      }
-      return false;
    }
 
    private static boolean isSubset(Set<String> set, Iterable<String> possibleSubset)

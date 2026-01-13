@@ -183,6 +183,11 @@ set(SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionChat.cpp
+   modules/chat/ChatConstants.cpp
+   modules/chat/ChatTypes.cpp
+   modules/chat/ChatLogging.cpp
+   modules/chat/ChatInstallation.cpp
+   modules/chat/ChatStaticFiles.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
@@ -211,6 +216,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
+   modules/SessionLSP.cpp
    modules/SessionMarkers.cpp
    modules/SessionNodeTools.cpp
    modules/SessionObjectExplorer.cpp
@@ -404,7 +410,15 @@ file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
-
+  # Use gtest from vendor directory
+  set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
+  include_directories(${GTEST_SOURCE_DIR}/include)
+   
+  # Add Google Test if not already added
+  if(NOT TARGET gtest)
+    add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
+  endif()
+  
   file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
   list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
 
@@ -552,6 +566,14 @@ set(SESSION_LIBRARIES
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
+
+# Add gtest to libraries when unit tests are enabled
+if(RSTUDIO_UNIT_TESTS_ENABLED)
+   list(APPEND SESSION_LIBRARIES gtest)
+   if(NOT WIN32)
+      list(APPEND SESSION_LIBRARIES pthread)
+   endif()
+endif()
 
 # define executable
 if(WIN32)

@@ -323,34 +323,6 @@ enum ChangeSource
    ChangeSourceURI
 };
    
-struct DocumentDiff
-{
-   // This is a chunk of text inserted into the specified document.
-   // It replaces the subrange [offset, offset+length).
-   explicit DocumentDiff(std::string docId,
-                         std::string replacement,
-                         int offset,
-                         int length)
-      : docId(std::move(docId)),
-        replacement(std::move(replacement)),
-        offset(offset),
-        length(length)
-   {
-   }
-
-   std::string toString() const
-   {
-      return "DocumentDiff(docId=" + docId +
-             ", replacement=[" + replacement + "]"
-             ", offset=" + std::to_string(offset) +
-             ", length=" + std::to_string(length) + ")";
-   }
-
-   std::string docId;
-   std::string replacement;
-   int offset, length;
-};
-
 // custom slot combiner that takes the first non empty value
 template<typename T>
 struct firstNonEmpty
@@ -368,7 +340,6 @@ struct firstNonEmpty
      return T();
   }
 };
-
 
 // session events
 struct Events : boost::noncopyable
@@ -389,7 +360,6 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void()>                                       onUserInterrupt;
    RSTUDIO_BOOST_SIGNAL<void(ChangeSource)>                           onDetectChanges;
    RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onSourceEditorFileSaved;
-   RSTUDIO_BOOST_SIGNAL<void(DocumentDiff)>                           onSourceFileDiff;
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onBackgroundProcessing;
    RSTUDIO_BOOST_SIGNAL<void(const std::vector<std::string>&)>        onLibPathsChanged;
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
@@ -511,6 +481,9 @@ void consoleWriteError(const std::string& message);
    
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
+
+// show a message dialog (convenience wrapper for enquing kShowMessage)
+void showMessage(int type, const std::string& title, const std::string& message);
 
 void showFile(const core::FilePath& filePath,
               const std::string& window = "_blank");

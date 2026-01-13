@@ -137,3 +137,51 @@ withr::defer(.rs.automation.deleteRemote())
    Sys.sleep(1)
    remote$project.close()
 })
+
+# https://github.com/rstudio/rstudio/issues/16490
+.rs.test("breakpoints in S7 method definitions for S3 generics", {
+   
+   skip_on_ci()
+   
+   remote$console.executeExpr({
+      if (!requireNamespace("S7", quietly = TRUE))
+         install.packages("S7")
+   })
+   
+   contents <- .rs.heredoc('
+      s7mean <- S7::new_class("s7mean")
+      S7::method(mean, s7mean) <- function(x, ...) {
+         print("This is my S7 method.")
+      }
+   ')
+   
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+      
+      # Click to set a breakpoint.
+      gutterLayer <- remote$js.querySelector(".ace_gutter-layer")
+      gutterCell <- gutterLayer$children[[2L]]
+      remote$dom.clickElement(objectId = gutterCell, horizontalOffset = -6L)
+      
+      # Source the document to activate breakpoints.
+      remote$commands.execute(.rs.appCommands$sourceActiveDocument)
+      
+      # Try and see if the breakpoint fires.
+      remote$console.executeExpr({
+         object <- structure(1:10, class = "s7mean")
+         mean(object)
+      })
+      
+      # Check that line '3' is highlighted.
+      activeLineEl <- remote$js.querySelector(".ace_executing-line")
+      expect_equal(activeLineEl$innerText, "3")
+      
+      # Finish the debug session.
+      remote$commands.execute("activateConsole")
+      remote$keyboard.insertText("c", "<Enter>")
+      
+      # Check the console output.
+      output <- remote$console.getOutput(1L)
+      expect_equal(output, "[1] \"This is my S7 method.\"")
+      
+   })
+})

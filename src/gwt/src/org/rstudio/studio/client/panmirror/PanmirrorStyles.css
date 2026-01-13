@@ -1,6 +1,10 @@
 @charset "UTF-8";
 
-@external ProseMirror, pm-editing-root-node, body;
+@external body;
+@external pagedtable;
+@external pm-background-color;
+@external pm-editing-root-node;
+@external ProseMirror;
 
 .ProseMirror:focus-visible {
    outline-style: none !important;
@@ -8,4 +12,11 @@
 
 .ProseMirror .body {
    padding-top: 2px !important;
+}
+
+/* Override width: auto from Quarto's table-styles.css for chunk output tables */
+/* https://github.com/rstudio/rstudio/issues/8531 */
+.ProseMirror .pm-background-color .pagedtable table {
+   width: 100%;
+   table-layout: auto;
 }

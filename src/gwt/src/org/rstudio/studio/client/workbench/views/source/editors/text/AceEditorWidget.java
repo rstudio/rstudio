@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.EditEvent;
@@ -698,6 +699,15 @@ public class AceEditorWidget extends Composite
    {
       if (editor_ != null)
       {
+         // Check for and recover from corrupt mouse handler state.
+         // This can happen if an exception occurs during mouse event handling.
+         // See: https://github.com/rstudio/rstudio/issues/13436
+         if (editor_.isMouseHandlerStateCorrupt())
+         {
+            Debug.log("Recovering from corrupt Ace mouse handler state");
+            editor_.resetMouseHandlerState();
+         }
+
          if (BrowseCap.INSTANCE.aceVerticalScrollBarIssue())
             editor_.getRenderer().forceScrollbarUpdate();
          editor_.getRenderer().updateFontSize();
@@ -852,7 +862,7 @@ public class AceEditorWidget extends Composite
    {
       editor_.onCursorChange();
    }
-   
+
    public void syncScrollSpeed(double scrollRatio)
    {
       final double DEFAULT_SCROLL_FACTOR = 2.0;
@@ -1035,13 +1045,13 @@ public class AceEditorWidget extends Composite
       {
         editor_.getRenderer().addGutterDecoration(
                rowFromLine(line),
-               "ace_pending-breakpoint");
+               AceEditorGutterStyles.PENDING_BREAKPOINT);
       }
       else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
       {
          editor_.getRenderer().addGutterDecoration(
                rowFromLine(line),
-               "ace_inactive-breakpoint");
+               AceEditorGutterStyles.INACTIVE_BREAKPOINT);
       }
    }
 
@@ -1056,13 +1066,13 @@ public class AceEditorWidget extends Composite
       {
         editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line),
-               "ace_pending-breakpoint");
+               AceEditorGutterStyles.PENDING_BREAKPOINT);
       }
       else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
       {
          editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line),
-               "ace_inactive-breakpoint");
+               AceEditorGutterStyles.INACTIVE_BREAKPOINT);
       }
    }
 
@@ -1235,7 +1245,8 @@ public class AceEditorWidget extends Composite
                anchor_.getColumn(),
                annotation_.html(),
                annotation_.text(),
-               annotation_.type());
+               annotation_.type(),
+               annotation_.className());
       }
 
       private final AceAnnotation annotation_;
@@ -1274,6 +1285,7 @@ public class AceEditorWidget extends Composite
 
    public void showLint(JsVector<LintItem> lint)
    {
+      lint_ = lint;
       clearAnnotations();
       
       // Set gutter annotations. Don't include 'spelling' items in gutter.
@@ -1286,6 +1298,11 @@ public class AceEditorWidget extends Composite
          }
       });
       
+      // Add the external gutter lint items.
+      JsArray<LintItem> externalItems = externalGutterAnnotations_.values();
+      for (int i = 0, n = externalItems.length(); i < n; i++)
+         gutterLint.push(externalItems.get(i));
+
       JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(gutterLint.cast());
       editor_.getSession().setAnnotations(annotations);
 
@@ -1323,6 +1340,35 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setAnnotations(null);
    }
 
+   public HandlerRegistration addGutterItem(LintItem item)
+   {
+      String id = StringUtil.makeRandomId(16);
+      externalGutterAnnotations_.set(id, item);
+      Timers.singleShot(() ->
+      {
+         renderMarkers();
+      });
+
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            externalGutterAnnotations_.delete(id);
+            Timers.singleShot(() ->
+            {
+               renderMarkers();
+            });
+         }
+      };
+   }
+
+   private void renderMarkers()
+   {
+      showLint(lint_);
+      editor_.getRenderer().forceImmediateRender();
+   }
+
    private void removeMarkersInRange(Range range, List<AnchoredAceAnnotation> annotations)
    {
       annotations.removeIf(new Predicate<AnchoredAceAnnotation>()
@@ -1346,8 +1392,13 @@ public class AceEditorWidget extends Composite
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
       Range range = event.getRange();
-      removeMarkers((annotation, marker) -> {
-         return range.contains(annotation.row(), annotation.column());
+      removeMarkers(new BiPredicate<AceAnnotation, Marker>()
+      {
+         @Override
+         public boolean test(AceAnnotation annotation, Marker marker)
+         {
+            return range.contains(annotation.row(), annotation.column());
+         }
       });
    }
 
@@ -1496,9 +1547,11 @@ public class AceEditorWidget extends Composite
    private boolean isRendered_ = false;
    private final ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
    private final List<AnchoredAceAnnotation> gutterAnnotations_ = new ArrayList<>();
+   private final JsMap<LintItem> externalGutterAnnotations_ = JsMap.create().cast();
    private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
+   private JsVector<LintItem> lint_ = JsVector.createVector();
    private static boolean hasEditHandlers_ = false;
    private boolean tabMovesFocus_ = false;
    private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;

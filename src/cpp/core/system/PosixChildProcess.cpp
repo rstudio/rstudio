@@ -1560,7 +1560,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
                // check again in 20 milliseconds - this is a short amount of time, but long enough
                // to play nice with the rest of the system. in terms of process cleanup time,
                // in most cases this should be a significant amount of time
-               exitTimer_.reset(new deadline_timer(ioContext_, milliseconds(20)));
+               exitTimer_.reset(new boost::asio::system_timer(ioContext_, std::chrono::milliseconds(20)));
                exitTimer_->async_wait(boost::bind(&Impl::checkExitedTimer,
                                                   boost::weak_ptr<Impl>(shared_from_this()),
                                                   boost::asio::placeholders::error,
@@ -1662,7 +1662,7 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
    std::atomic<bool> stderrFailure_;
    int exitCode_;
 
-   boost::shared_ptr<boost::asio::deadline_timer> exitTimer_;
+   boost::shared_ptr<boost::asio::system_timer> exitTimer_;
 
    ProcessCallbacks callbacks_;
 

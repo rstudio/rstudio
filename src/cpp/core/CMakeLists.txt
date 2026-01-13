@@ -87,6 +87,7 @@ set(CORE_SOURCE_FILES
    http/Response.cpp
    http/SocketProxy.cpp
    http/Ssl.cpp
+   http/SslContextCache.cpp
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
@@ -330,7 +331,9 @@ define_source_file_names(rstudio-core)
 # link dependencies
 target_link_libraries(rstudio-core
    rstudio-shared-core
+   rstudio-dtl
    rstudio-hunspell
+   rstudio-utfcpp
    rstudio-websocketpp
    ${Boost_LIBRARIES}
    ${SOCI_LIBRARIES}
@@ -348,16 +351,20 @@ endif()
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
-   # -----------------------------------
-   # This is the catch2 based unit tests
-   # We are migrating to gtest which will be in the unittests directory
+   # Find all test files (including both standard tests and gtest files)
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
-
-   # Remove GTest-based test files from the catch 2 tests for now
-   list(FILTER CORE_TEST_FILES EXCLUDE REGEX ".*gtest*")
    
    if (NOT RSTUDIO_HAS_SOCI)
       list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
+   endif()
+
+   # Use gtest from vendor directory
+   set(GTEST_SOURCE_DIR ${CMAKE_SOURCE_DIR}/src/cpp/tests/cpp/tests/vendor/gtest)
+   include_directories(${GTEST_SOURCE_DIR}/include)
+   
+   # Add Google Test if not already added
+   if(NOT TARGET gtest)
+      add_subdirectory(${GTEST_SOURCE_DIR} gtest-build EXCLUDE_FROM_ALL)
    endif()
 
    add_executable(rstudio-core-tests
@@ -370,36 +377,25 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-shared-core
       rstudio-core
       rstudio-core-synctex
+      rstudio-dtl
       rstudio-hunspell
+      rstudio-utfcpp
       ${Boost_LIBRARIES}
       ${SOCI_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
+      gtest
    )
+
+   if(NOT WIN32)
+      target_link_libraries(rstudio-core-tests pthread)
+   endif()
 
    if(WIN32)
       target_link_libraries(rstudio-core-tests zlibstatic)
    endif()
 
-   # -----------------------------------
-
-   # This is the new style gtests
-   file(GLOB_RECURSE CORE_GTEST_SOURCE_FILES "*_gtests.cpp")
-   list(APPEND CORE_GTEST_SOURCE_FILES unittests/main.cpp)
-
-   add_executable(core_gtests
-       ${CORE_GTEST_SOURCE_FILES}
-   )
-
-   target_link_libraries(core_gtests PRIVATE
-       rstudio-core
-       rstudio-shared-core
-       gtest_main
-       ${Boost_LIBRARIES}
-       ${CORE_SYSTEM_LIBRARIES}
-   )
-
    enable_testing()
    include(GoogleTest)
-   gtest_discover_tests(core_gtests)
+   gtest_discover_tests(rstudio-core-tests)
 
 endif()

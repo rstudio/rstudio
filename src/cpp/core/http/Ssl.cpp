@@ -274,10 +274,11 @@ void validateSelfSignedCertificate(const FilePath& certPath)
 #endif
 }
 
-void initializeSslContext(boost::asio::ssl::context* pContext,
-                        bool verify,
-                        const std::string& certificateAuthority)
+bool initializeSslContext(boost::asio::ssl::context* pContext,
+                          bool verify,
+                          const std::string& certificateAuthority)
 {
+   bool res = true;
    if (verify)
    {
       boost::system::error_code ec;
@@ -286,16 +287,20 @@ void initializeSslContext(boost::asio::ssl::context* pContext,
       {
          LOG_ERROR(Error(ec, "Could not enable certificate verification on SSL context", ERROR_LOCATION));
          ec.clear();
+         res = false;
       }
 
-      pContext->set_default_verify_paths(ec);
-      if (ec)
+      if (certificateAuthority.empty())
       {
-         LOG_ERROR(Error(ec, "Could not set default certificate verification paths on SSL context", ERROR_LOCATION));
-         ec.clear();
+         pContext->set_default_verify_paths(ec);
+         if (ec)
+         {
+            LOG_ERROR(Error(ec, "Could not set default certificate verification paths on SSL context", ERROR_LOCATION));
+            ec.clear();
+            res = false;
+         }
       }
-
-      if (!certificateAuthority.empty())
+      else
       {
          boost::asio::const_buffer buff(certificateAuthority.data(), certificateAuthority.size());
          pContext->add_certificate_authority(buff, ec);
@@ -303,6 +308,7 @@ void initializeSslContext(boost::asio::ssl::context* pContext,
          {
             LOG_ERROR(Error(ec, "Could not add certificate authority to SSL context - is it valid?", ERROR_LOCATION));
             ec.clear();
+            res = false;
          }
       }
 
@@ -338,6 +344,7 @@ void initializeSslContext(boost::asio::ssl::context* pContext,
                error.addProperty("description", "Could not add certificate to OpenSSL cert store: " + subjectNameStr);
 
                LOG_ERROR(error);
+               res = false;
             }
          }
       }
@@ -348,8 +355,12 @@ void initializeSslContext(boost::asio::ssl::context* pContext,
       boost::system::error_code ec;
       pContext->set_verify_mode(boost::asio::ssl::context::verify_none, ec);
       if (ec)
+      {
          LOG_ERROR(Error(ec, "Could not disable certificate verification on SSL context", ERROR_LOCATION));
+         res = false;
+      }
    }
+   return res;
 }
 
 void initializeSslStream(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>* pSslStream,

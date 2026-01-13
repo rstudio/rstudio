@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.Barrier.Token;
@@ -67,6 +69,12 @@ public class DocUpdateSentinel
       implements ValueChangeHandler<Void>,
       FoldChangeEvent.Handler
 {
+   private interface SaveCompleteCommand
+   {
+      public void onCompleted();
+      public void onError(String message);
+   }
+
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
       public ReopenFileCallback()
@@ -137,6 +145,7 @@ public class DocUpdateSentinel
       prefs_ = prefs;
       chunkDefProvider_ = chunkDefProvider;
       changeTracker_ = docDisplay.getChangeTracker();
+      saveCommands_ = new ArrayList<>();
       propertyChangeHandlers_ = new HashMap<>();
       
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -258,7 +267,25 @@ public class DocUpdateSentinel
                                  final Command onSaved,
                                  final CommandWithArg<String> onError)
    {
-      if (changeTracker_.hasChanged())
+      if (isSaving_)
+      {
+         saveCommands_.add(new SaveCompleteCommand()
+         {
+            @Override
+            public void onCompleted()
+            {
+               onSaved.execute();
+            }
+
+            @Override
+            public void onError(String message)
+            {
+               if (onError != null)
+                  onError.execute(message);
+            }
+         });
+      }
+      else if (changeTracker_.hasChanged())
       {
          boolean saved = doSave(null, null, null, retryWrite, new ProgressIndicator() {
 
@@ -269,7 +296,8 @@ public class DocUpdateSentinel
                   onSaved.execute();
             }
 
-            @Override public void onError(String message)
+            @Override
+            public void onError(String message)
             {
                if (onError != null)
                   onError.execute(message);
@@ -280,6 +308,8 @@ public class DocUpdateSentinel
             @Override public void clearProgress() {}
          });
 
+         // A 'false' return here implies the document was already up-to-date and no save
+         // action was taken. In this scenario, we still want to call the 'onSaved' command.
          if (!saved)
             onSaved.execute();
       }
@@ -501,6 +531,10 @@ public class DocUpdateSentinel
          actually sent to the server. */
       final ChangeTracker thisChangeTracker = changeTracker_.fork();
 
+      // we only want to know about changes that happen during this save operation,
+      // so we reset the forked change tracker to its initial state.
+      thisChangeTracker.reset();
+
       final String newContents = docDisplay_.getCode();
       String oldContents = sourceDoc_.getContents();
       final String hash = sourceDoc_.getHash();
@@ -547,11 +581,12 @@ public class DocUpdateSentinel
             eventBus_.fireEvent(new SaveInitiatedEvent(path, getId()));
          }
       }
-      catch(Exception e)
+      catch (Exception e)
       {
          Debug.logException(e);
       }
 
+      isSaving_ = true;
       server_.saveDocumentDiff(
             sourceDoc_.getId(),
             path,
@@ -570,15 +605,17 @@ public class DocUpdateSentinel
                @Override
                public void onError(ServerError error)
                {
+
                   // Always log save errors.
                   Debug.logError(error);
 
                   // Report errors to indicator.
+                  String errorMessage = constants_.errorSavingPathPlusMessage(
+                     path == null ? "<unknown>" : path,
+                     error.getUserMessage());
+
                   if (progress != null)
                   {
-                     String errorMessage =
-                           constants_.errorSavingPathPlusMessage(path, error.getUserMessage());
-
                      progress.onError(errorMessage);
                   }
 
@@ -588,6 +625,7 @@ public class DocUpdateSentinel
                      if (path != null)
                      {
                         eventBus_.fireEvent(new SaveFailedEvent(path, getId()));
+                        onSaveFailed(errorMessage);
                      }
                   }
                   catch (Exception e)
@@ -595,6 +633,7 @@ public class DocUpdateSentinel
                      Debug.logException(e);
                   }
 
+                  isSaving_ = false;
                   changesPending_ = false;
                }
 
@@ -622,7 +661,7 @@ public class DocUpdateSentinel
                                            fileType,
                                            encoding);
                      }
-                     catch(Exception ex)
+                     catch (Exception ex)
                      {
                         // log exception, but continue (we want to guarantee the
                         // progress indicator is updated)
@@ -633,20 +672,21 @@ public class DocUpdateSentinel
                         progress.onCompleted();
 
                      // let anyone interested know we just saved
+                     onSaveComplete();
                      SaveFileEvent saveEvent = new SaveFileEvent(path, fileType, encoding);
                      docDisplay_.fireEvent(saveEvent);
                      eventBus_.fireEvent(saveEvent);
+                     isSaving_ = false;
                   }
                   else if (hash != sourceDoc_.getHash())
                   {
                      // We just hit a race condition where two updates
-                     // happened at once. Try again
+                     // happened at once. Try again.
                      doSave(path, fileType, encoding, retryWrite, progress);
                   }
                   else
                   {
-                     /*Debug.log("Diff-based save failed--falling back to " +
-                               "snapshot save");*/
+                     // Diff-based save failed; fall back to full save
                      server_.saveDocument(
                            sourceDoc_.getId(),
                            path,
@@ -662,6 +702,20 @@ public class DocUpdateSentinel
             });
 
       return true;
+   }
+
+   private void onSaveComplete()
+   {
+      for (SaveCompleteCommand command : saveCommands_)
+         command.onCompleted();
+      saveCommands_.clear();
+   }
+
+   private void onSaveFailed(String message)
+   {
+      for (SaveCompleteCommand command : saveCommands_)
+         command.onError(message);
+      saveCommands_.clear();
    }
 
    private void onSuccessfulUpdate(String contents,
@@ -1009,8 +1063,9 @@ public class DocUpdateSentinel
    private ApplicationQuit quit_;
    private HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
-   private final HashMap<String, ValueChangeHandlerManager<String>>
-                 propertyChangeHandlers_;
+   private boolean isSaving_;
+   private final List<SaveCompleteCommand> saveCommands_;
+   private final HashMap<String, ValueChangeHandlerManager<String>> propertyChangeHandlers_;
    private final ChunkDefinition.Provider chunkDefProvider_;
    private boolean loggedAutosaveError_ = false;
 

@@ -160,6 +160,10 @@ if [ "$CMAKE_BUILD_TYPE" = "Debug" ]; then
     FLAVOR_SUFFIX="-Debug"
 fi
 
+if [ "$CMAKE_BUILD_TYPE" = "Release" ]; then
+    FLAVOR_SUFFIX="-Release"
+fi
+
 # remove previous image if it exists
 CONTAINER_ID="build-$REPO-$IMAGE_TAG"
 echo "Cleaning up container $CONTAINER_ID if it exists..."

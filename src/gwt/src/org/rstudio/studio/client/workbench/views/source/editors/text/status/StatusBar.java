@@ -54,10 +54,8 @@ public interface StatusBar
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
    
-   // TODO: Add a 'ShowStatus' API that lets the user provide an icon (button),
-   // that also has some kind of click handler for displaying status information.
-   
    // NOTE: Uses the same widget as the 'showMessage()' APIs.
+   void showStatus(StatusBarIconType type, String message, ClickHandler onClicked);
    void showStatus(StatusBarIconType type, String message);
    void hideStatus();
 

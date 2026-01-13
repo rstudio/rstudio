@@ -17,7 +17,10 @@ package org.rstudio.studio.client.workbench.copilot.model;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotRange;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotTextDocument;
 
 import com.google.gwt.core.client.GWT;
 
@@ -168,6 +171,29 @@ public class CopilotResponseTypes
       // These aren't part of a normal Copilot completions request; we append
       // this extra information to report whether Copilot is enabled for this document.
       public Boolean enabled;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotNextEditSuggestionsResultEntry
+   {
+      public String text;
+      public CopilotTextDocument textDocument;
+      public CopilotRange range;
+      public CopilotCompletionCommand command;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotNextEditSuggestionsResult
+   {
+      public JsArrayLike<CopilotNextEditSuggestionsResultEntry> edits;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotNextEditSuggestionsResponse
+   {
+      public String jsonrpc;
+      public String id;
+      public CopilotNextEditSuggestionsResult result;
    }
 
    private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);

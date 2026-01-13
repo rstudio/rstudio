@@ -51,14 +51,6 @@ public interface UserStateAccessorConstants extends Constants {
     * 
     */
    @DefaultStringValue("")
-   String remoteSessionTitle();
-   @DefaultStringValue("")
-   String remoteSessionDescription();
-
-   /**
-    * 
-    */
-   @DefaultStringValue("")
    String rendererTitle();
    @DefaultStringValue("")
    String rendererDescription();
@@ -270,6 +262,14 @@ public interface UserStateAccessorConstants extends Constants {
    String quartoWebsiteSyncEditorTitle();
    @DefaultStringValue("Sync source editor to Quarto website preview navigation.")
    String quartoWebsiteSyncEditorDescription();
+
+   /**
+    * State related to the Posit Assistant feature.
+    */
+   @DefaultStringValue("Posit Assistant State")
+   String positAssistantTitle();
+   @DefaultStringValue("State related to the Posit Assistant feature.")
+   String positAssistantDescription();
 
 
 

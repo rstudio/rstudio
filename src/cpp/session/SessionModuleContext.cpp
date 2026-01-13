@@ -2241,6 +2241,11 @@ void showErrorMessage(const std::string& title, const std::string& message)
    session::clientEventQueue().add(showErrorMessageEvent(title, message));
 }
 
+void showMessage(int type, const std::string& title, const std::string& message)
+{
+   session::clientEventQueue().add(showMessageEvent(type, title, message));
+}
+
 void showFile(const FilePath& filePath, const std::string& window)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)

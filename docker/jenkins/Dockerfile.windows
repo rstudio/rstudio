@@ -3,13 +3,6 @@
 # https://hub.docker.com/r/microsoft/windows-servercore
 FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
-# The version of the Windows SDK we want to use.
-ENV _WIN32_SDK_VERSION=20348
-
-# The full version path for the Windows SDK. Some tools want the full version,
-# other sjust want the "inner" component, so we provide both.
-ENV WIN32_SDK_VERSION=10.0.${_WIN32_SDK_VERSION}.0
-
 # Use plain cmd shell for initial setup.
 SHELL ["cmd", "/S", "/C"]
 
@@ -40,26 +33,32 @@ WORKDIR "C:/BuildTools"
 # Download the Build Tools bootstrapper.
 RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
 
+#
 # Install Build Tools. For whatever reason, this fails when we try to install
 # into C:/Program Files (x86), so just use the "regular" C:/Program Files.
-RUN start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
+#
+# In case you need to figure out what the so-called "Component IDs" are...
+# https://learn.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-build-tools?view=visualstudio
+#
+# Note that the unversioned 'Microsoft.VisualStudio.Component.Windows10SDK' component only installs
+# the UCRT redistributable files; it doesn't install the whole SDK. An appropriately versioned copy
+# of the Windows SDK needs to be selected to ensure it's installed and available.
+#
+RUN `
+  start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
     --installPath "C:/Program Files/Microsoft Visual Studio/2022/BuildTools" `
-    --add Microsoft.VisualStudio.Workload.CoreEditor `
-    --add Microsoft.VisualStudio.Workload.NativeDesktop `
-    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core `
-    --add Microsoft.VisualStudio.Component.VC.CoreIde `
-    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
+    --add Microsoft.VisualStudio.Workload.VCTools `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.%_WIN32_SDK_VERSION%
+    --add Microsoft.VisualStudio.Component.Windows11SDK.26100
 
 # Try testing the build tools. You might see some telemetry errors here;
 # they can apparently be ignored.
 WORKDIR "C:/Program Files/Microsoft Visual Studio/2022/BuildTools/Common7/Tools"
-RUN start /WAIT /B cmd.exe /S /C `
+RUN `
+  start /WAIT /B cmd.exe /S /C `
   echo -- Testing VsDevCmd.bat `
   && call VsDevCmd.bat -clean_env -no_logo `
-  && call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -winsdk=%WIN32_SDK_VERSION% -no_logo `
+  && call VsDevCmd.bat -arch=x86 -startdir=none -host_arch=x86 -no_logo `
   && echo -- Testing VsDevCmd.bat -- success
 WORKDIR "C:/BuildTools"
 
@@ -131,7 +130,7 @@ COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-apple-blossom panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-globemaster-allium panmirror.version.json
 
 ENV DOCKER_IMAGE_BUILD=1
 WORKDIR C:/rstudio-tools/dependencies/windows

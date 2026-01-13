@@ -17,12 +17,15 @@
 #include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionConsoleProcessSocketPacket.hpp>
 
-#include "http/SessionTcpIpHttpConnectionListener.hpp"
-
 #include <boost/make_shared.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
+
+#include "http/SessionTcpIpHttpConnectionListener.hpp"
+
+#include "websocketpp/transport/asio/base.hpp"
+#include "websocketpp/transport/base/connection.hpp"
 
 
 namespace rstudio {
@@ -165,16 +168,16 @@ Error ConsoleProcessSocket::ensureServerRunning()
          }
          catch (websocketpp::exception const& e)
          {
-            // fail if this isn't the code we're expecting
-            // (we're only trying to deal with address in use errors here)
-            if (e.code() != websocketpp::transport::asio::error::pass_through)
+            auto&& ec = e.code();
+            if (ec == websocketpp::transport::error::pass_through ||
+                ec == websocketpp::transport::asio::error::pass_through)
             {
-               return systemError(boost::system::errc::invalid_argument,
-                                  e.what(), ERROR_LOCATION);
+               port = 3000 + (rand() % 5000);
             }
-
-            // try another random port
-            port = 3000 + (rand() % 5000);
+            else
+            {
+               return Error(ec, ERROR_LOCATION);
+            }
          }
       }
       while (++portRetries < 20);

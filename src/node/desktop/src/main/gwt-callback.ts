@@ -32,7 +32,6 @@ import EventEmitter from 'events';
 import { existsSync, statSync, writeFileSync } from 'fs';
 import { platform, release } from 'os';
 import i18next from 'i18next';
-import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
 import { pathToFileURL } from 'url';
 import { FilePath, tempFilename } from '../core/file-path';
@@ -48,7 +47,14 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { parseFilter, findRepoRoot, getAppPath, handleLocaleCookies, resolveAliasedPath } from './utils';
+import {
+  parseFilter,
+  findRepoRoot,
+  getAppPath,
+  handleLocaleCookies,
+  resolveAliasedPath,
+  raiseAndActivateWindow,
+} from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
@@ -98,34 +104,35 @@ export class GwtCallback extends EventEmitter {
   monospaceFonts: string[] = [];
   proportionalFonts: string[] = [];
 
-  getFonts(monospace: boolean) {
-    if (this.hasFontConfig) {
-      let command: string = '';
-      if (monospace) {
-        command = 'fc-list :spacing=mono family | sort';
-      } else {
-        command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
-      }
-
-      const result = execSync(command, { encoding: 'utf-8' });
-      return result.trim().split('\n');
-    } else if (platform() === 'win32') {
-      return desktop.win32ListMonospaceFonts();
-    } else {
-      const result = findFontsSync({ monospace: monospace }).map((fd) => {
-        if (process.platform === 'darwin') {
-          return monospace ? fd.postscriptName : fd.family;
-        } else {
-          return fd.family;
-        }
-      });
-
-      const fontList = [...new Set<string>(result)];
-      fontList.sort((lhs, rhs) => {
-        return lhs.localeCompare(rhs);
-      });
-      return fontList;
+  /**
+   * Opens a file in the main window and activates it.
+   * This should be called from the main process (e.g., application.ts, args-manager.ts).
+   * Fixes issue #16740 by ensuring files always open in the main window, not satellite windows.
+   */
+  async openFileInMainWindow(filePath: string): Promise<void> {
+    if (!filePath) {
+      return;
     }
+
+    try {
+      const webContent = this.mainWindow.window.webContents;
+      await webContent.executeJavaScript(`window.desktopHooks.openFile(${JSON.stringify(filePath)})`);
+      raiseAndActivateWindow(this.mainWindow.window);
+    } catch (error: unknown) {
+      logger().logError(safeError(error));
+    }
+  }
+
+  getFontsLinux(monospace: boolean): string[] {
+    let command: string = '';
+    if (monospace) {
+      command = 'fc-list :spacing=mono family | sort';
+    } else {
+      command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
+    }
+
+    const result = execSync(command, { encoding: 'utf-8' });
+    return result.trim().split('\n');
   }
 
   constructor(public mainWindow: MainWindow) {
@@ -141,14 +148,23 @@ export class GwtCallback extends EventEmitter {
       }
     }
 
-    // https://github.com/foliojs/font-manager/issues/15
-    // the fork did not correct usage of Fontconfig
-    // getAvailableFontsSync() incorrectly sets the monospace property
     try {
       const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
       if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
-        this.monospaceFonts = this.getFonts(true);
-        this.proportionalFonts = this.getFonts(false);
+        if (this.hasFontConfig) {
+          // Linux with fontconfig
+          this.monospaceFonts = this.getFontsLinux(true);
+          this.proportionalFonts = this.getFontsLinux(false);
+        } else if (platform() === 'win32') {
+          this.monospaceFonts = desktop.win32ListMonospaceFonts();
+          // Windows doesn't have a proportional font list API
+          this.proportionalFonts = [];
+        } else if (platform() === 'darwin') {
+          // macOS: single-pass enumeration for both font types
+          const fonts = desktop.macOSListFonts();
+          this.monospaceFonts = fonts.monospace.sort((a, b) => a.localeCompare(b));
+          this.proportionalFonts = fonts.proportional.sort((a, b) => a.localeCompare(b));
+        }
       }
     } catch (err: unknown) {
       logger().logError(safeError(err));
@@ -171,6 +187,11 @@ export class GwtCallback extends EventEmitter {
       } else {
         void shell.openExternal(url);
       }
+    });
+
+    ipcMain.on('desktop_open_file', async (_event, filePath: string) => {
+      // Delegate to the shared method that handles opening files in the main window
+      await this.openFileInMainWindow(filePath);
     });
 
     ipcMain.handle(

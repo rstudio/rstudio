@@ -120,6 +120,8 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String openRecentFilesTitle();
     String versionControlTitle();
     String workspacePanesTitle();
+    String showSidebarTitle();
+    String hideSidebarTitle();
     String toolBarButtonText();
     String popupMenuProgressMessage();
     String recentProjectsLabel();

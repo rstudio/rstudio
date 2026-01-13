@@ -628,7 +628,9 @@ private:
    Error setCgroupMemoryStat(const std::string& key, long val)
    {
       FilePath statPath = path_.completePath(key);
-      Error error = writeStringToFile(statPath, std::to_string(val));
+      // Do not log an error in writeStringToFile - let higher level code handle it
+      Error error = writeStringToFile(statPath, std::to_string(val), string_utils::LineEndingPassthrough,
+                                      true /* truncate */, 0 /* retry secs */, false /* logError */);
       if (error)
          return error;
       return Success();
@@ -679,7 +681,8 @@ private:
    Error setCgroupCpuStat(const std::string& key, std::string val)
    {
       FilePath statPath = path_.completePath(key);
-      Error error = writeStringToFile(statPath, val);
+      Error error = writeStringToFile(statPath, val, string_utils::LineEndingPassthrough,
+                                      true /* truncate */, 0 /* retry secs */, false /* logError */);
       if (error)
       {
          error.addProperty("description", "Failed to set cgroup cpu stat: " + key + " to: " +

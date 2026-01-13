@@ -25,6 +25,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleWritePrompt = "console_write_prompt";
    public static final String ConsoleWriteInput = "console_write_input";
    public static final String ShowErrorMessage = "show_error_message";
+   public static final String ShowMessage = "show_message";
    public static final String ShowHelp = "show_help";
    public static final String BrowseUrl = "browse_url";
    public static final String ShowEditor = "show_editor";
@@ -207,7 +208,8 @@ class ClientEvent extends JavaScriptObject
    public static final String FormatDocumentCompleted = "format_document_completed";
    public static final String RunAutomation = "run_automation";
    public static final String CopilotStatusChanged = "copilot_status_changed";
-   
+   public static final String ChatBackendExit = "chat_backend_exit";
+
    protected ClientEvent()
    {
    }

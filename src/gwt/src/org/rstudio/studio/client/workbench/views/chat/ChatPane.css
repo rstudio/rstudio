@@ -1,1 +1,75 @@
 @charset "UTF-8";
+
+/* Theme color variables using @eval */
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_ALTERNATE_BACKGROUND org.rstudio.core.client.theme.ThemeColors.alternateBackground;
+@eval THEME_ALTERNATE_BORDER org.rstudio.core.client.theme.ThemeColors.alternateBorder;
+
+/* Declare external theme classes */
+@external rstudio-themes-dark-grey, rstudio-themes-alternate;
+
+/* Notification panel - base light theme style */
+.chatUpdateNotification {
+   background-color: THEME_DEFAULT_BACKGROUND;
+   padding: 10px;
+   border-bottom: 1px solid THEME_DEFAULT_BORDER;
+}
+
+/* Message label vertical alignment */
+.chatUpdateMessage {
+   display: inline-block;
+   vertical-align: middle;
+   line-height: normal;
+}
+
+/* Notification panel - dark theme override */
+.rstudio-themes-dark-grey .chatUpdateNotification {
+   background-color: THEME_DARKGREY_BACKGROUND !important;
+   border-bottom: 1px solid THEME_DARKGREY_BORDER !important;
+}
+
+/* Notification panel - alternate theme override */
+.rstudio-themes-alternate .chatUpdateNotification {
+   background-color: THEME_ALTERNATE_BACKGROUND !important;
+   border-bottom: 1px solid THEME_ALTERNATE_BORDER !important;
+}
+
+/* Buttons in notification panel - base light theme */
+.chatNotificationButton {
+   margin-left: 5px;
+   padding: 5px 12px;
+   font-size: 12px;
+   cursor: pointer;
+   border-radius: 3px;
+   border: 1px solid THEME_DEFAULT_BORDER;
+   background-color: THEME_DEFAULT_BACKGROUND;
+   color: #333;
+}
+
+.chatNotificationButton:hover {
+   background-color: THEME_DEFAULT_BORDER;
+}
+
+/* Buttons - dark theme override */
+.rstudio-themes-dark-grey .chatNotificationButton {
+   border: 1px solid THEME_DARKGREY_BORDER !important;
+   background-color: THEME_DARKGREY_BACKGROUND !important;
+   color: #fff !important;
+}
+
+.rstudio-themes-dark-grey .chatNotificationButton:hover {
+   background-color: THEME_DARKGREY_BORDER !important;
+}
+
+/* Buttons - alternate theme override */
+.rstudio-themes-alternate .chatNotificationButton {
+   border: 1px solid THEME_ALTERNATE_BORDER !important;
+   background-color: THEME_ALTERNATE_BACKGROUND !important;
+}
+
+.rstudio-themes-alternate .chatNotificationButton:hover {
+   background-color: THEME_ALTERNATE_BORDER !important;
+}

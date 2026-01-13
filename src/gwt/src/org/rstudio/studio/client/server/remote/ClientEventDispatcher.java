@@ -132,11 +132,13 @@ import org.rstudio.studio.client.workbench.events.InstallRtoolsEvent;
 import org.rstudio.studio.client.workbench.events.ListChangedEvent;
 import org.rstudio.studio.client.workbench.events.QuotaStatusEvent;
 import org.rstudio.studio.client.workbench.events.ShowErrorMessageEvent;
+import org.rstudio.studio.client.workbench.events.ShowMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
 import org.rstudio.studio.client.workbench.events.UserPromptEvent;
 import org.rstudio.studio.client.workbench.model.AdminNotification;
 import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
 import org.rstudio.studio.client.workbench.model.ErrorMessage;
+import org.rstudio.studio.client.workbench.model.ShowMessage;
 import org.rstudio.studio.client.workbench.model.QuotaStatus;
 import org.rstudio.studio.client.workbench.model.UserPrompt;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
@@ -147,6 +149,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildComplete
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -351,6 +354,11 @@ public class ClientEventDispatcher
          {
             ErrorMessage errorMessage = event.getData();
             eventBus_.dispatchEvent(new ShowErrorMessageEvent(errorMessage));
+         }
+         else if (type == ClientEvent.ShowMessage)
+         {
+            ShowMessage showMessage = event.getData();
+            eventBus_.dispatchEvent(new ShowMessageEvent(showMessage));
          }
          else if (type == ClientEvent.ChooseFile)
          {
@@ -1188,6 +1196,11 @@ public class ClientEventDispatcher
          {
             CopilotStatusChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new CopilotStatusChangedEvent(data.getStatus()));
+         }
+         else if (type == ClientEvent.ChatBackendExit)
+         {
+            ChatBackendExitEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ChatBackendExitEvent(data.getExitCode(), data.getCrashed()));
          }
          else
          {

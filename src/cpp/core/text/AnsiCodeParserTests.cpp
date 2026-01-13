@@ -15,35 +15,32 @@
 
 #include <core/text/AnsiCodeParser.hpp>
 
-#include <tests/TestThat.hpp>
+#include <gtest/gtest.h>
 
 namespace rstudio {
 namespace core {
 namespace text {
 namespace tests {
 
-test_context("Ansi Code Parsing")
+TEST(AnsiCodeParserTest, AnsiStrippingPreservesPlainText)
 {
-   test_that("Ansi stripping doesn't modify plain text")
-   {
-      std::string expect("abcd12345\nderkjdf\r\n234");
-      std::string noAnsi = expect;
-      stripAnsiCodes(&noAnsi);
+   std::string expect("abcd12345\nderkjdf\r\n234");
+   std::string noAnsi = expect;
+   stripAnsiCodes(&noAnsi);
 
-      expect_true(expect == noAnsi);
-   }
-
-   test_that("Ansi stripping gets rid of Ansi escapes")
-   {
-      std::string hasAnsi("abc\x1b[31mHello\x1b[39m World\nBye.");
-      std::string expect("abcHello World\nBye.");
-      stripAnsiCodes(&hasAnsi);
-
-      expect_true(expect == hasAnsi);
-   }
+   EXPECT_EQ(expect, noAnsi);
 }
 
-} // end namespace tests
-} // end namespace text
-} // end namespace core
-} // end namespace rstudio
+TEST(AnsiCodeParserTest, StripAnsiCodesRemovesComplexEscapes)
+{
+   std::string withAnsi = "abc\x1b[31mHello\x1b[39m World\nBye.";
+   std::string expect = "abcHello World\nBye.";
+   
+   stripAnsiCodes(&withAnsi);
+   EXPECT_EQ(expect, withAnsi);
+}
+
+} // namespace tests
+} // namespace text
+} // namespace core
+} // namespace rstudio

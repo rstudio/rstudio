@@ -16,6 +16,8 @@
 #include "SessionCopilot.hpp"
 #include "SessionNodeTools.hpp"
 
+#include <atomic>
+
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -44,6 +46,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include "SessionLSP.hpp"
 
 #include "session-config.h"
 
@@ -87,90 +91,6 @@ namespace copilot {
 
 namespace {
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
-std::map<std::string, std::string> s_extToLanguageIdMap = {
-   { ".abap",  "abap" },
-   { ".bash",  "shellscript" },
-   { ".bat",   "bat" },
-   { ".bib",   "bibtex" },
-   { ".c",     "c" },
-   { ".cc",    "cpp" },
-   { ".clj",   "clojure"},
-   { ".coffee","coffeescript" },
-   { ".cpp",   "cpp" },
-   { ".cs",    "csharp" },
-   { ".css",   "css" },
-   { ".dart",  "dart" },
-   { ".diff",  "diff" },
-// { "",       "dockerfile" }, (special handling due to lack of extension)
-   { ".erl",   "erlang" },
-   { ".etx",   "tex" },
-   { ".ex",    "elixir" },
-   { ".fs",    "fsharp" },
-   { ".go",    "go" },
-   { ".groovy","groovy" },
-   { ".h",     "c" },
-   { ".hbs",   "handlebars" },
-   { ".hpp",   "cpp" },
-   { ".html",  "html" },
-   { ".ini",   "ini" },
-   { ".jade",  "jade" },
-   { ".java",  "java" },
-   { ".js",    "javascript" },
-   { ".jsx",   "javascriptreact" },
-   { ".json",  "json" },
-   { ".less",  "less" },
-   { ".lua",   "lua" },
-   { ".m",     "objective-c" },
-   { ".md",    "markdown" },
-   { ".mjs",   "javascript" },
-   { ".ps",    "powershell" },
-   { ".mk",    "makefile" }, // (special handling for extensionless "makefile" / "Makefile")
-   { ".mm",    "objective-cpp" },
-   { ".php",   "php" },
-   { ".pl",    "perl" },
-   { ".pl6",   "perl6" },
-   { ".pug",   "jade" },
-   { ".py",    "python" },
-   { ".qmd",   "quarto" },
-   { ".r",     "r" },
-   { ".razor", "razor" },
-   { ".rb",    "ruby" },
-   { ".rmd",   "r" },
-   { ".rnb",   "r" },
-   { ".rnw",   "r" },
-   { ".rs",    "rust" },
-   { ".sass",  "sass" },
-   { ".sc",    "scala" },
-   { ".scala", "scala" },
-   { ".scss",  "scss" },
-   { ".sh",    "shellscript" },
-   { ".shader","shaderlab" },
-   { ".sql",   "sql" },
-   { ".swift", "swift" },
-   { ".tex",   "latex" },
-   { ".toml",  "toml" },
-   { ".ts",    "typescript" },
-   { ".tsx",   "typescriptreact" },
-   { ".vb",    "vb" },
-   { ".xml",   "xml" },
-   { ".xsl",   "xsl" },
-   { ".yml",   "yaml" },
-};
-
-std::map<std::string, std::string> makeLanguageIdToExtMap()
-{
-   std::map<std::string, std::string> map;
-   for (auto&& entry : s_extToLanguageIdMap)
-      map[entry.second] = entry.first;
-   return map;
-}
-
-std::map<std::string, std::string>& languageIdToExtMap()
-{
-   static auto instance = makeLanguageIdToExtMap();
-   return instance;
-}
 
 struct CopilotRequest
 {
@@ -310,46 +230,14 @@ projects::RProjectCopilotOptions s_copilotProjectOptions;
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
 
-// The language server protocol states:
-//
-// ...open notification must not be sent more than once without a corresponding close notification 
-// send before. This means open and close notification must be balanced and the max open count
-// for a particular textDocument is one.
-//
-// Track documents Copilot knows about via textDocument/didOpen. Remove them when
-// textDocument/didClose is sent (or the agent is stopped).
-//
-// Also tracks an incrementing version number for each document.
-//
-std::unordered_map<std::string, int> s_knownDocuments;
+// Next Edit Suggestions (NES) retry configuration.
+// When NES returns no suggestions, we retry at progressively further positions.
+constexpr int kNesMaxRetries = 3;
+constexpr int kNesRetryLineOffset = 4;
 
-// Set/update the version for a given URI. IMPORTANT: will increment the version number each time
-// it is called.
-int updateVersionForDocument(const std::string& uri)
-{
-   // If the document is already known, increment its version.
-   auto it = s_knownDocuments.find(uri);
-   if (it != s_knownDocuments.end())
-   {
-      it->second++;
-      return it->second;
-   }
-   
-   // Otherwise, add it with initial version
-   s_knownDocuments[uri] = kCopilotDefaultDocumentVersion;
-   return s_knownDocuments[uri];
-}
-
-int currentVersionForDocument(const std::string& uri)
-{
-   // If the document is known, return its version.
-   auto it = s_knownDocuments.find(uri);
-   if (it != s_knownDocuments.end())
-      return it->second;
-
-   // Otherwise, return the default version.
-   return kCopilotDefaultDocumentVersion;
-}
+// Sequence number for NES requests. Incremented on each new request to
+// allow cancellation of in-flight requests when a new request arrives.
+std::atomic<int> s_nesRequestSequence{0};
 
 int copilotLogLevel()
 {
@@ -390,7 +278,8 @@ bool isIndexableFile(const FilePath& documentPath)
    // We previously used module_context::isTextFile(), but because this
    // relies on invoking /usr/bin/file, this can be dreadfully slow if
    // the project contains a large number of files without a known type.
-   return s_extToLanguageIdMap.count(ext);
+   std::string languageId = lsp::languageIdFromExtension(ext);
+   return !languageId.empty();
 }
 
 bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
@@ -408,7 +297,8 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    if (pDoc->isUntitled())
    {
       std::string type = pDoc->type();
-      return languageIdToExtMap().count(type);
+      std::string ext = lsp::extensionFromLanguageId(type);
+      return !ext.empty();
    }
    
    // Otherwise, check for known files / extensions.
@@ -536,46 +426,6 @@ bool isCopilotIndexingEnabled()
 
    // Check user preference
    return prefs::userPrefs().copilotIndexingEnabled();
-}
-
-std::string uriFromDocumentPath(const std::string& path)
-{
-   return fmt::format("file://{}", path);
-}
-
-
-std::string uriFromDocumentId(const std::string& id)
-{
-   return fmt::format("rstudio-document://{}", id);
-}
-
-std::string uriFromDocumentImpl(const std::string& id,
-                                const std::string& path,
-                                bool isUntitled)
-{
-   FilePath resolvedPath = module_context::resolveAliasedPath(path);
-   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
-   
-}
-std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
-{
-   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
-}
-
-std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
-      return "r";
-
-   FilePath docPath(pDoc->path());
-   std::string name = docPath.getFilename();
-   std::string stem = docPath.getStem();
-   if (name == "Makefile" || name == "makefile")
-      return "makefile";
-   else if (stem == "Dockerfile")
-      return "dockerfile";
-   
-   return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
 template <typename F>
@@ -988,8 +838,6 @@ void onExit(int status)
 
 void stopAgent()
 {
-   s_knownDocuments.clear();
-
    if (s_agentPid == -1)
    {
       setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
@@ -1136,7 +984,7 @@ Error startAgent()
    std::string workspaceFolderURI;
    if (prefs::userPrefs().copilotProjectWorkspace() && projects::projectContext().hasProject())
    {
-      workspaceFolderURI = uriFromDocumentPath(projects::projectContext().directory().getAbsolutePath());
+      workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
    }
 
    json::Object workspaceJson;
@@ -1219,124 +1067,59 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    return error == Success();
 }
 
-std::string contentsFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   std::string contents = pDoc->contents();
-   
-   // for SQL documents, remove a 'preview' header to avoid confusing Copilot
-   // into producing R completions in a SQL context
-   // https://github.com/rstudio/rstudio/issues/13432
-   if (pDoc->type() == kSourceDocumentTypeSQL)
-   {
-      boost::regex rePreview("(?:#+|[-]{2,})\\s*[!]preview[^\n]+\n");
-      contents = boost::regex_replace(contents, rePreview, "\n");
-   }
-   
-   return contents;
-}
-
 void docOpened(const std::string& uri,
+               int64_t version,
                const std::string& languageId,
                const std::string& contents)
 {
-   if (s_knownDocuments.count(uri) > 0)
-   {
-      // already told Copilot about this document, so skip this
-      return;
-   }
+   lsp::DidOpenTextDocumentParams params = {
+      .textDocument = {
+         .uri        = uri,
+         .languageId = languageId,
+         .version    = version,
+         .text       = contents
+      }
+   };
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = updateVersionForDocument(uri);
-   textDocumentJson["text"] = contents;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
+   sendNotification("textDocument/didOpen", lsp::toJson(params));
 }
 
 void docClosed(const std::string& uri)
 {
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      // Check if this is an untitled (unsaved) document; if so then it's likely an empty unsaved
-      // file that was never edited (Copilot isn't told about a new file until it gets modified)
-      // so the warning is unnecessary
-      if (uri.find("rstudio-document://") == 0)
-      {
-         return;
+   lsp::DidCloseTextDocumentParams params = {
+      .textDocument = {
+         .uri = uri,
       }
-      
-      WLOG("Tried to close unknown document '{}'.", uri);
-      return;
-   }
+   };
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   s_knownDocuments.erase(uri);
-   sendNotification("textDocument/didClose", paramsJson);
-}
-
-void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   if (!ensureAgentRunning())
-      return;
-   
-   if (!isIndexableDocument(pDoc))
-      return;
-   
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
+   sendNotification("textDocument/didClose", lsp::toJson(params));
 }
 
 // Send a textDocument/didChange notification with diff
 void didChangeIncremental(const std::string& uri,
-                          const std::string& languageId,
-                          collection::Range range,
+                          int version,
+                          const lsp::Range& range,
                           const std::string& text)
 {
-   if (s_knownDocuments.count(uri) == 0)
-   {
-      DLOG("Ignoring diff for unknown document '{}'.", uri);
-      return;
-   }
+   lsp::TextDocumentContentChangeEvent event = {
+      .range = range,
+      .text = text,
+   };
 
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uri;
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = updateVersionForDocument(uri);
+   lsp::DidChangeTextDocumentParams params = {
+      .textDocument = {
+         .uri = uri,
+         .version = version,
+      },
+      .contentChanges = {
+         {
+            .range = range,
+            .text = text,
+         }
+      }
+   };
 
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   json::Object startJson;
-   startJson["line"] = static_cast<uint64_t>(range.begin().row);
-   startJson["character"] = static_cast<uint64_t>(range.begin().column);
-
-   json::Object endJson;
-   endJson["line"] = static_cast<uint64_t>(range.end().row);
-   endJson["character"] = static_cast<uint64_t>(range.end().column);
-
-   json::Object rangeJson;
-   rangeJson["start"] = startJson;
-   rangeJson["end"] = endJson;
-
-   json::Object contentChangeJson;
-   contentChangeJson["range"] = rangeJson;
-   contentChangeJson["text"] = text;
-
-   json::Array contentChangesJsonArray;
-   contentChangesJsonArray.push_back(contentChangeJson);
-   paramsJson["contentChanges"] = contentChangesJsonArray;
-
-   sendNotification("textDocument/didChange", paramsJson);
+   sendNotification("textDocument/didChange", lsp::toJson(params));
 }
 
 namespace file_monitor {
@@ -1354,10 +1137,10 @@ void indexFile(const core::FileInfo& info)
    if (!isIndexableFile(documentPath))
       return;
    
-   std::string languageId;
    std::string ext = documentPath.getExtensionLowerCase();
-   if (s_extToLanguageIdMap.count(ext))
-      languageId = s_extToLanguageIdMap[ext];
+   std::string languageId = lsp::languageIdFromExtension(ext);
+   if (languageId.empty())
+      return;
       
    std::string contents;
    Error error = core::readStringFromFile(documentPath, &contents);
@@ -1366,9 +1149,13 @@ void indexFile(const core::FileInfo& info)
    
    DLOG("Indexing document: {}", info.absolutePath());
    
-   docOpened(uriFromDocumentPath(documentPath.getAbsolutePath()),
-             languageId,
-             contents);
+   std::string uri = lsp::uriFromDocumentPath(documentPath);
+   auto version = lsp::documentVersionFromUri(uri);
+   docOpened(
+      uri,
+      version,
+      languageId,
+      contents);
 }
 
 } // end anonymous namespace
@@ -1393,47 +1180,72 @@ void onMonitoringDisabled()
 
 } // end namespace file_monitor
 
-void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+void didOpen(lsp::DidOpenTextDocumentParams params)
 {
    if (!ensureAgentRunning())
       return;
+   
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    if (!isIndexableDocument(pDoc))
       return;
 
-   // We generally handle changes to the document via onSourceFileDiff(), but in the case 
-   // where a new document is created but not yet saved, we get this onDocUpdated() call
-   // and use it to tell Copilot about the new document.
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
+   docOpened(
+      params.textDocument.uri,
+      params.textDocument.version,
+      params.textDocument.languageId,
+      params.textDocument.text);
 }
 
-void onDocReopened(boost::shared_ptr<source_database::SourceDocument> pDoc)
+void didChange(lsp::DidChangeTextDocumentParams params)
 {
    if (!ensureAgentRunning())
       return;
 
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
    if (!isIndexableDocument(pDoc))
       return;
 
-   docClosed(uriFromDocument(pDoc));
-
-   docOpened(uriFromDocument(pDoc),
-             languageIdFromDocument(pDoc),
-             contentsFromDocument(pDoc));
+   for (auto&& contentChange : params.contentChanges)
+   {
+      didChangeIncremental(
+         params.textDocument.uri,
+         params.textDocument.version,
+         contentChange.range,
+         contentChange.text);
+   }
 }
 
-void onDocRemoved(boost::shared_ptr<source_database::SourceDocument> pDoc)
+void didClose(lsp::DidCloseTextDocumentParams params)
 {
    if (!ensureAgentRunning())
       return;
 
-   // we didn't tell Copilot about this document, so skip this
+   boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
+   Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
    if (!isIndexableDocument(pDoc))
       return;
 
-   docClosed(uriFromDocument(pDoc));
+   docClosed(params.textDocument.uri);
 }
 
 void onBackgroundProcessing(bool isIdle)
@@ -1696,10 +1508,9 @@ void onUserPrefsChanged(const std::string& layer,
 
 void onDeferredInit(bool newSession)
 {
-   source_database::events().onDocAdded.connect(onDocAdded);
-   source_database::events().onDocUpdated.connect(onDocUpdated);
-   source_database::events().onDocReopened.connect(onDocReopened);
-   source_database::events().onDocPendingRemove.connect(onDocRemoved);
+   lsp::events().didOpen.connect(didOpen);
+   lsp::events().didChange.connect(didChange);
+   lsp::events().didClose.connect(didClose);
 }
 
 void onShutdown(bool)
@@ -1709,32 +1520,6 @@ void onShutdown(bool)
 
    // Shut down the agent.
    stopAgentSync();
-}
-
-void onSourceFileDiff(module_context::DocumentDiff diff)
-{
-   if (!ensureAgentRunning())
-      return;
-
-   // Resolve source document from id
-   auto pDoc = boost::make_shared<source_database::SourceDocument>();
-   Error error = source_database::get(diff.docId, pDoc);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // Convert from absolute location in the file to a line/column range.
-   collection::Range range(
-         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset), 
-         core::string_utils::offsetToPosition(pDoc->contents(), diff.offset + diff.length));
-
-   // Notify Copilot of the change
-   didChangeIncremental(uriFromDocument(pDoc),
-                        languageIdFromDocument(pDoc),
-                        range,
-                        diff.replacement);
 }
 
 // Primarily intended for debugging / exploration.
@@ -1896,9 +1681,9 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    positionJson["character"] = cursorColumn;
 
    json::Object docJson;
-   auto uri = uriFromDocument(pDoc);
+   auto uri = lsp::uriFromDocument(pDoc);
    docJson["uri"] = uri;
-   docJson["version"] = currentVersionForDocument(uri);
+   docJson["version"] = lsp::documentVersionFromUri(uri);
 
    json::Object contextJson;
    contextJson["triggerKind"] = autoInvoked ? 
@@ -1915,6 +1700,314 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+// Structure to hold state for NES retry logic
+struct NesRetryState
+{
+   json::JsonRpcFunctionContinuation continuation;
+   boost::shared_ptr<source_database::SourceDocument> pDoc;
+   std::string uri;
+   int documentVersion;
+   int originalRow;    // The original cursor row (doesn't change)
+   int currentRow;     // The current row being queried (changes with retries)
+   int column;
+   int retryCount;
+   int sequenceNumber;
+   int documentLineCount;
+};
+
+// Helper function to check if a NES response contains edit suggestions
+bool nesResponseHasEdits(json::Object responseJson)
+{
+   if (!responseJson.hasMember("result"))
+      return false;
+
+   json::Value resultValue = responseJson["result"];
+   if (!resultValue.isObject())
+      return false;
+
+   json::Object result = resultValue.getObject();
+   if (!result.hasMember("edits"))
+      return false;
+
+   json::Value editsValue = result["edits"];
+   if (!editsValue.isArray())
+      return false;
+
+   json::Array edits = editsValue.getArray();
+   return !edits.isEmpty();
+}
+
+// Forward declaration
+void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state);
+
+// Callback handler for NES requests that implements retry logic
+class NesContinuation
+{
+public:
+   explicit NesContinuation(boost::shared_ptr<NesRetryState> state)
+      : state_(state)
+   {
+   }
+
+   void invoke(json::Object responseJson)
+   {
+      // Check if this request has been cancelled (a newer request has started)
+      if (s_nesRequestSequence.load() != state_->sequenceNumber)
+      {
+         DLOG("NES request {} cancelled (current sequence: {})",
+              state_->sequenceNumber, s_nesRequestSequence.load());
+
+         // Return a cancelled response
+         json::Object cancelledResult;
+         cancelledResult["cancelled"] = true;
+
+         json::JsonRpcResponse response;
+         response.setResult(cancelledResult);
+
+         if (state_->continuation)
+            state_->continuation(Success(), &response);
+         return;
+      }
+
+      // Check if we got edit suggestions
+      if (nesResponseHasEdits(responseJson))
+      {
+         DLOG("NES request {} got suggestions on attempt {}",
+              state_->sequenceNumber, state_->retryCount + 1);
+
+         // We have results - pass them to the original continuation
+         responseJson["cancelled"] = false;
+
+         json::JsonRpcResponse response;
+         response.setResult(responseJson);
+
+         if (state_->continuation)
+            state_->continuation(Success(), &response);
+         return;
+      }
+
+      // No suggestions - should we retry?
+      if (state_->retryCount < kNesMaxRetries)
+      {
+         // Calculate new position for retry (linear offset from original position)
+         int newRow = state_->originalRow + ((state_->retryCount + 1) * kNesRetryLineOffset);
+
+         // Don't retry if we'd go past the end of the document
+         if (newRow >= state_->documentLineCount)
+         {
+            DLOG("NES request {} no more retries (would exceed document length: {} >= {})",
+                 state_->sequenceNumber, newRow, state_->documentLineCount);
+
+            // Return empty result
+            responseJson["cancelled"] = false;
+
+            json::JsonRpcResponse response;
+            response.setResult(responseJson);
+
+            if (state_->continuation)
+               state_->continuation(Success(), &response);
+            return;
+         }
+
+         DLOG("NES request {} retrying at row {} (attempt {})",
+              state_->sequenceNumber, newRow, state_->retryCount + 2);
+
+         // Update state for retry
+         state_->retryCount++;
+         state_->currentRow = newRow;
+
+         // Send another request
+         sendNesRequestWithRetry(state_);
+         return;
+      }
+
+      DLOG("NES request {} exhausted retries", state_->sequenceNumber);
+
+      // No more retries - return the (empty) result
+      responseJson["cancelled"] = false;
+
+      json::JsonRpcResponse response;
+      response.setResult(responseJson);
+
+      if (state_->continuation)
+         state_->continuation(Success(), &response);
+   }
+
+   void cancel()
+   {
+      json::Object resultJson;
+      resultJson["cancelled"] = true;
+
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+
+      if (state_->continuation)
+         state_->continuation(Success(), &response);
+   }
+
+   boost::posix_time::ptime time()
+   {
+      return time_;
+   }
+
+private:
+   boost::shared_ptr<NesRetryState> state_;
+   boost::posix_time::ptime time_ = boost::posix_time::second_clock::local_time();
+};
+
+// Send a NES request with retry support
+void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
+{
+   // Check for cancellation before sending
+   if (s_nesRequestSequence.load() != state->sequenceNumber)
+   {
+      DLOG("NES request {} cancelled before sending", state->sequenceNumber);
+
+      json::Object cancelledResult;
+      cancelledResult["cancelled"] = true;
+
+      json::JsonRpcResponse response;
+      response.setResult(cancelledResult);
+
+      if (state->continuation)
+         state->continuation(Success(), &response);
+      return;
+   }
+
+   // Build the request
+   json::Object positionJson;
+   positionJson["line"] = state->currentRow;
+   positionJson["character"] = state->column;
+
+   json::Object docJson;
+   docJson["uri"] = state->uri;
+   docJson["version"] = state->documentVersion;
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kCopilotCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Create the continuation that will handle retries
+   NesContinuation nesContinuation(state);
+
+   // Wrap in a CopilotContinuation-compatible lambda
+   auto continuation = [nesContinuation](const Error& error, json::JsonRpcResponse* pResponse) mutable
+   {
+      if (error)
+      {
+         nesContinuation.cancel();
+         return;
+      }
+
+      if (pResponse && pResponse->result().isObject())
+      {
+         nesContinuation.invoke(pResponse->result().getObject());
+      }
+      else
+      {
+         // No valid response - treat as empty
+         json::Object emptyResponse;
+         nesContinuation.invoke(emptyResponse);
+      }
+   };
+
+   // Send the request
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, CopilotContinuation(continuation));
+}
+
+Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
+                                 const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
+   // Read params
+   std::string documentId;
+   std::string documentPath;
+   bool isUntitled;
+   int cursorRow, cursorColumn;
+
+   Error error = core::json::readParams(
+            request.params,
+            &documentId,
+            &documentPath,
+            &isUntitled,
+            &cursorRow,
+            &cursorColumn);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Resolve source document from id
+   auto pDoc = boost::make_shared<source_database::SourceDocument>();
+   error = source_database::get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Disallow completion request in hidden files, since this might trigger
+   // the copilot agent to attempt to read the contents of that file
+   if (!isIndexableDocument(pDoc))
+   {
+      json::Object resultJson;
+      resultJson["enabled"] = false;
+
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+
+      continuation(Success(), &response);
+      return Success();
+   }
+
+   // Increment the sequence number to cancel any in-flight requests
+   int sequenceNumber = ++s_nesRequestSequence;
+
+   DLOG("Starting NES request {} at row {}", sequenceNumber, cursorRow);
+
+   // Get document line count for bounds checking during retries
+   std::string contents = pDoc->contents();
+   int lineCount = 1;
+   for (char c : contents)
+   {
+      if (c == '\n')
+         lineCount++;
+   }
+
+   // Create the retry state
+   auto state = boost::make_shared<NesRetryState>();
+   state->continuation = continuation;
+   state->pDoc = pDoc;
+   state->uri = lsp::uriFromDocument(pDoc);
+   state->documentVersion = lsp::documentVersionFromUri(state->uri);
+   state->originalRow = cursorRow;
+   state->currentRow = cursorRow;
+   state->column = cursorColumn;
+   state->retryCount = 0;
+   state->sequenceNumber = sequenceNumber;
+   state->documentLineCount = lineCount;
+
+   // Send the initial request with retry support
+   sendNesRequestWithRetry(state);
+
+   return Success();
+}
+
 
 Error copilotSignIn(const json::JsonRpcRequest& request,
                     const json::JsonRpcFunctionContinuation& continuation)
@@ -2015,14 +2108,17 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    
    // If document is NOT indexable we tell Copilot that no file has focus via an empty request.
    // This is to prevent Copilot from attempting to read the contents of the file.
-   json::Object textDocumentJson;
+   json::Object paramsJson;
    if (isIndexableDocument(pDoc))
    {
-      textDocumentJson["uri"] = uriFromDocument(pDoc);
+      lsp::DidFocusTextDocumentParams params = {
+         .textDocument = {
+            .uri = lsp::uriFromDocument(pDoc),
+         }
+      };
+      
+      paramsJson = lsp::toJson(params);
    }
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didFocus", paramsJson);
    return Success();
@@ -2149,7 +2245,6 @@ Error initialize()
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
-   events().onSourceFileDiff.connect(onSourceFileDiff);
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while
@@ -2165,6 +2260,7 @@ Error initialize()
    initBlock.addFunctions()
          (bind(registerAsyncRpcMethod, "copilot_diagnostics", copilotDiagnostics))
          (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
+         (bind(registerAsyncRpcMethod, "copilot_next_edit_suggestions", copilotNextEditSuggestions))
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))

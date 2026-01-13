@@ -16,6 +16,8 @@
 #include <shared_core/Error.hpp>
 #include <set>
 
+#include <core/system/System.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -44,6 +46,10 @@ void startShutdown()
 std::set<std::string> interruptProcs()
 {
    return std::set<std::string>();
+}
+
+void addProcsToShutdown(std::vector<core::system::ProcessInfo> *pChildren)
+{
 }
 
 void shutdown()

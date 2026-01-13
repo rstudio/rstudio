@@ -1073,6 +1073,12 @@
             "title": "Show hidden files in Files pane",
             "description": "Whether to show hidden files in the Files pane."
         },
+        "delete_to_trash": {
+            "type": "boolean",
+            "default": true,
+            "title": "Delete files to Trash/Recycle Bin",
+            "description": "Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them."
+        },
         "always_shown_files": {
             "type": "array",
             "description": "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",
@@ -1094,6 +1100,7 @@
                 "type": "string"
             },
             "default": [
+                ".air.toml",
                 ".circleci",
                 ".env",
                 ".gitattributes",
@@ -1795,6 +1802,12 @@
             "title": "Index project files with GitHub Copilot",
             "description": "When enabled, RStudio will index project files with GitHub Copilot."
         },
+        "copilot_nes_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "[Preview] Enable next-edit suggestions",
+            "description": "When enabled, RStudio will display next-edit suggestions as provided by Copilot when available."
+        },
         "copilot_show_messages": {
             "type": "boolean",
             "default": true,
@@ -1865,10 +1878,9 @@
             "title": "Use extended display for",
             "description": "When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied."
         },
-        "show_chat_ui": {
-            "description": "Whether to show the experimental Chat UI",
-            "title": "Show Chat UI",
+        "pai": {
             "type": "boolean",
+            "description": "Experimental",
             "default": false
         }
       }

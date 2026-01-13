@@ -28,7 +28,7 @@
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -421,25 +421,38 @@ private:
    bool scheduleRetry()
    {
       // set expiration
-      boost::system::error_code ec;
-      connectionRetryContext_.retryTimer.expires_from_now(
-                  connectionRetryContext_.profile.retryInterval,
-                  ec);
-
-      // attempt to schedule retry timer (should always succeed but
-      // include error check to be paranoid/robust)
-      if (!ec)
+      try
       {
-         connectionRetryContext_.retryTimer.async_wait(boost::asio::bind_executor(*pStrand_, boost::bind(
-               &AsyncClient<SocketService>::handleConnectionRetryTimer,
-               AsyncClient<SocketService>::shared_from_this(),
-               boost::asio::placeholders::error)));
+         auto interval = std::chrono::milliseconds(
+            connectionRetryContext_.profile.retryInterval.total_milliseconds());
 
+         connectionRetryContext_.retryTimer.expires_after(interval);
+         connectionRetryContext_.retryTimer.async_wait(
+            boost::asio::bind_executor(
+               *pStrand_,
+               boost::bind(
+                  &AsyncClient<SocketService>::handleConnectionRetryTimer,
+                  AsyncClient<SocketService>::shared_from_this(),
+                  boost::asio::placeholders::error)));
          return true;
       }
-      else
+      catch (boost::system::system_error& e)
       {
-         logError(Error(ec, ERROR_LOCATION));
+         log::logError(Error(e.code(), ERROR_LOCATION));
+         return false;
+      }
+      catch (std::exception& e)
+      {
+         log::logErrorMessage(
+            fmt::format("Unexpected exception: {}", e.what()),
+            ERROR_LOCATION);
+         return false;
+      }
+      catch (...)
+      {
+         log::logErrorMessage(
+            "Unexpected exception: <no information available>",
+            ERROR_LOCATION);
          return false;
       }
    }
@@ -792,7 +805,7 @@ private:
 
       http::ConnectionRetryProfile profile;
       boost::posix_time::ptime stopTryingTime;
-      boost::asio::deadline_timer retryTimer;
+      boost::asio::system_timer retryTimer;
    };
 
    struct ChunkState

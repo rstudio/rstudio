@@ -80,6 +80,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.GWT;
@@ -97,7 +99,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
                                  NewProjectFromVcsEvent.Handler,
                                  NewProjectFolderEvent.Handler,
                                  OpenProjectEvent.Handler,
-                                 RequestOpenProjectEvent.Handler
+                                 RequestOpenProjectEvent.Handler,
+                                 FileChangeEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, Projects> {}
 
@@ -148,6 +151,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       eventBus.addHandler(NewProjectFolderEvent.TYPE, this);
       eventBus.addHandler(OpenProjectEvent.TYPE, this);
       eventBus.addHandler(RequestOpenProjectEvent.TYPE, this);
+      eventBus.addHandler(FileChangeEvent.TYPE, this);
 
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -333,6 +337,50 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
          createNewProject(newProject, saveChanges);
       }
+   }
+
+   private void handleAirTomlFileChange(FileChangeEvent event)
+   {
+      FileChange fileChange = event.getFileChange();
+      FileSystemItem file = fileChange.getFile();
+      
+      // Check if this is an air.toml file at the project root
+      WorkbenchContext workbenchContext = pWorkbenchContext_.get();
+      FileSystemItem projectDir = workbenchContext.getActiveProjectDir();
+      if (projectDir == null)
+         return;
+      
+      String filename = file.getName();
+      
+      // Check if the file is air.toml or .air.toml
+      if (!filename.equals("air.toml") && !filename.equals(".air.toml"))
+         return;
+      
+      // Check if the file is at the project root
+      String filePath = file.getPath();
+      String projectPath = projectDir.getPath();
+      boolean isAtProjectRoot = filePath.equals(projectPath + "/air.toml") ||
+                                filePath.equals(projectPath + "/.air.toml");
+      
+      if (isAtProjectRoot)
+      {
+         // Update the existence state based on the change type
+         int type = fileChange.getType();
+         if (type == FileChange.ADD || type == FileChange.MODIFIED)
+         {
+            airTomlPath_ = filePath;
+         }
+         else if (type == FileChange.DELETE)
+         {
+            airTomlPath_ = null;
+         }
+      }
+   }
+
+   @Override
+   public void onFileChange(FileChangeEvent event)
+   {
+      handleAirTomlFileChange(event);
    }
 
    @Override
@@ -883,6 +931,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
       showProjectOptions(ProjectPreferencesDialog.RENV, true);
    }
 
+   public String getAirTomlPath()
+   {
+      return airTomlPath_;
+   }
+
    public void showProjectOptions(final int initialPane, boolean showPaneChooser)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
@@ -1234,8 +1287,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
 
+   private String airTomlPath_;
+
    // This string cannot be localized, currently, because it is hardcoded as "none" in the C++ code
    // #define kProjectNone           "none"
    public static final String NONE = "none"; // constants_.noneLabel();
    public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
+
 }

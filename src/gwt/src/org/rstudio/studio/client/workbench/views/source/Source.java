@@ -72,6 +72,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
@@ -80,6 +81,7 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.events.InsertAtCursorEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent.AskForRestartData;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
@@ -217,6 +219,7 @@ public class Source implements InsertSourceEvent.Handler,
                                RefreshObjectExplorerEvent.Handler,
                                CloseObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
+                               InsertAtCursorEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
                                RequestDocumentSaveEvent.Handler,
@@ -474,6 +477,7 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
+      events_.addHandler(InsertAtCursorEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
       events_.addHandler(OpenProfileEvent.TYPE, this);
@@ -1816,14 +1820,20 @@ public class Source implements InsertSourceEvent.Handler,
       if (!isLastFocusedSourceWindow())
          return;
 
-      // determine the type
       final EditableFileType docType;
-      if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
+      FileType extType = fileTypeRegistry_.getTypeForExt(event.getType());
+      if (extType != null && extType instanceof EditableFileType)
+         docType = (EditableFileType) extType;
+      else if (event.getType() == NewDocumentWithCodeEvent.R_SCRIPT)
          docType = FileTypeRegistry.R;
       else if (event.getType() == NewDocumentWithCodeEvent.SQL)
          docType = FileTypeRegistry.SQL;
+      else if (event.getType() == NewDocumentWithCodeEvent.PYTHON)
+         docType = FileTypeRegistry.PYTHON;
+      else if (event.getType() == NewDocumentWithCodeEvent.QUARTO)
+         docType = FileTypeRegistry.QUARTO;
       else
-         docType = FileTypeRegistry.RMARKDOWN;
+         docType = FileTypeRegistry.TEXT;
 
       final ResultCallback<EditingTarget, ServerError> callback = event.getCallback();
 
@@ -3013,6 +3023,23 @@ public class Source implements InsertSourceEvent.Handler,
          docDisplay.replaceRange(range, text);
       }
       docDisplay.focus();
+   }
+
+   @Override
+   public void onInsertAtCursor(final InsertAtCursorEvent event)
+   {
+      dispatchEditorEvent(event.getData().getId(), new CommandWithArg<DocDisplay>()
+      {
+         @Override
+         public void execute(DocDisplay docDisplay)
+         {
+            if (docDisplay == null)
+               return;
+
+            docDisplay.insertCode(event.getData().getContent());
+            docDisplay.focus();
+         }
+      });
    }
 
    private boolean apiEventTargetIsConsole(String id)

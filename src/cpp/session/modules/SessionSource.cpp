@@ -13,26 +13,34 @@
  *
  */
 
+// Use C++11 API 
+#define UTF_CPP_CPLUSPLUS 201103L
+
 #include "SessionSource.hpp"
 #include "rmarkdown/NotebookChunkDefs.hpp"
 
 #include <string>
-#include <map>
 #include <fstream>
 
+#include <dtl/dtl.hpp>
 #include <gsl/gsl-lite.hpp>
+#include <utf8.h>
 
-#include <boost/utility.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/utility.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
+#include <core/Diff.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
+#include <core/json/JsonBuilder.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RPackageInfo.hpp>
@@ -64,10 +72,6 @@ extern "C" const char *locale2charset(const char *);
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
-#define kFormatContextUnknown 0
-#define kFormatContextCommand 1
-#define kFormatContextSave    2
-
 namespace rstudio {
 namespace session {
 namespace modules { 
@@ -79,6 +83,67 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
 module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
+
+struct FormatData
+{
+   FilePath codeDir;
+   FilePath codePath;
+   std::string indent;
+};
+
+Error prepareFormatData(
+   const FilePath& documentPath,
+   const std::string& code,
+   bool computeIndent,
+   FormatData* pData)
+{
+   // Create a temporary directory using a path computed by tempFile
+   FilePath codeDir = module_context::tempFile("rstudio-format-", "");
+   Error error = codeDir.ensureDirectory();
+   if (error)
+      return error;
+   
+   // Write the code to document.R in the temporary directory
+   FilePath codePath = codeDir.completePath("document.R");
+   error = writeStringToFile(codePath, code);
+   if (error)
+      return error;
+
+   // Figure out if we're going to use the air formatter.
+   bool usingAirFormatter =
+      prefs::userPrefs().codeFormatter() == kCodeFormatterNone &&
+      prefs::userPrefs().useAirFormatter();
+   
+   // Preserve the common indent if we're using the air formatter.
+   std::string indent;
+   if (usingAirFormatter)
+   {
+      // Compute the common prefix for this code, and then trim
+      // non-whitespace characters from the end.
+      if (computeIndent)
+      {
+         indent = string_utils::getCommonPrefix(code);
+         auto it = indent.find_first_not_of(" \t");
+         if (it != std::string::npos)
+            indent = indent.substr(0, it);
+      }
+
+      // Copy the air.toml file associated with the document, if one exists.
+      FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
+      if (airTomlPath.exists())
+      {
+         Error copyError = airTomlPath.copy(codeDir.completePath("air.toml"), true);
+         if (copyError)
+            LOG_ERROR(copyError);
+      }
+   }
+
+   pData->codeDir = codeDir;
+   pData->codePath = codePath;
+   pData->indent = indent;
+
+   return Success();
+}
 
 Error sourceDatabaseError(Error error)
 {
@@ -262,7 +327,9 @@ Error newDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument(type));
 
    if (json::isType<std::string>(jsonContents))
+   {
       pDoc->setContents(jsonContents.getString());
+   }
 
    pDoc->editProperties(properties);
 
@@ -630,8 +697,18 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    // to attempt a 'full' document save rather than just a diff-based save
    try
    {
+      // get current state of document
       std::string contents(pDoc->contents());
-      
+
+      // construct change event with original state of document
+      SourceDocumentChangedEvent event {
+         .sourceDocument = pDoc,
+         .contents = contents,
+         .text = replacement,
+         .offset = offset,
+         .length = length,
+      };
+
       // NOTE: this flag denotes whether the front-end successfully
       // constructed a diff to be saved; we leave this in while still
       // going down this code path just to ensure that any code that
@@ -652,11 +729,9 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
-      if (hasChanges)
-      {
-         module_context::events().onSourceFileDiff(
-            module_context::DocumentDiff(id, replacement, offset, length));
-      }
+      // notify listeners of changes -- note that the LSP specification asks
+      // for notifications even if the edit was a no-op
+      source_database::events().onDocChanged(event);
 
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
@@ -674,63 +749,26 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
 
 Error onFormatError(
       const Error& error,
+      const ErrorLocation& location,
       const json::JsonRpcFunctionContinuation& continuation)
 {
    if (error)
-      LOG_ERROR(error);
+      log::logError(error, location);
 
    json::JsonRpcResponse response;
    continuation(error, &response);
    return error;
 }
 
-bool canUseAirFormatter(int context, const FilePath& documentPath)
-{
-   if (context == kFormatContextCommand)
-   {
-      // always enabled for command invocations
-      return true;
-   }
-   else if (context == kFormatContextSave)
-   {
-      // enable on save if user has opted in
-      if (prefs::userPrefs().useAirFormatter())
-      {
-         if (projects::projectContext().hasProject())
-         {
-            using namespace modules::air;
-            return hasAirToml(projects::projectContext().directory());
-         }
-         else
-         {
-            // TODO: Air has not yet formalized whether global air.toml
-            // files will be supported, or (if they are) where those files
-            // should be located.
-            return false;
-         }
-      }
-      else
-      {
-         return false;
-      }
-   }
-   else
-   {
-      // disabled
-      return false;
-   }
-}
-
 template <typename F>
 Error formatDocumentImpl(
-      int context,
       const FilePath& documentPath,
       const json::JsonRpcFunctionContinuation& continuation,
       F&& callback)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
@@ -750,35 +788,28 @@ Error formatDocumentImpl(
    std::string formatType = prefs::userPrefs().codeFormatter();
    if (formatType == kCodeFormatterNone)
    {
-      if (canUseAirFormatter(context, documentPath))
-      {
-         std::string airExePath;
-         Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
-         if (error)
-            return onError(error);
+      std::string airExePath;
+      Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
+      if (error)
+         return onError(error, ERROR_LOCATION);
 
-         error = module_context::processSupervisor().runProgram(
-             airExePath,
-             {"format", documentPath.getAbsolutePath()},
-             options,
-             callbacks);
+      error = module_context::processSupervisor().runProgram(
+          airExePath,
+          {"format", documentPath.getAbsolutePath()},
+          options,
+          callbacks);
 
-         if (error)
-            return onError(error);
+      if (error)
+         return onError(error, ERROR_LOCATION);
 
-         return Success();
-      }
-      else
-      {
-         return Success();
-      }
+      return Success();
    }
    else if (formatType == kCodeFormatterStyler)
    {
       FilePath rScriptPath;
       error = module_context::rScriptPath(&rScriptPath);
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       FilePath formatScriptPath = module_context::tempFile("rstudio-format-", "R");
       error = r::exec::RFunction(".rs.generateStylerFormatDocumentScript")
@@ -786,10 +817,10 @@ Error formatDocumentImpl(
             .addUtf8Param(formatScriptPath)
             .call();
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       else if (!formatScriptPath.exists())
-         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION));
+         return onError(fileNotFoundError(formatScriptPath, ERROR_LOCATION), ERROR_LOCATION);
 
       // TODO: How should we handle the case where a formatter is already
       // running on the current file?
@@ -800,7 +831,7 @@ Error formatDocumentImpl(
                callbacks);
 
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
 
       return Success();
    }
@@ -817,7 +848,7 @@ Error formatDocumentImpl(
                callbacks);
 
       if (error)
-         return onError(error);
+         return onError(error, ERROR_LOCATION);
    
       return Success();
    }
@@ -825,47 +856,123 @@ Error formatDocumentImpl(
    {
       Error error(boost::system::errc::invalid_argument, ERROR_LOCATION);
       error.addProperty("type", formatType);
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
    }
 }
 
-template <typename F>
-Error formatDocumentImpl(
-      const FilePath& documentPath,
-      const json::JsonRpcFunctionContinuation& continuation,
-      F&& callback)
+Error formatContext(
+      const json::JsonRpcRequest& request,
+      const json::JsonRpcFunctionContinuation& continuation)
 {
-   return formatDocumentImpl(
-      kFormatContextUnknown,
-      documentPath,
-      continuation,
-      std::forward<F>(callback));
+   std::string id;
+   std::string path;
+   Error error = json::readParams(request.params, &id, &path);
+   if (error || path.empty())
+   {
+      json::Object contextJson = JSON {
+         {
+            "air", JSON {
+               {
+                  "path", json::Value()
+               }
+            }
+         }
+      };
+
+      json::JsonRpcResponse response;
+      response.setResult(JSON { { "air", json::Value() } });
+      continuation(error, &response);
+      return error;
+   }
+
+   FilePath documentPath = module_context::resolveAliasedPath(path);
+   FilePath airTomlPath = modules::air::findAirTomlPath(documentPath);
+
+   json::Object contextJson = JSON {
+      {
+         "air", JSON {
+            {
+               "path", module_context::createAliasedPath(airTomlPath)
+            }
+         }
+      }
+   };
+
+   json::JsonRpcResponse response;
+   response.setResult(contextJson);
+   continuation(Success(), &response);
+   return Success();
 }
 
 Error formatDocument(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
    
-   std::string documentId, documentPath;
-   int context = kFormatContextUnknown;
-   error = json::readParams(request.params, &documentId, &documentPath, &context);
+   std::string documentId;
+   error = json::readParams(request.params, &documentId);
    if (error)
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
  
-   return formatDocumentImpl(
-            context,
-            module_context::resolveAliasedPath(documentPath),
-            continuation,
-            [=]()
+   // Get the path to the document in the source database, and then
+   // copy that to a temporary file to be used for formatting.
+   using source_database::SourceDocument;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(documentId, pDoc);
+   if (error)
+      return onError(error, ERROR_LOCATION);
+
+   FilePath documentPath = module_context::resolveAliasedPath(pDoc->path());
+   std::string contents = pDoc->contents();
+
+   // Initialize format context
+   FormatData data;
+   error = prepareFormatData(documentPath, contents, false, &data);
+   if (error)
+      return onError(error, ERROR_LOCATION);
+
+   FilePath codeDir = data.codeDir;
+   FilePath codePath = data.codePath;
+   return formatDocumentImpl(codePath, continuation, [=]()
    {
-      return json::JsonRpcResponse();
+      Error error;
+      json::JsonRpcResponse response;
+
+      // Read the newly-formatted document
+      std::string formatted;
+      error = core::readStringFromFile(codePath, &formatted);
+      if (error)
+         LOG_ERROR(error);
+
+      // Clean up the temporary directory
+      Error removeError = codeDir.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+
+      // Compute edits with UTF-16 strings so that offsets are
+      // correctly translated when applied on client side
+      auto edits = core::diff::computeEdits(
+         utf8::utf8to16(contents),
+         utf8::utf8to16(formatted));
+
+      json::Array resultJson;
+      for (auto&& edit : edits)
+      {
+         json::Object editJson;
+         editJson["offset"] = static_cast<int>(edit.offset);
+         editJson["size"] = static_cast<int>(edit.size);
+         editJson["value"] = utf8::utf16to8(edit.value);
+         resultJson.push_back(editJson);
+      }
+      response.setResult(resultJson);
+
+      return response;
    });
    
 }
@@ -874,27 +981,36 @@ Error formatCode(
       const json::JsonRpcRequest& request,
       const json::JsonRpcFunctionContinuation& continuation)
 {
-   auto onError = [&](const Error& error)
+   auto onError = [&](const Error& error, const ErrorLocation& location)
    {
-      return onFormatError(error, continuation);
+      return onFormatError(error, location, continuation);
    };
    
    Error error;
    
-   std::string code;
-   error = json::readParams(request.params, &code);
+   std::string id, path, code;
+   error = json::readParams(request.params, &id, &path, &code);
    if (error)
-      return onError(error);
+      return onError(error, ERROR_LOCATION);
    
-   FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
-   error = writeStringToFile(documentPath, code);
+   // Resolve the document path if available
+   FilePath documentPath;
+   if (!path.empty())
+      documentPath = module_context::resolveAliasedPath(path);
+
+   // Initialize format context
+   FormatData data;
+   error = prepareFormatData(documentPath, code, true, &data);
    if (error)
-      return onError(error);
-   
-   return formatDocumentImpl(documentPath, continuation, [=]()
+      return onError(error, ERROR_LOCATION);
+
+   FilePath codePath = data.codePath;
+   std::string indent = data.indent;
+   FilePath codeDir = data.codeDir;
+   return formatDocumentImpl(codePath, continuation, [=]()
    {
       std::string code;
-      Error error = readStringFromFile(documentPath, &code);
+      Error error = readStringFromFile(codePath, &code);
       if (error)
          LOG_ERROR(error);
       
@@ -904,9 +1020,20 @@ Error formatCode(
       else if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
       
+      // add back in the indent we computed (only if air formatter was used)
+      if (!indent.empty())
+      {
+         code = indent + code;
+         boost::algorithm::replace_all(code, "\n", "\n" + indent);
+      }
+      
+      // Clean up the temporary directory
+      Error removeError = codeDir.removeIfExists();
+      if (removeError)
+         LOG_ERROR(removeError);
+      
       json::JsonRpcResponse response;
       response.setResult(code);
-      
       return response;
    });
 }
@@ -1008,7 +1135,8 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
    return Success();
 }
 
-Error insertDocument(std::string path, int insertIndex) {
+Error insertDocument(std::string path, int insertIndex)
+{
    FilePath documentPath = module_context::resolveAliasedPath(path);
    if (!module_context::isPathViewAllowed(documentPath))
       return systemError(boost::system::errc::operation_not_permitted, ERROR_LOCATION);
@@ -1826,6 +1954,7 @@ Error initialize()
    using namespace rstudio::r::function_hook;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerAsyncRpcMethod, "format_context", formatContext))
       (bind(registerAsyncRpcMethod, "format_document", formatDocument))
       (bind(registerAsyncRpcMethod, "format_code", formatCode))
       (bind(registerRpcMethod, "new_document", newDocument))

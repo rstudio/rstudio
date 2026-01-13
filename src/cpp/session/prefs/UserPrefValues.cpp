@@ -2052,6 +2052,19 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+ */
+bool UserPrefValues::deleteToTrash()
+{
+   return readPref<bool>("delete_to_trash");
+}
+
+core::Error UserPrefValues::setDeleteToTrash(bool val)
+{
+   return writePref("delete_to_trash", val);
+}
+
+/**
  * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
  */
 core::json::Array UserPrefValues::alwaysShownFiles()
@@ -3417,6 +3430,19 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 }
 
 /**
+ * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+ */
+bool UserPrefValues::copilotNesEnabled()
+{
+   return readPref<bool>("copilot_nes_enabled");
+}
+
+core::Error UserPrefValues::setCopilotNesEnabled(bool val)
+{
+   return writePref("copilot_nes_enabled", val);
+}
+
+/**
  * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
  */
 bool UserPrefValues::copilotShowMessages()
@@ -3560,16 +3586,16 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
 }
 
 /**
- * Whether to show the experimental Chat UI
+ * Experimental
  */
-bool UserPrefValues::showChatUi()
+bool UserPrefValues::pai()
 {
-   return readPref<bool>("show_chat_ui");
+   return readPref<bool>("pai");
 }
 
-core::Error UserPrefValues::setShowChatUi(bool val)
+core::Error UserPrefValues::setPai(bool val)
 {
-   return writePref("show_chat_ui", val);
+   return writePref("pai", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3731,6 +3757,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRmdRenameInScopeBehavior,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kDeleteToTrash,
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,
@@ -3836,6 +3863,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
+      kCopilotNesEnabled,
       kCopilotShowMessages,
       kCopilotProjectWorkspace,
       kProjectName,
@@ -3847,7 +3875,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
-      kShowChatUi,
+      kPai,
    });
 }
    

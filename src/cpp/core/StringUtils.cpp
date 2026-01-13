@@ -19,8 +19,12 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 #include <map>
-#include <ostream>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -38,8 +42,8 @@
 #include <core/Log.hpp>
 
 #ifdef _WIN32
-#include <windows.h>
-#include <winnls.h>
+# include <windows.h>
+# include <winnls.h>
 #endif
 
 #ifndef CP_ACP
@@ -330,7 +334,7 @@ std::string utf8ToSystem(const std::string& str,
             // latter is accepted by Python, and since the reticulate
             // REPL uses the same conversion routines we prefer the
             // format compatible with both parsers
-            output << "\\u" << std::hex << wide[i];
+            output << "\\u" << std::hex << static_cast<uint32_t>(wide[i]);
          }
          else
          {
@@ -802,6 +806,107 @@ bool extractCommentHeader(const std::string& contents,
    
    // report success to the user
    return true;
+}
+
+std::string getCommonPrefix(const std::string& code)
+{
+   // Split the code into views of each line
+   std::vector<std::string_view> lines;
+   std::string_view codeView(code);
+   
+   std::string_view::size_type start = 0;
+   std::string_view::size_type end = codeView.find('\n', start);
+   
+   while (end != std::string_view::npos)
+   {
+      std::string_view line = codeView.substr(start, end - start);
+      lines.push_back(line);
+      start = end + 1;
+      end = codeView.find('\n', start);
+   }
+   
+   // Add the final line (if any)
+   if (start < codeView.length())
+   {
+      lines.push_back(codeView.substr(start));
+   }
+
+   // Remove whitespace-only lines
+   lines.erase(
+      std::remove_if(lines.begin(), lines.end(),
+         [](std::string_view line)
+         {
+            return std::all_of(line.begin(), line.end(), ::isspace);
+         }),
+      lines.end());
+
+   // Check edge cases
+   if (lines.empty())
+   {
+      return "";
+   }
+   else if (lines.size() == 1)
+   {
+      return std::string(lines[0]);
+   }
+
+   std::size_t offset = 0;
+   std::string prefix;
+   while (true)
+   {
+      // Track whether the offset remained in-bounds
+      // for some string in the provided list.
+      bool inBounds = false;
+
+      // Get the first character at the current offset.
+      char lhs;
+      if (offset < lines[0].length())
+      {
+         inBounds = true;
+         lhs = lines[0][offset];
+      }
+      else
+      {
+         lhs = ' ';
+      }
+
+      // Now, iterate over the rest of the characters in each line,
+      // and check if they match at the current offset.
+      for (std::size_t i = 1, n = lines.size(); i < n; i++)
+      {
+         char rhs;
+         if (offset < lines[i].length())
+         {
+            inBounds = true;
+            rhs = lines[i][offset];
+         }
+         else
+         {
+            rhs = ' ';
+         }
+
+         // If the characters do not match, then we bail.
+         if (lhs != rhs)
+         {
+            return prefix;
+         }
+      }
+
+      // If the offset computed was out-of-bounds for all
+      // of the provided lines, then we're done.
+      if (!inBounds)
+      {
+         return prefix;
+      }
+
+      // If we got here, all the characters at this offset matched.
+      // Add it to the computed prefix, and keep looking.
+      offset++;
+      prefix += lhs;
+   }
+
+   // Appease the compiler.
+   return prefix;
 }
 
 std::string extractIndent(const std::string& line)

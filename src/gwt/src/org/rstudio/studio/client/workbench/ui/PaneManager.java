@@ -567,21 +567,6 @@ public class PaneManager
       manageLayoutCommands();
       manageChatCommands();
 
-      // Monitor changes to show_chat_ui preference and reload when it changes
-      userPrefs_.showChatUi().addValueChangeHandler(event ->
-      {
-         // Write preferences to server before reloading to ensure they persist
-         userPrefs_.writeUserPrefs(succeeded ->
-         {
-            if (succeeded)
-            {
-               // Preference saved successfully - reload the page to apply changes
-               com.google.gwt.user.client.Window.Location.reload();
-            }
-            // If write failed, don't reload to avoid losing user's change
-         });
-      });
-
       new ZoomedTabStateValue();
    }
 
@@ -1074,21 +1059,17 @@ public class PaneManager
          // Create sidebar configuration
          PaneConfig config = getCurrentConfig();
          JsArrayString sidebarTabs = config.getSidebar();
-         
-         // Create sidebar tabset if not already created
-         LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-         if (sidebarWindow == null)
-         {
-            Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
-                  UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
-                  tabNamesToTabs(sidebarTabs));
-            panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-            sidebarTabPanel_ = sidebar.second;
-            sidebarMinPanel_ = sidebar.third;
-            sidebarTabs_ = tabNamesToTabs(sidebarTabs);
-            sidebarWindow = sidebar.first;
-         }
-         
+
+         // Always recreate sidebar to ensure tabs match current preference values
+         // This handles cases where preferences change via API without triggering client refresh
+         clearSidebarCache();
+         ArrayList<Tab> tabs = tabNamesToTabs(sidebarTabs);
+         Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> sidebar = createTabSet(
+               UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
+               tabs);
+         panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
+         LogicalWindow sidebarWindow = sidebar.first;
+
          if (sidebarWindow != null)
          {
             // For sidebar, we use just the WindowFrame directly (no vertical split)
@@ -1103,15 +1084,14 @@ public class PaneManager
          panel_.removeSidebarWidget();
          sidebar_ = null;
       }
+
+      commands_.toggleSidebar().setChecked(showSidebar);
    }
    
    public void clearSidebarCache()
    {
       // Remove the cached sidebar window so it gets recreated with new tabs
       panesByName_.remove(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      sidebarTabPanel_ = null;
-      sidebarMinPanel_ = null;
-      sidebarTabs_ = null;
    }
 
    public void refreshSidebar()
@@ -1752,8 +1732,6 @@ public class PaneManager
             UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR,
             tabNamesToTabs(config.getSidebar()));
       panesByName_.put(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR, sidebar.first);
-      sidebarTabPanel_ = sidebar.second;
-      sidebarMinPanel_ = sidebar.third;
 
       // Initialize the sidebar window state (HIDE if not visible, NORMAL if visible)
       // This prevents null state_ in LogicalWindow.visible()
@@ -1769,8 +1747,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            // Filter out Chat tab if show_chat_ui preference is false
-            if (tab == Tab.Chat && !userPrefs_.showChatUi().getGlobalValue())
+            if (tab == Tab.Chat && !userPrefs_.pai().getGlobalValue())
                continue;
             tabList.add(tab);
          }
@@ -1851,7 +1828,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (userPrefs_.showChatUi().getGlobalValue())
+      if (userPrefs_.pai().getGlobalValue())
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -2414,15 +2391,23 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      // For sidebar, don't show minimize/maximize buttons as they don't apply to full-height columns
-      boolean showMinMaxButtons = !StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMinMaxButtons);
+      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      boolean showMaximizeButton = true;  // All tabsets get maximize button
+      boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
+      // Wire sidebar maximize button to layoutZoomSidebar command
+      if (isSidebar)
+      {
+         frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
+      }
+
       // Only pass commands to sidebar for the empty state feature
       final WorkbenchTabPanel tabPanel = new WorkbenchTabPanel(frame, logicalWindow, persisterName,
-         StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR) ? commands_ : null);
+         isSidebar, isSidebar ? commands_ : null);
 
       if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
          tabs1_ = tabs;
@@ -2430,8 +2415,6 @@ public class PaneManager
          tabs2_ = tabs;
       else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET))
          hiddenTabs_ = tabs;
-      else if (StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR))
-         sidebarTabs_ = tabs;
 
       populateTabPanel(tabs, tabPanel, minimized);
 
@@ -2631,6 +2614,18 @@ public class PaneManager
       PaneConfig config = getCurrentConfig();
       boolean isSidebarVisible = config.getSidebarVisible();
       commands_.layoutZoomSidebar().setEnabled(isSidebarVisible);
+
+      // Update sidebar maximize button state to reflect zoom state
+      LogicalWindow sidebarWindow = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
+      if (sidebarWindow != null)
+      {
+         WindowFrame sidebarFrame = sidebarWindow.getNormal();
+         if (sidebarFrame != null)
+         {
+            sidebarFrame.setMaximizedDependentState(
+               zoomSidebarChecked ? WindowState.MAXIMIZE : WindowState.NORMAL);
+         }
+      }
    }
 
    private void manageSidebarCommands()
@@ -2643,9 +2638,9 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showChatUi = userPrefs_.showChatUi().getGlobalValue();
-      commands_.activateChat().setVisible(showChatUi);
-      commands_.layoutZoomChat().setVisible(showChatUi);
+      boolean showPaiUi = userPrefs_.pai().getGlobalValue();
+      commands_.activateChat().setVisible(showPaiUi);
+      commands_.layoutZoomChat().setVisible(showPaiUi);
    }
 
    private List<AppCommand> getLayoutCommands()
@@ -2667,8 +2662,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      // Only add layoutZoomChat if show_chat_ui preference is enabled
-      if (userPrefs_.showChatUi().getGlobalValue())
+      if (userPrefs_.pai().getGlobalValue())
          commands.add(commands_.layoutZoomChat());
 
       return commands;
@@ -2751,10 +2745,7 @@ public class PaneManager
    private MinimizedModuleTabLayoutPanel tabSet2MinPanel_;
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
-   private WorkbenchTabPanel sidebarTabPanel_;
-   private MinimizedModuleTabLayoutPanel sidebarMinPanel_;
    private Widget sidebar_;
-   private ArrayList<Tab> sidebarTabs_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;

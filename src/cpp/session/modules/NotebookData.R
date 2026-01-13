@@ -75,8 +75,11 @@
     options[["rows.total"]] <- nrow(x)
     options[["cols.total"]] <- ncol(x)
 
-    output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
-                       fileext = ".rdf")
+    # ensure output directory exists; may have been removed if the execution
+    # context was torn down during debugging
+    # https://github.com/rstudio/rstudio/issues/6260
+    dir.create(outputFolder, recursive = TRUE, showWarnings = FALSE)
+    output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, fileext = ".rdf")
 
     max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else options$max.print
 

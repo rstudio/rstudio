@@ -138,6 +138,11 @@ public class AboutDialogContents extends Composite
       return productInfo.getElement();
    }
 
+   public void appendToUserAgent(String text)
+   {
+      userAgentLabel.setText(userAgentLabel.getText() + text);
+   }
+
    @UiField InlineLabel versionMajorLabel;
    @UiField InlineLabel versionBuildLabel;
    @UiField InlineLabel userAgentLabel;

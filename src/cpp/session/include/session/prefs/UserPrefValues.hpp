@@ -272,6 +272,7 @@ namespace prefs {
 #define kRmdRenameInScopeBehaviorAll "all"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kDeleteToTrash "delete_to_trash"
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
@@ -446,6 +447,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
+#define kCopilotNesEnabled "copilot_nes_enabled"
 #define kCopilotShowMessages "copilot_show_messages"
 #define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
@@ -466,7 +468,7 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
-#define kShowChatUi "show_chat_ui"
+#define kPai "pai"
 
 class UserPrefValues: public Preferences
 {
@@ -1409,6 +1411,12 @@ public:
    core::Error setShowHiddenFiles(bool val);
 
    /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   bool deleteToTrash();
+   core::Error setDeleteToTrash(bool val);
+
+   /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    core::json::Array alwaysShownFiles();
@@ -2039,6 +2047,12 @@ public:
    core::Error setCopilotIndexingEnabled(bool val);
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   bool copilotNesEnabled();
+   core::Error setCopilotNesEnabled(bool val);
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    bool copilotShowMessages();
@@ -2105,10 +2119,10 @@ public:
    core::Error setConsoleHighlightConditions(std::string val);
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   bool showChatUi();
-   core::Error setShowChatUi(bool val);
+   bool pai();
+   core::Error setPai(bool val);
 
 };
 

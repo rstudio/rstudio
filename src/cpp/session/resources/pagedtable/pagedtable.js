@@ -562,6 +562,19 @@ var PagedTable = function (pagedTable) {
       table.parentElement.insertBefore(metaheader, table);
    };
 
+   var setColumnWidth = function (column, columnData) {
+      if (columnData.width) {
+         var width = maxColumnWidth(columnData.width);
+         column.style.minWidth = column.style.maxWidth = width;
+         if (columnData.name === "_rn_") {
+            var widthPx = parseInt(width, 10);
+            if (widthPx > 160)
+              width = "160px";
+            column.style.width = width;
+         }
+      }
+   }
+
    var renderHeader = function (clear) {
       var fragment = document.createDocumentFragment();
       cachedPagedTableClientWidth = pagedTable.clientWidth;
@@ -577,9 +590,7 @@ var PagedTable = function (pagedTable) {
          column.style.textAlign = columnData.align;
 
          column.style.maxWidth = maxColumnWidth(null);
-         if (columnData.width) {
-            column.style.minWidth = column.style.maxWidth = maxColumnWidth(columnData.width);
-         }
+         setColumnWidth(column, columnData);
 
          var columnName = document.createElement("div");
          columnName.setAttribute("class", "pagedtable-header-name");
@@ -714,15 +725,13 @@ var PagedTable = function (pagedTable) {
 
             var cellText = document.createTextNode(dataCell);
             htmlCell.appendChild(cellText);
-            if (dataCell.length > 50) {
+            if (dataCell.length > 50 || cellName === "_rn_") {
                htmlCell.setAttribute("title", dataCell);
             }
             htmlCell.setAttribute("align", columnData.align);
             htmlCell.style.textAlign = columnData.align;
             htmlCell.style.maxWidth = maxColumnWidth(null);
-            if (columnData.width) {
-               htmlCell.style.minWidth = htmlCell.style.maxWidth = maxColumnWidth(columnData.width);
-            }
+            setColumnWidth(htmlCell, columnData);
             htmlRow.appendChild(htmlCell);
          });
 

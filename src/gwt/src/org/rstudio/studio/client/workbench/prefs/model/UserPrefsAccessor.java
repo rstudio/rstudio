@@ -2254,6 +2254,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   public PrefValue<Boolean> deleteToTrash()
+   {
+      return bool(
+         "delete_to_trash",
+         _constants.deleteToTrashTitle(), 
+         _constants.deleteToTrashDescription(), 
+         true);
+   }
+
+   /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    public PrefValue<JsArrayString> alwaysShownFiles()
@@ -2274,7 +2286,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".air.toml", ".circleci", ".env", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -3749,6 +3761,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   public PrefValue<Boolean> copilotNesEnabled()
+   {
+      return bool(
+         "copilot_nes_enabled",
+         _constants.copilotNesEnabledTitle(), 
+         _constants.copilotNesEnabledDescription(), 
+         false);
+   }
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    public PrefValue<Boolean> copilotShowMessages()
@@ -3923,14 +3947,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   public PrefValue<Boolean> showChatUi()
+   public PrefValue<Boolean> pai()
    {
       return bool(
-         "show_chat_ui",
-         _constants.showChatUiTitle(), 
-         _constants.showChatUiDescription(), 
+         "pai",
+         _constants.paiTitle(), 
+         _constants.paiDescription(), 
          false);
    }
 
@@ -4248,6 +4272,8 @@ public class UserPrefsAccessor extends Prefs
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
          showHiddenFiles().setValue(layer, source.getBool("show_hidden_files"));
+      if (source.hasKey("delete_to_trash"))
+         deleteToTrash().setValue(layer, source.getBool("delete_to_trash"));
       if (source.hasKey("always_shown_files"))
          alwaysShownFiles().setValue(layer, source.getObject("always_shown_files"));
       if (source.hasKey("always_shown_extensions"))
@@ -4458,6 +4484,8 @@ public class UserPrefsAccessor extends Prefs
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
+      if (source.hasKey("copilot_nes_enabled"))
+         copilotNesEnabled().setValue(layer, source.getBool("copilot_nes_enabled"));
       if (source.hasKey("copilot_show_messages"))
          copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
       if (source.hasKey("copilot_project_workspace"))
@@ -4480,8 +4508,8 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
-      if (source.hasKey("show_chat_ui"))
-         showChatUi().setValue(layer, source.getBool("show_chat_ui"));
+      if (source.hasKey("pai"))
+         pai().setValue(layer, source.getBool("pai"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4642,6 +4670,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rmdRenameInScopeBehavior());
       prefs.add(enableTextDrag());
       prefs.add(showHiddenFiles());
+      prefs.add(deleteToTrash());
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
@@ -4747,6 +4776,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
+      prefs.add(copilotNesEnabled());
       prefs.add(copilotShowMessages());
       prefs.add(copilotProjectWorkspace());
       prefs.add(projectName());
@@ -4758,7 +4788,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
-      prefs.add(showChatUi());
+      prefs.add(pai());
       return prefs;
    }
    

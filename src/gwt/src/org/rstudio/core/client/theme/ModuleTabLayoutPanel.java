@@ -16,6 +16,8 @@ package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -24,17 +26,27 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -186,12 +198,192 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
       addDomHandler(onClick, ClickEvent.getType());
    }
 
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+
+      // Defer to ensure DOM is ready (same pattern as DocTabLayoutPanel)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            Element tabBar = getTabBarElement();
+            if (tabBar == null)
+               return;
+
+            Element tabBarParent = tabBar.getParentElement();
+            if (tabBarParent == null)
+               return;
+
+            // Enable scroll container
+            tabBarParent.getStyle().setOverflowX(Overflow.HIDDEN);
+
+            // Update tab bar width
+            updateTabBarWidth();
+
+            // Sink wheel events (same pattern as DocTabLayoutPanel)
+            DOM.sinkBitlessEvent(tabBar, "mousewheel");
+            DOM.sinkBitlessEvent(tabBar, "wheel");
+            wheelEventListener_ = new WheelEventListener();
+            Event.setEventListener(tabBar, wheelEventListener_);
+         }
+      });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      // Clean up wheel event listener to prevent memory leaks
+      Element tabBar = getTabBarElement();
+      if (tabBar != null && wheelEventListener_ != null)
+      {
+         Event.setEventListener(tabBar, null);
+      }
+      wheelEventListener_ = null;
+
+      super.onUnload();
+   }
+
    private boolean isWithinTopBand(NativeEvent event)
    {
       int clientPos = event.getClientY();
       int topBounds = getAbsoluteTop();
       int bottomBounds = topBounds + BAR_HEIGHT;
       return clientPos >= topBounds && clientPos <= bottomBounds;
+   }
+
+   private Element getTabBarElement()
+   {
+      return (Element) DomUtils.findNode(
+            getElement(),
+            true,
+            false,
+            new DomUtils.NodePredicate()
+            {
+               public boolean test(Node n)
+               {
+                  if (n.getNodeType() != Node.ELEMENT_NODE)
+                     return false;
+                  return ((Element) n).getClassName()
+                        .contains("gwt-TabLayoutPanelTabs");
+               }
+            });
+   }
+
+   private void updateTabBarWidth()
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null)
+         return;
+
+      Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
+
+      int contentWidth = getTabsContentWidth(tabBar);
+      int parentWidth = tabBarParent.getOffsetWidth();
+
+      // Tab bar must be at least as wide as parent (for background/border)
+      // and have extra space so last tab can scroll into view
+      int minWidth = parentWidth;
+      int neededWidth = contentWidth + BUTTON_AREA_WIDTH;
+      int tabBarWidth = Math.max(minWidth, neededWidth);
+
+      tabBar.getStyle().setWidth(tabBarWidth, Unit.PX);
+   }
+
+   private int getTabsContentWidth(Element tabBar)
+   {
+      int width = 0;
+      for (int i = 0; i < tabBar.getChildCount(); i++)
+      {
+         Node child = tabBar.getChild(i);
+         if (child.getNodeType() == Node.ELEMENT_NODE)
+            width += ((Element) child).getOffsetWidth();
+      }
+      return width;
+   }
+
+   private int getMaxScroll()
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null)
+         return 0;
+      Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return 0;
+      int contentWidth = getTabsContentWidth(tabBar);
+      int effectiveViewport = tabBarParent.getOffsetWidth() - BUTTON_AREA_WIDTH;
+      return Math.max(0, contentWidth - effectiveViewport);
+   }
+
+   private void scrollBy(int delta, boolean animate)
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null)
+         return;
+      Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
+      int currentScroll = tabBarParent.getScrollLeft();
+      int targetScroll = currentScroll + delta;
+      scrollTo(targetScroll, animate);
+   }
+
+   private void scrollTo(int targetScroll, boolean animate)
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null)
+         return;
+      Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
+
+      int maxScroll = getMaxScroll();
+      int newScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+      if (animate && !reducedMotion())
+      {
+         animateScrollTo(tabBarParent, newScroll);
+      }
+      else
+      {
+         tabBarParent.setScrollLeft(newScroll);
+      }
+   }
+
+   private void animateScrollTo(final Element tabBarParent, final int targetScroll)
+   {
+      if (currentAnimation_ != null)
+         currentAnimation_.cancel();
+
+      final int startScroll = tabBarParent.getScrollLeft();
+      final int delta = targetScroll - startScroll;
+
+      currentAnimation_ = new Animation()
+      {
+         @Override
+         protected void onUpdate(double progress)
+         {
+            tabBarParent.setScrollLeft(startScroll + (int)(delta * progress));
+         }
+
+         @Override
+         protected void onComplete()
+         {
+            tabBarParent.setScrollLeft(targetScroll);
+            currentAnimation_ = null;
+         }
+      };
+
+      currentAnimation_.run(200);  // 200ms duration
+   }
+
+   private boolean reducedMotion()
+   {
+      return RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue();
    }
 
    @Override
@@ -226,16 +418,112 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
       if (providesBusy != null)
          providesBusy.addBusyHandler(tab);
+
+      // Update tab bar width after adding
+      Scheduler.get().scheduleDeferred(() -> updateTabBarWidth());
+   }
+
+   @Override
+   public boolean remove(int index)
+   {
+      boolean result = super.remove(index);
+      if (result)
+      {
+         Scheduler.get().scheduleDeferred(() -> {
+            updateTabBarWidth();
+            ensureSelectedTabIsVisible(!reducedMotion());
+         });
+      }
+      return result;
    }
 
    @Override
    public void selectTab(int index)
    {
+      // Cancel any ongoing scroll animation BEFORE selection to prevent timing conflicts
+      if (currentAnimation_ != null)
+      {
+         currentAnimation_.cancel();
+         currentAnimation_ = null;
+      }
+
       super.selectTab(Math.max(0, Math.min(index, getWidgetCount() - 1)));
       if (index == 0)
          owner_.addStyleName(styles_.firstTabSelected());
       else
          owner_.removeStyleName(styles_.firstTabSelected());
+
+      // Use scheduleFinally to ensure scroll adjustment happens AFTER all
+      // layout changes settle (runs later than scheduleDeferred)
+      Scheduler.get().scheduleFinally(() -> ensureSelectedTabIsVisible(!reducedMotion()));
+   }
+
+   private void ensureSelectedTabIsVisible(boolean animate)
+   {
+      Element tabBar = getTabBarElement();
+      if (tabBar == null || !isVisible() || !isAttached())
+         return;
+
+      int selectedIndex = getSelectedIndex();
+      if (selectedIndex < 0)
+         return;
+
+      // Get the selected tab widget's element
+      Widget tabWidget = getTabWidget(selectedIndex);
+      if (tabWidget == null)
+         return;
+
+      Element selectedTab = tabWidget.getElement();
+      Element tabBarParent = tabBar.getParentElement();
+      if (tabBarParent == null)
+         return;
+
+      // Use getRelativePosition for more accurate positioning relative to scroll container
+      // (matches the pattern used in DocTabLayoutPanel)
+      Point tabPosition = DomUtils.getRelativePosition(tabBarParent, selectedTab);
+      int tabLeft = tabPosition.x;
+      int tabRight = tabLeft + selectedTab.getOffsetWidth();
+      int scrollLeft = tabBarParent.getScrollLeft();
+      int viewportWidth = tabBarParent.getOffsetWidth() - BUTTON_AREA_WIDTH;
+
+      int newScroll = scrollLeft;
+
+      // If tab is to the left of viewport, scroll left
+      if (tabLeft < scrollLeft)
+         newScroll = tabLeft;
+      // If tab is to the right of viewport, scroll right
+      else if (tabRight > scrollLeft + viewportWidth)
+         newScroll = tabRight - viewportWidth;
+
+      if (newScroll != scrollLeft)
+         scrollTo(newScroll, animate);
+   }
+
+   private class WheelEventListener implements EventListener
+   {
+      @Override
+      public void onBrowserEvent(Event event)
+      {
+         String type = event.getType();
+         if ("mousewheel".equals(type) || "wheel".equals(type))
+         {
+            // Get scroll delta (positive = scroll down, negative = scroll up)
+            double deltaY = event.getDeltaY();
+            if (deltaY != 0)
+            {
+               scrollBy(deltaY > 0 ? SCROLL_AMOUNT : -SCROLL_AMOUNT, !reducedMotion());
+               event.preventDefault();
+            }
+         }
+      }
+   }
+
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      updateTabBarWidth();
+      ensureSelectedTabIsVisible(false);  // No animation on resize
    }
 
    @Override
@@ -248,6 +536,10 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
 
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
    public static final int BAR_HEIGHT = 23;
+   private static final int BUTTON_AREA_WIDTH = 55;  // Space for min/max buttons
+   private static final int SCROLL_AMOUNT = 100;     // Pixels per scroll event
    private final WindowFrame owner_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
+   private Animation currentAnimation_;
+   private WheelEventListener wheelEventListener_;
 }

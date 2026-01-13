@@ -71,6 +71,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -139,6 +140,7 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -219,6 +221,9 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatContext;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentEdit;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations.FormatDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
@@ -1890,7 +1895,7 @@ public class TextEditingTarget implements
                   }
                }
             });
-      
+
       events_.addHandler(
             this,
             CopilotEvent.TYPE,
@@ -1928,9 +1933,41 @@ public class TextEditingTarget implements
                      break;
                      
                   case COMPLETION_RECEIVED_SOME:
+
+                     ClickHandler handler = null;
+                     CopilotCompletion completion = (CopilotCompletion) event.getData();
+                     if (completion != null)
+                     {
+                        handler = new ClickHandler()
+                        {
+                           @Override
+                           public void onClick(ClickEvent event)
+                           {
+                              int scrollLine = completion.range.start.line - 5;
+                              docDisplay_.scrollToLine(scrollLine, false);
+
+                              for (int line = completion.range.start.line;
+                                   line <= completion.range.end.line;
+                                   line++)
+                              {
+                                 HandlerRegistration registration =
+                                    docDisplay_.addGutterItem(line, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+
+                                 Timers.singleShot(2000, () ->
+                                 {
+                                    registration.removeHandler();
+                                 });
+
+                              }
+                           }
+                        };
+                     }
+
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           constants_.copilotResponseReceived());
+                           constants_.copilotResponseReceived(),
+                           handler);
+
                      break;
                      
                   case COMPLETION_RECEIVED_NONE:
@@ -2940,6 +2977,11 @@ public class TextEditingTarget implements
          return "";
    }
 
+   public String getAirTomlPath()
+   {
+      return RStudioGinjector.INSTANCE.getProjects().getAirTomlPath();
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
@@ -3343,7 +3385,8 @@ public class TextEditingTarget implements
                      final TextFileType fileType =
                            fileTypeRegistry_.getTextTypeForFile(saveItem);
 
-                     final Command saveCommand = new Command() {
+                     final Command saveCommand = new Command()
+                     {
                         @Override
                         public void execute()
                         {
@@ -3359,22 +3402,26 @@ public class TextEditingTarget implements
                               syncPublishPath(saveItem.getPath());
                            }
 
-                           fixupCodeBeforeSaving(() -> {
-                              docUpdateSentinel_.save(
-                                    saveItem.getPath(),
-                                    fileType.getTypeId(),
-                                    encoding,
-                                    true,
-                                    new SaveProgressIndicator(saveItem,
-                                                              fileType,
-                                                              false,
-                                                              executeOnSuccess));
-
-                              events_.fireEvent(
-                                    new SourceFileSavedEvent(getId(),
+                           fixupCodeBeforeSaving(() ->
+                           {
+                              maybeFormatOnUserInitiatedSave(() ->
+                              {
+                                 docUpdateSentinel_.save(
+                                       saveItem.getPath(),
+                                       fileType.getTypeId(),
+                                       encoding,
+                                       true,
+                                       new SaveProgressIndicator(saveItem,
+                                                                 fileType,
+                                                                 false,
+                                                                 executeOnSuccess));
+                                 events_.fireEvent(
+                                       new SourceFileSavedEvent(
+                                          getId(),
                                           saveItem.getPath()));
-                           });
+                              });
 
+                           });
 
                         }
 
@@ -3890,9 +3937,30 @@ public class TextEditingTarget implements
    {
       withActiveEditor((editor) ->
       {
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+         onReformatDocumentImpl(editor);
+      });
+   }
+
+   private boolean useBuiltinFormatter(FormatContext context)
+   {
+      String formatter = prefs_.codeFormatter().getValue();
+      if (!formatter.equals(UserPrefsAccessor.CODE_FORMATTER_NONE))
+         return false;
+
+      if (prefs_.useAirFormatter().getValue())
+      {
+         boolean hasAirToml = context.air != null && context.air.path != null;
+         return hasAirToml;
+      }
+
+      return true;
+   }
+
+   void onReformatDocumentImpl(DocDisplay editor)
+   {
+      withFormatContext((context) ->
+      {
+         if (useBuiltinFormatter(context))
          {
             Range currentRange = editor.getSelectionRange();
             editor.setSelectionRange(Range.fromPoints(
@@ -3905,18 +3973,16 @@ public class TextEditingTarget implements
          {
             withReformatDependencies(() ->
             {
-               save(() ->
+               docUpdateSentinel_.withSavedDoc(() ->
                {
                   server_.formatDocument(
                         docUpdateSentinel_.getId(),
-                        docUpdateSentinel_.getPath(),
-                        SourceServerOperations.FORMAT_CONTEXT_COMMAND,
-                        new ServerRequestCallback<SourceDocument>()
+                        new ServerRequestCallback<FormatDocumentResult>()
                         {
                            @Override
-                           public void onResponseReceived(SourceDocument document)
+                           public void onResponseReceived(FormatDocumentResult result)
                            {
-                              revertEdits();
+                              applyEdits(result);
                            }
 
                            @Override
@@ -3931,21 +3997,75 @@ public class TextEditingTarget implements
       });
    }
 
+   private void withFormatContext(CommandWithArg<FormatContext> command)
+   {
+      String path = getPath();
+      
+      // If this is a project file, we can use the cached hasProjectAirToml value
+      // to build FormatContext without an RPC call
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         // Check if the file is within the project directory
+         String projectPath = projectDir.getPath();
+         if (path.startsWith(projectPath + "/") || path.equals(projectPath))
+         {
+            // Create FormatContext locally using cached value from Projects
+            FormatContext context = createFormatContext(getAirTomlPath());
+            command.execute(context);
+            return;
+         }
+      }
+      
+      // For non-project files or when project info is unavailable, make RPC call
+      server_.formatContext(
+         getId(),
+         path,
+         new ServerRequestCallback<FormatContext>()
+      {
+         @Override
+         public void onResponseReceived(FormatContext context)
+         {
+            command.execute(context);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            command.execute(createFormatContext(getAirTomlPath()));
+         }
+      });
+   }
+
+   private native FormatContext createFormatContext(String airTomlPath) /*-{
+      return {
+         air: {
+            path: airTomlPath
+         }
+      };
+   }-*/;
+
    @Handler
    void onReformatCode()
    {
       withActiveEditor((editor) ->
       {
-         // Only allow if entire selection in R mode for now
-         if (!DocumentMode.isSelectionInRMode(editor))
-         {
-            showRModeWarning(commands_.reformatCode().getLabel());
-            return;
-         }
+         onReformatCodeImpl(editor);
+      });
+   }
 
-         String formatType = prefs_.codeFormatter().getValue();
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         if (!hasAirToml && StringUtil.equals(formatType, UserPrefsAccessor.CODE_FORMATTER_NONE))
+   void onReformatCodeImpl(DocDisplay editor)
+   {
+      if (!DocumentMode.isSelectionInRMode(editor))
+      {
+         showRModeWarning(commands_.reformatCode().getLabel());
+         return;
+      }
+
+      withFormatContext((context) ->
+      {
+         if (useBuiltinFormatter(context))
          {
             new TextEditingTargetReformatHelper(editor).insertPrettyNewlines();
          }
@@ -3961,7 +4081,11 @@ public class TextEditingTarget implements
                }
                
                String selection = editor.getTextForRange(range);
-               server_.formatCode(selection, new ServerRequestCallback<String>()
+               server_.formatCode(
+                  getId(),
+                  getPath(),
+                  selection,
+                  new ServerRequestCallback<String>()
                {
                   @Override
                   public void onResponseReceived(String response)
@@ -4110,6 +4234,11 @@ public class TextEditingTarget implements
       lintManager_.lint(true, true, false);
    }
 
+   public LintManager getLintManager()
+   {
+      return lintManager_;
+   }
+
    public void withSavedDoc(Command onsaved)
    {
       docUpdateSentinel_.withSavedDoc(onsaved);
@@ -4239,13 +4368,99 @@ public class TextEditingTarget implements
       }
    }
 
+   private void applyEdits(FormatDocumentResult response)
+   {
+      try
+      {
+         docDisplay_.startOperation();
+         applyEditsImpl(response);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      docDisplay_.endOperation();
+   }
+
+   private void applyEditsImpl(FormatDocumentResult response)
+   {
+      List<FormatDocumentEdit> edits = response.asList();
+      for (int i = 0, n = edits.size(); i < n; i++)
+      {
+         FormatDocumentEdit edit = edits.get(n - i - 1);
+
+         Position lhs = docDisplay_.positionFromIndex(edit.offset);
+         Position rhs = docDisplay_.positionFromIndex(edit.offset + edit.size);
+         docDisplay_.replaceRange(
+            Range.fromPoints(lhs, rhs),
+            edit.value);
+      }
+   }
+
+   private void maybeFormatOnUserInitiatedSave(Command onFormatted)
+   {
+      // check for format on save
+      if (!isFormatOnSaveEnabled())
+      {
+         onFormatted.execute();
+         return;
+      }
+
+      // Only format files within the current project folder
+      String path = getPath();
+      FileSystemItem projectDir = workbenchContext_.getActiveProjectDir();
+      if (projectDir != null && path != null)
+      {
+         String projectPath = projectDir.getPath();
+         // Check if the file is within the project directory
+         if (!path.startsWith(projectPath + "/") && !path.equals(projectPath))
+         {
+            // File is not within the project folder, skip formatting
+            onFormatted.execute();
+            return;
+         }
+      }
+      else
+      {
+         // No project or no path, skip formatting
+         onFormatted.execute();
+         return;
+      }
+
+      docUpdateSentinel_.withSavedDoc(() ->
+      {
+         server_.formatDocument(
+               docUpdateSentinel_.getId(),
+               new ServerRequestCallback<FormatDocumentResult>()
+               {
+                  @Override
+                  public void onResponseReceived(FormatDocumentResult response)
+                  {
+                     applyEdits(response);
+                     onFormatted.execute();
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                     onFormatted.execute();
+                  }
+               });
+      });
+   }
+
    @Handler
    void onSaveSourceDoc()
    {
       if (isSaving_)
          return;
 
-      saveThenExecute(null, true, postSaveCommand(true));
+      maybeFormatOnUserInitiatedSave(() ->
+      {
+         saveThenExecute(null, true, postSaveCommand(true));
+      });
    }
 
    @Handler
@@ -8314,34 +8529,8 @@ public class TextEditingTarget implements
                }
             }
             
-            // check for format on save
-            if (formatOnSave && isFormatOnSaveEnabled())
-            {
-               server_.formatDocument(
-                     docUpdateSentinel_.getId(),
-                     docUpdateSentinel_.getPath(),
-                     SourceServerOperations.FORMAT_CONTEXT_SAVE,
-                     new ServerRequestCallback<SourceDocument>()
-                     {
-                        @Override
-                        public void onResponseReceived(SourceDocument response)
-                        {
-                           revertEdits();
-                           onFinished.execute();
-                        }
 
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           Debug.logError(error);
-                           onFinished.execute();
-                        }
-                     });
-            }
-            else
-            {
-               onFinished.execute();
-            }
+            onFinished.execute();
          }
       };
    }
@@ -8352,16 +8541,11 @@ public class TextEditingTarget implements
       if (fileType_ == null || !fileType_.isR())
          return false;
       
+      // Check document-specific preference first.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
-      
-      String codeFormatter = prefs_.codeFormatter().getValue();
-      if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
-      {
-         boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         return hasAirToml;
-      }
-      
+
+      // Check format on save preference.
       return prefs_.reformatOnSave().getValue();
    }
 

@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -43,12 +44,14 @@ import com.google.inject.Provider;
 public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands,
-                        Provider<CodeSearch> pCodeSearch)
+                        Provider<CodeSearch> pCodeSearch,
+                        UserPrefs userPrefs)
    {
       super(constants_.mainLabel());
 
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
+      userPrefs_ = userPrefs;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
 
@@ -203,6 +206,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutEndZoom().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.toggleSidebar().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.toggleSidebarLocation().createMenuItem(false));
       paneLayoutMenu.addSeparator();
       paneLayoutMenu.addItem(commands_.layoutConsoleOnLeft().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutConsoleOnRight().createMenuItem(false));
@@ -236,12 +240,54 @@ public class GlobalToolbar extends Toolbar
       // addins menu
       addLeftWidget(new AddinsToolbarButton());
 
+      // sidebar toggle button
+      addLeftSeparator();
+      sidebarToggleButton_ = new ToolbarButton(ToolbarButton.NoText,
+                                               constants_.showSidebarTitle(),
+                                               new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightHidden2x()),
+                                               event -> commands_.toggleSidebar().execute());
+      ElementIds.assignElementId(sidebarToggleButton_, ElementIds.SIDEBAR_TOGGLE_BUTTON);
+      addLeftWidget(sidebarToggleButton_);
+
+      // Set initial button state from current preference
+      updateSidebarToggleButton();
+
+      // Keep button in sync with Sidebar location and visibility
+      userPrefs_.panes().addValueChangeHandler(evt -> updateSidebarToggleButton());
+
       // project popup menu
       if (sessionInfo.getAllowFullUI())
       {
          ProjectPopupMenu projectMenu = new ProjectPopupMenu(
                sessionInfo, commands_, ElementIds.PROJECT_MENUBUTTON_TOOLBAR_SUFFIX);
          addRightWidget(projectMenu.getToolbarButton());
+      }
+   }
+
+   private void updateSidebarToggleButton()
+   {
+      if (sidebarToggleButton_ != null)
+      {
+         boolean sidebarVisible = userPrefs_.panes().getValue().getSidebarVisible();
+         boolean sidebarLocationRight = userPrefs_.panes().getValue().getSidebarLocation().equals("right");
+         sidebarToggleButton_.setTitle(sidebarVisible ? constants_.hideSidebarTitle() : constants_.showSidebarTitle());
+         sidebarToggleButton_.setLeftImage(getSidebarToggleIcon(sidebarVisible, sidebarLocationRight));
+      }
+   }
+
+   private ImageResource getSidebarToggleIcon(boolean isVisible, boolean sidebarLocationRight)
+   {
+      if (sidebarLocationRight)
+      {
+         return isVisible
+            ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightVisible2x())
+            : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarRightHidden2x());
+      }
+      else
+      {
+         return isVisible
+            ? new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftVisible2x())
+            : new ImageResource2x(StandardIcons.INSTANCE.toggleSidebarLeftHidden2x());
       }
    }
 
@@ -270,6 +316,8 @@ public class GlobalToolbar extends Toolbar
    private final ToolbarMenuButton newButton_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
+   private final UserPrefs userPrefs_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+   private ToolbarButton sidebarToggleButton_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

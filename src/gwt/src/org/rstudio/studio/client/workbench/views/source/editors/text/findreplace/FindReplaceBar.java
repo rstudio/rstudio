@@ -87,17 +87,24 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       findReplacePanel.addStyleName(RES.styles().findPanel());
       findReplacePanel.add(txtFind_ = new FindTextBox(constants_.findCapitalized()));
       txtFind_.addStyleName(RES.styles().findTextBox());
+      txtFind_.getElement().addClassName("rstudio-find-replace-find-input");
       txtFind_.setIconVisible(true);
 
       Commands cmds = RStudioGinjector.INSTANCE.getCommands();
       findReplacePanel.add(btnFindNext_ = new SmallButton(cmds.findNext()));
+      btnFindNext_.getElement().addClassName("rstudio-find-replace-find-next-button");
       findReplacePanel.add(btnFindPrev_ = new SmallButton(cmds.findPrevious()));
+      btnFindPrev_.getElement().addClassName("rstudio-find-replace-find-prev-button");
       findReplacePanel.add(btnSelectAll_ = new SmallButton(cmds.findSelectAll()));
+      btnSelectAll_.getElement().addClassName("rstudio-find-replace-select-all-button");
 
       findReplacePanel.add(txtReplace_ = new FindTextBox(constants_.replaceCapitalized()));
       txtReplace_.addStyleName(RES.styles().replaceTextBox());
+      txtReplace_.getElement().addClassName("rstudio-find-replace-replace-input");
       findReplacePanel.add(btnReplace_ = new SmallButton(cmds.replaceAndFind()));
+      btnReplace_.getElement().addClassName("rstudio-find-replace-replace-button");
       findReplacePanel.add(btnReplaceAll_ = new SmallButton(constants_.allCapitalized()));
+      btnReplaceAll_.getElement().addClassName("rstudio-find-replace-replace-all-button");
       btnReplaceAll_.setTitle(constants_.replaceAllOccurrences());
 
       panel.add(findReplacePanel);
@@ -106,30 +113,35 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       optionsPanel.addStyleName(RES.styles().optionsPanel());
 
       optionsPanel.add(chkInSelection_ = new CheckBox());
+      chkInSelection_.getElement().addClassName("rstudio-find-replace-in-selection-checkbox");
       Label inSelectionLabel = new CheckboxLabel(chkInSelection_,
                                                  constants_.inSelection()).getLabel();
       inSelectionLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(inSelectionLabel);
 
       optionsPanel.add(chkCaseSensitive_ = new CheckBox());
+      chkCaseSensitive_.getElement().addClassName("rstudio-find-replace-match-case-checkbox");
       Label matchCaseLabel =
                   new CheckboxLabel(chkCaseSensitive_, constants_.matchCase()).getLabel();
       matchCaseLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(matchCaseLabel);
 
       optionsPanel.add(chkWholeWord_ = new CheckBox());
+      chkWholeWord_.getElement().addClassName("rstudio-find-replace-whole-word-checkbox");
       Label wholeWordLabel =
              new CheckboxLabel(chkWholeWord_, constants_.wholeWord()).getLabel();
       wholeWordLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(wholeWordLabel);
 
       optionsPanel.add(chkRegEx_ = new CheckBox());
+      chkRegEx_.getElement().addClassName("rstudio-find-replace-regex-checkbox");
       Label regexLabel = new CheckboxLabel(chkRegEx_, constants_.regexCapitalized()).getLabel();
       regexLabel.addStyleName(RES.styles().checkboxLabel());
 
       optionsPanel.add(regexLabel);
 
       optionsPanel.add(chkWrapSearch_ = new CheckBox());
+      chkWrapSearch_.getElement().addClassName("rstudio-find-replace-wrap-checkbox");
       Label wrapSearchLabel = new CheckboxLabel(chkWrapSearch_,
                                                 constants_.wrapCapitalized()).getLabel();
       wrapSearchLabel.addStyleName(RES.styles().checkboxLabel());

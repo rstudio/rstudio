@@ -30,7 +30,7 @@ namespace ssl {
 
 void validateSelfSignedCertificate(const FilePath& certPath);
 
-void initializeSslContext(boost::asio::ssl::context* pContext,
+bool initializeSslContext(boost::asio::ssl::context* pContext,
                           bool verify,
                           const std::string& certificateAuthority = std::string());
 

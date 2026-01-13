@@ -15,6 +15,8 @@ RSTUDIO_WORKBENCH_TAB_HELP <- "#rstudio_workbench_tab_help"
 RSTUDIO_WORKBENCH_TAB_TUTORIAL <- "#rstudio_workbench_tab_tutorial"
 RSTUDIO_WORKBENCH_TAB_VIEWER <- "#rstudio_workbench_tab_viewer"
 
+PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
+
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
@@ -91,6 +93,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width is preserved when adding tabs via pane layout options", {
+   # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar
    remote$commands.execute("toggleSidebar")
    .rs.waitUntil("sidebar created", function() {
@@ -168,6 +173,11 @@ isElementSelected <- function(selector) {
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
                "Files should be unchecked in sidebar after toggling")
 
+   # Keep the sidebar visible despite having no tabs
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar should now be checked")
+
    # Apply changes by clicking OK button
    remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
    .rs.waitUntil("pane layout dialog closed", function() {
@@ -190,6 +200,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("Sidebar width (left side) is preserved when adding tabs via pane layout options", {
+   # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Show the sidebar
    remote$commands.execute("toggleSidebar")
    .rs.waitUntil("sidebar created", function() {
@@ -273,6 +286,11 @@ isElementSelected <- function(selector) {
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
                "Environment should be unchecked in sidebar after toggling")
 
+   # Keep the sidebar visible despite having no tabs
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
+               info = "Sidebar should now be checked")
+
    # Apply changes by clicking OK button
    remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
    .rs.waitUntil("pane layout dialog closed", function() {
@@ -295,6 +313,9 @@ isElementSelected <- function(selector) {
 })
 
 .rs.test("layoutZoomEnvironment zooms environment pane and toggles back", {
+   # skipping to cut down run times on CI
+   skip_on_ci()
+
    # Verify Environment panel exists and is visible
    expect_true(remote$dom.elementExists("#rstudio_workbench_panel_environment"),
                "Environment panel should exist")

@@ -1328,6 +1328,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showHiddenFilesDescription();
 
    /**
+    * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+    */
+   @DefaultStringValue("Delete files to Trash/Recycle Bin")
+   String deleteToTrashTitle();
+   @DefaultStringValue("Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.")
+   String deleteToTrashDescription();
+
+   /**
     * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
     */
    @DefaultStringValue("Files always shown in the Files Pane")
@@ -2186,6 +2194,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledDescription();
 
    /**
+    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    */
+   @DefaultStringValue("[Preview] Enable next-edit suggestions")
+   String copilotNesEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.")
+   String copilotNesEnabledDescription();
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    @DefaultStringValue("Display account and billing messages from GitHub Copilot")
@@ -2292,12 +2308,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleHighlightConditionsEnum_none();
 
    /**
-    * Whether to show the experimental Chat UI
+    * Experimental
     */
-   @DefaultStringValue("Show Chat UI")
-   String showChatUiTitle();
-   @DefaultStringValue("Whether to show the experimental Chat UI")
-   String showChatUiDescription();
+   @DefaultStringValue("")
+   String paiTitle();
+   @DefaultStringValue("Experimental")
+   String paiDescription();
 
 
 

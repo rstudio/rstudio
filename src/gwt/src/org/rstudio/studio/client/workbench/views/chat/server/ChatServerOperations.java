@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.chat.server;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 public interface ChatServerOperations
 {
@@ -21,4 +22,11 @@ public interface ChatServerOperations
    public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback);
+   public void chatGetVersion(ServerRequestCallback<String> requestCallback);
+
+   public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback);
+   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback);
+   public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
+
+   public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
 }

@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { NullLogger, logger, parseCommandLineLogLevel, setLogger } from '../../../src/core/logger';
+import { NullLogger, logger, parseCommandLineLogLevel, setLogger, levelToCppLevel } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 
 describe('Logger', () => {
@@ -32,9 +32,48 @@ describe('Logger', () => {
     assert.deepEqual(f, fetched);
   });
   it('log level can be parsed from string representation', () => {
+    // Test abbreviated forms (backwards compatibility)
     assert.equal(parseCommandLineLogLevel('ERR', 'silly'), 'error');
     assert.equal(parseCommandLineLogLevel('WARN', 'silly'), 'warn');
     assert.equal(parseCommandLineLogLevel('INFO', 'silly'), 'info');
     assert.equal(parseCommandLineLogLevel('DEBUG', 'silly'), 'debug');
+
+    // Test full names
+    assert.equal(parseCommandLineLogLevel('ERROR', 'silly'), 'error');
+    assert.equal(parseCommandLineLogLevel('WARNING', 'silly'), 'warn');
+
+    // Test TRACE support (returns 'trace' which will be normalized later)
+    assert.equal(parseCommandLineLogLevel('TRACE', 'silly'), 'trace');
+
+    // Test case insensitivity
+    assert.equal(parseCommandLineLogLevel('error', 'silly'), 'error');
+    assert.equal(parseCommandLineLogLevel('warning', 'silly'), 'warn');
+    assert.equal(parseCommandLineLogLevel('trace', 'silly'), 'trace');
+
+    // Test invalid input falls back to default
+    assert.equal(parseCommandLineLogLevel('INVALID', 'warn'), 'warn');
+  });
+
+  it('log levels can be converted to C++ Logger levels', () => {
+    // Test standard levels
+    assert.equal(levelToCppLevel('error'), 'ERROR');
+    assert.equal(levelToCppLevel('warn'), 'WARNING');
+    assert.equal(levelToCppLevel('info'), 'INFO');
+    assert.equal(levelToCppLevel('debug'), 'DEBUG');
+    assert.equal(levelToCppLevel('trace'), 'TRACE');
+
+    // Test case insensitivity
+    assert.equal(levelToCppLevel('ERROR'), 'ERROR');
+    assert.equal(levelToCppLevel('WARN'), 'WARNING');
+    assert.equal(levelToCppLevel('INFO'), 'INFO');
+    assert.equal(levelToCppLevel('DEBUG'), 'DEBUG');
+    assert.equal(levelToCppLevel('TRACE'), 'TRACE');
+
+    // Test other Winston levels map to DEBUG
+    assert.equal(levelToCppLevel('verbose'), 'DEBUG');
+    assert.equal(levelToCppLevel('silly'), 'DEBUG');
+
+    // Test invalid input falls back to WARNING
+    assert.equal(levelToCppLevel('invalid'), 'WARNING');
   });
 });

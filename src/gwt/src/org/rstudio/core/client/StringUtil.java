@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomMetrics;
@@ -423,6 +424,16 @@ public class StringUtil
       return RE_TRAILING_WHITESPACE.replaceAll(string, "");
    }
 
+   public static String getCommonPrefix(String[] lines,
+                                        boolean allowPhantomWhitespace,
+                                        boolean skipWhitespaceOnlyLines)
+   {
+      return getCommonPrefix(
+         Arrays.asList(lines),
+         allowPhantomWhitespace,
+         skipWhitespaceOnlyLines);
+   }
+
    /**
     * Returns the zero or more characters that prefix all of the lines (but see
     * allowPhantomWhitespace).
@@ -430,82 +441,84 @@ public class StringUtil
     * @param allowPhantomWhitespace See comment in function body
     * @return
     */
-   public static String getCommonPrefix(String[] lines,
+   public static String getCommonPrefix(List<String> lines,
                                         boolean allowPhantomWhitespace,
                                         boolean skipWhitespaceOnlyLines)
    {
-      if (lines.length == 0)
+      if (skipWhitespaceOnlyLines)
+      {
+         lines = lines.stream()
+            .filter(line -> !line.trim().isEmpty())
+            .collect(Collectors.toList());
+      }
+
+      if (lines.size() == 0)
          return "";
 
-      /*
-       * allowPhantomWhitespace demands some explanation. Assuming these lines:
-       *
-       * {
-       *    "#",
-       *    "#  hello",
-       *    "#",
-       *    "#  goodbye",
-       *    "#    hello again"
-       * }
-       *
-       * The result with allowPhantomWhitespace = false would be "#", but with
-       * allowPhantomWhiteSpace = true it would be "#  ". Basically phantom
-       * whitespace refers to spots at the end of a line where additional
-       * whitespace would lead to a longer overall prefix but would not change
-       * the visible appearance of the document.
-       */
+      if (lines.size() == 1)
+         return lines.get(0);
 
-      String prefix = notNull(lines[0]);
+      int offset = 0;
+      StringBuilder prefix = new StringBuilder();
 
-      // Usually the prefix gradually gets shorter and shorter.
-      // whitespaceExpansionAllowed means that the prefix might get longer,
-      // because the prefix as it stands is eligible for phantom whitespace
-      // insertion. This is true iff the prefix is the same length as, or longer
-      // than, all of the lines we have processed.
-      boolean whitespaceExpansionAllowed = allowPhantomWhitespace;
-
-      for (int i = 1; i < lines.length && prefix.length() > 0; i++)
+      while (true)
       {
-         String line = notNull(lines[i]);
-         if (line.trim().isEmpty() && skipWhitespaceOnlyLines)
-            continue;
+         // Track whether the offset remained in-bounds
+         // for some string in the provided list.
+         boolean inBounds = false;
 
-         int len = whitespaceExpansionAllowed ? Math.max(prefix.length(), line.length()) :
-                   allowPhantomWhitespace ? prefix.length() :
-                   Math.min(prefix.length(), line.length());
-         int j;
-         for (j = 0; j < len; j++)
+         // Get the first character at the current offset.
+         char lhs;
+         if (offset < lines.get(0).length())
          {
-            if (j >= prefix.length())
+            inBounds = true;
+            lhs = lines.get(0).charAt(offset);
+         }
+         else if (allowPhantomWhitespace)
+         {
+            lhs = ' ';
+         }
+         else
+         {
+            lhs = '\0';
+         }
+
+         // Now, iterate over the rest of the characters in each line,
+         // and check if they match at the current offset.
+         for (int i = 1, n = lines.size(); i < n; i++)
+         {
+            char rhs;
+            if (offset < lines.get(i).length())
             {
-               assert whitespaceExpansionAllowed;
-               if (!isWhitespace(line.charAt(j)))
-                  break;
-               continue;
+               inBounds = true;
+               rhs = lines.get(i).charAt(offset);
+            }
+            else if (allowPhantomWhitespace)
+            {
+               rhs = ' ';
+            }
+            else
+            {
+               rhs = '\0';
             }
 
-            if (j >= line.length())
+            // If the characters do not match, then we bail.
+            if (lhs != rhs)
             {
-               assert allowPhantomWhitespace;
-               if (!isWhitespace(prefix.charAt(j)))
-                  break;
-               continue;
-            }
-
-            if (prefix.charAt(j) != line.charAt(j))
-            {
-               break;
+               return prefix.toString();
             }
          }
 
-         prefix = j <= prefix.length() ? StringUtil.substring(prefix, 0, j)
-                                       : StringUtil.substring(line, 0, j);
+         // If the offset computed was out-of-bounds for all
+         // of the provided lines, then we're done.
+         if (!inBounds)
+            return prefix.toString();
 
-         whitespaceExpansionAllowed =
-               whitespaceExpansionAllowed && (prefix.length() >= line.length());
+         // If we got here, all the characters at this offset matched.
+         // Add it to the computed prefix, and keep looking.
+         offset++;
+         prefix.append(lhs);
       }
-
-      return prefix;
    }
 
    public static boolean isWhitespace(char c)

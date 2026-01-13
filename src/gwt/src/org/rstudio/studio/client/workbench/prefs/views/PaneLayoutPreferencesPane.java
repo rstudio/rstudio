@@ -116,18 +116,19 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       ModuleList(String width, int height)
       {
          checkBoxes_ = new ArrayList<>();
+         moduleIds_ = new ArrayList<>();
          FlowPanel flowPanel = new FlowPanel();
          for (String module : PaneConfig.getAllTabs())
          {
-            CheckBox checkBox = new CheckBox(module, false);
+            CheckBox checkBox = new CheckBox(PaneConfig.getPaneDisplayLabel(module), false);
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
+            moduleIds_.add(module);
             flowPanel.add(checkBox);
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
-            // Hide Chat pane if show_chat_ui preference is false
             if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
-                !userPrefs_.showChatUi().getGlobalValue())
+                !userPrefs_.pai().getGlobalValue())
               checkBox.setVisible(false);
          }
 
@@ -161,18 +162,29 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       public ArrayList<String> getValue()
       {
          ArrayList<String> value = new ArrayList<>();
-         for (CheckBox checkBox : checkBoxes_)
+         for (int i = 0; i < checkBoxes_.size(); i++)
          {
-            if (checkBox.getValue())
-               value.add(checkBox.getText());
+            if (checkBoxes_.get(i).getValue())
+               value.add(moduleIds_.get(i));
+         }
+         return value;
+      }
+
+      public ArrayList<String> getVisibleValue()
+      {
+         ArrayList<String> value = new ArrayList<>();
+         for (int i = 0; i < checkBoxes_.size(); i++)
+         {
+            if (checkBoxes_.get(i).getValue() && checkBoxes_.get(i).isVisible())
+               value.add(moduleIds_.get(i));
          }
          return value;
       }
 
       public void setValue(ArrayList<String> tabs)
       {
-         for (CheckBox checkBox : checkBoxes_)
-            checkBox.setValue(tabs.contains(checkBox.getText()), false);
+         for (int i = 0; i < checkBoxes_.size(); i++)
+            checkBoxes_.get(i).setValue(tabs.contains(moduleIds_.get(i)), false);
       }
 
       public boolean presentationVisible()
@@ -180,8 +192,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          if (checkBoxes_.size() <= 0)
             return false;
 
-         CheckBox lastCheckBox = checkBoxes_.get(checkBoxes_.size() - 1);
-         return StringUtil.equals(lastCheckBox.getText(), "Presentation") &&
+         int lastIndex = checkBoxes_.size() - 1;
+         CheckBox lastCheckBox = checkBoxes_.get(lastIndex);
+         return StringUtil.equals(moduleIds_.get(lastIndex), "Presentation") &&
                                   lastCheckBox.isVisible();
       }
 
@@ -192,6 +205,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       }
 
       private final ArrayList<CheckBox> checkBoxes_;
+      private final ArrayList<String> moduleIds_;
    }
 
 
@@ -419,6 +433,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                sidebarModuleList_.setSelectedIndices(sidebarIndices);
 
                updateTabSetLabels();
+               updateSidebarVisibilityCheckbox();
             }
          }
       };
@@ -451,6 +466,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             hiddenTabSetModuleList_.setSelectedIndices(hiddenIndices);
 
             updateTabSetLabels();
+            updateSidebarVisibilityCheckbox();
          }
       });
 
@@ -507,6 +523,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       // Update labels to reflect new configuration
       updateTabSetPositions();
       updateTabSetLabels();
+      updateSidebarVisibilityCheckbox();
 
       // Ensure reset panel stays at the bottom after grid rebuild
       if (resetPanel_ != null)
@@ -926,6 +943,28 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       {
          pane.setItemText(2, itemText1);
          pane.setItemText(3, itemText2);
+      }
+   }
+
+   private boolean hasSidebarTabs()
+   {
+      return !sidebarModuleList_.getVisibleValue().isEmpty();
+   }
+
+   private void updateSidebarVisibilityCheckbox()
+   {
+      boolean hasTabs = hasSidebarTabs();
+      boolean currentlyVisible = sidebarVisibleCheckbox_.getValue();
+
+      // Auto-check when adding first tab to hidden sidebar
+      if (hasTabs && !currentlyVisible)
+      {
+         sidebarVisibleCheckbox_.setValue(true, false);
+      }
+      // Auto-uncheck when removing last tab from visible sidebar
+      else if (!hasTabs && currentlyVisible)
+      {
+         sidebarVisibleCheckbox_.setValue(false, false);
       }
    }
 

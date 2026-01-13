@@ -222,7 +222,7 @@
       return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
    
    # Otherwise, look for compatible browsers on the PATH.
-   browsers <- c("chromium", "google-chrome")
+   browsers <- c("chromium-browser", "chromium", "google-chrome")
    for (browser in browsers)
    {
       exe <- Sys.which(browser)
@@ -456,13 +456,22 @@
    # the constructed arguments to processx which launches
    # the program directly rather than through a shell
    args <- c(
+
       baseArgs,
       sprintf("--remote-debugging-port=%i", port),
       sprintf("--user-data-dir=%s", browserDataDir),
+
+      # recommended flags for automation in Docker environments
+      if (.rs.platform.isLinux) c(
+         "--disable-dev-shm-usage",
+         "--renderer-process-limit=1"
+      ),
+
       if (mode == "desktop") c(
          "--automation-agent",
          "--no-sandbox"
       ),
+
       if (mode == "server") c(
          "--no-default-browser-check",
          "--no-first-run",
@@ -470,6 +479,7 @@
          "--disable-features=PrivacySandboxSettings4",
          "http://localhost:8788"
       )
+
    )
    
    # On Linux, try to make sure we're using an existing display.
@@ -680,16 +690,26 @@
                                                reportFile = NULL,
                                                automationMode = NULL)
 {
-   .rs.alog('
-      Preparing to run automation.
-      - projectRoot:    %s
-      - reportFile:     %s
-      - automationMode: %s
-   ', projectRoot, reportFile, automationMode)
-   
+   # Use rlang to print back traces.
+   options(error = rlang::trace_back)
+
    # Resolve the automation mode.
    automationMode <- .rs.automation.resolveMode(automationMode)
-   
+
+   fmt <- '
+      Preparing to run automation.
+      - projectRoot:     %s
+      - reportFile:      %s
+      - automationMode:  %s
+   '
+
+   .rs.alog(
+      fmt,
+      .rs.nullCoalesce(projectRoot, "<unset>"),
+      .rs.nullCoalesce(reportFile, "<unset>"),
+      .rs.nullCoalesce(automationMode, "<unset>")
+   )
+
    # Move to the project root directory.
    owd <- setwd(projectRoot)
    on.exit(setwd(owd), add = TRUE)
@@ -929,7 +949,7 @@
    if (.rs.platform.isLinux)
    {
       # Sanitize label name.
-      label <- gsub("[^[:alnum:]]", "_", label)
+      label <- gsub("[^[:alnum:]]", "_", format(label))
       
       # Use 'xwd' to capture a screenshot from the display.
       name <- sprintf("rstudio-automation-%s.%s", label, format(Sys.time(), "%F.%s"))

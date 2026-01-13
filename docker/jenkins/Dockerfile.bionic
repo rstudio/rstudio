@@ -104,7 +104,7 @@ RUN /bin/bash /tmp/install-dependencies
 
 # panmirror check for changes
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
-# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-apple-blossom panmirror.version.json
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-globemaster-allium panmirror.version.json
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common

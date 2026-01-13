@@ -68,6 +68,7 @@ function(dependency)
    set(${_NAME}_ENABLED ${${_NAME}_ENABLED} CACHE INTERNAL "")
 
    string(REPLACE "." ";" _VERSION_LIST "${_VERSION}")
+   list(APPEND _VERSION_LIST 0 0 0)
    list(GET _VERSION_LIST 0 _VERSION_MAJOR)
    list(GET _VERSION_LIST 1 _VERSION_MINOR)
    list(GET _VERSION_LIST 2 _VERSION_PATCH)
@@ -83,104 +84,6 @@ function(dependency)
 
 endfunction()
 
-
-# tl-expected
-dependency(TL_EXPECTED
-   COMMENT    "Single header implementation of std::expected with functional-style extensions."
-   VERSION    "1.1.0"
-   REPOSITORY "https://github.com/TartanLlama/expected"
-   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
-)
-
-set(EXPECTED_BUILD_TESTS OFF)
-
-
-# fmt
-dependency(FMT
-   COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
-   VERSION    "11.1.4"
-   REPOSITORY "https://github.com/fmtlib/fmt"
-   REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
-)
-
-set(FMT_INSTALL OFF)
-
-
-# gsl-lite
-dependency(GSL_LITE
-   COMMENT    "gsl-lite is an implementation of the C++ Core Guidelines Support Library originally based on Microsoft GSL."
-   VERSION    "0.42.0"
-   REPOSITORY "https://github.com/gsl-lite/gsl-lite"
-   REVISION   "21751fb0473473e27ffb1f280543885ed65447a8" # pragma: allowlist secret
-)
-
-# gtest and gmock
-dependency(GTEST
-   COMMENT    "Google Test is a C++ test framework based on the xUnit architecture."
-   VERSION    "1.17.0"
-   REPOSITORY "https://github.com/google/googletest"
-   REVISION   "52eb8108c5bdec04579160ae17225d66034bd723" # pragma: allowlist secret
-)
-
-# Disable installation of gtest/gmock - these are test dependencies only
-set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
-
-# Force gtest to use the same runtime library as the rest of the project on Windows
-if(WIN32)
-   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-endif()
-
-# hunspell
-dependency(HUNSPELL
-   COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
-   VERSION    "1.7.2"
-   REPOSITORY "https://github.com/hunspell/hunspell"
-   REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
-   CUSTOM     TRUE
-)
-
-# rapidjson
-dependency(RAPIDJSON
-   COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
-   VERSION    "1.1.0"
-   REPOSITORY "https://github.com/Tencent/rapidjson"
-   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f" # pragma: allowlist secret
-   CUSTOM     TRUE
-)
-
-# websocketpp
-dependency(WEBSOCKETPP
-   COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
-   VERSION    "0.8.3"
-   REPOSITORY "https://github.com/amini-allight/websocketpp"
-   REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
-   CUSTOM     TRUE
-)
-
-# yaml-cpp
-dependency(YAML_CPP
-   COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
-   VERSION    "0.8.0"
-   REPOSITORY "https://github.com/jbeder/yaml-cpp"
-   REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
-)
-
-# help yaml-cpp 0.8.0 find <cstdint> during compilation
-if(NOT MSVC AND NOT APPLE)
-   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
-   set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
-endif()
-
-
-# zlib
-dependency(ZLIB
-   COMMENT    "zlib is a general purpose data compression library."
-   VERSION    "1.3.1"
-   REPOSITORY "https://github.com/madler/zlib"
-   REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
-   PLATFORMS  WIN32
-)
 
 function(fetch)
 
@@ -247,26 +150,147 @@ function(fetch)
 endfunction()
 
 
+
+# dtl
+dependency(DTL
+   COMMENT    "dtl provides the functions for comparing two sequences have arbitrary type."
+   VERSION    "1.21"
+   REPOSITORY "https://github.com/cubicdaiya/dtl"
+   REVISION   "32567bb9ec704f09040fb1ed7431a3d967e3df03" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
+# fmt
+dependency(FMT
+   COMMENT    "{fmt} is an open-source formatting library providing a fast and safe alternative to C stdio and C++ iostreams."
+   VERSION    "11.1.4"
+   REPOSITORY "https://github.com/fmtlib/fmt"
+   REVISION   "123913715afeb8a437e6388b4473fcc4753e1c9a" # pragma: allowlist secret
+)
+
+set(FMT_INSTALL OFF)
+
+
+# gsl-lite
+dependency(GSL_LITE
+   COMMENT    "gsl-lite is an implementation of the C++ Core Guidelines Support Library originally based on Microsoft GSL."
+   VERSION    "0.42.0"
+   REPOSITORY "https://github.com/gsl-lite/gsl-lite"
+   REVISION   "21751fb0473473e27ffb1f280543885ed65447a8" # pragma: allowlist secret
+)
+
+
+# gtest and gmock
+dependency(GTEST
+   COMMENT    "Google Test is a C++ test framework based on the xUnit architecture."
+   VERSION    "1.17.0"
+   REPOSITORY "https://github.com/google/googletest"
+   REVISION   "52eb8108c5bdec04579160ae17225d66034bd723" # pragma: allowlist secret
+)
+
+# Disable installation of gtest/gmock - these are test dependencies only
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+set(INSTALL_GMOCK OFF CACHE BOOL "" FORCE)
+
+# Force gtest to use the same runtime library as the rest of the project on Windows
+if(WIN32)
+   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
+
+# hunspell
+dependency(HUNSPELL
+   COMMENT    "Hunspell is a free spell checker and morphological analyzer library and command-line tool, licensed under LGPL/GPL/MPL tri-license."
+   VERSION    "1.7.2"
+   REPOSITORY "https://github.com/hunspell/hunspell"
+   REVISION   "2969be996acad84b91ab3875b1816636fe61a40e" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
+# rapidjson
+dependency(RAPIDJSON
+   COMMENT    "A fast JSON parser/generator for C++ with both SAX/DOM style API"
+   VERSION    "1.1.0"
+   REPOSITORY "https://github.com/Tencent/rapidjson"
+   REVISION   "24b5e7a8b27f42fa16b96fc70aade9106cf7102f" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
+# tl-expected
+dependency(TL_EXPECTED
+   COMMENT    "Single header implementation of std::expected with functional-style extensions."
+   VERSION    "1.1.0"
+   REPOSITORY "https://github.com/TartanLlama/expected"
+   REVISION   "292eff8bd8ee230a7df1d6a1c00c4ea0eb2f0362" # pragma: allowlist secret
+)
+
+set(EXPECTED_BUILD_TESTS OFF)
+
+
+# utfcpp
+dependency(UTFCPP
+   COMMENT    "UTF8-CPP: UTF-8 with C++ in a Portable Way"
+   VERSION    "4.0.8"
+   REPOSITORY "https://github.com/nemtrif/utfcpp"
+   REVISION   "f9319195dfddf369f68f18e7c0039b3f351797fd" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
+# websocketpp
+dependency(WEBSOCKETPP
+   COMMENT    "WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket Protocol."
+   VERSION    "0.8.3"
+   REPOSITORY "https://github.com/amini-allight/websocketpp"
+   REVISION   "ee8cf4257e001d939839cff5b1766a835b749cd6" # pragma: allowlist secret
+   CUSTOM     TRUE
+)
+
+
+# yaml-cpp
+dependency(YAML_CPP
+   COMMENT    "yaml-cpp is a YAML parser and emitter in C++ matching the YAML 1.2 spec."
+   VERSION    "0.8.0"
+   REPOSITORY "https://github.com/jbeder/yaml-cpp"
+   REVISION   "f7320141120f720aecc4c32be25586e7da9eb978" # pragma: allowlist secret
+)
+
+# help yaml-cpp 0.8.0 find <cstdint> during compilation
+if(NOT MSVC AND NOT APPLE)
+   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h" "#include <cstdint>")
+   set(YAML_CPP_CXXFLAGS "-include ${CMAKE_CURRENT_BINARY_DIR}/yaml-cpp.h")
+endif()
+
+
+# zlib
+dependency(ZLIB
+   COMMENT    "zlib is a general purpose data compression library."
+   VERSION    "1.3.1"
+   REPOSITORY "https://github.com/madler/zlib"
+   REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
+   PLATFORMS  WIN32
+)
+
 fetch(
+   dtl          DTL
    fmt          FMT
    gsl-lite     GSL_LITE
    gtest        GTEST
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
    tl-expected  TL_EXPECTED
+   utfcpp       UTFCPP
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
 
-# Create rapidjson target.
-add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
-target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
-target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
 
-
-# Create websocketpp target.
-add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
-target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+# Create dtl target.
+add_library(rstudio-dtl INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-dtl INTERFACE "${DTL_SOURCE_DIR}")
 
 
 # Create hunspell target.
@@ -284,3 +308,20 @@ if(WIN32)
 else()
    target_compile_options(rstudio-hunspell PRIVATE -Wno-deprecated-declarations -Wno-sign-compare -Wno-unused-but-set-variable)
 endif()
+
+
+# Create rapidjson target.
+add_library(rstudio-rapidjson INTERFACE EXCLUDE_FROM_ALL)
+target_compile_definitions(rstudio-rapidjson INTERFACE "-DRAPIDJSON_NO_SIZETYPEDEFINE")
+target_include_directories(rstudio-rapidjson INTERFACE "${RAPIDJSON_SOURCE_DIR}/include")
+
+
+# Create utfcpp target.
+add_library(rstudio-utfcpp INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source")
+
+
+# Create websocketpp target.
+add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
+target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+

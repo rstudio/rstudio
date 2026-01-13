@@ -71,8 +71,7 @@ namespace source_database {
 
 namespace {
 
-// cached mapping of document id to document path (facilitates efficient path
-// lookup)
+// cached mapping of document id to path (facilitates efficient path lookup)
 std::map<std::string, std::string> s_idToPath;
 
 // cached mapping of document last write times
@@ -698,7 +697,9 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       retry = false;
       numAttempts++;
       if (!propertiesPath.exists())
+      {
          return core::fileNotFoundError(propertiesPath, ERROR_LOCATION);
+      }
       else
       {
          // read the contents of the file
@@ -708,7 +709,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
                                           options().sourceLineEnding());
          if (error)
          {
-           LOG_DEBUG_MESSAGE("SourceDB: read string from file failed: " + std::to_string(numAttempts) + " path: " + propertiesPath.getAbsolutePath() + " error: " + error.asString());
+            LOG_DEBUG_MESSAGE("SourceDB: read string from file failed: " + std::to_string(numAttempts) + " path: " + propertiesPath.getAbsolutePath() + " error: " + error.asString());
             retry = true;
          }
          else
@@ -733,7 +734,9 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
          return error;
       }
       else
+      {
          boost::this_thread::sleep(boost::posix_time::milliseconds(25));
+      }
    }
    while (retry);
    
@@ -945,12 +948,16 @@ Error removeAll()
 
 Error getPath(const std::string& id, std::string* pPath)
 {
-   std::map<std::string, std::string>::iterator it = s_idToPath.find(id);
+   auto it = s_idToPath.find(id);
    if (it == s_idToPath.end())
    {
-      return systemError(boost::system::errc::no_such_file_or_directory,
-                         ERROR_LOCATION);
+      Error error = systemError(
+         boost::system::errc::no_such_file_or_directory,
+         ERROR_LOCATION);
+      error.addProperty("id", id);
+      return error;
    }
+
    *pPath = it->second;
    return Success();
 }
@@ -961,13 +968,14 @@ Error getPath(const std::string& id, core::FilePath* pPath)
    Error error = getPath(id, &path);
    if (error) 
       return error;
+
    *pPath = module_context::resolveAliasedPath(path);
    return Success();
 }
 
 Error getId(const std::string& path, std::string* pId)
 {
-   for (std::map<std::string, std::string>::iterator it = s_idToPath.begin();
+   for (auto it = s_idToPath.begin();
         it != s_idToPath.end();
         it++)
    {
@@ -977,8 +985,13 @@ Error getId(const std::string& path, std::string* pId)
          return Success();
       }
    }
-   return systemError(boost::system::errc::no_such_file_or_directory,
-                      ERROR_LOCATION);
+
+   Error error = systemError(
+      boost::system::errc::no_such_file_or_directory,
+      ERROR_LOCATION);
+   
+   error.addProperty("path", path);
+   return error;
 }
 
 Error getId(const FilePath& path, std::string* pId)
