@@ -62,6 +62,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionFilesQuotas.hpp"
@@ -360,7 +361,8 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
 
 core::Error deleteFile(const FilePath& filePath)
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop &&
+       prefs::userPrefs().deleteToTrash())
    {
       Error error = core::system::recycle_bin::sendTo(filePath);
       if (error)

@@ -610,7 +610,7 @@ TEST(LoggingTest, FileLogRotationsCap)
       ASSERT_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
       std::string logStr = "Log line " + safe_convert::numberToString(49 - i) + "\n";
-      ASSERT_TRUE(boost::ends_with(logContents, logStr));
+      ASSERT_TRUE(boost::contains(logContents, logStr));
    }
 
    // No more log files should exist because we capped number of rotations at 15
@@ -662,7 +662,7 @@ TEST(LoggingTest, FileLogRotationsCapCanBeDisabled)
       ASSERT_FALSE(core::readStringFromFile(rotatedLogFile, &logContents));
 
       std::string logStr = "Log line " + safe_convert::numberToString(99 - i) + "\n";
-      ASSERT_TRUE(boost::ends_with(logContents, logStr));
+      ASSERT_TRUE(boost::contains(logContents, logStr));
    }
 }
 

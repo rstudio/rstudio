@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperation
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -139,12 +140,13 @@ public class TextEditingTargetCopilotHelper
          @Override
          protected void apply()
          {
-            // Get edit range
+            // Get edit range using anchored positions so the range stays
+            // valid even if the document has been edited.
             Range range = Range.create(
-               completion.range.start.line,
-               completion.range.start.character,
-               completion.range.end.line,
-               completion.range.end.character);
+               completionStartAnchor_.getRow(),
+               completionStartAnchor_.getColumn(),
+               completionEndAnchor_.getRow(),
+               completionEndAnchor_.getColumn());
 
             // Move cursor to end of edit range
             display_.setCursorPosition(range.getEnd());
@@ -192,6 +194,7 @@ public class TextEditingTargetCopilotHelper
       display_.removeGhostText();
       completionTimer_.cancel();
       activeCompletion_ = null;
+      detachCompletionAnchors();
 
       // Detach inline diff view
       if (diffWidget_ != null)
@@ -211,6 +214,37 @@ public class TextEditingTargetCopilotHelper
          display_.removeHighlight(diffMarkerId_);
          diffMarkerId_ = -1;
       }
+   }
+
+   /**
+    * Detaches and clears the completion anchors.
+    */
+   private void detachCompletionAnchors()
+   {
+      if (completionStartAnchor_ != null)
+      {
+         completionStartAnchor_.detach();
+         completionStartAnchor_ = null;
+      }
+      if (completionEndAnchor_ != null)
+      {
+         completionEndAnchor_.detach();
+         completionEndAnchor_ = null;
+      }
+   }
+
+   /**
+    * Creates anchors for the current completion range.
+    * The start anchor uses insertRight=true so it moves when text is inserted
+    * at the anchor position (e.g., during partial word-by-word acceptance).
+    */
+   private void createCompletionAnchors(int startLine, int startCharacter, int endLine, int endCharacter)
+   {
+      detachCompletionAnchors();
+      completionStartAnchor_ = display_.createAnchor(Position.create(startLine, startCharacter));
+      completionStartAnchor_.setInsertRight(true);
+      completionEndAnchor_ = display_.createAnchor(Position.create(endLine, endCharacter));
+      completionEndAnchor_.setInsertRight(true);
    }
 
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
@@ -361,6 +395,11 @@ public class TextEditingTargetCopilotHelper
 
                               reset();
                               activeCompletion_ = new Completion(normalized);
+                              createCompletionAnchors(
+                                 activeCompletion_.startLine,
+                                 activeCompletion_.startCharacter,
+                                 activeCompletion_.endLine,
+                                 activeCompletion_.endCharacter);
                               display_.setGhostText(activeCompletion_.displayText);
                               server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                            }
@@ -562,17 +601,18 @@ public class TextEditingTargetCopilotHelper
                         event.stopPropagation();
                         event.preventDefault();
 
-                        // Otherwise, accept the ghost text
+                        // Otherwise, accept the ghost text. Use anchored positions
+                        // so the range stays valid even if the document has been edited.
                         Range aceRange = Range.create(
-                              activeCompletion_.startLine,
-                              activeCompletion_.startCharacter,
-                              activeCompletion_.endLine,
-                              activeCompletion_.endCharacter);
+                              completionStartAnchor_.getRow(),
+                              completionStartAnchor_.getColumn(),
+                              completionEndAnchor_.getRow(),
+                              completionEndAnchor_.getColumn());
                         display_.replaceRange(aceRange, activeCompletion_.insertText);
 
                         Position cursorPos = Position.create(
-                           activeCompletion_.endLine,
-                           activeCompletion_.endCharacter + activeCompletion_.insertText.length());
+                           completionEndAnchor_.getRow(),
+                           completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
                         display_.setCursorPosition(cursorPos);
 
                         server_.copilotDidAcceptCompletion(
@@ -684,6 +724,11 @@ public class TextEditingTargetCopilotHelper
                // (which we need to send back to the server as-is in some language-server methods).
                CopilotCompletion normalized = normalizeCompletion(completion);
                activeCompletion_ = new Completion(normalized);
+               createCompletionAnchors(
+                  activeCompletion_.startLine,
+                  activeCompletion_.startCharacter,
+                  activeCompletion_.endLine,
+                  activeCompletion_.endCharacter);
 
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)
@@ -701,6 +746,13 @@ public class TextEditingTargetCopilotHelper
                else
                {
                   // Otherwise, show the suggestion as an inline diff view.
+                  // For inline diff, we use the original (non-normalized) completion
+                  // to show the full context, so update anchors to track the original range.
+                  createCompletionAnchors(
+                     completion.range.start.line,
+                     completion.range.start.character,
+                     completion.range.end.line,
+                     completion.range.end.character);
                   showEditSuggestion(completion);
                }
             }
@@ -855,7 +907,7 @@ public class TextEditingTargetCopilotHelper
          int col = completion.range.start.character;
          String line = display_.getLine(row);
 
-         for (; col + lhs < line.length(); lhs++)
+         for (; lhs < completion.insertText.length() && col + lhs < line.length(); lhs++)
          {
             char clhs = completion.insertText.charAt(lhs);
             char crhs = line.charAt(col + lhs);
@@ -873,7 +925,7 @@ public class TextEditingTargetCopilotHelper
          int col = completion.range.end.character;
          String line = display_.getLine(row);
 
-         for (; col - rhs > 0; rhs++)
+         for (; rhs < completion.insertText.length() && col - rhs > 0; rhs++)
          {
             char clhs = completion.insertText.charAt(completion.insertText.length() - rhs - 1);
             char crhs = line.charAt(col - rhs - 1);
@@ -887,13 +939,29 @@ public class TextEditingTargetCopilotHelper
 
       if (lhs >= n - rhs)
       {
-         // The completion is entirely overlapping the existing text.
-         Position cursorPos = display_.getCursorPosition();
-         normalized.insertText = "";
-         normalized.range.start.line = cursorPos.getRow();
-         normalized.range.start.character = cursorPos.getColumn();
-         normalized.range.end.line = cursorPos.getRow();
-         normalized.range.end.character = cursorPos.getColumn();
+         // The matched prefix and suffix cover the entire insertText.
+         // Only discard as "entirely overlapping" if the range length also matches,
+         // otherwise the completion represents a deletion (range longer) or
+         // insertion (range shorter) which is meaningful.
+         boolean rangeMatchesLength = false;
+         if (completion.range.start.line == completion.range.end.line)
+         {
+            int rangeLength = completion.range.end.character - completion.range.start.character;
+            rangeMatchesLength = (rangeLength == n);
+         }
+
+         if (rangeMatchesLength)
+         {
+            // The completion is entirely overlapping the existing text.
+            Position cursorPos = display_.getCursorPosition();
+            normalized.insertText = "";
+            normalized.range.start.line = cursorPos.getRow();
+            normalized.range.start.character = cursorPos.getColumn();
+            normalized.range.end.line = cursorPos.getRow();
+            normalized.range.end.character = cursorPos.getColumn();
+         }
+         // else: range length differs from insertText length, so this completion
+         // represents a meaningful change (deletion or insertion). Return unchanged.
       }
       else
       {
@@ -944,6 +1012,8 @@ public class TextEditingTargetCopilotHelper
    private int diffMarkerId_ = -1;
    private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
+   private Anchor completionStartAnchor_;
+   private Anchor completionEndAnchor_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
 
 

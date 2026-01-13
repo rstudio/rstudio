@@ -1073,6 +1073,12 @@
             "title": "Show hidden files in Files pane",
             "description": "Whether to show hidden files in the Files pane."
         },
+        "delete_to_trash": {
+            "type": "boolean",
+            "default": true,
+            "title": "Delete files to Trash/Recycle Bin",
+            "description": "Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them."
+        },
         "always_shown_files": {
             "type": "array",
             "description": "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown",

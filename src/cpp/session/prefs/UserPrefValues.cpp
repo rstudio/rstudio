@@ -2052,6 +2052,19 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * Whether to move deleted files to the system Trash/Recycle Bin instead of permanently deleting them.
+ */
+bool UserPrefValues::deleteToTrash()
+{
+   return readPref<bool>("delete_to_trash");
+}
+
+core::Error UserPrefValues::setDeleteToTrash(bool val)
+{
+   return writePref("delete_to_trash", val);
+}
+
+/**
  * List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown
  */
 core::json::Array UserPrefValues::alwaysShownFiles()
@@ -3744,6 +3757,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRmdRenameInScopeBehavior,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kDeleteToTrash,
       kAlwaysShownFiles,
       kAlwaysShownExtensions,
       kSortFileNamesNaturally,

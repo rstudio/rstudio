@@ -185,7 +185,235 @@ withr::defer(.rs.automation.deleteRemote())
       # second header
       token <- as.vector(editor$session$getTokenAt(13, 0))
       expect_equal(token$type, "markup.heading.2")
-      
+
    })
-   
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16657
+.rs.test("R files highlight hex color strings", {
+
+   # Tokens for 'col1 <- "#ff0000"':
+   # 1: col1 (identifier)
+   # 2: ' ' (text)
+   # 3: <- (keyword.operator)
+   # 4: ' ' (text)
+   # 5: " (string)
+   # 6: #ff0000 (string.color)
+   # 7: " (string)
+
+   documentContents <- .rs.heredoc('
+      col1 <- "#ff0000"
+      col2 <- "#00ff00ff"
+      col3 <- "#abc"
+   ')
+
+   remote$editor.executeWithContents(".R", documentContents, function(editor) {
+
+      # Test #rrggbb format
+      tokens <- as.vector(editor$session$getTokens(0L))
+      colorToken <- tokens[[6L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#ff0000")
+      expect_equal(colorToken$bg, "#ff0000")
+
+      # Test #rrggbbaa format
+      tokens <- as.vector(editor$session$getTokens(1L))
+      colorToken <- tokens[[6L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#00ff00ff")
+      expect_equal(colorToken$bg, "#00ff00ff")
+
+      # Test #rgb format
+      tokens <- as.vector(editor$session$getTokens(2L))
+      colorToken <- tokens[[6L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#abc")
+      expect_equal(colorToken$bg, "#abc")
+
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16657
+.rs.test("R files highlight named color strings", {
+
+   # Tokens for 'col1 <- "red"':
+   # 1: col1 (identifier)
+   # 2: ' ' (text)
+   # 3: <- (keyword.operator)
+   # 4: ' ' (text)
+   # 5: " (string)
+   # 6: red (string.color)
+   # 7: " (string)
+   #
+   # For non-color 'col3 <- "notacolor"':
+   # 1-4: same as above
+   # 5: "notacolor" (string) - single token since not a recognized color
+
+   documentContents <- .rs.heredoc('
+      col1 <- "red"
+      col2 <- "steelblue4"
+      col3 <- "notacolor"
+   ')
+
+   remote$editor.executeWithContents(".R", documentContents, function(editor) {
+
+      # Test named color "red"
+      tokens <- as.vector(editor$session$getTokens(0L))
+      colorToken <- tokens[[6L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "red")
+      expect_equal(colorToken$bg, "#ff0000")
+
+      # Test named color "steelblue4"
+      tokens <- as.vector(editor$session$getTokens(1L))
+      colorToken <- tokens[[6L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "steelblue4")
+      expect_equal(colorToken$bg, "#36648b")
+
+      # Test non-color string (should be regular string token)
+      tokens <- as.vector(editor$session$getTokens(2L))
+      stringToken <- tokens[[5L]]
+      expect_equal(stringToken$type, "string")
+      expect_equal(stringToken$value, "\"notacolor\"")
+
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16657
+.rs.test("YAML files highlight hex color strings", {
+
+   # Tokens for 'color1: "#ff0000"':
+   # 1: color1 (meta.tag)
+   # 2: ': ' (keyword.operator) - includes trailing space
+   # 3: " (string)
+   # 4: #ff0000 (string.color)
+   # 5: " (string)
+
+   documentContents <- .rs.heredoc('
+      color1: "#ff0000"
+      color2: "#00ff00ff"
+      color3: "#abc"
+   ')
+
+   remote$editor.executeWithContents(".yml", documentContents, function(editor) {
+
+      # Test #rrggbb format
+      tokens <- as.vector(editor$session$getTokens(0L))
+      colorToken <- tokens[[4L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#ff0000")
+      expect_equal(colorToken$bg, "#ff0000")
+
+      # Test #rrggbbaa format
+      tokens <- as.vector(editor$session$getTokens(1L))
+      colorToken <- tokens[[4L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#00ff00ff")
+      expect_equal(colorToken$bg, "#00ff00ff")
+
+      # Test #rgb format
+      tokens <- as.vector(editor$session$getTokens(2L))
+      colorToken <- tokens[[4L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "#abc")
+      expect_equal(colorToken$bg, "#abc")
+
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16657
+.rs.test("YAML files highlight named color strings", {
+
+   # Tokens for 'color1: "red"':
+   # 1: color1 (meta.tag)
+   # 2: ': ' (keyword.operator)
+   # 3: " (string)
+   # 4: red (string.color)
+   # 5: " (string)
+   #
+   # For non-color 'color3: "notacolor"':
+   # 1: color3 (meta.tag)
+   # 2: ': ' (keyword.operator)
+   # 3: "notacolor" (string) - single token since not a recognized color
+
+   documentContents <- .rs.heredoc('
+      color1: "red"
+      color2: "steelblue4"
+      color3: "notacolor"
+   ')
+
+   remote$editor.executeWithContents(".yml", documentContents, function(editor) {
+
+      # Test named color "red"
+      tokens <- as.vector(editor$session$getTokens(0L))
+      colorToken <- tokens[[4L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "red")
+      expect_equal(colorToken$bg, "#ff0000")
+
+      # Test named color "steelblue4"
+      tokens <- as.vector(editor$session$getTokens(1L))
+      colorToken <- tokens[[4L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "steelblue4")
+      expect_equal(colorToken$bg, "#36648b")
+
+      # Test non-color string (should be regular string token)
+      tokens <- as.vector(editor$session$getTokens(2L))
+      stringToken <- tokens[[3L]]
+      expect_equal(stringToken$type, "string")
+      expect_equal(stringToken$value, "\"notacolor\"")
+
+   })
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16657
+.rs.test("YAML files highlight unquoted named colors", {
+
+   # Tokens for 'color1: red':
+   # 1: color1 (meta.tag)
+   # 2: ': ' (keyword.operator)
+   # 3: red (string.color)
+   #
+   # For non-color 'color3: notacolor':
+   # 1: color3 (meta.tag)
+   # 2: ': ' (keyword.operator)
+   # 3: notacolor (text)
+
+   documentContents <- .rs.heredoc('
+      color1: red
+      color2: steelblue4
+      color3: notacolor
+   ')
+
+   remote$editor.executeWithContents(".yml", documentContents, function(editor) {
+
+      # Test named color "red"
+      tokens <- as.vector(editor$session$getTokens(0L))
+      colorToken <- tokens[[3L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "red")
+      expect_equal(colorToken$bg, "#ff0000")
+
+      # Test named color "steelblue4"
+      tokens <- as.vector(editor$session$getTokens(1L))
+      colorToken <- tokens[[3L]]
+      expect_equal(colorToken$type, "string.color")
+      expect_equal(colorToken$value, "steelblue4")
+      expect_equal(colorToken$bg, "#36648b")
+
+      # Test non-color (should be regular text token)
+      tokens <- as.vector(editor$session$getTokens(2L))
+      textToken <- tokens[[3L]]
+      expect_equal(textToken$type, "text")
+      expect_equal(textToken$value, "notacolor")
+
+   })
+
 })

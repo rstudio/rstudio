@@ -1,9 +1,12 @@
-## RStudio 2026.02.0 "Globemaster Allium" Release Notes
+## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
 #### RStudio
+- ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors
 - ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
 - (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
+- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): Deleting files from Files pane on Linux Desktop now sends files to the Trash
+- ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
 
 #### Posit Workbench
 -
@@ -18,6 +21,7 @@
 - ([#16740](https://github.com/rstudio/rstudio/issues/16740)): Fixed an issue with opening files from operating system file manager when RStudio had a secondary window open
 - ([#16688](https://github.com/rstudio/rstudio/issues/16688)): Fixed an issue with pane layout when exiting RStudio with a zoomed column region
 - ([#16798](https://github.com/rstudio/rstudio/issues/16798)): Fixed an issue where whole-word search and replace would not correctly match search terms containing dots
+- ([#16814](https://github.com/rstudio/rstudio/issues/16814)): Fixed an issue where apostrophes in file names were displayed as HTML entities in the Files pane
 
 #### Posit Workbench
 - 
@@ -28,10 +32,10 @@
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.406.0
+- Copilot Language Server 1.409.0
 - Electron 39.2.7
 - Node.js 22.21.1 (copilot completions)
 - Node.js 22.20.0 (vscode server)
-- Quarto 1.8.25
+- Quarto 1.8.26
 - Launcher 2.21.0
 - rserver-saml 0.9.2

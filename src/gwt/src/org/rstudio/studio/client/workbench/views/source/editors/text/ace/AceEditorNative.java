@@ -566,7 +566,75 @@ public class AceEditorNative extends JavaScriptObject
    public final native boolean dragEnabled() /*-{
       return this.getOption("dragEnabled");
    }-*/;
-   
+
+   /**
+    * Resets the mouse handler state to recover from any corruption.
+    * This can happen if an exception occurs during mouse event handling,
+    * leaving the handler in an inconsistent state.
+    * See: https://github.com/rstudio/rstudio/issues/13436
+    */
+   public final native void resetMouseHandlerState()
+   /*-{
+      var handler = this.$mouseHandler;
+      if (!handler) return;
+
+      // Reset core state variables
+      handler.state = "";
+      handler.isMousePressed = false;
+      handler.$mouseMoved = false;
+      handler.$clickSelection = null;
+
+      // Reset renderer state
+      var renderer = this.renderer;
+      if (renderer) {
+         renderer.$isMousePressed = false;
+      }
+
+      // Clean up any lingering capture
+      if (handler.releaseMouse) {
+         try {
+            handler.releaseMouse();
+         } catch (e) {
+            // Ignore errors during cleanup
+         }
+         handler.releaseMouse = null;
+      }
+      handler.$onCaptureMouseMove = null;
+
+      // Reset virtual selection mode if stuck
+      if (this.inVirtualSelectionMode) {
+         this.inVirtualSelectionMode = false;
+      }
+   }-*/;
+
+   /**
+    * Returns true if the mouse handler appears to be in a corrupt state.
+    * See: https://github.com/rstudio/rstudio/issues/13436
+    */
+   public final native boolean isMouseHandlerStateCorrupt()
+   /*-{
+      var handler = this.$mouseHandler;
+      if (!handler) return false;
+
+      // Check for suspicious state combinations:
+      // State should be empty when mouse is not pressed
+      if (handler.state && handler.state !== "" && !handler.isMousePressed) {
+         return true;
+      }
+
+      // releaseMouse should be null when not in a capture operation
+      if (handler.releaseMouse && !handler.isMousePressed) {
+         return true;
+      }
+
+      // inVirtualSelectionMode should not persist indefinitely
+      if (this.inVirtualSelectionMode && !handler.isMousePressed) {
+         return true;
+      }
+
+      return false;
+   }-*/;
+
    public final native JsMap<Position> getMarks() /*-{
       
       var marks = {};

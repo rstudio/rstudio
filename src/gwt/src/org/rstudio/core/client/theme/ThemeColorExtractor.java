@@ -157,6 +157,30 @@ public class ThemeColorExtractor
          // Selection/message background color
          colors.put("--rstudio-selectionBackground", deriveSelectionBackground(background, isDark));
 
+         // Syntax highlighting colors for code blocks in chat UI
+         // Core syntax tokens
+         colors.put("--rstudio-syntax-keyword", extractSyntaxColor("ace_keyword", foreground));
+         colors.put("--rstudio-syntax-string", extractSyntaxColor("ace_string", foreground));
+         colors.put("--rstudio-syntax-comment", extractSyntaxColor("ace_comment", foreground));
+         colors.put("--rstudio-syntax-number", extractSyntaxColorMultiClass(
+               new String[]{"ace_constant", "ace_numeric"}, foreground));
+         colors.put("--rstudio-syntax-function", extractSyntaxColorMultiClass(
+               new String[]{"ace_support", "ace_function"}, foreground));
+         colors.put("--rstudio-syntax-operator", extractSyntaxColorMultiClass(
+               new String[]{"ace_keyword", "ace_operator"}, foreground));
+
+         // Extended syntax tokens
+         colors.put("--rstudio-syntax-variable", extractSyntaxColor("ace_variable", foreground));
+         colors.put("--rstudio-syntax-punctuation", extractPunctuationColor(foreground));
+         colors.put("--rstudio-syntax-constant", extractSyntaxColorMultiClass(
+               new String[]{"ace_constant", "ace_language"}, foreground));
+         colors.put("--rstudio-syntax-class-name", extractSyntaxColorMultiClass(
+               new String[]{"ace_support", "ace_class"}, foreground));
+         colors.put("--rstudio-syntax-tag", extractSyntaxColorMultiClass(
+               new String[]{"ace_meta", "ace_tag"}, foreground));
+         colors.put("--rstudio-syntax-attr-name", extractSyntaxColorMultiClass(
+               new String[]{"ace_entity", "ace_other", "ace_attribute-name"}, foreground));
+
       }
       catch (Exception e)
       {
@@ -183,6 +207,20 @@ public class ThemeColorExtractor
          colors.put("--rstudio-primaryButton-background", "#4d9de0");
          colors.put("--rstudio-primaryButton-foreground", "#ffffff");
          colors.put("--rstudio-selectionBackground", "#daeffe");
+
+         // Syntax highlighting fallbacks (VS Code light theme colors)
+         colors.put("--rstudio-syntax-keyword", "#0000ff");
+         colors.put("--rstudio-syntax-string", "#a31515");
+         colors.put("--rstudio-syntax-comment", "#008000");
+         colors.put("--rstudio-syntax-number", "#098658");
+         colors.put("--rstudio-syntax-function", "#795e26");
+         colors.put("--rstudio-syntax-operator", "#000000");
+         colors.put("--rstudio-syntax-variable", "#001080");
+         colors.put("--rstudio-syntax-punctuation", "#000000");
+         colors.put("--rstudio-syntax-constant", "#0000ff");
+         colors.put("--rstudio-syntax-class-name", "#267f99");
+         colors.put("--rstudio-syntax-tag", "#800000");
+         colors.put("--rstudio-syntax-attr-name", "#ff0000");
       }
 
       return colors;
@@ -492,5 +530,116 @@ public class ThemeColorExtractor
          Debug.logException(e);
          return "default";
       }
+   }
+
+   /**
+    * Extract a syntax highlighting color from a single Ace CSS class.
+    * Returns the foreground color as fallback if extraction fails.
+    *
+    * @param className The Ace CSS class (e.g., "ace_keyword")
+    * @param fallback Fallback color if extraction fails
+    * @return The extracted color value
+    */
+   private static String extractSyntaxColor(String className, String fallback)
+   {
+      try
+      {
+         String color = DomUtils.extractCssValue(className, "color");
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+      return fallback;
+   }
+
+   /**
+    * Extract a syntax highlighting color from multiple Ace CSS classes.
+    * The classes are applied to a single element (compound selector).
+    * This matches Ace theme CSS like ".ace_constant.ace_numeric { color: ... }"
+    * Returns the foreground color as fallback if extraction fails.
+    *
+    * @param classNames Array of Ace CSS classes (e.g., {"ace_constant", "ace_numeric"})
+    * @param fallback Fallback color if extraction fails
+    * @return The extracted color value
+    */
+   private static String extractSyntaxColorMultiClass(String[] classNames, String fallback)
+   {
+      try
+      {
+         // Join class names with spaces to create a compound selector
+         // e.g., "ace_constant ace_numeric" creates <div class="ace_constant ace_numeric">
+         // which matches CSS like .ace_constant.ace_numeric { color: ... }
+         StringBuilder sb = new StringBuilder();
+         for (int i = 0; i < classNames.length; i++)
+         {
+            if (i > 0)
+               sb.append(' ');
+            sb.append(classNames[i]);
+         }
+         String classNamesStr = sb.toString();
+         String color = DomUtils.extractCssValue(classNamesStr, "color");
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+      return fallback;
+   }
+
+   /**
+    * Extract punctuation/bracket color with proper fallback chain.
+    * Braces/brackets in ACE are tokenized as paren.keyword.operator and styled by .ace_keyword.ace_operator.
+    * Most themes don't define .ace_punctuation explicitly, so we try multiple extraction paths:
+    * 1. Try .ace_paren.ace_keyword.ace_operator (exact match for how ACE tokenizes braces)
+    * 2. Try .ace_keyword.ace_operator (what themes actually define)
+    * 3. Try .ace_punctuation (for themes that do define it)
+    * 4. Fall back to foreground color
+    *
+    * @param fallback Fallback color if extraction fails
+    * @return The extracted color value
+    */
+   private static String extractPunctuationColor(String fallback)
+   {
+      try
+      {
+         // First try: exact match for how ACE tokenizes braces
+         String color = extractSyntaxColorMultiClass(
+               new String[]{"ace_paren", "ace_keyword", "ace_operator"}, null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+
+         // Second try: what themes actually define for operators
+         color = extractSyntaxColorMultiClass(
+               new String[]{"ace_keyword", "ace_operator"}, null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+
+         // Third try: plain punctuation class (for themes that do define it)
+         color = extractSyntaxColor("ace_punctuation", null);
+         if (color != null && !color.isEmpty())
+         {
+            return color;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+
+      // Final fallback to foreground color
+      return fallback;
    }
 }
