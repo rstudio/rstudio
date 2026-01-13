@@ -63,24 +63,21 @@
    })
 })
 
-# Get the current display list length (used to detect if plotting occurred)
-.rs.addFunction("chat.getDisplayListLength", function()
+# Get the current recorded plot (used to detect if plotting occurred)
+.rs.addFunction("chat.getRecordedPlot", function()
 {
    if (dev.cur() <= 1)
-      return(0L)
+      return(NULL)
 
    tryCatch({
-      p <- recordPlot()
-      if (is.null(p))
-         return(0L)
-      length(p[[1]])
+      recordPlot()
    }, error = function(e) {
-      0L
+      NULL
    })
 })
 
 # Capture the current plot, but only if plotting occurred since the given
-# display list length (to avoid returning stale plots from previous executions).
+# recorded plot snapshot (to avoid returning stale plots from previous executions).
 #
 # NOTE: This only captures the final plot state. If code creates multiple plots
 # (e.g., plot(1); plot(2)), only the last one is captured. This is a known
@@ -91,7 +88,7 @@
 #   - mimeType: "image/png"
 #   - width: pixel width
 #   - height: pixel height
-.rs.addFunction("chat.captureCurrentPlot", function(displayListLengthBefore = 0L)
+.rs.addFunction("chat.captureCurrentPlot", function(plotBefore = NULL)
 {
    # No graphics device open
    if (dev.cur() <= 1)
@@ -111,11 +108,13 @@
    if (is.null(recordedPlot))
       return(NULL)
 
-   # Check if the display list grew since before execution
-   # If not, this is a stale plot from a previous execution
-   currentLength <- length(recordedPlot[[1]])
-   if (currentLength <= displayListLengthBefore)
-      return(NULL)
+   # Check if the plot changed since before execution
+   # If the plots are identical, this is a stale plot from a previous execution
+   if (!is.null(plotBefore)) {
+      # Compare the plot objects to see if plotting actually occurred
+      if (identical(recordedPlot, plotBefore))
+         return(NULL)
+   }
 
    # Use the helper to capture and encode the plot
    plotData <- .rs.chat.capturePlotFromRecorded(recordedPlot)
