@@ -373,7 +373,7 @@ void logWarningMessage(const std::string& in_message,
 void logDebugMessage(const std::string& in_message, const std::string& in_section = std::string());
 
 /* Like the above but used for macros that need a value return */
-bool logDebugMessageReturn(const std::string& in_message);
+bool logDebugMessageReturn(const std::string& in_message, const ErrorLocation& in_errorLocation);
 
 /**
  * @brief Logs a debug message to all registered destinations.
@@ -426,7 +426,7 @@ void logDebugAction(const boost::function<std::string(boost::optional<LogMessage
 void logTraceMessage(const std::string& in_message, const std::string& in_section = std::string());
 
 /* Like the above but used for macros that need a value return */
-bool logTraceMessageReturn(const std::string& in_message);
+bool logTraceMessageReturn(const std::string& in_message, const ErrorLocation& in_errorLocation);
 
 /**
  * @brief Logs a trace message to all registered destinations.
