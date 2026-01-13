@@ -88,10 +88,11 @@ struct RProjectBuildOptions
    bool autoRoxygenizeForBuildAndReload;
 };
 
-// copilot options
-struct RProjectCopilotOptions
+// assistant options
+struct RProjectAssistantOptions
 {
-   core::r_util::YesNoAskValue copilotEnabled;
+   std::string assistant;  // "default", "none", "posit_ai", "copilot"
+   core::r_util::YesNoAskValue copilotEnabled;  // deprecated, use assistant
    core::r_util::YesNoAskValue copilotIndexingEnabled;
 };
 
@@ -162,8 +163,8 @@ public:
    core::Error readBuildOptions(RProjectBuildOptions* pOptions);
    core::Error writeBuildOptions(const RProjectBuildOptions& options);
 
-   core::Error readCopilotOptions(RProjectCopilotOptions* pOptions) const;
-   core::Error writeCopilotOptions(const RProjectCopilotOptions& options) const;
+   core::Error readAssistantOptions(RProjectAssistantOptions* pOptions) const;
+   core::Error writeAssistantOptions(const RProjectAssistantOptions& options) const;
    
    // update the website output type
    void setWebsiteOutputFormat(const std::string& websiteOutputFormat);
@@ -246,7 +247,7 @@ private:
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
-   core::FilePath copilotOptionsFilePath() const;
+   core::FilePath assistantOptionsFilePath() const;
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();

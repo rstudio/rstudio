@@ -1,5 +1,5 @@
 /*
- * RProjectCopilotOptions.java
+ * RProjectAssistantOptions.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -19,16 +19,22 @@ import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class RProjectCopilotOptions
+public class RProjectAssistantOptions
 {
    @JsOverlay
-   public static RProjectCopilotOptions createEmpty()
+   public static RProjectAssistantOptions createEmpty()
    {
-      RProjectCopilotOptions options = new RProjectCopilotOptions();
+      RProjectAssistantOptions options = new RProjectAssistantOptions();
+      options.assistant = "default";
+      options.copilot_enabled = -1;  // DefaultValue
+      options.copilot_indexing_enabled = -1;  // DefaultValue
       return options;
    }
-   
+
+   // Assistant selection: "default", "none", "posit_ai", "copilot"
+   public String assistant;
+
    // NOTE: These map to the 'YesNoAskValue' enum used for project options.
-   public int copilot_enabled;
+   public int copilot_enabled;  // deprecated, use assistant
    public int copilot_indexing_enabled;
 }

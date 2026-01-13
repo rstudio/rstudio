@@ -32,7 +32,7 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
@@ -51,7 +51,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.prefs.views.AssistantPreferencesPane;
-import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -75,11 +74,28 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
-      RProjectCopilotOptions copilotOptions = options.getCopilotOptions();
+      RProjectAssistantOptions copilotOptions = options.getAssistantOptions();
+
+      // Save assistant selection
+      // Map "none" (used as default placeholder in UI) to "default" for storage
+      String selectedAssistant = selAssistant_.getValue();
+      if (selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
+         copilotOptions.assistant = "default";
+      else
+         copilotOptions.assistant = selectedAssistant;
+
       copilotOptions.copilot_indexing_enabled = copilotIndexingEnabled_.getValue();
 
       RestartRequirement requirement = new RestartRequirement();
-      if (options_.getCopilotOptions().copilot_indexing_enabled != copilotIndexingEnabled_.getValue())
+
+      // Check if assistant changed
+      String originalAssistant = options_.getAssistantOptions().assistant;
+      if (originalAssistant == null)
+         originalAssistant = "default";
+      if (!originalAssistant.equals(copilotOptions.assistant))
+         requirement.setSessionRestartRequired(true);
+
+      if (options_.getAssistantOptions().copilot_indexing_enabled != copilotIndexingEnabled_.getValue())
          requirement.setSessionRestartRequired(true);
 
       // If project indexing is enabled and Copilot was started while the dialog was open, suggest
@@ -279,7 +295,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
          LayoutGrid grid = new LayoutGrid(1, 2);
 
-         copilotIndexingEnabled_.setValue(options.getCopilotOptions().copilot_indexing_enabled);
+         copilotIndexingEnabled_.setValue(options.getAssistantOptions().copilot_indexing_enabled);
          grid.setWidget(0, 0, new FormLabel(prefsConstants_.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
          grid.setWidget(0, 1, copilotIndexingEnabled_);
 
@@ -426,6 +442,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    {
       options_ = options;
 
+      // Load assistant selection from project options
+      // Map "default" (or null/empty) to "none" which represents "(Default)" in UI
+      String projectAssistant = options.getAssistantOptions().assistant;
+      if (projectAssistant == null || projectAssistant.isEmpty() || projectAssistant.equals("default"))
+         selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE);
+      else
+         selAssistant_.setValue(projectAssistant);
+
       initDisplay(options);
       initModel();
 
@@ -452,9 +476,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
    private boolean isIndexingEnabled()
    {
-      if (options_.getCopilotOptions().copilot_indexing_enabled == YesNoAskDefault.YES_VALUE)
+      if (options_.getAssistantOptions().copilot_indexing_enabled == YesNoAskDefault.YES_VALUE)
          return true;
-      else if (options_.getCopilotOptions().copilot_indexing_enabled == YesNoAskDefault.NO_VALUE)
+      else if (options_.getAssistantOptions().copilot_indexing_enabled == YesNoAskDefault.NO_VALUE)
          return false;
       else
          return prefs_.copilotIndexingEnabled().getValue();

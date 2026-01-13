@@ -1043,9 +1043,9 @@ Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
    return pOptionsFile->initialize(scratchPath().completeChildPath("build_options"));
 }
 
-FilePath ProjectContext::copilotOptionsFilePath() const
+FilePath ProjectContext::assistantOptionsFilePath() const
 {
-   return scratchPath().completeChildPath("copilot_options");
+   return scratchPath().completeChildPath("assistant_options");
 }
 
 Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
@@ -1120,28 +1120,41 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
    return Success();
 }
 
-Error ProjectContext::readCopilotOptions(RProjectCopilotOptions* pOptions) const
+Error ProjectContext::readAssistantOptions(RProjectAssistantOptions* pOptions) const
 {
+   FilePath newOptionsPath = assistantOptionsFilePath();
+   FilePath oldOptionsPath = scratchPath().completeChildPath("copilot_options");
+
+   // Migrate from old copilot_options file if new file doesn't exist but old one does
+   if (!newOptionsPath.exists() && oldOptionsPath.exists())
+   {
+      Error error = oldOptionsPath.copy(newOptionsPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    core::Settings settings;
-   Error error = settings.initialize(copilotOptionsFilePath());
+   Error error = settings.initialize(newOptionsPath);
    if (error)
       return error;
 
    using r_util::YesNoAskValue;
+   pOptions->assistant = settings.get("assistant", "default");
    pOptions->copilotEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_enabled"));
    pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_indexing_enabled"));
 
    return Success();
 }
 
-Error ProjectContext::writeCopilotOptions(const RProjectCopilotOptions& options) const
+Error ProjectContext::writeAssistantOptions(const RProjectAssistantOptions& options) const
 {
    core::Settings settings;
-   Error error = settings.initialize(copilotOptionsFilePath());
+   Error error = settings.initialize(assistantOptionsFilePath());
    if (error)
       return error;
 
    settings.beginUpdate();
+   settings.set("assistant", options.assistant);
    settings.set("copilot_enabled", options.copilotEnabled);
    settings.set("copilot_indexing_enabled", options.copilotIndexingEnabled);
    settings.endUpdate();

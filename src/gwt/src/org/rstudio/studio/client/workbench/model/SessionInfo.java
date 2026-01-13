@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
-import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
@@ -681,8 +681,8 @@ public class SessionInfo extends JavaScriptObject
       return this.copilot_enabled || false;
    }-*/;
    
-   public final native RProjectCopilotOptions getCopilotProjectOptions() /*-{
-      return this.copilot_project_options;
+   public final native RProjectAssistantOptions getAssistantProjectOptions() /*-{
+      return this.assistant_project_options;
    }-*/;
    
    public final native boolean isAutomationHost() /*-{

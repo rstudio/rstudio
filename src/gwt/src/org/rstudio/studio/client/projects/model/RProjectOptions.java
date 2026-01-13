@@ -24,25 +24,25 @@ public class RProjectOptions extends JavaScriptObject
    protected RProjectOptions()
    {
    }
-   
+
    public static final RProjectOptions createEmpty()
    {
       return create(
-            RProjectConfig.createEmpty(), 
+            RProjectConfig.createEmpty(),
             RProjectVcsOptions.createEmpty(),
             RProjectBuildOptions.createEmpty(),
             RProjectPackratOptions.createEmpty(),
             RProjectRenvOptions.createEmpty(),
-            RProjectCopilotOptions.createEmpty());
+            RProjectAssistantOptions.createEmpty());
    }
-   
+
    public native static final RProjectOptions create(
                                     RProjectConfig config,
                                     RProjectVcsOptions vcsOptions,
                                     RProjectBuildOptions buildOptions,
                                     RProjectPackratOptions packratOptions,
                                     RProjectRenvOptions renvOptions,
-                                    RProjectCopilotOptions copilotOptions)
+                                    RProjectAssistantOptions assistantOptions)
    /*-{
       var options = new Object();
       options.config = config;
@@ -51,50 +51,50 @@ public class RProjectOptions extends JavaScriptObject
       options.build_options = buildOptions;
       options.packrat_options = packratOptions;
       options.renv_options = renvOptions;
-      options.copilot_options = copilotOptions;
+      options.assistant_options = assistantOptions;
       return options;
    }-*/;
-   
+
    public native final RProjectConfig getConfig() /*-{
       return this.config;
    }-*/;
-   
+
    public native final RProjectVcsOptions getVcsOptions() /*-{
       return this.vcs_options;
    }-*/;
-   
+
    public native final RProjectBuildOptions getBuildOptions() /*-{
       return this.build_options;
    }-*/;
-   
+
    public native final RProjectPackratOptions getPackratOptions() /*-{
       return this.packrat_options;
    }-*/;
-   
+
    public native final RProjectRenvOptions getRenvOptions() /*-{
       return this.renv_options;
    }-*/;
-   
-   public native final RProjectCopilotOptions getCopilotOptions() /*-{
-      return this.copilot_options;
+
+   public native final RProjectAssistantOptions getAssistantOptions() /*-{
+      return this.assistant_options;
    }-*/;
 
    public native final RProjectVcsContext getVcsContext() /*-{
       return this.vcs_context;
    }-*/;
-   
+
    public native final RProjectBuildContext getBuildContext() /*-{
       return this.build_context;
    }-*/;
-   
+
    public native final PackratContext getPackratContext() /*-{
       return this.packrat_context;
    }-*/;
-   
+
    public native final RenvContext getRenvContext() /*-{
       return this.renv_context;
    }-*/;
-   
-   
-   
+
+
+
 }

@@ -25,7 +25,7 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -83,7 +83,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          public void onSessionInit(SessionInitEvent event)
          {
-            copilotProjectOptions_ = session_.getSessionInfo().getCopilotProjectOptions();
+            assistantProjectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
          }
       });
       
@@ -92,7 +92,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          public void onProjectOptionsChanged(ProjectOptionsChangedEvent event)
          {
-            copilotProjectOptions_ = event.getData().getCopilotOptions();
+            assistantProjectOptions_ = event.getData().getAssistantOptions();
             if (!isEnabled())
             {
                events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
@@ -104,9 +104,9 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    public boolean isEnabled()
    {
-      if (copilotProjectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
+      if (assistantProjectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
       {
-         switch (copilotProjectOptions_.copilot_enabled)
+         switch (assistantProjectOptions_.copilot_enabled)
          {
          case YesNoAskDefault.YES_VALUE: return true;
          case YesNoAskDefault.NO_VALUE: return false;
@@ -384,7 +384,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Override
    public void onProjectOptionsChanged(ProjectOptionsChangedEvent event)
    {
-      copilotProjectOptions_ = event.getData().getCopilotOptions();
+      assistantProjectOptions_ = event.getData().getAssistantOptions();
    }
    
    interface CopilotCommandBinder
@@ -392,7 +392,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    {
    }
    
-   private RProjectCopilotOptions copilotProjectOptions_;
+   private RProjectAssistantOptions assistantProjectOptions_;
    
    private final GlobalDisplay display_;
    private final Commands commands_;

@@ -498,7 +498,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
                }
-               else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
                   lblCopilotStatus_.setText(constants_.copilotDisabledInProject());
                   showButtons(btnProjectOptions_);
