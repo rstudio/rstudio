@@ -242,6 +242,16 @@ public class XTermWidget extends Widget
       terminal_.onTitleData(handler);
    }
 
+   /**
+    * Set the handler for terminal bell events.
+    * @param handler Command to execute when bell (BEL character) is received
+    */
+   public void setBellHandler(Command handler)
+   {
+      if (terminalEmulatorLoaded())
+         terminal_.onBellEvent(handler);
+   }
+
    private XTermDimensions getTerminalSize()
    {
       return terminal_.proposeGeometry();
@@ -429,6 +439,55 @@ public class XTermWidget extends Widget
          terminal_.refresh();
    }
 
+   /**
+    * Enable WebGL (GPU-accelerated) rendering. Loads the WebGL addon if not already loaded.
+    * @param callback Called with true if WebGL was enabled, false if it failed
+    */
+   public void enableWebGL(CommandWithArg<Boolean> callback)
+   {
+      if (!terminalEmulatorLoaded())
+      {
+         callback.execute(false);
+         return;
+      }
+
+      // If WebGL is already loaded, nothing to do
+      if (terminal_.isWebGLAddonLoaded())
+      {
+         callback.execute(true);
+         return;
+      }
+
+      // Load WebGL resources then enable the addon
+      xtermWebGLLoader_.addCallback(() -> {
+         boolean success = terminal_.loadWebGLAddon();
+         if (success)
+            onResize(); // Refresh after renderer change
+         callback.execute(success);
+      });
+   }
+
+   /**
+    * Disable WebGL rendering, reverting to DOM renderer.
+    */
+   public void disableWebGL()
+   {
+      if (terminalEmulatorLoaded() && terminal_.isWebGLAddonLoaded())
+      {
+         terminal_.unloadWebGLAddon();
+         onResize(); // Refresh after renderer change
+      }
+   }
+
+   /**
+    * Check if WebGL rendering is currently enabled.
+    * @return true if WebGL is active
+    */
+   public boolean isWebGLEnabled()
+   {
+      return terminalEmulatorLoaded() && terminal_.isWebGLAddonLoaded();
+   }
+
    private static final int RESIZE_DELAY = 50;
 
    private static final ExternalStyleSheetLoader xtermCssLoader_ =
@@ -442,6 +501,9 @@ public class XTermWidget extends Widget
 
    private static final ExternalJavaScriptLoader xtermWebLinksLoader_ =
       new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermweblinksjs().getSafeUri().asString());
+
+   private static final ExternalJavaScriptLoader xtermWebGLLoader_ =
+      new ExternalJavaScriptLoader(XTermResources.INSTANCE.xtermwebgljs().getSafeUri().asString());
 
    private XTermNative terminal_;
    private boolean initialized_ = false;

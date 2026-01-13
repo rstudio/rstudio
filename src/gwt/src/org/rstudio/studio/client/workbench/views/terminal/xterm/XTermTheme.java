@@ -148,11 +148,11 @@ public class XTermTheme
 
    @JsOverlay public static double computeLineHeight()
    {
-      double lineHeight = FontSizer.getNormalLineHeight();
-
-      // due to units oddity, have to scale down before passing to xterm.js
-      // (pixels vs. pts); don't go below 1.0 as lines will begin to overlap
-      return Math.max(lineHeight > 1.0 ? lineHeight * 0.75 : 1.0, 1.0);
+      // Use line height of 1.0 for the terminal to ensure block characters
+      // and ASCII art render without gaps between lines. The editor may use
+      // larger line heights for readability, but terminals need tight spacing
+      // for proper rendering of box-drawing characters and ASCII art.
+      return 1.0;
    }
 
    @JsOverlay public static XTermTheme create(

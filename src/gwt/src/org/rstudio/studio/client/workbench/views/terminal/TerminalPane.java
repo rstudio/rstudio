@@ -1133,14 +1133,9 @@ public class TerminalPane extends WorkbenchPane
 
    private XTermOptions defaultTerminalOptions()
    {
-      // Always start terminals with BEL disabled, in case we are playing back previous output
-      // that contains BEL characters. We turn on the bell once playback is complete.
       return XTermOptions.create(
-            UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
             uiPrefs_.enableScreenReader().getValue(),
-            uiPrefs_.terminalRenderer().getValue(),
-            BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),
             XTermTheme.getFontFamily(),
             XTermTheme.adjustFontSize(pFontSizeManager_.get().getFontSize()),

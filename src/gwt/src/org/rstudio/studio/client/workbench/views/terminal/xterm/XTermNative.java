@@ -19,6 +19,7 @@ import org.rstudio.core.client.CommandWithArg;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Command;
 
 /**
  * <code>JavaScriptObject</code> wrapper for xterm.js
@@ -160,20 +161,31 @@ public class XTermNative extends JavaScriptObject
          }));
    }-*/;
 
+   /**
+    * Install a handler for bell events (BEL character received).
+    * @param command handler to execute when bell sounds
+    */
+   public final native void onBellEvent(Command command) /*-{
+      this.bellHandler = this.onBell(
+         $entry(function() {
+            command.@com.google.gwt.user.client.Command::execute()();
+         }));
+   }-*/;
+
    public final native void updateTheme(XTermTheme theme) /*-{
-      this.setOption("theme", theme);
+      this.options.theme = theme;
    }-*/;
 
    public final native void updateBooleanOption(String option, boolean value) /*-{
-      this.setOption(option, value);
+      this.options[option] = value;
    }-*/;
 
    public final native void updateStringOption(String option, String value) /*-{
-      this.setOption(option, value);
+      this.options[option] = value;
    }-*/;
 
    public final native void updateDoubleOption(String option, double value) /*-{
-      this.setOption(option, value);
+      this.options[option] = value;
    }-*/;
 
    public final native void refresh() /*-{
@@ -182,6 +194,49 @@ public class XTermNative extends JavaScriptObject
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
       this.tabMovesFocus = movesFocus;
+   }-*/;
+
+   /**
+    * Load the WebGL addon for GPU-accelerated rendering.
+    * @return true if WebGL addon was loaded successfully, false otherwise
+    */
+   public final native boolean loadWebGLAddon() /*-{
+      if (this.rstudioWebGLAddon_) {
+         return true; // Already loaded
+      }
+      try {
+         if ($wnd.WebglAddon && $wnd.WebglAddon.WebglAddon) {
+            this.rstudioWebGLAddon_ = new $wnd.WebglAddon.WebglAddon();
+            this.loadAddon(this.rstudioWebGLAddon_);
+            return true;
+         }
+      } catch (error) {
+         console.error("Error loading WebglAddon: " + error);
+         this.rstudioWebGLAddon_ = null;
+      }
+      return false;
+   }-*/;
+
+   /**
+    * Unload the WebGL addon, reverting to DOM rendering.
+    */
+   public final native void unloadWebGLAddon() /*-{
+      if (this.rstudioWebGLAddon_) {
+         try {
+            this.rstudioWebGLAddon_.dispose();
+         } catch (error) {
+            console.error("Error disposing WebglAddon: " + error);
+         }
+         this.rstudioWebGLAddon_ = null;
+      }
+   }-*/;
+
+   /**
+    * Check if WebGL addon is currently loaded.
+    * @return true if WebGL addon is active
+    */
+   public final native boolean isWebGLAddonLoaded() /*-{
+      return !!this.rstudioWebGLAddon_;
    }-*/;
 
    /**
@@ -206,7 +261,17 @@ public class XTermNative extends JavaScriptObject
          }
          if (clickableLinks) {
             try {
-               nativeTerm_.rstudioLinksAddon_ = new $wnd.WebLinksAddon.WebLinksAddon();
+               // Custom handler to open URLs in the system browser
+               var linkHandler = function(event, uri) {
+                  // Use desktop bridge if available (RStudio Desktop),
+                  // otherwise fall back to window.open (RStudio Server)
+                  if ($wnd.desktop && $wnd.desktop.browseUrl) {
+                     $wnd.desktop.browseUrl(uri);
+                  } else {
+                     $wnd.open(uri, '_blank');
+                  }
+               };
+               nativeTerm_.rstudioLinksAddon_ = new $wnd.WebLinksAddon.WebLinksAddon(linkHandler);
                nativeTerm_.loadAddon(nativeTerm_.rstudioLinksAddon_);
             } catch (error) {
                console.error("Error loading WebLinksAddon: " + error);

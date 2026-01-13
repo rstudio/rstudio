@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalReceivedConsoleProcessInfoEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -173,18 +174,43 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(eventBus_.addHandler(ThemeChangedEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(uiPrefs_.blinkingCursor().bind(arg -> updateBooleanOption("cursorBlink", arg)));
             addHandlerRegistration(uiPrefs_.tabKeyMoveFocus().bind(arg -> setTabMovesFocus(arg)));
-            addHandlerRegistration(uiPrefs_.terminalBellStyle().bind(arg ->
-            {
-               // don't enable bell if we aren't done loading, don't want beeps if reloading
+
+            // Set up bell handler - bell events are now handled via callback in xterm 6.0
+            // instead of the deprecated bellStyle option
+            setBellHandler(() -> {
+               // don't play bell if we aren't done loading, don't want beeps if reloading
                // previous output containing '\a'
-               if (haveLoadedBuffer_)
-                  updateStringOption("bellStyle", arg);
-            }));
+               if (haveLoadedBuffer_ &&
+                   UserPrefsAccessor.TERMINAL_BELL_STYLE_SOUND.equals(uiPrefs_.terminalBellStyle().getValue()))
+               {
+                  playBell();
+               }
+            });
+
+            // Handle renderer preference - "canvas" now maps to WebGL (GPU-accelerated),
+            // "dom" uses the default DOM renderer. In xterm 6.0, the canvas renderer was
+            // removed and replaced with WebGL addon.
             addHandlerRegistration(uiPrefs_.terminalRenderer().bind(arg ->
             {
-               updateStringOption("rendererType", arg);
-               onResize();
+               if (UserPrefsAccessor.TERMINAL_RENDERER_CANVAS.equals(arg))
+               {
+                  enableWebGL(success -> {
+                     if (success)
+                        onResize();
+                  });
+               }
+               else
+               {
+                  disableWebGL();
+               }
             }));
+
+            // Enable WebGL on startup if preference is set
+            if (UserPrefsAccessor.TERMINAL_RENDERER_CANVAS.equals(uiPrefs_.terminalRenderer().getValue()))
+            {
+               enableWebGL(success -> {});
+            }
+
             addHandlerRegistration(uiPrefs_.fontSizePoints().bind(arg ->
             {
                updateDoubleOption("fontSize", XTermTheme.adjustFontSize(arg));
@@ -927,19 +953,56 @@ public class TerminalSession extends XTermWidget
 
    private void setNotReloading()
    {
-      // Always start terminal emulator with BEL support off to avoid playing back previous
-      // "\a" when reloading, then set it to desired value when done reloading. Slight delay
-      // needed to ensure terminal has completed rendering the output.
+      // Wait a bit before enabling bell sounds to avoid playing back previous
+      // "\a" characters when reloading terminal output.
       new Timer() {
          @Override
          public void run()
          {
-            updateStringOption("bellStyle", uiPrefs_.terminalBellStyle().getValue());
+            haveLoadedBuffer_ = true;
          }
       }.schedule(500);
       reloading_ = false;
-      haveLoadedBuffer_ = true;
    }
+
+   /**
+    * Play a bell/beep sound for the terminal.
+    * Uses the system bell on desktop, or a synthesized beep in the browser.
+    */
+   private void playBell()
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().beep();
+      }
+      else
+      {
+         playBellWeb();
+      }
+   }
+
+   /**
+    * Play a synthesized beep sound using Web Audio API (for browser/server mode).
+    */
+   private native void playBellWeb() /*-{
+      // Create audio context for generating beep sound
+      var AudioContext = $wnd.AudioContext || $wnd.webkitAudioContext;
+      if (AudioContext) {
+         var audioCtx = new AudioContext();
+         var oscillator = audioCtx.createOscillator();
+         var gainNode = audioCtx.createGain();
+
+         oscillator.connect(gainNode);
+         gainNode.connect(audioCtx.destination);
+
+         oscillator.type = 'sine';
+         oscillator.frequency.value = 800; // Frequency in Hz
+         gainNode.gain.value = 0.1; // Volume (0-1)
+
+         oscillator.start();
+         oscillator.stop(audioCtx.currentTime + 0.1); // Duration: 100ms
+      }
+   }-*/;
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final TerminalSessionSocket socket_;

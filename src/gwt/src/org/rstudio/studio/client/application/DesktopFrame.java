@@ -81,6 +81,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void onWorkbenchInitialized(String scratchDir);
    void showFolder(String path);
    void showFile(String path);
+   void beep();
    void showWordDoc(String path);
    void showPDF(String path, int pdfPage);
    void prepareShowWordDoc();
