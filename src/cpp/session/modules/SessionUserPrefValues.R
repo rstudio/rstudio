@@ -2452,7 +2452,7 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
-# [Preview] Enable next-edit suggestions
+# Enable next-edit suggestions
 #
 # When enabled, RStudio will display next-edit suggestions as provided by Copilot
 # when available.
@@ -2472,10 +2472,10 @@
    clear = function() { .rs.clearUserPref("copilot_show_messages") }
 )
 
-# Use RStudio project folder as a Copilot workspace
+# Use project directory as a Copilot workspace
 #
-# When enabled, RStudio will tell Copilot to use the current RStudio project's
-# folder as a workspace.
+# When enabled, RStudio will tell Copilot to use the current project's directory
+# as a workspace.
 .rs.uiPrefs$copilotProjectWorkspace <- list(
    get = function() { .rs.getUserPref("copilot_project_workspace") },
    set = function(value) { .rs.setUserPref("copilot_project_workspace", value) },

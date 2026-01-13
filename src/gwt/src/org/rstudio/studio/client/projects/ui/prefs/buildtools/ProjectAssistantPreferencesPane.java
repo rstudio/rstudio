@@ -23,8 +23,6 @@ import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
@@ -35,7 +33,6 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
-import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -74,17 +71,15 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
-      RProjectAssistantOptions copilotOptions = options.getAssistantOptions();
+      RProjectAssistantOptions assistantOptions = options.getAssistantOptions();
 
       // Save assistant selection
       // Map "none" (used as default placeholder in UI) to "default" for storage
       String selectedAssistant = selAssistant_.getValue();
       if (selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
-         copilotOptions.assistant = "default";
+         assistantOptions.assistant = "default";
       else
-         copilotOptions.assistant = selectedAssistant;
-
-      copilotOptions.copilot_indexing_enabled = copilotIndexingEnabled_.getValue();
+         assistantOptions.assistant = selectedAssistant;
 
       RestartRequirement requirement = new RestartRequirement();
 
@@ -92,15 +87,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       String originalAssistant = options_.getAssistantOptions().assistant;
       if (originalAssistant == null)
          originalAssistant = "default";
-      if (!originalAssistant.equals(copilotOptions.assistant))
-         requirement.setSessionRestartRequired(true);
-
-      if (options_.getAssistantOptions().copilot_indexing_enabled != copilotIndexingEnabled_.getValue())
-         requirement.setSessionRestartRequired(true);
-
-      // If project indexing is enabled and Copilot was started while the dialog was open, suggest
-      // a session restart to ensure that Copilot indexes the project files.
-      if (copilotStarted_ && isIndexingEnabled())
+      if (!originalAssistant.equals(assistantOptions.assistant))
          requirement.setSessionRestartRequired(true);
 
       return requirement;
@@ -169,9 +156,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
       btnDiagnostics_.addStyleName(RES.styles().button());
       statusButtons_.add(btnDiagnostics_);
-      
-      copilotIndexingEnabled_ = new YesNoAskDefault(false);
-      
+
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -292,14 +277,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          for (SmallButton button : statusButtons_)
             statusPanel.add(button);
          panel.add(spaced(statusPanel));
-
-         LayoutGrid grid = new LayoutGrid(1, 2);
-
-         copilotIndexingEnabled_.setValue(options.getAssistantOptions().copilot_indexing_enabled);
-         grid.setWidget(0, 0, new FormLabel(prefsConstants_.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
-         grid.setWidget(0, 1, copilotIndexingEnabled_);
-
-         panel.add(grid);
       }
       else
       {
@@ -474,16 +451,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       return constants_.assistantPaneName();
    }
 
-   private boolean isIndexingEnabled()
-   {
-      if (options_.getAssistantOptions().copilot_indexing_enabled == YesNoAskDefault.YES_VALUE)
-         return true;
-      else if (options_.getAssistantOptions().copilot_indexing_enabled == YesNoAskDefault.NO_VALUE)
-         return false;
-      else
-         return prefs_.copilotIndexingEnabled().getValue();
-   }
-
    private void hideButtons()
    {
       for (SmallButton button : statusButtons_)
@@ -517,7 +484,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    // UI
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
-   private final YesNoAskDefault copilotIndexingEnabled_;
    private final Label lblCopilotStatus_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnSignIn_;

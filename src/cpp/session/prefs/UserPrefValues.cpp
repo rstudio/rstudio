@@ -3469,7 +3469,7 @@ core::Error UserPrefValues::setCopilotShowMessages(bool val)
 }
 
 /**
- * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+ * When enabled, RStudio will tell Copilot to use the current project's directory as a workspace.
  */
 bool UserPrefValues::copilotProjectWorkspace()
 {

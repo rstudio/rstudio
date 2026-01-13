@@ -92,15 +92,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
 
       RestartRequirement requirement = super.onApply(prefs);
-      if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
-         requirement.setSessionRestartRequired(true);
       if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
-         requirement.setSessionRestartRequired(true);
-
-      // If project indexing is enabled and Copilot was started while the dialog was open, suggest
-      // a session restart to ensure that Copilot indexes the project files.
-      boolean projectOpened = session_.getSessionInfo().getActiveProjectFile() != null;
-      if (projectOpened && copilotStarted_ && prefs.copilotIndexingEnabled().getGlobalValue())
          requirement.setSessionRestartRequired(true);
 
       return requirement;
@@ -180,7 +172,6 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
-      cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
       cbCopilotProjectWorkspace_ = checkboxPref(prefs_.copilotProjectWorkspace(), true);
       selCopilotTabKeyBehavior_ = new SelectWidget(
@@ -220,7 +211,9 @@ public class AssistantPreferencesPane extends PreferencesPane
             10,
             5000,
             prefs_.copilotCompletionsDelay());
-      
+
+      cbCopilotNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
+
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -331,12 +324,10 @@ public class AssistantPreferencesPane extends PreferencesPane
             statusPanel.add(button);
          panel.add(spaced(statusPanel));
 
-         panel.add(headerLabel(constants_.copilotIndexingHeader()));
-         panel.add(spaced(cbCopilotIndexingEnabled_));
-
          panel.add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
          panel.add(selCopilotCompletionsTrigger_);
          panel.add(nvwCopilotCompletionsDelay_);
+         panel.add(cbCopilotNesEnabled_);
 
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
          panel.add(cbCopilotShowMessages_);
@@ -574,7 +565,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
       }
 
-      initialCopilotIndexingEnabled_ = prefs.copilotIndexingEnabled().getGlobalValue();
       initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
@@ -646,7 +636,6 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    // State
    private String copilotStartupError_;
-   private boolean initialCopilotIndexingEnabled_;
    private boolean initialCopilotWorkspaceEnabled_;
    private HandlerRegistration copilotStatusHandler_;
    private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
@@ -663,9 +652,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblCopilotStatus_;
-   private final CheckBox cbCopilotIndexingEnabled_;
    private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbCopilotProjectWorkspace_;
+   private final CheckBox cbCopilotNesEnabled_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;
