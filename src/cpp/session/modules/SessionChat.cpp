@@ -1469,7 +1469,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    sendJsonRpcResponse(ops, requestId, result);
 
    // Fire change detection event to trigger environment refresh
-   module_context::events().onDetectChanges(module_context::ChangeSourceRPC);
+   // Use ChangeSourceREPL if a plot was captured so the Plots pane gets activated
+   module_context::ChangeSource changeSource = !plotsArray.isEmpty()
+      ? module_context::ChangeSourceREPL
+      : module_context::ChangeSourceRPC;
+   module_context::events().onDetectChanges(changeSource);
 }
 
 void handleCancelExecution(const json::Object& params)
