@@ -967,8 +967,24 @@ public class TerminalSession extends XTermWidget
 
    /**
     * Play a bell/beep sound for the terminal.
+    * Uses the system bell on desktop, or a synthesized beep in the browser.
     */
-   private native void playBell() /*-{
+   private void playBell()
+   {
+      if (Desktop.isDesktop())
+      {
+         Desktop.getFrame().beep();
+      }
+      else
+      {
+         playBellWeb();
+      }
+   }
+
+   /**
+    * Play a synthesized beep sound using Web Audio API (for browser/server mode).
+    */
+   private native void playBellWeb() /*-{
       // Create audio context for generating beep sound
       var AudioContext = $wnd.AudioContext || $wnd.webkitAudioContext;
       if (AudioContext) {

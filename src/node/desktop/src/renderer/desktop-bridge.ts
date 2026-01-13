@@ -248,6 +248,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_show_file', file);
     },
 
+    beep: () => {
+      ipcRenderer.send('desktop_beep');
+    },
+
     showWordDoc: (wordDoc: string) => {
       ipcRenderer.send('desktop_show_word_doc', wordDoc);
     },

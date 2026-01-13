@@ -465,6 +465,10 @@ export class GwtCallback extends EventEmitter {
       showFileInSystemViewer(file);
     });
 
+    ipcMain.on('desktop_beep', () => {
+      shell.beep();
+    });
+
     ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {
       showFileInSystemViewer(wordDoc);
     });
