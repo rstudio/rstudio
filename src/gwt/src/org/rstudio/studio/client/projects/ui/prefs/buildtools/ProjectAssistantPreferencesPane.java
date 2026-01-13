@@ -109,7 +109,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Create assistant selector
       // Note: Use "(Default)" instead of "(None)" since project settings inherit from global
       selAssistant_ = new SelectWidget(
-            prefsConstants_.rstudioAssistantTitle(),
+            constants_.assistantSelectLabel(),
             new String[] {
                   constants_.defaultInParentheses(),
                   prefsConstants_.rstudioAssistantEnum_posit_ai(),

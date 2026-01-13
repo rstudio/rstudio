@@ -82,8 +82,11 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
-      // Save assistant selection
-      prefs.rstudioAssistant().setGlobalValue(selAssistant_.getValue());
+      // Save assistant selection and sync deprecated copilot_enabled preference
+      String selectedAssistant = selAssistant_.getValue();
+      prefs.rstudioAssistant().setGlobalValue(selectedAssistant);
+      prefs.copilotEnabled().setGlobalValue(
+            selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT));
 
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
@@ -123,7 +126,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Create assistant selector
       selAssistant_ = new SelectWidget(
-            prefsConstants_.rstudioAssistantTitle(),
+            constants_.assistantSelectLabel(),
             new String[] {
                   prefsConstants_.rstudioAssistantEnum_none(),
                   prefsConstants_.rstudioAssistantEnum_posit_ai(),

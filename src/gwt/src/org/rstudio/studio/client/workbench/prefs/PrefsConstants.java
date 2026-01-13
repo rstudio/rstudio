@@ -584,6 +584,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String copilotTermsOfServiceLinkLabel();
     String copilotTermsOfServiceLabel();
     String assistantDisplayName();
+    String assistantSelectLabel();
     String assistantPaneName();
     String assistantNoneInfo();
     String projectAssistantDefaultInfo(String globalAssistant);
