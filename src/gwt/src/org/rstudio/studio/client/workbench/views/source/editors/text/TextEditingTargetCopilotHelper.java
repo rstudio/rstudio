@@ -746,14 +746,7 @@ public class TextEditingTargetCopilotHelper
                else
                {
                   // Otherwise, show the suggestion as an inline diff view.
-                  // For inline diff, we use the original (non-normalized) completion
-                  // to show the full context, so update anchors to track the original range.
-                  createCompletionAnchors(
-                     completion.range.start.line,
-                     completion.range.start.character,
-                     completion.range.end.line,
-                     completion.range.end.character);
-                  showEditSuggestion(completion);
+                  showEditSuggestion(normalized);
                }
             }
 
@@ -900,76 +893,24 @@ public class TextEditingTargetCopilotHelper
 
    private CopilotCompletion normalizeCompletionImpl(CopilotCompletion completion)
    {
-      // Remove any overlap from the start of the completion.
-      int lhs = 0;
-      {
-         int row = completion.range.start.line;
-         int col = completion.range.start.character;
-         String line = display_.getLine(row);
+      completion = JsUtil.clone(completion);
 
-         for (; lhs < completion.insertText.length() && col + lhs < line.length(); lhs++)
-         {
-            char clhs = completion.insertText.charAt(lhs);
-            char crhs = line.charAt(col + lhs);
-            if (clhs != crhs)
-               break;
-         }
+      if (completion.range.start.line != completion.range.end.line)
+      {
+         // Include text from the document up to the first character.
+         String startLine = display_.getLine(completion.range.start.line);
+         String prefix = startLine.substring(0, completion.range.start.character);
+         completion.range.start.character = 0;
+         completion.insertText = prefix + completion.insertText;
+
+         // Include text from the document up to the end of the last line.
+         String endLine = display_.getLine(completion.range.end.line);
+         String suffix = endLine.substring(completion.range.end.character);
+         completion.range.end.character = endLine.length();
+         completion.insertText = completion.insertText + suffix;
       }
 
-      // Remove any overlap from the end of the completion.
-      // Only do this part for single-line completions.
-      int rhs = 0;
-      if (completion.range.start.line == completion.range.end.line)
-      {
-         int row = completion.range.end.line;
-         int col = completion.range.end.character;
-         String line = display_.getLine(row);
-
-         for (; rhs < completion.insertText.length() && col - rhs > 0; rhs++)
-         {
-            char clhs = completion.insertText.charAt(completion.insertText.length() - rhs - 1);
-            char crhs = line.charAt(col - rhs - 1);
-            if (clhs != crhs)
-               break;
-         }
-      }
-
-      CopilotCompletion normalized = JsUtil.clone(completion);
-      int n = normalized.insertText.length();
-
-      if (lhs >= n - rhs)
-      {
-         // The matched prefix and suffix cover the entire insertText.
-         // Only discard as "entirely overlapping" if the range length also matches,
-         // otherwise the completion represents a deletion (range longer) or
-         // insertion (range shorter) which is meaningful.
-         boolean rangeMatchesLength = false;
-         if (completion.range.start.line == completion.range.end.line)
-         {
-            int rangeLength = completion.range.end.character - completion.range.start.character;
-            rangeMatchesLength = (rangeLength == n);
-         }
-
-         if (rangeMatchesLength)
-         {
-            // The completion is entirely overlapping the existing text.
-            Position cursorPos = display_.getCursorPosition();
-            normalized.insertText = "";
-            normalized.range.start.line = cursorPos.getRow();
-            normalized.range.start.character = cursorPos.getColumn();
-            normalized.range.end.line = cursorPos.getRow();
-            normalized.range.end.character = cursorPos.getColumn();
-         }
-         // else: range length differs from insertText length, so this completion
-         // represents a meaningful change (deletion or insertion). Return unchanged.
-      }
-      else
-      {
-         normalized.insertText = StringUtil.substring(normalized.insertText, lhs, n - rhs);
-         normalized.range.start.character += lhs;
-         normalized.range.end.character -= rhs;
-      }
-      return normalized;
+      return completion;
    }
 
    private void temporarilySuspendCompletionRequests()
