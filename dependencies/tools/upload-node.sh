@@ -10,7 +10,7 @@
 # installed with the RStudio IDE by RSTUDIO_INSTALLED_NODE_VERSION.
 
 # Modify to set the node.js version to upload
-NODE_VERSION="v22.21.1"
+NODE_VERSION="v22.22.0"
 
 # Check that we're logged in with AWS
 aws sts get-caller-identity || aws sso login

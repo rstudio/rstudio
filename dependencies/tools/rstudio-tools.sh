@@ -67,7 +67,7 @@ export RSTUDIO_NODE_VERSION="22.13.1"
 #
 # In addition to updating the version here, search the entire repo for other instances of
 # RSTUDIO_INSTALLED_NODE_VERSION and update to match.
-export RSTUDIO_INSTALLED_NODE_VERSION="22.21.1"
+export RSTUDIO_INSTALLED_NODE_VERSION="22.22.0"
 
 # actual directory name of the node installation used
 # mainly relevant for cases like macOS, where we have an -arm64 variant installed
