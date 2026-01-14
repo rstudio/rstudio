@@ -327,6 +327,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          panel.add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
          panel.add(selCopilotCompletionsTrigger_);
          panel.add(nvwCopilotCompletionsDelay_);
+
+         panel.add(spacedBefore(headerLabel(constants_.copilotSuggestionsHeader())));
          panel.add(cbCopilotNesEnabled_);
 
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
