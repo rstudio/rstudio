@@ -18,82 +18,98 @@
 
 #include <shared_core/SafeConvert.hpp>
 
-#import <AppKit/NSApplication.h>
+#include <set>
 
-#define kRootCertsKeychainPath "/System/Library/Keychains/SystemRootCertificates.keychain"
+#import <AppKit/NSApplication.h>
 
 namespace rstudio {
 namespace core {
 namespace http {
 
+namespace {
+
+void appendCertificateData(SecCertificateRef cert,
+                           std::vector<KeychainCertificateData>& certificates,
+                           std::set<std::vector<unsigned char>>& seen)
+{
+   if (cert == nullptr)
+      return;
+
+   CFDataRef certData = SecCertificateCopyData(cert);
+   if (certData == nullptr)
+      return;
+
+   CFIndex length = CFDataGetLength(certData);
+   const unsigned char* bytes = CFDataGetBytePtr(certData);
+
+   // Check for duplicate
+   std::vector<unsigned char> certBytes(bytes, bytes + length);
+   if (seen.find(certBytes) != seen.end())
+   {
+      CFRelease(certData);
+      return;
+   }
+   seen.insert(certBytes);
+
+   struct KeychainCertificateData keychainCertData;
+   keychainCertData.size = length;
+   keychainCertData.data = boost::shared_ptr<unsigned char>(new unsigned char[length]);
+
+   memcpy(keychainCertData.data.get(), bytes, length);
+   CFRelease(certData);
+
+   certificates.push_back(keychainCertData);
+}
+
+} // anonymous namespace
+
 std::vector<KeychainCertificateData> getKeychainCertificates()
 {
-   // some up-front declarations
-   OSStatus status;
    std::vector<KeychainCertificateData> certificates;
- 
-   // root certificates are not included by default in SecItemCopyMatching searches,
-   // so we need to explicitly add that keychain to the search list
-   SecKeychainRef rootCertsKeychain;
-   status = SecKeychainOpen(kRootCertsKeychainPath, &rootCertsKeychain);
-   if (status != errSecSuccess)
+   std::set<std::vector<unsigned char>> seen;
+
+   // Get system trusted root certificates using the modern API
+   CFArrayRef rootCerts = nullptr;
+   OSStatus status = SecTrustCopyAnchorCertificates(&rootCerts);
+   if (status == errSecSuccess && rootCerts != nullptr)
    {
-      LOG_ERROR_MESSAGE("Could not open system root certificate store");
-      return certificates;
+      for (CFIndex i = 0; i < CFArrayGetCount(rootCerts); ++i)
+      {
+         SecCertificateRef cert = (SecCertificateRef) CFArrayGetValueAtIndex(rootCerts, i);
+         appendCertificateData(cert, certificates, seen);
+      }
+      CFRelease(rootCerts);
    }
-   
-   // read current (default) search list
-   CFArrayRef currentSearchList;
-   SecKeychainCopySearchList(&currentSearchList);
-   
-   // copy to mutable array (so we can append root certs)
-   NSMutableArray* searchList = [(NSArray*) currentSearchList mutableCopy];
-   [searchList addObject: (id) rootCertsKeychain];
-   
-   // build our query
+   else
+   {
+      LOG_ERROR_MESSAGE("Could not get system root certificates: error code " + safe_convert::numberToString(status));
+   }
+
+   // Get certificates from user/system keychains
    NSDictionary* query = @{
-      (id) kSecMatchSearchList: (id) searchList,
       (id) kSecClass:           (id) kSecClassCertificate,
       (id) kSecMatchLimit:      (id) kSecMatchLimitAll,
       (id) kSecReturnRef:       @YES
    };
-   
-   // execute the query
-   CFArrayRef certs;
+
+   CFArrayRef certs = nullptr;
    OSStatus result = SecItemCopyMatching((CFDictionaryRef) query, (CFTypeRef*) &certs);
-   
-   // release values required by the query
-   [searchList release];
-   CFRelease(currentSearchList);
-   CFRelease(rootCertsKeychain);
-   
-   // check for and bail on failure
+
    if (result != errSecSuccess)
    {
-      LOG_ERROR_MESSAGE("Could not search keychains: error code " + safe_convert::numberToString(result));
+      // errSecItemNotFound is not an error - just means no additional certs in keychains
+      if (result != errSecItemNotFound)
+      {
+         LOG_ERROR_MESSAGE("Could not search keychains: error code " + safe_convert::numberToString(result));
+      }
       return certificates;
    }
-   
+
    // iterate and copy certificate data
    for (CFIndex i = 0; i < CFArrayGetCount(certs); ++i)
    {
-      // copy the certificate data into a raw byte representation
-      // (these will be converted by OpenSSL appropriately later)
       SecCertificateRef cert = (SecCertificateRef) CFArrayGetValueAtIndex(certs, i);
-      CFDataRef certData = SecCertificateCopyData(cert);
-      
-      CFRange range;
-      range.location = 0;
-      range.length = CFDataGetLength(certData);
-      
-      struct KeychainCertificateData keychainCertData;
-      keychainCertData.size = range.length;
-      keychainCertData.data = boost::shared_ptr<unsigned char>(new unsigned char[range.length]);
-      
-      CFDataGetBytes(certData, range, keychainCertData.data.get());
-      CFRelease(certData);
-      
-      certificates.push_back(keychainCertData);
+      appendCertificateData(cert, certificates, seen);
    }
 
    CFRelease(certs);
