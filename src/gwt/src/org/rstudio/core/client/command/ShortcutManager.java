@@ -547,7 +547,7 @@ public class ShortcutManager implements NativePreviewHandler,
                if (activeEl != null)
                {
                   Element shellWidgetEl = DomUtils.querySelector(Document.get().getBody(), ".rstudio_shell_widget");
-                  if (DomUtils.contains(shellWidgetEl, activeEl))
+                  if (shellWidgetEl != null && DomUtils.contains(shellWidgetEl, activeEl))
                   {
                      event.stopPropagation();
                      commands_.consoleFind().executeFromShortcut();
@@ -555,7 +555,7 @@ public class ShortcutManager implements NativePreviewHandler,
                   }
 
                   Element buildWidgetEl = DomUtils.querySelector(Document.get().getBody(), "#rstudio_workbench_panel_build");
-                  if (DomUtils.contains(buildWidgetEl, activeEl))
+                  if (buildWidgetEl != null && DomUtils.contains(buildWidgetEl, activeEl))
                   {
                      event.stopPropagation();
                      commands_.findBuild().executeFromShortcut();
