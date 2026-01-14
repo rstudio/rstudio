@@ -1768,6 +1768,14 @@
             "title": "Disable Electron accessibility support",
             "description": "Disable Electron accessibility support."
         },
+        "rstudio_assistant": {
+            "type": "string",
+            "enum": ["none", "posit_ai", "copilot"],
+            "enumReadable": ["(None)", "Posit Assistant", "GitHub Copilot"],
+            "default": "none",
+            "title": "AI Assistant",
+            "description": "Select which AI assistant to use for code suggestions and assistance."
+        },
         "copilot_enabled": {
             "type": "boolean",
             "default": false,
@@ -1805,7 +1813,7 @@
         "copilot_nes_enabled": {
             "type": "boolean",
             "default": false,
-            "title": "[Preview] Enable next-edit suggestions",
+            "title": "Enable next-edit suggestions",
             "description": "When enabled, RStudio will display next-edit suggestions as provided by Copilot when available."
         },
         "copilot_show_messages": {
@@ -1817,8 +1825,8 @@
         "copilot_project_workspace": {
             "type": "boolean",
             "default": true,
-            "title": "Use RStudio project folder as a Copilot workspace",
-            "description": "When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace."
+            "title": "Use project directory as a Copilot workspace",
+            "description": "When enabled, RStudio will tell Copilot to use the current project's directory as a workspace."
         },
         "project_name": {
             "description": "User-provided name for the currently opened R project.",

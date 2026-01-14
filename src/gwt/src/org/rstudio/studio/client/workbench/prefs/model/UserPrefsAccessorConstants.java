@@ -2146,6 +2146,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String disableRendererAccessibilityDescription();
 
    /**
+    * Select which AI assistant to use for code suggestions and assistance.
+    */
+   @DefaultStringValue("AI Assistant")
+   String rstudioAssistantTitle();
+   @DefaultStringValue("Select which AI assistant to use for code suggestions and assistance.")
+   String rstudioAssistantDescription();
+   @DefaultStringValue("(None)")
+   String rstudioAssistantEnum_none();
+   @DefaultStringValue("Posit Assistant")
+   String rstudioAssistantEnum_posit_ai();
+   @DefaultStringValue("GitHub Copilot")
+   String rstudioAssistantEnum_copilot();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")
@@ -2196,7 +2210,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
     */
-   @DefaultStringValue("[Preview] Enable next-edit suggestions")
+   @DefaultStringValue("Enable next-edit suggestions")
    String copilotNesEnabledTitle();
    @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.")
    String copilotNesEnabledDescription();
@@ -2210,11 +2224,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotShowMessagesDescription();
 
    /**
-    * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+    * When enabled, RStudio will tell Copilot to use the current project's directory as a workspace.
     */
-   @DefaultStringValue("Use RStudio project folder as a Copilot workspace")
+   @DefaultStringValue("Use project directory as a Copilot workspace")
    String copilotProjectWorkspaceTitle();
-   @DefaultStringValue("When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.")
+   @DefaultStringValue("When enabled, RStudio will tell Copilot to use the current project's directory as a workspace.")
    String copilotProjectWorkspaceDescription();
 
    /**

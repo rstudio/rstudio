@@ -662,22 +662,22 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    if (projects::projectContext().hasProject())
    {
-      projects::RProjectCopilotOptions options;
-      Error error = projects::projectContext().readCopilotOptions(&options);
+      projects::RProjectAssistantOptions options;
+      Error error = projects::projectContext().readAssistantOptions(&options);
       if (error)
       {
          LOG_ERROR(error);
       }
       else
       {
-         json::Object copilotOptionsJson;
+         json::Object assistantOptionsJson;
 #ifdef COPILOT_ENABLED
-         copilotOptionsJson["copilot_enabled"] = options.copilotEnabled;
+         assistantOptionsJson["copilot_enabled"] = options.copilotEnabled;
 #else
-         copilotOptionsJson["copilot_enabled"] = false;
+         assistantOptionsJson["copilot_enabled"] = false;
 #endif
-         copilotOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
-         sessionInfo["copilot_project_options"] = copilotOptionsJson;
+         assistantOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
+         sessionInfo["assistant_project_options"] = assistantOptionsJson;
       }
    }
 

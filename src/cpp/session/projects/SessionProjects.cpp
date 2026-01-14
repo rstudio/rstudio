@@ -540,17 +540,18 @@ json::Object projectBuildContextJson()
    return contextJson;
 }
 
-json::Object projectCopilotOptionsJson()
+json::Object projectAssistantOptionsJson()
 {
-   RProjectCopilotOptions copilotOptions;
-   Error error = s_projectContext.readCopilotOptions(&copilotOptions);
+   RProjectAssistantOptions assistantOptions;
+   Error error = s_projectContext.readAssistantOptions(&assistantOptions);
    if (error)
       LOG_ERROR(error);
-   
-   json::Object copilotOptionsJson;
-   copilotOptionsJson["copilot_enabled"] = copilotOptions.copilotEnabled;
-   copilotOptionsJson["copilot_indexing_enabled"] = copilotOptions.copilotIndexingEnabled;
-   return copilotOptionsJson;
+
+   json::Object assistantOptionsJson;
+   assistantOptionsJson["assistant"] = assistantOptions.assistant;
+   assistantOptionsJson["copilot_enabled"] = assistantOptions.copilotEnabled;
+   assistantOptionsJson["copilot_indexing_enabled"] = assistantOptions.copilotIndexingEnabled;
+   return assistantOptionsJson;
 }
 
 void setProjectConfig(const r_util::RProjectConfig& config)
@@ -613,7 +614,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["packrat_context"] = module_context::packratContextAsJson();
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
-   optionsJson["copilot_options"] = projectCopilotOptionsJson();
+   optionsJson["assistant_options"] = projectAssistantOptionsJson();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -649,18 +650,21 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        "run_on_build_and_reload", pOptions->autoRoxygenizeForBuildAndReload);
 }
 
-Error rProjectCopilotOptionsFromJson(const json::Object& optionsJson,
-                                     RProjectCopilotOptions* pOptions)
+Error rProjectAssistantOptionsFromJson(const json::Object& optionsJson,
+                                       RProjectAssistantOptions* pOptions)
 {
+   std::string assistant;
    int copilotEnabled, copilotIndexingEnabled;
    Error error = json::readObject(
             optionsJson,
+            "assistant", assistant,
             "copilot_enabled", copilotEnabled,
             "copilot_indexing_enabled", copilotIndexingEnabled);
    if (error)
       return error;
-   
+
    using r_util::YesNoAskValue;
+   pOptions->assistant = assistant;
    pOptions->copilotEnabled = static_cast<YesNoAskValue>(copilotEnabled);
    pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(copilotIndexingEnabled);
    return Success();
@@ -836,12 +840,12 @@ Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   json::Object configJson, vcsOptionsJson, buildOptionsJson, copilotOptionsJson;
+   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
                                        "vcs_options", &vcsOptionsJson,
                                        "build_options", &buildOptionsJson,
-                                       "copilot_options", &copilotOptionsJson);
+                                       "assistant_options", &assistantOptionsJson);
    if (error)
       return error;
 
@@ -861,10 +865,10 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
    if (error)
       return error;
-   
-   // read the copilot options
-   RProjectCopilotOptions copilotOptions;
-   error = rProjectCopilotOptionsFromJson(copilotOptionsJson, &copilotOptions);
+
+   // read the assistant options
+   RProjectAssistantOptions assistantOptions;
+   error = rProjectAssistantOptionsFromJson(assistantOptionsJson, &assistantOptions);
    if (error)
       return error;
 
@@ -877,9 +881,9 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = s_projectContext.writeBuildOptions(buildOptions);
    if (error)
       LOG_ERROR(error);
-   
-   // write the copilot options
-   error = s_projectContext.writeCopilotOptions(copilotOptions);
+
+   // write the assistant options
+   error = s_projectContext.writeAssistantOptions(assistantOptions);
    if (error)
       LOG_ERROR(error);
    

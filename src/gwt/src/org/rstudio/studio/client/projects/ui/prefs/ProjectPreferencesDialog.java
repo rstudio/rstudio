@@ -32,7 +32,7 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRenvOptions;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectBuildToolsPreferencesPane;
-import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectCopilotPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectAssistantPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -77,7 +77,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectRenvPreferencesPane renv,
                                    ProjectPythonPreferencesPane python,
                                    ProjectSharingPreferencesPane sharing,
-                                   ProjectCopilotPreferencesPane copilot,
+                                   ProjectAssistantPreferencesPane assistant,
                                    Provider<ApplicationQuit> pQuit,
                                    Provider<GlobalDisplay> pGlobalDisplay)
    {
@@ -96,7 +96,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                   source,
                   renv,
                   sharing,
-                  copilot));
+                  assistant));
 
       pSession_ = session;
       server_ = server;

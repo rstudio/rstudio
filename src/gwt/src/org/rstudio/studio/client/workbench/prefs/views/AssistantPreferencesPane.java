@@ -1,5 +1,5 @@
 /*
- * CopilotPreferencesPane.java
+ * AssistantPreferencesPane.java
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -22,6 +22,7 @@ import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
@@ -71,35 +72,34 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 
-public class CopilotPreferencesPane extends PreferencesPane
+public class AssistantPreferencesPane extends PreferencesPane
 {
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
+      // Save assistant selection and sync deprecated copilot_enabled preference
+      String selectedAssistant = selAssistant_.getValue();
+      prefs.rstudioAssistant().setGlobalValue(selectedAssistant);
+      prefs.copilotEnabled().setGlobalValue(
+            selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT));
+
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
-      
+
       RestartRequirement requirement = super.onApply(prefs);
-      if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
-         requirement.setSessionRestartRequired(true);
       if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
-         requirement.setSessionRestartRequired(true); 
-      
-      // If project indexing is enabled and Copilot was started while the dialog was open, suggest
-      // a session restart to ensure that Copilot indexes the project files.
-      boolean projectOpened = session_.getSessionInfo().getActiveProjectFile() != null;
-      if (projectOpened && copilotStarted_ && prefs.copilotIndexingEnabled().getGlobalValue())
-         requirement.setSessionRestartRequired(true); 
+         requirement.setSessionRestartRequired(true);
 
       return requirement;
    }
-   
+
    @Inject
-   public CopilotPreferencesPane(EventBus events,
+   public AssistantPreferencesPane(EventBus events,
                                  Session session,
                                  UserPrefs prefs,
                                  Commands commands,
@@ -115,7 +115,28 @@ public class CopilotPreferencesPane extends PreferencesPane
       copilot_ = copilot;
       server_ = server;
       projectServer_ = projectServer;
-      
+
+      // Create assistant selector
+      selAssistant_ = new SelectWidget(
+            constants_.assistantSelectLabel(),
+            new String[] {
+                  prefsConstants_.rstudioAssistantEnum_none(),
+                  prefsConstants_.rstudioAssistantEnum_posit_ai(),
+                  prefsConstants_.rstudioAssistantEnum_copilot()
+            },
+            new String[] {
+                  UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
+                  UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI,
+                  UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+            },
+            false,
+            true,
+            false);
+      selAssistant_.setValue(prefs_.rstudioAssistant().getGlobalValue());
+
+      // Container for dynamic assistant-specific content
+      assistantDetailsPanel_ = new SimplePanel();
+
       lblCopilotStatus_ = new Label(constants_.copilotLoadingMessage());
       lblCopilotStatus_.addStyleName(RES.styles().copilotStatusLabel());
       
@@ -151,8 +172,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
-      cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
-      cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       cbCopilotShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
       cbCopilotProjectWorkspace_ = checkboxPref(prefs_.copilotProjectWorkspace(), true);
       selCopilotTabKeyBehavior_ = new SelectWidget(
@@ -192,7 +211,9 @@ public class CopilotPreferencesPane extends PreferencesPane
             10,
             5000,
             prefs_.copilotCompletionsDelay());
-      
+
+      cbCopilotNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
+
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -219,100 +240,111 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      add(headerLabel(constants_.copilotDisplayName()));
-      
+      add(headerLabel(constants_.assistantDisplayName()));
+
+      // Add assistant selector
+      add(selAssistant_);
+
+      // Create the three panels
+      nonePanel_ = createNonePanel();
+      positAiPanel_ = createPositAiPanel();
+      copilotPanel_ = createCopilotPanel();
+
+      // Add container for dynamic content
+      add(assistantDetailsPanel_);
+
+      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      copilotTosPanel_ = new VerticalPanel();
+      copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
+      copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
+      copilotTosPanel_.add(spaced(lblCopilotTos_));
+      copilotTosPanel_.add(spaced(linkCopilotTos_));
+      add(copilotTosPanel_);
+
+      // Set up panel swapping based on assistant selection
+      ChangeHandler assistantChangedHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = selAssistant_.getValue();
+            if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
+            {
+               assistantDetailsPanel_.setWidget(nonePanel_);
+               copilotTosPanel_.setVisible(false);
+            }
+            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
+            {
+               assistantDetailsPanel_.setWidget(positAiPanel_);
+               copilotTosPanel_.setVisible(false);
+            }
+            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+            {
+               assistantDetailsPanel_.setWidget(copilotPanel_);
+               copilotTosPanel_.setVisible(true);
+               // Refresh Copilot status when panel is shown
+               if (!copilotRefreshed_)
+               {
+                  refresh();
+                  copilotRefreshed_ = true;
+               }
+            }
+         }
+      };
+
+      selAssistant_.addChangeHandler(assistantChangedHandler);
+      assistantChangedHandler.onChange(null); // Initialize
+   }
+
+   private VerticalPanel createNonePanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      Label lblInfo = new Label(constants_.assistantNoneInfo());
+      panel.add(spaced(lblInfo));
+      return panel;
+   }
+
+   private VerticalPanel createPositAiPanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      Label lblPlaceholder = new Label(constants_.positAiPlaceholder());
+      panel.add(spaced(lblPlaceholder));
+      return panel;
+   }
+
+   private VerticalPanel createCopilotPanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+
       if (session_.getSessionInfo().getCopilotEnabled())
       {
-         add(cbCopilotEnabled_);
-
          HorizontalPanel statusPanel = new HorizontalPanel();
          statusPanel.add(lblCopilotStatus_);
          for (SmallButton button : statusButtons_)
             statusPanel.add(button);
-         add(spaced(statusPanel));
-         
-         add(headerLabel(constants_.copilotIndexingHeader()));
-         add(spaced(cbCopilotIndexingEnabled_));
+         panel.add(spaced(statusPanel));
 
-         add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
-         add(selCopilotCompletionsTrigger_);
-         add(nvwCopilotCompletionsDelay_);
+         panel.add(spacedBefore(headerLabel(constants_.copilotCompletionsHeader())));
+         panel.add(selCopilotCompletionsTrigger_);
+         panel.add(nvwCopilotCompletionsDelay_);
 
-         add(spacedBefore(headerLabel(constants_.otherCaption())));
-         add(cbCopilotShowMessages_);
-         add(cbCopilotProjectWorkspace_);
+         panel.add(spacedBefore(headerLabel(constants_.copilotSuggestionsHeader())));
+         panel.add(cbCopilotNesEnabled_);
 
-         // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
-         // add(selCopilotTabKeyBehavior_);
+         panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
+         panel.add(cbCopilotShowMessages_);
+         panel.add(cbCopilotProjectWorkspace_);
       }
       else
       {
-         add(new Label(constants_.copilotDisabledByAdmin()));
+         panel.add(new Label(constants_.copilotDisabledByAdmin()));
       }
-      
-      VerticalPanel bottomPanel = new VerticalPanel();
-      bottomPanel.getElement().getStyle().setBottom(0, Unit.PX);
-      bottomPanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      bottomPanel.add(spaced(lblCopilotTos_));
-      bottomPanel.add(spaced(linkCopilotTos_));
-      add(bottomPanel);
+
+      return panel;
    }
    
    private void initModel()
    {
-      cbCopilotEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            boolean enabled = event.getValue();
-            
-            if (enabled)
-            {
-               server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
-               {
-                  @Override
-                  public void onResponseReceived(Boolean isInstalled)
-                  {
-                     if (isInstalled)
-                     {
-                        // Eagerly change the preference here, so that we can
-                        // respond to changes in the agent status.
-                        prefs_.copilotEnabled().setGlobalValue(true);
-                        prefs_.writeUserPrefs((completed) ->
-                        {
-                           refresh();
-                        });
-                     }
-                     else
-                     {
-                        // Copilot language server not found so revert the checkbox state.
-                        cbCopilotEnabled_.setValue(false);
-                     }
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // Error when verifying copilot language server installation, revert the checkbox state.
-                     Debug.logError(error);
-                     cbCopilotEnabled_.setValue(false);
-                  }
-               });
-            }
-            else
-            {
-               // Eagerly change the preference here, so that we can
-               // respond to changes in the agent status.
-               prefs_.copilotEnabled().setGlobalValue(false);
-               prefs_.writeUserPrefs((completed) ->
-               {
-                  refresh();
-               });
-            }
-         }
-      });
-      
       selCopilotCompletionsTrigger_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -459,7 +491,7 @@ public class CopilotPreferencesPane extends PreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
                }
-               else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
                   lblCopilotStatus_.setText(constants_.copilotDisabledInProject());
                   showButtons(btnProjectOptions_);
@@ -513,19 +545,28 @@ public class CopilotPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      return new ImageResource2x(RES.iconCopilotLight2x());
+      // TODO: Replace with proper Assistant icon
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
    }
 
    @Override
    public String getName()
    {
-      return constants_.copilotPaneName();
+      return constants_.assistantPaneName();
    }
 
    @Override
    protected void initialize(UserPrefs prefs)
    {
-      initialCopilotIndexingEnabled_ = prefs.copilotIndexingEnabled().getGlobalValue();
+      // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
+      String assistant = prefs.rstudioAssistant().getGlobalValue();
+      if (assistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE) &&
+          prefs.copilotEnabled().getGlobalValue())
+      {
+         prefs.rstudioAssistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+         selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+      }
+
       initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
@@ -549,7 +590,13 @@ public class CopilotPreferencesPane extends PreferencesPane
    {
       initDisplay();
       initModel();
-      refresh();
+
+      // Only refresh Copilot status if Copilot is the selected assistant
+      if (selAssistant_.getValue().equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+      {
+         refresh();
+         copilotRefreshed_ = true;
+      }
    }
    
    private void hideButtons()
@@ -579,15 +626,8 @@ public class CopilotPreferencesPane extends PreferencesPane
 
    public interface Resources extends ClientBundle
    {
-      @Source("CopilotPreferencesPane.css")
+      @Source("AssistantPreferencesPane.css")
       Styles styles();
-      
-      @Source("iconCopilotLight_2x.png")
-      ImageResource iconCopilotLight2x();
-      
-      @Source("iconCopilotDark_2x.png")
-      ImageResource iconCopilotDark2x();
-      
    }
 
    public static Resources RES = GWT.create(Resources.class);
@@ -598,18 +638,25 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    // State
    private String copilotStartupError_;
-   private boolean initialCopilotIndexingEnabled_;
    private boolean initialCopilotWorkspaceEnabled_;
    private HandlerRegistration copilotStatusHandler_;
    private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
+   private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
- 
+
+   // Assistant panels (created in initDisplay)
+   private VerticalPanel nonePanel_;
+   private VerticalPanel positAiPanel_;
+   private VerticalPanel copilotPanel_;
+   private VerticalPanel copilotTosPanel_;
+
    // UI
+   private final SelectWidget selAssistant_;
+   private final SimplePanel assistantDetailsPanel_;
    private final Label lblCopilotStatus_;
-   private final CheckBox cbCopilotEnabled_;
-   private final CheckBox cbCopilotIndexingEnabled_;
    private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbCopilotProjectWorkspace_;
+   private final CheckBox cbCopilotNesEnabled_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;

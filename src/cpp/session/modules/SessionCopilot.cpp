@@ -223,8 +223,8 @@ std::queue<std::string> s_pendingResponses;
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
 
-// Project-specific Copilot options.
-projects::RProjectCopilotOptions s_copilotProjectOptions;
+// Project-specific assistant options.
+projects::RProjectAssistantOptions s_assistantProjectOptions;
 
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
@@ -381,7 +381,7 @@ bool isCopilotEnabled()
    }
 
    // Check project option
-   switch (s_copilotProjectOptions.copilotEnabled)
+   switch (s_assistantProjectOptions.copilotEnabled)
    {
    
    case r_util::YesValue:
@@ -417,7 +417,7 @@ bool isCopilotEnabled()
 bool isCopilotIndexingEnabled()
 {
    // Check project option
-   switch (s_copilotProjectOptions.copilotIndexingEnabled)
+   switch (s_assistantProjectOptions.copilotIndexingEnabled)
    {
    case r_util::YesValue: return true;
    case r_util::NoValue: return false;
@@ -1489,7 +1489,7 @@ void onPreferencesSaved()
 void onProjectOptionsUpdated()
 {
    // Update internal cache of project options
-   Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+   Error error = projects::projectContext().readAssistantOptions(&s_assistantProjectOptions);
    if (error)
       LOG_ERROR(error);
    
@@ -2232,7 +2232,7 @@ Error initialize()
    // Read project options
    if (projects::projectContext().hasProject())
    {
-      Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+      Error error = projects::projectContext().readAssistantOptions(&s_assistantProjectOptions);
       if (error)
          LOG_ERROR(error);
    }

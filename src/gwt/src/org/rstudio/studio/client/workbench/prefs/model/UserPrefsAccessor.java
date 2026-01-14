@@ -3679,6 +3679,32 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Select which AI assistant to use for code suggestions and assistance.
+    */
+   public PrefValue<String> rstudioAssistant()
+   {
+      return enumeration(
+         "rstudio_assistant",
+         _constants.rstudioAssistantTitle(), 
+         _constants.rstudioAssistantDescription(), 
+         new String[] {
+            RSTUDIO_ASSISTANT_NONE,
+            RSTUDIO_ASSISTANT_POSIT_AI,
+            RSTUDIO_ASSISTANT_COPILOT
+         },
+         "none",
+         new String[] {
+            _constants.rstudioAssistantEnum_none(),
+            _constants.rstudioAssistantEnum_posit_ai(),
+            _constants.rstudioAssistantEnum_copilot()
+         });
+   }
+
+   public final static String RSTUDIO_ASSISTANT_NONE = "none";
+   public final static String RSTUDIO_ASSISTANT_POSIT_AI = "posit_ai";
+   public final static String RSTUDIO_ASSISTANT_COPILOT = "copilot";
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -3785,7 +3811,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+    * When enabled, RStudio will tell Copilot to use the current project's directory as a workspace.
     */
    public PrefValue<Boolean> copilotProjectWorkspace()
    {
@@ -4474,6 +4500,8 @@ public class UserPrefsAccessor extends Prefs
          textRendering().setValue(layer, source.getString("text_rendering"));
       if (source.hasKey("disable_renderer_accessibility"))
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
+      if (source.hasKey("rstudio_assistant"))
+         rstudioAssistant().setValue(layer, source.getString("rstudio_assistant"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -4771,6 +4799,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
+      prefs.add(rstudioAssistant());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());

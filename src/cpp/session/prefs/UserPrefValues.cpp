@@ -3365,6 +3365,19 @@ core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
 }
 
 /**
+ * Select which AI assistant to use for code suggestions and assistance.
+ */
+std::string UserPrefValues::rstudioAssistant()
+{
+   return readPref<std::string>("rstudio_assistant");
+}
+
+core::Error UserPrefValues::setRstudioAssistant(std::string val)
+{
+   return writePref("rstudio_assistant", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -3456,7 +3469,7 @@ core::Error UserPrefValues::setCopilotShowMessages(bool val)
 }
 
 /**
- * When enabled, RStudio will tell Copilot to use the current RStudio project's folder as a workspace.
+ * When enabled, RStudio will tell Copilot to use the current project's directory as a workspace.
  */
 bool UserPrefValues::copilotProjectWorkspace()
 {
@@ -3858,6 +3871,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEditorScrollMultiplier,
       kTextRendering,
       kDisableRendererAccessibility,
+      kRstudioAssistant,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,
