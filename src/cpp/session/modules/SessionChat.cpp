@@ -54,6 +54,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -1177,6 +1178,14 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
    if (!error && parsedSEXP != R_NilValue && TYPEOF(parsedSEXP) == EXPRSXP)
    {
+      // Add code to console history so it appears in History tab
+      r::session::consoleHistory().add(code, false);
+
+      // Fire events to notify modules that code is about to execute
+      // (matches behavior of normal console input in SessionConsoleInput.cpp)
+      module_context::events().onBeforeExecute();
+      module_context::events().onConsoleInput(code);
+
       numExpressions = Rf_length(parsedSEXP);
 
       // Evaluate each expression
