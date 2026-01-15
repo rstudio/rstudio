@@ -427,20 +427,13 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Shows a deletion-only edit suggestion by highlighting the text that would be deleted.
-    * This is a simpler presentation than the full diff view, used when the edit only removes text.
+    * Renders a deletion-only edit suggestion by highlighting the text that would be deleted.
+    * Assumes nesCompletion_ and nesDeltas_ are already set.
     */
-   private void showDeletionSuggestion(CopilotCompletion completion, EditDeltas deltas)
+   private void renderDeletionSuggestion()
    {
-      // Note that we can accept the suggestion with Tab
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         canAcceptSuggestionWithTab_ = true;
-      });
-
-      // Get the start position of the completion in the document
-      int baseRow = completion.range.start.line;
-      int baseCol = completion.range.start.character;
+      int baseRow = nesCompletion_.range.start.line;
+      int baseCol = nesCompletion_.range.start.character;
 
       // Track bounds for the bounding rectangle highlight
       int minRow = Integer.MAX_VALUE;
@@ -448,37 +441,12 @@ public class TextEditingTargetCopilotHelper
 
       // Highlight each deletion range with a red-tinted background
       boolean addedGutterIcon = false;
-      for (EditDelta delta : deltas.getDeltas())
+      for (EditDelta delta : nesDeltas_.getDeltas())
       {
          if (delta.type != EditType.DELETION)
             continue;
 
-         Range range = delta.range;
-
-         // Offset the range by the completion's position in the document
-         Range documentRange;
-         if (range.getStart().getRow() == 0)
-         {
-            // First line: offset the column by baseCol
-            int startCol = baseCol + range.getStart().getColumn();
-            int endCol = range.getEnd().getRow() == 0
-               ? baseCol + range.getEnd().getColumn()
-               : range.getEnd().getColumn();
-            documentRange = Range.create(
-               baseRow + range.getStart().getRow(),
-               startCol,
-               baseRow + range.getEnd().getRow(),
-               endCol);
-         }
-         else
-         {
-            // Subsequent lines: only offset the row
-            documentRange = Range.create(
-               baseRow + range.getStart().getRow(),
-               range.getStart().getColumn(),
-               baseRow + range.getEnd().getRow(),
-               range.getEnd().getColumn());
-         }
+         Range documentRange = offsetRangeToDocument(delta.range, baseRow, baseCol);
 
          int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
          nesMarkerIds_.add(markerId);
@@ -507,27 +475,20 @@ public class TextEditingTargetCopilotHelper
          nesBoundsMarkerId_ = display_.addHighlight(
             boundsRange, "ace_next-edit-suggestion-deletion-bounds", "fullLine");
       }
-
-      // Store the completion and type for applying later
-      nesCompletion_ = completion;
-      nesType_ = SuggestionType.DELETION;
    }
 
    /**
-    * Shows single-line insertion suggestions by rendering the insertion text inline.
-    * This is used for simple insertions that don't involve deletions or multi-line text.
+    * Renders single-line insertion suggestions by rendering the insertion text inline.
+    * Assumes nesCompletion_ and nesDeltas_ are already set.
     */
-   private void showInsertionSuggestion(CopilotCompletion completion, List<EditDelta> additionDeltas)
+   private void renderInsertionSuggestion()
    {
-      // Note that we can accept the suggestion with Tab
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         canAcceptSuggestionWithTab_ = true;
-      });
+      int baseRow = nesCompletion_.range.start.line;
+      int baseCol = nesCompletion_.range.start.character;
 
-      // Get the start position of the completion in the document
-      int baseRow = completion.range.start.line;
-      int baseCol = completion.range.start.character;
+      List<EditDelta> additionDeltas = nesDeltas_.getAdditions();
+      if (additionDeltas.isEmpty())
+         return;
 
       // Track bounds for the bounding rectangle highlight
       int minRow = Integer.MAX_VALUE;
@@ -599,10 +560,6 @@ public class TextEditingTargetCopilotHelper
             minRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
          nesGutterRegistrations_.add(registration);
       }
-
-      // Store the completion and type for applying later
-      nesCompletion_ = completion;
-      nesType_ = SuggestionType.INSERTION;
    }
 
    // Helper class for grouping insertion information by row
@@ -645,45 +602,33 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Shows a single-line replacement suggestion inline.
-    * Displays the deleted text with strikethrough and the replacement text as a ghost-like insertion.
+    * Renders a single-line replacement suggestion inline.
+    * Assumes nesCompletion_ and nesDeltas_ are already set.
     */
-   private void showReplacementSuggestion(CopilotCompletion completion, EditDelta deletion, EditDelta addition)
+   private void renderReplacementSuggestion()
    {
-      // Note that we can accept the suggestion with Tab
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         canAcceptSuggestionWithTab_ = true;
-      });
+      EditDelta deletion = nesDeltas_.getSingleDeletion();
+      EditDelta addition = nesDeltas_.getSingleAddition();
+      if (deletion == null || addition == null)
+         return;
 
-      // Get the start position of the completion in the document
-      int baseRow = completion.range.start.line;
-      int baseCol = completion.range.start.character;
+      int baseRow = nesCompletion_.range.start.line;
+      int baseCol = nesCompletion_.range.start.character;
 
       // Compute the document range for the deletion
-      Range delRange = deletion.range;
-      int delStartRow = baseRow + delRange.getStart().getRow();
-      int delStartCol = delRange.getStart().getRow() == 0
-         ? baseCol + delRange.getStart().getColumn()
-         : delRange.getStart().getColumn();
-      int delEndRow = baseRow + delRange.getEnd().getRow();
-      int delEndCol = delRange.getEnd().getRow() == 0
-         ? baseCol + delRange.getEnd().getColumn()
-         : delRange.getEnd().getColumn();
-
-      Range deletionDocRange = Range.create(delStartRow, delStartCol, delEndRow, delEndCol);
+      Range deletionDocRange = offsetRangeToDocument(deletion.range, baseRow, baseCol);
 
       // Add strikethrough highlight for the deletion
       int deletionMarkerId = display_.addHighlight(
          deletionDocRange, "ace_replacement_deletion", "text");
       nesMarkerIds_.add(deletionMarkerId);
 
-      // Store the range for click detection (the clickable area includes both deletion and insertion)
+      // Store the range for click detection
       nesClickableRanges_.add(deletionDocRange);
 
       // Compute the document position for the insertion (right after the deletion)
-      int insertRow = delEndRow;
-      int insertCol = delEndCol;
+      int insertRow = deletionDocRange.getEnd().getRow();
+      int insertCol = deletionDocRange.getEnd().getColumn();
 
       // Add the insertion preview token
       display_.invalidateTokens(insertRow);
@@ -693,6 +638,7 @@ public class TextEditingTargetCopilotHelper
       nesTokenPositions_.add(Position.create(insertRow, insertCol));
 
       // Add bounding rectangle highlight
+      int delStartRow = deletionDocRange.getStart().getRow();
       Range boundsRange = Range.create(delStartRow, 0, delStartRow + 1, 0);
       nesBoundsMarkerId_ = display_.addHighlight(
          boundsRange, "ace_next-edit-suggestion-replacement-bounds", "fullLine");
@@ -701,10 +647,6 @@ public class TextEditingTargetCopilotHelper
       HandlerRegistration registration = display_.addGutterItem(
          delStartRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
       nesGutterRegistrations_.add(registration);
-
-      // Store the completion and type for applying later
-      nesCompletion_ = completion;
-      nesType_ = SuggestionType.REPLACEMENT;
    }
 
    /**
@@ -721,23 +663,79 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
-    * The full details will be shown when the user hovers over the gutter icon.
-    * The suggestion data should already be stored in nesCompletion_, nesType_, nesDeltas_.
+    * Converts a delta range (relative to the edit) to a document range.
+    * Handles the offset logic where the first line needs column offset but subsequent lines don't.
     */
-   private void showSuggestionGutterOnly(int row, String gutterClass)
+   private static Range offsetRangeToDocument(Range deltaRange, int baseRow, int baseCol)
    {
-      // Store the gutter row for later restoration after hide
-      pendingGutterRow_ = row;
+      int startRow = baseRow + deltaRange.getStart().getRow();
+      int endRow = baseRow + deltaRange.getEnd().getRow();
+
+      int startCol = deltaRange.getStart().getRow() == 0
+         ? baseCol + deltaRange.getStart().getColumn()
+         : deltaRange.getStart().getColumn();
+
+      int endCol = deltaRange.getEnd().getRow() == 0
+         ? baseCol + deltaRange.getEnd().getColumn()
+         : deltaRange.getEnd().getColumn();
+
+      return Range.create(startRow, startCol, endRow, endCol);
+   }
+
+   /**
+    * Checks if an element is within a NES gutter cell.
+    */
+   private static boolean isNesSuggestionGutterCell(Element el)
+   {
+      return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
+             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
+             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
+             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+   }
+
+   /**
+    * Finds the NES gutter cell element containing the given element, if any.
+    */
+   private static Element findNesGutterCell(Element target)
+   {
+      // First find the gutter annotation element
+      Element annotationEl = DomUtils.findParentElement(target, true, el ->
+         el.hasClassName("ace_gutter_annotation"));
+
+      if (annotationEl == null)
+         return null;
+
+      // Then check if it's within a suggestion gutter cell
+      return DomUtils.findParentElement(annotationEl, false,
+         TextEditingTargetCopilotHelper::isNesSuggestionGutterCell);
+   }
+
+   /**
+    * Sets the NES state and creates completion anchors.
+    * Call this before renderNesSuggestion() or showSuggestionGutterOnly().
+    */
+   private void setNesState(CopilotCompletion completion, SuggestionType type, EditDeltas deltas)
+   {
+      nesCompletion_ = completion;
+      nesType_ = type;
+      nesDeltas_ = deltas;
 
       // Create anchors for the completion range
       createCompletionAnchors(
-         nesCompletion_.range.start.line,
-         nesCompletion_.range.start.character,
-         nesCompletion_.range.end.line,
-         nesCompletion_.range.end.character);
+         completion.range.start.line,
+         completion.range.start.character,
+         completion.range.end.line,
+         completion.range.end.character);
+   }
 
-      // Show the gutter icon
+   /**
+    * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
+    * The full details will be shown when the user hovers over the gutter icon.
+    * Assumes setNesState() has already been called.
+    */
+   private void showSuggestionGutterOnly(int row, String gutterClass)
+   {
+      pendingGutterRow_ = row;
       pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
    }
 
@@ -796,10 +794,15 @@ public class TextEditingTargetCopilotHelper
       if (nesCompletion_ == null || nesType_ == SuggestionType.NONE)
          return;
 
+      // Enable Tab acceptance for all NES types (except DIFF which handles it separately)
+      if (nesType_ != SuggestionType.DIFF)
+      {
+         Scheduler.get().scheduleDeferred(() -> canAcceptSuggestionWithTab_ = true);
+      }
+
       switch (nesType_)
       {
          case GHOST_TEXT:
-            // For ghost text, set up the completion and display
             activeCompletion_ = new Completion(nesCompletion_);
             Position position = Position.create(
                nesCompletion_.range.start.line,
@@ -809,26 +812,17 @@ public class TextEditingTargetCopilotHelper
 
          case DELETION:
             if (nesDeltas_ != null)
-               showDeletionSuggestion(nesCompletion_, nesDeltas_);
+               renderDeletionSuggestion();
             break;
 
          case INSERTION:
             if (nesDeltas_ != null)
-            {
-               List<EditDelta> additions = nesDeltas_.getAdditions();
-               if (!additions.isEmpty())
-                  showInsertionSuggestion(nesCompletion_, additions);
-            }
+               renderInsertionSuggestion();
             break;
 
          case REPLACEMENT:
             if (nesDeltas_ != null)
-            {
-               EditDelta deletion = nesDeltas_.getSingleDeletion();
-               EditDelta addition = nesDeltas_.getSingleAddition();
-               if (deletion != null && addition != null)
-                  showReplacementSuggestion(nesCompletion_, deletion, addition);
-            }
+               renderReplacementSuggestion();
             break;
 
          case DIFF:
@@ -1351,85 +1345,30 @@ public class TextEditingTargetCopilotHelper
                DomUtils.addEventListener(display_.getElement(), "mouseover", false, (event) ->
                {
                   Element target = event.getEventTarget().cast();
-
-                  // Check if over an ace_gutter_annotation element within a suggestion gutter cell
-                  Element annotationEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  Element gutterCell = findNesGutterCell(target);
+                  if (gutterCell != null)
                   {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName("ace_gutter_annotation");
-                     }
-                  });
+                     // Cancel any pending hide since we're over a gutter icon
+                     pendingHideTimer_.cancel();
 
-                  if (annotationEl != null)
-                  {
-                     // Check if this annotation is within a suggestion gutter cell
-                     Element gutterCell = DomUtils.findParentElement(annotationEl, false, new ElementPredicate()
-                     {
-                        @Override
-                        public boolean test(Element el)
-                        {
-                           return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                        }
-                     });
-
-                     if (gutterCell != null)
-                     {
-                        // Cancel any pending hide since we're over a gutter icon
-                        pendingHideTimer_.cancel();
-
-                        // Show details if not already revealed
-                        if (hasPendingUnrevealedSuggestion())
-                        {
-                           showPendingSuggestionDetails();
-                        }
-                     }
+                     // Show details if not already revealed
+                     if (hasPendingUnrevealedSuggestion())
+                        showPendingSuggestionDetails();
                   }
                }),
 
                // mouseout handler for hiding pending suggestion details when leaving gutter icon
                DomUtils.addEventListener(display_.getElement(), "mouseout", false, (event) ->
                {
-                  // Only relevant when we have a revealed pending suggestion
                   if (!pendingSuggestionRevealed_)
                      return;
 
                   Element target = event.getEventTarget().cast();
-
-                  // Check if leaving an ace_gutter_annotation element within a suggestion gutter cell
-                  Element annotationEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  Element gutterCell = findNesGutterCell(target);
+                  if (gutterCell != null)
                   {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName("ace_gutter_annotation");
-                     }
-                  });
-
-                  if (annotationEl != null)
-                  {
-                     // Check if this annotation is within a suggestion gutter cell
-                     Element gutterCell = DomUtils.findParentElement(annotationEl, false, new ElementPredicate()
-                     {
-                        @Override
-                        public boolean test(Element el)
-                        {
-                           return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
-                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                        }
-                     });
-
-                     if (gutterCell != null)
-                     {
-                        // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
-                        pendingHideTimer_.schedule(50);
-                     }
+                     // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
+                     pendingHideTimer_.schedule(50);
                   }
                }),
 
@@ -1679,12 +1618,6 @@ public class TextEditingTargetCopilotHelper
                // completions, so we need to use a copy and preserve the original
                // (which we need to send back to the server as-is in some language-server methods).
                CopilotCompletion normalized = normalizeCompletion(completion);
-               activeCompletion_ = new Completion(normalized);
-               createCompletionAnchors(
-                  activeCompletion_.startLine,
-                  activeCompletion_.startCharacter,
-                  activeCompletion_.endLine,
-                  activeCompletion_.endCharacter);
 
                // Check if autoshow is enabled
                boolean autoshow = prefs_.copilotNesAutoshow().getValue();
@@ -1692,26 +1625,14 @@ public class TextEditingTargetCopilotHelper
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)
                {
-                  // If the start position and end position match, then display
-                  // the suggestion using ghost text at that position.
+                  // Ghost text at cursor position
+                  activeCompletion_ = new Completion(normalized);
+                  setNesState(normalized, SuggestionType.GHOST_TEXT, null);
                   if (autoshow)
-                  {
-                     Position position = Position.create(
-                        normalized.range.start.line,
-                        normalized.range.start.character);
-                     display_.setGhostText(activeCompletion_.displayText, position);
-                  }
+                     renderNesSuggestion();
                   else
-                  {
-                     // Store state and show only gutter icon; details shown on hover
-                     nesCompletion_ = normalized;
-                     nesType_ = SuggestionType.GHOST_TEXT;
-                     nesDeltas_ = null;
-                     showSuggestionGutterOnly(
-                        normalized.range.start.line,
+                     showSuggestionGutterOnly(normalized.range.start.line,
                         AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-                  }
-
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
@@ -1725,49 +1646,27 @@ public class TextEditingTargetCopilotHelper
                EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
                if (deltas.isDeletionOnly())
                {
+                  setNesState(normalized, SuggestionType.DELETION, deltas);
                   if (autoshow)
-                  {
-                     // For deletion-only changes, just highlight the text to be deleted
-                     showDeletionSuggestion(normalized, deltas);
-                  }
+                     renderNesSuggestion();
                   else
-                  {
-                     // Store state and show only gutter icon; details shown on hover
-                     nesCompletion_ = normalized;
-                     nesType_ = SuggestionType.DELETION;
-                     nesDeltas_ = deltas;
-                     showSuggestionGutterOnly(
-                        normalized.range.start.line,
+                     showSuggestionGutterOnly(normalized.range.start.line,
                         AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
-                  }
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
 
                // Check if this consists only of single-line insertions
-               if (deltas.isSingleLineInsertions())
+               if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
                {
-                  // For single-line insertions, show inline token preview
-                  List<EditDelta> additions = deltas.getAdditions();
-                  if (!additions.isEmpty())
-                  {
-                     if (autoshow)
-                     {
-                        showInsertionSuggestion(normalized, additions);
-                     }
-                     else
-                     {
-                        // Store state and show only gutter icon; details shown on hover
-                        nesCompletion_ = normalized;
-                        nesType_ = SuggestionType.INSERTION;
-                        nesDeltas_ = deltas;
-                        showSuggestionGutterOnly(
-                           normalized.range.start.line,
-                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
-                     }
-                     server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
-                     return;
-                  }
+                  setNesState(normalized, SuggestionType.INSERTION, deltas);
+                  if (autoshow)
+                     renderNesSuggestion();
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  return;
                }
 
                // Check if this is a single-line replacement (one deletion + one insertion)
@@ -1777,40 +1676,24 @@ public class TextEditingTargetCopilotHelper
                   EditDelta addition = deltas.getSingleAddition();
                   if (deletion != null && addition != null)
                   {
+                     setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
                      if (autoshow)
-                     {
-                        showReplacementSuggestion(normalized, deletion, addition);
-                     }
+                        renderNesSuggestion();
                      else
-                     {
-                        // Store state and show only gutter icon; details shown on hover
-                        nesCompletion_ = normalized;
-                        nesType_ = SuggestionType.REPLACEMENT;
-                        nesDeltas_ = deltas;
-                        showSuggestionGutterOnly(
-                           normalized.range.start.line,
+                        showSuggestionGutterOnly(normalized.range.start.line,
                            AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                     }
                      server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                      return;
                   }
                }
 
                // Otherwise, show the suggestion as an inline diff view.
+               setNesState(normalized, SuggestionType.DIFF, deltas);
                if (autoshow)
-               {
-                  showEditSuggestion(normalized);
-               }
+                  showEditSuggestion(nesCompletion_);
                else
-               {
-                  // Store state and show only gutter icon; details shown on hover
-                  nesCompletion_ = normalized;
-                  nesType_ = SuggestionType.DIFF;
-                  nesDeltas_ = deltas;
-                  showSuggestionGutterOnly(
-                     normalized.range.start.line,
+                  showSuggestionGutterOnly(normalized.range.start.line,
                      AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-               }
             }
 
             @Override
