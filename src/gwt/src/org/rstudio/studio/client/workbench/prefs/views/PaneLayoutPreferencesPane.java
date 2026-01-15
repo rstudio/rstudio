@@ -26,7 +26,9 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
@@ -128,7 +130,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
             if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
-                !userPrefs_.pai().getGlobalValue())
+                !PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
               checkBox.setVisible(false);
          }
 
@@ -212,10 +214,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,
+                                    Session session,
                                     Provider<PaneManager> pPaneManager)
    {
       res_ = res;
       userPrefs_ = userPrefs;
+      session_ = session;
       paneManager_ = pPaneManager.get();
 
       PaneConfig paneConfig = userPrefs.panes().getGlobalValue().cast();
@@ -978,6 +982,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    private final UserPrefs userPrefs_;
+   private final Session session_;
    private final ListBox leftTop_;
    private final ListBox leftBottom_;
    private final ListBox rightTop_;
