@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.gwt.aria.client.Roles;
@@ -125,8 +126,8 @@ public class AboutDialog extends ModalDialogBase
 
    private void fetchPositAssistantVersion()
    {
-      // Only fetch if pai preference is enabled
-      if (!userPrefs_.pai().getValue())
+      // Only fetch if pai is allowed and preference is enabled
+      if (!PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
          return;
 
       chatServer_.chatGetVersion(new ServerRequestCallback<String>()

@@ -34,7 +34,7 @@
 - Ace 1.43.5
 - Copilot Language Server 1.409.0
 - Electron 39.2.7
-- Node.js 22.21.1 (copilot completions)
+- Node.js 22.22.0 (copilot completions)
 - Node.js 22.20.0 (vscode server)
 - Quarto 1.8.26
 - xterm.js 6.0.0
