@@ -213,6 +213,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             prefs_.copilotCompletionsDelay());
 
       cbCopilotNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
+      cbCopilotNesAutoshow_ = checkboxPref(prefs_.copilotNesAutoshow(), true);
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -330,6 +331,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          panel.add(spacedBefore(headerLabel(constants_.copilotSuggestionsHeader())));
          panel.add(cbCopilotNesEnabled_);
+         panel.add(cbCopilotNesAutoshow_);
 
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
          panel.add(cbCopilotShowMessages_);
@@ -490,6 +492,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   int reason = (int) response.reason.valueOf();
                   lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+                  showButtons(btnRefresh_, btnDiagnostics_);
                }
                else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
@@ -499,10 +502,12 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (prefs_.copilotEnabled().getValue())
                {
                   lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
+                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
                else
                {
                   lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }
             else if (response.result.status == CopilotConstants.STATUS_OK ||
@@ -656,6 +661,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbCopilotProjectWorkspace_;
    private final CheckBox cbCopilotNesEnabled_;
+   private final CheckBox cbCopilotNesAutoshow_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;
