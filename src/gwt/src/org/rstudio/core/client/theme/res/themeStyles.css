@@ -464,6 +464,23 @@ pre {
    background-color: #555555;
 }
 
+/* Background colors for NES gutter cells */
+.ace_nes-gutter-highlight {
+   background-color: rgba(30, 119, 188, 0.4);
+}
+
+.ace_nes-gutter-deletion {
+   background-color: rgba(198, 40, 40, 0.4);
+}
+
+.ace_nes-gutter-insertion {
+   background-color: rgba(46, 125, 50, 0.4);
+}
+
+.ace_nes-gutter-replacement {
+   background-color: rgba(85, 85, 85, 0.4);
+}
+
 .ace_next-edit-suggestion-highlight {
    position: absolute;
    z-index: 1;

@@ -470,7 +470,7 @@ public class TextEditingTargetCopilotHelper
       // Add bounding rectangle highlight for all affected rows
       if (minRow <= maxRow)
       {
-         Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
+         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
          nesBoundsMarkerId_ = display_.addHighlight(
             boundsRange, "ace_next-edit-suggestion-deletion-bounds", "fullLine");
       }
@@ -550,7 +550,7 @@ public class TextEditingTargetCopilotHelper
       // Add bounding rectangle highlight for all affected rows
       if (minRow <= maxRow)
       {
-         Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
+         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
          nesBoundsMarkerId_ = display_.addHighlight(
             boundsRange, "ace_next-edit-suggestion-insertion-bounds", "fullLine");
 
@@ -1838,6 +1838,18 @@ public class TextEditingTargetCopilotHelper
          String suffix = endLine.substring(completion.range.end.character);
          completion.range.end.character = endLine.length();
          completion.insertText = completion.insertText + suffix;
+      }
+
+      // If both the original text and insert text end with a newline,
+      // trim the trailing newline to avoid redundant replacement
+      while (completion.range.end.line > completion.range.start.line &&
+             completion.range.end.character == 0 &&
+             completion.insertText.endsWith("\n"))
+      {
+         completion.insertText = completion.insertText.substring(0, completion.insertText.length() - 1);
+         completion.range.end.line--;
+         String newEndLine = display_.getLine(completion.range.end.line);
+         completion.range.end.character = newEndLine.length();
       }
 
       return completion;

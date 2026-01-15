@@ -545,8 +545,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      // TODO: Replace with proper Assistant icon
-      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
    @Override
