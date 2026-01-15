@@ -431,6 +431,7 @@ pre {
    height: 16px;
    border-radius: 3px;
    cursor: pointer;
+   background-color: #1E77BC;
 }
 
 .ace_nes-gutter .ace_gutter_annotation::after {
@@ -447,38 +448,31 @@ pre {
    cursor: pointer;
 }
 
-/* Color modifiers for NES gutter icons */
-.ace_nes-gutter-highlight .ace_gutter_annotation::before {
-   background-color: #1E77BC;
+/* Darker blue background for all NES gutter cells */
+.ace_nes-gutter {
+   background-color: rgba(20, 60, 120, 0.75);
 }
 
+/* Type-specific colored dots at bottom-right corner of the icon */
 .ace_nes-gutter-deletion .ace_gutter_annotation::before {
-   background-color: #C62828;
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #C62828 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
 }
 
 .ace_nes-gutter-insertion .ace_gutter_annotation::before {
-   background-color: #2E7D32;
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #2E7D32 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
 }
 
 .ace_nes-gutter-replacement .ace_gutter_annotation::before {
-   background-color: #555555;
-}
-
-/* Background colors for NES gutter cells */
-.ace_nes-gutter-highlight {
-   background-color: rgba(30, 119, 188, 0.4);
-}
-
-.ace_nes-gutter-deletion {
-   background-color: rgba(198, 40, 40, 0.4);
-}
-
-.ace_nes-gutter-insertion {
-   background-color: rgba(46, 125, 50, 0.4);
-}
-
-.ace_nes-gutter-replacement {
-   background-color: rgba(85, 85, 85, 0.4);
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #888888 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
 }
 
 .ace_next-edit-suggestion-highlight {
