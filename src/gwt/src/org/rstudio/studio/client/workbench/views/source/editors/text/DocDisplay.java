@@ -522,5 +522,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void applyGhostText();
    void removeGhostText();
 
+   void addRendererToken(String text, String type, int row, int column);
+   void removeRendererToken(int row, int column);
+
    double getLineHeight();
 }

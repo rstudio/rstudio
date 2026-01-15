@@ -2462,6 +2462,16 @@
    clear = function() { .rs.clearUserPref("copilot_nes_enabled") }
 )
 
+# Automatically show next-edit suggestions
+#
+# When enabled, next-edit suggestions will be automatically displayed. When
+# disabled, suggestions will only be shown when hovering over the gutter icon.
+.rs.uiPrefs$copilotNesAutoshow <- list(
+   get = function() { .rs.getUserPref("copilot_nes_autoshow") },
+   set = function(value) { .rs.setUserPref("copilot_nes_autoshow", value) },
+   clear = function() { .rs.clearUserPref("copilot_nes_autoshow") }
+)
+
 # Display account and billing messages from GitHub Copilot
 #
 # When enabled, RStudio will show account and billing messages from GitHub

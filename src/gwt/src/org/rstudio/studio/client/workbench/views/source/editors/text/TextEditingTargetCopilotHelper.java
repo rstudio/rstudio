@@ -24,6 +24,8 @@ import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.diff.JsDiff;
+import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
@@ -61,6 +63,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -101,6 +104,265 @@ public class TextEditingTargetCopilotHelper
       public int endCharacter;
       public CopilotCompletion originalCompletion;
       public int partialAcceptedLength;
+   }
+
+   /**
+    * Enum representing the type of edit operation.
+    */
+   private enum EditType
+   {
+      ADDITION,
+      DELETION
+   }
+
+   /**
+    * Enum representing the type of next-edit suggestion display.
+    */
+   private enum SuggestionType
+   {
+      NONE,
+      GHOST_TEXT,
+      DELETION,
+      INSERTION,
+      REPLACEMENT,
+      DIFF
+   }
+
+   /**
+    * Holds pending suggestion data for deferred display.
+    * Used when autoshow is disabled to show details on hover.
+    */
+   private static class PendingSuggestion
+   {
+      public SuggestionType type = SuggestionType.NONE;
+      public CopilotCompletion completion;
+      public EditDeltas deltas;           // For deletion type
+      public List<EditDelta> additions;   // For insertion type
+      public EditDelta singleDeletion;    // For replacement type
+      public EditDelta singleAddition;    // For replacement type
+      public int gutterRow = -1;          // Row where gutter icon is shown
+
+      public void clear()
+      {
+         type = SuggestionType.NONE;
+         completion = null;
+         deltas = null;
+         additions = null;
+         singleDeletion = null;
+         singleAddition = null;
+         gutterRow = -1;
+      }
+   }
+
+   /**
+    * Represents a single edit operation with its type, range, and text.
+    */
+   private static class EditDelta
+   {
+      public EditDelta(EditType type, Range range, String text)
+      {
+         this.type = type;
+         this.range = range;
+         this.text = text;
+      }
+
+      public final EditType type;
+      public final Range range;
+      public final String text;  // The text being added/deleted; null for deletions
+   }
+
+   /**
+    * Helper class for computing and storing edit deltas between original and replacement text.
+    * Computes the actual ranges of text that would be added or deleted.
+    */
+   private static class EditDeltas
+   {
+      public EditDeltas(String originalText, String replacementText)
+      {
+         JsArrayLike<Delta> deltas = JsDiff.diffChars(originalText, replacementText);
+
+         // Track position in the original text (for deletions)
+         StringBuilder originalPos = new StringBuilder();
+
+         for (int i = 0, n = deltas.getLength(); i < n; i++)
+         {
+            Delta delta = deltas.getAt(i);
+
+            if (delta.added)
+            {
+               hasAdditions_ = true;
+
+               // Compute the range in the original text where this addition occurs
+               // (it's inserted at the current position, so start == end)
+               String prefix = originalPos.toString();
+               int line = StringUtil.countMatches(prefix, '\n');
+               int character = prefix.length() - prefix.lastIndexOf('\n') - 1;
+               Range range = Range.create(line, character, line, character);
+
+               deltas_.add(new EditDelta(EditType.ADDITION, range, delta.value));
+               // Additions don't consume original text, so don't advance originalPos
+            }
+            else if (delta.removed)
+            {
+               hasDeletions_ = true;
+
+               // Compute the range in the original text for this deletion
+               String prefix = originalPos.toString();
+               String postfix = prefix + delta.value;
+
+               int startLine = StringUtil.countMatches(prefix, '\n');
+               int startChar = prefix.length() - prefix.lastIndexOf('\n') - 1;
+               int endLine = StringUtil.countMatches(postfix, '\n');
+               int endChar = postfix.length() - postfix.lastIndexOf('\n') - 1;
+
+               Range range = Range.create(startLine, startChar, endLine, endChar);
+               deltas_.add(new EditDelta(EditType.DELETION, range, null));
+
+               // Advance position in original text
+               originalPos.append(delta.value);
+            }
+            else
+            {
+               // Unchanged text - advance position in original text
+               originalPos.append(delta.value);
+            }
+         }
+      }
+
+      public boolean isDeletionOnly()
+      {
+         return hasDeletions_ && !hasAdditions_;
+      }
+
+      public boolean isInsertionOnly()
+      {
+         return hasAdditions_ && !hasDeletions_;
+      }
+
+      /**
+       * Returns true if this consists only of single-line insertions:
+       * - Only additions (no deletions)
+       * - Each insertion text doesn't contain newlines
+       */
+      public boolean isSingleLineInsertions()
+      {
+         if (!isInsertionOnly())
+            return false;
+
+         // Check that all additions are single-line
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+            {
+               if (delta.text == null || delta.text.contains("\n"))
+                  return false;
+            }
+         }
+
+         return true;
+      }
+
+      /**
+       * Returns true if this is a single-line replacement:
+       * - Exactly one deletion and one insertion
+       * - Both are single-line (no newlines in the text)
+       */
+      public boolean isSingleLineReplacement()
+      {
+         if (!hasAdditions_ || !hasDeletions_)
+            return false;
+
+         EditDelta deletion = null;
+         EditDelta addition = null;
+
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.DELETION)
+            {
+               if (deletion != null)
+                  return false; // More than one deletion
+               deletion = delta;
+            }
+            else if (delta.type == EditType.ADDITION)
+            {
+               if (addition != null)
+                  return false; // More than one addition
+               addition = delta;
+            }
+         }
+
+         if (deletion == null || addition == null)
+            return false;
+
+         // Check that deletion is single-line
+         if (deletion.range.getStart().getRow() != deletion.range.getEnd().getRow())
+            return false;
+
+         // Check that addition text doesn't contain newlines
+         if (addition.text != null && addition.text.contains("\n"))
+            return false;
+
+         return true;
+      }
+
+      /**
+       * Returns the single deletion delta, or null if there isn't exactly one.
+       */
+      public EditDelta getSingleDeletion()
+      {
+         EditDelta deletion = null;
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.DELETION)
+            {
+               if (deletion != null)
+                  return null; // More than one
+               deletion = delta;
+            }
+         }
+         return deletion;
+      }
+
+      /**
+       * Returns the single addition delta, or null if there isn't exactly one.
+       */
+      public EditDelta getSingleAddition()
+      {
+         EditDelta addition = null;
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+            {
+               if (addition != null)
+                  return null; // More than one
+               addition = delta;
+            }
+         }
+         return addition;
+      }
+
+      /**
+       * Returns all addition deltas.
+       */
+      public List<EditDelta> getAdditions()
+      {
+         List<EditDelta> additions = new ArrayList<>();
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+               additions.add(delta);
+         }
+         return additions;
+      }
+
+      public List<EditDelta> getDeltas()
+      {
+         return deltas_;
+      }
+
+      private boolean hasAdditions_ = false;
+      private boolean hasDeletions_ = false;
+      private List<EditDelta> deltas_ = new ArrayList<>();
    }
 
    /**
@@ -185,6 +447,520 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
+    * Shows a deletion-only edit suggestion by highlighting the text that would be deleted.
+    * This is a simpler presentation than the full diff view, used when the edit only removes text.
+    */
+   private void showDeletionSuggestion(CopilotCompletion completion, EditDeltas deltas)
+   {
+      // Note that we can accept the suggestion with Tab
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         canAcceptSuggestionWithTab_ = true;
+      });
+
+      // Get the start position of the completion in the document
+      int baseRow = completion.range.start.line;
+      int baseCol = completion.range.start.character;
+
+      // Track bounds for the bounding rectangle highlight
+      int minRow = Integer.MAX_VALUE;
+      int maxRow = Integer.MIN_VALUE;
+
+      // Highlight each deletion range with a red-tinted background
+      boolean addedGutterIcon = false;
+      for (EditDelta delta : deltas.getDeltas())
+      {
+         if (delta.type != EditType.DELETION)
+            continue;
+
+         Range range = delta.range;
+
+         // Offset the range by the completion's position in the document
+         Range documentRange;
+         if (range.getStart().getRow() == 0)
+         {
+            // First line: offset the column by baseCol
+            int startCol = baseCol + range.getStart().getColumn();
+            int endCol = range.getEnd().getRow() == 0
+               ? baseCol + range.getEnd().getColumn()
+               : range.getEnd().getColumn();
+            documentRange = Range.create(
+               baseRow + range.getStart().getRow(),
+               startCol,
+               baseRow + range.getEnd().getRow(),
+               endCol);
+         }
+         else
+         {
+            // Subsequent lines: only offset the row
+            documentRange = Range.create(
+               baseRow + range.getStart().getRow(),
+               range.getStart().getColumn(),
+               baseRow + range.getEnd().getRow(),
+               range.getEnd().getColumn());
+         }
+
+         int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
+         deletionMarkerIds_.add(markerId);
+
+         // Store the document range for click detection
+         deletionRanges_.add(documentRange);
+
+         // Track min/max rows for bounding rectangle
+         minRow = Math.min(minRow, documentRange.getStart().getRow());
+         maxRow = Math.max(maxRow, documentRange.getEnd().getRow());
+
+         // Add gutter icon only on the first row of the first deletion
+         if (!addedGutterIcon)
+         {
+            HandlerRegistration registration = display_.addGutterItem(
+               documentRange.getStart().getRow(), AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
+            deletionGutterRegistrations_.add(registration);
+            addedGutterIcon = true;
+         }
+      }
+
+      // Add bounding rectangle highlight for all affected rows
+      if (minRow <= maxRow)
+      {
+         Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
+         int boundsMarkerId = display_.addHighlight(
+            boundsRange, "ace_next-edit-suggestion-deletion-bounds", "fullLine");
+         deletionMarkerIds_.add(boundsMarkerId);
+      }
+
+      // Store the completion for applying later
+      deletionCompletion_ = completion;
+   }
+
+   /**
+    * Shows single-line insertion suggestions by rendering the insertion text inline.
+    * This is used for simple insertions that don't involve deletions or multi-line text.
+    */
+   private void showInsertionSuggestion(CopilotCompletion completion, List<EditDelta> additionDeltas)
+   {
+      // Note that we can accept the suggestion with Tab
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         canAcceptSuggestionWithTab_ = true;
+      });
+
+      // Get the start position of the completion in the document
+      int baseRow = completion.range.start.line;
+      int baseCol = completion.range.start.character;
+
+      // Track bounds for the bounding rectangle highlight
+      int minRow = Integer.MAX_VALUE;
+      int maxRow = Integer.MIN_VALUE;
+
+      // Add insertion preview tokens for each addition
+      for (EditDelta additionDelta : additionDeltas)
+      {
+         // Compute the document position for the insertion
+         Range range = additionDelta.range;
+         int insertRow = baseRow + range.getStart().getRow();
+         int insertCol = range.getStart().getRow() == 0
+            ? baseCol + range.getStart().getColumn()
+            : range.getStart().getColumn();
+
+         // Add the insertion preview token
+         display_.addRendererToken(additionDelta.text, "insertion_preview", insertRow, insertCol);
+
+         // Track the position for cleanup
+         insertionTokenPositions_.add(Position.create(insertRow, insertCol));
+
+         // Store the range for click detection (covers the preview text area)
+         int insertEndCol = insertCol + additionDelta.text.length();
+         Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
+         insertionRanges_.add(insertionRange);
+
+         // Track min/max rows for bounding rectangle
+         minRow = Math.min(minRow, insertRow);
+         maxRow = Math.max(maxRow, insertRow);
+      }
+
+      // Add bounding rectangle highlight for all affected rows
+      if (minRow <= maxRow)
+      {
+         Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
+         insertionBoundsMarkerId_ = display_.addHighlight(
+            boundsRange, "ace_next-edit-suggestion-insertion-bounds", "fullLine");
+
+         // Add gutter icon on the first row
+         HandlerRegistration registration = display_.addGutterItem(
+            minRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
+         insertionGutterRegistrations_.add(registration);
+      }
+
+      // Store the completion for applying later
+      insertionCompletion_ = completion;
+   }
+
+   /**
+    * Applies the current insertion suggestion.
+    */
+   private void applyInsertionSuggestion()
+   {
+      if (insertionCompletion_ == null)
+         return;
+
+      // Get edit range using anchored positions
+      Range range = Range.create(
+         completionStartAnchor_.getRow(),
+         completionStartAnchor_.getColumn(),
+         completionEndAnchor_.getRow(),
+         completionEndAnchor_.getColumn());
+
+      // Move cursor to start of range
+      display_.setCursorPosition(range.getStart());
+
+      // Perform the insertion (replace range with insertText)
+      display_.replaceRange(range, insertionCompletion_.insertText);
+
+      // Reset and schedule another suggestion
+      reset();
+      nesTimer_.schedule(20);
+   }
+
+   /**
+    * Shows a single-line replacement suggestion inline.
+    * Displays the deleted text with strikethrough and the replacement text as a ghost-like insertion.
+    */
+   private void showReplacementSuggestion(CopilotCompletion completion, EditDelta deletion, EditDelta addition)
+   {
+      // Note that we can accept the suggestion with Tab
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         canAcceptSuggestionWithTab_ = true;
+      });
+
+      // Get the start position of the completion in the document
+      int baseRow = completion.range.start.line;
+      int baseCol = completion.range.start.character;
+
+      // Compute the document range for the deletion
+      Range delRange = deletion.range;
+      int delStartRow = baseRow + delRange.getStart().getRow();
+      int delStartCol = delRange.getStart().getRow() == 0
+         ? baseCol + delRange.getStart().getColumn()
+         : delRange.getStart().getColumn();
+      int delEndRow = baseRow + delRange.getEnd().getRow();
+      int delEndCol = delRange.getEnd().getRow() == 0
+         ? baseCol + delRange.getEnd().getColumn()
+         : delRange.getEnd().getColumn();
+
+      Range deletionDocRange = Range.create(delStartRow, delStartCol, delEndRow, delEndCol);
+
+      // Add strikethrough highlight for the deletion
+      replacementDeletionMarkerId_ = display_.addHighlight(
+         deletionDocRange, "ace_replacement_deletion", "text");
+
+      // Store the range for click detection (the clickable area includes both deletion and insertion)
+      replacementRange_ = deletionDocRange;
+
+      // Compute the document position for the insertion (right after the deletion)
+      int insertRow = delEndRow;
+      int insertCol = delEndCol;
+
+      // Add the insertion preview token
+      display_.addRendererToken(addition.text, "insertion_preview", insertRow, insertCol);
+      replacementTokenPosition_ = Position.create(insertRow, insertCol);
+
+      // Add bounding rectangle highlight
+      Range boundsRange = Range.create(delStartRow, 0, delStartRow + 1, 0);
+      replacementBoundsMarkerId_ = display_.addHighlight(
+         boundsRange, "ace_next-edit-suggestion-replacement-bounds", "fullLine");
+
+      // Add gutter icon
+      replacementGutterRegistration_ = display_.addGutterItem(
+         delStartRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+
+      // Store the completion for applying later
+      replacementCompletion_ = completion;
+   }
+
+   /**
+    * Applies the current replacement suggestion.
+    */
+   private void applyReplacementSuggestion()
+   {
+      if (replacementCompletion_ == null)
+         return;
+
+      // Get edit range using anchored positions
+      Range range = Range.create(
+         completionStartAnchor_.getRow(),
+         completionStartAnchor_.getColumn(),
+         completionEndAnchor_.getRow(),
+         completionEndAnchor_.getColumn());
+
+      // Move cursor to start of range
+      display_.setCursorPosition(range.getStart());
+
+      // Perform the replacement (replace range with insertText)
+      display_.replaceRange(range, replacementCompletion_.insertText);
+
+      // Reset and schedule another suggestion
+      reset();
+      nesTimer_.schedule(20);
+   }
+
+   /**
+    * Checks if a document position falls within the replacement range.
+    */
+   private boolean isPositionInReplacementRange(Position pos)
+   {
+      if (replacementRange_ == null)
+         return false;
+      return replacementRange_.contains(pos);
+   }
+
+   /**
+    * Checks if a document position falls within any of the deletion ranges.
+    */
+   private boolean isPositionInDeletionRange(Position pos)
+   {
+      for (Range range : deletionRanges_)
+      {
+         if (range.contains(pos))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Checks if a document position falls within any of the insertion ranges.
+    */
+   private boolean isPositionInInsertionRange(Position pos)
+   {
+      for (Range range : insertionRanges_)
+      {
+         if (range.contains(pos))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
+    * The full details will be shown when the user hovers over the gutter icon.
+    */
+   private void showSuggestionGutterOnly(int row, String gutterClass, SuggestionType type,
+                                          CopilotCompletion completion)
+   {
+      // Store the pending suggestion data
+      pendingSuggestion_.type = type;
+      pendingSuggestion_.completion = completion;
+      pendingSuggestion_.gutterRow = row;
+
+      // Create anchors for the completion range
+      createCompletionAnchors(
+         completion.range.start.line,
+         completion.range.start.character,
+         completion.range.end.line,
+         completion.range.end.character);
+
+      // Show the gutter icon
+      pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
+   }
+
+   /**
+    * Shows the full details for the pending suggestion.
+    * Called when user hovers over the gutter icon (when autoshow is disabled).
+    * The pending state is preserved so we can hide details on mouseleave.
+    */
+   private void showPendingSuggestionDetails()
+   {
+      if (pendingSuggestion_.type == SuggestionType.NONE)
+         return;
+
+      CopilotCompletion completion = pendingSuggestion_.completion;
+      if (completion == null)
+         return;
+
+      // Remove the pending gutter icon (the full display methods will add their own)
+      if (pendingGutterRegistration_ != null)
+      {
+         pendingGutterRegistration_.removeHandler();
+         pendingGutterRegistration_ = null;
+      }
+
+      // Show full details based on type
+      switch (pendingSuggestion_.type)
+      {
+         case GHOST_TEXT:
+            // For ghost text, set up the completion and display
+            activeCompletion_ = new Completion(completion);
+            Position position = Position.create(
+               completion.range.start.line,
+               completion.range.start.character);
+            display_.setGhostText(activeCompletion_.displayText, position);
+            break;
+
+         case DELETION:
+            if (pendingSuggestion_.deltas != null)
+               showDeletionSuggestion(completion, pendingSuggestion_.deltas);
+            break;
+
+         case INSERTION:
+            if (pendingSuggestion_.additions != null)
+               showInsertionSuggestion(completion, pendingSuggestion_.additions);
+            break;
+
+         case REPLACEMENT:
+            if (pendingSuggestion_.singleDeletion != null && pendingSuggestion_.singleAddition != null)
+               showReplacementSuggestion(completion, pendingSuggestion_.singleDeletion,
+                                         pendingSuggestion_.singleAddition);
+            break;
+
+         case DIFF:
+            showEditSuggestion(completion);
+            break;
+
+         default:
+            break;
+      }
+
+      // Mark that details are revealed via hover (don't clear pending state)
+      pendingSuggestionRevealed_ = true;
+   }
+
+   /**
+    * Hides the details for a pending suggestion and restores gutter-only state.
+    * Called when mouse leaves the gutter icon area.
+    */
+   private void hidePendingSuggestionDetails()
+   {
+      if (!pendingSuggestionRevealed_ || pendingSuggestion_.type == SuggestionType.NONE)
+         return;
+
+      // Clear all visual elements (similar to reset, but preserve pendingSuggestion_)
+      display_.removeGhostText();
+      activeCompletion_ = null;
+
+      // Clear inline diff view
+      if (diffWidget_ != null)
+      {
+         diffWidget_.detach();
+         diffWidget_ = null;
+      }
+      if (diffView_ != null)
+      {
+         diffView_.detach();
+         diffView_ = null;
+      }
+      if (diffMarkerId_ != -1)
+      {
+         display_.removeHighlight(diffMarkerId_);
+         diffMarkerId_ = -1;
+      }
+
+      // Clear deletion markers
+      for (int markerId : deletionMarkerIds_)
+         display_.removeHighlight(markerId);
+      deletionMarkerIds_.clear();
+      for (HandlerRegistration reg : deletionGutterRegistrations_)
+         reg.removeHandler();
+      deletionGutterRegistrations_.clear();
+      deletionRanges_.clear();
+      display_.getElement().removeClassName("ace_deletion-clickable");
+      deletionCompletion_ = null;
+
+      // Clear insertion tokens
+      for (Position pos : insertionTokenPositions_)
+         display_.removeRendererToken(pos.getRow(), pos.getColumn());
+      insertionTokenPositions_.clear();
+      insertionRanges_.clear();
+      for (HandlerRegistration reg : insertionGutterRegistrations_)
+         reg.removeHandler();
+      insertionGutterRegistrations_.clear();
+      display_.getElement().removeClassName("ace_insertion-clickable");
+      if (insertionBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(insertionBoundsMarkerId_);
+         insertionBoundsMarkerId_ = -1;
+      }
+      insertionCompletion_ = null;
+
+      // Clear replacement
+      if (replacementDeletionMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementDeletionMarkerId_);
+         replacementDeletionMarkerId_ = -1;
+      }
+      if (replacementTokenPosition_ != null)
+      {
+         display_.removeRendererToken(replacementTokenPosition_.getRow(), replacementTokenPosition_.getColumn());
+         replacementTokenPosition_ = null;
+      }
+      if (replacementBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementBoundsMarkerId_);
+         replacementBoundsMarkerId_ = -1;
+      }
+      if (replacementGutterRegistration_ != null)
+      {
+         replacementGutterRegistration_.removeHandler();
+         replacementGutterRegistration_ = null;
+      }
+      replacementRange_ = null;
+      display_.getElement().removeClassName("ace_replacement-clickable");
+      replacementCompletion_ = null;
+
+      // Restore gutter-only state
+      String gutterClass = getGutterClassForType(pendingSuggestion_.type);
+      pendingGutterRegistration_ = display_.addGutterItem(pendingSuggestion_.gutterRow, gutterClass);
+
+      pendingSuggestionRevealed_ = false;
+   }
+
+   /**
+    * Returns the appropriate gutter CSS class for a suggestion type.
+    */
+   private String getGutterClassForType(SuggestionType type)
+   {
+      switch (type)
+      {
+         case DELETION:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+         case INSERTION:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+         case REPLACEMENT:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+         case GHOST_TEXT:
+         case DIFF:
+         default:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION;
+      }
+   }
+
+   /**
+    * Applies the current deletion suggestion.
+    */
+   private void applyDeletionSuggestion()
+   {
+      if (deletionCompletion_ == null)
+         return;
+
+      // Get edit range using anchored positions
+      Range range = Range.create(
+         completionStartAnchor_.getRow(),
+         completionStartAnchor_.getColumn(),
+         completionEndAnchor_.getRow(),
+         completionEndAnchor_.getColumn());
+
+      // Move cursor to start of deletion range
+      display_.setCursorPosition(range.getStart());
+
+      // Perform the deletion (replace with the insertText, which should be empty or minimal)
+      display_.replaceRange(range, deletionCompletion_.insertText);
+
+      // Reset and schedule another suggestion
+      reset();
+      nesTimer_.schedule(20);
+   }
+
+   /**
     * Resets any visible ghost text or inline diff view.
     * Call this before presenting a new suggestion to ensure only one is shown at a time.
     */
@@ -213,6 +989,97 @@ public class TextEditingTargetCopilotHelper
       {
          display_.removeHighlight(diffMarkerId_);
          diffMarkerId_ = -1;
+      }
+
+      // Clear deletion suggestion markers
+      for (int markerId : deletionMarkerIds_)
+      {
+         display_.removeHighlight(markerId);
+      }
+      deletionMarkerIds_.clear();
+
+      // Clear deletion gutter items
+      for (HandlerRegistration registration : deletionGutterRegistrations_)
+      {
+         registration.removeHandler();
+      }
+      deletionGutterRegistrations_.clear();
+
+      // Clear deletion ranges
+      deletionRanges_.clear();
+
+      // Clear clickable cursor class
+      display_.getElement().removeClassName("ace_deletion-clickable");
+
+      // Clear deletion suggestion
+      deletionCompletion_ = null;
+
+      // Clear insertion tokens
+      for (Position pos : insertionTokenPositions_)
+      {
+         display_.removeRendererToken(pos.getRow(), pos.getColumn());
+      }
+      insertionTokenPositions_.clear();
+
+      // Clear insertion ranges
+      insertionRanges_.clear();
+
+      // Clear insertion gutter items
+      for (HandlerRegistration registration : insertionGutterRegistrations_)
+      {
+         registration.removeHandler();
+      }
+      insertionGutterRegistrations_.clear();
+
+      // Clear insertion clickable cursor class
+      display_.getElement().removeClassName("ace_insertion-clickable");
+
+      // Clear insertion bounds marker
+      if (insertionBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(insertionBoundsMarkerId_);
+         insertionBoundsMarkerId_ = -1;
+      }
+
+      insertionCompletion_ = null;
+
+      // Clear replacement suggestion
+      if (replacementDeletionMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementDeletionMarkerId_);
+         replacementDeletionMarkerId_ = -1;
+      }
+
+      if (replacementTokenPosition_ != null)
+      {
+         display_.removeRendererToken(replacementTokenPosition_.getRow(), replacementTokenPosition_.getColumn());
+         replacementTokenPosition_ = null;
+      }
+
+      if (replacementBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementBoundsMarkerId_);
+         replacementBoundsMarkerId_ = -1;
+      }
+
+      if (replacementGutterRegistration_ != null)
+      {
+         replacementGutterRegistration_.removeHandler();
+         replacementGutterRegistration_ = null;
+      }
+
+      replacementRange_ = null;
+      display_.getElement().removeClassName("ace_replacement-clickable");
+      replacementCompletion_ = null;
+
+      // Clear pending suggestion (when autoshow is disabled)
+      pendingSuggestion_.clear();
+      pendingSuggestionRevealed_ = false;
+      pendingHideTimer_.cancel();
+      if (pendingGutterRegistration_ != null)
+      {
+         pendingGutterRegistration_.removeHandler();
+         pendingGutterRegistration_ = null;
       }
    }
 
@@ -432,7 +1299,16 @@ public class TextEditingTargetCopilotHelper
             requestNextEditSuggestions();
          }
       };
-      
+
+      pendingHideTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            hidePendingSuggestionDetails();
+         }
+      };
+
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
          manageHandlers();
@@ -514,6 +1390,260 @@ public class TextEditingTargetCopilotHelper
                      display_.applyGhostText();
                      return;
                   }
+
+                  // Check for clicks on the deletion suggestion gutter icon
+                  Element deletionGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
+                     }
+                  });
+
+                  if (deletionGutterEl != null && deletionCompletion_ != null)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     applyDeletionSuggestion();
+                     return;
+                  }
+
+                  // Check for clicks on the insertion suggestion gutter icon
+                  Element insertionGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
+                     }
+                  });
+
+                  if (insertionGutterEl != null && insertionCompletion_ != null)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     applyInsertionSuggestion();
+                     return;
+                  }
+
+                  // Check for clicks on the replacement suggestion gutter icon
+                  Element replacementGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                     }
+                  });
+
+                  if (replacementGutterEl != null && replacementCompletion_ != null)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     applyReplacementSuggestion();
+                     return;
+                  }
+
+                  // Check for Ctrl/Cmd + click on the deletion highlight
+                  boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
+                  if (isModifierHeld && deletionCompletion_ != null)
+                  {
+                     // Convert mouse coordinates to document position
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        event.getClientX(),
+                        event.getClientY());
+
+                     if (isPositionInDeletionRange(pos))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        applyDeletionSuggestion();
+                        return;
+                     }
+                  }
+
+                  // Check for Ctrl/Cmd + click on the insertion highlight
+                  if (isModifierHeld && insertionCompletion_ != null)
+                  {
+                     // Convert mouse coordinates to document position
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        event.getClientX(),
+                        event.getClientY());
+
+                     if (isPositionInInsertionRange(pos))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        applyInsertionSuggestion();
+                        return;
+                     }
+                  }
+
+                  // Check for Ctrl/Cmd + click on the replacement highlight
+                  if (isModifierHeld && replacementCompletion_ != null)
+                  {
+                     // Convert mouse coordinates to document position
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        event.getClientX(),
+                        event.getClientY());
+
+                     if (isPositionInReplacementRange(pos))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        applyReplacementSuggestion();
+                        return;
+                     }
+                  }
+               }),
+
+               // mousemove handler for showing pointer cursor when hovering over deletion/insertion highlights with Ctrl/Cmd
+               DomUtils.addEventListener(display_.getElement(), "mousemove", false, (event) ->
+               {
+                  // Track last mouse position for keydown/keyup handlers
+                  lastMouseClientX_ = event.getClientX();
+                  lastMouseClientY_ = event.getClientY();
+
+                  boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
+
+                  // Convert mouse coordinates to document position
+                  Position pos = display_.screenCoordinatesToDocumentPosition(
+                     event.getClientX(),
+                     event.getClientY());
+
+                  // Handle deletion clickable cursor
+                  if (deletionCompletion_ != null && isModifierHeld && isPositionInDeletionRange(pos))
+                  {
+                     display_.getElement().addClassName("ace_deletion-clickable");
+                  }
+                  else
+                  {
+                     display_.getElement().removeClassName("ace_deletion-clickable");
+                  }
+
+                  // Handle insertion clickable cursor
+                  if (insertionCompletion_ != null && isModifierHeld && isPositionInInsertionRange(pos))
+                  {
+                     display_.getElement().addClassName("ace_insertion-clickable");
+                  }
+                  else
+                  {
+                     display_.getElement().removeClassName("ace_insertion-clickable");
+                  }
+
+                  // Handle replacement clickable cursor
+                  if (replacementCompletion_ != null && isModifierHeld && isPositionInReplacementRange(pos))
+                  {
+                     display_.getElement().addClassName("ace_replacement-clickable");
+                  }
+                  else
+                  {
+                     display_.getElement().removeClassName("ace_replacement-clickable");
+                  }
+               }),
+
+               // keydown handler to update cursor when modifier key is pressed
+               DomUtils.addEventListener(display_.getElement(), "keydown", false, (event) ->
+               {
+                  // Check if Ctrl or Meta key was just pressed
+                  if (event.getKeyCode() == KeyCodes.KEY_CTRL ||
+                      event.getKeyCode() == 91 || // Left Meta (Cmd on Mac)
+                      event.getKeyCode() == 93)   // Right Meta (Cmd on Mac)
+                  {
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        lastMouseClientX_,
+                        lastMouseClientY_);
+
+                     if (deletionCompletion_ != null && isPositionInDeletionRange(pos))
+                     {
+                        display_.getElement().addClassName("ace_deletion-clickable");
+                     }
+
+                     if (insertionCompletion_ != null && isPositionInInsertionRange(pos))
+                     {
+                        display_.getElement().addClassName("ace_insertion-clickable");
+                     }
+
+                     if (replacementCompletion_ != null && isPositionInReplacementRange(pos))
+                     {
+                        display_.getElement().addClassName("ace_replacement-clickable");
+                     }
+                  }
+               }),
+
+               // keyup handler to update cursor when modifier key is released
+               DomUtils.addEventListener(display_.getElement(), "keyup", false, (event) ->
+               {
+                  // Check if Ctrl or Meta key was just released
+                  if (event.getKeyCode() == KeyCodes.KEY_CTRL ||
+                      event.getKeyCode() == 91 || // Left Meta (Cmd on Mac)
+                      event.getKeyCode() == 93)   // Right Meta (Cmd on Mac)
+                  {
+                     display_.getElement().removeClassName("ace_deletion-clickable");
+                     display_.getElement().removeClassName("ace_insertion-clickable");
+                     display_.getElement().removeClassName("ace_replacement-clickable");
+                  }
+               }),
+
+               // mouseover handler for showing/keeping pending suggestion details when hovering over gutter icon
+               DomUtils.addEventListener(display_.getElement(), "mouseover", false, (event) ->
+               {
+                  Element target = event.getEventTarget().cast();
+
+                  // Check if over a suggestion gutter icon
+                  Element gutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                     }
+                  });
+
+                  if (gutterEl != null)
+                  {
+                     // Cancel any pending hide since we're over a gutter icon
+                     pendingHideTimer_.cancel();
+
+                     // Show details if not already revealed
+                     if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                     {
+                        showPendingSuggestionDetails();
+                     }
+                  }
+               }),
+
+               // mouseout handler for hiding pending suggestion details when leaving gutter icon
+               DomUtils.addEventListener(display_.getElement(), "mouseout", false, (event) ->
+               {
+                  // Only relevant when we have a revealed pending suggestion
+                  if (!pendingSuggestionRevealed_)
+                     return;
+
+                  Element target = event.getEventTarget().cast();
+
+                  // Check if leaving a suggestion gutter icon
+                  Element gutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  {
+                     @Override
+                     public boolean test(Element el)
+                     {
+                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
+                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                     }
+                  });
+
+                  if (gutterEl != null)
+                  {
+                     // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
+                     pendingHideTimer_.schedule(50);
+                  }
                }),
 
                display_.addCursorChangedHandler((event) ->
@@ -567,6 +1697,46 @@ public class TextEditingTargetCopilotHelper
                            event.stopPropagation();
                            event.preventDefault();
                            diffView_.apply();
+                           return;
+                        }
+                     }
+
+                     // Let deletion suggestion accept on Tab if applicable
+                     if (deletionCompletion_ != null)
+                     {
+                        NativeEvent event = keyEvent.getNativeEvent();
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           applyDeletionSuggestion();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
+                           return;
+                        }
+                     }
+
+                     // Let insertion suggestion accept on Tab if applicable
+                     if (insertionCompletion_ != null)
+                     {
+                        NativeEvent event = keyEvent.getNativeEvent();
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           applyInsertionSuggestion();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
                            return;
                         }
                      }
@@ -730,23 +1900,129 @@ public class TextEditingTargetCopilotHelper
                   activeCompletion_.endLine,
                   activeCompletion_.endCharacter);
 
+               // Check if autoshow is enabled
+               boolean autoshow = prefs_.copilotNesAutoshow().getValue();
+
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)
                {
                   // If the start position and end position match, then display
                   // the suggestion using ghost text at that position.
-                  Position position = Position.create(
-                     normalized.range.start.line,
-                     normalized.range.start.character);
-                  display_.setGhostText(activeCompletion_.displayText, position);
+                  if (autoshow)
+                  {
+                     Position position = Position.create(
+                        normalized.range.start.line,
+                        normalized.range.start.character);
+                     display_.setGhostText(activeCompletion_.displayText, position);
+                  }
+                  else
+                  {
+                     // Show only gutter icon; details shown on hover
+                     showSuggestionGutterOnly(
+                        normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION,
+                        SuggestionType.GHOST_TEXT,
+                        normalized);
+                  }
 
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
+
+               // Get the original text from the document at the edit range
+               String originalText = display_.getCode(
+                  Position.create(normalized.range.start.line, normalized.range.start.character),
+                  Position.create(normalized.range.end.line, normalized.range.end.character));
+
+               // Check if this is a deletion-only change
+               EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
+               if (deltas.isDeletionOnly())
+               {
+                  if (autoshow)
+                  {
+                     // For deletion-only changes, just highlight the text to be deleted
+                     showDeletionSuggestion(normalized, deltas);
+                  }
+                  else
+                  {
+                     // Show only gutter icon; details shown on hover
+                     pendingSuggestion_.deltas = deltas;
+                     showSuggestionGutterOnly(
+                        normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION,
+                        SuggestionType.DELETION,
+                        normalized);
+                  }
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  return;
+               }
+
+               // Check if this consists only of single-line insertions
+               if (deltas.isSingleLineInsertions())
+               {
+                  // For single-line insertions, show inline token preview
+                  List<EditDelta> additions = deltas.getAdditions();
+                  if (!additions.isEmpty())
+                  {
+                     if (autoshow)
+                     {
+                        showInsertionSuggestion(normalized, additions);
+                     }
+                     else
+                     {
+                        // Show only gutter icon; details shown on hover
+                        pendingSuggestion_.additions = additions;
+                        showSuggestionGutterOnly(
+                           normalized.range.start.line,
+                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION,
+                           SuggestionType.INSERTION,
+                           normalized);
+                     }
+                     server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                     return;
+                  }
+               }
+
+               // Check if this is a single-line replacement (one deletion + one insertion)
+               if (deltas.isSingleLineReplacement())
+               {
+                  EditDelta deletion = deltas.getSingleDeletion();
+                  EditDelta addition = deltas.getSingleAddition();
+                  if (deletion != null && addition != null)
+                  {
+                     if (autoshow)
+                     {
+                        showReplacementSuggestion(normalized, deletion, addition);
+                     }
+                     else
+                     {
+                        // Show only gutter icon; details shown on hover
+                        pendingSuggestion_.singleDeletion = deletion;
+                        pendingSuggestion_.singleAddition = addition;
+                        showSuggestionGutterOnly(
+                           normalized.range.start.line,
+                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT,
+                           SuggestionType.REPLACEMENT,
+                           normalized);
+                     }
+                     server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                     return;
+                  }
+               }
+
+               // Otherwise, show the suggestion as an inline diff view.
+               if (autoshow)
+               {
+                  showEditSuggestion(normalized);
+               }
                else
                {
-                  // Otherwise, show the suggestion as an inline diff view.
-                  showEditSuggestion(normalized);
+                  // Show only gutter icon; details shown on hover
+                  showSuggestionGutterOnly(
+                     normalized.range.start.line,
+                     AceEditorGutterStyles.NEXT_EDIT_SUGGESTION,
+                     SuggestionType.DIFF,
+                     normalized);
                }
             }
 
@@ -940,6 +2216,7 @@ public class TextEditingTargetCopilotHelper
    private final Timer completionTimer_;
    private final Timer suspendTimer_;
    private final Timer nesTimer_;
+   private final Timer pendingHideTimer_;
    private int nesId_ = 0;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
@@ -953,9 +2230,29 @@ public class TextEditingTargetCopilotHelper
    private int diffMarkerId_ = -1;
    private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
+   private CopilotCompletion deletionCompletion_;
+   private List<Integer> deletionMarkerIds_ = new ArrayList<>();
+   private List<HandlerRegistration> deletionGutterRegistrations_ = new ArrayList<>();
+   private List<Range> deletionRanges_ = new ArrayList<>();
+   private CopilotCompletion insertionCompletion_;
+   private List<Position> insertionTokenPositions_ = new ArrayList<>();
+   private List<Range> insertionRanges_ = new ArrayList<>();
+   private List<HandlerRegistration> insertionGutterRegistrations_ = new ArrayList<>();
+   private int insertionBoundsMarkerId_ = -1;
+   private CopilotCompletion replacementCompletion_;
+   private int replacementDeletionMarkerId_ = -1;
+   private Position replacementTokenPosition_;
+   private Range replacementRange_;
+   private HandlerRegistration replacementGutterRegistration_;
+   private int replacementBoundsMarkerId_ = -1;
+   private int lastMouseClientX_ = 0;
+   private int lastMouseClientY_ = 0;
    private Anchor completionStartAnchor_;
    private Anchor completionEndAnchor_;
    private boolean automaticCodeSuggestionsEnabled_ = true;
+   private final PendingSuggestion pendingSuggestion_ = new PendingSuggestion();
+   private HandlerRegistration pendingGutterRegistration_;
+   private boolean pendingSuggestionRevealed_ = false;
 
 
    // Injected ----

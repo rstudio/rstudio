@@ -2,11 +2,11 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info, ace_tooltip;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_gutter_annotation, ace_info, ace_tooltip, ace_content, ace_line;
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
-@external ace_active_debug_line, ace_next-edit-suggestion-highlight;
+@external ace_active_debug_line, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_next-edit-suggestion-deletion-gutter, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_next-edit-suggestion-insertion-gutter, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_next-edit-suggestion-replacement-gutter, ace_replacement-clickable;
 @external ace_diff-added, ace_diff-removed;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
@@ -414,10 +414,163 @@ pre {
    pointer-events: none;
 }
 
+.ace_next-edit-suggestion-deletion-gutter::before {
+   content: '';
+   position: absolute;
+   left: 1px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   background-color: #C62828;
+   border-radius: 3px;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-deletion-gutter::after {
+   content: '';
+   position: absolute;
+   left: 7px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid transparent;
+   border-left: 5px solid white;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-deletion-gutter .ace_gutter_annotation {
+   cursor: pointer;
+}
+
 .ace_next-edit-suggestion-highlight {
    position: absolute;
    z-index: 1;
    background: rgba(128, 128, 128, 0.2) !important;
+}
+
+.ace_next-edit-suggestion-deletion {
+   position: absolute;
+   z-index: 1;
+   background: rgba(255, 0, 0, 0.2) !important;
+}
+
+.ace_next-edit-suggestion-deletion-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(255, 0, 0, 0.08) !important;
+}
+
+.ace_insertion_preview {
+   opacity: 0.5;
+   font-style: italic;
+   background: rgba(0, 128, 0, 0.2);
+}
+
+.ace_next-edit-suggestion-insertion-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(0, 128, 0, 0.08) !important;
+}
+
+.ace_next-edit-suggestion-insertion-gutter::before {
+   content: '';
+   position: absolute;
+   left: 1px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   background-color: #2E7D32;
+   border-radius: 3px;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-insertion-gutter::after {
+   content: '';
+   position: absolute;
+   left: 7px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid transparent;
+   border-left: 5px solid white;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-insertion-gutter .ace_gutter_annotation {
+   cursor: pointer;
+}
+
+.ace_replacement_deletion {
+   opacity: 0.6;
+   text-decoration: line-through;
+   background: rgba(255, 0, 0, 0.15);
+}
+
+.ace_next-edit-suggestion-replacement-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(128, 128, 0, 0.08) !important;
+}
+
+.ace_next-edit-suggestion-replacement-gutter::before {
+   content: '';
+   position: absolute;
+   left: 0;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   background-color: #555555;
+   border-radius: 3px;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-replacement-gutter::after {
+   content: '';
+   position: absolute;
+   left: 6px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid transparent;
+   border-left: 5px solid white;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-replacement-gutter .ace_gutter_annotation {
+   cursor: pointer;
+}
+
+.ace_replacement-clickable,
+.ace_replacement-clickable .ace_content,
+.ace_replacement-clickable .ace_text-layer,
+.ace_replacement-clickable .ace_line,
+.ace_replacement-clickable .ace_line * {
+   cursor: pointer !important;
+}
+
+.ace_deletion-clickable,
+.ace_deletion-clickable .ace_content,
+.ace_deletion-clickable .ace_text-layer,
+.ace_deletion-clickable .ace_line,
+.ace_deletion-clickable .ace_line * {
+   cursor: pointer !important;
+}
+
+.ace_insertion-clickable,
+.ace_insertion-clickable .ace_content,
+.ace_insertion-clickable .ace_text-layer,
+.ace_insertion-clickable .ace_line,
+.ace_insertion-clickable .ace_line * {
+   cursor: pointer !important;
 }
 
 .ace_diff-added {

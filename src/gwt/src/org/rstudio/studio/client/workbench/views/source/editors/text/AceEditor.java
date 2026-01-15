@@ -4739,6 +4739,16 @@ public class AceEditor implements DocDisplay
       return widget_.getEditor().getSession().getLength();
    }
 
+   public void addRendererToken(String text, String type, int row, int column)
+   {
+      widget_.getEditor().getRenderer().addToken(text, type, row, column);
+   }
+
+   public void removeRendererToken(int row, int column)
+   {
+      widget_.getEditor().getRenderer().removeExtraToken(row, column);
+   }
+
    public double getLineHeight()
    {
       return widget_.getEditor().getRenderer().getLineHeight();

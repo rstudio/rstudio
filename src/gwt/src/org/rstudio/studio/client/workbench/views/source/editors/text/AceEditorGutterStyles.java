@@ -16,9 +16,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 public class AceEditorGutterStyles
 {
-   public static final String ACTIVE_DEBUG_LINE    = "ace_active_debug_line";
-   public static final String EXECUTING_LINE       = "ace_executing-line";
-   public static final String INACTIVE_BREAKPOINT  = "ace_inactive-breakpoint";
-   public static final String NEXT_EDIT_SUGGESTION = "ace_next-edit-suggestion";
-   public static final String PENDING_BREAKPOINT   = "ace_pending-breakpoint";
+   public static final String ACTIVE_DEBUG_LINE            = "ace_active_debug_line";
+   public static final String EXECUTING_LINE               = "ace_executing-line";
+   public static final String INACTIVE_BREAKPOINT          = "ace_inactive-breakpoint";
+   public static final String NEXT_EDIT_SUGGESTION         = "ace_next-edit-suggestion";
+   public static final String NEXT_EDIT_SUGGESTION_DELETION = "ace_next-edit-suggestion-deletion-gutter";
+   public static final String NEXT_EDIT_SUGGESTION_INSERTION = "ace_next-edit-suggestion-insertion-gutter";
+   public static final String NEXT_EDIT_SUGGESTION_REPLACEMENT = "ace_next-edit-suggestion-replacement-gutter";
+   public static final String PENDING_BREAKPOINT           = "ace_pending-breakpoint";
 }
