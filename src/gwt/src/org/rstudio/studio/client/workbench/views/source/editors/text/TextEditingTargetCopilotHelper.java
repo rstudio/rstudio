@@ -406,13 +406,13 @@ public class TextEditingTargetCopilotHelper
          @Override
          protected void apply()
          {
-            // Get edit range using anchored positions so the range stays
+            // Get edit range using NES-specific anchored positions so the range stays
             // valid even if the document has been edited.
             Range range = Range.create(
-               completionStartAnchor_.getRow(),
-               completionStartAnchor_.getColumn(),
-               completionEndAnchor_.getRow(),
-               completionEndAnchor_.getColumn());
+               nesStartAnchor_.getRow(),
+               nesStartAnchor_.getColumn(),
+               nesEndAnchor_.getRow(),
+               nesEndAnchor_.getColumn());
 
             // Move cursor to end of edit range
             display_.setCursorPosition(range.getEnd());
@@ -471,12 +471,12 @@ public class TextEditingTargetCopilotHelper
       if (nesCompletion_ == null)
          return;
 
-      // Get edit range using anchored positions
+      // Get edit range using NES-specific anchored positions
       Range range = Range.create(
-         completionStartAnchor_.getRow(),
-         completionStartAnchor_.getColumn(),
-         completionEndAnchor_.getRow(),
-         completionEndAnchor_.getColumn());
+         nesStartAnchor_.getRow(),
+         nesStartAnchor_.getColumn(),
+         nesEndAnchor_.getRow(),
+         nesEndAnchor_.getColumn());
 
       // Move cursor to start of range
       display_.setCursorPosition(range.getStart());
@@ -672,7 +672,7 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Sets the NES state and creates completion anchors.
+    * Sets the NES state and creates NES anchors.
     * Call this before renderNesSuggestion() or showSuggestionGutterOnly().
     */
    private void setNesState(CopilotCompletion completion, SuggestionType type, EditDeltas deltas)
@@ -681,12 +681,31 @@ public class TextEditingTargetCopilotHelper
       nesType_ = type;
       nesDeltas_ = deltas;
 
-      // Create anchors for the completion range
-      createCompletionAnchors(
-         completion.range.start.line,
-         completion.range.start.character,
-         completion.range.end.line,
-         completion.range.end.character);
+      // Create NES-specific anchors for the completion range
+      detachNesAnchors();
+      nesStartAnchor_ = display_.createAnchor(Position.create(
+         completion.range.start.line, completion.range.start.character));
+      nesStartAnchor_.setInsertRight(true);
+      nesEndAnchor_ = display_.createAnchor(Position.create(
+         completion.range.end.line, completion.range.end.character));
+      nesEndAnchor_.setInsertRight(true);
+   }
+
+   /**
+    * Detaches and clears the NES anchors.
+    */
+   private void detachNesAnchors()
+   {
+      if (nesStartAnchor_ != null)
+      {
+         nesStartAnchor_.detach();
+         nesStartAnchor_ = null;
+      }
+      if (nesEndAnchor_ != null)
+      {
+         nesEndAnchor_.detach();
+         nesEndAnchor_ = null;
+      }
    }
 
    /**
@@ -2034,6 +2053,7 @@ public class TextEditingTargetCopilotHelper
    private void clearNesState()
    {
       clearNesVisuals();
+      detachNesAnchors();
       nesCompletion_ = null;
       nesType_ = SuggestionType.NONE;
       nesDeltas_ = null;
@@ -2072,10 +2092,14 @@ public class TextEditingTargetCopilotHelper
    private List<Range> nesClickableRanges_ = new ArrayList<>();
    private List<Position> nesTokenPositions_ = new ArrayList<>();
    private int nesBoundsMarkerId_ = -1;
+   private Anchor nesStartAnchor_;
+   private Anchor nesEndAnchor_;
 
-   // Mouse tracking and anchors
+   // Mouse tracking
    private int lastMouseClientX_ = 0;
    private int lastMouseClientY_ = 0;
+
+   // Ghost text completion anchors (separate from NES anchors)
    private Anchor completionStartAnchor_;
    private Anchor completionEndAnchor_;
 
