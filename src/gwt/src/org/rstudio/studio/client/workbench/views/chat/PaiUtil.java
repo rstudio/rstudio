@@ -24,7 +24,7 @@ public class PaiUtil
 {
    /**
     * Returns true if the Posit AI feature is enabled. This requires both:
-    * 1. The allow-pai admin option (always true in open-source, configurable in Pro)
+    * 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
     * 2. The pai user preference (temporary, will be removed when feature is ready)
     *
     * @param sessionInfo The session info containing admin settings
@@ -33,6 +33,6 @@ public class PaiUtil
     */
    public static boolean isPaiEnabled(SessionInfo sessionInfo, UserPrefs userPrefs)
    {
-      return sessionInfo.getAllowPai() && userPrefs.pai().getGlobalValue();
+      return sessionInfo.getAllowPositAssistant() && userPrefs.pai().getGlobalValue();
    }
 }

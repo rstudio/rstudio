@@ -309,8 +309,8 @@ protected:
       ("abort-free-mem-percent",
       value<int>(&abortFreeMemPercent_)->default_value(5),
       "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system.")
-      ("allow-pai",
-      value<bool>(&allowPai_)->default_value(false),
+      ("allow-posit-assistant",
+      value<bool>(&allowPositAssistant_)->default_value(false),
       "Indicates whether or not to allow use of the Posit AI assistant feature.");
 
    pR->add_options()
@@ -558,7 +558,7 @@ public:
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
    bool allowOverLimitSessions() const { return allowOverLimitSessions_ || allowOverlay(); }
    int abortFreeMemPercent() const { return abortFreeMemPercent_ || allowOverlay(); }
-   bool allowPai() const { return allowPai_ || allowOverlay(); }
+   bool allowPositAssistant() const { return allowPositAssistant_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -684,7 +684,7 @@ protected:
    bool allowLauncherJobs_;
    bool allowOverLimitSessions_;
    int abortFreeMemPercent_;
-   bool allowPai_;
+   bool allowPositAssistant_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;

@@ -131,11 +131,11 @@ static const char* const kExecutionCanceledError = "Execution canceled by user";
 // Feature availability helper
 // ============================================================================
 // Returns true if the Posit AI feature is enabled. This requires both:
-// 1. The allow-pai admin option (always true in open-source, configurable in Pro)
+// 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
 // 2. The pai user preference (temporary, will be removed when feature is ready)
 bool isPaiEnabled()
 {
-   return options().allowPai() && prefs::userPrefs().pai();
+   return options().allowPositAssistant() && prefs::userPrefs().pai();
 }
 
 // Selective imports from chat modules to avoid namespace pollution

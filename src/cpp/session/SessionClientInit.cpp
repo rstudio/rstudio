@@ -518,7 +518,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
    sessionInfo["allow_full_ui"] = options.allowFullUI();
-   sessionInfo["allow_pai"] = options.allowPai();
+   sessionInfo["allow_posit_assistant"] = options.allowPositAssistant();
    sessionInfo["websocket_ping_interval"] = options.webSocketPingInterval();
    sessionInfo["websocket_connect_timeout"] = options.webSocketConnectTimeout();
 
