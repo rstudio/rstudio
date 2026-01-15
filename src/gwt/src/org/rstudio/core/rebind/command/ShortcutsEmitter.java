@@ -319,6 +319,8 @@ public class ShortcutsEmitter
          return "109";
       if (val.equals("Numpad0"))
          return "96";
+      if (val.equals(";"))
+         return "186";
 
       logger_.log(Type.ERROR, "Returning null from toKeyCode for key '" + val + "'");
       return null;

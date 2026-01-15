@@ -207,11 +207,7 @@ public class Renderer extends JavaScriptObject
       this.$textLayer.setColorPreview(show);
    }-*/;
 
-   public final native void addToken(String text, String type, int row, int column) /*-{
-      this.addToken(text, type, row, column);
-   }-*/;
-
-   public final native void removeExtraToken(int row, int column) /*-{
-      this.removeExtraToken(row, column);
+   public final native void updateLines(int firstRow, int lastRow) /*-{
+      this.updateLines(firstRow, lastRow);
    }-*/;
 }

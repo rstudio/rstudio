@@ -414,7 +414,12 @@ pre {
    pointer-events: none;
 }
 
-.ace_next-edit-suggestion-deletion-gutter::before {
+.ace_next-edit-suggestion .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion .ace_gutter_annotation::before {
    content: '';
    position: absolute;
    left: 1px;
@@ -422,12 +427,12 @@ pre {
    transform: translateY(-50%);
    width: 16px;
    height: 16px;
-   background-color: #C62828;
+   background-color: #1E77BC;
    border-radius: 3px;
    cursor: pointer;
 }
 
-.ace_next-edit-suggestion-deletion-gutter::after {
+.ace_next-edit-suggestion .ace_gutter_annotation::after {
    content: '';
    position: absolute;
    left: 7px;
@@ -442,6 +447,34 @@ pre {
 }
 
 .ace_next-edit-suggestion-deletion-gutter .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-deletion-gutter .ace_gutter_annotation::before {
+   content: '';
+   position: absolute;
+   left: 1px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   background-color: #C62828;
+   border-radius: 3px;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-deletion-gutter .ace_gutter_annotation::after {
+   content: '';
+   position: absolute;
+   left: 7px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid transparent;
+   border-left: 5px solid white;
    cursor: pointer;
 }
 
@@ -475,7 +508,12 @@ pre {
    background: rgba(0, 128, 0, 0.08) !important;
 }
 
-.ace_next-edit-suggestion-insertion-gutter::before {
+.ace_next-edit-suggestion-insertion-gutter .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-insertion-gutter .ace_gutter_annotation::before {
    content: '';
    position: absolute;
    left: 1px;
@@ -488,7 +526,7 @@ pre {
    cursor: pointer;
 }
 
-.ace_next-edit-suggestion-insertion-gutter::after {
+.ace_next-edit-suggestion-insertion-gutter .ace_gutter_annotation::after {
    content: '';
    position: absolute;
    left: 7px;
@@ -499,10 +537,6 @@ pre {
    border-top: 4px solid transparent;
    border-bottom: 4px solid transparent;
    border-left: 5px solid white;
-   cursor: pointer;
-}
-
-.ace_next-edit-suggestion-insertion-gutter .ace_gutter_annotation {
    cursor: pointer;
 }
 
@@ -518,10 +552,15 @@ pre {
    background: rgba(128, 128, 0, 0.08) !important;
 }
 
-.ace_next-edit-suggestion-replacement-gutter::before {
+.ace_next-edit-suggestion-replacement-gutter .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_next-edit-suggestion-replacement-gutter .ace_gutter_annotation::before {
    content: '';
    position: absolute;
-   left: 0;
+   left: 1px;
    top: 50%;
    transform: translateY(-50%);
    width: 16px;
@@ -531,10 +570,10 @@ pre {
    cursor: pointer;
 }
 
-.ace_next-edit-suggestion-replacement-gutter::after {
+.ace_next-edit-suggestion-replacement-gutter .ace_gutter_annotation::after {
    content: '';
    position: absolute;
-   left: 6px;
+   left: 7px;
    top: 50%;
    transform: translateY(-50%);
    width: 0;
@@ -542,10 +581,6 @@ pre {
    border-top: 4px solid transparent;
    border-bottom: 4px solid transparent;
    border-left: 5px solid white;
-   cursor: pointer;
-}
-
-.ace_next-edit-suggestion-replacement-gutter .ace_gutter_annotation {
    cursor: pointer;
 }
 

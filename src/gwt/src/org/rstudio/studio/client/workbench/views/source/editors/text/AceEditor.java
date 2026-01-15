@@ -4739,15 +4739,67 @@ public class AceEditor implements DocDisplay
       return widget_.getEditor().getSession().getLength();
    }
 
-   public void addRendererToken(String text, String type, int row, int column)
+   /**
+    * Invalidates the tokenizer cache for a row, forcing re-tokenization
+    * on the next render. Call this before modifying tokens manually.
+    */
+   public void invalidateTokens(int row)
    {
-      widget_.getEditor().getRenderer().addToken(text, type, row, column);
+      invalidateTokensImpl(widget_.getEditor(), row);
    }
 
-   public void removeRendererToken(int row, int column)
+   private static final native void invalidateTokensImpl(AceEditorNative editor, int row) /*-{
+      editor.session.bgTokenizer.lines[row] = null;
+   }-*/;
+
+   /**
+    * Renders tokens on a row after manual modification.
+    * Call this after modifying the token array.
+    */
+   public void renderTokens(int row)
    {
-      widget_.getEditor().getRenderer().removeExtraToken(row, column);
+      widget_.getEditor().getRenderer().updateLines(row, row);
    }
+
+   /**
+    * Resets tokens on a row to their original state by invalidating
+    * the cache and re-rendering. This removes any extra tokens that
+    * were manually spliced in.
+    */
+   public void resetTokens(int row)
+   {
+      invalidateTokens(row);
+      renderTokens(row);
+   }
+
+   /**
+    * Splices a token into the token array at the specified column position.
+    * This splits an existing token if necessary.
+    */
+   public void spliceToken(JsArray<Token> tokens, Token newToken, int column)
+   {
+      spliceTokenImpl(tokens, newToken, column);
+   }
+
+   private static final native void spliceTokenImpl(JsArray<Token> tokens, Token newToken, int column) /*-{
+      var l = 0;
+      for (var i = 0; i < tokens.length; i++) {
+         var token = tokens[i];
+         l += token.value.length;
+         if (column <= l) {
+            var diff = token.value.length - (l - column);
+            var before = token.value.slice(0, diff);
+            var after = token.value.slice(diff);
+            tokens.splice(i, 1,
+               {type: token.type, value: before},
+               newToken,
+               {type: token.type, value: after});
+            return;
+         }
+      }
+      // If column is past end, just append
+      tokens.push(newToken);
+   }-*/;
 
    public double getLineHeight()
    {

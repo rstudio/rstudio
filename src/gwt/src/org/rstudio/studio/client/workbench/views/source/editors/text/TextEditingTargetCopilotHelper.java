@@ -15,8 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -56,7 +60,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -553,7 +559,11 @@ public class TextEditingTargetCopilotHelper
       int minRow = Integer.MAX_VALUE;
       int maxRow = Integer.MIN_VALUE;
 
-      // Add insertion preview tokens for each addition
+      // Group additions by row so we can add multiple tokens per row efficiently.
+      // We need to process them in reverse column order within each row so that
+      // splicing doesn't shift the positions of subsequent insertions.
+      Map<Integer, List<InsertionInfo>> insertionsByRow = new HashMap<>();
+
       for (EditDelta additionDelta : additionDeltas)
       {
          // Compute the document position for the insertion
@@ -562,9 +572,6 @@ public class TextEditingTargetCopilotHelper
          int insertCol = range.getStart().getRow() == 0
             ? baseCol + range.getStart().getColumn()
             : range.getStart().getColumn();
-
-         // Add the insertion preview token
-         display_.addRendererToken(additionDelta.text, "insertion_preview", insertRow, insertCol);
 
          // Track the position for cleanup
          insertionTokenPositions_.add(Position.create(insertRow, insertCol));
@@ -577,6 +584,33 @@ public class TextEditingTargetCopilotHelper
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, insertRow);
          maxRow = Math.max(maxRow, insertRow);
+
+         // Group by row
+         insertionsByRow
+            .computeIfAbsent(insertRow, k -> new ArrayList<>())
+            .add(new InsertionInfo(additionDelta.text, insertCol));
+      }
+
+      // Now add tokens row by row, processing multiple insertions per row efficiently
+      for (Map.Entry<Integer, List<InsertionInfo>> entry : insertionsByRow.entrySet())
+      {
+         int row = entry.getKey();
+         List<InsertionInfo> insertions = entry.getValue();
+
+         // Sort by column in descending order so splicing doesn't affect positions
+         insertions.sort((a, b) -> Integer.compare(b.column, a.column));
+
+         // Invalidate tokens for this row, get the token array, splice all insertions, then render
+         display_.invalidateTokens(row);
+         JsArray<Token> tokens = display_.getTokens(row);
+
+         for (InsertionInfo info : insertions)
+         {
+            Token newToken = Token.create(info.text, "insertion_preview", 0);
+            display_.spliceToken(tokens, newToken, info.column);
+         }
+
+         display_.renderTokens(row);
       }
 
       // Add bounding rectangle highlight for all affected rows
@@ -594,6 +628,19 @@ public class TextEditingTargetCopilotHelper
 
       // Store the completion for applying later
       insertionCompletion_ = completion;
+   }
+
+   // Helper class for grouping insertion information by row
+   private static class InsertionInfo
+   {
+      final String text;
+      final int column;
+
+      InsertionInfo(String text, int column)
+      {
+         this.text = text;
+         this.column = column;
+      }
    }
 
    /**
@@ -663,7 +710,10 @@ public class TextEditingTargetCopilotHelper
       int insertCol = delEndCol;
 
       // Add the insertion preview token
-      display_.addRendererToken(addition.text, "insertion_preview", insertRow, insertCol);
+      display_.invalidateTokens(insertRow);
+      JsArray<Token> tokens = display_.getTokens(insertRow);
+      display_.spliceToken(tokens, Token.create(addition.text, "insertion_preview", 0), insertCol);
+      display_.renderTokens(insertRow);
       replacementTokenPosition_ = Position.create(insertRow, insertCol);
 
       // Add bounding rectangle highlight
@@ -866,9 +916,12 @@ public class TextEditingTargetCopilotHelper
       display_.getElement().removeClassName("ace_deletion-clickable");
       deletionCompletion_ = null;
 
-      // Clear insertion tokens
+      // Clear insertion tokens (reset each affected row once)
+      Set<Integer> insertionRows = new HashSet<>();
       for (Position pos : insertionTokenPositions_)
-         display_.removeRendererToken(pos.getRow(), pos.getColumn());
+         insertionRows.add(pos.getRow());
+      for (int row : insertionRows)
+         display_.resetTokens(row);
       insertionTokenPositions_.clear();
       insertionRanges_.clear();
       for (HandlerRegistration reg : insertionGutterRegistrations_)
@@ -890,7 +943,7 @@ public class TextEditingTargetCopilotHelper
       }
       if (replacementTokenPosition_ != null)
       {
-         display_.removeRendererToken(replacementTokenPosition_.getRow(), replacementTokenPosition_.getColumn());
+         display_.resetTokens(replacementTokenPosition_.getRow());
          replacementTokenPosition_ = null;
       }
       if (replacementBoundsMarkerId_ != -1)
@@ -1014,11 +1067,12 @@ public class TextEditingTargetCopilotHelper
       // Clear deletion suggestion
       deletionCompletion_ = null;
 
-      // Clear insertion tokens
+      // Clear insertion tokens (reset each affected row once)
+      Set<Integer> rowsToReset = new HashSet<>();
       for (Position pos : insertionTokenPositions_)
-      {
-         display_.removeRendererToken(pos.getRow(), pos.getColumn());
-      }
+         rowsToReset.add(pos.getRow());
+      for (int row : rowsToReset)
+         display_.resetTokens(row);
       insertionTokenPositions_.clear();
 
       // Clear insertion ranges
@@ -1052,7 +1106,7 @@ public class TextEditingTargetCopilotHelper
 
       if (replacementTokenPosition_ != null)
       {
-         display_.removeRendererToken(replacementTokenPosition_.getRow(), replacementTokenPosition_.getColumn());
+         display_.resetTokens(replacementTokenPosition_.getRow());
          replacementTokenPosition_ = null;
       }
 
@@ -1591,28 +1645,41 @@ public class TextEditingTargetCopilotHelper
                {
                   Element target = event.getEventTarget().cast();
 
-                  // Check if over a suggestion gutter icon
-                  Element gutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  // Check if over an ace_gutter_annotation element within a suggestion gutter cell
+                  Element annotationEl = DomUtils.findParentElement(target, true, new ElementPredicate()
                   {
                      @Override
                      public boolean test(Element el)
                      {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                        return el.hasClassName("ace_gutter_annotation");
                      }
                   });
 
-                  if (gutterEl != null)
+                  if (annotationEl != null)
                   {
-                     // Cancel any pending hide since we're over a gutter icon
-                     pendingHideTimer_.cancel();
-
-                     // Show details if not already revealed
-                     if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                     // Check if this annotation is within a suggestion gutter cell
+                     Element gutterCell = DomUtils.findParentElement(annotationEl, false, new ElementPredicate()
                      {
-                        showPendingSuggestionDetails();
+                        @Override
+                        public boolean test(Element el)
+                        {
+                           return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                        }
+                     });
+
+                     if (gutterCell != null)
+                     {
+                        // Cancel any pending hide since we're over a gutter icon
+                        pendingHideTimer_.cancel();
+
+                        // Show details if not already revealed
+                        if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                        {
+                           showPendingSuggestionDetails();
+                        }
                      }
                   }
                }),
@@ -1626,23 +1693,36 @@ public class TextEditingTargetCopilotHelper
 
                   Element target = event.getEventTarget().cast();
 
-                  // Check if leaving a suggestion gutter icon
-                  Element gutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
+                  // Check if leaving an ace_gutter_annotation element within a suggestion gutter cell
+                  Element annotationEl = DomUtils.findParentElement(target, true, new ElementPredicate()
                   {
                      @Override
                      public boolean test(Element el)
                      {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
-                               el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                        return el.hasClassName("ace_gutter_annotation");
                      }
                   });
 
-                  if (gutterEl != null)
+                  if (annotationEl != null)
                   {
-                     // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
-                     pendingHideTimer_.schedule(50);
+                     // Check if this annotation is within a suggestion gutter cell
+                     Element gutterCell = DomUtils.findParentElement(annotationEl, false, new ElementPredicate()
+                     {
+                        @Override
+                        public boolean test(Element el)
+                        {
+                           return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
+                                  el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                        }
+                     });
+
+                     if (gutterCell != null)
+                     {
+                        // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
+                        pendingHideTimer_.schedule(50);
+                     }
                   }
                }),
 
@@ -1688,10 +1768,31 @@ public class TextEditingTargetCopilotHelper
                   @Override
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
+                     NativeEvent event = keyEvent.getNativeEvent();
+
+                     // If we have a pending suggestion (gutter only, not revealed),
+                     // Tab should reveal it first before accepting
+                     if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                     {
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           showPendingSuggestionDetails();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
+                           return;
+                        }
+                     }
+
                      // Let diff view accept on Tab if applicable
                      if (diffView_ != null)
                      {
-                        NativeEvent event = keyEvent.getNativeEvent();
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
@@ -1704,7 +1805,6 @@ public class TextEditingTargetCopilotHelper
                      // Let deletion suggestion accept on Tab if applicable
                      if (deletionCompletion_ != null)
                      {
-                        NativeEvent event = keyEvent.getNativeEvent();
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
@@ -1724,12 +1824,30 @@ public class TextEditingTargetCopilotHelper
                      // Let insertion suggestion accept on Tab if applicable
                      if (insertionCompletion_ != null)
                      {
-                        NativeEvent event = keyEvent.getNativeEvent();
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
                            applyInsertionSuggestion();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
+                           return;
+                        }
+                     }
+
+                     // Let replacement suggestion accept on Tab if applicable
+                     if (replacementCompletion_ != null)
+                     {
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           applyReplacementSuggestion();
                            return;
                         }
                         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
@@ -1765,13 +1883,12 @@ public class TextEditingTargetCopilotHelper
                         return;
                      }
 
-                     NativeEvent event = keyEvent.getNativeEvent();
                      if (event.getKeyCode() == KeyCodes.KEY_TAB)
                      {
                         event.stopPropagation();
                         event.preventDefault();
 
-                        // Otherwise, accept the ghost text. Use anchored positions
+                        // Accept the ghost text. Use anchored positions
                         // so the range stays valid even if the document has been edited.
                         Range aceRange = Range.create(
                               completionStartAnchor_.getRow(),
@@ -2102,7 +2219,7 @@ public class TextEditingTargetCopilotHelper
       if (display_.isFocused())
       {
          automaticCodeSuggestionsEnabled_ = !automaticCodeSuggestionsEnabled_;
-         
+
          if (automaticCodeSuggestionsEnabled_)
          {
             events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_ENABLED));
@@ -2113,7 +2230,56 @@ public class TextEditingTargetCopilotHelper
          }
       }
    }
-   
+
+   @Handler
+   public void onCopilotAcceptNextEditSuggestion()
+   {
+      if (!display_.isFocused())
+         return;
+
+      // If we have a pending suggestion that hasn't been revealed, reveal it first
+      if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+      {
+         showPendingSuggestionDetails();
+         return;
+      }
+
+      // Apply the appropriate suggestion type
+      if (diffView_ != null)
+      {
+         diffView_.apply();
+      }
+      else if (deletionCompletion_ != null)
+      {
+         applyDeletionSuggestion();
+      }
+      else if (insertionCompletion_ != null)
+      {
+         applyInsertionSuggestion();
+      }
+      else if (replacementCompletion_ != null)
+      {
+         applyReplacementSuggestion();
+      }
+   }
+
+   @Handler
+   public void onCopilotDismissNextEditSuggestion()
+   {
+      if (!display_.isFocused())
+         return;
+
+      // Dismiss any active next edit suggestion
+      if (pendingSuggestion_.type != SuggestionType.NONE ||
+          diffView_ != null ||
+          deletionCompletion_ != null ||
+          insertionCompletion_ != null ||
+          replacementCompletion_ != null)
+      {
+         reset();
+      }
+   }
+
    private void updateCompletion(String key)
    {
       int n = key.length();
