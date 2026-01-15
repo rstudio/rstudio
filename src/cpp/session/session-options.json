@@ -577,6 +577,13 @@
             "memberName": "abortFreeMemPercent_",
             "defaultValue": 5,
             "description": "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system."
+         },
+         {
+            "name": "allow-pai",
+            "type": "bool",
+            "memberName": "allowPai_",
+            "defaultValue": false,
+            "description": "Indicates whether or not to allow use of the Posit AI assistant feature."
          }
       ],
       "r": [

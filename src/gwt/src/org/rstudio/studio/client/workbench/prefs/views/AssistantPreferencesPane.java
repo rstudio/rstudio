@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
@@ -116,19 +117,38 @@ public class AssistantPreferencesPane extends PreferencesPane
       server_ = server;
       projectServer_ = projectServer;
 
-      // Create assistant selector
+      // Create assistant selector - conditionally include Posit AI option
+      boolean paiEnabled = PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs_);
+      String[] assistantLabels;
+      String[] assistantValues;
+      if (paiEnabled)
+      {
+         assistantLabels = new String[] {
+               prefsConstants_.rstudioAssistantEnum_none(),
+               prefsConstants_.rstudioAssistantEnum_posit_ai(),
+               prefsConstants_.rstudioAssistantEnum_copilot()
+         };
+         assistantValues = new String[] {
+               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
+               UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI,
+               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+         };
+      }
+      else
+      {
+         assistantLabels = new String[] {
+               prefsConstants_.rstudioAssistantEnum_none(),
+               prefsConstants_.rstudioAssistantEnum_copilot()
+         };
+         assistantValues = new String[] {
+               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
+               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+         };
+      }
       selAssistant_ = new SelectWidget(
             constants_.assistantSelectLabel(),
-            new String[] {
-                  prefsConstants_.rstudioAssistantEnum_none(),
-                  prefsConstants_.rstudioAssistantEnum_posit_ai(),
-                  prefsConstants_.rstudioAssistantEnum_copilot()
-            },
-            new String[] {
-                  UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
-                  UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI,
-                  UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
-            },
+            assistantLabels,
+            assistantValues,
             false,
             true,
             false);

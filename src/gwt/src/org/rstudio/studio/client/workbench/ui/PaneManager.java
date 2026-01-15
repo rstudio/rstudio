@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
+import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -1747,7 +1748,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            if (tab == Tab.Chat && !userPrefs_.pai().getGlobalValue())
+            if (tab == Tab.Chat && !PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
                continue;
             tabList.add(tab);
          }
@@ -1828,7 +1829,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (userPrefs_.pai().getGlobalValue())
+      if (PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -2638,7 +2639,7 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = userPrefs_.pai().getGlobalValue();
+      boolean showPaiUi = PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_);
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
    }
@@ -2662,7 +2663,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      if (userPrefs_.pai().getGlobalValue())
+      if (PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
          commands.add(commands_.layoutZoomChat());
 
       return commands;

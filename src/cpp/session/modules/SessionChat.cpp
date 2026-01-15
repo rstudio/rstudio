@@ -127,6 +127,16 @@ static std::string s_positAssistantVersion;
 // @databot/core/errors/constants.ts: "Execution canceled by user"
 static const char* const kExecutionCanceledError = "Execution canceled by user";
 
+// ============================================================================
+// Feature availability helper
+// ============================================================================
+// Returns true if the Posit AI feature is enabled. This requires both:
+// 1. The allow-pai admin option (always true in open-source, configurable in Pro)
+// 2. The pai user preference (temporary, will be removed when feature is ready)
+bool isPaiEnabled()
+{
+   return options().allowPai() && prefs::userPrefs().pai();
+}
 
 // Selective imports from chat modules to avoid namespace pollution
 namespace chat_constants = rstudio::session::modules::chat::constants;
@@ -2932,7 +2942,7 @@ Error checkForUpdatesOnStartup()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!prefs::userPrefs().pai())
+   if (!isPaiEnabled())
    {
       DLOG("Update check skipped: posit assistant not configured");
       return Success();
@@ -3519,7 +3529,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!prefs::userPrefs().pai())
+   if (!isPaiEnabled())
    {
       // Return empty/negative response - don't reveal feature
       json::Object result;
@@ -3550,7 +3560,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!prefs::userPrefs().pai())
+   if (!isPaiEnabled())
    {
       return systemError(boost::system::errc::operation_not_permitted,
                         "Feature not enabled",
@@ -3683,7 +3693,7 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!prefs::userPrefs().pai())
+   if (!isPaiEnabled())
    {
       // Return idle status - don't reveal feature exists
       json::Object result;
