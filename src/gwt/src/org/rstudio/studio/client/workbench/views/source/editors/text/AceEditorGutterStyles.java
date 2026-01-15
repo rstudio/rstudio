@@ -19,9 +19,12 @@ public class AceEditorGutterStyles
    public static final String ACTIVE_DEBUG_LINE            = "ace_active_debug_line";
    public static final String EXECUTING_LINE               = "ace_executing-line";
    public static final String INACTIVE_BREAKPOINT          = "ace_inactive-breakpoint";
-   public static final String NEXT_EDIT_SUGGESTION         = "ace_next-edit-suggestion";
-   public static final String NEXT_EDIT_SUGGESTION_DELETION = "ace_next-edit-suggestion-deletion-gutter";
-   public static final String NEXT_EDIT_SUGGESTION_INSERTION = "ace_next-edit-suggestion-insertion-gutter";
-   public static final String NEXT_EDIT_SUGGESTION_REPLACEMENT = "ace_next-edit-suggestion-replacement-gutter";
    public static final String PENDING_BREAKPOINT           = "ace_pending-breakpoint";
+
+   // NES (Next Edit Suggestion) gutter styles - base class + color modifier
+   public static final String NES_GUTTER_BASE              = "ace_nes-gutter";
+   public static final String NEXT_EDIT_SUGGESTION         = "ace_nes-gutter ace_nes-gutter-highlight";
+   public static final String NEXT_EDIT_SUGGESTION_DELETION = "ace_nes-gutter ace_nes-gutter-deletion";
+   public static final String NEXT_EDIT_SUGGESTION_INSERTION = "ace_nes-gutter ace_nes-gutter-insertion";
+   public static final String NEXT_EDIT_SUGGESTION_REPLACEMENT = "ace_nes-gutter ace_nes-gutter-replacement";
 }

@@ -31,7 +31,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.diff.JsDiff;
 import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
@@ -687,10 +686,8 @@ public class TextEditingTargetCopilotHelper
     */
    private static boolean isNesSuggestionGutterCell(Element el)
    {
-      return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION) ||
-             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION) ||
-             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION) ||
-             el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+      // Just check for the base class since all NES gutter icons use it
+      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE);
    }
 
    /**
@@ -1187,75 +1184,20 @@ public class TextEditingTargetCopilotHelper
 
                   Element target = event.getEventTarget().cast();
 
-                  // Check for clicks on the next-edit suggestion gutter icon.
-                  Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-                     }
-                  });
+                  // Check for clicks on any NES gutter icon (uses base class)
+                  Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
+                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE));
 
-                  if (nesEl != null)
+                  if (nesGutterEl != null && nesType_ != SuggestionType.NONE)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     display_.applyGhostText();
-                     return;
-                  }
 
-                  // Check for clicks on the deletion suggestion gutter icon
-                  Element deletionGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
-                     }
-                  });
-
-                  if (deletionGutterEl != null && nesType_ == SuggestionType.DELETION)
-                  {
-                     event.stopPropagation();
-                     event.preventDefault();
-                     applyNesSuggestion();
-                     return;
-                  }
-
-                  // Check for clicks on the insertion suggestion gutter icon
-                  Element insertionGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
-                     }
-                  });
-
-                  if (insertionGutterEl != null && nesType_ == SuggestionType.INSERTION)
-                  {
-                     event.stopPropagation();
-                     event.preventDefault();
-                     applyNesSuggestion();
-                     return;
-                  }
-
-                  // Check for clicks on the replacement suggestion gutter icon
-                  Element replacementGutterEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                     }
-                  });
-
-                  if (replacementGutterEl != null && nesType_ == SuggestionType.REPLACEMENT)
-                  {
-                     event.stopPropagation();
-                     event.preventDefault();
-                     applyNesSuggestion();
+                     // Ghost text uses applyGhostText(), all others use applyNesSuggestion()
+                     if (nesType_ == SuggestionType.GHOST_TEXT)
+                        display_.applyGhostText();
+                     else
+                        applyNesSuggestion();
                      return;
                   }
 
