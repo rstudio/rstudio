@@ -870,18 +870,21 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Resets any visible ghost text or inline diff view.
-    * Call this before presenting a new suggestion to ensure only one is shown at a time.
+    * Resets ghost text and inline completion state only.
     */
-   private void reset()
+   private void resetCompletion()
    {
-      // Remove ghost text
       display_.removeGhostText();
       completionTimer_.cancel();
       activeCompletion_ = null;
       detachCompletionAnchors();
+   }
 
-      // Clear all suggestion types (clearNesState also clears pending state)
+   /**
+    * Resets NES (Next Edit Suggestion) state only.
+    */
+   private void resetSuggestion()
+   {
       clearDiffState();
       clearNesState();
 
@@ -892,6 +895,16 @@ public class TextEditingTargetCopilotHelper
          pendingGutterRegistration_.removeHandler();
          pendingGutterRegistration_ = null;
       }
+   }
+
+   /**
+    * Resets all state - both inline completions and NES.
+    * Call this when both should be cleared (e.g., document changes, Escape key).
+    */
+   private void reset()
+   {
+      resetCompletion();
+      resetSuggestion();
    }
 
    /**
@@ -1071,7 +1084,7 @@ public class TextEditingTargetCopilotHelper
                               // (which we need to send back to the server as-is in some language-server methods).
                               CopilotCompletion normalized = normalizeCompletion(completion);
 
-                              reset();
+                              resetCompletion();
                               activeCompletion_ = new Completion(normalized);
                               createCompletionAnchors(
                                  activeCompletion_.startLine,
@@ -1544,7 +1557,7 @@ public class TextEditingTargetCopilotHelper
                   return;
                }
 
-               reset();
+               resetSuggestion();
                CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
 
                // Construct a Copilot completion object from the response
@@ -1560,7 +1573,7 @@ public class TextEditingTargetCopilotHelper
                // The completion data gets modified when doing partial (word-by-word)
                // completions, so we need to use a copy and preserve the original
                // (which we need to send back to the server as-is in some language-server methods).
-               CopilotCompletion normalized = normalizeCompletion(completion);
+               CopilotCompletion normalized = normalizeSuggestion(completion);
 
                // Check if autoshow is enabled
                boolean autoshow = prefs_.copilotNesAutoshow().getValue();
@@ -1806,9 +1819,8 @@ public class TextEditingTargetCopilotHelper
       return copilot_.isEnabled();
    }
    
-   // A Copilot completion will often overlap region(s) of the document.
-   // Try to avoid presenting this overlap, so that only the relevant
-   // portion of the completed text is presented to the user.
+   // Normalize an inline completion by trimming overlapping prefix/suffix.
+   // This is used for traditional Copilot completions displayed as ghost text.
    private CopilotCompletion normalizeCompletion(CopilotCompletion completion)
    {
       try
@@ -1823,6 +1835,80 @@ public class TextEditingTargetCopilotHelper
    }
 
    private CopilotCompletion normalizeCompletionImpl(CopilotCompletion completion)
+   {
+      // Remove any overlap from the start of the completion.
+      int lhs = 0;
+      {
+         int row = completion.range.start.line;
+         int col = completion.range.start.character;
+         String line = display_.getLine(row);
+
+         for (; lhs < completion.insertText.length() && col + lhs < line.length(); lhs++)
+         {
+            char clhs = completion.insertText.charAt(lhs);
+            char crhs = line.charAt(col + lhs);
+            if (clhs != crhs)
+               break;
+         }
+      }
+
+      // Remove any overlap from the end of the completion.
+      // Only do this part for single-line completions.
+      int rhs = 0;
+      if (completion.range.start.line == completion.range.end.line)
+      {
+         int row = completion.range.end.line;
+         int col = completion.range.end.character;
+         String line = display_.getLine(row);
+
+         for (; rhs < completion.insertText.length() && col - rhs > 0; rhs++)
+         {
+            char clhs = completion.insertText.charAt(completion.insertText.length() - rhs - 1);
+            char crhs = line.charAt(col - rhs - 1);
+            if (clhs != crhs)
+               break;
+         }
+      }
+
+      CopilotCompletion normalized = JsUtil.clone(completion);
+      int n = normalized.insertText.length();
+
+      if (lhs >= n - rhs)
+      {
+         // The completion is entirely overlapping the existing text.
+         Position cursorPos = display_.getCursorPosition();
+         normalized.insertText = "";
+         normalized.range.start.line = cursorPos.getRow();
+         normalized.range.start.character = cursorPos.getColumn();
+         normalized.range.end.line = cursorPos.getRow();
+         normalized.range.end.character = cursorPos.getColumn();
+      }
+      else
+      {
+         normalized.insertText = StringUtil.substring(normalized.insertText, lhs, n - rhs);
+         normalized.range.start.character += lhs;
+         normalized.range.end.character -= rhs;
+      }
+
+      return normalized;
+   }
+
+   // Normalize an edit suggestion by expanding multi-line ranges.
+   // This is used for NES (Next Edit Suggestions) which use diff-based rendering.
+   private CopilotCompletion normalizeSuggestion(CopilotCompletion completion)
+   {
+      try
+      {
+         return normalizeSuggestionImpl(completion);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         return completion;
+      }
+   }
+
+   private CopilotCompletion normalizeSuggestionImpl(CopilotCompletion completion)
    {
       completion = JsUtil.clone(completion);
 
