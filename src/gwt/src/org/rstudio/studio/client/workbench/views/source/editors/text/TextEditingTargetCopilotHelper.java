@@ -1310,7 +1310,7 @@ public class TextEditingTargetCopilotHelper
                   if (gutterCell != null)
                   {
                      // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
-                     pendingHideTimer_.schedule(50);
+                     pendingHideTimer_.schedule(100);
                   }
                }),
 
@@ -1362,7 +1362,7 @@ public class TextEditingTargetCopilotHelper
                      // Tab should reveal it first before accepting
                      if (hasPendingUnrevealedSuggestion())
                      {
-                        if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
