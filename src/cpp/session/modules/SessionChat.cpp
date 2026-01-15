@@ -955,6 +955,9 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             // relativeOrder == 0 means document is loaded but not visible in a tab
             fileObj["isVisible"] = (pDoc->relativeOrder() > 0);
 
+            // Text selections (empty for now, will be populated when selection tracking is implemented)
+            fileObj["textSelections"] = json::Array();
+
             openFilesArray.push_back(fileObj);
          }
 
