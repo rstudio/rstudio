@@ -450,142 +450,6 @@ public class TextEditingTargetCopilotHelper
          null);
    }
 
-   /**
-    * Renders a deletion-only edit suggestion by highlighting the text that would be deleted.
-    * Assumes nesCompletion_ and nesDeltas_ are already set.
-    */
-   private void renderDeletionSuggestion()
-   {
-      int baseRow = nesCompletion_.range.start.line;
-      int baseCol = nesCompletion_.range.start.character;
-
-      // Track bounds for the bounding rectangle highlight
-      int minRow = Integer.MAX_VALUE;
-      int maxRow = Integer.MIN_VALUE;
-
-      // Highlight each deletion range with a red-tinted background
-      boolean addedGutterIcon = false;
-      for (EditDelta delta : nesDeltas_.getDeltas())
-      {
-         if (delta.type != EditType.DELETION)
-            continue;
-
-         Range documentRange = offsetRangeToDocument(delta.range, baseRow, baseCol);
-
-         int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
-         nesMarkerIds_.add(markerId);
-
-         // Store the document range for click detection
-         nesClickableRanges_.add(documentRange);
-
-         // Track min/max rows for bounding rectangle
-         minRow = Math.min(minRow, documentRange.getStart().getRow());
-         maxRow = Math.max(maxRow, documentRange.getEnd().getRow());
-
-         // Add gutter icon only on the first row of the first deletion
-         if (!addedGutterIcon)
-         {
-            HandlerRegistration registration = display_.addGutterItem(
-               documentRange.getStart().getRow(), AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
-            nesGutterRegistrations_.add(registration);
-            addedGutterIcon = true;
-         }
-      }
-
-      // Add bounding rectangle highlight for all affected rows
-      if (minRow <= maxRow)
-      {
-         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
-         nesBoundsMarkerId_ = display_.addHighlight(
-            boundsRange, "ace_next-edit-suggestion-deletion-bounds", "fullLine");
-      }
-   }
-
-   /**
-    * Renders single-line insertion suggestions by rendering the insertion text inline.
-    * Assumes nesCompletion_ and nesDeltas_ are already set.
-    */
-   private void renderInsertionSuggestion()
-   {
-      int baseRow = nesCompletion_.range.start.line;
-      int baseCol = nesCompletion_.range.start.character;
-
-      List<EditDelta> additionDeltas = nesDeltas_.getAdditions();
-      if (additionDeltas.isEmpty())
-         return;
-
-      // Track bounds for the bounding rectangle highlight
-      int minRow = Integer.MAX_VALUE;
-      int maxRow = Integer.MIN_VALUE;
-
-      // Group additions by row so we can add multiple tokens per row efficiently.
-      // We need to process them in reverse column order within each row so that
-      // splicing doesn't shift the positions of subsequent insertions.
-      Map<Integer, List<InsertionInfo>> insertionsByRow = new HashMap<>();
-
-      for (EditDelta additionDelta : additionDeltas)
-      {
-         // Compute the document position for the insertion
-         Range range = additionDelta.range;
-         int insertRow = baseRow + range.getStart().getRow();
-         int insertCol = range.getStart().getRow() == 0
-            ? baseCol + range.getStart().getColumn()
-            : range.getStart().getColumn();
-
-         // Track the position for cleanup
-         nesTokenPositions_.add(Position.create(insertRow, insertCol));
-
-         // Store the range for click detection (covers the preview text area)
-         int insertEndCol = insertCol + additionDelta.text.length();
-         Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
-         nesClickableRanges_.add(insertionRange);
-
-         // Track min/max rows for bounding rectangle
-         minRow = Math.min(minRow, insertRow);
-         maxRow = Math.max(maxRow, insertRow);
-
-         // Group by row
-         insertionsByRow
-            .computeIfAbsent(insertRow, k -> new ArrayList<>())
-            .add(new InsertionInfo(additionDelta.text, insertCol));
-      }
-
-      // Now add tokens row by row, processing multiple insertions per row efficiently
-      for (Map.Entry<Integer, List<InsertionInfo>> entry : insertionsByRow.entrySet())
-      {
-         int row = entry.getKey();
-         List<InsertionInfo> insertions = entry.getValue();
-
-         // Sort by column in descending order so splicing doesn't affect positions
-         insertions.sort((a, b) -> Integer.compare(b.column, a.column));
-
-         // Invalidate tokens for this row, get the token array, splice all insertions, then render
-         display_.invalidateTokens(row);
-         JsArray<Token> tokens = display_.getTokens(row);
-
-         for (InsertionInfo info : insertions)
-         {
-            Token newToken = Token.create(info.text, "insertion_preview", 0);
-            display_.spliceToken(tokens, newToken, info.column);
-         }
-
-         display_.renderTokens(row);
-      }
-
-      // Add bounding rectangle highlight for all affected rows
-      if (minRow <= maxRow)
-      {
-         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
-         nesBoundsMarkerId_ = display_.addHighlight(
-            boundsRange, "ace_next-edit-suggestion-insertion-bounds", "fullLine");
-
-         // Add gutter icon on the first row
-         HandlerRegistration registration = display_.addGutterItem(
-            minRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
-         nesGutterRegistrations_.add(registration);
-      }
-   }
-
    // Helper class for grouping insertion information by row
    private static class InsertionInfo
    {
@@ -626,59 +490,11 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Renders a single-line replacement suggestion inline.
-    * Assumes nesCompletion_ and nesDeltas_ are already set.
-    */
-   private void renderReplacementSuggestion()
-   {
-      EditDelta deletion = nesDeltas_.getSingleDeletion();
-      EditDelta addition = nesDeltas_.getSingleAddition();
-      if (deletion == null || addition == null)
-         return;
-
-      int baseRow = nesCompletion_.range.start.line;
-      int baseCol = nesCompletion_.range.start.character;
-
-      // Compute the document range for the deletion
-      Range deletionDocRange = offsetRangeToDocument(deletion.range, baseRow, baseCol);
-
-      // Add strikethrough highlight for the deletion
-      int deletionMarkerId = display_.addHighlight(
-         deletionDocRange, "ace_replacement_deletion", "text");
-      nesMarkerIds_.add(deletionMarkerId);
-
-      // Store the range for click detection
-      nesClickableRanges_.add(deletionDocRange);
-
-      // Compute the document position for the insertion (right after the deletion)
-      int insertRow = deletionDocRange.getEnd().getRow();
-      int insertCol = deletionDocRange.getEnd().getColumn();
-
-      // Add the insertion preview token
-      display_.invalidateTokens(insertRow);
-      JsArray<Token> tokens = display_.getTokens(insertRow);
-      display_.spliceToken(tokens, Token.create(addition.text, "insertion_preview", 0), insertCol);
-      display_.renderTokens(insertRow);
-      nesTokenPositions_.add(Position.create(insertRow, insertCol));
-
-      // Add bounding rectangle highlight
-      int delStartRow = deletionDocRange.getStart().getRow();
-      Range boundsRange = Range.create(delStartRow, 0, delStartRow + 1, 0);
-      nesBoundsMarkerId_ = display_.addHighlight(
-         boundsRange, "ace_next-edit-suggestion-replacement-bounds", "fullLine");
-
-      // Add gutter icon
-      HandlerRegistration registration = display_.addGutterItem(
-         delStartRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-      nesGutterRegistrations_.add(registration);
-   }
-
-   /**
-    * Renders a mixed suggestion with multiple deletions and/or insertions inline.
-    * Uses deletion highlights and insertion token splicing combined.
+    * Renders an edit suggestion inline using deletion highlights and insertion token splicing.
+    * Handles deletion-only, insertion-only, and mixed cases with appropriate styling.
     * Assumes nesCompletion_ and nesDeltas_ are already set, and all deltas are single-line.
     */
-   private void renderMixedSuggestion()
+   private void renderSuggestion()
    {
       int baseRow = nesCompletion_.range.start.line;
       int baseCol = nesCompletion_.range.start.character;
@@ -686,6 +502,8 @@ public class TextEditingTargetCopilotHelper
       // Track bounds for the bounding rectangle highlight
       int minRow = Integer.MAX_VALUE;
       int maxRow = Integer.MIN_VALUE;
+      boolean hasDeletions = false;
+      boolean hasInsertions = false;
 
       // First pass: add deletion highlights
       for (EditDelta delta : nesDeltas_.getDeltas())
@@ -693,6 +511,7 @@ public class TextEditingTargetCopilotHelper
          if (delta.type != EditType.DELETION)
             continue;
 
+         hasDeletions = true;
          Range documentRange = offsetRangeToDocument(delta.range, baseRow, baseCol);
 
          int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
@@ -713,6 +532,8 @@ public class TextEditingTargetCopilotHelper
       {
          if (delta.type != EditType.ADDITION)
             continue;
+
+         hasInsertions = true;
 
          // Compute the document position for the insertion
          Range range = delta.range;
@@ -761,16 +582,32 @@ public class TextEditingTargetCopilotHelper
          display_.renderTokens(row);
       }
 
-      // Add bounding rectangle highlight for all affected rows
+      // Add bounding rectangle highlight and gutter icon for all affected rows
       if (minRow <= maxRow)
       {
-         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
-         nesBoundsMarkerId_ = display_.addHighlight(
-            boundsRange, "ace_next-edit-suggestion-replacement-bounds", "fullLine");
+         // Choose appropriate styling based on what's present
+         String boundsClass;
+         String gutterClass;
+         if (hasDeletions && hasInsertions)
+         {
+            boundsClass = "ace_next-edit-suggestion-replacement-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+         }
+         else if (hasDeletions)
+         {
+            boundsClass = "ace_next-edit-suggestion-deletion-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+         }
+         else
+         {
+            boundsClass = "ace_next-edit-suggestion-insertion-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+         }
 
-         // Add gutter icon on the first row
-         HandlerRegistration registration = display_.addGutterItem(
-            minRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
+         nesBoundsMarkerId_ = display_.addHighlight(boundsRange, boundsClass, "fullLine");
+
+         HandlerRegistration registration = display_.addGutterItem(minRow, gutterClass);
          nesGutterRegistrations_.add(registration);
       }
    }
@@ -935,18 +772,10 @@ public class TextEditingTargetCopilotHelper
             break;
 
          case DELETION:
-            if (nesDeltas_ != null)
-               renderDeletionSuggestion();
-            break;
-
          case INSERTION:
-            if (nesDeltas_ != null)
-               renderInsertionSuggestion();
-            break;
-
          case REPLACEMENT:
             if (nesDeltas_ != null)
-               renderReplacementSuggestion();
+               renderSuggestion();
             break;
 
          case MIXED:
