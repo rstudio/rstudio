@@ -20,10 +20,8 @@
 #include <napi.h>
 
 #include <chrono>
-#include <codecvt>
 #include <iomanip>
 #include <iostream>
-#include <locale>
 #include <set>
 #include <sstream>
 #include <string>
@@ -55,7 +53,7 @@ std::string timestamp()
 
 }
 
-void logDebug(const std::string& message)
+[[maybe_unused]] void logDebug(const std::string& message)
 {
    if (s_loggingEnabled && message.length())
    {
@@ -392,6 +390,45 @@ std::string cfStringToStdString(CFStringRef cfStr)
    return std::string();
 }
 
+// Helper to convert std::wstring to UTF-8 std::string
+std::string wstringToUtf8(const std::wstring& wstr)
+{
+   if (wstr.empty())
+      return std::string();
+
+#ifdef _WIN32
+   // Use Windows API for UTF-16 to UTF-8 conversion
+   int sizeNeeded = ::WideCharToMultiByte(
+       CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()),
+       nullptr, 0, nullptr, nullptr);
+   if (sizeNeeded <= 0)
+      return std::string();
+
+   std::string result(sizeNeeded, '\0');
+   ::WideCharToMultiByte(
+       CP_UTF8, 0, wstr.c_str(), static_cast<int>(wstr.length()),
+       &result[0], sizeNeeded, nullptr, nullptr);
+   return result;
+#elif defined(__APPLE__)
+   // On macOS, wchar_t is UTF-32; use CoreFoundation for conversion
+   CFStringRef cfStr = CFStringCreateWithBytes(
+       kCFAllocatorDefault,
+       reinterpret_cast<const UInt8*>(wstr.data()),
+       wstr.length() * sizeof(wchar_t),
+       kCFStringEncodingUTF32LE,
+       false);
+   if (!cfStr)
+      return std::string();
+
+   std::string result = cfStringToStdString(cfStr);
+   CFRelease(cfStr);
+   return result;
+#else
+   // Linux/other platforms: not currently needed (callers return empty wstrings)
+   return std::string();
+#endif
+}
+
 // Single-pass font enumeration that populates both monospace and proportional lists
 // Enumerates system fonts, returning:
 // - monospaceFonts: PostScript names (e.g., "Menlo-Regular") for individual font faces
@@ -554,10 +591,20 @@ void cleanClipboardImpl(bool stripHtml)
       std::vector<UInt8> buffer(length);
       ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), (UInt8*) buffer.data());
 
-      // convert those bytes from UTF-16 to UTF-8
-      char16_t* pBytes = (char16_t*) &buffer[0];
-      std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-      std::string utf8Text = converter.to_bytes(pBytes, pBytes + length / 2);
+      // convert those bytes from UTF-16 to UTF-8 using CoreFoundation
+      CFStringRef cfString = CFStringCreateWithBytes(
+          kCFAllocatorDefault,
+          buffer.data(),
+          length,
+          kCFStringEncodingUTF16,
+          false
+      );
+      std::string utf8Text;
+      if (cfString)
+      {
+         utf8Text = cfStringToStdString(cfString);
+         CFRelease(cfString);
+      }
 
       // convert '\r' line endings to '\n' -- not sure why these sneak in?
       std::replace(utf8Text.begin(), utf8Text.end(), '\r', '\n');
@@ -684,8 +731,7 @@ Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
    auto value = currentCSIDLPersonalHomePathImpl();
 
    // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wstringToUtf8(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -721,8 +767,7 @@ Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
    auto value = defaultCSIDLPersonalHomePathImpl();
 
    // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-   std::string u8str = converter.to_bytes(value);
+   std::string u8str = wstringToUtf8(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -875,7 +920,7 @@ int CALLBACK win32ListMonospaceFontsProc(
 
 #endif
 
-std::vector<std::string> win32ListMonospaceFontsImpl()
+[[maybe_unused]] std::vector<std::string> win32ListMonospaceFontsImpl()
 {
     std::vector<std::string> fontList;
 

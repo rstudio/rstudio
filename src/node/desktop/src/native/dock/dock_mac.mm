@@ -80,7 +80,7 @@ static MacDockTileView* s_DockTileView = nil;
    NSImage* icon = [NSImage imageNamed:@"NSApplicationIcon"];
    [icon setSize:bounds.size];
    [icon drawAtPoint:NSZeroPoint fromRect:NSZeroRect
-           operation:NSCompositeCopy fraction:1.0];
+           operation:NSCompositingOperationCopy fraction:1.0];
 
    // draw the label if needed
    if (label_ != nil)
@@ -97,7 +97,7 @@ static MacDockTileView* s_DockTileView = nil;
 
       // get the graphics context
       NSGraphicsContext* nsGraphicsContext = [NSGraphicsContext currentContext];
-      CGContextRef  context = (CGContextRef) [nsGraphicsContext graphicsPort];
+      CGContextRef  context = [nsGraphicsContext CGContext];
 
       // draw the badge rounded rect
       NSRect badgeRect = NSMakeRect(0, 0, bounds.size.width, height);
@@ -111,7 +111,7 @@ static MacDockTileView* s_DockTileView = nil;
 
 
       NSMutableParagraphStyle *paraStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-      [paraStyle setAlignment:NSCenterTextAlignment];
+      [paraStyle setAlignment:NSTextAlignmentCenter];
 
       NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:
                      [NSColor whiteColor], NSForegroundColorAttributeName,
@@ -265,7 +265,9 @@ static MacDockTileView* s_DockTileView = nil;
 
 - (CGColorRef) CGColorFromNSColor: (NSColor*) color
 {
-   NSColor* deviceColor = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+   NSColor* deviceColor = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+   if (!deviceColor)
+      deviceColor = color;  // fallback if color space conversion fails
    CGFloat red = [deviceColor redComponent];
    CGFloat green = [deviceColor greenComponent];
    CGFloat blue = [deviceColor blueComponent];
