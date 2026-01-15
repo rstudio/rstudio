@@ -2261,6 +2261,11 @@ public class TextEditingTargetCopilotHelper
       {
          applyReplacementSuggestion();
       }
+      else
+      {
+         // No active suggestion, request one
+         requestNextEditSuggestions();
+      }
    }
 
    @Handler
