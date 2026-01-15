@@ -888,77 +888,11 @@ public class TextEditingTargetCopilotHelper
       display_.removeGhostText();
       activeCompletion_ = null;
 
-      // Clear inline diff view
-      if (diffWidget_ != null)
-      {
-         diffWidget_.detach();
-         diffWidget_ = null;
-      }
-      if (diffView_ != null)
-      {
-         diffView_.detach();
-         diffView_ = null;
-      }
-      if (diffMarkerId_ != -1)
-      {
-         display_.removeHighlight(diffMarkerId_);
-         diffMarkerId_ = -1;
-      }
-
-      // Clear deletion markers
-      for (int markerId : deletionMarkerIds_)
-         display_.removeHighlight(markerId);
-      deletionMarkerIds_.clear();
-      for (HandlerRegistration reg : deletionGutterRegistrations_)
-         reg.removeHandler();
-      deletionGutterRegistrations_.clear();
-      deletionRanges_.clear();
-      display_.getElement().removeClassName("ace_deletion-clickable");
-      deletionCompletion_ = null;
-
-      // Clear insertion tokens (reset each affected row once)
-      Set<Integer> insertionRows = new HashSet<>();
-      for (Position pos : insertionTokenPositions_)
-         insertionRows.add(pos.getRow());
-      for (int row : insertionRows)
-         display_.resetTokens(row);
-      insertionTokenPositions_.clear();
-      insertionRanges_.clear();
-      for (HandlerRegistration reg : insertionGutterRegistrations_)
-         reg.removeHandler();
-      insertionGutterRegistrations_.clear();
-      display_.getElement().removeClassName("ace_insertion-clickable");
-      if (insertionBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(insertionBoundsMarkerId_);
-         insertionBoundsMarkerId_ = -1;
-      }
-      insertionCompletion_ = null;
-
-      // Clear replacement
-      if (replacementDeletionMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementDeletionMarkerId_);
-         replacementDeletionMarkerId_ = -1;
-      }
-      if (replacementTokenPosition_ != null)
-      {
-         display_.resetTokens(replacementTokenPosition_.getRow());
-         replacementTokenPosition_ = null;
-      }
-      if (replacementBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementBoundsMarkerId_);
-         replacementBoundsMarkerId_ = -1;
-      }
-      if (replacementGutterRegistration_ != null)
-      {
-         replacementGutterRegistration_.removeHandler();
-         replacementGutterRegistration_ = null;
-      }
-      replacementRange_ = null;
-      display_.getElement().removeClassName("ace_replacement-clickable");
-      replacementCompletion_ = null;
+      // Clear all suggestion types
+      clearDiffState();
+      clearDeletionState();
+      clearInsertionState();
+      clearReplacementState();
 
       // Restore gutter-only state
       String gutterClass = getGutterClassForType(pendingSuggestion_.type);
@@ -1025,106 +959,11 @@ public class TextEditingTargetCopilotHelper
       activeCompletion_ = null;
       detachCompletionAnchors();
 
-      // Detach inline diff view
-      if (diffWidget_ != null)
-      {
-         diffWidget_.detach();
-         diffWidget_ = null;
-      }
-
-      if (diffView_ != null)
-      {
-         diffView_.detach();
-         diffView_ = null;
-      }
-
-      if (diffMarkerId_ != -1)
-      {
-         display_.removeHighlight(diffMarkerId_);
-         diffMarkerId_ = -1;
-      }
-
-      // Clear deletion suggestion markers
-      for (int markerId : deletionMarkerIds_)
-      {
-         display_.removeHighlight(markerId);
-      }
-      deletionMarkerIds_.clear();
-
-      // Clear deletion gutter items
-      for (HandlerRegistration registration : deletionGutterRegistrations_)
-      {
-         registration.removeHandler();
-      }
-      deletionGutterRegistrations_.clear();
-
-      // Clear deletion ranges
-      deletionRanges_.clear();
-
-      // Clear clickable cursor class
-      display_.getElement().removeClassName("ace_deletion-clickable");
-
-      // Clear deletion suggestion
-      deletionCompletion_ = null;
-
-      // Clear insertion tokens (reset each affected row once)
-      Set<Integer> rowsToReset = new HashSet<>();
-      for (Position pos : insertionTokenPositions_)
-         rowsToReset.add(pos.getRow());
-      for (int row : rowsToReset)
-         display_.resetTokens(row);
-      insertionTokenPositions_.clear();
-
-      // Clear insertion ranges
-      insertionRanges_.clear();
-
-      // Clear insertion gutter items
-      for (HandlerRegistration registration : insertionGutterRegistrations_)
-      {
-         registration.removeHandler();
-      }
-      insertionGutterRegistrations_.clear();
-
-      // Clear insertion clickable cursor class
-      display_.getElement().removeClassName("ace_insertion-clickable");
-
-      // Clear insertion bounds marker
-      if (insertionBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(insertionBoundsMarkerId_);
-         insertionBoundsMarkerId_ = -1;
-      }
-
-      insertionCompletion_ = null;
-
-      // Clear replacement suggestion
-      if (replacementDeletionMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementDeletionMarkerId_);
-         replacementDeletionMarkerId_ = -1;
-      }
-
-      if (replacementTokenPosition_ != null)
-      {
-         display_.resetTokens(replacementTokenPosition_.getRow());
-         replacementTokenPosition_ = null;
-      }
-
-      if (replacementBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementBoundsMarkerId_);
-         replacementBoundsMarkerId_ = -1;
-      }
-
-      if (replacementGutterRegistration_ != null)
-      {
-         replacementGutterRegistration_.removeHandler();
-         replacementGutterRegistration_ = null;
-      }
-
-      replacementRange_ = null;
-      display_.getElement().removeClassName("ace_replacement-clickable");
-      replacementCompletion_ = null;
+      // Clear all suggestion types
+      clearDiffState();
+      clearDeletionState();
+      clearInsertionState();
+      clearReplacementState();
 
       // Clear pending suggestion (when autoshow is disabled)
       pendingSuggestion_.clear();
@@ -1676,7 +1515,7 @@ public class TextEditingTargetCopilotHelper
                         pendingHideTimer_.cancel();
 
                         // Show details if not already revealed
-                        if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                        if (hasPendingUnrevealedSuggestion())
                         {
                            showPendingSuggestionDetails();
                         }
@@ -1772,7 +1611,7 @@ public class TextEditingTargetCopilotHelper
 
                      // If we have a pending suggestion (gutter only, not revealed),
                      // Tab should reveal it first before accepting
-                     if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+                     if (hasPendingUnrevealedSuggestion())
                      {
                         if (event.getKeyCode() == KeyCodes.KEY_TAB)
                         {
@@ -2238,7 +2077,7 @@ public class TextEditingTargetCopilotHelper
          return;
 
       // If we have a pending suggestion that hasn't been revealed, reveal it first
-      if (pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_)
+      if (hasPendingUnrevealedSuggestion())
       {
          showPendingSuggestionDetails();
          return;
@@ -2275,11 +2114,7 @@ public class TextEditingTargetCopilotHelper
          return;
 
       // Dismiss any active next edit suggestion
-      if (pendingSuggestion_.type != SuggestionType.NONE ||
-          diffView_ != null ||
-          deletionCompletion_ != null ||
-          insertionCompletion_ != null ||
-          replacementCompletion_ != null)
+      if (hasActiveSuggestion())
       {
          reset();
       }
@@ -2381,7 +2216,139 @@ public class TextEditingTargetCopilotHelper
       binder_ = binder;
       server_ = server;
    }
-   
+
+   /**
+    * Returns true if there is any active next edit suggestion being displayed.
+    */
+   private boolean hasActiveSuggestion()
+   {
+      return pendingSuggestion_.type != SuggestionType.NONE ||
+             diffView_ != null ||
+             deletionCompletion_ != null ||
+             insertionCompletion_ != null ||
+             replacementCompletion_ != null;
+   }
+
+   /**
+    * Returns true if there is a pending suggestion that hasn't been revealed yet.
+    */
+   private boolean hasPendingUnrevealedSuggestion()
+   {
+      return pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_;
+   }
+
+   /**
+    * Resets tokens for all rows that have positions in the given list.
+    * This efficiently handles multiple positions on the same row by only
+    * resetting each affected row once.
+    */
+   private void resetTokensForPositions(List<Position> positions)
+   {
+      Set<Integer> rowsToReset = new HashSet<>();
+      for (Position pos : positions)
+         rowsToReset.add(pos.getRow());
+      for (int row : rowsToReset)
+         display_.resetTokens(row);
+   }
+
+   /**
+    * Clears the diff view state.
+    */
+   private void clearDiffState()
+   {
+      if (diffWidget_ != null)
+      {
+         diffWidget_.detach();
+         diffWidget_ = null;
+      }
+      if (diffView_ != null)
+      {
+         diffView_.detach();
+         diffView_ = null;
+      }
+      if (diffMarkerId_ != -1)
+      {
+         display_.removeHighlight(diffMarkerId_);
+         diffMarkerId_ = -1;
+      }
+   }
+
+   /**
+    * Clears the deletion suggestion state.
+    */
+   private void clearDeletionState()
+   {
+      for (int markerId : deletionMarkerIds_)
+         display_.removeHighlight(markerId);
+      deletionMarkerIds_.clear();
+
+      for (HandlerRegistration reg : deletionGutterRegistrations_)
+         reg.removeHandler();
+      deletionGutterRegistrations_.clear();
+
+      deletionRanges_.clear();
+      display_.getElement().removeClassName("ace_deletion-clickable");
+      deletionCompletion_ = null;
+   }
+
+   /**
+    * Clears the insertion suggestion state.
+    */
+   private void clearInsertionState()
+   {
+      resetTokensForPositions(insertionTokenPositions_);
+      insertionTokenPositions_.clear();
+      insertionRanges_.clear();
+
+      for (HandlerRegistration reg : insertionGutterRegistrations_)
+         reg.removeHandler();
+      insertionGutterRegistrations_.clear();
+
+      display_.getElement().removeClassName("ace_insertion-clickable");
+
+      if (insertionBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(insertionBoundsMarkerId_);
+         insertionBoundsMarkerId_ = -1;
+      }
+
+      insertionCompletion_ = null;
+   }
+
+   /**
+    * Clears the replacement suggestion state.
+    */
+   private void clearReplacementState()
+   {
+      if (replacementDeletionMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementDeletionMarkerId_);
+         replacementDeletionMarkerId_ = -1;
+      }
+
+      if (replacementTokenPosition_ != null)
+      {
+         display_.resetTokens(replacementTokenPosition_.getRow());
+         replacementTokenPosition_ = null;
+      }
+
+      if (replacementBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(replacementBoundsMarkerId_);
+         replacementBoundsMarkerId_ = -1;
+      }
+
+      if (replacementGutterRegistration_ != null)
+      {
+         replacementGutterRegistration_.removeHandler();
+         replacementGutterRegistration_ = null;
+      }
+
+      replacementRange_ = null;
+      display_.getElement().removeClassName("ace_replacement-clickable");
+      replacementCompletion_ = null;
+   }
+
    private final TextEditingTarget target_;
    private final DocDisplay display_;
    private final Timer completionTimer_;
