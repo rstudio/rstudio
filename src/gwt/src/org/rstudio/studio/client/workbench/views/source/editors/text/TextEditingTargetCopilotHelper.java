@@ -137,26 +137,34 @@ public class TextEditingTargetCopilotHelper
    /**
     * Holds pending suggestion data for deferred display.
     * Used when autoshow is disabled to show details on hover.
+    * When autoshow is disabled, we store the suggestion here first and only
+    * reveal it when the user hovers over the gutter icon.
     */
    private static class PendingSuggestion
    {
       public SuggestionType type = SuggestionType.NONE;
       public CopilotCompletion completion;
-      public EditDeltas deltas;           // For deletion type
-      public List<EditDelta> additions;   // For insertion type
-      public EditDelta singleDeletion;    // For replacement type
-      public EditDelta singleAddition;    // For replacement type
-      public int gutterRow = -1;          // Row where gutter icon is shown
+      public int gutterRow = -1;
+
+      // For deletion suggestions
+      public EditDeltas deltas;
+
+      // For insertion suggestions
+      public List<EditDelta> additions;
+
+      // For replacement suggestions
+      public EditDelta singleDeletion;
+      public EditDelta singleAddition;
 
       public void clear()
       {
          type = SuggestionType.NONE;
          completion = null;
+         gutterRow = -1;
          deltas = null;
          additions = null;
          singleDeletion = null;
          singleAddition = null;
-         gutterRow = -1;
       }
    }
 
@@ -507,10 +515,10 @@ public class TextEditingTargetCopilotHelper
          }
 
          int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
-         deletionMarkerIds_.add(markerId);
+         nesMarkerIds_.add(markerId);
 
          // Store the document range for click detection
-         deletionRanges_.add(documentRange);
+         nesClickableRanges_.add(documentRange);
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, documentRange.getStart().getRow());
@@ -521,7 +529,7 @@ public class TextEditingTargetCopilotHelper
          {
             HandlerRegistration registration = display_.addGutterItem(
                documentRange.getStart().getRow(), AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
-            deletionGutterRegistrations_.add(registration);
+            nesGutterRegistrations_.add(registration);
             addedGutterIcon = true;
          }
       }
@@ -530,13 +538,13 @@ public class TextEditingTargetCopilotHelper
       if (minRow <= maxRow)
       {
          Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
-         int boundsMarkerId = display_.addHighlight(
+         nesBoundsMarkerId_ = display_.addHighlight(
             boundsRange, "ace_next-edit-suggestion-deletion-bounds", "fullLine");
-         deletionMarkerIds_.add(boundsMarkerId);
       }
 
-      // Store the completion for applying later
-      deletionCompletion_ = completion;
+      // Store the completion and type for applying later
+      nesCompletion_ = completion;
+      nesType_ = SuggestionType.DELETION;
    }
 
    /**
@@ -574,12 +582,12 @@ public class TextEditingTargetCopilotHelper
             : range.getStart().getColumn();
 
          // Track the position for cleanup
-         insertionTokenPositions_.add(Position.create(insertRow, insertCol));
+         nesTokenPositions_.add(Position.create(insertRow, insertCol));
 
          // Store the range for click detection (covers the preview text area)
          int insertEndCol = insertCol + additionDelta.text.length();
          Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
-         insertionRanges_.add(insertionRange);
+         nesClickableRanges_.add(insertionRange);
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, insertRow);
@@ -617,17 +625,18 @@ public class TextEditingTargetCopilotHelper
       if (minRow <= maxRow)
       {
          Range boundsRange = Range.create(minRow, 0, maxRow + 1, 0);
-         insertionBoundsMarkerId_ = display_.addHighlight(
+         nesBoundsMarkerId_ = display_.addHighlight(
             boundsRange, "ace_next-edit-suggestion-insertion-bounds", "fullLine");
 
          // Add gutter icon on the first row
          HandlerRegistration registration = display_.addGutterItem(
             minRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
-         insertionGutterRegistrations_.add(registration);
+         nesGutterRegistrations_.add(registration);
       }
 
-      // Store the completion for applying later
-      insertionCompletion_ = completion;
+      // Store the completion and type for applying later
+      nesCompletion_ = completion;
+      nesType_ = SuggestionType.INSERTION;
    }
 
    // Helper class for grouping insertion information by row
@@ -644,11 +653,11 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Applies the current insertion suggestion.
+    * Applies the current NES suggestion (insertion, deletion, or replacement).
     */
-   private void applyInsertionSuggestion()
+   private void applyNesSuggestion()
    {
-      if (insertionCompletion_ == null)
+      if (nesCompletion_ == null)
          return;
 
       // Get edit range using anchored positions
@@ -661,8 +670,8 @@ public class TextEditingTargetCopilotHelper
       // Move cursor to start of range
       display_.setCursorPosition(range.getStart());
 
-      // Perform the insertion (replace range with insertText)
-      display_.replaceRange(range, insertionCompletion_.insertText);
+      // Perform the edit (replace range with insertText)
+      display_.replaceRange(range, nesCompletion_.insertText);
 
       // Reset and schedule another suggestion
       reset();
@@ -699,11 +708,12 @@ public class TextEditingTargetCopilotHelper
       Range deletionDocRange = Range.create(delStartRow, delStartCol, delEndRow, delEndCol);
 
       // Add strikethrough highlight for the deletion
-      replacementDeletionMarkerId_ = display_.addHighlight(
+      int deletionMarkerId = display_.addHighlight(
          deletionDocRange, "ace_replacement_deletion", "text");
+      nesMarkerIds_.add(deletionMarkerId);
 
       // Store the range for click detection (the clickable area includes both deletion and insertion)
-      replacementRange_ = deletionDocRange;
+      nesClickableRanges_.add(deletionDocRange);
 
       // Compute the document position for the insertion (right after the deletion)
       int insertRow = delEndRow;
@@ -714,76 +724,29 @@ public class TextEditingTargetCopilotHelper
       JsArray<Token> tokens = display_.getTokens(insertRow);
       display_.spliceToken(tokens, Token.create(addition.text, "insertion_preview", 0), insertCol);
       display_.renderTokens(insertRow);
-      replacementTokenPosition_ = Position.create(insertRow, insertCol);
+      nesTokenPositions_.add(Position.create(insertRow, insertCol));
 
       // Add bounding rectangle highlight
       Range boundsRange = Range.create(delStartRow, 0, delStartRow + 1, 0);
-      replacementBoundsMarkerId_ = display_.addHighlight(
+      nesBoundsMarkerId_ = display_.addHighlight(
          boundsRange, "ace_next-edit-suggestion-replacement-bounds", "fullLine");
 
       // Add gutter icon
-      replacementGutterRegistration_ = display_.addGutterItem(
+      HandlerRegistration registration = display_.addGutterItem(
          delStartRow, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+      nesGutterRegistrations_.add(registration);
 
-      // Store the completion for applying later
-      replacementCompletion_ = completion;
+      // Store the completion and type for applying later
+      nesCompletion_ = completion;
+      nesType_ = SuggestionType.REPLACEMENT;
    }
 
    /**
-    * Applies the current replacement suggestion.
+    * Checks if a document position falls within any of the NES clickable ranges.
     */
-   private void applyReplacementSuggestion()
+   private boolean isPositionInNesRange(Position pos)
    {
-      if (replacementCompletion_ == null)
-         return;
-
-      // Get edit range using anchored positions
-      Range range = Range.create(
-         completionStartAnchor_.getRow(),
-         completionStartAnchor_.getColumn(),
-         completionEndAnchor_.getRow(),
-         completionEndAnchor_.getColumn());
-
-      // Move cursor to start of range
-      display_.setCursorPosition(range.getStart());
-
-      // Perform the replacement (replace range with insertText)
-      display_.replaceRange(range, replacementCompletion_.insertText);
-
-      // Reset and schedule another suggestion
-      reset();
-      nesTimer_.schedule(20);
-   }
-
-   /**
-    * Checks if a document position falls within the replacement range.
-    */
-   private boolean isPositionInReplacementRange(Position pos)
-   {
-      if (replacementRange_ == null)
-         return false;
-      return replacementRange_.contains(pos);
-   }
-
-   /**
-    * Checks if a document position falls within any of the deletion ranges.
-    */
-   private boolean isPositionInDeletionRange(Position pos)
-   {
-      for (Range range : deletionRanges_)
-      {
-         if (range.contains(pos))
-            return true;
-      }
-      return false;
-   }
-
-   /**
-    * Checks if a document position falls within any of the insertion ranges.
-    */
-   private boolean isPositionInInsertionRange(Position pos)
-   {
-      for (Range range : insertionRanges_)
+      for (Range range : nesClickableRanges_)
       {
          if (range.contains(pos))
             return true;
@@ -890,9 +853,7 @@ public class TextEditingTargetCopilotHelper
 
       // Clear all suggestion types
       clearDiffState();
-      clearDeletionState();
-      clearInsertionState();
-      clearReplacementState();
+      clearNesState();
 
       // Restore gutter-only state
       String gutterClass = getGutterClassForType(pendingSuggestion_.type);
@@ -922,29 +883,21 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Applies the current deletion suggestion.
+    * Returns the appropriate clickable CSS class for a suggestion type.
     */
-   private void applyDeletionSuggestion()
+   private String getClickableClassForType(SuggestionType type)
    {
-      if (deletionCompletion_ == null)
-         return;
-
-      // Get edit range using anchored positions
-      Range range = Range.create(
-         completionStartAnchor_.getRow(),
-         completionStartAnchor_.getColumn(),
-         completionEndAnchor_.getRow(),
-         completionEndAnchor_.getColumn());
-
-      // Move cursor to start of deletion range
-      display_.setCursorPosition(range.getStart());
-
-      // Perform the deletion (replace with the insertText, which should be empty or minimal)
-      display_.replaceRange(range, deletionCompletion_.insertText);
-
-      // Reset and schedule another suggestion
-      reset();
-      nesTimer_.schedule(20);
+      switch (type)
+      {
+         case DELETION:
+            return "ace_deletion-clickable";
+         case INSERTION:
+            return "ace_insertion-clickable";
+         case REPLACEMENT:
+            return "ace_replacement-clickable";
+         default:
+            return null;
+      }
    }
 
    /**
@@ -961,9 +914,7 @@ public class TextEditingTargetCopilotHelper
 
       // Clear all suggestion types
       clearDiffState();
-      clearDeletionState();
-      clearInsertionState();
-      clearReplacementState();
+      clearNesState();
 
       // Clear pending suggestion (when autoshow is disabled)
       pendingSuggestion_.clear();
@@ -1294,11 +1245,11 @@ public class TextEditingTargetCopilotHelper
                      }
                   });
 
-                  if (deletionGutterEl != null && deletionCompletion_ != null)
+                  if (deletionGutterEl != null && nesType_ == SuggestionType.DELETION)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     applyDeletionSuggestion();
+                     applyNesSuggestion();
                      return;
                   }
 
@@ -1312,11 +1263,11 @@ public class TextEditingTargetCopilotHelper
                      }
                   });
 
-                  if (insertionGutterEl != null && insertionCompletion_ != null)
+                  if (insertionGutterEl != null && nesType_ == SuggestionType.INSERTION)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     applyInsertionSuggestion();
+                     applyNesSuggestion();
                      return;
                   }
 
@@ -1330,68 +1281,34 @@ public class TextEditingTargetCopilotHelper
                      }
                   });
 
-                  if (replacementGutterEl != null && replacementCompletion_ != null)
+                  if (replacementGutterEl != null && nesType_ == SuggestionType.REPLACEMENT)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     applyReplacementSuggestion();
+                     applyNesSuggestion();
                      return;
                   }
 
-                  // Check for Ctrl/Cmd + click on the deletion highlight
+                  // Check for Ctrl/Cmd + click on any NES highlight
                   boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
-                  if (isModifierHeld && deletionCompletion_ != null)
+                  if (isModifierHeld && nesCompletion_ != null)
                   {
                      // Convert mouse coordinates to document position
                      Position pos = display_.screenCoordinatesToDocumentPosition(
                         event.getClientX(),
                         event.getClientY());
 
-                     if (isPositionInDeletionRange(pos))
+                     if (isPositionInNesRange(pos))
                      {
                         event.stopPropagation();
                         event.preventDefault();
-                        applyDeletionSuggestion();
-                        return;
-                     }
-                  }
-
-                  // Check for Ctrl/Cmd + click on the insertion highlight
-                  if (isModifierHeld && insertionCompletion_ != null)
-                  {
-                     // Convert mouse coordinates to document position
-                     Position pos = display_.screenCoordinatesToDocumentPosition(
-                        event.getClientX(),
-                        event.getClientY());
-
-                     if (isPositionInInsertionRange(pos))
-                     {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        applyInsertionSuggestion();
-                        return;
-                     }
-                  }
-
-                  // Check for Ctrl/Cmd + click on the replacement highlight
-                  if (isModifierHeld && replacementCompletion_ != null)
-                  {
-                     // Convert mouse coordinates to document position
-                     Position pos = display_.screenCoordinatesToDocumentPosition(
-                        event.getClientX(),
-                        event.getClientY());
-
-                     if (isPositionInReplacementRange(pos))
-                     {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        applyReplacementSuggestion();
+                        applyNesSuggestion();
                         return;
                      }
                   }
                }),
 
-               // mousemove handler for showing pointer cursor when hovering over deletion/insertion highlights with Ctrl/Cmd
+               // mousemove handler for showing pointer cursor when hovering over NES highlights with Ctrl/Cmd
                DomUtils.addEventListener(display_.getElement(), "mousemove", false, (event) ->
                {
                   // Track last mouse position for keydown/keyup handlers
@@ -1405,34 +1322,17 @@ public class TextEditingTargetCopilotHelper
                      event.getClientX(),
                      event.getClientY());
 
-                  // Handle deletion clickable cursor
-                  if (deletionCompletion_ != null && isModifierHeld && isPositionInDeletionRange(pos))
-                  {
-                     display_.getElement().addClassName("ace_deletion-clickable");
-                  }
-                  else
-                  {
-                     display_.getElement().removeClassName("ace_deletion-clickable");
-                  }
+                  // Remove all clickable classes first
+                  display_.getElement().removeClassName("ace_deletion-clickable");
+                  display_.getElement().removeClassName("ace_insertion-clickable");
+                  display_.getElement().removeClassName("ace_replacement-clickable");
 
-                  // Handle insertion clickable cursor
-                  if (insertionCompletion_ != null && isModifierHeld && isPositionInInsertionRange(pos))
+                  // Add appropriate clickable class based on type if hovering over NES range
+                  if (nesCompletion_ != null && isModifierHeld && isPositionInNesRange(pos))
                   {
-                     display_.getElement().addClassName("ace_insertion-clickable");
-                  }
-                  else
-                  {
-                     display_.getElement().removeClassName("ace_insertion-clickable");
-                  }
-
-                  // Handle replacement clickable cursor
-                  if (replacementCompletion_ != null && isModifierHeld && isPositionInReplacementRange(pos))
-                  {
-                     display_.getElement().addClassName("ace_replacement-clickable");
-                  }
-                  else
-                  {
-                     display_.getElement().removeClassName("ace_replacement-clickable");
+                     String clickableClass = getClickableClassForType(nesType_);
+                     if (clickableClass != null)
+                        display_.getElement().addClassName(clickableClass);
                   }
                }),
 
@@ -1448,19 +1348,11 @@ public class TextEditingTargetCopilotHelper
                         lastMouseClientX_,
                         lastMouseClientY_);
 
-                     if (deletionCompletion_ != null && isPositionInDeletionRange(pos))
+                     if (nesCompletion_ != null && isPositionInNesRange(pos))
                      {
-                        display_.getElement().addClassName("ace_deletion-clickable");
-                     }
-
-                     if (insertionCompletion_ != null && isPositionInInsertionRange(pos))
-                     {
-                        display_.getElement().addClassName("ace_insertion-clickable");
-                     }
-
-                     if (replacementCompletion_ != null && isPositionInReplacementRange(pos))
-                     {
-                        display_.getElement().addClassName("ace_replacement-clickable");
+                        String clickableClass = getClickableClassForType(nesType_);
+                        if (clickableClass != null)
+                           display_.getElement().addClassName(clickableClass);
                      }
                   }
                }),
@@ -1641,52 +1533,14 @@ public class TextEditingTargetCopilotHelper
                         }
                      }
 
-                     // Let deletion suggestion accept on Tab if applicable
-                     if (deletionCompletion_ != null)
+                     // Let NES suggestion (deletion, insertion, replacement) accept on Tab if applicable
+                     if (nesCompletion_ != null)
                      {
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           applyDeletionSuggestion();
-                           return;
-                        }
-                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
-                        {
-                           event.stopPropagation();
-                           event.preventDefault();
-                           reset();
-                           return;
-                        }
-                     }
-
-                     // Let insertion suggestion accept on Tab if applicable
-                     if (insertionCompletion_ != null)
-                     {
-                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
-                        {
-                           event.stopPropagation();
-                           event.preventDefault();
-                           applyInsertionSuggestion();
-                           return;
-                        }
-                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
-                        {
-                           event.stopPropagation();
-                           event.preventDefault();
-                           reset();
-                           return;
-                        }
-                     }
-
-                     // Let replacement suggestion accept on Tab if applicable
-                     if (replacementCompletion_ != null)
-                     {
-                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
-                        {
-                           event.stopPropagation();
-                           event.preventDefault();
-                           applyReplacementSuggestion();
+                           applyNesSuggestion();
                            return;
                         }
                         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
@@ -2088,17 +1942,9 @@ public class TextEditingTargetCopilotHelper
       {
          diffView_.apply();
       }
-      else if (deletionCompletion_ != null)
+      else if (nesCompletion_ != null)
       {
-         applyDeletionSuggestion();
-      }
-      else if (insertionCompletion_ != null)
-      {
-         applyInsertionSuggestion();
-      }
-      else if (replacementCompletion_ != null)
-      {
-         applyReplacementSuggestion();
+         applyNesSuggestion();
       }
       else
       {
@@ -2224,9 +2070,7 @@ public class TextEditingTargetCopilotHelper
    {
       return pendingSuggestion_.type != SuggestionType.NONE ||
              diffView_ != null ||
-             deletionCompletion_ != null ||
-             insertionCompletion_ != null ||
-             replacementCompletion_ != null;
+             nesCompletion_ != null;
    }
 
    /**
@@ -2274,79 +2118,42 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Clears the deletion suggestion state.
+    * Clears the NES (Next Edit Suggestion) state for deletion, insertion, and replacement suggestions.
     */
-   private void clearDeletionState()
+   private void clearNesState()
    {
-      for (int markerId : deletionMarkerIds_)
+      // Remove all highlight markers
+      for (int markerId : nesMarkerIds_)
          display_.removeHighlight(markerId);
-      deletionMarkerIds_.clear();
+      nesMarkerIds_.clear();
 
-      for (HandlerRegistration reg : deletionGutterRegistrations_)
+      // Remove all gutter registrations
+      for (HandlerRegistration reg : nesGutterRegistrations_)
          reg.removeHandler();
-      deletionGutterRegistrations_.clear();
+      nesGutterRegistrations_.clear();
 
-      deletionRanges_.clear();
+      // Clear clickable ranges
+      nesClickableRanges_.clear();
+
+      // Reset tokens for all tracked positions
+      resetTokensForPositions(nesTokenPositions_);
+      nesTokenPositions_.clear();
+
+      // Remove bounds marker if present
+      if (nesBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(nesBoundsMarkerId_);
+         nesBoundsMarkerId_ = -1;
+      }
+
+      // Remove clickable class names
       display_.getElement().removeClassName("ace_deletion-clickable");
-      deletionCompletion_ = null;
-   }
-
-   /**
-    * Clears the insertion suggestion state.
-    */
-   private void clearInsertionState()
-   {
-      resetTokensForPositions(insertionTokenPositions_);
-      insertionTokenPositions_.clear();
-      insertionRanges_.clear();
-
-      for (HandlerRegistration reg : insertionGutterRegistrations_)
-         reg.removeHandler();
-      insertionGutterRegistrations_.clear();
-
       display_.getElement().removeClassName("ace_insertion-clickable");
-
-      if (insertionBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(insertionBoundsMarkerId_);
-         insertionBoundsMarkerId_ = -1;
-      }
-
-      insertionCompletion_ = null;
-   }
-
-   /**
-    * Clears the replacement suggestion state.
-    */
-   private void clearReplacementState()
-   {
-      if (replacementDeletionMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementDeletionMarkerId_);
-         replacementDeletionMarkerId_ = -1;
-      }
-
-      if (replacementTokenPosition_ != null)
-      {
-         display_.resetTokens(replacementTokenPosition_.getRow());
-         replacementTokenPosition_ = null;
-      }
-
-      if (replacementBoundsMarkerId_ != -1)
-      {
-         display_.removeHighlight(replacementBoundsMarkerId_);
-         replacementBoundsMarkerId_ = -1;
-      }
-
-      if (replacementGutterRegistration_ != null)
-      {
-         replacementGutterRegistration_.removeHandler();
-         replacementGutterRegistration_ = null;
-      }
-
-      replacementRange_ = null;
       display_.getElement().removeClassName("ace_replacement-clickable");
-      replacementCompletion_ = null;
+
+      // Clear completion and type
+      nesCompletion_ = null;
+      nesType_ = SuggestionType.NONE;
    }
 
    private final TextEditingTarget target_;
@@ -2363,30 +2170,32 @@ public class TextEditingTargetCopilotHelper
    private boolean completionRequestsSuspended_;
    private boolean copilotDisabledInThisDocument_;
 
+   // Diff view state (kept separate as it's a fundamentally different UI)
    private AceEditorDiffView diffView_;
    private PinnedLineWidget diffWidget_;
    private int diffMarkerId_ = -1;
+
+   // Ghost text completion state
    private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
-   private CopilotCompletion deletionCompletion_;
-   private List<Integer> deletionMarkerIds_ = new ArrayList<>();
-   private List<HandlerRegistration> deletionGutterRegistrations_ = new ArrayList<>();
-   private List<Range> deletionRanges_ = new ArrayList<>();
-   private CopilotCompletion insertionCompletion_;
-   private List<Position> insertionTokenPositions_ = new ArrayList<>();
-   private List<Range> insertionRanges_ = new ArrayList<>();
-   private List<HandlerRegistration> insertionGutterRegistrations_ = new ArrayList<>();
-   private int insertionBoundsMarkerId_ = -1;
-   private CopilotCompletion replacementCompletion_;
-   private int replacementDeletionMarkerId_ = -1;
-   private Position replacementTokenPosition_;
-   private Range replacementRange_;
-   private HandlerRegistration replacementGutterRegistration_;
-   private int replacementBoundsMarkerId_ = -1;
+
+   // Unified NES (Next Edit Suggestion) state
+   private CopilotCompletion nesCompletion_;
+   private SuggestionType nesType_ = SuggestionType.NONE;
+   private EditDeltas nesDeltas_;
+   private List<Integer> nesMarkerIds_ = new ArrayList<>();
+   private List<HandlerRegistration> nesGutterRegistrations_ = new ArrayList<>();
+   private List<Range> nesClickableRanges_ = new ArrayList<>();
+   private List<Position> nesTokenPositions_ = new ArrayList<>();
+   private int nesBoundsMarkerId_ = -1;
+
+   // Mouse tracking and anchors
    private int lastMouseClientX_ = 0;
    private int lastMouseClientY_ = 0;
    private Anchor completionStartAnchor_;
    private Anchor completionEndAnchor_;
+
+   // Autoshow and pending suggestion state
    private boolean automaticCodeSuggestionsEnabled_ = true;
    private final PendingSuggestion pendingSuggestion_ = new PendingSuggestion();
    private HandlerRegistration pendingGutterRegistration_;
