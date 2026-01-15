@@ -135,40 +135,6 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Holds pending suggestion data for deferred display.
-    * Used when autoshow is disabled to show details on hover.
-    * When autoshow is disabled, we store the suggestion here first and only
-    * reveal it when the user hovers over the gutter icon.
-    */
-   private static class PendingSuggestion
-   {
-      public SuggestionType type = SuggestionType.NONE;
-      public CopilotCompletion completion;
-      public int gutterRow = -1;
-
-      // For deletion suggestions
-      public EditDeltas deltas;
-
-      // For insertion suggestions
-      public List<EditDelta> additions;
-
-      // For replacement suggestions
-      public EditDelta singleDeletion;
-      public EditDelta singleAddition;
-
-      public void clear()
-      {
-         type = SuggestionType.NONE;
-         completion = null;
-         gutterRow = -1;
-         deltas = null;
-         additions = null;
-         singleDeletion = null;
-         singleAddition = null;
-      }
-   }
-
-   /**
     * Represents a single edit operation with its type, range, and text.
     */
    private static class EditDelta
@@ -757,21 +723,19 @@ public class TextEditingTargetCopilotHelper
    /**
     * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
     * The full details will be shown when the user hovers over the gutter icon.
+    * The suggestion data should already be stored in nesCompletion_, nesType_, nesDeltas_.
     */
-   private void showSuggestionGutterOnly(int row, String gutterClass, SuggestionType type,
-                                          CopilotCompletion completion)
+   private void showSuggestionGutterOnly(int row, String gutterClass)
    {
-      // Store the pending suggestion data
-      pendingSuggestion_.type = type;
-      pendingSuggestion_.completion = completion;
-      pendingSuggestion_.gutterRow = row;
+      // Store the gutter row for later restoration after hide
+      pendingGutterRow_ = row;
 
       // Create anchors for the completion range
       createCompletionAnchors(
-         completion.range.start.line,
-         completion.range.start.character,
-         completion.range.end.line,
-         completion.range.end.character);
+         nesCompletion_.range.start.line,
+         nesCompletion_.range.start.character,
+         nesCompletion_.range.end.line,
+         nesCompletion_.range.end.character);
 
       // Show the gutter icon
       pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
@@ -780,61 +744,24 @@ public class TextEditingTargetCopilotHelper
    /**
     * Shows the full details for the pending suggestion.
     * Called when user hovers over the gutter icon (when autoshow is disabled).
-    * The pending state is preserved so we can hide details on mouseleave.
+    * The NES state is preserved so we can hide details on mouseleave.
     */
    private void showPendingSuggestionDetails()
    {
-      if (pendingSuggestion_.type == SuggestionType.NONE)
+      if (nesType_ == SuggestionType.NONE || nesCompletion_ == null)
          return;
 
-      CopilotCompletion completion = pendingSuggestion_.completion;
-      if (completion == null)
-         return;
-
-      // Remove the pending gutter icon (the full display methods will add their own)
+      // Remove the pending gutter icon (the render methods will add their own)
       if (pendingGutterRegistration_ != null)
       {
          pendingGutterRegistration_.removeHandler();
          pendingGutterRegistration_ = null;
       }
 
-      // Show full details based on type
-      switch (pendingSuggestion_.type)
-      {
-         case GHOST_TEXT:
-            // For ghost text, set up the completion and display
-            activeCompletion_ = new Completion(completion);
-            Position position = Position.create(
-               completion.range.start.line,
-               completion.range.start.character);
-            display_.setGhostText(activeCompletion_.displayText, position);
-            break;
+      // Render the visual elements based on type
+      renderNesSuggestion();
 
-         case DELETION:
-            if (pendingSuggestion_.deltas != null)
-               showDeletionSuggestion(completion, pendingSuggestion_.deltas);
-            break;
-
-         case INSERTION:
-            if (pendingSuggestion_.additions != null)
-               showInsertionSuggestion(completion, pendingSuggestion_.additions);
-            break;
-
-         case REPLACEMENT:
-            if (pendingSuggestion_.singleDeletion != null && pendingSuggestion_.singleAddition != null)
-               showReplacementSuggestion(completion, pendingSuggestion_.singleDeletion,
-                                         pendingSuggestion_.singleAddition);
-            break;
-
-         case DIFF:
-            showEditSuggestion(completion);
-            break;
-
-         default:
-            break;
-      }
-
-      // Mark that details are revealed via hover (don't clear pending state)
+      // Mark that details are revealed via hover
       pendingSuggestionRevealed_ = true;
    }
 
@@ -844,22 +771,73 @@ public class TextEditingTargetCopilotHelper
     */
    private void hidePendingSuggestionDetails()
    {
-      if (!pendingSuggestionRevealed_ || pendingSuggestion_.type == SuggestionType.NONE)
+      if (!pendingSuggestionRevealed_ || nesType_ == SuggestionType.NONE)
          return;
 
-      // Clear all visual elements (similar to reset, but preserve pendingSuggestion_)
+      // Clear visual elements but preserve NES state (nesCompletion_, nesType_, nesDeltas_)
       display_.removeGhostText();
       activeCompletion_ = null;
-
-      // Clear all suggestion types
       clearDiffState();
-      clearNesState();
+      clearNesVisuals();
 
       // Restore gutter-only state
-      String gutterClass = getGutterClassForType(pendingSuggestion_.type);
-      pendingGutterRegistration_ = display_.addGutterItem(pendingSuggestion_.gutterRow, gutterClass);
+      String gutterClass = getGutterClassForType(nesType_);
+      pendingGutterRegistration_ = display_.addGutterItem(pendingGutterRow_, gutterClass);
 
       pendingSuggestionRevealed_ = false;
+   }
+
+   /**
+    * Renders the visual elements for the current NES suggestion based on nesType_.
+    * Assumes nesCompletion_, nesType_, and nesDeltas_ are already set.
+    */
+   private void renderNesSuggestion()
+   {
+      if (nesCompletion_ == null || nesType_ == SuggestionType.NONE)
+         return;
+
+      switch (nesType_)
+      {
+         case GHOST_TEXT:
+            // For ghost text, set up the completion and display
+            activeCompletion_ = new Completion(nesCompletion_);
+            Position position = Position.create(
+               nesCompletion_.range.start.line,
+               nesCompletion_.range.start.character);
+            display_.setGhostText(activeCompletion_.displayText, position);
+            break;
+
+         case DELETION:
+            if (nesDeltas_ != null)
+               showDeletionSuggestion(nesCompletion_, nesDeltas_);
+            break;
+
+         case INSERTION:
+            if (nesDeltas_ != null)
+            {
+               List<EditDelta> additions = nesDeltas_.getAdditions();
+               if (!additions.isEmpty())
+                  showInsertionSuggestion(nesCompletion_, additions);
+            }
+            break;
+
+         case REPLACEMENT:
+            if (nesDeltas_ != null)
+            {
+               EditDelta deletion = nesDeltas_.getSingleDeletion();
+               EditDelta addition = nesDeltas_.getSingleAddition();
+               if (deletion != null && addition != null)
+                  showReplacementSuggestion(nesCompletion_, deletion, addition);
+            }
+            break;
+
+         case DIFF:
+            showEditSuggestion(nesCompletion_);
+            break;
+
+         default:
+            break;
+      }
    }
 
    /**
@@ -912,12 +890,10 @@ public class TextEditingTargetCopilotHelper
       activeCompletion_ = null;
       detachCompletionAnchors();
 
-      // Clear all suggestion types
+      // Clear all suggestion types (clearNesState also clears pending state)
       clearDiffState();
       clearNesState();
 
-      // Clear pending suggestion (when autoshow is disabled)
-      pendingSuggestion_.clear();
       pendingSuggestionRevealed_ = false;
       pendingHideTimer_.cancel();
       if (pendingGutterRegistration_ != null)
@@ -1727,12 +1703,13 @@ public class TextEditingTargetCopilotHelper
                   }
                   else
                   {
-                     // Show only gutter icon; details shown on hover
+                     // Store state and show only gutter icon; details shown on hover
+                     nesCompletion_ = normalized;
+                     nesType_ = SuggestionType.GHOST_TEXT;
+                     nesDeltas_ = null;
                      showSuggestionGutterOnly(
                         normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION,
-                        SuggestionType.GHOST_TEXT,
-                        normalized);
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
                   }
 
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
@@ -1755,13 +1732,13 @@ public class TextEditingTargetCopilotHelper
                   }
                   else
                   {
-                     // Show only gutter icon; details shown on hover
-                     pendingSuggestion_.deltas = deltas;
+                     // Store state and show only gutter icon; details shown on hover
+                     nesCompletion_ = normalized;
+                     nesType_ = SuggestionType.DELETION;
+                     nesDeltas_ = deltas;
                      showSuggestionGutterOnly(
                         normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION,
-                        SuggestionType.DELETION,
-                        normalized);
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
                   }
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
@@ -1780,13 +1757,13 @@ public class TextEditingTargetCopilotHelper
                      }
                      else
                      {
-                        // Show only gutter icon; details shown on hover
-                        pendingSuggestion_.additions = additions;
+                        // Store state and show only gutter icon; details shown on hover
+                        nesCompletion_ = normalized;
+                        nesType_ = SuggestionType.INSERTION;
+                        nesDeltas_ = deltas;
                         showSuggestionGutterOnly(
                            normalized.range.start.line,
-                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION,
-                           SuggestionType.INSERTION,
-                           normalized);
+                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
                      }
                      server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                      return;
@@ -1806,14 +1783,13 @@ public class TextEditingTargetCopilotHelper
                      }
                      else
                      {
-                        // Show only gutter icon; details shown on hover
-                        pendingSuggestion_.singleDeletion = deletion;
-                        pendingSuggestion_.singleAddition = addition;
+                        // Store state and show only gutter icon; details shown on hover
+                        nesCompletion_ = normalized;
+                        nesType_ = SuggestionType.REPLACEMENT;
+                        nesDeltas_ = deltas;
                         showSuggestionGutterOnly(
                            normalized.range.start.line,
-                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT,
-                           SuggestionType.REPLACEMENT,
-                           normalized);
+                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
                      }
                      server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                      return;
@@ -1827,12 +1803,13 @@ public class TextEditingTargetCopilotHelper
                }
                else
                {
-                  // Show only gutter icon; details shown on hover
+                  // Store state and show only gutter icon; details shown on hover
+                  nesCompletion_ = normalized;
+                  nesType_ = SuggestionType.DIFF;
+                  nesDeltas_ = deltas;
                   showSuggestionGutterOnly(
                      normalized.range.start.line,
-                     AceEditorGutterStyles.NEXT_EDIT_SUGGESTION,
-                     SuggestionType.DIFF,
-                     normalized);
+                     AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
                }
             }
 
@@ -2068,17 +2045,16 @@ public class TextEditingTargetCopilotHelper
     */
    private boolean hasActiveSuggestion()
    {
-      return pendingSuggestion_.type != SuggestionType.NONE ||
-             diffView_ != null ||
-             nesCompletion_ != null;
+      return diffView_ != null || nesCompletion_ != null;
    }
 
    /**
     * Returns true if there is a pending suggestion that hasn't been revealed yet.
+    * This is when we have stored NES state but only showing the gutter icon.
     */
    private boolean hasPendingUnrevealedSuggestion()
    {
-      return pendingSuggestion_.type != SuggestionType.NONE && !pendingSuggestionRevealed_;
+      return pendingGutterRow_ != -1 && !pendingSuggestionRevealed_;
    }
 
    /**
@@ -2118,9 +2094,10 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
-    * Clears the NES (Next Edit Suggestion) state for deletion, insertion, and replacement suggestions.
+    * Clears only the visual elements for NES suggestions (markers, tokens, gutter icons).
+    * Preserves nesCompletion_, nesType_, and nesDeltas_ for re-rendering on hover.
     */
-   private void clearNesState()
+   private void clearNesVisuals()
    {
       // Remove all highlight markers
       for (int markerId : nesMarkerIds_)
@@ -2150,10 +2127,18 @@ public class TextEditingTargetCopilotHelper
       display_.getElement().removeClassName("ace_deletion-clickable");
       display_.getElement().removeClassName("ace_insertion-clickable");
       display_.getElement().removeClassName("ace_replacement-clickable");
+   }
 
-      // Clear completion and type
+   /**
+    * Clears the NES state completely (visuals and stored data).
+    */
+   private void clearNesState()
+   {
+      clearNesVisuals();
       nesCompletion_ = null;
       nesType_ = SuggestionType.NONE;
+      nesDeltas_ = null;
+      pendingGutterRow_ = -1;
    }
 
    private final TextEditingTarget target_;
@@ -2197,7 +2182,7 @@ public class TextEditingTargetCopilotHelper
 
    // Autoshow and pending suggestion state
    private boolean automaticCodeSuggestionsEnabled_ = true;
-   private final PendingSuggestion pendingSuggestion_ = new PendingSuggestion();
+   private int pendingGutterRow_ = -1;
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
 
