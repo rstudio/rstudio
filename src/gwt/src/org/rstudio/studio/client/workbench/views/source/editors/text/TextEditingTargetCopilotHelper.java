@@ -1172,7 +1172,8 @@ public class TextEditingTargetCopilotHelper
 
                display_.addValueChangeHandler((event) ->
                {
-                  nesTimer_.schedule(300);
+                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
+                  nesTimer_.schedule(delayMs);
                }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing

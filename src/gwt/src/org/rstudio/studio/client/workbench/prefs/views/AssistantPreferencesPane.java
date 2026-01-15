@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEven
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -332,6 +334,11 @@ public class AssistantPreferencesPane extends PreferencesPane
          panel.add(spacedBefore(headerLabel(constants_.copilotSuggestionsHeader())));
          panel.add(cbCopilotNesEnabled_);
          panel.add(cbCopilotNesAutoshow_);
+
+         String modifier = BrowseCap.isMacintosh() ? "Cmd" : "Ctrl";
+         Label lblNesShortcutHint = new Label(constants_.copilotSuggestionsShortcutHint(modifier));
+         lblNesShortcutHint.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
+         panel.add(spaced(lblNesShortcutHint));
 
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
          panel.add(cbCopilotShowMessages_);
