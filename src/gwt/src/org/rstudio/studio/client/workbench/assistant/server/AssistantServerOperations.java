@@ -40,34 +40,33 @@ public interface AssistantServerOperations
    public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback);
 
    public void assistantDocFocused(String documentId,
-                                 ServerRequestCallback<Void> requestCallback);
+                                   ServerRequestCallback<Void> requestCallback);
 
    public void assistantDidShowCompletion(AssistantCompletion command,
-                                        ServerRequestCallback<Void> requestCallback);
+                                          ServerRequestCallback<Void> requestCallback);
 
    public void assistantGenerateCompletions(String documentId,
-                                          String documentPath,
-                                          boolean isUntitled,
-                                          boolean autoInvoked,
-                                          int cursorRow,
-                                          int cursorColumn,
-                                          ServerRequestCallback<AssistantGenerateCompletionsResponse> requestCallback);
+                                            String documentPath,
+                                            boolean isUntitled,
+                                            boolean autoInvoked,
+                                            int cursorRow,
+                                            int cursorColumn,
+                                            ServerRequestCallback<AssistantGenerateCompletionsResponse> requestCallback);
 
-   public void assistantNextEditSuggestions(
-      String documentId,
-      String documentPath,
-      boolean isUntitled,
-      int cursorRow,
-      int cursorColumn,
-      ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback);
+   public void assistantNextEditSuggestions(String documentId,
+                                            String documentPath,
+                                            boolean isUntitled,
+                                            int cursorRow,
+                                            int cursorColumn,
+                                            ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback);
 
    public void assistantDidAcceptCompletion(AssistantCompletionCommand completionCommand,
-                                          ServerRequestCallback<Void> requestCallback);
+                                            ServerRequestCallback<Void> requestCallback);
 
    public void assistantDidAcceptPartialCompletion(AssistantCompletion completion,
                                                  int acceptedLength,
                                                  ServerRequestCallback<Void> requestCallback);
 
    public void assistantRegisterOpenFiles(ArrayList<String> filePaths,
-                                        ServerRequestCallback<Void> requestCallback);
+                                          ServerRequestCallback<Void> requestCallback);
 }
