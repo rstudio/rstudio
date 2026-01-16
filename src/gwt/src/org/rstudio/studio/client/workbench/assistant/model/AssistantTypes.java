@@ -1,5 +1,5 @@
 /*
- * CopilotTypes.java
+ * AssistantTypes.java
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -12,75 +12,75 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot.model;
+package org.rstudio.studio.client.workbench.assistant.model;
 
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 import jsinterop.base.Any;
 
-// The set of types returned by the GitHub Copilot agent.
+// The set of types returned by LSP-based AI assistant agents.
 // There is some overlap with LSP types here.
-public class CopilotTypes
+public class AssistantTypes
 {
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotDiagnostics
+   public static class AssistantDiagnostics
    {
       public String report;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotPosition
+   public static class AssistantPosition
    {
       public int line;
       public int character;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotTextDocument
+   public static class AssistantTextDocument
    {
       String uri;
       int version;
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotRange
+   public static class AssistantRange
    {
-      public CopilotPosition start;
-      public CopilotPosition end;
+      public AssistantPosition start;
+      public AssistantPosition end;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotCompletionCommand
+   public static class AssistantCompletionCommand
    {
       public String title;
       public String command;
       public String[] arguments;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotCompletion
+   public static class AssistantCompletion
    {
       public String insertText;
-      public CopilotRange range;
-      public CopilotCompletionCommand command;
+      public AssistantRange range;
+      public AssistantCompletionCommand command;
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotError
+   public static class AssistantError
    {
       public int code;
       public String message;
    }
-   
+
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotResponse
+   public static class AssistantResponse
    {
       public String jsonrpc;
       public String id;
       public Any result;
-      public CopilotError error;
+      public AssistantError error;
       public boolean cancelled;
    }
-      
-   
+
+
 }

@@ -1,5 +1,5 @@
 /*
- * CopilotEvent.java
+ * AssistantEvent.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,16 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot.model;
+package org.rstudio.studio.client.workbench.assistant.model;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
+public class AssistantEvent extends GwtEvent<AssistantEvent.Handler>
 {
-   public static enum CopilotEventType
+   public static enum AssistantEventType
    {
-      COPILOT_DISABLED,
+      ASSISTANT_DISABLED,
       COMPLETION_REQUESTED,
       COMPLETION_RECEIVED_SOME,
       COMPLETION_RECEIVED_NONE,
@@ -30,19 +30,19 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
       COMPLETIONS_ENABLED,
       COMPLETIONS_DISABLED,
    }
-   
-   public CopilotEvent(CopilotEventType type, Object data)
+
+   public AssistantEvent(AssistantEventType type, Object data)
    {
       type_ = type;
       data_ = data;
    }
-   
-   public CopilotEvent(CopilotEventType type)
+
+   public AssistantEvent(AssistantEventType type)
    {
       this(type, null);
    }
 
-   public CopilotEventType getType()
+   public AssistantEventType getType()
    {
       return type_;
    }
@@ -51,14 +51,14 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
    {
       return data_;
    }
-   
-   private final CopilotEventType type_;
+
+   private final AssistantEventType type_;
    private final Object data_;
 
    // Boilerplate ----
    public interface Handler extends EventHandler
    {
-      void onCopilot(CopilotEvent event);
+      void onAssistant(AssistantEvent event);
    }
 
    @Override
@@ -70,7 +70,7 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCopilot(this);
+      handler.onAssistant(this);
    }
 
    public static final Type<Handler> TYPE = new Type<>();

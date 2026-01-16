@@ -157,14 +157,14 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotNextEditSuggestionsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletionCommand;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignOutResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletionCommand;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -685,65 +685,65 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void copilotVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   public void assistantVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_verify_installed", requestCallback);
    }
-   
+
    @Override
-   public void copilotDiagnostics(ServerRequestCallback<CopilotDiagnosticsResponse> requestCallback)
+   public void assistantDiagnostics(ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copilot_diagnostics", requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_diagnostics", requestCallback);
    }
-   
+
    @Override
-   public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback)
+   public void assistantSignIn(ServerRequestCallback<AssistantSignInResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copilot_sign_in", requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_sign_in", requestCallback);
    }
-   
+
    @Override
-   public void copilotSignOut(ServerRequestCallback<CopilotSignOutResponse> requestCallback)
+   public void assistantSignOut(ServerRequestCallback<AssistantSignOutResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copilot_sign_out", requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_sign_out", requestCallback);
    }
-   
+
    @Override
-   public void copilotStatus(ServerRequestCallback<CopilotStatusResponse> requestCallback)
+   public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copilot_status", requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_status", requestCallback);
    }
-   
+
    @Override
-   public void copilotDocFocused(String documentId,
-                                 ServerRequestCallback<Void> requestCallback) 
+   public void assistantDocFocused(String documentId,
+                                 ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
             .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_doc_focused", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_doc_focused", params, requestCallback);
    };
 
    @Override
-   public void copilotDidShowCompletion(CopilotCompletion completion,
-                                        ServerRequestCallback<Void> requestCallback) 
+   public void assistantDidShowCompletion(AssistantCompletion completion,
+                                        ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completion)
             .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_did_show_completion", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_did_show_completion", params, requestCallback);
    };
 
    @Override
-   public void copilotGenerateCompletions(String documentId,
+   public void assistantGenerateCompletions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,
                                           boolean autoInvoked,
                                           int cursorRow,
                                           int cursorColumn,
-                                          ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback)
+                                          ServerRequestCallback<AssistantGenerateCompletionsResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -753,17 +753,17 @@ public class RemoteServer implements Server
             .add(cursorRow)
             .add(cursorColumn)
             .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_generate_completions", params, requestCallback);
    }
 
    @Override
-   public void copilotNextEditSuggestions(String documentId,
+   public void assistantNextEditSuggestions(String documentId,
                                           String documentPath,
                                           boolean isUntitled,
                                           int cursorRow,
                                           int cursorColumn,
-                                          ServerRequestCallback<CopilotNextEditSuggestionsResponse> requestCallback)
+                                          ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -772,23 +772,23 @@ public class RemoteServer implements Server
             .add(cursorRow)
             .add(cursorColumn)
             .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_next_edit_suggestions", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_next_edit_suggestions", params, requestCallback);
    }
-   
+
    @Override
-   public void copilotDidAcceptCompletion(CopilotCompletionCommand completionCommand,
-                                          ServerRequestCallback<Void> requestCallback) 
+   public void assistantDidAcceptCompletion(AssistantCompletionCommand completionCommand,
+                                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completionCommand)
             .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_did_accept_completion", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_did_accept_completion", params, requestCallback);
    }
 
    @Override
-   public void copilotDidAcceptPartialCompletion(CopilotCompletion completion,
+   public void assistantDidAcceptPartialCompletion(AssistantCompletion completion,
                                                  int acceptedLength,
                                                  ServerRequestCallback<Void> requestCallback)
    {
@@ -797,7 +797,7 @@ public class RemoteServer implements Server
             .add(acceptedLength)
             .get();
 
-      sendRequest(RPC_SCOPE, "copilot_did_accept_partial_completion", params, requestCallback);
+      sendRequest(RPC_SCOPE, "assistant_did_accept_partial_completion", params, requestCallback);
    }
    
    @Override
@@ -6956,14 +6956,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void copilotRegisterOpenFiles(ArrayList<String> filePaths,
-                                        ServerRequestCallback<Void> requestCallback) 
+   public void assistantRegisterOpenFiles(ArrayList<String> filePaths,
+                                        ServerRequestCallback<Void> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(filePaths);
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
-      
-      sendRequest(RPC_SCOPE, "copilot_register_open_files", params, requestCallback);
+
+      sendRequest(RPC_SCOPE, "assistant_register_open_files", params, requestCallback);
    };
 
    @Override

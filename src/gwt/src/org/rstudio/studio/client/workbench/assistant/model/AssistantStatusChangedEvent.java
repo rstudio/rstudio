@@ -1,5 +1,5 @@
 /*
- * CopilotStatusChangedEvent.java
+ * AssistantStatusChangedEvent.java
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot.model;
+package org.rstudio.studio.client.workbench.assistant.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CopilotStatusChangedEvent extends GwtEvent<CopilotStatusChangedEvent.Handler>
+public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChangedEvent.Handler>
 {
    // keep in sync with CopilotAgentRuntimeStatus in SessionCopilot.cpp
    public static final int UNKNOWN = 0;
@@ -30,7 +30,7 @@ public class CopilotStatusChangedEvent extends GwtEvent<CopilotStatusChangedEven
 
    public interface Handler extends EventHandler
    {
-      void onCopilotStatusChangedEvent(CopilotStatusChangedEvent event);
+      void onAssistantStatusChangedEvent(AssistantStatusChangedEvent event);
    }
 
    public static class Data extends JavaScriptObject
@@ -44,7 +44,7 @@ public class CopilotStatusChangedEvent extends GwtEvent<CopilotStatusChangedEven
       }-*/;
    }
 
-   public CopilotStatusChangedEvent(int status)
+   public AssistantStatusChangedEvent(int status)
    {
       status_ = status;
    }
@@ -63,7 +63,7 @@ public class CopilotStatusChangedEvent extends GwtEvent<CopilotStatusChangedEven
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCopilotStatusChangedEvent(this);
+      handler.onAssistantStatusChangedEvent(this);
    }
 
    public static final Type<Handler> TYPE = new Type<>();

@@ -139,8 +139,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -616,7 +616,7 @@ public class TextEditingTarget implements
                                          events_,
                                          this);
 
-      copilotHelper_ = new TextEditingTargetCopilotHelper(this);
+      copilotHelper_ = new TextEditingTargetAssistantHelper(this);
       
       EditingTarget target = this;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
@@ -1898,16 +1898,16 @@ public class TextEditingTarget implements
 
       events_.addHandler(
             this,
-            CopilotEvent.TYPE,
-            new CopilotEvent.Handler()
+            AssistantEvent.TYPE,
+            new AssistantEvent.Handler()
             {
                @Override
-               public void onCopilot(CopilotEvent event)
+               public void onAssistant(AssistantEvent event)
                {
                   // If copilot is disabled, hide the status message as a catch-all for
                   // this report of messages appearing when they shouldn't:
                   // https://github.com/rstudio/rstudio/issues/16471
-                  if (!copilotHelper_.isCopilotEnabled())
+                  if (!copilotHelper_.isAssistantEnabled())
                   {
                      view_.getStatusBar().hideStatus();
                      return;
@@ -1915,8 +1915,8 @@ public class TextEditingTarget implements
 
                   switch (event.getType())
                   {
-                  
-                  case COPILOT_DISABLED:
+
+                  case ASSISTANT_DISABLED:
                      view_.getStatusBar().hideStatus();
                      break;
                      
@@ -1935,7 +1935,7 @@ public class TextEditingTarget implements
                   case COMPLETION_RECEIVED_SOME:
 
                      ClickHandler handler = null;
-                     CopilotCompletion completion = (CopilotCompletion) event.getData();
+                     AssistantCompletion completion = (AssistantCompletion) event.getData();
                      if (completion != null)
                      {
                         handler = new ClickHandler()
@@ -9708,7 +9708,7 @@ public class TextEditingTarget implements
    private boolean forceSaveCommandActive_ = false;
    private boolean visualEditorHasFocus_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
-   private final TextEditingTargetCopilotHelper copilotHelper_;
+   private final TextEditingTargetAssistantHelper copilotHelper_;
    private TextEditingTargetPackageDependencyHelper packageDependencyHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;

@@ -171,7 +171,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeMa
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCopilotHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetAssistantHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
@@ -358,7 +358,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
-   void injectMembers(TextEditingTargetCopilotHelper copilotHelper);
+   void injectMembers(TextEditingTargetAssistantHelper copilotHelper);
    void injectMembers(DocUpdateSentinel sentinel);
    void injectMembers(LoggedOutDialog loggedOutDialog);
    void injectMembers(ShellWidget shellWidget);

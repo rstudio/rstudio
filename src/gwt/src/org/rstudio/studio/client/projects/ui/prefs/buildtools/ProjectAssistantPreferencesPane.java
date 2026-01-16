@@ -38,10 +38,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
-import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -100,7 +100,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                                         UserPrefs prefs,
                                         AriaLiveService ariaLive,
                                         Copilot copilot,
-                                        CopilotServerOperations server,
+                                        AssistantServerOperations server,
                                         ProjectsServerOperations projectServer)
    {
       events_ = events;
@@ -185,8 +185,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(CopilotStatusChangedEvent.TYPE, (event) -> {
-         copilotStarted_ = event.getStatus() == CopilotStatusChangedEvent.RUNNING;
+      copilotStatusHandler_ = events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) -> {
+         copilotStarted_ = event.getStatus() == AssistantStatusChangedEvent.RUNNING;
       });
    }
 
@@ -364,11 +364,11 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private void refresh()
    {
       hideButtons();
-      
-      server_.copilotStatus(new ServerRequestCallback<CopilotStatusResponse>()
+
+      server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
-         public void onResponseReceived(CopilotStatusResponse response)
+         public void onResponseReceived(AssistantStatusResponse response)
          {
             hideButtons();
             
@@ -389,10 +389,10 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                {
                   lblCopilotStatus_.setText(constants_.copilotStartupError());
                }
-               else if (CopilotResponseTypes.CopilotAgentNotRunningReason.isError(response.reason))
+               else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+                  lblCopilotStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
                }
                else if (prefs_.copilotEnabled().getValue())
                {
@@ -518,7 +518,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final Session session_;
    private final UserPrefs prefs_;
    private final Copilot copilot_;
-   private final CopilotServerOperations server_;
+   private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
    private static final AssistantPreferencesPane.Resources RES = AssistantPreferencesPane.RES;
