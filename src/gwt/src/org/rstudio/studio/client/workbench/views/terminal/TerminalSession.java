@@ -981,8 +981,38 @@ public class TerminalSession extends XTermWidget
       }
    }
 
+   /**
+    * Play a bell sound similar to macOS Terminal's "Glass" tone.
+    * A soft, pleasant tone like tapping a glass bottle.
+    */
    private native void playBellWeb() /*-{
-      // TODO
+      var AudioContext = $wnd.AudioContext || $wnd.webkitAudioContext;
+      if (!AudioContext) return;
+
+      var ctx = new AudioContext();
+      var now = ctx.currentTime;
+
+      // Single pure tone with low-pass filter for warmth
+      var osc = ctx.createOscillator();
+      var filter = ctx.createBiquadFilter();
+      var gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(698.46, now); // F5
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, now);
+      filter.Q.setValueAtTime(0.7, now); // Gentle rolloff
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.setTargetAtTime(0, now, 0.05);
+
+      osc.start(now);
+      osc.stop(now + 0.3);
    }-*/;
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
