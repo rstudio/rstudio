@@ -188,12 +188,12 @@ set(SESSION_SOURCE_FILES
    modules/chat/ChatLogging.cpp
    modules/chat/ChatInstallation.cpp
    modules/chat/ChatStaticFiles.cpp
+   modules/SessionAssistant.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
    modules/SessionClipboard.cpp
    modules/SessionConsole.cpp
-   modules/SessionCopilot.cpp
    modules/SessionCpp.cpp
    modules/SessionDebugging.cpp
    modules/SessionDependencies.cpp

@@ -1,7 +1,7 @@
 /*
- * SessionCopilot.cpp
+ * SessionAssistant.cpp
  *
- * Copyright (C) 2023 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionCopilot.hpp"
+#include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
 #include <atomic>
@@ -51,35 +51,35 @@
 
 #include "session-config.h"
 
-#define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                          \
-   {                                                                           \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);           \
-      std::string __formatted__ =                                              \
-          fmt::format("[{}]: {}", __func__, __message__);                      \
-      __LOGGER__("copilot", __formatted__);                                    \
-      if (copilotLogLevel() >= 1)                                              \
-         std::cerr << __formatted__ << std::endl;                              \
+#define _LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
+   do                                                                   \
+   {                                                                    \
+      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);    \
+      std::string __formatted__ =                                       \
+          fmt::format("[{}]: {}", __func__, __message__);               \
+      __LOGGER__("assistant", __formatted__);                             \
+      if (assistantLogLevel() >= 1)                                       \
+         std::cerr << __formatted__ << std::endl;                       \
    } while (0)
 
-#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+#define DLOG(__FMT__, ...) _LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+#define WLOG(__FMT__, ...) _LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) _LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
 
-// Use a default section of 'copilot' for errors / warnings
+// Use a default section of 'assistant' for errors / warnings
 #ifdef LOG_ERROR
 # undef LOG_ERROR
-# define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
+# define LOG_ERROR(error) LOG_ERROR_NAMED("assistant", error)
 #endif
 
-#define kCopilotDefaultDocumentVersion (0)
+#define kAssistantDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
 // completion was triggered explicitly by a user gesture
-#define kCopilotCompletionTriggerUserInvoked (1)
+#define kAssistantCompletionTriggerUserInvoked (1)
 
 // completion was triggered automatically while editing
-#define kCopilotCompletionTriggerAutomatic (2)
+#define kAssistantCompletionTriggerAutomatic (2)
 
 using namespace rstudio::core;
 using namespace rstudio::core::system;
@@ -87,31 +87,31 @@ using namespace rstudio::core::system;
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace copilot {
+namespace assistant {
 
 namespace {
 
 
-struct CopilotRequest
+struct AssistantRequest
 {
    std::string method;
    std::string id;
    json::Value params;
 };
 
-class CopilotContinuation
+class AssistantContinuation
 {
 public:
 
-   explicit CopilotContinuation(const json::JsonRpcFunctionContinuation& continuation)
+   explicit AssistantContinuation(const json::JsonRpcFunctionContinuation& continuation)
       : continuation_(continuation),
         time_(boost::posix_time::second_clock::local_time())
    {
    }
    
    // default ctor needed for compatibility with map
-   CopilotContinuation()
-      : CopilotContinuation(json::JsonRpcFunctionContinuation())
+   AssistantContinuation()
+      : AssistantContinuation(json::JsonRpcFunctionContinuation())
    {
    }
 
@@ -148,7 +148,7 @@ private:
    boost::posix_time::ptime time_;
 };
 
-enum class CopilotAgentNotRunningReason {
+enum class AgentNotRunningReason {
    Unknown,
    NotInstalled,
    DisabledByAdministrator,
@@ -157,8 +157,8 @@ enum class CopilotAgentNotRunningReason {
    LaunchError,
 };
 
-// keep in sync with constants in CopilotStatusChangedEvent.java
-enum class CopilotAgentRuntimeStatus {
+// keep in sync with constants in AssistantStatusChangedEvent.java
+enum class AgentRuntimeStatus {
    Unknown,
    Preparing,
    Starting,
@@ -167,55 +167,55 @@ enum class CopilotAgentRuntimeStatus {
    Stopped,
 };
 
-// The log level for Copilot-specific logs. Primarily for developer use.
-int s_copilotLogLevel = 0;
+// The log level for Assistant-specific logs. Primarily for developer use.
+int s_assistantLogLevel = 0;
 
-// Whether Copilot is enabled.
-bool s_copilotEnabled = false;
+// Whether Assistant is enabled.
+bool s_assistantEnabled = false;
 
-// Whether Copilot has been allowed to index project files.
-bool s_copilotIndexingEnabled = false;
+// Whether Assistant has been allowed to index project files.
+bool s_assistantIndexingEnabled = false;
 
 // Have we checked the config files at least once
-bool s_copilotInitialized = false;
+bool s_assistantInitialized = false;
 
-// The PID of the active Copilot agent process.
+// The PID of the active Assistant agent process.
 PidType s_agentPid = -1;
 
 // Error output (if any) that was written during startup.
 std::string s_agentStartupError;
 
-// The current status of the Copilot agent, mainly around if it's enabled
+// The current status of the Assistant agent, mainly around if it's enabled
 // (and why or why not).
-CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningReason::Unknown;
+AgentNotRunningReason s_agentNotRunningReason = AgentNotRunningReason::Unknown;
 
-// The current runtime status of the Copilot agent process.
-CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+// The current runtime status of the Assistant agent process.
+AgentRuntimeStatus s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
 
-void setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus status)
+void setAgentRuntimeStatus(AgentRuntimeStatus status)
 {
    if (s_agentRuntimeStatus != status)
    {
       s_agentRuntimeStatus = status;
 
-      // notify client of copilot status change
+      // notify client of assistant status change
       json::Object dataJson;
       dataJson["status"] = static_cast<int>(status);
-      ClientEvent event(client_events::kCopilotStatusChanged, dataJson);
+      ClientEvent event(client_events::kAssistantStatusChanged, dataJson);
       module_context::enqueClientEvent(event);
    }
 }
 
-// Whether or not we've handled the Copilot 'initialized' notification.
-// Primarily done to allow proper sequencing of Copilot callbacks.
+// Whether or not we've handled the Assistant 'initialized' notification.
+// Primarily done to allow proper sequencing of Assistant callbacks.
 bool s_agentInitialized = false;
 
 // A queue of pending requests, to be sent via the agent's stdin.
-std::vector<CopilotRequest> s_pendingRequests;
+std::vector<AssistantRequest> s_pendingRequests;
 
 // Metadata related to pending requests. Mainly used to map
 // responses to their expected result types.
-std::map<std::string, CopilotContinuation> s_pendingContinuations;
+std::map<std::string, AssistantContinuation> s_pendingContinuations;
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
@@ -239,9 +239,9 @@ constexpr int kNesRetryLineOffset = 4;
 // allow cancellation of in-flight requests when a new request arrives.
 std::atomic<int> s_nesRequestSequence{0};
 
-int copilotLogLevel()
+int assistantLogLevel()
 {
-   return s_copilotLogLevel;
+   return s_assistantLogLevel;
 }
 
 bool isIndexableFile(const FilePath& documentPath)
@@ -306,129 +306,112 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    return isIndexableFile(docPath);
 }
 
-FilePath copilotLanguageServerPath()
+FilePath assistantLanguageServerPath()
 {
-   FilePath copilotPath;
+   FilePath assistantPath;
    
    // Background
    // -------------------------------------------------------------------------
    // RStudio 2025.05 and 2025.09 bundle the standalone binary executable for
-   // Copilot Language Server (i.e. `copilot-language-server[.exe]`), which
+   // Assistant Language Server (i.e. `assistant-language-server[.exe]`), which
    // contains an embedded copy of node.js and can be executed directly. If 
-   // a user needed to use a newer version of `copilot-language-server` than
-   // included with RStudio they could set the `RSTUDIO_COPILOT_FOLDER`
+   // a user needed to use a newer version of `assistant-language-server` than
+   // included with RStudio they could set the `RSTUDIO_assistant_FOLDER`
    // environment variable to point at the folder containing the
-   // copilot-language-server executable to use.
+   // assistant-language-server executable to use.
    //
-   // In 2025.11 we ship the JavaScript distribution of the Copilot Language
+   // In 2025.11 we ship the JavaScript distribution of the Assistant Language
    // Server. This must be executed via node.js. The environment variable
    // for pointing at a custom version of this Javascript distribution is
-   // `RSTUDIO_COPILOT_JS_FOLDER`.
+   // `RSTUDIO_assistant_JS_FOLDER`.
    // -------------------------------------------------------------------------
    
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
 
-   std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
-   if (!rstudioCopilot.empty())
+   std::string rstudioAssistant = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
+   if (!rstudioAssistant.empty())
    {
-      if (FilePath::exists(rstudioCopilot) && FilePath(rstudioCopilot).isDirectory())
+      if (FilePath::exists(rstudioAssistant) && FilePath(rstudioAssistant).isDirectory())
       {
-         copilotPath = FilePath(rstudioCopilot);
+         assistantPath = FilePath(rstudioAssistant);
       }
    }
    
-   if (copilotPath.isEmpty())
+   if (assistantPath.isEmpty())
    {
-      copilotPath = session::options().copilotPath();
-      if (!copilotPath.exists() || !copilotPath.isDirectory())
+      // TODO: Should we support separate paths for Posit Assistant vs Copilot here?
+      assistantPath = session::options().copilotPath();
+      if (!assistantPath.exists() || !assistantPath.isDirectory())
       {
-         ELOG("Copilot Language Server path '{}' does not exist or is not a directory.", copilotPath.getAbsolutePath());
+         ELOG("Assistant Language Server path '{}' does not exist or is not a directory.", assistantPath.getAbsolutePath());
          return FilePath();
       }
    }
 
    auto suffix = "language-server.js";
-   FilePath candidatePath = copilotPath.completePath(suffix);
+   FilePath candidatePath = assistantPath.completePath(suffix);
    if (candidatePath.exists())
    {
-      DLOG("Copilot Language Server '{}' found at '{}'.", suffix, candidatePath.getAbsolutePath());
+      DLOG("Assistant Language Server '{}' found at '{}'.", suffix, candidatePath.getAbsolutePath());
       return candidatePath;
    }
 
-   ELOG("Copilot Language Server '{}' not found at '{}'.", suffix, candidatePath.getAbsolutePath());
+   ELOG("Assistant Language Server '{}' not found at '{}'.", suffix, candidatePath.getAbsolutePath());
    return FilePath();
 }
 
-bool isCopilotAgentInstalled()
+bool isAgentInstalled()
 {
-   return copilotLanguageServerPath().exists();
+   return assistantLanguageServerPath().exists();
 }
 
-bool isCopilotEnabled()
+bool isAssistantEnabled()
 {
-#ifdef COPILOT_ENABLED
-
    // Check administrator option
+   // TODO: Add option for 'assistantEnabled' vs. 'assistantEnabled'?
    if (!session::options().copilotEnabled())
    {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
+      s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
       return false;
    }
 
    // Check whether the agent is where it should be
-   if (!isCopilotAgentInstalled())
+   if (!isAgentInstalled())
    {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
+      s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
       return false;
    }
 
    // Check project option
-   switch (s_assistantProjectOptions.copilotEnabled)
-   {
-   
-   case r_util::YesValue:
-   {
-      return true;
-   }
-      
-   case r_util::NoValue:
-   {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledViaProjectPreferences;
-      return false;
-   }
-      
-   default: {}
-      
-   }
+   // TODO: Handle possible values of 'assistant' here
+   std::string assistant = s_assistantProjectOptions.assistant;
 
    // Check user preference
+   // TODO: Copilot vs. Assistant options here
    if (!prefs::userPrefs().copilotEnabled())
    {
-      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledViaGlobalPreferences;
+      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
       return false;
    }
    
    return true;
-
-#else // RStudio built without Copilot support
-   s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
-   return false;
-#endif
 }
 
-bool isCopilotIndexingEnabled()
+bool isAssistantIndexingEnabled()
 {
    // Check project option
-   switch (s_assistantProjectOptions.copilotIndexingEnabled)
-   {
-   case r_util::YesValue: return true;
-   case r_util::NoValue: return false;
-   default: {}
-   }
+   // TODO: Use 'assistant' member on options value
+   /// switch (s_assistantProjectOptions.assistantIndexingEnabled)
+   /// {
+   /// case r_util::YesValue: return true;
+   /// case r_util::NoValue: return false;
+   /// default: {}
+   /// }
 
    // Check user preference
+   // TODO: Copilot vs. Assistant options here
    return prefs::userPrefs().copilotIndexingEnabled();
 }
 
@@ -455,7 +438,7 @@ void sendNotification(const std::string& method,
    s_pendingRequests.push_back({ method, "", paramsJson });
 }
 
-std::string formatRequest(const CopilotRequest& request)
+std::string formatRequest(const AssistantRequest& request)
 {
    // Create the request body
    json::Object requestJson;
@@ -480,7 +463,7 @@ std::string formatRequest(const CopilotRequest& request)
 void sendRequest(const std::string& method,
                  const std::string& requestId,
                  const json::Value& paramsJson,
-                 const CopilotContinuation& continuation)
+                 const AssistantContinuation& continuation)
 {
    DLOG("Enqueuing request '{}' with id '{}'.", method, requestId);
    
@@ -507,13 +490,13 @@ json::Object sendSynchronousRequest(const std::string& method,
          result = pResponse->result().getObject();
    };
    
-   sendRequest(method, requestId, paramsJson, CopilotContinuation(continuation));
+   sendRequest(method, requestId, paramsJson, AssistantContinuation(continuation));
    waitFor([&]() { return responseReceived; });
    
    return result;
 }
 
-void setConfiguration()
+void setCopilotConfiguration()
 {
    json::Object paramsJson;
    json::Object settingsJson;
@@ -553,7 +536,7 @@ void setConfiguration()
       SEXP networkProxySEXP = R_NilValue;
 
       // parse the URL into its associated components for logging
-      Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
+      Error error = r::exec::RFunction(".rs.assistant.parseNetworkProxyUrl")
             .addUtf8Param(proxyUrl)
             .call(&networkProxySEXP, &protect);
       if (error)
@@ -571,7 +554,7 @@ void setConfiguration()
          {
             json::Object networkProxyJson = networkProxy.getObject();
 
-            if (s_copilotLogLevel > 0)
+            if (s_assistantLogLevel > 0)
             {
                json::Object networkProxyClone = networkProxyJson.clone().getObject();
                if (networkProxyClone.hasMember("user"))
@@ -650,9 +633,10 @@ namespace agent {
 void onStarted(ProcessOperations& operations)
 {
    // Record the PID of the agent.
-   DLOG("Copilot agent has started [PID = {}]", operations.getPid());
+   // TODO: Log current agent type as well (from prefs)
+   DLOG("Assistant agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
-   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Starting);
+   setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
 
 bool onContinue(ProcessOperations& operations)
@@ -662,7 +646,7 @@ bool onContinue(ProcessOperations& operations)
 
    auto debugCallback = [](const std::string& htmlRequest)
    {
-      if (copilotLogLevel() >= 2)
+      if (assistantLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "REQUEST" << std::endl;
@@ -685,8 +669,8 @@ bool onContinue(ProcessOperations& operations)
    }
    else
    {
-      // use expel_if to only process requests related to Copilot initialization
-      core::algorithm::expel_if(s_pendingRequests, [&](const CopilotRequest& request)
+      // use expel_if to only process requests related to Assistant initialization
+      core::algorithm::expel_if(s_pendingRequests, [&](const AssistantRequest& request)
       {
          bool isInitMethod =
                request.method == "initialize" ||
@@ -719,7 +703,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    if (regex_utils::match(stdOut, reWhitespace))
       return;
 
-   // Copilot responses will have the format
+   // Assistant responses will have the format
    //
    //    Content-Length: xyz
    //
@@ -759,7 +743,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       {
          ELOG("Internal error: response contains no Content-Length header.");
          
-         if (copilotLogLevel() >= 2)
+         if (assistantLogLevel() >= 2)
          {
             std::cerr << std::endl;
             std::cerr << "RESPONSE" << std::endl;
@@ -778,7 +762,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
-      if (copilotLogLevel() >= 2)
+      if (assistantLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "RESPONSE" << std::endl;
@@ -793,7 +777,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    }
    
    // Note that the agent is now ready.
-   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Running);
+   setAgentRuntimeStatus(AgentRuntimeStatus::Running);
 }
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
@@ -801,8 +785,8 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    if (s_isSessionShuttingDown)
       return;
 
-   LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
-   if (copilotLogLevel() >= 1)
+   LOG_ERROR_MESSAGE_NAMED("assistant", stdErr);
+   if (assistantLogLevel() >= 1)
       std::cerr << stdErr << std::endl;
  
    // If we get output from stderr while the agent is starting, that means
@@ -810,11 +794,11 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    switch (s_agentRuntimeStatus)
    {
    
-   case CopilotAgentRuntimeStatus::Starting:
-   case CopilotAgentRuntimeStatus::Stopping:
+   case AgentRuntimeStatus::Starting:
+   case AgentRuntimeStatus::Stopping:
    {
       s_agentStartupError += stdErr;
-      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopping);
+      setAgentRuntimeStatus(AgentRuntimeStatus::Stopping);
       break;
    }
  
@@ -828,13 +812,13 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
-   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
+   setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
-   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
+   setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
 } // end namespace agent
@@ -844,7 +828,7 @@ void stopAgent()
 {
    if (s_agentPid == -1)
    {
-      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Stopped);
+      setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
       return;
    }
 
@@ -864,13 +848,13 @@ bool stopAgentSync()
 
 Error startAgent()
 {
-   if (s_agentRuntimeStatus != CopilotAgentRuntimeStatus::Unknown &&
-       s_agentRuntimeStatus != CopilotAgentRuntimeStatus::Stopped)
+   if (s_agentRuntimeStatus != AgentRuntimeStatus::Unknown &&
+       s_agentRuntimeStatus != AgentRuntimeStatus::Stopped)
    {
       return Success();
    }
 
-   setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Preparing);
+   setAgentRuntimeStatus(AgentRuntimeStatus::Preparing);
 
    Error error;
 
@@ -879,11 +863,13 @@ Error startAgent()
    core::system::environment(&environment);
    
    // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   // TODO: Copilot vs. Assistant option here?
    std::string certificatesFile = session::options().copilotSslCertificatesFile();
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // Find node.js
+   // TODO: Should we support a custom node path here?
    FilePath nodePath;
    error = node_tools::findNode(&nodePath, "rstudio.copilot.nodeBinaryPath");
    if (error)
@@ -914,35 +900,38 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Run the Copilot Language Server. If RStudio has been configured with a custom
-   // Copilot script, use that; otherwise, just run the Copilot Language Server directly.
-   FilePath copilotHelper = session::options().copilotHelper();
-   if (!copilotHelper.isEmpty())
+   // Run the Assistant Language Server. If RStudio has been configured with a custom
+   // Assistant script, use that; otherwise, just run the Assistant Language Server directly.
+   //
+   // TODO: assistantHelper vs. copilotHelper?
+   FilePath assistantHelper = session::options().copilotHelper();
+   if (!assistantHelper.isEmpty())
    {
-      if (!copilotHelper.exists())
-         return fileNotFoundError(copilotHelper, ERROR_LOCATION);
+      if (!assistantHelper.exists())
+         return fileNotFoundError(assistantHelper, ERROR_LOCATION);
       
-      FilePath copilotPath = copilotLanguageServerPath();
+      // TODO: Update these environment variables.
+      FilePath assistantPath = assistantLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", assistantPath.getAbsolutePath()));
       options.environment = environment;
       error = module_context::processSupervisor().runProgram(
-               copilotHelper.getAbsolutePath(),
+               assistantHelper.getAbsolutePath(),
                {},
                options,
                callbacks);
    }
    else
    {
-      FilePath copilotPath = copilotLanguageServerPath();
-      if (!copilotPath.exists())
-         return fileNotFoundError(copilotPath, ERROR_LOCATION);
+      FilePath assistantPath = assistantLanguageServerPath();
+      if (!assistantPath.exists())
+         return fileNotFoundError(assistantPath, ERROR_LOCATION);
 
-      options.workingDir = copilotPath.getParent();
+      options.workingDir = assistantPath.getParent();
       options.environment = environment;
 
       std::vector<std::string> args;
-      args.push_back(copilotPath.getAbsolutePath());
+      args.push_back(assistantPath.getAbsolutePath());
       args.push_back("--stdio");
       error = module_context::processSupervisor().runProgram(
                nodePath.getAbsolutePath(),
@@ -953,7 +942,7 @@ Error startAgent()
    
    if (error)
    {
-      setCopilotAgentRuntimeStatus(CopilotAgentRuntimeStatus::Unknown);
+      setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       return error;
    }
    
@@ -967,7 +956,7 @@ Error startAgent()
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
-      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+      s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    }
    
@@ -985,14 +974,12 @@ Error startAgent()
    paramsJson["locale"] = prefs::userPrefs().uiLanguage();
    paramsJson["initializationOptions"] = initializationOptionsJson;
 
-   std::string workspaceFolderURI;
-   if (prefs::userPrefs().copilotProjectWorkspace() && projects::projectContext().hasProject())
-   {
-      workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
-   }
+   // TODO: Does this really need to be a preference? Seems reasonable to just always include the project as a workspace URI.
+   std::string workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
 
    json::Object workspaceJson;
    workspaceJson["workspaceFolders"] = !workspaceFolderURI.empty();
+
    json::Object capabilitiesJson;
    capabilitiesJson["workspace"] = workspaceJson;
    paramsJson["capabilities"] = capabilitiesJson;
@@ -1011,19 +998,21 @@ Error startAgent()
    {
       if (error)
       {
-         s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
+         s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
          LOG_ERROR(error);
          return;
       }
       
-      // newer versions of Copilot require an 'initialized' notification, which is
+      // newer versions of Assistant require an 'initialized' notification, which is
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
-      setConfiguration();
+
+      // TODO: Posit AI?
+      setCopilotConfiguration();
    };
    
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(initializedCallback));
+   sendRequest("initialize", requestId, paramsJson, AssistantContinuation(initializedCallback));
 
    // Okay, we're ready to go.
    return Success();
@@ -1032,10 +1021,10 @@ Error startAgent()
 bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 {
    // TODO: Should we further validate the PID is actually associated
-   // with a running Copilot process, or just handle that separately?
+   // with a running Assistant process, or just handle that separately?
    if (s_agentPid != -1)
    {
-      //DLOG("Copilot is already running; nothing to do.");
+      //DLOG("Assistant is already running; nothing to do.");
       return true;
    }
 
@@ -1043,13 +1032,13 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    if (s_isSessionShuttingDown)
       return false;
 
-   // bail if we haven't enabled copilot
-   if (!s_copilotEnabled)
+   // bail if we haven't enabled assistant
+   if (!s_assistantEnabled)
    {
-      if (!s_copilotInitialized)
+      if (!s_assistantInitialized)
       {
-         DLOG("Copilot is not enabled; not starting agent.");
-         s_copilotInitialized = true;
+         DLOG("Assistant is not enabled; not starting agent.");
+         s_assistantInitialized = true;
       }
       return false;
    }
@@ -1067,7 +1056,7 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
    
-   s_copilotInitialized = true;
+   s_assistantInitialized = true;
    return error == Success();
 }
 
@@ -1166,14 +1155,14 @@ void indexFile(const core::FileInfo& info)
 
 void onMonitoringEnabled(const tree<core::FileInfo>& tree)
 {
-   if (s_copilotIndexingEnabled)
+   if (s_assistantIndexingEnabled)
       for (auto&& file : tree)
          s_indexQueue.push_back(file);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   if (s_copilotIndexingEnabled)
+   if (s_assistantIndexingEnabled)
       for (auto&& event : events)
          s_indexQueue.push_back(event.fileInfo());
 }
@@ -1350,8 +1339,9 @@ void onBackgroundProcessing(bool isIdle)
                 boost::iequals(type, "Warning") ||
                 boost::iequals(type, "Info"))
             {
+               // TODO: Copilot vs. Assistant preference here?
                if (prefs::userPrefs().copilotShowMessages())
-                  module_context::showErrorMessage("GitHub Copilot", message);
+                  module_context::showErrorMessage("GitHub Assistant", message);
                else
                   ELOG("showMessageRequest ({}): '{}'", type, message);
             }
@@ -1388,7 +1378,7 @@ void onBackgroundProcessing(bool isIdle)
       }
 
       // Check the response id. This will be missing for notifications; we may receive
-      // a flurry of progress notifications when requesting completions from Copilot.
+      // a flurry of progress notifications when requesting completions from Assistant.
       // We might want to handle these somehow. Perhaps hook them up to some status widget?
       json::Value requestIdJson = responseJson["id"];
       if (!requestIdJson.isString())
@@ -1452,7 +1442,7 @@ bool subscribeToFileMonitor()
    callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
    callbacks.onFilesChanged = file_monitor::onFilesChanged;
    callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
+   projects::projectContext().subscribeToFileMonitor("Assistant indexing", callbacks);
    return true;
 }
 
@@ -1463,18 +1453,18 @@ void synchronize()
       return;
 
    // Update flags
-   s_copilotEnabled = isCopilotEnabled();
-   s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
+   s_assistantEnabled = isAssistantEnabled();
+   s_assistantIndexingEnabled = s_assistantEnabled && isAssistantIndexingEnabled();
    
    // Subscribe to file monitor if enabled
-   if (s_copilotIndexingEnabled)
+   if (s_assistantIndexingEnabled)
    {
       static bool once = subscribeToFileMonitor();
       (void) once;
    }
    
    // Start or stop the agent as appropriate
-   if (s_copilotEnabled)
+   if (s_assistantEnabled)
    {
       startAgent();
    }
@@ -1504,6 +1494,7 @@ void onProjectOptionsUpdated()
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
+   // TODO: Check if posit assistant enabled?
    if (name == kCopilotEnabled)
    {
       synchronize();
@@ -1527,7 +1518,7 @@ void onShutdown(bool)
 }
 
 // Primarily intended for debugging / exploration.
-SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
+SEXP rs_assistantSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
 {
    std::string method = r::sexp::asString(methodSEXP);
    
@@ -1549,14 +1540,14 @@ SEXP rs_copilotSendRequest(SEXP methodSEXP, SEXP paramsSEXP)
    return r::sexp::create(responseJson, &protect);
 }
 
-SEXP rs_copilotSetLogLevel(SEXP logLevelSEXP)
+SEXP rs_assistantSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
-   s_copilotLogLevel = logLevel;
+   s_assistantLogLevel = logLevel;
    return logLevelSEXP;
 }
 
-std::string copilotVersion()
+std::string assistantVersion()
 {
    std::string requestId = core::system::generateUuid();
    json::Object responseJson = sendSynchronousRequest("getVersion", requestId, json::Object());
@@ -1578,37 +1569,37 @@ std::string copilotVersion()
    return version;
 }
 
-SEXP rs_copilotVersion()
+SEXP rs_assistantVersion()
 {
-   if (!isCopilotEnabled())
+   if (!isAssistantEnabled())
       return R_NilValue;
    
-   std::string version = copilotVersion();
+   std::string version = assistantVersion();
    r::sexp::Protect protect;
    return r::sexp::create(version, &protect);
 }
 
-SEXP rs_copilotStopAgent()
+SEXP rs_assistantStopAgent()
 {
-   // stop the copilot agent
+   // stop the assistant agent
    bool stopped = stopAgentSync();
  
    // return status
    return Rf_ScalarLogical(stopped);
 }
 
-Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
+Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
    json::Object responseJson;
-   pResponse->setResult(isCopilotAgentInstalled());
+   pResponse->setResult(isAgentInstalled());
    return Success();
 }
 
-Error copilotDiagnostics(const json::JsonRpcRequest& request,
+Error assistantDiagnostics(const json::JsonRpcRequest& request,
                          const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       json::JsonRpcResponse response;
@@ -1617,15 +1608,15 @@ Error copilotDiagnostics(const json::JsonRpcRequest& request,
    }
    
    std::string requestId = core::system::generateUuid();
-   sendRequest("debug/diagnostics", requestId, json::Object(), CopilotContinuation(continuation));
+   sendRequest("debug/diagnostics", requestId, json::Object(), AssistantContinuation(continuation));
    
    return Success();
 }
 
-Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
+Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
                                  const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       json::JsonRpcResponse response;
@@ -1666,7 +1657,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    }
    
    // Disallow completion request in hidden files, since this might trigger
-   // the copilot agent to attempt to read the contents of that file
+   // the assistant agent to attempt to read the contents of that file
    if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
@@ -1691,7 +1682,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    json::Object contextJson;
    contextJson["triggerKind"] = autoInvoked ? 
-         kCopilotCompletionTriggerAutomatic : kCopilotCompletionTriggerUserInvoked;
+         kAssistantCompletionTriggerAutomatic : kAssistantCompletionTriggerUserInvoked;
 
    json::Object paramsJson;
    paramsJson["textDocument"] = docJson;
@@ -1700,7 +1691,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    // Send the request
    std::string requestId = core::system::generateUuid();
-   sendRequest("textDocument/inlineCompletion", requestId, paramsJson, CopilotContinuation(continuation));
+   sendRequest("textDocument/inlineCompletion", requestId, paramsJson, AssistantContinuation(continuation));
 
    return Success();
 }
@@ -1889,7 +1880,7 @@ void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
    docJson["version"] = state->documentVersion;
 
    json::Object contextJson;
-   contextJson["triggerKind"] = kCopilotCompletionTriggerAutomatic;
+   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
 
    json::Object paramsJson;
    paramsJson["textDocument"] = docJson;
@@ -1899,7 +1890,7 @@ void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
    // Create the continuation that will handle retries
    NesContinuation nesContinuation(state);
 
-   // Wrap in a CopilotContinuation-compatible lambda
+   // Wrap in a AssistantContinuation-compatible lambda
    auto continuation = [nesContinuation](const Error& error, json::JsonRpcResponse* pResponse) mutable
    {
       if (error)
@@ -1922,13 +1913,13 @@ void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
 
    // Send the request
    std::string requestId = core::system::generateUuid();
-   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, CopilotContinuation(continuation));
+   sendRequest("textDocument/assistantInlineEdit", requestId, paramsJson, AssistantContinuation(continuation));
 }
 
-Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
-                                 const json::JsonRpcFunctionContinuation& continuation)
+Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
+                                   const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       json::JsonRpcResponse response;
@@ -1966,7 +1957,7 @@ Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
    }
 
    // Disallow completion request in hidden files, since this might trigger
-   // the copilot agent to attempt to read the contents of that file
+   // the assistant agent to attempt to read the contents of that file
    if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
@@ -2013,10 +2004,10 @@ Error copilotNextEditSuggestions(const json::JsonRpcRequest& request,
 }
 
 
-Error copilotSignIn(const json::JsonRpcRequest& request,
-                    const json::JsonRpcFunctionContinuation& continuation)
+Error assistantSignIn(const json::JsonRpcRequest& request,
+                      const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       json::JsonRpcResponse response;
@@ -2026,15 +2017,15 @@ Error copilotSignIn(const json::JsonRpcRequest& request,
 
    // Send sign in request
    std::string requestId = core::system::generateUuid();
-   sendRequest("signInInitiate", requestId, json::Object(), CopilotContinuation(continuation));
+   sendRequest("signInInitiate", requestId, json::Object(), AssistantContinuation(continuation));
 
    return Success();
 }
 
-Error copilotSignOut(const json::JsonRpcRequest& request,
-                     const json::JsonRpcFunctionContinuation& continuation)
+Error assistantSignOut(const json::JsonRpcRequest& request,
+                       const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       json::JsonRpcResponse response;
@@ -2044,14 +2035,14 @@ Error copilotSignOut(const json::JsonRpcRequest& request,
 
    // Send sign out request
    std::string requestId = core::system::generateUuid();
-   sendRequest("signOut", requestId, json::Object(), CopilotContinuation(continuation));
+   sendRequest("signOut", requestId, json::Object(), AssistantContinuation(continuation));
    return Success();
 }
 
-Error copilotStatus(const json::JsonRpcRequest& request,
-                    const json::JsonRpcFunctionContinuation& continuation)
+Error assistantStatus(const json::JsonRpcRequest& request,
+                      const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    Error launchError;
    if (!ensureAgentRunning(&launchError))
    {
@@ -2062,7 +2053,7 @@ Error copilotStatus(const json::JsonRpcRequest& request,
       {
          json::Object errorJson;
          launchError.writeJson(&errorJson);
-         resultJson["reason"] = static_cast<int>(CopilotAgentNotRunningReason::LaunchError);
+         resultJson["reason"] = static_cast<int>(AgentNotRunningReason::LaunchError);
          resultJson["error"] = errorJson;
          resultJson["output"] = s_agentStartupError;
       }
@@ -2078,14 +2069,14 @@ Error copilotStatus(const json::JsonRpcRequest& request,
 
    // Send status request
    std::string requestId = core::system::generateUuid();
-   sendRequest("checkStatus", requestId, json::Object(), CopilotContinuation(continuation));
+   sendRequest("checkStatus", requestId, json::Object(), AssistantContinuation(continuation));
    return Success();
 }
 
-Error copilotDocFocused(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+Error assistantDocFocused(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       // nothing to do if we can't connect to the agent
@@ -2110,8 +2101,8 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // If document is NOT indexable we tell Copilot that no file has focus via an empty request.
-   // This is to prevent Copilot from attempting to read the contents of the file.
+   // If document is NOT indexable we tell Assistant that no file has focus via an empty request.
+   // This is to prevent Assistant from attempting to read the contents of the file.
    json::Object paramsJson;
    if (isIndexableDocument(pDoc))
    {
@@ -2128,10 +2119,10 @@ Error copilotDocFocused(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotDidShowCompletion(const json::JsonRpcRequest& request,
-                               json::JsonRpcResponse* pResponse)
+Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       // nothing to do if we can't connect to the agent
@@ -2153,10 +2144,10 @@ Error copilotDidShowCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotDidAcceptCompletion(const json::JsonRpcRequest& request,
-                                 json::JsonRpcResponse* pResponse)
+Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       // nothing to do if we can't connect to the agent
@@ -2176,10 +2167,10 @@ Error copilotDidAcceptCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
-                                        json::JsonRpcResponse* pResponse)
+Error assistantDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
+                                          json::JsonRpcResponse* pResponse)
 {
-   // Make sure copilot is running
+   // Make sure assistant is running
    if (!ensureAgentRunning())
    {
       // nothing to do if we can't connect to the agent
@@ -2203,8 +2194,8 @@ Error copilotDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error copilotRegisterOpenFiles(const json::JsonRpcRequest& request,
-                               json::JsonRpcResponse* pResponse)
+Error assistantRegisterOpenFiles(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
 {
    json::Array paths;
    Error error = json::readParam(request.params, 0, &paths);
@@ -2229,9 +2220,10 @@ Error initialize()
    using namespace module_context;
 
    // Read default log level
-   std::string copilotLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
-   if (!copilotLogLevel.empty())
-      s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
+   // TODO: Also PAI_LOG_LEVEL?
+   std::string assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
+   if (!assistantLogLevel.empty())
+      s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
    
    // Read project options
    if (projects::projectContext().hasProject())
@@ -2252,35 +2244,36 @@ Error initialize()
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while
-   // editting preferences within the Copilot prefs dialog, anyhow.
+   // editting preferences within the Assistant prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
-   RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
-   RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
-   RS_REGISTER_CALL_METHOD(rs_copilotVersion);
-   RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
+   RS_REGISTER_CALL_METHOD(rs_assistantSendRequest);
+   RS_REGISTER_CALL_METHOD(rs_assistantSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_assistantVersion);
+   RS_REGISTER_CALL_METHOD(rs_assistantStopAgent);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(registerAsyncRpcMethod, "copilot_diagnostics", copilotDiagnostics))
-         (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
-         (bind(registerAsyncRpcMethod, "copilot_next_edit_suggestions", copilotNextEditSuggestions))
-         (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
-         (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
-         (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
-         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
-         (bind(registerRpcMethod, "copilot_doc_focused", copilotDocFocused))
-         (bind(registerRpcMethod, "copilot_did_show_completion", copilotDidShowCompletion))
-         (bind(registerRpcMethod, "copilot_did_accept_completion", copilotDidAcceptCompletion))
-         (bind(registerRpcMethod, "copilot_did_accept_partial_completion", copilotDidAcceptPartialCompletion))
-         (bind(registerRpcMethod, "copilot_register_open_files", copilotRegisterOpenFiles))
+         (bind(registerAsyncRpcMethod, "assistant_diagnostics", assistantDiagnostics))
+         (bind(registerAsyncRpcMethod, "assistant_generate_completions", assistantGenerateCompletions))
+         (bind(registerAsyncRpcMethod, "assistant_next_edit_suggestions", assistantNextEditSuggestions))
+         (bind(registerAsyncRpcMethod, "assistant_sign_in", assistantSignIn))
+         (bind(registerAsyncRpcMethod, "assistant_sign_out", assistantSignOut))
+         (bind(registerAsyncRpcMethod, "assistant_status", assistantStatus))
+         (bind(registerRpcMethod, "assistant_verify_installed", assistantVerifyInstalled))
+         (bind(registerRpcMethod, "assistant_doc_focused", assistantDocFocused))
+         (bind(registerRpcMethod, "assistant_did_show_completion", assistantDidShowCompletion))
+         (bind(registerRpcMethod, "assistant_did_accept_completion", assistantDidAcceptCompletion))
+         (bind(registerRpcMethod, "assistant_did_accept_partial_completion", assistantDidAcceptPartialCompletion))
+         (bind(registerRpcMethod, "assistant_register_open_files", assistantRegisterOpenFiles))
+         (bind(sourceModuleRFile, "SessionAssistant.R"))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
 
 }
 
-} // end namespace copilot
+} // end namespace assistant
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio

@@ -1,7 +1,7 @@
 /*
- * SessionCopilot.hpp
+ * SessionAssistant.hpp
  *
- * Copyright (C) 2023 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef RSTUDIO_SESSION_MODULES_COPILOT_HPP
-#define RSTUDIO_SESSION_MODULES_COPILOT_HPP
+#ifndef RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
+#define RSTUDIO_SESSION_MODULES_ASSISTANT_HPP
 
 namespace rstudio {
 namespace core {
@@ -25,13 +25,13 @@ class Error;
 namespace rstudio {
 namespace session {
 namespace modules {
-namespace copilot {
+namespace assistant {
 
 core::Error initialize();
 
-} // end namespace copilot
+} // end namespace assistant
 } // end namespace modules
 } // end namespace session
 } // end namespace rstudio
 
-#endif /* RSTUDIO_SESSION_MODULES_COPILOT_HPP */
+#endif /* RSTUDIO_SESSION_MODULES_ASSISTANT_HPP */
