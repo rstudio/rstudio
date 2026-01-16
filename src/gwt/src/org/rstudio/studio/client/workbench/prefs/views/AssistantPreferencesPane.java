@@ -305,8 +305,44 @@ public class AssistantPreferencesPane extends PreferencesPane
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
-                  refresh();
                   copilotRefreshed_ = true;
+
+                  // If Copilot is already enabled, just refresh the status
+                  if (prefs_.copilotEnabled().getValue())
+                  {
+                     refresh();
+                  }
+                  else
+                  {
+                     // Eagerly save the preference so the backend can start the agent
+                     server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              prefs_.copilotEnabled().setGlobalValue(true);
+                              prefs_.rstudioAssistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+                              prefs_.writeUserPrefs((completed) ->
+                              {
+                                 refresh();
+                              });
+                           }
+                           else
+                           {
+                              lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblCopilotStatus_.setText(constants_.copilotStartupError());
+                        }
+                     });
+                  }
                }
             }
          }
