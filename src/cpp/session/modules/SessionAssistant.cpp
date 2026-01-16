@@ -310,22 +310,6 @@ FilePath assistantLanguageServerPath()
 {
    FilePath assistantPath;
    
-   // Background
-   // -------------------------------------------------------------------------
-   // RStudio 2025.05 and 2025.09 bundle the standalone binary executable for
-   // Assistant Language Server (i.e. `assistant-language-server[.exe]`), which
-   // contains an embedded copy of node.js and can be executed directly. If 
-   // a user needed to use a newer version of `assistant-language-server` than
-   // included with RStudio they could set the `RSTUDIO_assistant_FOLDER`
-   // environment variable to point at the folder containing the
-   // assistant-language-server executable to use.
-   //
-   // In 2025.11 we ship the JavaScript distribution of the Assistant Language
-   // Server. This must be executed via node.js. The environment variable
-   // for pointing at a custom version of this Javascript distribution is
-   // `RSTUDIO_assistant_JS_FOLDER`.
-   // -------------------------------------------------------------------------
-   
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
