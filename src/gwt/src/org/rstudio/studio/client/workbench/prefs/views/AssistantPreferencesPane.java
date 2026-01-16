@@ -295,11 +295,13 @@ public class AssistantPreferencesPane extends PreferencesPane
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
+               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
+               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
             {
@@ -308,8 +310,44 @@ public class AssistantPreferencesPane extends PreferencesPane
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
-                  refresh();
                   copilotRefreshed_ = true;
+
+                  // If Copilot is already enabled, just refresh the status
+                  if (prefs_.copilotEnabled().getValue())
+                  {
+                     refresh();
+                  }
+                  else
+                  {
+                     // Eagerly save the preference so the backend can start the agent
+                     server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              prefs_.copilotEnabled().setGlobalValue(true);
+                              prefs_.rstudioAssistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+                              prefs_.writeUserPrefs((completed) ->
+                              {
+                                 refresh();
+                              });
+                           }
+                           else
+                           {
+                              lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblCopilotStatus_.setText(constants_.copilotStartupError());
+                        }
+                     });
+                  }
                }
             }
          }
@@ -566,6 +604,18 @@ public class AssistantPreferencesPane extends PreferencesPane
             Debug.logError(error);
          }
       });
+   }
+
+   private void disableCopilot(String newAssistant)
+   {
+      // Eagerly disable Copilot so the agent stops immediately
+      if (prefs_.copilotEnabled().getValue())
+      {
+         prefs_.copilotEnabled().setGlobalValue(false);
+         prefs_.rstudioAssistant().setGlobalValue(newAssistant);
+         prefs_.writeUserPrefs((completed) -> {});
+         copilotRefreshed_ = false;
+      }
    }
 
    private void reset()
