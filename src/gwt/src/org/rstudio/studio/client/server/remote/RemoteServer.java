@@ -154,9 +154,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
-import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
@@ -165,6 +162,9 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseType
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletionCommand;
+import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
+import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -716,7 +716,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDocFocused(String documentId,
-                                 ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -727,7 +727,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDidShowCompletion(AssistantCompletion completion,
-                                        ServerRequestCallback<Void> requestCallback)
+                                          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completion)
@@ -738,12 +738,12 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantGenerateCompletions(String documentId,
-                                          String documentPath,
-                                          boolean isUntitled,
-                                          boolean autoInvoked,
-                                          int cursorRow,
-                                          int cursorColumn,
-                                          ServerRequestCallback<AssistantGenerateCompletionsResponse> requestCallback)
+                                            String documentPath,
+                                            boolean isUntitled,
+                                            boolean autoInvoked,
+                                            int cursorRow,
+                                            int cursorColumn,
+                                            ServerRequestCallback<AssistantGenerateCompletionsResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -759,11 +759,11 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantNextEditSuggestions(String documentId,
-                                          String documentPath,
-                                          boolean isUntitled,
-                                          int cursorRow,
-                                          int cursorColumn,
-                                          ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback)
+                                            String documentPath,
+                                            boolean isUntitled,
+                                            int cursorRow,
+                                            int cursorColumn,
+                                            ServerRequestCallback<AssistantNextEditSuggestionsResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -778,7 +778,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDidAcceptCompletion(AssistantCompletionCommand completionCommand,
-                                          ServerRequestCallback<Void> requestCallback)
+                                            ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completionCommand)
@@ -789,8 +789,8 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDidAcceptPartialCompletion(AssistantCompletion completion,
-                                                 int acceptedLength,
-                                                 ServerRequestCallback<Void> requestCallback)
+                                                   int acceptedLength,
+                                                   ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completion)

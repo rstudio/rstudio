@@ -91,7 +91,6 @@ namespace assistant {
 
 namespace {
 
-
 struct AssistantRequest
 {
    std::string method;
@@ -167,29 +166,29 @@ enum class AgentRuntimeStatus {
    Stopped,
 };
 
-// The log level for Assistant-specific logs. Primarily for developer use.
+// The log level for agent-specific logs. Primarily for developer use.
 int s_assistantLogLevel = 0;
 
-// Whether Assistant is enabled.
+// Whether the agent is enabled.
 bool s_assistantEnabled = false;
 
-// Whether Assistant has been allowed to index project files.
+// Whether the agent has been allowed to index project files.
 bool s_assistantIndexingEnabled = false;
 
 // Have we checked the config files at least once
 bool s_assistantInitialized = false;
 
-// The PID of the active Assistant agent process.
+// The PID of the active agent process.
 PidType s_agentPid = -1;
 
 // Error output (if any) that was written during startup.
 std::string s_agentStartupError;
 
-// The current status of the Assistant agent, mainly around if it's enabled
+// The current status of the agent, mainly around if it's enabled
 // (and why or why not).
 AgentNotRunningReason s_agentNotRunningReason = AgentNotRunningReason::Unknown;
 
-// The current runtime status of the Assistant agent process.
+// The current runtime status of the agent process.
 AgentRuntimeStatus s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
 
 void setAgentRuntimeStatus(AgentRuntimeStatus status)
@@ -198,7 +197,7 @@ void setAgentRuntimeStatus(AgentRuntimeStatus status)
    {
       s_agentRuntimeStatus = status;
 
-      // notify client of assistant status change
+      // notify client of agent status change
       json::Object dataJson;
       dataJson["status"] = static_cast<int>(status);
       ClientEvent event(client_events::kAssistantStatusChanged, dataJson);
@@ -520,7 +519,7 @@ void setCopilotConfiguration()
       SEXP networkProxySEXP = R_NilValue;
 
       // parse the URL into its associated components for logging
-      Error error = r::exec::RFunction(".rs.assistant.parseNetworkProxyUrl")
+      Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
             .addUtf8Param(proxyUrl)
             .call(&networkProxySEXP, &protect);
       if (error)
@@ -618,7 +617,7 @@ void onStarted(ProcessOperations& operations)
 {
    // Record the PID of the agent.
    // TODO: Log current agent type as well (from prefs)
-   DLOG("Assistant agent has started [PID = {}]", operations.getPid());
+   DLOG("Agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
@@ -653,7 +652,7 @@ bool onContinue(ProcessOperations& operations)
    }
    else
    {
-      // use expel_if to only process requests related to Assistant initialization
+      // use expel_if to only process requests related to initialization
       core::algorithm::expel_if(s_pendingRequests, [&](const AssistantRequest& request)
       {
          bool isInitMethod =
@@ -687,7 +686,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    if (regex_utils::match(stdOut, reWhitespace))
       return;
 
-   // Assistant responses will have the format
+   // Responses will have the format
    //
    //    Content-Length: xyz
    //
@@ -884,9 +883,7 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Run the Assistant Language Server. If RStudio has been configured with a custom
-   // Assistant script, use that; otherwise, just run the Assistant Language Server directly.
-   //
+   // Check for and run a custom assistant helper script if provided.
    // TODO: assistantHelper vs. copilotHelper?
    FilePath assistantHelper = session::options().copilotHelper();
    if (!assistantHelper.isEmpty())
@@ -1419,14 +1416,14 @@ void onBackgroundProcessing(bool isIdle)
    
 }
 
-
+// TODO: Can we remove this?
 bool subscribeToFileMonitor()
 {
    session::projects::FileMonitorCallbacks callbacks;
    callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
    callbacks.onFilesChanged = file_monitor::onFilesChanged;
    callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor("Assistant indexing", callbacks);
+   projects::projectContext().subscribeToFileMonitor("Posit Assistant", callbacks);
    return true;
 }
 
@@ -1565,7 +1562,7 @@ SEXP rs_assistantVersion()
 
 SEXP rs_assistantStopAgent()
 {
-   // stop the assistant agent
+   // stop the agent
    bool stopped = stopAgentSync();
  
    // return status
@@ -1573,7 +1570,7 @@ SEXP rs_assistantStopAgent()
 }
 
 Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
+                               json::JsonRpcResponse* pResponse)
 {
    json::Object responseJson;
    pResponse->setResult(isAgentInstalled());
@@ -1581,7 +1578,7 @@ Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
 }
 
 Error assistantDiagnostics(const json::JsonRpcRequest& request,
-                         const json::JsonRpcFunctionContinuation& continuation)
+                           const json::JsonRpcFunctionContinuation& continuation)
 {
    // Make sure assistant is running
    if (!ensureAgentRunning())
@@ -1598,7 +1595,7 @@ Error assistantDiagnostics(const json::JsonRpcRequest& request,
 }
 
 Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
-                                 const json::JsonRpcFunctionContinuation& continuation)
+                                   const json::JsonRpcFunctionContinuation& continuation)
 {
    // Make sure assistant is running
    if (!ensureAgentRunning())
@@ -1641,7 +1638,7 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    }
    
    // Disallow completion request in hidden files, since this might trigger
-   // the assistant agent to attempt to read the contents of that file
+   // the agent to attempt to read the contents of that file
    if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
@@ -1941,7 +1938,7 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    }
 
    // Disallow completion request in hidden files, since this might trigger
-   // the assistant agent to attempt to read the contents of that file
+   // the agent to attempt to read the contents of that file
    if (!isIndexableDocument(pDoc))
    {
       json::Object resultJson;
@@ -2085,8 +2082,8 @@ Error assistantDocFocused(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // If document is NOT indexable we tell Assistant that no file has focus via an empty request.
-   // This is to prevent Assistant from attempting to read the contents of the file.
+   // If document is NOT indexable we tell the agent that no file has focus via an empty request.
+   // This is to prevent the agent from attempting to read the contents of the file.
    json::Object paramsJson;
    if (isIndexableDocument(pDoc))
    {
