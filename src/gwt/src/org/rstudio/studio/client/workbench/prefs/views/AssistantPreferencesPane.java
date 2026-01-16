@@ -292,11 +292,13 @@ public class AssistantPreferencesPane extends PreferencesPane
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
+               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
+               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI);
             }
             else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
             {
@@ -590,6 +592,18 @@ public class AssistantPreferencesPane extends PreferencesPane
             Debug.logError(error);
          }
       });
+   }
+
+   private void disableCopilot(String newAssistant)
+   {
+      // Eagerly disable Copilot so the agent stops immediately
+      if (prefs_.copilotEnabled().getValue())
+      {
+         prefs_.copilotEnabled().setGlobalValue(false);
+         prefs_.rstudioAssistant().setGlobalValue(newAssistant);
+         prefs_.writeUserPrefs((completed) -> {});
+         copilotRefreshed_ = false;
+      }
    }
 
    private void reset()
