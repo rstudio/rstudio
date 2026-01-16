@@ -760,6 +760,8 @@ public abstract class
    public abstract AppCommand copilotRequestCompletions();
    public abstract AppCommand copilotAcceptNextWord();
    public abstract AppCommand copilotToggleAutomaticCompletions();
+   public abstract AppCommand copilotAcceptNextEditSuggestion();
+   public abstract AppCommand copilotDismissNextEditSuggestion();
 
    // Databricks
    public abstract AppCommand layoutZoomDatabricks();

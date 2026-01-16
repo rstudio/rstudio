@@ -15,8 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
@@ -24,8 +28,9 @@ import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.diff.JsDiff;
+import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
@@ -54,13 +59,16 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -104,6 +112,264 @@ public class TextEditingTargetCopilotHelper
    }
 
    /**
+    * Enum representing the type of edit operation.
+    */
+   private enum EditType
+   {
+      ADDITION,
+      DELETION
+   }
+
+   /**
+    * Enum representing the type of next-edit suggestion display.
+    */
+   private enum SuggestionType
+   {
+      NONE,
+      GHOST_TEXT,
+      DELETION,
+      INSERTION,
+      REPLACEMENT,
+      MIXED,
+      DIFF
+   }
+
+   /**
+    * Represents a single edit operation with its type, range, and text.
+    */
+   private static class EditDelta
+   {
+      public EditDelta(EditType type, Range range, String text)
+      {
+         this.type = type;
+         this.range = range;
+         this.text = text;
+      }
+
+      public final EditType type;
+      public final Range range;
+      public final String text;  // The text being added/deleted; null for deletions
+   }
+
+   /**
+    * Helper class for computing and storing edit deltas between original and replacement text.
+    * Computes the actual ranges of text that would be added or deleted.
+    */
+   private static class EditDeltas
+   {
+      public EditDeltas(String originalText, String replacementText)
+      {
+         JsArrayLike<Delta> deltas = JsDiff.diffChars(originalText, replacementText);
+
+         // Track position in the original text (for deletions)
+         StringBuilder originalPos = new StringBuilder();
+
+         for (int i = 0, n = deltas.getLength(); i < n; i++)
+         {
+            Delta delta = deltas.getAt(i);
+
+            if (delta.added)
+            {
+               hasAdditions_ = true;
+
+               // Compute the range in the original text where this addition occurs
+               // (it's inserted at the current position, so start == end)
+               String prefix = originalPos.toString();
+               int line = StringUtil.countMatches(prefix, '\n');
+               int character = prefix.length() - prefix.lastIndexOf('\n') - 1;
+               Range range = Range.create(line, character, line, character);
+
+               deltas_.add(new EditDelta(EditType.ADDITION, range, delta.value));
+               // Additions don't consume original text, so don't advance originalPos
+            }
+            else if (delta.removed)
+            {
+               hasDeletions_ = true;
+
+               // Compute the range in the original text for this deletion
+               String prefix = originalPos.toString();
+               String postfix = prefix + delta.value;
+
+               int startLine = StringUtil.countMatches(prefix, '\n');
+               int startChar = prefix.length() - prefix.lastIndexOf('\n') - 1;
+               int endLine = StringUtil.countMatches(postfix, '\n');
+               int endChar = postfix.length() - postfix.lastIndexOf('\n') - 1;
+
+               Range range = Range.create(startLine, startChar, endLine, endChar);
+               deltas_.add(new EditDelta(EditType.DELETION, range, null));
+
+               // Advance position in original text
+               originalPos.append(delta.value);
+            }
+            else
+            {
+               // Unchanged text - advance position in original text
+               originalPos.append(delta.value);
+            }
+         }
+      }
+
+      public boolean isDeletionOnly()
+      {
+         return hasDeletions_ && !hasAdditions_;
+      }
+
+      public boolean isInsertionOnly()
+      {
+         return hasAdditions_ && !hasDeletions_;
+      }
+
+      /**
+       * Returns true if this consists only of single-line insertions:
+       * - Only additions (no deletions)
+       * - Each insertion text doesn't contain newlines
+       */
+      public boolean isSingleLineInsertions()
+      {
+         if (!isInsertionOnly())
+            return false;
+
+         // Check that all additions are single-line
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+            {
+               if (delta.text == null || delta.text.contains("\n"))
+                  return false;
+            }
+         }
+
+         return true;
+      }
+
+      /**
+       * Returns true if this is a single-line replacement:
+       * - Exactly one deletion and one insertion
+       * - Both are single-line (no newlines in the text)
+       */
+      public boolean isSingleLineReplacement()
+      {
+         if (!hasAdditions_ || !hasDeletions_)
+            return false;
+
+         EditDelta deletion = null;
+         EditDelta addition = null;
+
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.DELETION)
+            {
+               if (deletion != null)
+                  return false; // More than one deletion
+               deletion = delta;
+            }
+            else if (delta.type == EditType.ADDITION)
+            {
+               if (addition != null)
+                  return false; // More than one addition
+               addition = delta;
+            }
+         }
+
+         if (deletion == null || addition == null)
+            return false;
+
+         // Check that deletion is single-line
+         if (deletion.range.getStart().getRow() != deletion.range.getEnd().getRow())
+            return false;
+
+         // Check that addition text doesn't contain newlines
+         if (addition.text != null && addition.text.contains("\n"))
+            return false;
+
+         return true;
+      }
+
+      /**
+       * Returns the single deletion delta, or null if there isn't exactly one.
+       */
+      public EditDelta getSingleDeletion()
+      {
+         EditDelta deletion = null;
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.DELETION)
+            {
+               if (deletion != null)
+                  return null; // More than one
+               deletion = delta;
+            }
+         }
+         return deletion;
+      }
+
+      /**
+       * Returns the single addition delta, or null if there isn't exactly one.
+       */
+      public EditDelta getSingleAddition()
+      {
+         EditDelta addition = null;
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+            {
+               if (addition != null)
+                  return null; // More than one
+               addition = delta;
+            }
+         }
+         return addition;
+      }
+
+      /**
+       * Returns all addition deltas.
+       */
+      public List<EditDelta> getAdditions()
+      {
+         List<EditDelta> additions = new ArrayList<>();
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.ADDITION)
+               additions.add(delta);
+         }
+         return additions;
+      }
+
+      public List<EditDelta> getDeltas()
+      {
+         return deltas_;
+      }
+
+      /**
+       * Returns true if all deltas are single-line (no delta spans multiple lines
+       * and no insertion text contains newlines).
+       */
+      public boolean isSingleLineDeltas()
+      {
+         for (EditDelta delta : deltas_)
+         {
+            if (delta.type == EditType.DELETION)
+            {
+               // Check if deletion spans multiple lines
+               if (delta.range.getStart().getRow() != delta.range.getEnd().getRow())
+                  return false;
+            }
+            else if (delta.type == EditType.ADDITION)
+            {
+               // Check if insertion text contains newlines
+               if (delta.text != null && delta.text.contains("\n"))
+                  return false;
+            }
+         }
+         return true;
+      }
+
+      private boolean hasAdditions_ = false;
+      private boolean hasDeletions_ = false;
+      private List<EditDelta> deltas_ = new ArrayList<>();
+   }
+
+   /**
     * Shows an inline edit suggestion diff view for the given completion.
     */
    private void showEditSuggestion(CopilotCompletion completion)
@@ -140,13 +406,13 @@ public class TextEditingTargetCopilotHelper
          @Override
          protected void apply()
          {
-            // Get edit range using anchored positions so the range stays
+            // Get edit range using NES-specific anchored positions so the range stays
             // valid even if the document has been edited.
             Range range = Range.create(
-               completionStartAnchor_.getRow(),
-               completionStartAnchor_.getColumn(),
-               completionEndAnchor_.getRow(),
-               completionEndAnchor_.getColumn());
+               nesStartAnchor_.getRow(),
+               nesStartAnchor_.getColumn(),
+               nesEndAnchor_.getRow(),
+               nesEndAnchor_.getColumn());
 
             // Move cursor to end of edit range
             display_.setCursorPosition(range.getEnd());
@@ -184,36 +450,438 @@ public class TextEditingTargetCopilotHelper
          null);
    }
 
-   /**
-    * Resets any visible ghost text or inline diff view.
-    * Call this before presenting a new suggestion to ensure only one is shown at a time.
-    */
-   private void reset()
+   // Helper class for grouping insertion information by row
+   private static class InsertionInfo
    {
-      // Remove ghost text
+      final String text;
+      final int column;
+
+      InsertionInfo(String text, int column)
+      {
+         this.text = text;
+         this.column = column;
+      }
+   }
+
+   /**
+    * Applies the current NES suggestion (insertion, deletion, or replacement).
+    */
+   private void applyNesSuggestion()
+   {
+      if (nesCompletion_ == null)
+         return;
+
+      // Get edit range using NES-specific anchored positions
+      Range range = Range.create(
+         nesStartAnchor_.getRow(),
+         nesStartAnchor_.getColumn(),
+         nesEndAnchor_.getRow(),
+         nesEndAnchor_.getColumn());
+
+      // Move cursor to start of range
+      display_.setCursorPosition(range.getStart());
+
+      // Perform the edit (replace range with insertText)
+      display_.replaceRange(range, nesCompletion_.insertText);
+
+      // Reset and schedule another suggestion
+      reset();
+      nesTimer_.schedule(20);
+   }
+
+   /**
+    * Renders an edit suggestion inline using deletion highlights and insertion token splicing.
+    * Handles deletion-only, insertion-only, and mixed cases with appropriate styling.
+    * Assumes nesCompletion_ and nesDeltas_ are already set, and all deltas are single-line.
+    */
+   private void renderSuggestion()
+   {
+      int baseRow = nesCompletion_.range.start.line;
+      int baseCol = nesCompletion_.range.start.character;
+
+      // Track bounds for the bounding rectangle highlight
+      int minRow = Integer.MAX_VALUE;
+      int maxRow = Integer.MIN_VALUE;
+      boolean hasDeletions = false;
+      boolean hasInsertions = false;
+
+      // First pass: add deletion highlights
+      for (EditDelta delta : nesDeltas_.getDeltas())
+      {
+         if (delta.type != EditType.DELETION)
+            continue;
+
+         hasDeletions = true;
+         Range documentRange = offsetRangeToDocument(delta.range, baseRow, baseCol);
+
+         int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
+         nesMarkerIds_.add(markerId);
+
+         // Store the document range for click detection
+         nesClickableRanges_.add(documentRange);
+
+         // Track min/max rows for bounding rectangle
+         minRow = Math.min(minRow, documentRange.getStart().getRow());
+         maxRow = Math.max(maxRow, documentRange.getEnd().getRow());
+      }
+
+      // Second pass: collect insertion info grouped by row
+      Map<Integer, List<InsertionInfo>> insertionsByRow = new HashMap<>();
+
+      for (EditDelta delta : nesDeltas_.getDeltas())
+      {
+         if (delta.type != EditType.ADDITION)
+            continue;
+
+         hasInsertions = true;
+
+         // Compute the document position for the insertion
+         Range range = delta.range;
+         int insertRow = baseRow + range.getStart().getRow();
+         int insertCol = range.getStart().getRow() == 0
+            ? baseCol + range.getStart().getColumn()
+            : range.getStart().getColumn();
+
+         // Track the position for cleanup
+         nesTokenPositions_.add(Position.create(insertRow, insertCol));
+
+         // Store the range for click detection
+         int insertEndCol = insertCol + delta.text.length();
+         Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
+         nesClickableRanges_.add(insertionRange);
+
+         // Track min/max rows for bounding rectangle
+         minRow = Math.min(minRow, insertRow);
+         maxRow = Math.max(maxRow, insertRow);
+
+         // Group by row
+         insertionsByRow
+            .computeIfAbsent(insertRow, k -> new ArrayList<>())
+            .add(new InsertionInfo(delta.text, insertCol));
+      }
+
+      // Third pass: splice insertion tokens row by row
+      for (Map.Entry<Integer, List<InsertionInfo>> entry : insertionsByRow.entrySet())
+      {
+         int row = entry.getKey();
+         List<InsertionInfo> insertions = entry.getValue();
+
+         // Sort by column in descending order so splicing doesn't affect positions
+         insertions.sort((a, b) -> Integer.compare(b.column, a.column));
+
+         // Invalidate tokens for this row, get the token array, splice all insertions, then render
+         display_.invalidateTokens(row);
+         JsArray<Token> tokens = display_.getTokens(row);
+
+         for (InsertionInfo info : insertions)
+         {
+            Token newToken = Token.create(info.text, "insertion_preview", 0);
+            display_.spliceToken(tokens, newToken, info.column);
+         }
+
+         display_.renderTokens(row);
+      }
+
+      // Add bounding rectangle highlight and gutter icon for all affected rows
+      if (minRow <= maxRow)
+      {
+         // Choose appropriate styling based on what's present
+         String boundsClass;
+         String gutterClass;
+         if (hasDeletions && hasInsertions)
+         {
+            boundsClass = "ace_next-edit-suggestion-replacement-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+         }
+         else if (hasDeletions)
+         {
+            boundsClass = "ace_next-edit-suggestion-deletion-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+         }
+         else
+         {
+            boundsClass = "ace_next-edit-suggestion-insertion-bounds";
+            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+         }
+
+         Range boundsRange = Range.create(minRow, 0, maxRow, 0);
+         nesBoundsMarkerId_ = display_.addHighlight(boundsRange, boundsClass, "fullLine");
+
+         HandlerRegistration registration = display_.addGutterItem(minRow, gutterClass);
+         nesGutterRegistrations_.add(registration);
+      }
+   }
+
+   /**
+    * Checks if a document position falls within any of the NES clickable ranges.
+    */
+   private boolean isPositionInNesRange(Position pos)
+   {
+      for (Range range : nesClickableRanges_)
+      {
+         if (range.contains(pos))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Converts a delta range (relative to the edit) to a document range.
+    * Handles the offset logic where the first line needs column offset but subsequent lines don't.
+    */
+   private static Range offsetRangeToDocument(Range deltaRange, int baseRow, int baseCol)
+   {
+      int startRow = baseRow + deltaRange.getStart().getRow();
+      int endRow = baseRow + deltaRange.getEnd().getRow();
+
+      int startCol = deltaRange.getStart().getRow() == 0
+         ? baseCol + deltaRange.getStart().getColumn()
+         : deltaRange.getStart().getColumn();
+
+      int endCol = deltaRange.getEnd().getRow() == 0
+         ? baseCol + deltaRange.getEnd().getColumn()
+         : deltaRange.getEnd().getColumn();
+
+      return Range.create(startRow, startCol, endRow, endCol);
+   }
+
+   /**
+    * Checks if an element is within a NES gutter cell.
+    */
+   private static boolean isNesSuggestionGutterCell(Element el)
+   {
+      // Just check for the base class since all NES gutter icons use it
+      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE);
+   }
+
+   /**
+    * Finds the NES gutter cell element containing the given element, if any.
+    */
+   private static Element findNesGutterCell(Element target)
+   {
+      // First find the gutter annotation element
+      Element annotationEl = DomUtils.findParentElement(target, true, el ->
+         el.hasClassName("ace_gutter_annotation"));
+
+      if (annotationEl == null)
+         return null;
+
+      // Then check if it's within a suggestion gutter cell
+      return DomUtils.findParentElement(annotationEl, false,
+         TextEditingTargetCopilotHelper::isNesSuggestionGutterCell);
+   }
+
+   /**
+    * Sets the NES state and creates NES anchors.
+    * Call this before renderNesSuggestion() or showSuggestionGutterOnly().
+    */
+   private void setNesState(CopilotCompletion completion, SuggestionType type, EditDeltas deltas)
+   {
+      nesCompletion_ = completion;
+      nesType_ = type;
+      nesDeltas_ = deltas;
+
+      // Create NES-specific anchors for the completion range
+      detachNesAnchors();
+      nesStartAnchor_ = display_.createAnchor(Position.create(
+         completion.range.start.line, completion.range.start.character));
+      nesStartAnchor_.setInsertRight(true);
+      nesEndAnchor_ = display_.createAnchor(Position.create(
+         completion.range.end.line, completion.range.end.character));
+      nesEndAnchor_.setInsertRight(true);
+   }
+
+   /**
+    * Detaches and clears the NES anchors.
+    */
+   private void detachNesAnchors()
+   {
+      if (nesStartAnchor_ != null)
+      {
+         nesStartAnchor_.detach();
+         nesStartAnchor_ = null;
+      }
+      if (nesEndAnchor_ != null)
+      {
+         nesEndAnchor_.detach();
+         nesEndAnchor_ = null;
+      }
+   }
+
+   /**
+    * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
+    * The full details will be shown when the user hovers over the gutter icon.
+    * Assumes setNesState() has already been called.
+    */
+   private void showSuggestionGutterOnly(int row, String gutterClass)
+   {
+      pendingGutterRow_ = row;
+      pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
+   }
+
+   /**
+    * Shows the full details for the pending suggestion.
+    * Called when user hovers over the gutter icon (when autoshow is disabled).
+    * The NES state is preserved so we can hide details on mouseleave.
+    */
+   private void showPendingSuggestionDetails()
+   {
+      if (nesType_ == SuggestionType.NONE || nesCompletion_ == null)
+         return;
+
+      // Remove the pending gutter icon (the render methods will add their own)
+      if (pendingGutterRegistration_ != null)
+      {
+         pendingGutterRegistration_.removeHandler();
+         pendingGutterRegistration_ = null;
+      }
+
+      // Render the visual elements based on type
+      renderNesSuggestion();
+
+      // Mark that details are revealed via hover
+      pendingSuggestionRevealed_ = true;
+   }
+
+   /**
+    * Hides the details for a pending suggestion and restores gutter-only state.
+    * Called when mouse leaves the gutter icon area.
+    */
+   private void hidePendingSuggestionDetails()
+   {
+      if (!pendingSuggestionRevealed_ || nesType_ == SuggestionType.NONE)
+         return;
+
+      // Clear visual elements but preserve NES state (nesCompletion_, nesType_, nesDeltas_)
+      display_.removeGhostText();
+      activeCompletion_ = null;
+      clearDiffState();
+      clearNesVisuals();
+
+      // Restore gutter-only state
+      String gutterClass = getGutterClassForType(nesType_);
+      pendingGutterRegistration_ = display_.addGutterItem(pendingGutterRow_, gutterClass);
+
+      pendingSuggestionRevealed_ = false;
+   }
+
+   /**
+    * Renders the visual elements for the current NES suggestion based on nesType_.
+    * Assumes nesCompletion_, nesType_, and nesDeltas_ are already set.
+    */
+   private void renderNesSuggestion()
+   {
+      if (nesCompletion_ == null || nesType_ == SuggestionType.NONE)
+         return;
+
+      // Enable Tab acceptance for all NES types (except DIFF which handles it separately)
+      if (nesType_ != SuggestionType.DIFF)
+      {
+         Scheduler.get().scheduleDeferred(() -> canAcceptSuggestionWithTab_ = true);
+      }
+
+      switch (nesType_)
+      {
+         case GHOST_TEXT:
+            activeCompletion_ = new Completion(nesCompletion_);
+            Position position = Position.create(
+               nesCompletion_.range.start.line,
+               nesCompletion_.range.start.character);
+            display_.setGhostText(activeCompletion_.displayText, position);
+            break;
+
+         case DELETION:
+         case INSERTION:
+         case REPLACEMENT:
+            if (nesDeltas_ != null)
+               renderSuggestion();
+            break;
+
+         case MIXED:
+         case DIFF:
+            showEditSuggestion(nesCompletion_);
+            break;
+
+         default:
+            break;
+      }
+   }
+
+   /**
+    * Returns the appropriate gutter CSS class for a suggestion type.
+    */
+   private String getGutterClassForType(SuggestionType type)
+   {
+      switch (type)
+      {
+         case DELETION:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+         case INSERTION:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+         case REPLACEMENT:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+         case GHOST_TEXT:
+         case MIXED:
+         case DIFF:
+         default:
+            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION;
+      }
+   }
+
+   /**
+    * Returns the appropriate clickable CSS class for a suggestion type.
+    */
+   private String getClickableClassForType(SuggestionType type)
+   {
+      switch (type)
+      {
+         case DELETION:
+            return "ace_deletion-clickable";
+         case INSERTION:
+            return "ace_insertion-clickable";
+         case REPLACEMENT:
+            return "ace_replacement-clickable";
+         default:
+            return null;
+      }
+   }
+
+   /**
+    * Resets ghost text and inline completion state only.
+    */
+   private void resetCompletion()
+   {
       display_.removeGhostText();
       completionTimer_.cancel();
       activeCompletion_ = null;
       detachCompletionAnchors();
+   }
 
-      // Detach inline diff view
-      if (diffWidget_ != null)
-      {
-         diffWidget_.detach();
-         diffWidget_ = null;
-      }
+   /**
+    * Resets NES (Next Edit Suggestion) state only.
+    */
+   private void resetSuggestion()
+   {
+      clearDiffState();
+      clearNesState();
 
-      if (diffView_ != null)
+      pendingSuggestionRevealed_ = false;
+      pendingHideTimer_.cancel();
+      if (pendingGutterRegistration_ != null)
       {
-         diffView_.detach();
-         diffView_ = null;
+         pendingGutterRegistration_.removeHandler();
+         pendingGutterRegistration_ = null;
       }
+   }
 
-      if (diffMarkerId_ != -1)
-      {
-         display_.removeHighlight(diffMarkerId_);
-         diffMarkerId_ = -1;
-      }
+   /**
+    * Resets all state - both inline completions and NES.
+    * Call this when both should be cleared (e.g., document changes, Escape key).
+    */
+   private void reset()
+   {
+      resetCompletion();
+      resetSuggestion();
    }
 
    /**
@@ -393,7 +1061,7 @@ public class TextEditingTargetCopilotHelper
                               // (which we need to send back to the server as-is in some language-server methods).
                               CopilotCompletion normalized = normalizeCompletion(completion);
 
-                              reset();
+                              resetCompletion();
                               activeCompletion_ = new Completion(normalized);
                               createCompletionAnchors(
                                  activeCompletion_.startLine,
@@ -432,7 +1100,16 @@ public class TextEditingTargetCopilotHelper
             requestNextEditSuggestions();
          }
       };
-      
+
+      pendingHideTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            hidePendingSuggestionDetails();
+         }
+      };
+
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
          manageHandlers();
@@ -485,7 +1162,11 @@ public class TextEditingTargetCopilotHelper
 
                display_.addValueChangeHandler((event) ->
                {
-                  nesTimer_.schedule(300);
+                  // Clear any active NES suggestion on document change
+                  resetSuggestion();
+
+                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
+                  nesTimer_.schedule(delayMs);
                }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing
@@ -497,22 +1178,133 @@ public class TextEditingTargetCopilotHelper
 
                   Element target = event.getEventTarget().cast();
 
-                  // Check for clicks on the next-edit suggestion gutter icon.
-                  Element nesEl = DomUtils.findParentElement(target, true, new ElementPredicate()
-                  {
-                     @Override
-                     public boolean test(Element el)
-                     {
-                        return el.hasClassName(AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-                     }
-                  });
+                  // Check for clicks on any NES gutter icon (uses base class)
+                  Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
+                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE));
 
-                  if (nesEl != null)
+                  if (nesGutterEl != null && nesType_ != SuggestionType.NONE)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     display_.applyGhostText();
+
+                     // Ghost text uses applyGhostText(), all others use applyNesSuggestion()
+                     if (nesType_ == SuggestionType.GHOST_TEXT)
+                        display_.applyGhostText();
+                     else
+                        applyNesSuggestion();
                      return;
+                  }
+
+                  // Check for Ctrl/Cmd + click on any NES highlight
+                  boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
+                  if (isModifierHeld && nesCompletion_ != null)
+                  {
+                     // Convert mouse coordinates to document position
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        event.getClientX(),
+                        event.getClientY());
+
+                     if (isPositionInNesRange(pos))
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        applyNesSuggestion();
+                        return;
+                     }
+                  }
+               }),
+
+               // mousemove handler for showing pointer cursor when hovering over NES highlights with Ctrl/Cmd
+               DomUtils.addEventListener(display_.getElement(), "mousemove", false, (event) ->
+               {
+                  // Track last mouse position for keydown/keyup handlers
+                  lastMouseClientX_ = event.getClientX();
+                  lastMouseClientY_ = event.getClientY();
+
+                  boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
+
+                  // Convert mouse coordinates to document position
+                  Position pos = display_.screenCoordinatesToDocumentPosition(
+                     event.getClientX(),
+                     event.getClientY());
+
+                  // Remove all clickable classes first
+                  display_.getElement().removeClassName("ace_deletion-clickable");
+                  display_.getElement().removeClassName("ace_insertion-clickable");
+                  display_.getElement().removeClassName("ace_replacement-clickable");
+
+                  // Add appropriate clickable class based on type if hovering over NES range
+                  if (nesCompletion_ != null && isModifierHeld && isPositionInNesRange(pos))
+                  {
+                     String clickableClass = getClickableClassForType(nesType_);
+                     if (clickableClass != null)
+                        display_.getElement().addClassName(clickableClass);
+                  }
+               }),
+
+               // keydown handler to update cursor when modifier key is pressed
+               DomUtils.addEventListener(display_.getElement(), "keydown", false, (event) ->
+               {
+                  // Check if Ctrl or Meta key was just pressed
+                  if (event.getKeyCode() == KeyCodes.KEY_CTRL ||
+                      event.getKeyCode() == 91 || // Left Meta (Cmd on Mac)
+                      event.getKeyCode() == 93)   // Right Meta (Cmd on Mac)
+                  {
+                     Position pos = display_.screenCoordinatesToDocumentPosition(
+                        lastMouseClientX_,
+                        lastMouseClientY_);
+
+                     if (nesCompletion_ != null && isPositionInNesRange(pos))
+                     {
+                        String clickableClass = getClickableClassForType(nesType_);
+                        if (clickableClass != null)
+                           display_.getElement().addClassName(clickableClass);
+                     }
+                  }
+               }),
+
+               // keyup handler to update cursor when modifier key is released
+               DomUtils.addEventListener(display_.getElement(), "keyup", false, (event) ->
+               {
+                  // Check if Ctrl or Meta key was just released
+                  if (event.getKeyCode() == KeyCodes.KEY_CTRL ||
+                      event.getKeyCode() == 91 || // Left Meta (Cmd on Mac)
+                      event.getKeyCode() == 93)   // Right Meta (Cmd on Mac)
+                  {
+                     display_.getElement().removeClassName("ace_deletion-clickable");
+                     display_.getElement().removeClassName("ace_insertion-clickable");
+                     display_.getElement().removeClassName("ace_replacement-clickable");
+                  }
+               }),
+
+               // mouseover handler for showing/keeping pending suggestion details when hovering over gutter icon
+               DomUtils.addEventListener(display_.getElement(), "mouseover", false, (event) ->
+               {
+                  Element target = event.getEventTarget().cast();
+                  Element gutterCell = findNesGutterCell(target);
+                  if (gutterCell != null)
+                  {
+                     // Cancel any pending hide since we're over a gutter icon
+                     pendingHideTimer_.cancel();
+
+                     // Show details if not already revealed
+                     if (hasPendingUnrevealedSuggestion())
+                        showPendingSuggestionDetails();
+                  }
+               }),
+
+               // mouseout handler for hiding pending suggestion details when leaving gutter icon
+               DomUtils.addEventListener(display_.getElement(), "mouseout", false, (event) ->
+               {
+                  if (!pendingSuggestionRevealed_)
+                     return;
+
+                  Element target = event.getEventTarget().cast();
+                  Element gutterCell = findNesGutterCell(target);
+                  if (gutterCell != null)
+                  {
+                     // Use a small delay to handle DOM changes that cause brief mouseout/mouseover cycles
+                     pendingHideTimer_.schedule(100);
                   }
                }),
 
@@ -558,15 +1350,55 @@ public class TextEditingTargetCopilotHelper
                   @Override
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
+                     NativeEvent event = keyEvent.getNativeEvent();
+
+                     // If we have a pending suggestion (gutter only, not revealed),
+                     // Tab should reveal it first before accepting
+                     if (hasPendingUnrevealedSuggestion())
+                     {
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           showPendingSuggestionDetails();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
+                           return;
+                        }
+                     }
+
                      // Let diff view accept on Tab if applicable
                      if (diffView_ != null)
                      {
-                        NativeEvent event = keyEvent.getNativeEvent();
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
                            diffView_.apply();
+                           return;
+                        }
+                     }
+
+                     // Let NES suggestion (deletion, insertion, replacement) accept on Tab if applicable
+                     if (nesCompletion_ != null)
+                     {
+                        if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           applyNesSuggestion();
+                           return;
+                        }
+                        else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+                        {
+                           event.stopPropagation();
+                           event.preventDefault();
+                           reset();
                            return;
                         }
                      }
@@ -595,13 +1427,12 @@ public class TextEditingTargetCopilotHelper
                         return;
                      }
 
-                     NativeEvent event = keyEvent.getNativeEvent();
                      if (event.getKeyCode() == KeyCodes.KEY_TAB)
                      {
                         event.stopPropagation();
                         event.preventDefault();
 
-                        // Otherwise, accept the ghost text. Use anchored positions
+                        // Accept the ghost text. Use anchored positions
                         // so the range stays valid even if the document has been edited.
                         Range aceRange = Range.create(
                               completionStartAnchor_.getRow(),
@@ -706,7 +1537,7 @@ public class TextEditingTargetCopilotHelper
                   return;
                }
 
-               reset();
+               resetSuggestion();
                CopilotNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
 
                // Construct a Copilot completion object from the response
@@ -722,38 +1553,96 @@ public class TextEditingTargetCopilotHelper
                // The completion data gets modified when doing partial (word-by-word)
                // completions, so we need to use a copy and preserve the original
                // (which we need to send back to the server as-is in some language-server methods).
-               CopilotCompletion normalized = normalizeCompletion(completion);
-               activeCompletion_ = new Completion(normalized);
-               createCompletionAnchors(
-                  activeCompletion_.startLine,
-                  activeCompletion_.startCharacter,
-                  activeCompletion_.endLine,
-                  activeCompletion_.endCharacter);
+               CopilotCompletion normalized = normalizeSuggestion(completion);
+
+               // Check if autoshow is enabled
+               boolean autoshow = prefs_.copilotNesAutoshow().getValue();
 
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)
                {
-                  // If the start position and end position match, then display
-                  // the suggestion using ghost text at that position.
-                  Position position = Position.create(
-                     normalized.range.start.line,
-                     normalized.range.start.character);
-                  display_.setGhostText(activeCompletion_.displayText, position);
-
+                  // Ghost text at cursor position
+                  activeCompletion_ = new Completion(normalized);
+                  setNesState(normalized, SuggestionType.GHOST_TEXT, null);
+                  if (autoshow)
+                     renderNesSuggestion();
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
                   server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
+
+               // Get the original text from the document at the edit range
+               String originalText = display_.getCode(
+                  Position.create(normalized.range.start.line, normalized.range.start.character),
+                  Position.create(normalized.range.end.line, normalized.range.end.character));
+
+               // Check if this is a deletion-only change
+               EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
+               if (deltas.isDeletionOnly())
+               {
+                  setNesState(normalized, SuggestionType.DELETION, deltas);
+                  if (autoshow)
+                     renderNesSuggestion();
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  return;
+               }
+
+               // Check if this consists only of single-line insertions
+               if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
+               {
+                  setNesState(normalized, SuggestionType.INSERTION, deltas);
+                  if (autoshow)
+                     renderNesSuggestion();
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                  return;
+               }
+
+               // Check if this is a single-line replacement (one deletion + one insertion)
+               if (deltas.isSingleLineReplacement())
+               {
+                  EditDelta deletion = deltas.getSingleDeletion();
+                  EditDelta addition = deltas.getSingleAddition();
+                  if (deletion != null && addition != null)
+                  {
+                     setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
+                     if (autoshow)
+                        renderNesSuggestion();
+                     else
+                        showSuggestionGutterOnly(normalized.range.start.line,
+                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                     server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+                     return;
+                  }
+               }
+
+               // For single-line deltas, use mixed in-document rendering;
+               // for multiline deltas, fall back to the inline diff view.
+               if (deltas.isSingleLineDeltas())
+               {
+                  setNesState(normalized, SuggestionType.MIXED, deltas);
+                  if (autoshow)
+                     renderNesSuggestion();
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                  server_.copilotDidShowCompletion(completion, new VoidServerRequestCallback());
+               }
                else
                {
-                  // Otherwise, show the suggestion as an inline diff view.
-                  // For inline diff, we use the original (non-normalized) completion
-                  // to show the full context, so update anchors to track the original range.
-                  createCompletionAnchors(
-                     completion.range.start.line,
-                     completion.range.start.character,
-                     completion.range.end.line,
-                     completion.range.end.character);
-                  showEditSuggestion(completion);
+                  setNesState(normalized, SuggestionType.DIFF, deltas);
+                  if (autoshow)
+                     showEditSuggestion(nesCompletion_);
+                  else
+                     showSuggestionGutterOnly(normalized.range.start.line,
+                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
                }
             }
 
@@ -833,7 +1722,7 @@ public class TextEditingTargetCopilotHelper
       if (display_.isFocused())
       {
          automaticCodeSuggestionsEnabled_ = !automaticCodeSuggestionsEnabled_;
-         
+
          if (automaticCodeSuggestionsEnabled_)
          {
             events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETIONS_ENABLED));
@@ -844,7 +1733,49 @@ public class TextEditingTargetCopilotHelper
          }
       }
    }
-   
+
+   @Handler
+   public void onCopilotAcceptNextEditSuggestion()
+   {
+      if (!display_.isFocused())
+         return;
+
+      // If we have a pending suggestion that hasn't been revealed, reveal it first
+      if (hasPendingUnrevealedSuggestion())
+      {
+         showPendingSuggestionDetails();
+         return;
+      }
+
+      // Apply the appropriate suggestion type
+      if (diffView_ != null)
+      {
+         diffView_.apply();
+      }
+      else if (nesCompletion_ != null)
+      {
+         applyNesSuggestion();
+      }
+      else
+      {
+         // No active suggestion, request one
+         requestNextEditSuggestions();
+      }
+   }
+
+   @Handler
+   public void onCopilotDismissNextEditSuggestion()
+   {
+      if (!display_.isFocused())
+         return;
+
+      // Dismiss any active next edit suggestion
+      if (hasActiveSuggestion())
+      {
+         reset();
+      }
+   }
+
    private void updateCompletion(String key)
    {
       int n = key.length();
@@ -882,9 +1813,8 @@ public class TextEditingTargetCopilotHelper
       return copilot_.isEnabled();
    }
    
-   // A Copilot completion will often overlap region(s) of the document.
-   // Try to avoid presenting this overlap, so that only the relevant
-   // portion of the completed text is presented to the user.
+   // Normalize an inline completion by trimming overlapping prefix/suffix.
+   // This is used for traditional Copilot completions displayed as ghost text.
    private CopilotCompletion normalizeCompletion(CopilotCompletion completion)
    {
       try
@@ -939,29 +1869,13 @@ public class TextEditingTargetCopilotHelper
 
       if (lhs >= n - rhs)
       {
-         // The matched prefix and suffix cover the entire insertText.
-         // Only discard as "entirely overlapping" if the range length also matches,
-         // otherwise the completion represents a deletion (range longer) or
-         // insertion (range shorter) which is meaningful.
-         boolean rangeMatchesLength = false;
-         if (completion.range.start.line == completion.range.end.line)
-         {
-            int rangeLength = completion.range.end.character - completion.range.start.character;
-            rangeMatchesLength = (rangeLength == n);
-         }
-
-         if (rangeMatchesLength)
-         {
-            // The completion is entirely overlapping the existing text.
-            Position cursorPos = display_.getCursorPosition();
-            normalized.insertText = "";
-            normalized.range.start.line = cursorPos.getRow();
-            normalized.range.start.character = cursorPos.getColumn();
-            normalized.range.end.line = cursorPos.getRow();
-            normalized.range.end.character = cursorPos.getColumn();
-         }
-         // else: range length differs from insertText length, so this completion
-         // represents a meaningful change (deletion or insertion). Return unchanged.
+         // The completion is entirely overlapping the existing text.
+         Position cursorPos = display_.getCursorPosition();
+         normalized.insertText = "";
+         normalized.range.start.line = cursorPos.getRow();
+         normalized.range.start.character = cursorPos.getColumn();
+         normalized.range.end.line = cursorPos.getRow();
+         normalized.range.end.character = cursorPos.getColumn();
       }
       else
       {
@@ -969,7 +1883,57 @@ public class TextEditingTargetCopilotHelper
          normalized.range.start.character += lhs;
          normalized.range.end.character -= rhs;
       }
+
       return normalized;
+   }
+
+   // Normalize an edit suggestion by expanding multi-line ranges.
+   // This is used for NES (Next Edit Suggestions) which use diff-based rendering.
+   private CopilotCompletion normalizeSuggestion(CopilotCompletion completion)
+   {
+      try
+      {
+         return normalizeSuggestionImpl(completion);
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+         return completion;
+      }
+   }
+
+   private CopilotCompletion normalizeSuggestionImpl(CopilotCompletion completion)
+   {
+      completion = JsUtil.clone(completion);
+
+      if (completion.range.start.line != completion.range.end.line)
+      {
+         // Include text from the document up to the first character.
+         String startLine = display_.getLine(completion.range.start.line);
+         String prefix = startLine.substring(0, completion.range.start.character);
+         completion.range.start.character = 0;
+         completion.insertText = prefix + completion.insertText;
+
+         // Include text from the document up to the end of the last line.
+         String endLine = display_.getLine(completion.range.end.line);
+         String suffix = endLine.substring(completion.range.end.character);
+         completion.range.end.character = endLine.length();
+         completion.insertText = completion.insertText + suffix;
+      }
+
+      // If both the original text and insert text end with a newline,
+      // trim the trailing newline to avoid redundant replacement
+      while (completion.range.end.line > completion.range.start.line &&
+             completion.range.end.character == 0 &&
+             completion.insertText.endsWith("\n"))
+      {
+         completion.insertText = completion.insertText.substring(0, completion.insertText.length() - 1);
+         completion.range.end.line--;
+         String newEndLine = display_.getLine(completion.range.end.line);
+         completion.range.end.character = newEndLine.length();
+      }
+
+      return completion;
    }
 
    private void temporarilySuspendCompletionRequests()
@@ -993,12 +1957,115 @@ public class TextEditingTargetCopilotHelper
       binder_ = binder;
       server_ = server;
    }
-   
+
+   /**
+    * Returns true if there is any active next edit suggestion being displayed.
+    */
+   private boolean hasActiveSuggestion()
+   {
+      return diffView_ != null || nesCompletion_ != null;
+   }
+
+   /**
+    * Returns true if there is a pending suggestion that hasn't been revealed yet.
+    * This is when we have stored NES state but only showing the gutter icon.
+    */
+   private boolean hasPendingUnrevealedSuggestion()
+   {
+      return pendingGutterRow_ != -1 && !pendingSuggestionRevealed_;
+   }
+
+   /**
+    * Resets tokens for all rows that have positions in the given list.
+    * This efficiently handles multiple positions on the same row by only
+    * resetting each affected row once.
+    */
+   private void resetTokensForPositions(List<Position> positions)
+   {
+      Set<Integer> rowsToReset = new HashSet<>();
+      for (Position pos : positions)
+         rowsToReset.add(pos.getRow());
+      for (int row : rowsToReset)
+         display_.resetTokens(row);
+   }
+
+   /**
+    * Clears the diff view state.
+    */
+   private void clearDiffState()
+   {
+      if (diffWidget_ != null)
+      {
+         diffWidget_.detach();
+         diffWidget_ = null;
+      }
+      if (diffView_ != null)
+      {
+         diffView_.detach();
+         diffView_ = null;
+      }
+      if (diffMarkerId_ != -1)
+      {
+         display_.removeHighlight(diffMarkerId_);
+         diffMarkerId_ = -1;
+      }
+   }
+
+   /**
+    * Clears only the visual elements for NES suggestions (markers, tokens, gutter icons).
+    * Preserves nesCompletion_, nesType_, and nesDeltas_ for re-rendering on hover.
+    */
+   private void clearNesVisuals()
+   {
+      // Remove all highlight markers
+      for (int markerId : nesMarkerIds_)
+         display_.removeHighlight(markerId);
+      nesMarkerIds_.clear();
+
+      // Remove all gutter registrations
+      for (HandlerRegistration reg : nesGutterRegistrations_)
+         reg.removeHandler();
+      nesGutterRegistrations_.clear();
+
+      // Clear clickable ranges
+      nesClickableRanges_.clear();
+
+      // Reset tokens for all tracked positions
+      resetTokensForPositions(nesTokenPositions_);
+      nesTokenPositions_.clear();
+
+      // Remove bounds marker if present
+      if (nesBoundsMarkerId_ != -1)
+      {
+         display_.removeHighlight(nesBoundsMarkerId_);
+         nesBoundsMarkerId_ = -1;
+      }
+
+      // Remove clickable class names
+      display_.getElement().removeClassName("ace_deletion-clickable");
+      display_.getElement().removeClassName("ace_insertion-clickable");
+      display_.getElement().removeClassName("ace_replacement-clickable");
+   }
+
+   /**
+    * Clears the NES state completely (visuals and stored data).
+    */
+   private void clearNesState()
+   {
+      clearNesVisuals();
+      detachNesAnchors();
+      nesCompletion_ = null;
+      nesType_ = SuggestionType.NONE;
+      nesDeltas_ = null;
+      pendingGutterRow_ = -1;
+   }
+
    private final TextEditingTarget target_;
    private final DocDisplay display_;
    private final Timer completionTimer_;
    private final Timer suspendTimer_;
    private final Timer nesTimer_;
+   private final Timer pendingHideTimer_;
    private int nesId_ = 0;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
@@ -1007,14 +2074,40 @@ public class TextEditingTargetCopilotHelper
    private boolean completionRequestsSuspended_;
    private boolean copilotDisabledInThisDocument_;
 
+   // Diff view state (kept separate as it's a fundamentally different UI)
    private AceEditorDiffView diffView_;
    private PinnedLineWidget diffWidget_;
    private int diffMarkerId_ = -1;
+
+   // Ghost text completion state
    private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
+
+   // Unified NES (Next Edit Suggestion) state
+   private CopilotCompletion nesCompletion_;
+   private SuggestionType nesType_ = SuggestionType.NONE;
+   private EditDeltas nesDeltas_;
+   private List<Integer> nesMarkerIds_ = new ArrayList<>();
+   private List<HandlerRegistration> nesGutterRegistrations_ = new ArrayList<>();
+   private List<Range> nesClickableRanges_ = new ArrayList<>();
+   private List<Position> nesTokenPositions_ = new ArrayList<>();
+   private int nesBoundsMarkerId_ = -1;
+   private Anchor nesStartAnchor_;
+   private Anchor nesEndAnchor_;
+
+   // Mouse tracking
+   private int lastMouseClientX_ = 0;
+   private int lastMouseClientY_ = 0;
+
+   // Ghost text completion anchors (separate from NES anchors)
    private Anchor completionStartAnchor_;
    private Anchor completionEndAnchor_;
+
+   // Autoshow and pending suggestion state
    private boolean automaticCodeSuggestionsEnabled_ = true;
+   private int pendingGutterRow_ = -1;
+   private HandlerRegistration pendingGutterRegistration_;
+   private boolean pendingSuggestionRevealed_ = false;
 
 
    // Injected ----

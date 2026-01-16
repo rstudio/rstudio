@@ -206,4 +206,8 @@ public class Renderer extends JavaScriptObject
    public final native void setColorPreview(boolean show) /*-{
       this.$textLayer.setColorPreview(show);
    }-*/;
+
+   public final native void updateLines(int firstRow, int lastRow) /*-{
+      this.updateLines(firstRow, lastRow);
+   }-*/;
 }

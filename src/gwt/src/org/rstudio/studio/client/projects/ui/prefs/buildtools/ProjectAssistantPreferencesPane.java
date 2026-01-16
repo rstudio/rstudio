@@ -461,8 +461,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      // TODO: Replace with proper Copilot icon
-      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
    @Override

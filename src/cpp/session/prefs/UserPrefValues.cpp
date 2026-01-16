@@ -3456,6 +3456,19 @@ core::Error UserPrefValues::setCopilotNesEnabled(bool val)
 }
 
 /**
+ * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+ */
+bool UserPrefValues::copilotNesAutoshow()
+{
+   return readPref<bool>("copilot_nes_autoshow");
+}
+
+core::Error UserPrefValues::setCopilotNesAutoshow(bool val)
+{
+   return writePref("copilot_nes_autoshow", val);
+}
+
+/**
  * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
  */
 bool UserPrefValues::copilotShowMessages()
@@ -3878,6 +3891,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotTabKeyBehavior,
       kCopilotIndexingEnabled,
       kCopilotNesEnabled,
+      kCopilotNesAutoshow,
       kCopilotShowMessages,
       kCopilotProjectWorkspace,
       kProjectName,

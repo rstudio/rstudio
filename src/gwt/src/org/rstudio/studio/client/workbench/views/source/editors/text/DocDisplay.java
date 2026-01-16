@@ -522,5 +522,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void applyGhostText();
    void removeGhostText();
 
+   void invalidateTokens(int row);
+   void renderTokens(int row);
+   void resetTokens(int row);
+   void spliceToken(JsArray<Token> tokens, Token newToken, int column);
+
    double getLineHeight();
 }

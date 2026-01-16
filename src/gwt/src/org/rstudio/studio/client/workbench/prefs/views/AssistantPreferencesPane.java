@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
@@ -57,6 +58,7 @@ import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEven
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -233,6 +235,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             prefs_.copilotCompletionsDelay());
 
       cbCopilotNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
+      cbCopilotNesAutoshow_ = checkboxPref(prefs_.copilotNesAutoshow(), true);
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -350,6 +353,12 @@ public class AssistantPreferencesPane extends PreferencesPane
 
          panel.add(spacedBefore(headerLabel(constants_.copilotSuggestionsHeader())));
          panel.add(cbCopilotNesEnabled_);
+         panel.add(cbCopilotNesAutoshow_);
+
+         String modifier = BrowseCap.isMacintosh() ? "Cmd" : "Ctrl";
+         Label lblNesShortcutHint = new Label(constants_.copilotSuggestionsShortcutHint(modifier));
+         lblNesShortcutHint.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
+         panel.add(spaced(lblNesShortcutHint));
 
          panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
          panel.add(cbCopilotShowMessages_);
@@ -510,6 +519,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   int reason = (int) response.reason.valueOf();
                   lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+                  showButtons(btnRefresh_, btnDiagnostics_);
                }
                else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
@@ -519,10 +529,12 @@ public class AssistantPreferencesPane extends PreferencesPane
                else if (prefs_.copilotEnabled().getValue())
                {
                   lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
+                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
                else
                {
                   lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }
             else if (response.result.status == CopilotConstants.STATUS_OK ||
@@ -565,8 +577,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
-      // TODO: Replace with proper Assistant icon
-      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconCodeEditing2x());
+      return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
    @Override
@@ -677,6 +688,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final CheckBox cbCopilotShowMessages_;
    private final CheckBox cbCopilotProjectWorkspace_;
    private final CheckBox cbCopilotNesEnabled_;
+   private final CheckBox cbCopilotNesAutoshow_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;

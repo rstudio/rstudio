@@ -197,7 +197,7 @@ protected:
       value<int>(&webSocketPingSeconds_)->default_value(10),
       "Specifies the WebSocket keep-alive ping interval for session terminals.")
       (kWebSocketConnectTimeout,
-      value<int>(&webSocketConnectTimeout_)->default_value(3),
+      value<int>(&webSocketConnectTimeout_)->default_value(5),
       "Specifies the WebSocket initial connection timeout in seconds for session terminals.")
       (kWebSocketLogLevel,
       value<int>(&webSocketLogLevel_)->default_value(0),

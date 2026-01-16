@@ -1440,6 +1440,22 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session.") // $NON-NLS-1$
     String copilotToggleAutomaticCompletionsDesc();
     
+    // copilotAcceptNextEditSuggestion
+    @DefaultStringValue("Copilot: Accept Next Edit Suggestion") // $NON-NLS-1$
+    String copilotAcceptNextEditSuggestionLabel();
+    @DefaultStringValue("Accept Next Edit Suggestion") // $NON-NLS-1$
+    String copilotAcceptNextEditSuggestionMenuLabel();
+    @DefaultStringValue("Accept the current Copilot next edit suggestion, if any.") // $NON-NLS-1$
+    String copilotAcceptNextEditSuggestionDesc();
+    
+    // copilotDismissNextEditSuggestion
+    @DefaultStringValue("Copilot: Dismiss Next Edit Suggestion") // $NON-NLS-1$
+    String copilotDismissNextEditSuggestionLabel();
+    @DefaultStringValue("Dismiss Next Edit Suggestion") // $NON-NLS-1$
+    String copilotDismissNextEditSuggestionMenuLabel();
+    @DefaultStringValue("Dismiss the current Copilot next edit suggestion, if any.") // $NON-NLS-1$
+    String copilotDismissNextEditSuggestionDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();

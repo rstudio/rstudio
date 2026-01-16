@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -58,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.inject.Inject;
 
@@ -982,26 +982,37 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Play a synthesized beep sound using Web Audio API (for browser/server mode).
+    * Play a bell sound similar to macOS Terminal's "Glass" tone.
+    * A soft, pleasant tone like tapping a glass bottle.
     */
    private native void playBellWeb() /*-{
-      // Create audio context for generating beep sound
       var AudioContext = $wnd.AudioContext || $wnd.webkitAudioContext;
-      if (AudioContext) {
-         var audioCtx = new AudioContext();
-         var oscillator = audioCtx.createOscillator();
-         var gainNode = audioCtx.createGain();
+      if (!AudioContext) return;
 
-         oscillator.connect(gainNode);
-         gainNode.connect(audioCtx.destination);
+      var ctx = new AudioContext();
+      var now = ctx.currentTime;
 
-         oscillator.type = 'sine';
-         oscillator.frequency.value = 800; // Frequency in Hz
-         gainNode.gain.value = 0.1; // Volume (0-1)
+      // Single pure tone with low-pass filter for warmth
+      var osc = ctx.createOscillator();
+      var filter = ctx.createBiquadFilter();
+      var gain = ctx.createGain();
 
-         oscillator.start();
-         oscillator.stop(audioCtx.currentTime + 0.1); // Duration: 100ms
-      }
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(698.46, now); // F5
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, now);
+      filter.Q.setValueAtTime(0.7, now); // Gentle rolloff
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.setTargetAtTime(0, now, 0.05);
+
+      osc.start(now);
+      osc.stop(now + 0.3);
    }-*/;
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();

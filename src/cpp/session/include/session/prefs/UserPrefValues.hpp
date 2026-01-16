@@ -452,6 +452,7 @@ namespace prefs {
 #define kCopilotTabKeyBehaviorCompletions "completions"
 #define kCopilotIndexingEnabled "copilot_indexing_enabled"
 #define kCopilotNesEnabled "copilot_nes_enabled"
+#define kCopilotNesAutoshow "copilot_nes_autoshow"
 #define kCopilotShowMessages "copilot_show_messages"
 #define kCopilotProjectWorkspace "copilot_project_workspace"
 #define kProjectName "project_name"
@@ -2061,6 +2062,12 @@ public:
     */
    bool copilotNesEnabled();
    core::Error setCopilotNesEnabled(bool val);
+
+   /**
+    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    */
+   bool copilotNesAutoshow();
+   core::Error setCopilotNesAutoshow(bool val);
 
    /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.

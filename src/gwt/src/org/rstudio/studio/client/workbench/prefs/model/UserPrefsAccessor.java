@@ -3799,6 +3799,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    */
+   public PrefValue<Boolean> copilotNesAutoshow()
+   {
+      return bool(
+         "copilot_nes_autoshow",
+         _constants.copilotNesAutoshowTitle(), 
+         _constants.copilotNesAutoshowDescription(), 
+         true);
+   }
+
+   /**
     * When enabled, RStudio will show account and billing messages from GitHub Copilot in a message box.
     */
    public PrefValue<Boolean> copilotShowMessages()
@@ -4514,6 +4526,8 @@ public class UserPrefsAccessor extends Prefs
          copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
       if (source.hasKey("copilot_nes_enabled"))
          copilotNesEnabled().setValue(layer, source.getBool("copilot_nes_enabled"));
+      if (source.hasKey("copilot_nes_autoshow"))
+         copilotNesAutoshow().setValue(layer, source.getBool("copilot_nes_autoshow"));
       if (source.hasKey("copilot_show_messages"))
          copilotShowMessages().setValue(layer, source.getBool("copilot_show_messages"));
       if (source.hasKey("copilot_project_workspace"))
@@ -4806,6 +4820,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
       prefs.add(copilotNesEnabled());
+      prefs.add(copilotNesAutoshow());
       prefs.add(copilotShowMessages());
       prefs.add(copilotProjectWorkspace());
       prefs.add(projectName());

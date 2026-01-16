@@ -315,7 +315,7 @@
             "name": {"constant": "kWebSocketConnectTimeout", "value": "websocket-connect-timeout"},
             "type": "int",
             "memberName": "webSocketConnectTimeout_",
-            "defaultValue": 3,
+            "defaultValue": 5,
             "description": "Specifies the WebSocket initial connection timeout in seconds for session terminals."
          },
          {

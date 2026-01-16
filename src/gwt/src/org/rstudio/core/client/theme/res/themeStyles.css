@@ -2,11 +2,12 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info, ace_tooltip;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_gutter_annotation, ace_info, ace_tooltip, ace_content, ace_line;
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
-@external ace_active_debug_line, ace_next-edit-suggestion-highlight;
+@external ace_active_debug_line, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_replacement-clickable;
+@external ace_nes-gutter, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
 @external ace_diff-added, ace_diff-removed;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
 @external ace_sb;
@@ -414,10 +415,130 @@ pre {
    pointer-events: none;
 }
 
+/* Base class for NES gutter icons - defines the arrow shape */
+.ace_nes-gutter .ace_gutter_annotation {
+   position: relative;
+   cursor: pointer;
+}
+
+.ace_nes-gutter .ace_gutter_annotation::before {
+   content: '';
+   position: absolute;
+   left: 1px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 16px;
+   height: 16px;
+   border-radius: 3px;
+   cursor: pointer;
+   background-color: #1E77BC;
+}
+
+.ace_nes-gutter .ace_gutter_annotation::after {
+   content: '';
+   position: absolute;
+   left: 7px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 0;
+   height: 0;
+   border-top: 4px solid transparent;
+   border-bottom: 4px solid transparent;
+   border-left: 5px solid white;
+   cursor: pointer;
+}
+
+/* Darker blue background for all NES gutter cells */
+.ace_nes-gutter {
+   background-color: rgba(20, 60, 120, 0.75);
+}
+
+/* Type-specific colored dots at bottom-right corner of the icon */
+.ace_nes-gutter-deletion .ace_gutter_annotation::before {
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #C62828 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
+}
+
+.ace_nes-gutter-insertion .ace_gutter_annotation::before {
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #2E7D32 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
+}
+
+.ace_nes-gutter-replacement .ace_gutter_annotation::before {
+   background-color: #1E77BC;
+   background-image:
+      radial-gradient(circle 1.5px at 12px 12px, #888888 100%, transparent 100%),
+      radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
+}
+
 .ace_next-edit-suggestion-highlight {
    position: absolute;
    z-index: 1;
    background: rgba(128, 128, 128, 0.2) !important;
+}
+
+.ace_next-edit-suggestion-deletion {
+   position: absolute;
+   z-index: 1;
+   background: rgba(255, 0, 0, 0.2) !important;
+}
+
+.ace_next-edit-suggestion-deletion-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(255, 0, 0, 0.08) !important;
+}
+
+.ace_insertion_preview {
+   opacity: 0.5;
+   font-style: italic;
+   background: rgba(0, 128, 0, 0.2);
+}
+
+.ace_next-edit-suggestion-insertion-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(0, 128, 0, 0.08) !important;
+}
+
+.ace_replacement_deletion {
+   opacity: 0.6;
+   text-decoration: line-through;
+   background: rgba(255, 0, 0, 0.15);
+}
+
+.ace_next-edit-suggestion-replacement-bounds {
+   position: absolute;
+   z-index: 0;
+   background: rgba(128, 128, 0, 0.08) !important;
+}
+
+.ace_replacement-clickable,
+.ace_replacement-clickable .ace_content,
+.ace_replacement-clickable .ace_text-layer,
+.ace_replacement-clickable .ace_line,
+.ace_replacement-clickable .ace_line * {
+   cursor: pointer !important;
+}
+
+.ace_deletion-clickable,
+.ace_deletion-clickable .ace_content,
+.ace_deletion-clickable .ace_text-layer,
+.ace_deletion-clickable .ace_line,
+.ace_deletion-clickable .ace_line * {
+   cursor: pointer !important;
+}
+
+.ace_insertion-clickable,
+.ace_insertion-clickable .ace_content,
+.ace_insertion-clickable .ace_text-layer,
+.ace_insertion-clickable .ace_line,
+.ace_insertion-clickable .ace_line * {
+   cursor: pointer !important;
 }
 
 .ace_diff-added {

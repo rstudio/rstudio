@@ -210,6 +210,12 @@ public class KeyCombination
          keyCode = 189;
       }
 
+      // Normalize semicolon keycode (Firefox reports 59, others report 186)
+      if (StringUtil.equals(key, ";"))
+      {
+         keyCode = 186;
+      }
+
       return keyCode;
    }
 

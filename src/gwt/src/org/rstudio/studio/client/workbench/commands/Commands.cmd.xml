@@ -692,7 +692,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="copilotRequestCompletions" value="Cmd+Backslash" title="Request Copilot Code Suggestions" />
-         
+         <shortcut refid="copilotAcceptNextEditSuggestion" value="Ctrl+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
+         <shortcut refid="copilotAcceptNextEditSuggestion" value="Cmd+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
+         <shortcut refid="copilotDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
+         <shortcut refid="copilotDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
+
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -2122,7 +2126,17 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copilot: Toggle Automatic Completions"
         menuLabel="Toggle Automatic Completions"
         desc="When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session."/>
-   
+
+   <cmd id="copilotAcceptNextEditSuggestion"
+        label="Copilot: Accept Next Edit Suggestion"
+        menuLabel="Accept Next Edit Suggestion"
+        desc="Accept the current Copilot next edit suggestion, if any."/>
+
+   <cmd id="copilotDismissNextEditSuggestion"
+        label="Copilot: Dismiss Next Edit Suggestion"
+        menuLabel="Dismiss Next Edit Suggestion"
+        desc="Dismiss the current Copilot next edit suggestion, if any."/>
+
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

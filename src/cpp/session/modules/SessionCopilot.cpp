@@ -326,6 +326,10 @@ FilePath copilotLanguageServerPath()
    // `RSTUDIO_COPILOT_JS_FOLDER`.
    // -------------------------------------------------------------------------
    
+   std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
+   if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
+      return FilePath(rstudioAgentPath);
+
    std::string rstudioCopilot = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
    if (!rstudioCopilot.empty())
    {
