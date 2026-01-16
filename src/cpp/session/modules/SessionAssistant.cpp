@@ -57,8 +57,8 @@
       std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);    \
       std::string __formatted__ =                                       \
           fmt::format("[{}]: {}", __func__, __message__);               \
-      __LOGGER__("assistant", __formatted__);                             \
-      if (assistantLogLevel() >= 1)                                       \
+      __LOGGER__("assistant", __formatted__);                           \
+      if (assistantLogLevel() >= 1)                                     \
          std::cerr << __formatted__ << std::endl;                       \
    } while (0)
 
