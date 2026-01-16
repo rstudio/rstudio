@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import java.util.ArrayList;
 
-import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
@@ -58,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.inject.Inject;
 
@@ -981,27 +981,8 @@ public class TerminalSession extends XTermWidget
       }
    }
 
-   /**
-    * Play a synthesized beep sound using Web Audio API (for browser/server mode).
-    */
    private native void playBellWeb() /*-{
-      // Create audio context for generating beep sound
-      var AudioContext = $wnd.AudioContext || $wnd.webkitAudioContext;
-      if (AudioContext) {
-         var audioCtx = new AudioContext();
-         var oscillator = audioCtx.createOscillator();
-         var gainNode = audioCtx.createGain();
-
-         oscillator.connect(gainNode);
-         gainNode.connect(audioCtx.destination);
-
-         oscillator.type = 'sine';
-         oscillator.frequency.value = 800; // Frequency in Hz
-         gainNode.gain.value = 0.1; // Volume (0-1)
-
-         oscillator.start();
-         oscillator.stop(audioCtx.currentTime + 0.1); // Duration: 100ms
-      }
+      // TODO
    }-*/;
 
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
