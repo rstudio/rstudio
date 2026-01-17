@@ -432,7 +432,7 @@ public class TextEditingTarget implements
             
             fileType_ = newFileType_;
             if (fileTypeChanged)
-               copilotHelper_.onFileTypeChanged();
+               assistant_.onFileTypeChanged();
          }
 
          if (file_ != null)
@@ -616,7 +616,7 @@ public class TextEditingTarget implements
                                          events_,
                                          this);
 
-      copilotHelper_ = new TextEditingTargetAssistantHelper(this);
+      assistant_ = new TextEditingTargetAssistantHelper(this);
       
       EditingTarget target = this;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
@@ -1909,7 +1909,7 @@ public class TextEditingTarget implements
                   // If copilot is disabled, hide the status message as a catch-all for
                   // this report of messages appearing when they shouldn't:
                   // https://github.com/rstudio/rstudio/issues/16471
-                  if (!copilotHelper_.isAssistantEnabled())
+                  if (!assistant_.isAssistantEnabled())
                   {
                      view_.getStatusBar().hideStatus();
                      return;
@@ -9710,7 +9710,7 @@ public class TextEditingTarget implements
    private boolean forceSaveCommandActive_ = false;
    private boolean visualEditorHasFocus_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
-   private final TextEditingTargetAssistantHelper copilotHelper_;
+   private final TextEditingTargetAssistantHelper assistant_;
    private TextEditingTargetPackageDependencyHelper packageDependencyHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
