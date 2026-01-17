@@ -914,7 +914,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             // notify Copilot and Chat of the focused document
             if (event.getId() != null)
             {
-               server_.copilotDocFocused(event.getId(), new VoidServerRequestCallback());
+               server_.assistantDocFocused(event.getId(), new VoidServerRequestCallback());
                server_.chatDocFocused(event.getId(), new VoidServerRequestCallback());
             }
 

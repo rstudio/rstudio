@@ -136,6 +136,7 @@
 #include "modules/SessionAir.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
+#include "modules/SessionAssistant.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionCpp.hpp"
@@ -144,7 +145,6 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
-#include "modules/SessionCopilot.hpp"
 #include "modules/SessionChat.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
@@ -729,7 +729,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
       (modules::lsp::initialize)
-      (modules::copilot::initialize)
+      (modules::assistant::initialize)
       (modules::chat::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)

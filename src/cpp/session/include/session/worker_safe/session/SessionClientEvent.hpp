@@ -218,7 +218,7 @@ extern const int kDeploymentRecordsUpdated;
 extern const int kRunAutomation;
 extern const int kConsoleWritePendingError;
 extern const int kConsoleWritePendingWarning;
-extern const int kCopilotStatusChanged;
+extern const int kAssistantStatusChanged;
 extern const int kChatBackendExit;
 
 }

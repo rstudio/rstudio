@@ -129,7 +129,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOper
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.model.MetaServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
@@ -505,7 +505,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(TutorialServerOperations.class).to(RemoteServer.class);
       bind(PythonServerOperations.class).to(RemoteServer.class);
       bind(QuartoServerOperations.class).to(RemoteServer.class);
-      bind(CopilotServerOperations.class).to(RemoteServer.class);
+      bind(AssistantServerOperations.class).to(RemoteServer.class);
       bind(ChatServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class);

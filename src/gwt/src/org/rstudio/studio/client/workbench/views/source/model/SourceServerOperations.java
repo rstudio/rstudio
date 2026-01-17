@@ -27,7 +27,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -61,7 +61,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 ObjectExplorerServerOperations,
                                                 TestServerOperations,
                                                 CryptoServerOperations,
-                                                CopilotServerOperations,
+                                                AssistantServerOperations,
                                                 ChatServerOperations
 {
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

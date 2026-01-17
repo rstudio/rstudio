@@ -44,10 +44,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotStatusChangedEvent;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
@@ -108,7 +108,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                                  Commands commands,
                                  AriaLiveService ariaLive,
                                  Copilot copilot,
-                                 CopilotServerOperations server,
+                                 AssistantServerOperations server,
                                  ProjectsServerOperations projectServer)
    {
       events_ = events;
@@ -245,8 +245,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(CopilotStatusChangedEvent.TYPE, (event) -> {
-         copilotStarted_ = event.getStatus() == CopilotStatusChangedEvent.RUNNING;
+      copilotStatusHandler_ = events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) -> {
+         copilotStarted_ = event.getStatus() == AssistantStatusChangedEvent.RUNNING;
       });
    }
    
@@ -320,7 +320,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                   else
                   {
                      // Eagerly save the preference so the backend can start the agent
-                     server_.copilotVerifyInstalled(new ServerRequestCallback<Boolean>()
+                     server_.assistantVerifyInstalled(new ServerRequestCallback<Boolean>()
                      {
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
@@ -523,14 +523,14 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void refresh()
    {
       reset();
-      
-      server_.copilotStatus(new ServerRequestCallback<CopilotStatusResponse>()
+
+      server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
-         public void onResponseReceived(CopilotStatusResponse response)
+         public void onResponseReceived(AssistantStatusResponse response)
          {
             hideButtons();
-            
+
             if (response == null)
             {
                lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
@@ -553,10 +553,10 @@ public class AssistantPreferencesPane extends PreferencesPane
                      showButtons(btnShowError_);
                   }
                }
-               else if (CopilotResponseTypes.CopilotAgentNotRunningReason.isError(response.reason))
+               else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblCopilotStatus_.setText(CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+                  lblCopilotStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
                   showButtons(btnRefresh_, btnDiagnostics_);
                }
                else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
@@ -759,7 +759,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final Commands commands_;
    private final Copilot copilot_;
-   private final CopilotServerOperations server_;
+   private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
