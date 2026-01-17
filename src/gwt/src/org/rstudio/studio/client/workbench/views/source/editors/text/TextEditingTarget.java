@@ -138,9 +138,9 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -1904,6 +1904,8 @@ public class TextEditingTarget implements
                @Override
                public void onAssistant(AssistantEvent event)
                {
+                  // TODO: These should be updated to indicate the current agent (Posit AI or Copilot)
+
                   // If copilot is disabled, hide the status message as a catch-all for
                   // this report of messages appearing when they shouldn't:
                   // https://github.com/rstudio/rstudio/issues/16471
