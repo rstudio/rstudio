@@ -3247,7 +3247,16 @@ public class DummyCommands extends Commands {
     public AppCommand copilotToggleAutomaticCompletions() {
         return null;
     }
-    
+
+   @Override
+   public AppCommand copilotAcceptNextEditSuggestion() {
+      return null;
+   }
+
+    @Override
+   public AppCommand copilotDismissNextEditSuggestion() {
+      return null;
+   }
 
     @Override
     public AppCommand layoutZoomDatabricks() {
