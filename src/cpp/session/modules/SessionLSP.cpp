@@ -141,6 +141,12 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
+
+   // Skip if document is already tracked (prevents duplicate didOpen
+   // when both onDocUpdated and onDocAdded fire for the same document)
+   if (s_documents.count(uri))
+      return;
+
    auto&& document = s_documents[uri];
    document.version = 0;
 
