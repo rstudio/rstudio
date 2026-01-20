@@ -340,6 +340,11 @@ Error newDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // broadcast doc added event -- it's important to do this after it's in the
+   // database but before we serialize it so hooks can operate on the doc
+   // before it's written to the client
+   events().onDocAdded(pDoc);
+
    // return the doc
    json::Object jsonDoc;
    writeDocToJson(pDoc, &jsonDoc);
