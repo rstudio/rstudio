@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChangedEvent.Handler>
 {
-   // keep in sync with CopilotAgentRuntimeStatus in SessionCopilot.cpp
+   // keep in sync with CopilotAgentRuntimeStatus in SessionAssistant.cpp
    public static final int UNKNOWN = 0;
    public static final int PREPARING = 1;
    public static final int STARTING = 2;

@@ -1546,7 +1546,7 @@ void handleCancelExecution(const json::Object& params)
 // ============================================================================
 
 // Convert internal document type to standard language ID
-// Based on SessionCopilot.cpp:languageIdFromDocument()
+// Based on SessionAssistant.cpp:languageIdFromDocument()
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // R files: r_source, r_markdown, quarto_markdown all map to "r"

@@ -1322,7 +1322,7 @@ void onBackgroundProcessing(bool isIdle)
             {
                // TODO: Copilot vs. Assistant preference here?
                if (prefs::userPrefs().copilotShowMessages())
-                  module_context::showErrorMessage("GitHub Assistant", message);
+                  module_context::showErrorMessage("Copilot", message);
                else
                   ELOG("showMessageRequest ({}): '{}'", type, message);
             }
