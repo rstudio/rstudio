@@ -6,4 +6,8 @@
    <set-property name="compiler.stackMode" value="native"/>
 
    <set-property name="rstudio.unittests" value="true"/>
+
+   <generate-with class="org.rstudio.studio.client.workbench.commands.DummyCommandsGenerator">
+      <when-type-is class="org.rstudio.studio.client.workbench.commands.DummyCommands"/>
+   </generate-with>
 </module>
