@@ -448,7 +448,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(normalizeSeparatorsNative(path)).catch((value) => {
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });

@@ -210,9 +210,15 @@ Error findProgramOnPath(const std::string& program,
       if (path.empty())
          continue;
 
+      // Skip non-existent directories to avoid logging errors, matching the behavior of the
+      // Posix implementation
+      FilePath pathDir(path);
+      if (!pathDir.exists())
+         continue;
+
       for (auto&& ext : exts)
       {
-         FilePath programPath = FilePath(path).completeChildPath(program + ext);
+         FilePath programPath = pathDir.completeChildPath(program + ext);
          if (!programPath.exists())
             continue;
 
