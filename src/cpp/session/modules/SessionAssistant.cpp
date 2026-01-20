@@ -1894,7 +1894,7 @@ void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
 
    // Send the request
    std::string requestId = core::system::generateUuid();
-   sendRequest("textDocument/assistantInlineEdit", requestId, paramsJson, AssistantContinuation(continuation));
+   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, AssistantContinuation(continuation));
 }
 
 Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
