@@ -1510,12 +1510,6 @@ void onUserPrefsChanged(const std::string& layer,
    }
 }
 
-void onDeferredInit(bool newSession)
-{
-   // LSP event connections moved to initialize() to ensure we receive
-   // document events during session resume (before deferred init fires)
-}
-
 void onShutdown(bool)
 {
    // Note that we're about to shut down.
@@ -2246,11 +2240,10 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
-   events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
 
-   // Connect to LSP events here (not in onDeferredInit) to ensure we receive
-   // document events during session resume, which fires before deferred init
+   // Connect to LSP events early to ensure we receive document events during
+   // session resume (which fires before deferred init)
    lsp::events().didOpen.connect(didOpen);
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
