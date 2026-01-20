@@ -3248,6 +3248,15 @@ public class DummyCommands extends Commands {
         return null;
     }
     
+    @Override
+    public AppCommand copilotAcceptNextEditSuggestion() {
+        return null;
+    }
+
+    @Override
+    public AppCommand copilotDismissNextEditSuggestion() {
+        return null;
+    }
 
     @Override
     public AppCommand layoutZoomDatabricks() {
