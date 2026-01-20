@@ -141,6 +141,12 @@ std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocu
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    std::string uri = uriFromDocument(pDoc);
+
+   // Skip if document is already tracked (prevents duplicate didOpen
+   // when both onDocUpdated and onDocAdded fire for the same document)
+   if (s_documents.count(uri))
+      return;
+
    auto&& document = s_documents[uri];
    document.version = 0;
 
@@ -264,7 +270,9 @@ core::Error sourceDocumentFromUri(
 
 std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (pDoc->isUntitled())
+   // Use rstudio-document:// URI for untitled documents or documents with empty paths
+   // (path may be empty before tempName property is set)
+   if (pDoc->isUntitled() || pDoc->path().empty())
    {
       return fmt::format("{}{}", kRStudioDocumentPrefix, pDoc->id());
    }
