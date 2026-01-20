@@ -5,6 +5,7 @@ import org.rstudio.studio.client.common.DummyGlobalDisplay;
 import org.rstudio.studio.client.widget.MockDynamicPopupMenuCallback;
 import org.rstudio.studio.client.workbench.commands.DummyCommands;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class TestMocks extends GWTTestCase
@@ -27,7 +28,7 @@ public class TestMocks extends GWTTestCase
     {
         new DummyApplicationServerOperations();
         new DummyGlobalDisplay();
-        new DummyCommands();
+        GWT.create(DummyCommands.class);
         new MockDynamicPopupMenuCallback();
     }
 }

@@ -216,7 +216,7 @@ const int kDeploymentRecordsUpdated = 198;
 const int kRunAutomation = 199;
 const int kConsoleWritePendingError = 200;
 const int kConsoleWritePendingWarning = 201;
-const int kCopilotStatusChanged = 202;
+const int kAssistantStatusChanged = 202;
 const int kChatBackendExit = 203;
 const int kShowMessage = 204;
 
@@ -609,8 +609,8 @@ std::string ClientEvent::typeName() const
          return "console_write_pending_error";
       case client_events::kConsoleWritePendingWarning:
          return "console_write_pending_warning";
-      case client_events::kCopilotStatusChanged:
-         return "copilot_status_changed";
+      case client_events::kAssistantStatusChanged:
+         return "assistant_status_changed";
       case client_events::kChatBackendExit:
          return "chat_backend_exit";
       default:

@@ -15,46 +15,12 @@
 
 .rs.addFunction("copilot.setLogLevel", function(level = 0L)
 {
-   .Call("rs_copilotSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
+   .Call("rs_assistantSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.sendRequest", function(method, params = list())
 {
-   .Call("rs_copilotSendRequest", as.character(method), as.list(params), PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("copilot.networkProxy", function()
-{
-   # check for proxy from option
-   proxy <- getOption("rstudio.copilot.networkProxy")
-   if (is.null(proxy))
-      return(NULL)
- 
-   # return as scalar list
-   .rs.scalarListFromList(proxy)
-})
-
-.rs.addFunction("copilot.authProvider", function()
-{
-   # check for auth provider from option
-   authProvider <- getOption("rstudio.copilot.authProvider")
-   if (is.null(authProvider))
-      return(NULL)
- 
-   # return as scalar list
-   .rs.scalarListFromList(authProvider)
-})
-
-
-.rs.addFunction("copilot.proxyKerberosServicePrincipal", function()
-{
-   # check for principal from option
-   principal <- getOption("rstudio.copilot.proxyKerberosServicePrincipal")
-   if (is.null(principal))
-      return(NULL)
- 
-   # return as scalar list
-   .rs.scalarListFromList(principal)
+   .Call("rs_assistantSendRequest", as.character(method), as.list(params), PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.parseNetworkProxyUrl", function(url)
@@ -83,7 +49,7 @@
    # validate the protocol, if it was set
    protocol <- .rs.nullCoalesce(networkProxy$protocol, "http")
    if (protocol != "http")
-      warning("only 'http' network proxies are supported by the GitHub Copilot agent", call. = FALSE)
+      warning("only 'http' network proxies are supported by the GitHub copilot agent", call. = FALSE)
    
    # drop the 'url' and 'protocol' fields as they are not used by copilot
    networkProxy[c("url", "protocol")] <- NULL
@@ -94,4 +60,38 @@
    # return rest of the data   
    .rs.scalarListFromList(networkProxy)
 })
+
+.rs.addFunction("copilot.authProvider", function()
+{
+   # check for auth provider from option
+   authProvider <- getOption("rstudio.copilot.authProvider")
+   if (is.null(authProvider))
+      return(NULL)
+ 
+   # return as scalar list
+   .rs.scalarListFromList(authProvider)
+})
+
+.rs.addFunction("copilot.networkProxy", function()
+{
+   # check for proxy from option
+   proxy <- getOption("rstudio.copilot.networkProxy")
+   if (is.null(proxy))
+      return(NULL)
+ 
+   # return as scalar list
+   .rs.scalarListFromList(proxy)
+})
+
+.rs.addFunction("copilot.proxyKerberosServicePrincipal", function()
+{
+   # check for principal from option
+   principal <- getOption("rstudio.copilot.proxyKerberosServicePrincipal")
+   if (is.null(principal))
+      return(NULL)
+ 
+   # return as scalar list
+   .rs.scalarListFromList(principal)
+})
+
 

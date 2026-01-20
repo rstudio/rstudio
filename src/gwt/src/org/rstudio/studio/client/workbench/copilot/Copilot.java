@@ -32,17 +32,17 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotDiagnosticsResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponseResult;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotDiagnostics;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
-import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponseResult;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignOutResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantDiagnostics;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotDiagnosticsDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -66,7 +66,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                   UserPrefs prefs,
                   Session session,
                   CopilotCommandBinder binder,
-                  CopilotServerOperations server)
+                  AssistantServerOperations server)
    {
       display_ = display;
       commands_ = commands;
@@ -95,7 +95,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             assistantProjectOptions_ = event.getData().getAssistantOptions();
             if (!isEnabled())
             {
-               events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
+               events_.fireEvent(new AssistantEvent(AssistantEventType.ASSISTANT_DISABLED));
             }
          }
       });
@@ -125,26 +125,26 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    public void onCopilotDiagnostics(Command onCompleted)
    {
-      server_.copilotDiagnostics(new ServerRequestCallback<CopilotDiagnosticsResponse>()
+      server_.assistantDiagnostics(new ServerRequestCallback<AssistantDiagnosticsResponse>()
       {
-         
+
          @Override
-         public void onResponseReceived(CopilotDiagnosticsResponse response)
+         public void onResponseReceived(AssistantDiagnosticsResponse response)
          {
             onCompleted.execute();
-            
+
             if (response.error != null)
             {
                globalDisplay_.showErrorMessage(response.error.message);
             }
             else
             {
-               CopilotDiagnostics diagnostics = response.result.cast();
+               AssistantDiagnostics diagnostics = response.result.cast();
                CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
                dialog.showModal();
             }
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
@@ -172,18 +172,18 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          }
       });
    }
-   
-   public void onCopilotSignIn(CommandWithArg<CopilotStatusResponse> callback)
+
+   public void onCopilotSignIn(CommandWithArg<AssistantStatusResponse> callback)
    {
-      server_.copilotSignIn(new DelayedProgressRequestCallback<CopilotSignInResponse>(constants_.copilotSigningIn())
+      server_.assistantSignIn(new DelayedProgressRequestCallback<AssistantSignInResponse>(constants_.copilotSigningIn())
       {
          private ModalDialogBase signInDialog_;
          private Timer statusTimer_;
-         
+
          @Override
-         protected void onSuccess(CopilotSignInResponse response)
+         protected void onSuccess(AssistantSignInResponse response)
          {
-            CopilotError error = response.error;
+            AssistantError error = response.error;
             if (error != null)
             {
                globalDisplay_.showMessage(
@@ -192,24 +192,24 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                      constants_.copilotError(error.code, error.message));
                return;
             }
-            
-            CopilotSignInResponseResult result = response.result.cast();
+
+            AssistantSignInResponseResult result = response.result.cast();
             if (result.status == CopilotConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
             {
                // Generate the dialog.
                signInDialog_ = new CopilotSignInDialog(result.verificationUri, result.userCode);
                signInDialog_.showModal();
-               
+
                // Start polling for status, to see when the user has finished authenticating.
                statusTimer_ = new Timer()
                {
                   @Override
                   public void run()
                   {
-                     server_.copilotStatus(new ServerRequestCallback<CopilotStatusResponse>()
+                     server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
                      {
                         @Override
-                        public void onResponseReceived(CopilotStatusResponse response)
+                        public void onResponseReceived(AssistantStatusResponse response)
                         {
                            if (response.result.status == CopilotConstants.STATUS_OK)
                            {
@@ -235,7 +235,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                      });
                   }
                };
-               
+
                statusTimer_.schedule(1000);
             }
             else if (result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
@@ -277,31 +277,31 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          }
       });
    }
-   
-   public void onCopilotSignOut(CommandWithArg<CopilotSignOutResponse> callback)
+
+   public void onCopilotSignOut(CommandWithArg<AssistantSignOutResponse> callback)
    {
-      server_.copilotSignOut(new DelayedProgressRequestCallback<CopilotSignOutResponse>(constants_.copilotSigningOut())
+      server_.assistantSignOut(new DelayedProgressRequestCallback<AssistantSignOutResponse>(constants_.copilotSigningOut())
       {
          @Override
-         protected void onSuccess(CopilotSignOutResponse response)
+         protected void onSuccess(AssistantSignOutResponse response)
          {
             callback.execute(response);
          }
       });
    }
-   
+
    @Handler
    public void onCopilotStatus()
    {
       onCopilotStatusImpl();
    }
-   
+
    private void onCopilotStatusImpl()
    {
-      server_.copilotStatus(new DelayedProgressRequestCallback<CopilotStatusResponse>(constants_.copilotCheckingStatus())
+      server_.assistantStatus(new DelayedProgressRequestCallback<AssistantStatusResponse>(constants_.copilotCheckingStatus())
       {
          @Override
-         protected void onSuccess(CopilotStatusResponse response)
+         protected void onSuccess(AssistantStatusResponse response)
          {
             if (response == null)
             {
@@ -309,17 +309,17 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                      MessageDisplay.MSG_INFO,
                      constants_.copilotCheckStatusDialogTitle(),
                      constants_.copilotEmptyResponse());
-               
+
             }
             else if (response.error != null)
             {
                String output = response.output;
                if (StringUtil.isNullOrEmpty(output))
                   output = constants_.copilotNoOutput();
-               
+
                String message = constants_.copilotErrorStartingAgent(
                      response.error.getEndUserMessage(), output);
-               
+
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
                      constants_.copilotCheckStatusDialogTitle(),
@@ -331,7 +331,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
                      constants_.copilotCheckStatusDialogTitle(),
-                     CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
@@ -353,13 +353,13 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                      constants_.copilotCheckStatusDialogTitle(),
                      response.result);
             }
-            
+
             Debug.logObject(response);
          }
       });
    }
-   
-   public String messageForError(CopilotError error)
+
+   public String messageForError(AssistantError error)
    {
       Integer code = error.code;
       
@@ -400,7 +400,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    private final UserPrefs prefs_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final CopilotServerOperations server_;
+   private final AssistantServerOperations server_;
 
    private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
 }
