@@ -264,7 +264,9 @@ core::Error sourceDocumentFromUri(
 
 std::string uriFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (pDoc->isUntitled())
+   // Use rstudio-document:// URI for untitled documents or documents with empty paths
+   // (path may be empty before tempName property is set)
+   if (pDoc->isUntitled() || pDoc->path().empty())
    {
       return fmt::format("{}{}", kRStudioDocumentPrefix, pDoc->id());
    }

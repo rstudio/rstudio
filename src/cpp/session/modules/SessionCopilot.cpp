@@ -1188,7 +1188,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 {
    if (!ensureAgentRunning())
       return;
-   
+
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
    Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
@@ -1512,9 +1512,8 @@ void onUserPrefsChanged(const std::string& layer,
 
 void onDeferredInit(bool newSession)
 {
-   lsp::events().didOpen.connect(didOpen);
-   lsp::events().didChange.connect(didChange);
-   lsp::events().didClose.connect(didClose);
+   // LSP event connections moved to initialize() to ensure we receive
+   // document events during session resume (before deferred init fires)
 }
 
 void onShutdown(bool)
@@ -2249,6 +2248,12 @@ Error initialize()
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
+
+   // Connect to LSP events here (not in onDeferredInit) to ensure we receive
+   // document events during session resume, which fires before deferred init
+   lsp::events().didOpen.connect(didOpen);
+   lsp::events().didChange.connect(didChange);
+   lsp::events().didClose.connect(didClose);
 
    // TODO: Do we need this _and_ the preferences saved callback?
    // This one seems required so that we see preference changes while

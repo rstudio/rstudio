@@ -340,6 +340,9 @@ Error newDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // broadcast doc added event
+   events().onDocAdded(pDoc);
+
    // return the doc
    json::Object jsonDoc;
    writeDocToJson(pDoc, &jsonDoc);
