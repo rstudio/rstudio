@@ -130,18 +130,21 @@ static const char* const kExecutionCanceledError = "Execution canceled by user";
 // ============================================================================
 // Feature availability helper
 // ============================================================================
-// Returns true if the Posit AI feature is enabled. This requires both:
+// Returns true if the Posit AI feature is enabled. This requires:
 // 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
-// 2. The pai user preference (temporary, will be removed when feature is ready)
+// 2. The posit-assistant-enabled session option
+// 3. The pai user preference (temporary, will be removed when feature is ready)
 bool isPaiEnabled()
 {
-   return options().allowPositAssistant() && prefs::userPrefs().pai();
+   return options().allowPositAssistant() &&
+          options().positAssistantEnabled() &&
+          prefs::userPrefs().pai();
 }
 
 // Returns true if the user has selected Posit AI as their assistant
 bool isPaiSelected()
 {
-   return prefs::userPrefs().rstudioAssistant() == kRstudioAssistantPositAi;
+   return prefs::userPrefs().assistant() == kAssistantPosit;
 }
 
 // Selective imports from chat modules to avoid namespace pollution
@@ -3974,7 +3977,7 @@ Error initialize()
    // If user has Posit AI selected but PAI is no longer available, reset to "none"
    if (isPaiSelected() && !isPaiEnabled())
    {
-      prefs::userPrefs().setRstudioAssistant(kRstudioAssistantNone);
+      prefs::userPrefs().setAssistant(kAssistantNone);
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);

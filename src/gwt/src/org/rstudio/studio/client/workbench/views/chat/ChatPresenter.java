@@ -170,6 +170,13 @@ public class ChatPresenter extends BasePresenter
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
+               // Don't poll for backend if PAI isn't selected
+               if (!PaiUtil.isPaiSelected(prefs_))
+               {
+                  display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+                  return;
+               }
+
                // Backend will be restarted by onResume() handler in SessionChat.cpp
                // Just need to wait for it to become available
                pollForBackendUrl(0);
