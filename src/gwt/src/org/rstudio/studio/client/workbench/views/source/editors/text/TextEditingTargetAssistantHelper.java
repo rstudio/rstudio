@@ -42,18 +42,21 @@ import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedE
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
@@ -1127,11 +1130,17 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
+      events_.addHandler(SessionInitEvent.TYPE, (event) ->
+      {
+         SessionInfo info = session_.getSessionInfo();
+         assistantStatus_ = info.getAssistantRuntimeStatus();
+         manageHandlers();
+      });
+
       Scheduler.get().scheduleDeferred(() ->
       {
          manageHandlers();
       });
-
    }
 
    private boolean isValidCompletion(AssistantCompletion completion)
@@ -1674,7 +1683,7 @@ public class TextEditingTargetAssistantHelper
    @Handler
    public void onCopilotRequestCompletions()
    {
-      commands_.assistantRequestSuggestions().execute();
+      onAssistantRequestSuggestions();
    }
 
    @Handler
@@ -1732,7 +1741,7 @@ public class TextEditingTargetAssistantHelper
    @Handler
    public void onCopilotAcceptNextWord()
    {
-      commands_.assistantAcceptNextWord().execute();
+      onAssistantAcceptNextWord();
    }
 
    @Handler
@@ -1785,7 +1794,7 @@ public class TextEditingTargetAssistantHelper
    @Handler
    public void onCopilotAcceptNextEditSuggestion()
    {
-      commands_.assistantAcceptNextEditSuggestion().execute();
+      onAssistantAcceptNextEditSuggestion();
    }
 
    @Handler
@@ -1804,7 +1813,7 @@ public class TextEditingTargetAssistantHelper
    @Handler
    public void onCopilotDismissNextEditSuggestion()
    {
-      commands_.assistantDismissNextEditSuggestion().execute();
+      onAssistantDismissNextEditSuggestion();
    }
 
    private void updateCompletion(String key)
@@ -1975,6 +1984,7 @@ public class TextEditingTargetAssistantHelper
 
    @Inject
    private void initialize(Copilot copilot,
+                           Session session,
                            EventBus events,
                            UserPrefs prefs,
                            Commands commands,
@@ -1982,6 +1992,7 @@ public class TextEditingTargetAssistantHelper
                            AssistantServerOperations server)
    {
       copilot_ = copilot;
+      session_ = session;
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
@@ -2145,6 +2156,7 @@ public class TextEditingTargetAssistantHelper
 
    // Injected ----
    private Copilot copilot_;
+   private Session session_;
    private EventBus events_;
    private UserPrefs prefs_;
    private Commands commands_;

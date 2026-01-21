@@ -1883,6 +1883,8 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    {
       if (error)
       {
+         DLOG("Next edit suggestions request failed: {}", error.getMessage());
+
          json::Object cancelledResult;
          cancelledResult["cancelled"] = true;
 
@@ -1898,6 +1900,15 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
          json::Object resultJson = pResponse->result().getObject();
          resultJson["cancelled"] = false;
 
+         // Drop the edit history for now, since it can be quite large,
+         // and we don't need / use it anywhere currently.
+         if (resultJson.hasMember("editHistory"))
+            resultJson["editHistory"] = json::Array();
+
+         DLOG("Next edit suggestions request succeeded.");
+         DLOG("{}", resultJson.writeFormatted());
+         DLOG("\n");
+
          json::JsonRpcResponse response;
          response.setResult(resultJson);
 
@@ -1905,6 +1916,7 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
       }
       else
       {
+         DLOG("Next edit suggestions request returned no result.");
          json::JsonRpcResponse response;
          continuation(Success(), &response);
       }
@@ -2136,6 +2148,10 @@ Error assistantRegisterOpenFiles(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+int assistantRuntimeStatus()
+{
+   return static_cast<int>(s_agentRuntimeStatus);
+}
 
 Error initialize()
 {

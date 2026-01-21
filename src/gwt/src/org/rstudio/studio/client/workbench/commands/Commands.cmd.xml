@@ -691,11 +691,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
-         <shortcut refid="copilotRequestCompletions" value="Cmd+Backslash" title="Request Copilot Code Suggestions" />
-         <shortcut refid="copilotAcceptNextEditSuggestion" value="Ctrl+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotAcceptNextEditSuggestion" value="Cmd+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
+         <shortcut refid="assistantRequestSuggestions" value="Cmd+Backslash" title="Request Code Suggestions" />
+         <shortcut refid="assistantAcceptNextEditSuggestion" value="Ctrl+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept assistant Next Edit Suggestion" />
+         <shortcut refid="assistantAcceptNextEditSuggestion" value="Cmd+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept assistant Next Edit Suggestion" />
+         <shortcut refid="assistantDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
+         <shortcut refid="assistantDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
 
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
