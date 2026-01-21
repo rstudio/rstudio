@@ -78,7 +78,6 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
       binder.bind(commands_, this);
 
-      assistantProjectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
          @Override
