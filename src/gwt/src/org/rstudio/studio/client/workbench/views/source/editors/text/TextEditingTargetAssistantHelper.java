@@ -424,6 +424,9 @@ public class TextEditingTargetAssistantHelper
             // Perform the actual replacement
             display_.replaceRange(range, completion.insertText);
 
+            // Notify server that completion was accepted
+            server_.assistantDidAcceptCompletion(completion.command, new VoidServerRequestCallback());
+
             // Reset and schedule another suggestion
             reset();
             nesTimer_.schedule(20);
@@ -487,6 +490,9 @@ public class TextEditingTargetAssistantHelper
 
       // Perform the edit (replace range with insertText)
       display_.replaceRange(range, nesCompletion_.insertText);
+
+      // Notify server that completion was accepted
+      server_.assistantDidAcceptCompletion(nesCompletion_.command, new VoidServerRequestCallback());
 
       // Reset and schedule another suggestion
       reset();
