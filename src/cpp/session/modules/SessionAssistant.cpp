@@ -16,8 +16,6 @@
 #include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
-#include <atomic>
-
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -242,15 +240,6 @@ projects::RProjectAssistantOptions s_assistantProjectOptions;
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
-
-// Next Edit Suggestions (NES) retry configuration.
-// When NES returns no suggestions, we retry at progressively further positions.
-constexpr int kNesMaxRetries = 3;
-constexpr int kNesRetryLineOffset = 4;
-
-// Sequence number for NES requests. Incremented on each new request to
-// allow cancellation of in-flight requests when a new request arrives.
-std::atomic<int> s_nesRequestSequence{0};
 
 std::string agentNotRunningReason()
 {
@@ -1815,226 +1804,6 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Structure to hold state for NES retry logic
-struct NesRetryState
-{
-   json::JsonRpcFunctionContinuation continuation;
-   boost::shared_ptr<source_database::SourceDocument> pDoc;
-   std::string uri;
-   int documentVersion;
-   int originalRow;    // The original cursor row (doesn't change)
-   int currentRow;     // The current row being queried (changes with retries)
-   int column;
-   int retryCount;
-   int sequenceNumber;
-   int documentLineCount;
-};
-
-// Helper function to check if a NES response contains edit suggestions
-bool nesResponseHasEdits(json::Object responseJson)
-{
-   if (!responseJson.hasMember("result"))
-      return false;
-
-   json::Value resultValue = responseJson["result"];
-   if (!resultValue.isObject())
-      return false;
-
-   json::Object result = resultValue.getObject();
-   if (!result.hasMember("edits"))
-      return false;
-
-   json::Value editsValue = result["edits"];
-   if (!editsValue.isArray())
-      return false;
-
-   json::Array edits = editsValue.getArray();
-   return !edits.isEmpty();
-}
-
-// Forward declaration
-void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state);
-
-// Callback handler for NES requests that implements retry logic
-class NesContinuation
-{
-public:
-   explicit NesContinuation(boost::shared_ptr<NesRetryState> state)
-      : state_(state)
-   {
-   }
-
-   void invoke(json::Object responseJson)
-   {
-      // Check if this request has been cancelled (a newer request has started)
-      if (s_nesRequestSequence.load() != state_->sequenceNumber)
-      {
-         DLOG("NES request {} cancelled (current sequence: {})",
-              state_->sequenceNumber, s_nesRequestSequence.load());
-
-         // Return a cancelled response
-         json::Object cancelledResult;
-         cancelledResult["cancelled"] = true;
-
-         json::JsonRpcResponse response;
-         response.setResult(cancelledResult);
-
-         if (state_->continuation)
-            state_->continuation(Success(), &response);
-         return;
-      }
-
-      // Check if we got edit suggestions
-      if (nesResponseHasEdits(responseJson))
-      {
-         DLOG("NES request {} got suggestions on attempt {}",
-              state_->sequenceNumber, state_->retryCount + 1);
-
-         // We have results - pass them to the original continuation
-         responseJson["cancelled"] = false;
-
-         json::JsonRpcResponse response;
-         response.setResult(responseJson);
-
-         if (state_->continuation)
-            state_->continuation(Success(), &response);
-         return;
-      }
-
-      // No suggestions - should we retry?
-      if (state_->retryCount < kNesMaxRetries)
-      {
-         // Calculate new position for retry (linear offset from original position)
-         int newRow = state_->originalRow + ((state_->retryCount + 1) * kNesRetryLineOffset);
-
-         // Don't retry if we'd go past the end of the document
-         if (newRow >= state_->documentLineCount)
-         {
-            DLOG("NES request {} no more retries (would exceed document length: {} >= {})",
-                 state_->sequenceNumber, newRow, state_->documentLineCount);
-
-            // Return empty result
-            responseJson["cancelled"] = false;
-
-            json::JsonRpcResponse response;
-            response.setResult(responseJson);
-
-            if (state_->continuation)
-               state_->continuation(Success(), &response);
-            return;
-         }
-
-         DLOG("NES request {} retrying at row {} (attempt {})",
-              state_->sequenceNumber, newRow, state_->retryCount + 2);
-
-         // Update state for retry
-         state_->retryCount++;
-         state_->currentRow = newRow;
-
-         // Send another request
-         sendNesRequestWithRetry(state_);
-         return;
-      }
-
-      DLOG("NES request {} exhausted retries", state_->sequenceNumber);
-
-      // No more retries - return the (empty) result
-      responseJson["cancelled"] = false;
-
-      json::JsonRpcResponse response;
-      response.setResult(responseJson);
-
-      if (state_->continuation)
-         state_->continuation(Success(), &response);
-   }
-
-   void cancel()
-   {
-      json::Object resultJson;
-      resultJson["cancelled"] = true;
-
-      json::JsonRpcResponse response;
-      response.setResult(resultJson);
-
-      if (state_->continuation)
-         state_->continuation(Success(), &response);
-   }
-
-   boost::posix_time::ptime time()
-   {
-      return time_;
-   }
-
-private:
-   boost::shared_ptr<NesRetryState> state_;
-   boost::posix_time::ptime time_ = boost::posix_time::second_clock::local_time();
-};
-
-// Send a NES request with retry support
-void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
-{
-   // Check for cancellation before sending
-   if (s_nesRequestSequence.load() != state->sequenceNumber)
-   {
-      DLOG("NES request {} cancelled before sending", state->sequenceNumber);
-
-      json::Object cancelledResult;
-      cancelledResult["cancelled"] = true;
-
-      json::JsonRpcResponse response;
-      response.setResult(cancelledResult);
-
-      if (state->continuation)
-         state->continuation(Success(), &response);
-      return;
-   }
-
-   // Build the request
-   json::Object positionJson;
-   positionJson["line"] = state->currentRow;
-   positionJson["character"] = state->column;
-
-   json::Object docJson;
-   docJson["uri"] = state->uri;
-   docJson["version"] = state->documentVersion;
-
-   json::Object contextJson;
-   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = docJson;
-   paramsJson["position"] = positionJson;
-   paramsJson["context"] = contextJson;
-
-   // Create the continuation that will handle retries
-   NesContinuation nesContinuation(state);
-
-   // Wrap in a AssistantContinuation-compatible lambda
-   auto continuation = [nesContinuation](const Error& error, json::JsonRpcResponse* pResponse) mutable
-   {
-      if (error)
-      {
-         nesContinuation.cancel();
-         return;
-      }
-
-      if (pResponse && pResponse->result().isObject())
-      {
-         nesContinuation.invoke(pResponse->result().getObject());
-      }
-      else
-      {
-         // No valid response - treat as empty
-         json::Object emptyResponse;
-         nesContinuation.invoke(emptyResponse);
-      }
-   };
-
-   // Send the request
-   std::string requestId = core::system::generateUuid();
-   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, AssistantContinuation(continuation));
-}
-
 Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
                                    const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -2089,35 +1858,61 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Increment the sequence number to cancel any in-flight requests
-   int sequenceNumber = ++s_nesRequestSequence;
+   // Build the request
+   std::string uri = lsp::uriFromDocument(pDoc);
+   int documentVersion = lsp::documentVersionFromUri(uri);
 
-   DLOG("Starting NES request {} at row {}", sequenceNumber, cursorRow);
+   json::Object positionJson;
+   positionJson["line"] = cursorRow;
+   positionJson["character"] = cursorColumn;
 
-   // Get document line count for bounds checking during retries
-   std::string contents = pDoc->contents();
-   int lineCount = 1;
-   for (char c : contents)
+   json::Object docJson;
+   docJson["uri"] = uri;
+   docJson["version"] = documentVersion;
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Create the continuation
+   auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
    {
-      if (c == '\n')
-         lineCount++;
-   }
+      if (error)
+      {
+         json::Object cancelledResult;
+         cancelledResult["cancelled"] = true;
 
-   // Create the retry state
-   auto state = boost::make_shared<NesRetryState>();
-   state->continuation = continuation;
-   state->pDoc = pDoc;
-   state->uri = lsp::uriFromDocument(pDoc);
-   state->documentVersion = lsp::documentVersionFromUri(state->uri);
-   state->originalRow = cursorRow;
-   state->currentRow = cursorRow;
-   state->column = cursorColumn;
-   state->retryCount = 0;
-   state->sequenceNumber = sequenceNumber;
-   state->documentLineCount = lineCount;
+         json::JsonRpcResponse response;
+         response.setResult(cancelledResult);
 
-   // Send the initial request with retry support
-   sendNesRequestWithRetry(state);
+         continuation(Success(), &response);
+         return;
+      }
+
+      if (pResponse && pResponse->result().isObject())
+      {
+         json::Object resultJson = pResponse->result().getObject();
+         resultJson["cancelled"] = false;
+
+         json::JsonRpcResponse response;
+         response.setResult(resultJson);
+
+         continuation(Success(), &response);
+      }
+      else
+      {
+         json::JsonRpcResponse response;
+         continuation(Success(), &response);
+      }
+   };
+
+   // Send the request
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, AssistantContinuation(wrappedContinuation));
 
    return Success();
 }
