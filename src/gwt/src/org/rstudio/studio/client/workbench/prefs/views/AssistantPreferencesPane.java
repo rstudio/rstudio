@@ -302,6 +302,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
+               positAiRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
@@ -355,6 +356,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                copilotPanel_.add(copilotOtherPanel_);
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
+               positAiRefreshed_ = false;
 
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
