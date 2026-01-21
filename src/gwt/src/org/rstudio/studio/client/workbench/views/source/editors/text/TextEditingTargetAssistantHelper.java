@@ -952,8 +952,8 @@ public class TextEditingTargetAssistantHelper
                events_.fireEvent(
                      new AssistantEvent(AssistantEventType.COMPLETION_REQUESTED));
 
-               String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
-               boolean autoInvoked = trigger.equals(UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO);
+               String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
+               boolean autoInvoked = trigger.equals(UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO);
                if (completionTriggeredByCommand_)
                {
                   // users can trigger completions manually via command, even if set to auto
@@ -1338,8 +1338,8 @@ public class TextEditingTargetAssistantHelper
                      return;
 
                   // Check preference value
-                  String trigger = prefs_.copilotCompletionsTrigger().getGlobalValue();
-                  if (trigger != UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
+                  String trigger = prefs_.assistantCompletionsTrigger().getGlobalValue();
+                  if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
                      return;
 
                   // Allow one-time suppression of cursor change handler
@@ -1355,7 +1355,7 @@ public class TextEditingTargetAssistantHelper
                   }
 
                   // Request completions on cursor navigation.
-                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
+                  int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
                   suggestionTimer_.schedule(delayMs);
 
                   // Delay handler so we can handle a Tab keypress
@@ -1506,7 +1506,7 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestions()
    {
-      if (!prefs_.copilotNesEnabled().getGlobalValue())
+      if (!prefs_.assistantNesEnabled().getGlobalValue())
          return;
 
       if (completionRequestsSuspended_)
@@ -1576,7 +1576,7 @@ public class TextEditingTargetAssistantHelper
                AssistantCompletion normalized = normalizeSuggestion(completion);
 
                // Check if autoshow is enabled
-               boolean autoshow = prefs_.copilotNesAutoshow().getValue();
+               boolean autoshow = prefs_.assistantNesAutoshow().getValue();
 
                if (normalized.range.start.line == normalized.range.end.line &&
                    normalized.range.start.character == normalized.range.end.character)

@@ -191,47 +191,47 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
-      cbAssistantShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
+      cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
-            prefsConstants_.copilotTabKeyBehaviorTitle(),
+            prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
-                  prefsConstants_.copilotTabKeyBehaviorEnum_suggestion(),
-                  prefsConstants_.copilotTabKeyBehaviorEnum_completions()
+                  prefsConstants_.assistantTabKeyBehaviorEnum_suggestion(),
+                  prefsConstants_.assistantTabKeyBehaviorEnum_completions()
             },
             new String[] {
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
+                  UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR_SUGGESTION,
+                  UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR_COMPLETIONS
             },
             false,
             true,
             false);
-      
-      selAssistantTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
-      
+
+      selAssistantTabKeyBehavior_.setValue(prefs_.assistantTabKeyBehavior().getGlobalValue());
+
       selAssistantCompletionsTrigger_ = new SelectWidget(
-            prefsConstants_.copilotCompletionsTriggerTitle(),
+            prefsConstants_.assistantCompletionsTriggerTitle(),
             new String[] {
-                  prefsConstants_.copilotCompletionsTriggerEnum_auto(),
-                  prefsConstants_.copilotCompletionsTriggerEnum_manual()
+                  prefsConstants_.assistantCompletionsTriggerEnum_auto(),
+                  prefsConstants_.assistantCompletionsTriggerEnum_manual()
             },
             new String[] {
-                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO,
-                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_MANUAL
+                  UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO,
+                  UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_MANUAL
             },
             false,
             true,
             false);
-      
-      selAssistantCompletionsTrigger_.setValue(prefs_.copilotCompletionsTrigger().getGlobalValue());
- 
+
+      selAssistantCompletionsTrigger_.setValue(prefs_.assistantCompletionsTrigger().getGlobalValue());
+
       nvwAssistantCompletionsDelay_ = numericPref(
             constants_.assistantCompletionsDelayLabel(),
             10,
             5000,
-            prefs_.copilotCompletionsDelay());
+            prefs_.assistantCompletionsDelay());
 
-      cbAssistantNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
-      cbAssistantNesAutoshow_ = checkboxPref(prefs_.copilotNesAutoshow(), true);
+      cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
+      cbAssistantNesAutoshow_ = checkboxPref(prefs_.assistantNesAutoshow(), true);
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -473,7 +473,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistantCompletionsTrigger_.getValue();
-            if (value == UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
+            if (value == UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
             {
                nvwAssistantCompletionsDelay_.setVisible(true);
             }
