@@ -62,6 +62,11 @@ ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, 
    storagePath_ = storagePath(rootStoragePath);
 }
 
+ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage) :
+   storage_(storage)
+{
+}
+
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
                              bool initial,
@@ -177,7 +182,12 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 {
    std::shared_ptr<IActiveSessionStorage> candidateStorage = storage_->getSessionStorage(id);
    if (candidateStorage != nullptr)
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, storagePath_.completeChildPath(kSessionDirPrefix + id), candidateStorage));
+   {
+      if (storagePath_.isEmpty()) // rpc or db storage
+         return boost::shared_ptr<ActiveSession>(new ActiveSession(id, candidateStorage));
+      else // file storage
+         return boost::shared_ptr<ActiveSession>(new ActiveSession(id, storagePath_.completeChildPath(kSessionDirPrefix + id), candidateStorage));
+   }
    else
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }

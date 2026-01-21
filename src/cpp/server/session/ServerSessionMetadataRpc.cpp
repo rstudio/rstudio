@@ -72,10 +72,16 @@ inline std::shared_ptr<r_util::IActiveSessionsStorage> getActiveSessionsStorage(
 
 inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
 {
-   FilePath storageDir = userDataDir(user);
-   return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
-      getActiveSessionsStorage(storageDir, user),
-      storageDir));
+   if (!options().sessionUseFileStorage())
+   {
+      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
+              std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user))));
+   }
+   else {
+      FilePath storageDir = userDataDir(user);
+      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
+         std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir)), storageDir));
+   }
 }
 
 inline boost::shared_ptr<r_util::ActiveSession> getActiveSession(const system::User& user, const std::string& sessionId)
@@ -234,6 +240,9 @@ Error authorizeRequest(
    }
 
    *pRequesterIsAdmin = auth::handler::overlay::isUserAdmin(pRequesterUser->getUsername());
+   // The session-reaper runs as 'root' and uses the metadata rpc
+   if (!*pRequesterIsAdmin && pRequesterUser->getUserId() == 0 && pRequesterUser->getUsername() == "root")
+      *pRequesterIsAdmin = true;
 
    // If the user is not an admin and there is no user-id specified in the request (which means read for all users),
    // or the user in the request is not the same as the request initiator, disallow access
@@ -353,6 +362,20 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
 
+      if (log::isLogLevel(log::LogLevel::DEBUG_LEVEL))
+      {
+         std::string fieldsStr;
+         bool first = true;
+         for (auto it = fields.begin(); it != fields.end(); it++)
+         {
+            if (!first)
+               fieldsStr += ", ";
+            fieldsStr += it->first + " = " + it->second;
+            first = false;
+         }
+         LOG_DEBUG_MESSAGE("Handling session storage write: " + fieldsStr + " for session: " + sessionId + ": " + pConnection->request().debugInfo());
+      }
+
       error = handleWrite(sessionOwner.get(), sessionId, fields);
       if (error)
       {
@@ -378,6 +401,12 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
 
+      if (log::isLogLevel(log::LogLevel::DEBUG_LEVEL))
+      {
+         std::string fieldsStr = boost::algorithm::join(fields, ", ");;
+         LOG_DEBUG_MESSAGE("Handling session storage read fields op for: " + fieldsStr + " session: " + sessionId + ": " + pConnection->request().debugInfo());
+      }
+
       std::map<std::string, std::string> result;
       error = handleRead(sessionOwner.get(), sessionId, fields, &result);
       if (error)
@@ -396,6 +425,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    }
    else if (operation == kSessionStorageReadAllOp)
    {
+      LOG_DEBUG_MESSAGE("Handling session storage read all op: " + pConnection->request().debugInfo());
       std::set<std::string> fields;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageFieldsField, fields);
       if (error)
@@ -431,6 +461,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    }
    else if (operation == kSessionStorageCountOp)
    {
+      LOG_DEBUG_MESSAGE("Handling session storage count op: " + pConnection->request().debugInfo());
       boost::optional<std::string> sessionId;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
       if (error)
@@ -460,6 +491,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    }
    else if (operation == kSessionStorageDeleteOp)
    {
+      LOG_DEBUG_MESSAGE("Handling session storage delete op: " + pConnection->request().debugInfo());
       std::string sessionId;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
       if (error)
@@ -484,6 +516,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    }
    else if (operation == kSessionStorageValidateOp)
    {
+      LOG_DEBUG_MESSAGE("- Handling session storage validate op: " + pConnection->request().debugInfo());
       std::string sessionId;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
       if (error)
@@ -505,7 +538,10 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
       else
+      {
+         LOG_DEBUG_MESSAGE("-- Sending session validate response: " + std::to_string(valid) + " for: " + pConnection->request().debugInfoFinal());
          response.setResult(valid);
+      }
    }
    else 
    {

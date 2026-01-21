@@ -24,6 +24,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
+
 #include <core/Settings.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -99,34 +101,56 @@ SessionScope SessionScope::projectNone(const std::string& id)
    return SessionScope(ProjectId(kProjectNoneId), id);
 }
 
+SessionScope SessionScope::projectNone(const std::string& id, const uid_t uid)
+{
+   return SessionScope(ProjectId(kProjectNoneId, uid), id);
+}
+
+// Uses the process owner's uid
 SessionScope SessionScope::jupyterLabSession(const std::string& id)
 {
-   // note: project ID is currently unused as it is meaningless
-   // in the context of Jupyter sessions
    return SessionScope(ProjectId(kJupyterLabId), id);
 }
 
+SessionScope SessionScope::jupyterLabSession(const std::string& id, const uid_t uid)
+{
+   return SessionScope(ProjectId(kJupyterLabId, uid), id);
+}
+
+// Uses the process owner's uid
 SessionScope SessionScope::jupyterNotebookSession(const std::string& id)
 {
-   // note: project ID is currently unused as it is meaningless
-   // in the context of Jupyter sessions
    return SessionScope(ProjectId(kJupyterNotebookId), id);
 }
 
+SessionScope SessionScope::jupyterNotebookSession(const std::string& id, const uid_t uid)
+{
+   return SessionScope(ProjectId(kJupyterNotebookId, uid), id);
+}
+
+// Uses the process owner's uid
 SessionScope SessionScope::vscodeSession(const std::string& id)
 {
-   // note: project ID is currently unused as it is meaningless
-   // in the context of external workbenches
    return SessionScope(ProjectId(kVSCodeId), id);
 }
 
+SessionScope SessionScope::vscodeSession(const std::string& id, const uid_t uid)
+{
+   return SessionScope(ProjectId(kVSCodeId, uid), id);
+}
+
+// Uses the process owner's uid
 SessionScope SessionScope::positronSession(const std::string& id)
 {
-   // note: project ID is currently unused as it is meaningless
-   // in the context of external workbenches
    return SessionScope(ProjectId(kPositronId), id);
 }
 
+SessionScope SessionScope::positronSession(const std::string& id, const uid_t uid)
+{
+   return SessionScope(ProjectId(kPositronId, uid), id);
+}
+
+// Uses the process owner's uid
 SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor)
 {
    if (editor == kWorkbenchJupyterLab)
@@ -139,6 +163,20 @@ SessionScope SessionScope::fromSessionId(const std::string& id, const std::strin
       return positronSession(id);
    else
       return projectNone(id);
+}
+
+SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor, const uid_t uid)
+{
+   if (editor == kWorkbenchJupyterLab)
+      return jupyterLabSession(id, uid);
+   else if (editor == kWorkbenchJupyterNotebook)
+      return jupyterNotebookSession(id, uid);
+   else if (editor == kWorkbenchVSCode)
+      return vscodeSession(id, uid);
+   else if (editor == kWorkbenchPositron)
+      return positronSession(id, uid);
+   else
+      return projectNone(id, uid);
 }
 
 bool SessionScope::isProjectNone() const
@@ -281,7 +319,10 @@ SessionScopeState validateSessionScope(
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate())
+   {
+      core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Invalid session id: " + scope.id());
       return ScopeInvalidSession;
+   }
 
    // if this isn't project none then check if the project exists
    if (!scope.isProjectNone())
@@ -295,17 +336,28 @@ SessionScopeState validateSessionScope(
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
+      {
+         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project paths do not match:" + project + " and " + pSession->project());
+
          return ScopeInvalidProject;
+      }
 
       // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
       if (!projectDir.exists())
+      {
+         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project directory does not exist:" + projectDir.getAbsolutePath());
+
          return ScopeMissingProject;
+      }
 
       // get the path to the project file
       FilePath projectPath = r_util::projectFromDirectory(projectDir);
       if (!projectPath.exists())
+      {
+         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project file does not exist:" + projectPath.getAbsolutePath());
          return ScopeMissingProject;
+      }
 
       // record path to project file
       *pProjectFilePath = projectPath.getAbsolutePath();
@@ -314,7 +366,10 @@ SessionScopeState validateSessionScope(
    {
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
+      {
+         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project session metadata is not none: " + pSession->project());
          return ScopeInvalidProject;
+      }
    }
 
    // if we got this far the scope is valid, do one final check for
@@ -322,6 +377,7 @@ SessionScopeState validateSessionScope(
    if (!projectSharingEnabled &&
        r_util::isSharedPath(*pProjectFilePath, userHomePath))
    {
+      core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project path is shared but sharing not enabled.");
       return r_util::ScopeMissingProject;
    }
    else
@@ -589,6 +645,32 @@ std::string obfuscatedUserId(uid_t uid)
    ustr << std::setw(kUserIdLen) << std::setfill('0') << std::hex
         << OBFUSCATE_USER_ID(uid);
    return ustr.str().substr(0, kUserIdLen);
+}
+
+r_util::SessionScope getSessionScope(const std::string& workbench, const std::string& sessionId, const std::string& projectId, const uid_t uid)
+{
+   if (workbench.empty() || workbench == kWorkbenchRStudio)
+      return r_util::SessionScope::fromProjectId(r_util::ProjectId(projectId, uid), sessionId);
+   else if (workbench == kWorkbenchJupyterLab)
+      return r_util::SessionScope::jupyterLabSession(sessionId, uid);
+   else if (workbench == kWorkbenchJupyterNotebook)
+      return r_util::SessionScope::jupyterNotebookSession(sessionId, uid);
+   else if (workbench == kWorkbenchVSCode)
+      return r_util::SessionScope::vscodeSession(sessionId, uid);
+   else if (workbench == kWorkbenchPositron)
+      return r_util::SessionScope::positronSession(sessionId, uid);
+
+   LOG_ERROR_MESSAGE("Invalid workbench in getSession Scope: " + workbench);
+
+   return r_util::SessionScope::fromProjectId(r_util::ProjectId(projectId, uid), sessionId);
+}
+
+std::string getSessionUrlForScope(const r_util::SessionScope& scope, const std::string& hostPageUrl)
+{
+   if (hostPageUrl.empty())
+      return r_util::urlPathForSessionScope(scope);
+   else
+      return r_util::createSessionUrl(hostPageUrl, scope);
 }
 
 } // namespace r_util

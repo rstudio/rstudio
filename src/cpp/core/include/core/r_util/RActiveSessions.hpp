@@ -33,6 +33,7 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/json/Json.hpp>
+#include <shared_core/system/SyslogDestination.hpp>
 
 namespace rstudio {
 namespace core {
@@ -100,6 +101,12 @@ private:
    friend class RpcActiveSessionsStorage;
 
    explicit ActiveSession(const std::string& id) : id_(id) 
+   {
+   }
+
+   explicit ActiveSession(
+      const std::string& id,
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), storage_(storage)
    {
    }
 
@@ -712,7 +719,7 @@ public:
 
 private:
    std::string id_;
-   FilePath scratchPath_;
+   FilePath scratchPath_;                    // Use isEmpty() for for processes not owned by the session user (i.e. not file storage)
    std::shared_ptr<IActiveSessionStorage> storage_;
    SortConditions sortConditions_;
 };
@@ -722,6 +729,8 @@ class IActiveSessionsStorage;
 class ActiveSessions : boost::noncopyable
 {
 public:
+   explicit ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage);
+
    explicit ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
    static FilePath storagePath(const FilePath& path)
@@ -754,7 +763,7 @@ public:
    boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
-   FilePath storagePath_;
+   FilePath storagePath_;  // Only set for file based session storage
    std::shared_ptr<IActiveSessionsStorage> storage_;
 };
 

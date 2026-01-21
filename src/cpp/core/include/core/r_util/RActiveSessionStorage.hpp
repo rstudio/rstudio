@@ -19,8 +19,10 @@
 #include <set>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 #include <shared_core/FilePath.hpp>
+
 
 namespace rstudio {
 namespace core {
@@ -46,7 +48,7 @@ protected:
 class FileActiveSessionStorage : public IActiveSessionStorage
 {
 public:
-   explicit FileActiveSessionStorage(const FilePath& location);
+   explicit FileActiveSessionStorage(const FilePath& location, const core::r_util::FilePathToProjectId& projectToIdFunction = {});
    ~FileActiveSessionStorage() override = default;
    Error readProperty(const std::string& name, std::string* pValue) override;   
    Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
@@ -56,6 +58,8 @@ public:
    Error destroy() override;
    Error isValid(bool* pValue) override;
 
+   uintmax_t getSuspendSize();
+
 private:
    // Scratch Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18
    // This contains the properties directory, as well as susspended session data, session-persistence-state etc
@@ -63,6 +67,8 @@ private:
 
    // Properties Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18/properites
    FilePath scratchPath_;
+   const core::r_util::FilePathToProjectId& projectToIdFunction_;
+
    const std::string propertiesDirName_ = "properites";
 
    Error ensurePropertyDir() const;
