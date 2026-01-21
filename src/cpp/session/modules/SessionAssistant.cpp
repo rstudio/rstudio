@@ -91,6 +91,20 @@ namespace assistant {
 
 namespace {
 
+bool isCopilotAllowedByAdmin()
+{
+   return
+      session::options().allowCopilot() &&
+      session::options().copilotEnabled();
+}
+
+bool isPositAssistantAllowedByAdmin()
+{
+   return
+      session::options().allowPositAssistant() &&
+      session::options().positAssistantEnabled();
+}
+
 struct AssistantRequest
 {
    std::string method;
@@ -273,10 +287,6 @@ bool isIndexableFile(const FilePath& documentPath)
    if (name == "Makefile" || name == "makefile")
       return true;
 
-   // TODO: Do we want to also allow indexing of 'data' file types?
-   // We previously used module_context::isTextFile(), but because this
-   // relies on invoking /usr/bin/file, this can be dreadfully slow if
-   // the project contains a large number of files without a known type.
    std::string languageId = lsp::languageIdFromExtension(ext);
    return !languageId.empty();
 }
@@ -305,44 +315,82 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    return isIndexableFile(docPath);
 }
 
+FilePath paiLanguageServerPath()
+{
+   FilePath languageServerPath = xdg::userDataDir()
+      .completeChildPath("pai/bin/dist/nes/language-server.js");
+   
+   if (!languageServerPath.exists())
+   {
+      ELOG("Posit AI Language Server not found at '{}'.", languageServerPath.getAbsolutePath());
+      return FilePath();
+   }
+
+   DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
+   return languageServerPath;
+}
+
+FilePath copilotLanguageServerPath()
+{
+   FilePath copilotPath;
+   
+   std::string copilotJsFolder = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
+   if (!copilotJsFolder.empty())
+   {
+      if (FilePath::exists(copilotJsFolder) && FilePath(copilotJsFolder).isDirectory())
+      {
+         DLOG("Using Copilot Language Server path from RSTUDIO_COPILOT_JS_FOLDER: '{}'.", copilotJsFolder);
+         copilotPath = FilePath(copilotJsFolder);
+      }
+   }
+   
+   if (copilotPath.isEmpty())
+   {
+      copilotPath = session::options().copilotPath();
+      if (copilotPath.exists())
+      {
+         DLOG("Using Copilot Language Server path from session options: '{}'.", copilotPath.getAbsolutePath());
+      }
+   }
+
+   // Accept both directories and paths to language-server.js
+   if (copilotPath.isDirectory())
+   {
+      copilotPath = copilotPath.completeChildPath("language-server.js");
+   }
+
+   if (!copilotPath.exists())
+   {
+      ELOG("Copilot Language Server not found at '{}'.", copilotPath.getAbsolutePath());
+   }
+
+   DLOG("Copilot Language Server found at '{}'.", copilotPath.getAbsolutePath());
+   return copilotPath;
+}
+
 FilePath assistantLanguageServerPath()
 {
-   FilePath assistantPath;
-   
+   // Allow override via environment variable
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
 
-   std::string rstudioAssistant = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
-   if (!rstudioAssistant.empty())
+   // Otherwise, determine path based on selected assistant type
+   std::string assistant = prefs::userPrefs().rstudioAssistant();
+   if (assistant == kRstudioAssistantPositAi)
    {
-      if (FilePath::exists(rstudioAssistant) && FilePath(rstudioAssistant).isDirectory())
-      {
-         assistantPath = FilePath(rstudioAssistant);
-      }
+      return paiLanguageServerPath();
    }
-   
-   if (assistantPath.isEmpty())
+   else if (assistant == kRstudioAssistantCopilot)
    {
-      // TODO: Should we support separate paths for Posit Assistant vs Copilot here?
-      assistantPath = session::options().copilotPath();
-      if (!assistantPath.exists() || !assistantPath.isDirectory())
-      {
-         ELOG("Assistant Language Server path '{}' does not exist or is not a directory.", assistantPath.getAbsolutePath());
-         return FilePath();
-      }
+      return copilotLanguageServerPath();
    }
-
-   auto suffix = "language-server.js";
-   FilePath candidatePath = assistantPath.completePath(suffix);
-   if (candidatePath.exists())
+   else
    {
-      DLOG("Assistant Language Server '{}' found at '{}'.", suffix, candidatePath.getAbsolutePath());
-      return candidatePath;
+      // unknown assistant type
+      ELOG("Unknown assistant type '{}'", assistant);
+      return FilePath();
    }
-
-   ELOG("Assistant Language Server '{}' not found at '{}'.", suffix, candidatePath.getAbsolutePath());
-   return FilePath();
 }
 
 bool isAgentInstalled()
@@ -352,50 +400,64 @@ bool isAgentInstalled()
 
 bool isAssistantEnabled()
 {
-   // Check administrator option
-   // TODO: Add option for 'assistantEnabled' vs. 'assistantEnabled'?
-   if (!session::options().copilotEnabled())
+   // First, check the user preference to see if the user is requesting
+   // a specific assistant type (Posit AI, Copilot, None).
+   std::string assistant = prefs::userPrefs().rstudioAssistant();
+
+   // If no assistant is selected, we're done.
+   if (assistant == kRstudioAssistantNone)
    {
-      s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
       return false;
    }
 
-   // Check whether the agent is where it should be
+   // Check for project-level override.
+   std::string projectAssistant = s_assistantProjectOptions.assistant;
+   if (!projectAssistant.empty() && projectAssistant != "default")
+   {
+      // If the project explicitly disables the assistant, respect that.
+      if (projectAssistant == kRstudioAssistantNone)
+      {
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
+         return false;
+      }
+
+      // Otherwise, use the project-specified assistant type.
+      assistant = projectAssistant;
+   }
+
+   // Check whether the selected assistant type is allowed by the administrator.
+   if (assistant == kRstudioAssistantCopilot)
+   {
+      if (!isCopilotAllowedByAdmin())
+      {
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+         return false;
+      }
+   }
+   else if (assistant == kRstudioAssistantPositAi)
+   {
+      if (!isPositAssistantAllowedByAdmin())
+      {
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+         return false;
+      }
+   }
+
+   // Finally, check whether the selected assistant type is installed.
    if (!isAgentInstalled())
    {
       s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
       return false;
    }
 
-   // Check project option
-   // TODO: Handle possible values of 'assistant' here
-   std::string assistant = s_assistantProjectOptions.assistant;
-
-   // Check user preference
-   // TODO: Copilot vs. Assistant options here
-   if (!prefs::userPrefs().copilotEnabled())
-   {
-      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
-      return false;
-   }
-   
    return true;
 }
 
 bool isAssistantIndexingEnabled()
 {
-   // Check project option
-   // TODO: Use 'assistant' member on options value
-   /// switch (s_assistantProjectOptions.assistantIndexingEnabled)
-   /// {
-   /// case r_util::YesValue: return true;
-   /// case r_util::NoValue: return false;
-   /// default: {}
-   /// }
-
-   // Check user preference
-   // TODO: Copilot vs. Assistant options here
-   return prefs::userPrefs().copilotIndexingEnabled();
+   // Indexing is disabled for now; may be removed entirely in the future.
+   return false;
 }
 
 template <typename F>
@@ -611,13 +673,19 @@ void setCopilotConfiguration()
    sendNotification("workspace/didChangeConfiguration", paramsJson);
 }
 
+void setPositAiConfiguration()
+{
+   // Stub for Posit AI configuration.
+}
+
 namespace agent {
 
 void onStarted(ProcessOperations& operations)
 {
    // Record the PID of the agent.
-   // TODO: Log current agent type as well (from prefs)
-   DLOG("Agent has started [PID = {}]", operations.getPid());
+   DLOG("Agent has started [PID = {}, type = {}]",
+        operations.getPid(),
+        prefs::userPrefs().rstudioAssistant());
    s_agentPid = operations.getPid();
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
@@ -694,9 +762,6 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    //
    // Importantly, there is no character separating the body from the
    // next response, so we're forced to parse headers here.
-   //
-   // TODO: Does this need to be a state machine? Is it possible that we
-   // receive some incomplete requests here?
    std::size_t startIndex = 0;
 
    while (startIndex < stdOut.length())
@@ -785,7 +850,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
       break;
    }
  
-   // TODO: Is there anything reasonable we can do with errors here?
+   // Nothing to do in other states.
    default: {}
       
    }
@@ -846,13 +911,11 @@ Error startAgent()
    core::system::environment(&environment);
    
    // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
-   // TODO: Copilot vs. Assistant option here?
    std::string certificatesFile = session::options().copilotSslCertificatesFile();
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // Find node.js
-   // TODO: Should we support a custom node path here?
    FilePath nodePath;
    error = node_tools::findNode(&nodePath, "rstudio.copilot.nodeBinaryPath");
    if (error)
@@ -883,27 +946,50 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Check for and run a custom assistant helper script if provided.
-   // TODO: assistantHelper vs. copilotHelper?
-   FilePath assistantHelper = session::options().copilotHelper();
-   if (!assistantHelper.isEmpty())
+   // Launch the assistant, using a helper script if one is configured.
+   std::string assistant = prefs::userPrefs().rstudioAssistant();
+   FilePath copilotHelper = session::options().copilotHelper();
+   FilePath positAssistantHelper = session::options().positAssistantHelper();
+
+   if (assistant == kRstudioAssistantCopilot && !copilotHelper.isEmpty())
    {
-      if (!assistantHelper.exists())
-         return fileNotFoundError(assistantHelper, ERROR_LOCATION);
-      
-      // TODO: Update these environment variables.
-      FilePath assistantPath = assistantLanguageServerPath();
+      // Run Copilot via helper script
+      if (!copilotHelper.exists())
+         return fileNotFoundError(copilotHelper, ERROR_LOCATION);
+
+      FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", assistantPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", copilotPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
-               assistantHelper.getAbsolutePath(),
+               copilotHelper.getAbsolutePath(),
+               {},
+               options,
+               callbacks);
+   }
+   else if (assistant == kRstudioAssistantPositAi && !positAssistantHelper.isEmpty())
+   {
+      // Run Posit AI via helper script
+      if (!positAssistantHelper.exists())
+         return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
+
+      FilePath paiPath = paiLanguageServerPath();
+      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", paiPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", paiPath.getAbsolutePath()));
+      options.environment = environment;
+
+      error = module_context::processSupervisor().runProgram(
+               positAssistantHelper.getAbsolutePath(),
                {},
                options,
                callbacks);
    }
    else
    {
+      // Run assistant directly (no helper script)
       FilePath assistantPath = assistantLanguageServerPath();
       if (!assistantPath.exists())
          return fileNotFoundError(assistantPath, ERROR_LOCATION);
@@ -955,7 +1041,6 @@ Error startAgent()
    paramsJson["locale"] = prefs::userPrefs().uiLanguage();
    paramsJson["initializationOptions"] = initializationOptionsJson;
 
-   // TODO: Does this really need to be a preference? Seems reasonable to just always include the project as a workspace URI.
    std::string workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
 
    json::Object workspaceJson;
@@ -988,8 +1073,12 @@ Error startAgent()
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
 
-      // TODO: Posit AI?
-      setCopilotConfiguration();
+      // Send assistant-specific configuration
+      std::string assistant = prefs::userPrefs().rstudioAssistant();
+      if (assistant == kRstudioAssistantCopilot)
+         setCopilotConfiguration();
+      else if (assistant == kRstudioAssistantPositAi)
+         setPositAiConfiguration();
    };
    
    std::string requestId = core::system::generateUuid();
@@ -1001,8 +1090,6 @@ Error startAgent()
 
 bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 {
-   // TODO: Should we further validate the PID is actually associated
-   // with a running Assistant process, or just handle that separately?
    if (s_agentPid != -1)
    {
       //DLOG("Assistant is already running; nothing to do.");
@@ -1475,8 +1562,7 @@ void onProjectOptionsUpdated()
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   // TODO: Check if posit assistant enabled?
-   if (name == kCopilotEnabled)
+   if (name == kRstudioAssistant || name == kCopilotEnabled)
    {
       synchronize();
    }
@@ -2193,9 +2279,20 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // Read default log level
-   // TODO: Also PAI_LOG_LEVEL?
-   std::string assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
+   // Read default log level from environment variable.
+   // RSTUDIO_ASSISTANT_LOG_LEVEL applies to all assistant types;
+   // COPILOT_LOG_LEVEL and PAI_LOG_LEVEL only apply to their respective types.
+   std::string assistantLogLevel;
+   {
+      std::string assistant = prefs::userPrefs().rstudioAssistant();
+      if (assistant == kRstudioAssistantCopilot)
+         assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
+      else if (assistant == kRstudioAssistantPositAi)
+         assistantLogLevel = core::system::getenv("PAI_LOG_LEVEL");
+   }
+   if (assistantLogLevel.empty())
+      assistantLogLevel = core::system::getenv("AI_LOG_LEVEL");
+
    if (!assistantLogLevel.empty())
       s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
    
@@ -2221,9 +2318,6 @@ Error initialize()
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
 
-   // TODO: Do we need this _and_ the preferences saved callback?
-   // This one seems required so that we see preference changes while
-   // editting preferences within the Assistant prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    RS_REGISTER_CALL_METHOD(rs_assistantSendRequest);

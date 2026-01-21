@@ -58,6 +58,7 @@ protected:
                 boost::program_options::options_description* pGit,
                 boost::program_options::options_description* pUser,
                 boost::program_options::options_description* pCopilot,
+                boost::program_options::options_description* pPai,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
                 int* wwwSameSite,
@@ -309,6 +310,9 @@ protected:
       ("abort-free-mem-percent",
       value<int>(&abortFreeMemPercent_)->default_value(5),
       "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system.")
+      ("allow-copilot",
+      value<bool>(&allowCopilot_)->default_value(true),
+      "Indicates where or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
       value<bool>(&allowPositAssistant_)->default_value(false),
       "Indicates whether or not to allow use of the Posit AI assistant feature.");
@@ -475,6 +479,17 @@ protected:
       value<std::string>(&copilotHelper_)->default_value(std::string()),
       "The path to an optional shell script, which when invoked, should start the GitHub Copilot Language Server.");
 
+   pPai->add_options()
+      ("posit-assistant-enabled",
+      value<bool>(&positAssistantEnabled_)->default_value(false),
+      "Indicates whether or not Posit Assistant integration can be enabled.")
+      ("posit-assistant-ssl-certificates-file",
+      value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
+      "The path to a file containing one or more trusted certificates in PEM format.")
+      ("posit-assistant-helper",
+      value<std::string>(&positAssistantHelper_)->default_value(std::string()),
+      "The path to an optional shell script, which when invoked, should start the Posit Assistant Language Server.");
+
    pMisc->add_options();
 
    FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
@@ -558,6 +573,7 @@ public:
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
    bool allowOverLimitSessions() const { return allowOverLimitSessions_ || allowOverlay(); }
    int abortFreeMemPercent() const { return abortFreeMemPercent_ || allowOverlay(); }
+   bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    bool allowPositAssistant() const { return allowPositAssistant_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
@@ -607,6 +623,9 @@ public:
    bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
    core::FilePath deprecatedCopilotAgentHelper() const { return core::FilePath(deprecatedCopilotAgentHelper_); }
    core::FilePath copilotHelper() const { return core::FilePath(copilotHelper_); }
+   bool positAssistantEnabled() const { return positAssistantEnabled_; }
+   std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
+   core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
 
 
 protected:
@@ -684,6 +703,7 @@ protected:
    bool allowLauncherJobs_;
    bool allowOverLimitSessions_;
    int abortFreeMemPercent_;
+   bool allowCopilot_;
    bool allowPositAssistant_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
@@ -735,6 +755,9 @@ protected:
    bool copilotProxyStrictSsl_;
    std::string deprecatedCopilotAgentHelper_;
    std::string copilotHelper_;
+   bool positAssistantEnabled_;
+   std::string positAssistantSslCertificatesFile_;
+   std::string positAssistantHelper_;
    virtual bool allowOverlay() const { return false; };
 };
 
