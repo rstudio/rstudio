@@ -424,6 +424,9 @@ public class TextEditingTargetAssistantHelper
             // Perform the actual replacement
             display_.replaceRange(range, completion.insertText);
 
+            // Notify server that completion was accepted
+            server_.assistantDidAcceptCompletion(completion.command, new VoidServerRequestCallback());
+
             // Reset and schedule another suggestion
             reset();
             nesTimer_.schedule(20);
@@ -487,6 +490,9 @@ public class TextEditingTargetAssistantHelper
 
       // Perform the edit (replace range with insertText)
       display_.replaceRange(range, nesCompletion_.insertText);
+
+      // Notify server that completion was accepted
+      server_.assistantDidAcceptCompletion(nesCompletion_.command, new VoidServerRequestCallback());
 
       // Reset and schedule another suggestion
       reset();
@@ -1053,28 +1059,32 @@ public class TextEditingTargetAssistantHelper
                                     ? AssistantEventType.COMPLETION_RECEIVED_NONE
                                     : AssistantEventType.COMPLETION_RECEIVED_SOME));
 
+                           // If we don't have any completions available, request next edit suggestions instead.
+                           if (completions.isEmpty())
+                           {
+                              nesTimer_.schedule(20);
+                              return;
+                           }
+
                            // TODO: If multiple completions are available we should provide a way for
                            // the user to view/select them. For now, use the last one.
                            // https://github.com/rstudio/rstudio/issues/16055
-                           if (!completions.isEmpty())
-                           {
-                              AssistantCompletion completion = completions.get(completions.size() - 1);
+                           AssistantCompletion completion = completions.get(completions.size() - 1);
 
-                              // The completion data gets modified when doing partial (word-by-word)
-                              // completions, so we need to use a copy and preserve the original
-                              // (which we need to send back to the server as-is in some language-server methods).
-                              AssistantCompletion normalized = normalizeCompletion(completion);
+                           // The completion data gets modified when doing partial (word-by-word)
+                           // completions, so we need to use a copy and preserve the original
+                           // (which we need to send back to the server as-is in some language-server methods).
+                           AssistantCompletion normalized = normalizeCompletion(completion);
 
-                              resetCompletion();
-                              activeCompletion_ = new Completion(normalized);
-                              createCompletionAnchors(
-                                 activeCompletion_.startLine,
-                                 activeCompletion_.startCharacter,
-                                 activeCompletion_.endLine,
-                                 activeCompletion_.endCharacter);
-                              display_.setGhostText(activeCompletion_.displayText);
-                              server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                           }
+                           resetCompletion();
+                           activeCompletion_ = new Completion(normalized);
+                           createCompletionAnchors(
+                              activeCompletion_.startLine,
+                              activeCompletion_.startCharacter,
+                              activeCompletion_.endLine,
+                              activeCompletion_.endCharacter);
+                           display_.setGhostText(activeCompletion_.displayText);
+                           server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                         }
 
                         @Override
