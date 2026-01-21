@@ -89,7 +89,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       String selectedAssistant = selAssistant_.getValue();
       prefs.assistant().setGlobalValue(selectedAssistant);
       prefs.copilotEnabled().setGlobalValue(
-            selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT));
+            selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
 
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selCopilotCompletionsTrigger_.getValue());
@@ -126,25 +126,25 @@ public class AssistantPreferencesPane extends PreferencesPane
       if (paiEnabled)
       {
          assistantLabels = new String[] {
-               prefsConstants_.rstudioAssistantEnum_none(),
-               prefsConstants_.rstudioAssistantEnum_posit_ai(),
-               prefsConstants_.rstudioAssistantEnum_copilot()
+               prefsConstants_.assistantEnum_none(),
+               prefsConstants_.assistantEnum_posit(),
+               prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+               UserPrefsAccessor.ASSISTANT_NONE,
+               UserPrefsAccessor.ASSISTANT_POSIT,
+               UserPrefsAccessor.ASSISTANT_COPILOT
          };
       }
       else
       {
          assistantLabels = new String[] {
-               prefsConstants_.rstudioAssistantEnum_none(),
-               prefsConstants_.rstudioAssistantEnum_copilot()
+               prefsConstants_.assistantEnum_none(),
+               prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+               UserPrefsAccessor.ASSISTANT_NONE,
+               UserPrefsAccessor.ASSISTANT_COPILOT
          };
       }
       selAssistant_ = new SelectWidget(
@@ -291,19 +291,19 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistant_.getValue();
-            if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
+            if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
-               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE);
+               disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
             }
-            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
+            else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
-               disableCopilot(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI);
+               disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
             }
-            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+            else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
@@ -328,7 +328,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                            if (isInstalled)
                            {
                               prefs_.copilotEnabled().setGlobalValue(true);
-                              prefs_.assistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+                              prefs_.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_COPILOT);
                               prefs_.writeUserPrefs((completed) ->
                               {
                                  refresh();
@@ -641,11 +641,11 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
       String assistant = prefs.assistant().getGlobalValue();
-      if (assistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE) &&
+      if (assistant.equals(UserPrefsAccessor.ASSISTANT_NONE) &&
           prefs.copilotEnabled().getGlobalValue())
       {
-         prefs.assistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
-         selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+         prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_COPILOT);
+         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
       initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
@@ -673,7 +673,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       initModel();
 
       // Only refresh Copilot status if Copilot is the selected assistant
-      if (selAssistant_.getValue().equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+      if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
          refresh();
          copilotRefreshed_ = true;
