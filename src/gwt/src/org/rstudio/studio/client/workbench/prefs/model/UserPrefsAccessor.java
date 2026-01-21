@@ -4090,18 +4090,6 @@ public class UserPrefsAccessor extends Prefs
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_ERRORS = "errors";
    public final static String CONSOLE_HIGHLIGHT_CONDITIONS_NONE = "none";
 
-   /**
-    * Experimental
-    */
-   public PrefValue<Boolean> pai()
-   {
-      return bool(
-         "pai",
-         _constants.paiTitle(), 
-         _constants.paiDescription(), 
-         false);
-   }
-
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4670,8 +4658,6 @@ public class UserPrefsAccessor extends Prefs
          projectUserDataDirectory().setValue(layer, source.getString("project_user_data_directory"));
       if (source.hasKey("console_highlight_conditions"))
          consoleHighlightConditions().setValue(layer, source.getString("console_highlight_conditions"));
-      if (source.hasKey("pai"))
-         pai().setValue(layer, source.getBool("pai"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4959,7 +4945,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(reformatOnSave());
       prefs.add(projectUserDataDirectory());
       prefs.add(consoleHighlightConditions());
-      prefs.add(pai());
       return prefs;
    }
    

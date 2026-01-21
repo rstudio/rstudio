@@ -24,10 +24,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 public class PaiUtil
 {
    /**
-    * Returns true if the Posit AI feature is enabled. This requires:
-    * 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
-    * 2. The posit-assistant-enabled session option
-    * 3. The pai user preference (temporary, will be removed when feature is ready)
+    * Returns true if the Posit AI feature is enabled.
     *
     * @param sessionInfo The session info containing admin settings
     * @param userPrefs The user preferences
@@ -35,9 +32,7 @@ public class PaiUtil
     */
    public static boolean isPaiEnabled(SessionInfo sessionInfo, UserPrefs userPrefs)
    {
-      return sessionInfo.getAllowPositAssistant() &&
-             sessionInfo.getPositAssistantEnabled() &&
-             userPrefs.pai().getGlobalValue();
+      return sessionInfo.getPositAssistantEnabled();
    }
 
    /**

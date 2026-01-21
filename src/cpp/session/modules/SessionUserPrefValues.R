@@ -2643,12 +2643,3 @@
    set = function(value) { .rs.setUserPref("console_highlight_conditions", value) },
    clear = function() { .rs.clearUserPref("console_highlight_conditions") }
 )
-
-# 
-#
-# Experimental
-.rs.uiPrefs$pai <- list(
-   get = function() { .rs.getUserPref("pai") },
-   set = function(value) { .rs.setUserPref("pai", value) },
-   clear = function() { .rs.clearUserPref("pai") }
-)
