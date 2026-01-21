@@ -150,29 +150,29 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
 
-      lblCopilotStatus_ = new Label(constants_.copilotLoadingMessage());
-      
+      lblAssistantStatus_ = new Label(constants_.assistantLoadingMessage());
+
       statusButtons_ = new ArrayList<SmallButton>();
-      
-      btnSignIn_ = new SmallButton(constants_.copilotSignInLabel());
+
+      btnSignIn_ = new SmallButton(constants_.assistantSignInLabel());
       btnSignIn_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignIn_);
-      
-      btnSignOut_ = new SmallButton(constants_.copilotSignOutLabel());
+
+      btnSignOut_ = new SmallButton(constants_.assistantSignOutLabel());
       btnSignOut_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignOut_);
-      
+
       btnActivate_ = new SmallButton(constants_.copilotActivateLabel());
       Roles.getLinkRole().set(btnActivate_.getElement());
       btnActivate_.getElement().setPropertyString("href", "https://github.com/settings/copilot");
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
-      
-      btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
+
+      btnRefresh_ = new SmallButton(constants_.assistantRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
-      
-      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+
+      btnDiagnostics_ = new SmallButton(constants_.assistantDiagnosticsLabel());
       btnDiagnostics_.addStyleName(RES.styles().button());
       statusButtons_.add(btnDiagnostics_);
 
@@ -295,7 +295,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (session_.getSessionInfo().getCopilotEnabled())
       {
          HorizontalPanel statusPanel = new HorizontalPanel();
-         statusPanel.add(lblCopilotStatus_);
+         statusPanel.add(lblAssistantStatus_);
          for (SmallButton button : statusButtons_)
             statusPanel.add(button);
          panel.add(spaced(statusPanel));
@@ -356,7 +356,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          public void onClick(ClickEvent event)
          {
             ProgressIndicator indicator = getProgressIndicator();
-            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
+            indicator.onProgress(constants_.assistantDiagnosticReportProgressLabel());
             assistant_.showDiagnostics(getSelectedAssistantType(), () ->
             {
                indicator.onCompleted();
@@ -396,55 +396,55 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
             if (response == null)
             {
-               lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
+               lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
             }
             else if (response.result == null)
             {
                if (response.error != null && response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
                {
-                  // Copilot still starting up, so wait a second and refresh again
+                  // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
                      refresh(assistantType);
                   });
                }
                else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
-                  lblCopilotStatus_.setText(constants_.copilotStartupError());
+                  lblAssistantStatus_.setText(constants_.assistantStartupError());
                }
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblCopilotStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
                }
                else if (prefs_.copilotEnabled().getValue())
                {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
                }
                else
                {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
                }
             }
             else if (response.result.status == AssistantConstants.STATUS_OK ||
                      response.result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
+               lblAssistantStatus_.setText(constants_.assistantSignedInAsLabel(response.result.user));
             }
             else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
+               lblAssistantStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
             else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
+               lblAssistantStatus_.setText(constants_.assistantNotSignedIn());
             }
             else
             {
-               String message = constants_.copilotUnknownResponse(JSON.stringify(response));
-               lblCopilotStatus_.setText(message);
+               String message = constants_.assistantUnknownResponse(JSON.stringify(response));
+               lblAssistantStatus_.setText(message);
             }
          }
 
@@ -529,7 +529,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    // UI
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
-   private final Label lblCopilotStatus_;
+   private final Label lblAssistantStatus_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;
