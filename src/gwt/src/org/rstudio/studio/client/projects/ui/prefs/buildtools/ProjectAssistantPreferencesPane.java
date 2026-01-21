@@ -35,12 +35,12 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
-import org.rstudio.studio.client.workbench.assistant.Assistant;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -184,19 +184,19 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      assistantRuntimeStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
       {
-         copilotStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
+         assistantStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
       });
    }
 
    @Override
    public void onUnload()
    {
-      if (copilotStatusHandler_ != null)
+      if (assistantRuntimeStatusHandler_ != null)
       {
-         copilotStatusHandler_.removeHandler();
-         copilotStatusHandler_ = null;
+         assistantRuntimeStatusHandler_.removeHandler();
+         assistantRuntimeStatusHandler_ = null;
       }
       super.onUnload();
    }
@@ -315,20 +315,22 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            assistant_.signIn((response) -> refresh());
+            String selectedType = getSelectedAssistantType();
+            assistant_.signIn(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnSignOut_.addClickHandler(new ClickHandler()
       {
-         
+
          @Override
          public void onClick(ClickEvent event)
          {
-            assistant_.signOut((response) -> refresh());
+            String selectedType = getSelectedAssistantType();
+            assistant_.signOut(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnActivate_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -338,13 +340,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             Window.open(href, "_blank", "");
          }
       });
-      
+
       btnRefresh_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            refresh();
+            refresh(getSelectedAssistantType());
          }
       });
       
@@ -355,12 +357,24 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          {
             ProgressIndicator indicator = getProgressIndicator();
             indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
-            assistant_.showDiagnostics(() ->
+            assistant_.showDiagnostics(getSelectedAssistantType(), () ->
             {
                indicator.onCompleted();
             });
          }
-      }); 
+      });
+   }
+
+   private String getSelectedAssistantType()
+   {
+      // For project settings, "none" means use default (global preference)
+      // Map it to the actual global preference value
+      String selected = selAssistant_.getValue();
+      if (selected.equals(UserPrefsAccessor.ASSISTANT_NONE))
+      {
+         return prefs_.assistant().getGlobalValue();
+      }
+      return selected;
    }
    
    private void refresh()
@@ -502,8 +516,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    
    // State
    private RProjectOptions options_;
-   private HandlerRegistration copilotStatusHandler_;
-   private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
+   private HandlerRegistration assistantRuntimeStatusHandler_;
+   private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
 
    // Assistant panels (created in initDisplay)
