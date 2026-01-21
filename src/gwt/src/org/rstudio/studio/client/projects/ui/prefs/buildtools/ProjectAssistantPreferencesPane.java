@@ -39,8 +39,8 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseType
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -98,14 +98,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                                         Session session,
                                         UserPrefs prefs,
                                         AriaLiveService ariaLive,
-                                        Copilot copilot,
+                                        Assistant assistant,
                                         AssistantServerOperations server,
                                         ProjectsServerOperations projectServer)
    {
       events_ = events;
       session_ = session;
       prefs_ = prefs;
-      copilot_ = copilot;
+      assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
 
@@ -315,7 +315,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignIn((response) -> refresh());
+            assistant_.signIn((response) -> refresh());
          }
       });
       
@@ -325,7 +325,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignOut((response) -> refresh());
+            assistant_.signOut((response) -> refresh());
          }
       });
       
@@ -355,7 +355,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          {
             ProgressIndicator indicator = getProgressIndicator();
             indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
-            copilot_.onCopilotDiagnostics(() ->
+            assistant_.showDiagnostics(() ->
             {
                indicator.onCompleted();
             });
@@ -386,14 +386,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             }
             else if (response.result == null)
             {
-               if (response.error != null && response.error.getCode() == CopilotConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
+               if (response.error != null && response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
                {
                   // Copilot still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
                      refresh(assistantType);
                   });
                }
-               else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
+               else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
                   lblCopilotStatus_.setText(constants_.copilotStartupError());
                }
@@ -411,18 +411,18 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                   lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
                }
             }
-            else if (response.result.status == CopilotConstants.STATUS_OK ||
-                     response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_OK ||
+                     response.result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
@@ -441,14 +441,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          }
       };
 
-      if (assistantType.isEmpty())
-      {
-         server_.assistantStatus(callback);
-      }
-      else
-      {
-         server_.assistantStatus(assistantType, callback);
-      }
+      // If no assistantType specified, use current preference
+      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+      server_.assistantStatus(type, callback);
    }
 
    @Override
@@ -534,7 +529,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final EventBus events_;
    private final Session session_;
    private final UserPrefs prefs_;
-   private final Copilot copilot_;
+   private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    

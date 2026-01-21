@@ -4,24 +4,24 @@
              ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
              ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
              ui:generateLocales="default">
-             
+
 	<ui:style>
-	
+
 	.container {
 		margin-left: 6px;
 	}
-	
+
 	.container p {
 		margin-top: 0;
 		margin-bottom: 16px;
 	}
-	
+
 	</ui:style>
-	
+
 	<div class="{style.container}">
 		<p><ui:msg key="navMessage">Navigate to <a ui:field="verificationUri_" target="_blank"/> to complete signing in.</ui:msg></p>
 		<p><ui:msg key="verificationCode">Verification code: <span ui:field="verificationCode_" /></ui:msg></p>
 		<p><ui:msg key="dialogWillClose">This dialog will automatically close after you have finished verification.</ui:msg></p>
 	</div>
-	
+
 </ui:UiBinder>

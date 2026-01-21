@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.assistant.model;
 
 import org.rstudio.core.client.jsonrpc.RpcError;
-import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
+import org.rstudio.studio.client.workbench.assistant.AssistantUIConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletionCommand;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantRange;
@@ -42,31 +42,31 @@ public class AssistantResponseTypes
       {
          if (reason == Unknown)
          {
-            return constants_.copilotUnknownError();
+            return constants_.assistantUnknownError();
          }
          else if (reason == NotInstalled)
          {
-            return constants_.copilotNotInstalledError();
+            return constants_.assistantNotInstalledError();
          }
          else if (reason == DisabledByAdministrator)
          {
-            return constants_.copilotDisabledByAdministratorError();
+            return constants_.assistantDisabledByAdministratorError();
          }
          else if (reason == DisabledViaProjectPreferences)
          {
-            return constants_.copilotDisabledViaProjectPreferencesError();
+            return constants_.assistantDisabledViaProjectPreferencesError();
          }
          else if (reason == DisabledViaGlobalOptions)
          {
-            return constants_.copilotDisabledViaGlobalOptionsError();
+            return constants_.assistantDisabledViaGlobalOptionsError();
          }
          else if (reason == LaunchError)
          {
-            return constants_.copilotLaunchError();
+            return constants_.assistantLaunchError();
          }
          else
          {
-            return constants_.copilotUnknownErrorShort();
+            return constants_.assistantUnknownErrorShort();
          }
       }
 
@@ -196,5 +196,5 @@ public class AssistantResponseTypes
       public AssistantNextEditSuggestionsResult result;
    }
 
-   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
+   private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
 }

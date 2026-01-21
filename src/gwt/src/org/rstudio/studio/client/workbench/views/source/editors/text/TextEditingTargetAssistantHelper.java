@@ -52,8 +52,8 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -1003,13 +1003,13 @@ public class TextEditingTargetAssistantHelper
                               // will normally self-resolve after the user starts editing the document,
                               // so it should suffice just to indicate that no completions are available.
                               int code = error.code;
-                              if (code == CopilotConstants.ErrorCodes.DOCUMENT_NOT_FOUND)
+                              if (code == AssistantConstants.ErrorCodes.DOCUMENT_NOT_FOUND)
                               {
                                  events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
                               }
                               else
                               {
-                                 String message = copilot_.messageForError(error);
+                                 String message = assistant_.messageForError(error);
                                  events_.fireEvent(
                                        new AssistantEvent(
                                              AssistantEventType.COMPLETION_ERROR,
@@ -1685,7 +1685,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotRequestCompletions()
+   public void onAssistantRequestCompletions()
    {
       onAssistantRequestSuggestions();
    }
@@ -1743,13 +1743,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotAcceptNextWord()
-   {
-      onAssistantAcceptNextWord();
-   }
-
-   @Handler
-   public void onCopilotToggleAutomaticCompletions()
+   public void onAssistantToggleAutomaticCompletions()
    {
       if (display_.isFocused())
       {
@@ -1796,12 +1790,6 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotAcceptNextEditSuggestion()
-   {
-      onAssistantAcceptNextEditSuggestion();
-   }
-
-   @Handler
    public void onAssistantDismissNextEditSuggestion()
    {
       if (!display_.isFocused())
@@ -1812,12 +1800,6 @@ public class TextEditingTargetAssistantHelper
       {
          reset();
       }
-   }
-
-   @Handler
-   public void onCopilotDismissNextEditSuggestion()
-   {
-      onAssistantDismissNextEditSuggestion();
    }
 
    private void updateCompletion(String key)
@@ -1987,7 +1969,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Inject
-   private void initialize(Copilot copilot,
+   private void initialize(Assistant assistant,
                            Session session,
                            EventBus events,
                            UserPrefs prefs,
@@ -1995,7 +1977,7 @@ public class TextEditingTargetAssistantHelper
                            AssistantCommandBinder binder,
                            AssistantServerOperations server)
    {
-      copilot_ = copilot;
+      assistant_ = assistant;
       session_ = session;
       events_ = events;
       prefs_ = prefs;
@@ -2159,7 +2141,7 @@ public class TextEditingTargetAssistantHelper
    private int assistantRuntimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
 
    // Injected ----
-   private Copilot copilot_;
+   private Assistant assistant_;
    private Session session_;
    private EventBus events_;
    private UserPrefs prefs_;

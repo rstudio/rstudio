@@ -1384,85 +1384,45 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show code completions at the current cursor location") // $NON-NLS-1$
     String codeCompletionDesc();
     
-    // copilotDiagnostics
-    @DefaultStringValue("Copilot: Show Diagnostics") // $NON-NLS-1$
-    String copilotDiagnosticsLabel();
-    @DefaultStringValue("Show Copilot Diagnostics") // $NON-NLS-1$
-    String copilotDiagnosticsMenuLabel();
-    @DefaultStringValue("Print a Copilot diagnostic report, indicating how the Copilot agent has been configured.") // $NON-NLS-1$
-    String copilotDiagnosticsDesc();
+    // assistantDiagnostics
+    @DefaultStringValue("Assistant: Show Diagnostics") // $NON-NLS-1$
+    String assistantDiagnosticsLabel();
+    @DefaultStringValue("Show Assistant Diagnostics") // $NON-NLS-1$
+    String assistantDiagnosticsMenuLabel();
+    @DefaultStringValue("Print an assistant diagnostic report, indicating how the assistant agent has been configured.") // $NON-NLS-1$
+    String assistantDiagnosticsDesc();
     
-    // copilotSignIn
-    @DefaultStringValue("Copilot: Sign In") // $NON-NLS-1$
-    String copilotSignInLabel();
+    // assistantSignIn
+    @DefaultStringValue("Assistant: Sign In") // $NON-NLS-1$
+    String assistantSignInLabel();
     @DefaultStringValue("Sign In") // $NON-NLS-1$
-    String copilotSignInMenuLabel();
-    @DefaultStringValue("Sign in to the GitHub Copilot service.") // $NON-NLS-1$
-    String copilotSignInDesc();
+    String assistantSignInMenuLabel();
+    @DefaultStringValue("Sign in to the assistant service.") // $NON-NLS-1$
+    String assistantSignInDesc();
     
-    // copilotSignOut
-    @DefaultStringValue("Copilot: Sign Out") // $NON-NLS-1$
-    String copilotSignOutLabel();
+    // assistantSignOut
+    @DefaultStringValue("Assistant: Sign Out") // $NON-NLS-1$
+    String assistantSignOutLabel();
     @DefaultStringValue("Sign Out") // $NON-NLS-1$
-    String copilotSignOutMenuLabel();
-    @DefaultStringValue("Sign out from the GitHub Copilot service.") // $NON-NLS-1$
-    String copilotSignOutDesc();
+    String assistantSignOutMenuLabel();
+    @DefaultStringValue("Sign out from the assistant service.") // $NON-NLS-1$
+    String assistantSignOutDesc();
     
-    // copilotStatus
-    @DefaultStringValue("Copilot: Check Status") // $NON-NLS-1$
-    String copilotStatusLabel();
+    // assistantStatus
+    @DefaultStringValue("Assistant: Check Status") // $NON-NLS-1$
+    String assistantStatusLabel();
     @DefaultStringValue("Status") // $NON-NLS-1$
-    String copilotStatusMenuLabel();
-    @DefaultStringValue("Check the status of the GitHub Copilot agent.") // $NON-NLS-1$
-    String copilotStatusDesc();
+    String assistantStatusMenuLabel();
+    @DefaultStringValue("Check the status of the assistant agent.") // $NON-NLS-1$
+    String assistantStatusDesc();
     
-    // copilotRequestCompletions
-    @DefaultStringValue("Copilot: Request Completions") // $NON-NLS-1$
-    String copilotRequestCompletionsLabel();
+    // assistantRequestCompletions
+    @DefaultStringValue("Assistant: Request Completions") // $NON-NLS-1$
+    String assistantRequestCompletionsLabel();
     @DefaultStringValue("Request Completions") // $NON-NLS-1$
-    String copilotRequestCompletionsMenuLabel();
-    @DefaultStringValue("Request Copilot completions at the cursor position.") // $NON-NLS-1$
-    String copilotRequestCompletionsDesc();
-    
-    // copilotAcceptNextWord
-    @DefaultStringValue("Copilot: Accept Next Word") // $NON-NLS-1$
-    String copilotAcceptNextWordLabel();
-    @DefaultStringValue("Accept Next Word") // $NON-NLS-1$
-    String copilotAcceptNextWordMenuLabel();
-    @DefaultStringValue("Accept the next word of the current Copilot suggestion, if any.") // $NON-NLS-1$
-    String copilotAcceptNextWordDesc();
-    
-    // copilotToggleAutomaticCompletions
-    @DefaultStringValue("Copilot: Toggle Automatic Completions") // $NON-NLS-1$
-    String copilotToggleAutomaticCompletionsLabel();
-    @DefaultStringValue("Toggle Automatic Completions") // $NON-NLS-1$
-    String copilotToggleAutomaticCompletionsMenuLabel();
-    @DefaultStringValue("When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session.") // $NON-NLS-1$
-    String copilotToggleAutomaticCompletionsDesc();
-    
-    // copilotAcceptNextEditSuggestion
-    @DefaultStringValue("Copilot: Accept Next Edit Suggestion") // $NON-NLS-1$
-    String copilotAcceptNextEditSuggestionLabel();
-    @DefaultStringValue("Accept Next Edit Suggestion") // $NON-NLS-1$
-    String copilotAcceptNextEditSuggestionMenuLabel();
-    @DefaultStringValue("Accept the current Copilot next edit suggestion, if any.") // $NON-NLS-1$
-    String copilotAcceptNextEditSuggestionDesc();
-    
-    // copilotDismissNextEditSuggestion
-    @DefaultStringValue("Copilot: Dismiss Next Edit Suggestion") // $NON-NLS-1$
-    String copilotDismissNextEditSuggestionLabel();
-    @DefaultStringValue("Dismiss Next Edit Suggestion") // $NON-NLS-1$
-    String copilotDismissNextEditSuggestionMenuLabel();
-    @DefaultStringValue("Dismiss the current Copilot next edit suggestion, if any.") // $NON-NLS-1$
-    String copilotDismissNextEditSuggestionDesc();
-    
-    // assistantRequestSuggestions
-    @DefaultStringValue("Assistant: Request Suggestions") // $NON-NLS-1$
-    String assistantRequestSuggestionsLabel();
-    @DefaultStringValue("Request Suggestions") // $NON-NLS-1$
-    String assistantRequestSuggestionsMenuLabel();
-    @DefaultStringValue("Request assistant suggestions at the cursor position.") // $NON-NLS-1$
-    String assistantRequestSuggestionsDesc();
+    String assistantRequestCompletionsMenuLabel();
+    @DefaultStringValue("Request assistant completions at the cursor position.") // $NON-NLS-1$
+    String assistantRequestCompletionsDesc();
     
     // assistantAcceptNextWord
     @DefaultStringValue("Assistant: Accept Next Word") // $NON-NLS-1$
@@ -1471,6 +1431,14 @@ public interface CmdConstants extends Constants {
     String assistantAcceptNextWordMenuLabel();
     @DefaultStringValue("Accept the next word of the current assistant suggestion, if any.") // $NON-NLS-1$
     String assistantAcceptNextWordDesc();
+    
+    // assistantToggleAutomaticCompletions
+    @DefaultStringValue("Assistant: Toggle Automatic Completions") // $NON-NLS-1$
+    String assistantToggleAutomaticCompletionsLabel();
+    @DefaultStringValue("Toggle Automatic Completions") // $NON-NLS-1$
+    String assistantToggleAutomaticCompletionsMenuLabel();
+    @DefaultStringValue("Toggle assistant completions on and off in a session.") // $NON-NLS-1$
+    String assistantToggleAutomaticCompletionsDesc();
     
     // assistantAcceptNextEditSuggestion
     @DefaultStringValue("Assistant: Accept Next Edit Suggestion") // $NON-NLS-1$
@@ -1487,6 +1455,14 @@ public interface CmdConstants extends Constants {
     String assistantDismissNextEditSuggestionMenuLabel();
     @DefaultStringValue("Dismiss the current assistant next edit suggestion, if any.") // $NON-NLS-1$
     String assistantDismissNextEditSuggestionDesc();
+    
+    // assistantRequestSuggestions
+    @DefaultStringValue("Assistant: Request Suggestions") // $NON-NLS-1$
+    String assistantRequestSuggestionsLabel();
+    @DefaultStringValue("Request Suggestions") // $NON-NLS-1$
+    String assistantRequestSuggestionsMenuLabel();
+    @DefaultStringValue("Request assistant suggestions at the cursor position.") // $NON-NLS-1$
+    String assistantRequestSuggestionsDesc();
     
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$

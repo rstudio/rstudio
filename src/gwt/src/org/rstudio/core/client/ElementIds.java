@@ -755,9 +755,9 @@ public class ElementIds
    public final static String CONSOLE_SESSION_SUSPENDED = "r_session_suspended_console";
    public final static String CONSOLE_SESSION_SUSPEND_BLOCKED = "r_session_suspend_blocked_console";
    
-   // Copilot Diagnostics
-   public final static String COPILOT_DIAGNOSTICS_CLOSE_BUTTON = "copilot_diagnostics_close_button";
-   public final static String COPILOT_DIAGNOSTICS_COPY_BUTTON = "copilot_diagnostics_copy_button";
+   // Assistant Diagnostics
+   public final static String ASSISTANT_DIAGNOSTICS_CLOSE_BUTTON = "assistant_diagnostics_close_button";
+   public final static String ASSISTANT_DIAGNOSTICS_COPY_BUTTON = "assistant_diagnostics_copy_button";
    
    // ProjectGeneralPreferencesPane
    public final static String PROJ_DISPLAY_NAME = "proj_display_name";

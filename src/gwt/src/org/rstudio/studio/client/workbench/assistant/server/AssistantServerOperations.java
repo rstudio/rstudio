@@ -29,18 +29,17 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 
 public interface AssistantServerOperations
 {
-   public void assistantDiagnostics(ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback);
-
-   public void assistantVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
+   public void assistantDiagnostics(String assistantType,
+                                    ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback);
 
    public void assistantVerifyInstalled(String assistantType,
                                         ServerRequestCallback<Boolean> requestCallback);
 
-   public void assistantSignIn(ServerRequestCallback<AssistantSignInResponse> requestCallback);
+   public void assistantSignIn(String assistantType,
+                               ServerRequestCallback<AssistantSignInResponse> requestCallback);
 
-   public void assistantSignOut(ServerRequestCallback<AssistantSignOutResponse> requestCallback);
-
-   public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback);
+   public void assistantSignOut(String assistantType,
+                                ServerRequestCallback<AssistantSignOutResponse> requestCallback);
 
    public void assistantStatus(String assistantType,
                                ServerRequestCallback<AssistantStatusResponse> requestCallback);

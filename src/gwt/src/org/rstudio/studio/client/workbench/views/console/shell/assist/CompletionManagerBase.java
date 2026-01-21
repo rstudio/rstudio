@@ -28,7 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -94,12 +94,12 @@ public abstract class CompletionManagerBase
    @Inject
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
-                           Copilot copilot,
+                           Assistant assistant,
                            HelpStrategy helpStrategy)
    {
       events_ = events;
       userPrefs_ = uiPrefs;
-      copilot_ = copilot;
+      assistant_ = assistant;
       helpStrategy_ = helpStrategy;
    }
    
@@ -723,7 +723,7 @@ public abstract class CompletionManagerBase
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
-      if (copilot_.isEnabled())
+      if (assistant_.isEnabled())
          return false;
       
       String codeComplete = userPrefs_.codeCompletion().getValue();
@@ -1139,6 +1139,6 @@ public abstract class CompletionManagerBase
    
    protected EventBus events_;
    protected UserPrefs userPrefs_;
-   protected Copilot copilot_;
+   protected Assistant assistant_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

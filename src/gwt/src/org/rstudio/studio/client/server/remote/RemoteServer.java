@@ -685,12 +685,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void assistantVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "assistant_verify_installed", requestCallback);
-   }
-
-   @Override
    public void assistantVerifyInstalled(String assistantType,
                                         ServerRequestCallback<Boolean> requestCallback)
    {
@@ -701,27 +695,33 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void assistantDiagnostics(ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback)
+   public void assistantDiagnostics(String assistantType,
+                                    ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "assistant_diagnostics", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(assistantType)
+            .get();
+      sendRequest(RPC_SCOPE, "assistant_diagnostics", params, requestCallback);
    }
 
    @Override
-   public void assistantSignIn(ServerRequestCallback<AssistantSignInResponse> requestCallback)
+   public void assistantSignIn(String assistantType,
+                               ServerRequestCallback<AssistantSignInResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "assistant_sign_in", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(assistantType)
+            .get();
+      sendRequest(RPC_SCOPE, "assistant_sign_in", params, requestCallback);
    }
 
    @Override
-   public void assistantSignOut(ServerRequestCallback<AssistantSignOutResponse> requestCallback)
+   public void assistantSignOut(String assistantType,
+                                ServerRequestCallback<AssistantSignOutResponse> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "assistant_sign_out", requestCallback);
-   }
-
-   @Override
-   public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, "assistant_status", requestCallback);
+      JSONArray params = new JSONArrayBuilder()
+            .add(assistantType)
+            .get();
+      sendRequest(RPC_SCOPE, "assistant_sign_out", params, requestCallback);
    }
 
    @Override

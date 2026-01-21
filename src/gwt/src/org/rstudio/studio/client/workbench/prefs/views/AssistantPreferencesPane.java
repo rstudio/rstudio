@@ -46,8 +46,8 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseType
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -105,7 +105,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Commands commands,
                                  AriaLiveService ariaLive,
-                                 Copilot copilot,
+                                 Assistant assistant,
                                  AssistantServerOperations server,
                                  ProjectsServerOperations projectServer)
    {
@@ -113,7 +113,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
-      copilot_ = copilot;
+      assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
 
@@ -265,6 +265,9 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Add assistant selector
       add(selAssistant_);
 
+      // Create the status panel (shared between Copilot and Posit AI)
+      statusPanel_ = createStatusPanel();
+
       // Create the common settings panel (shared between Copilot and Posit AI)
       commonSettingsPanel_ = createCommonSettingsPanel();
 
@@ -302,19 +305,57 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
-               // Move common settings panel to Posit AI panel
+               // Move status panel and common settings panel to Posit AI panel
+               positAiPanel_.insert(spaced(statusPanel_), 0);
                positAiPanel_.add(commonSettingsPanel_);
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
+
+               // Refresh Posit AI status when panel is shown
+               if (!positAiRefreshed_)
+               {
+                  positAiRefreshed_ = true;
+
+                  // Check if Posit AI is installed
+                  server_.assistantVerifyInstalled(
+                     UserPrefsAccessor.ASSISTANT_POSIT,
+                     new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+                           }
+                           else
+                           {
+                              lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblCopilotStatus_.setText(constants_.copilotStartupError());
+                        }
+                     });
+               }
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
-               // Move common settings panel and Copilot-specific "Other" panel to Copilot panel
+               // Move status panel, common settings panel and Copilot-specific "Other" panel to Copilot panel
+               if (session_.getSessionInfo().getCopilotEnabled())
+               {
+                  copilotPanel_.insert(spaced(statusPanel_), 0);
+               }
                copilotPanel_.add(commonSettingsPanel_);
                copilotPanel_.add(copilotOtherPanel_);
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
+
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
@@ -365,10 +406,19 @@ public class AssistantPreferencesPane extends PreferencesPane
       return panel;
    }
 
+   private HorizontalPanel createStatusPanel()
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(lblCopilotStatus_);
+      for (SmallButton button : statusButtons_)
+         panel.add(button);
+      return panel;
+   }
+
    private VerticalPanel createPositAiPanel()
    {
       VerticalPanel panel = new VerticalPanel();
-      // TODO: Add Posit AI-specific status/sign-in UI here when available
+      // Status panel and common settings will be added dynamically
       return panel;
    }
 
@@ -376,20 +426,11 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       VerticalPanel panel = new VerticalPanel();
 
-      if (session_.getSessionInfo().getCopilotEnabled())
-      {
-         // Copilot-specific: sign-in status panel
-         HorizontalPanel statusPanel = new HorizontalPanel();
-         statusPanel.add(lblCopilotStatus_);
-         for (SmallButton button : statusButtons_)
-            statusPanel.add(button);
-         panel.add(spaced(statusPanel));
-         // Common settings and "Other" section will be added dynamically
-      }
-      else
+      if (!session_.getSessionInfo().getCopilotEnabled())
       {
          panel.add(new Label(constants_.copilotDisabledByAdmin()));
       }
+      // Status panel, common settings and "Other" section will be added dynamically
 
       return panel;
    }
@@ -472,17 +513,19 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignIn((response) -> refresh());
+            String selectedType = selAssistant_.getValue();
+            assistant_.signIn(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnSignOut_.addClickHandler(new ClickHandler()
       {
-         
+
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignOut((response) -> refresh());
+            String selectedType = selAssistant_.getValue();
+            assistant_.signOut(selectedType, (response) -> refresh(selectedType));
          }
       });
       
@@ -501,10 +544,10 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            refresh();
+            refresh(selAssistant_.getValue());
          }
       });
-      
+
       btnDiagnostics_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -512,7 +555,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             ProgressIndicator indicator = getProgressIndicator();
             indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
-            copilot_.onCopilotDiagnostics(() ->
+            assistant_.showDiagnostics(selAssistant_.getValue(), () ->
             {
                indicator.onCompleted();
             });
@@ -530,7 +573,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       
       events_.addHandler(CopilotEnabledEvent.TYPE, (event) ->
       {
-         refresh();
+         refresh(selAssistant_.getValue());
       });
    }
    
@@ -557,14 +600,14 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (response.result == null)
             {
-               if (response.error != null && response.error.getCode() == CopilotConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
+               if (response.error != null && response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
                {
                   // Copilot still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
                      refresh(assistantType);
                   });
                }
-               else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
+               else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
                   lblCopilotStatus_.setText(constants_.copilotStartupError());
                   if (!StringUtil.isNullOrEmpty(response.output))
@@ -595,18 +638,18 @@ public class AssistantPreferencesPane extends PreferencesPane
                   showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }
-            else if (response.result.status == CopilotConstants.STATUS_OK ||
-                     response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_OK ||
+                     response.result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
@@ -625,14 +668,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      if (assistantType.isEmpty())
-      {
-         server_.assistantStatus(callback);
-      }
-      else
-      {
-         server_.assistantStatus(assistantType, callback);
-      }
+      // If no assistantType specified, use current preference
+      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+      server_.assistantStatus(type, callback);
    }
 
    private void disableCopilot(String newAssistant)
@@ -704,7 +742,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Only refresh Copilot status if Copilot is the selected assistant
       if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
-         refresh();
+         refresh(selAssistant_.getValue());
          copilotRefreshed_ = true;
       }
    }
@@ -752,6 +790,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private HandlerRegistration copilotStatusHandler_;
    private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
+   private boolean positAiRefreshed_ = false; // has Posit AI status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
 
    // Assistant panels (created in initDisplay)
@@ -761,6 +800,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel copilotTosPanel_;
    private VerticalPanel commonSettingsPanel_;
    private VerticalPanel copilotOtherPanel_;
+   private HorizontalPanel statusPanel_;
 
    // UI
    private final SelectWidget selAssistant_;
@@ -788,7 +828,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Session session_;
    private final UserPrefs prefs_;
    private final Commands commands_;
-   private final Copilot copilot_;
+   private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
