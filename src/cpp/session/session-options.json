@@ -589,7 +589,7 @@
             "name": "allow-posit-assistant",
             "type": "bool",
             "memberName": "allowPositAssistant_",
-            "defaultValue": true,
+            "defaultValue": false,
             "description": "Indicates whether or not to allow use of the Posit AI assistant feature."
          }
       ],

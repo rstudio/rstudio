@@ -314,7 +314,7 @@ protected:
       value<bool>(&allowCopilot_)->default_value(true),
       "Indicates whether or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
-      value<bool>(&allowPositAssistant_)->default_value(true),
+      value<bool>(&allowPositAssistant_)->default_value(false),
       "Indicates whether or not to allow use of the Posit AI assistant feature.");
 
    pR->add_options()
