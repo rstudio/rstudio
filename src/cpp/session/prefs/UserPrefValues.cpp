@@ -3367,14 +3367,105 @@ core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
 /**
  * Select which AI assistant to use for code suggestions and assistance.
  */
-std::string UserPrefValues::rstudioAssistant()
+std::string UserPrefValues::assistant()
 {
-   return readPref<std::string>("rstudio_assistant");
+   return readPref<std::string>("assistant");
 }
 
-core::Error UserPrefValues::setRstudioAssistant(std::string val)
+core::Error UserPrefValues::setAssistant(std::string val)
 {
-   return writePref("rstudio_assistant", val);
+   return writePref("assistant", val);
+}
+
+/**
+ * Control when code suggestions are displayed in the editor.
+ */
+std::string UserPrefValues::assistantCompletionsTrigger()
+{
+   return readPref<std::string>("assistant_completions_trigger", "copilot_completions_trigger");
+}
+
+core::Error UserPrefValues::setAssistantCompletionsTrigger(std::string val)
+{
+   return writePref("assistant_completions_trigger", val);
+}
+
+/**
+ * The delay (in milliseconds) before AI completions are requested after the cursor position has changed.
+ */
+int UserPrefValues::assistantCompletionsDelay()
+{
+   return readPref<int>("assistant_completions_delay", "copilot_completions_delay");
+}
+
+core::Error UserPrefValues::setAssistantCompletionsDelay(int val)
+{
+   return writePref("assistant_completions_delay", val);
+}
+
+/**
+ * Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.
+ */
+std::string UserPrefValues::assistantTabKeyBehavior()
+{
+   return readPref<std::string>("assistant_tab_key_behavior", "copilot_tab_key_behavior");
+}
+
+core::Error UserPrefValues::setAssistantTabKeyBehavior(std::string val)
+{
+   return writePref("assistant_tab_key_behavior", val);
+}
+
+/**
+ * When enabled, RStudio will index project files with the AI assistant.
+ */
+bool UserPrefValues::assistantIndexingEnabled()
+{
+   return readPref<bool>("assistant_indexing_enabled", "copilot_indexing_enabled");
+}
+
+core::Error UserPrefValues::setAssistantIndexingEnabled(bool val)
+{
+   return writePref("assistant_indexing_enabled", val);
+}
+
+/**
+ * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+ */
+bool UserPrefValues::assistantNesEnabled()
+{
+   return readPref<bool>("assistant_nes_enabled", "copilot_nes_enabled");
+}
+
+core::Error UserPrefValues::setAssistantNesEnabled(bool val)
+{
+   return writePref("assistant_nes_enabled", val);
+}
+
+/**
+ * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+ */
+bool UserPrefValues::assistantNesAutoshow()
+{
+   return readPref<bool>("assistant_nes_autoshow", "copilot_nes_autoshow");
+}
+
+core::Error UserPrefValues::setAssistantNesAutoshow(bool val)
+{
+   return writePref("assistant_nes_autoshow", val);
+}
+
+/**
+ * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+ */
+bool UserPrefValues::assistantShowMessages()
+{
+   return readPref<bool>("assistant_show_messages");
+}
+
+core::Error UserPrefValues::setAssistantShowMessages(bool val)
+{
+   return writePref("assistant_show_messages", val);
 }
 
 /**
@@ -3391,7 +3482,7 @@ core::Error UserPrefValues::setCopilotEnabled(bool val)
 }
 
 /**
- * Control when Copilot code suggestions are displayed in the editor.
+ * Control when code suggestions are displayed in the editor.
  */
 std::string UserPrefValues::copilotCompletionsTrigger()
 {
@@ -3884,7 +3975,14 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEditorScrollMultiplier,
       kTextRendering,
       kDisableRendererAccessibility,
-      kRstudioAssistant,
+      kAssistant,
+      kAssistantCompletionsTrigger,
+      kAssistantCompletionsDelay,
+      kAssistantTabKeyBehavior,
+      kAssistantIndexingEnabled,
+      kAssistantNesEnabled,
+      kAssistantNesAutoshow,
+      kAssistantShowMessages,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

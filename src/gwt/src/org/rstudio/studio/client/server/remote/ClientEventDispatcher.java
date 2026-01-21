@@ -122,8 +122,8 @@ import org.rstudio.studio.client.tests.events.TestsStartedEvent;
 import org.rstudio.studio.client.tests.model.TestsResult;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.events.AdminNotificationEvent;
 import org.rstudio.studio.client.workbench.events.BrowseUrlEvent;
@@ -138,8 +138,8 @@ import org.rstudio.studio.client.workbench.events.UserPromptEvent;
 import org.rstudio.studio.client.workbench.model.AdminNotification;
 import org.rstudio.studio.client.workbench.model.BrowseUrlInfo;
 import org.rstudio.studio.client.workbench.model.ErrorMessage;
-import org.rstudio.studio.client.workbench.model.ShowMessage;
 import org.rstudio.studio.client.workbench.model.QuotaStatus;
+import org.rstudio.studio.client.workbench.model.ShowMessage;
 import org.rstudio.studio.client.workbench.model.UserPrompt;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
@@ -1194,8 +1194,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.CopilotStatusChanged)
          {
-            AssistantStatusChangedEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new AssistantStatusChangedEvent(data.getStatus()));
+            AssistantRuntimeStatusChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new AssistantRuntimeStatusChangedEvent(data.getStatus()));
          }
          else if (type == ClientEvent.ChatBackendExit)
          {

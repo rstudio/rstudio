@@ -691,11 +691,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
-         <shortcut refid="copilotRequestCompletions" value="Cmd+Backslash" title="Request Copilot Code Suggestions" />
-         <shortcut refid="copilotAcceptNextEditSuggestion" value="Ctrl+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotAcceptNextEditSuggestion" value="Cmd+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
-         <shortcut refid="copilotDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss Copilot Next Edit Suggestion" />
+         <shortcut refid="assistantRequestSuggestions" value="Cmd+Backslash" title="Request Code Suggestions" />
+         <shortcut refid="assistantAcceptNextEditSuggestion" value="Ctrl+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept assistant Next Edit Suggestion" />
+         <shortcut refid="assistantAcceptNextEditSuggestion" value="Cmd+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Accept assistant Next Edit Suggestion" />
+         <shortcut refid="assistantDismissNextEditSuggestion" value="Ctrl+Shift+;" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
+         <shortcut refid="assistantDismissNextEditSuggestion" value="Cmd+Shift+;" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Dismiss assistant Next Edit Suggestion" />
 
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
@@ -2136,6 +2136,26 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copilot: Dismiss Next Edit Suggestion"
         menuLabel="Dismiss Next Edit Suggestion"
         desc="Dismiss the current Copilot next edit suggestion, if any."/>
+
+   <cmd id="assistantRequestSuggestions"
+        label="Assistant: Request Suggestions"
+        menuLabel="Request Suggestions"
+        desc="Request assistant suggestions at the cursor position."/>
+
+   <cmd id="assistantAcceptNextWord"
+        label="Assistant: Accept Next Word"
+        menuLabel="Accept Next Word"
+        desc="Accept the next word of the current assistant suggestion, if any."/>
+
+   <cmd id="assistantAcceptNextEditSuggestion"
+        label="Assistant: Accept Next Edit Suggestion"
+        menuLabel="Accept Next Edit Suggestion"
+        desc="Accept the current assistant next edit suggestion, if any."/>
+
+   <cmd id="assistantDismissNextEditSuggestion"
+        label="Assistant: Dismiss Next Edit Suggestion"
+        menuLabel="Dismiss Next Edit Suggestion"
+        desc="Dismiss the current assistant next edit suggestion, if any."/>
 
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"

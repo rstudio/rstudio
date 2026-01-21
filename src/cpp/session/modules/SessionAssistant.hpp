@@ -27,6 +27,7 @@ namespace session {
 namespace modules {
 namespace assistant {
 
+int assistantRuntimeStatus();
 core::Error initialize();
 
 } // end namespace assistant

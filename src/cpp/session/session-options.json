@@ -579,6 +579,13 @@
             "description": "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system."
          },
          {
+            "name": "allow-copilot",
+            "type": "bool",
+            "memberName": "allowCopilot_",
+            "defaultValue": true,
+            "description": "Indicates whether or not to allow use of Copilot-related features."
+         },
+         {
             "name": "allow-posit-assistant",
             "type": "bool",
             "memberName": "allowPositAssistant_",
@@ -969,7 +976,28 @@
             "memberName": "copilotHelper_",
             "description": "The path to an optional shell script, which when invoked, should start the GitHub Copilot Language Server."
          }
-
+      ],
+      "pai": [
+         {
+            "name": "posit-assistant-enabled",
+            "type": "bool",
+            "memberName": "positAssistantEnabled_",
+            "defaultValue": true,
+            "description": "Indicates whether or not Posit Assistant integration can be enabled."
+         },
+         {
+            "name": "posit-assistant-ssl-certificates-file",
+            "type": "string",
+            "memberName": "positAssistantSslCertificatesFile_",
+            "defaultValue": "",
+            "description": "The path to a file containing one or more trusted certificates in PEM format."
+         },
+         {
+            "name": "posit-assistant-helper",
+            "type": "core::FilePath",
+            "memberName": "positAssistantHelper_",
+            "description": "The path to an optional shell script, which when invoked, should start the Posit Assistant Language Server."
+         }
       ],
       "misc": [
          

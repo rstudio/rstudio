@@ -16,8 +16,6 @@
 #include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
-#include <atomic>
-
 #include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -90,6 +88,25 @@ namespace modules {
 namespace assistant {
 
 namespace {
+
+bool isCopilotAllowedByAdmin()
+{
+   return
+      session::options().allowCopilot() &&
+      session::options().copilotEnabled();
+}
+
+bool isPositAssistantAllowedByAdmin()
+{
+   // The 'pai' user preference is used as a (temporary) control
+   // for enabling/disabling the Posit Assistant.
+   if (!prefs::userPrefs().pai())
+      return false;
+
+   return
+      session::options().allowPositAssistant() &&
+      session::options().positAssistantEnabled();
+}
 
 struct AssistantRequest
 {
@@ -229,14 +246,26 @@ projects::RProjectAssistantOptions s_assistantProjectOptions;
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
 
-// Next Edit Suggestions (NES) retry configuration.
-// When NES returns no suggestions, we retry at progressively further positions.
-constexpr int kNesMaxRetries = 3;
-constexpr int kNesRetryLineOffset = 4;
+std::string agentNotRunningReason()
+{
+   switch (s_agentNotRunningReason)
+   {
+      case AgentNotRunningReason::Unknown:
+         return "Unknown";
+      case AgentNotRunningReason::NotInstalled:
+         return "The required assistant agent is not installed.";
+      case AgentNotRunningReason::DisabledByAdministrator:
+         return "AI assistant use has been disabled by the system administrator.";
+      case AgentNotRunningReason::DisabledViaProjectPreferences:
+         return "AI assistant has been disabled via project preferences.";
+      case AgentNotRunningReason::DisabledViaGlobalPreferences:
+         return "AI assistant has been disabled via global preferences.";
+      case AgentNotRunningReason::LaunchError:
+         return "The AI assistant agent failed to launch: " + s_agentStartupError;
+   }
 
-// Sequence number for NES requests. Incremented on each new request to
-// allow cancellation of in-flight requests when a new request arrives.
-std::atomic<int> s_nesRequestSequence{0};
+   return "Unknown";
+}
 
 int assistantLogLevel()
 {
@@ -273,10 +302,6 @@ bool isIndexableFile(const FilePath& documentPath)
    if (name == "Makefile" || name == "makefile")
       return true;
 
-   // TODO: Do we want to also allow indexing of 'data' file types?
-   // We previously used module_context::isTextFile(), but because this
-   // relies on invoking /usr/bin/file, this can be dreadfully slow if
-   // the project contains a large number of files without a known type.
    std::string languageId = lsp::languageIdFromExtension(ext);
    return !languageId.empty();
 }
@@ -305,97 +330,160 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    return isIndexableFile(docPath);
 }
 
-FilePath assistantLanguageServerPath()
+FilePath paiLanguageServerPath()
 {
-   FilePath assistantPath;
+   FilePath languageServerDir = xdg::userDataDir().completePath("pai/bin/dist/nes");
+
+   for (auto&& suffix : { "language-server.cjs", "language-server.js" })
+   {
+      FilePath languageServerPath = languageServerDir.completePath(suffix);
+
+      if (languageServerPath.exists())
+      {        
+         DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
+         return languageServerPath;
+      }
+   }
    
+   ELOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+   return FilePath();
+}
+
+FilePath copilotLanguageServerPath()
+{
+   FilePath copilotPath;
+   
+   std::string copilotJsFolder = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
+   if (!copilotJsFolder.empty())
+   {
+      if (FilePath::exists(copilotJsFolder) && FilePath(copilotJsFolder).isDirectory())
+      {
+         DLOG("Using Copilot Language Server path from RSTUDIO_COPILOT_JS_FOLDER: '{}'.", copilotJsFolder);
+         copilotPath = FilePath(copilotJsFolder);
+      }
+   }
+   
+   if (copilotPath.isEmpty())
+   {
+      copilotPath = session::options().copilotPath();
+      if (copilotPath.exists())
+      {
+         DLOG("Using Copilot Language Server path from session options: '{}'.", copilotPath.getAbsolutePath());
+      }
+   }
+
+   // Accept both directories and paths to language-server.js
+   if (copilotPath.isDirectory())
+   {
+      copilotPath = copilotPath.completeChildPath("language-server.js");
+   }
+
+   if (!copilotPath.exists())
+   {
+      ELOG("Copilot Language Server not found at '{}'.", copilotPath.getAbsolutePath());
+   }
+
+   DLOG("Copilot Language Server found at '{}'.", copilotPath.getAbsolutePath());
+   return copilotPath;
+}
+
+FilePath assistantLanguageServerPath(const std::string& assistantType = "")
+{
+   // Allow override via environment variable
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
 
-   std::string rstudioAssistant = core::system::getenv("RSTUDIO_COPILOT_JS_FOLDER");
-   if (!rstudioAssistant.empty())
-   {
-      if (FilePath::exists(rstudioAssistant) && FilePath(rstudioAssistant).isDirectory())
-      {
-         assistantPath = FilePath(rstudioAssistant);
-      }
-   }
-   
-   if (assistantPath.isEmpty())
-   {
-      // TODO: Should we support separate paths for Posit Assistant vs Copilot here?
-      assistantPath = session::options().copilotPath();
-      if (!assistantPath.exists() || !assistantPath.isDirectory())
-      {
-         ELOG("Assistant Language Server path '{}' does not exist or is not a directory.", assistantPath.getAbsolutePath());
-         return FilePath();
-      }
-   }
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
 
-   auto suffix = "language-server.js";
-   FilePath candidatePath = assistantPath.completePath(suffix);
-   if (candidatePath.exists())
+   if (assistant == kAssistantPosit)
    {
-      DLOG("Assistant Language Server '{}' found at '{}'.", suffix, candidatePath.getAbsolutePath());
-      return candidatePath;
+      return paiLanguageServerPath();
    }
-
-   ELOG("Assistant Language Server '{}' not found at '{}'.", suffix, candidatePath.getAbsolutePath());
-   return FilePath();
+   else if (assistant == kAssistantCopilot)
+   {
+      return copilotLanguageServerPath();
+   }
+   else
+   {
+      // unknown assistant type
+      ELOG("Unknown assistant type '{}'", assistant);
+      return FilePath();
+   }
 }
 
-bool isAgentInstalled()
+bool isAgentInstalled(const std::string& assistantType = "")
 {
-   return assistantLanguageServerPath().exists();
+   return assistantLanguageServerPath(assistantType).exists();
 }
 
-bool isAssistantEnabled()
+bool isAssistantEnabled(const std::string& assistantType = "")
 {
-   // Check administrator option
-   // TODO: Add option for 'assistantEnabled' vs. 'assistantEnabled'?
-   if (!session::options().copilotEnabled())
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
+
+   // If no assistant is selected, we're done.
+   if (assistant == kAssistantNone)
    {
-      s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
       return false;
    }
 
-   // Check whether the agent is where it should be
-   if (!isAgentInstalled())
+   // Check for project-level override (only if not using an explicit assistantType)
+   if (assistantType.empty())
+   {
+      std::string projectAssistant = s_assistantProjectOptions.assistant;
+      if (!projectAssistant.empty() && projectAssistant != "default")
+      {
+         // If the project explicitly disables the assistant, respect that.
+         if (projectAssistant == kAssistantNone)
+         {
+            s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
+            return false;
+         }
+
+         // Otherwise, use the project-specified assistant type.
+         assistant = projectAssistant;
+      }
+   }
+
+   // Check whether the selected assistant type is allowed by the administrator.
+   if (assistant == kAssistantCopilot)
+   {
+      if (!isCopilotAllowedByAdmin())
+      {
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+         return false;
+      }
+   }
+   else if (assistant == kAssistantPosit)
+   {
+      if (!isPositAssistantAllowedByAdmin())
+      {
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledByAdministrator;
+         return false;
+      }
+   }
+
+   // Finally, check whether the selected assistant type is installed.
+   if (!isAgentInstalled(assistant))
    {
       s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
       return false;
    }
 
-   // Check project option
-   // TODO: Handle possible values of 'assistant' here
-   std::string assistant = s_assistantProjectOptions.assistant;
-
-   // Check user preference
-   // TODO: Copilot vs. Assistant options here
-   if (!prefs::userPrefs().copilotEnabled())
-   {
-      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
-      return false;
-   }
-   
    return true;
 }
 
 bool isAssistantIndexingEnabled()
 {
-   // Check project option
-   // TODO: Use 'assistant' member on options value
-   /// switch (s_assistantProjectOptions.assistantIndexingEnabled)
-   /// {
-   /// case r_util::YesValue: return true;
-   /// case r_util::NoValue: return false;
-   /// default: {}
-   /// }
-
-   // Check user preference
-   // TODO: Copilot vs. Assistant options here
-   return prefs::userPrefs().copilotIndexingEnabled();
+   // Indexing is disabled for now; may be removed entirely in the future.
+   return false;
 }
 
 template <typename F>
@@ -611,13 +699,19 @@ void setCopilotConfiguration()
    sendNotification("workspace/didChangeConfiguration", paramsJson);
 }
 
+void setPositAiConfiguration()
+{
+   // Stub for Posit AI configuration.
+}
+
 namespace agent {
 
 void onStarted(ProcessOperations& operations)
 {
    // Record the PID of the agent.
-   // TODO: Log current agent type as well (from prefs)
-   DLOG("Agent has started [PID = {}]", operations.getPid());
+   DLOG("Agent has started [PID = {}, type = {}]",
+        operations.getPid(),
+        prefs::userPrefs().assistant());
    s_agentPid = operations.getPid();
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
@@ -694,9 +788,6 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    //
    // Importantly, there is no character separating the body from the
    // next response, so we're forced to parse headers here.
-   //
-   // TODO: Does this need to be a state machine? Is it possible that we
-   // receive some incomplete requests here?
    std::size_t startIndex = 0;
 
    while (startIndex < stdOut.length())
@@ -785,7 +876,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
       break;
    }
  
-   // TODO: Is there anything reasonable we can do with errors here?
+   // Nothing to do in other states.
    default: {}
       
    }
@@ -829,7 +920,7 @@ bool stopAgentSync()
    return waitFor([]() { return s_agentPid == -1; });
 }
 
-Error startAgent()
+Error startAgent(const std::string& assistantType = "")
 {
    if (s_agentRuntimeStatus != AgentRuntimeStatus::Unknown &&
        s_agentRuntimeStatus != AgentRuntimeStatus::Stopped)
@@ -841,18 +932,21 @@ Error startAgent()
 
    Error error;
 
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
+
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
-   
+
    // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
-   // TODO: Copilot vs. Assistant option here?
    std::string certificatesFile = session::options().copilotSslCertificatesFile();
    if (!certificatesFile.empty())
       environment.push_back(std::make_pair("NODE_EXTRA_CA_CERTS", certificatesFile));
 
    // Find node.js
-   // TODO: Should we support a custom node path here?
    FilePath nodePath;
    error = node_tools::findNode(&nodePath, "rstudio.copilot.nodeBinaryPath");
    if (error)
@@ -883,28 +977,50 @@ Error startAgent()
    options.detachProcess = true;
 #endif
 
-   // Check for and run a custom assistant helper script if provided.
-   // TODO: assistantHelper vs. copilotHelper?
-   FilePath assistantHelper = session::options().copilotHelper();
-   if (!assistantHelper.isEmpty())
+   // Launch the assistant, using a helper script if one is configured.
+   FilePath copilotHelper = session::options().copilotHelper();
+   FilePath positAssistantHelper = session::options().positAssistantHelper();
+
+   if (assistant == kAssistantCopilot && !copilotHelper.isEmpty())
    {
-      if (!assistantHelper.exists())
-         return fileNotFoundError(assistantHelper, ERROR_LOCATION);
-      
-      // TODO: Update these environment variables.
-      FilePath assistantPath = assistantLanguageServerPath();
+      // Run Copilot via helper script
+      if (!copilotHelper.exists())
+         return fileNotFoundError(copilotHelper, ERROR_LOCATION);
+
+      FilePath copilotPath = copilotLanguageServerPath();
       environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
-      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", assistantPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", copilotPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_COPILOT_PATH", copilotPath.getAbsolutePath()));
       options.environment = environment;
+
       error = module_context::processSupervisor().runProgram(
-               assistantHelper.getAbsolutePath(),
+               copilotHelper.getAbsolutePath(),
+               {},
+               options,
+               callbacks);
+   }
+   else if (assistant == kAssistantPosit && !positAssistantHelper.isEmpty())
+   {
+      // Run Posit AI via helper script
+      if (!positAssistantHelper.exists())
+         return fileNotFoundError(positAssistantHelper, ERROR_LOCATION);
+
+      FilePath paiPath = paiLanguageServerPath();
+      environment.push_back(std::make_pair("RSTUDIO_NODE_PATH", nodePath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_AGENT_PATH", paiPath.getAbsolutePath()));
+      environment.push_back(std::make_pair("RSTUDIO_PAI_PATH", paiPath.getAbsolutePath()));
+      options.environment = environment;
+
+      error = module_context::processSupervisor().runProgram(
+               positAssistantHelper.getAbsolutePath(),
                {},
                options,
                callbacks);
    }
    else
    {
-      FilePath assistantPath = assistantLanguageServerPath();
+      // Run assistant directly (no helper script)
+      FilePath assistantPath = assistantLanguageServerPath(assistant);
       if (!assistantPath.exists())
          return fileNotFoundError(assistantPath, ERROR_LOCATION);
 
@@ -955,7 +1071,6 @@ Error startAgent()
    paramsJson["locale"] = prefs::userPrefs().uiLanguage();
    paramsJson["initializationOptions"] = initializationOptionsJson;
 
-   // TODO: Does this really need to be a preference? Seems reasonable to just always include the project as a workspace URI.
    std::string workspaceFolderURI = lsp::uriFromDocumentPath(projects::projectContext().directory());
 
    json::Object workspaceJson;
@@ -988,8 +1103,12 @@ Error startAgent()
       // then used as a signal that they should start the agent process
       sendNotification("initialized", json::Object());
 
-      // TODO: Posit AI?
-      setCopilotConfiguration();
+      // Send assistant-specific configuration
+      std::string assistant = prefs::userPrefs().assistant();
+      if (assistant == kAssistantCopilot)
+         setCopilotConfiguration();
+      else if (assistant == kAssistantPosit)
+         setPositAiConfiguration();
    };
    
    std::string requestId = core::system::generateUuid();
@@ -999,13 +1118,11 @@ Error startAgent()
    return Success();
 }
 
-bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
+bool ensureAgentRunning(const std::string& assistantType = "",
+                        Error* pAgentLaunchError = nullptr)
 {
-   // TODO: Should we further validate the PID is actually associated
-   // with a running Assistant process, or just handle that separately?
    if (s_agentPid != -1)
    {
-      //DLOG("Assistant is already running; nothing to do.");
       return true;
    }
 
@@ -1013,30 +1130,45 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    if (s_isSessionShuttingDown)
       return false;
 
-   // bail if we haven't enabled assistant
-   if (!s_assistantEnabled)
+   // Check if assistant is enabled
+   // When assistantType is explicitly provided (e.g., from preferences dialog),
+   // check directly rather than relying on cached state
+   if (assistantType.empty())
    {
-      if (!s_assistantInitialized)
+      // Use cached state for normal operation
+      if (!s_assistantEnabled)
       {
-         DLOG("Assistant is not enabled; not starting agent.");
-         s_assistantInitialized = true;
+         if (!s_assistantInitialized)
+         {
+            std::string reason = agentNotRunningReason();
+            DLOG("Assistant is not enabled; not starting agent. Reason: {}", reason);
+            s_assistantInitialized = true;
+         }
+         return false;
       }
-      return false;
+   }
+   else
+   {
+      // Check directly for explicit assistant type
+      if (!isAssistantEnabled(assistantType))
+      {
+         return false;
+      }
    }
 
    // bail if we're not on the main thread; we make use of R when attempting
    // to start R so we cannot safely start on a child thread
    if (!thread::isMainThread())
       return false;
-   
+
    // preflight checks passed; try to start the agent
-   Error error = startAgent();
+   Error error = startAgent(assistantType);
    if (error)
       LOG_ERROR(error);
-   
+
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
-   
+
    s_assistantInitialized = true;
    return error == Success();
 }
@@ -1475,8 +1607,7 @@ void onProjectOptionsUpdated()
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   // TODO: Check if posit assistant enabled?
-   if (name == kCopilotEnabled)
+   if (name == kAssistant || name == kCopilotEnabled)
    {
       synchronize();
    }
@@ -1565,8 +1696,16 @@ SEXP rs_assistantStopAgent()
 Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
-   json::Object responseJson;
-   pResponse->setResult(isAgentInstalled());
+   // Read optional assistantType parameter (used by preferences dialog)
+   std::string assistantType;
+   if (request.params.getSize() > 0)
+   {
+      Error error = core::json::readParams(request.params, &assistantType);
+      if (error)
+         assistantType = "";
+   }
+
+   pResponse->setResult(isAgentInstalled(assistantType));
    return Success();
 }
 
@@ -1670,226 +1809,6 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// Structure to hold state for NES retry logic
-struct NesRetryState
-{
-   json::JsonRpcFunctionContinuation continuation;
-   boost::shared_ptr<source_database::SourceDocument> pDoc;
-   std::string uri;
-   int documentVersion;
-   int originalRow;    // The original cursor row (doesn't change)
-   int currentRow;     // The current row being queried (changes with retries)
-   int column;
-   int retryCount;
-   int sequenceNumber;
-   int documentLineCount;
-};
-
-// Helper function to check if a NES response contains edit suggestions
-bool nesResponseHasEdits(json::Object responseJson)
-{
-   if (!responseJson.hasMember("result"))
-      return false;
-
-   json::Value resultValue = responseJson["result"];
-   if (!resultValue.isObject())
-      return false;
-
-   json::Object result = resultValue.getObject();
-   if (!result.hasMember("edits"))
-      return false;
-
-   json::Value editsValue = result["edits"];
-   if (!editsValue.isArray())
-      return false;
-
-   json::Array edits = editsValue.getArray();
-   return !edits.isEmpty();
-}
-
-// Forward declaration
-void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state);
-
-// Callback handler for NES requests that implements retry logic
-class NesContinuation
-{
-public:
-   explicit NesContinuation(boost::shared_ptr<NesRetryState> state)
-      : state_(state)
-   {
-   }
-
-   void invoke(json::Object responseJson)
-   {
-      // Check if this request has been cancelled (a newer request has started)
-      if (s_nesRequestSequence.load() != state_->sequenceNumber)
-      {
-         DLOG("NES request {} cancelled (current sequence: {})",
-              state_->sequenceNumber, s_nesRequestSequence.load());
-
-         // Return a cancelled response
-         json::Object cancelledResult;
-         cancelledResult["cancelled"] = true;
-
-         json::JsonRpcResponse response;
-         response.setResult(cancelledResult);
-
-         if (state_->continuation)
-            state_->continuation(Success(), &response);
-         return;
-      }
-
-      // Check if we got edit suggestions
-      if (nesResponseHasEdits(responseJson))
-      {
-         DLOG("NES request {} got suggestions on attempt {}",
-              state_->sequenceNumber, state_->retryCount + 1);
-
-         // We have results - pass them to the original continuation
-         responseJson["cancelled"] = false;
-
-         json::JsonRpcResponse response;
-         response.setResult(responseJson);
-
-         if (state_->continuation)
-            state_->continuation(Success(), &response);
-         return;
-      }
-
-      // No suggestions - should we retry?
-      if (state_->retryCount < kNesMaxRetries)
-      {
-         // Calculate new position for retry (linear offset from original position)
-         int newRow = state_->originalRow + ((state_->retryCount + 1) * kNesRetryLineOffset);
-
-         // Don't retry if we'd go past the end of the document
-         if (newRow >= state_->documentLineCount)
-         {
-            DLOG("NES request {} no more retries (would exceed document length: {} >= {})",
-                 state_->sequenceNumber, newRow, state_->documentLineCount);
-
-            // Return empty result
-            responseJson["cancelled"] = false;
-
-            json::JsonRpcResponse response;
-            response.setResult(responseJson);
-
-            if (state_->continuation)
-               state_->continuation(Success(), &response);
-            return;
-         }
-
-         DLOG("NES request {} retrying at row {} (attempt {})",
-              state_->sequenceNumber, newRow, state_->retryCount + 2);
-
-         // Update state for retry
-         state_->retryCount++;
-         state_->currentRow = newRow;
-
-         // Send another request
-         sendNesRequestWithRetry(state_);
-         return;
-      }
-
-      DLOG("NES request {} exhausted retries", state_->sequenceNumber);
-
-      // No more retries - return the (empty) result
-      responseJson["cancelled"] = false;
-
-      json::JsonRpcResponse response;
-      response.setResult(responseJson);
-
-      if (state_->continuation)
-         state_->continuation(Success(), &response);
-   }
-
-   void cancel()
-   {
-      json::Object resultJson;
-      resultJson["cancelled"] = true;
-
-      json::JsonRpcResponse response;
-      response.setResult(resultJson);
-
-      if (state_->continuation)
-         state_->continuation(Success(), &response);
-   }
-
-   boost::posix_time::ptime time()
-   {
-      return time_;
-   }
-
-private:
-   boost::shared_ptr<NesRetryState> state_;
-   boost::posix_time::ptime time_ = boost::posix_time::second_clock::local_time();
-};
-
-// Send a NES request with retry support
-void sendNesRequestWithRetry(boost::shared_ptr<NesRetryState> state)
-{
-   // Check for cancellation before sending
-   if (s_nesRequestSequence.load() != state->sequenceNumber)
-   {
-      DLOG("NES request {} cancelled before sending", state->sequenceNumber);
-
-      json::Object cancelledResult;
-      cancelledResult["cancelled"] = true;
-
-      json::JsonRpcResponse response;
-      response.setResult(cancelledResult);
-
-      if (state->continuation)
-         state->continuation(Success(), &response);
-      return;
-   }
-
-   // Build the request
-   json::Object positionJson;
-   positionJson["line"] = state->currentRow;
-   positionJson["character"] = state->column;
-
-   json::Object docJson;
-   docJson["uri"] = state->uri;
-   docJson["version"] = state->documentVersion;
-
-   json::Object contextJson;
-   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = docJson;
-   paramsJson["position"] = positionJson;
-   paramsJson["context"] = contextJson;
-
-   // Create the continuation that will handle retries
-   NesContinuation nesContinuation(state);
-
-   // Wrap in a AssistantContinuation-compatible lambda
-   auto continuation = [nesContinuation](const Error& error, json::JsonRpcResponse* pResponse) mutable
-   {
-      if (error)
-      {
-         nesContinuation.cancel();
-         return;
-      }
-
-      if (pResponse && pResponse->result().isObject())
-      {
-         nesContinuation.invoke(pResponse->result().getObject());
-      }
-      else
-      {
-         // No valid response - treat as empty
-         json::Object emptyResponse;
-         nesContinuation.invoke(emptyResponse);
-      }
-   };
-
-   // Send the request
-   std::string requestId = core::system::generateUuid();
-   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, AssistantContinuation(continuation));
-}
-
 Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
                                    const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -1944,35 +1863,73 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Increment the sequence number to cancel any in-flight requests
-   int sequenceNumber = ++s_nesRequestSequence;
+   // Build the request
+   std::string uri = lsp::uriFromDocument(pDoc);
+   int documentVersion = lsp::documentVersionFromUri(uri);
 
-   DLOG("Starting NES request {} at row {}", sequenceNumber, cursorRow);
+   json::Object positionJson;
+   positionJson["line"] = cursorRow;
+   positionJson["character"] = cursorColumn;
 
-   // Get document line count for bounds checking during retries
-   std::string contents = pDoc->contents();
-   int lineCount = 1;
-   for (char c : contents)
+   json::Object docJson;
+   docJson["uri"] = uri;
+   docJson["version"] = documentVersion;
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Create the continuation
+   auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
    {
-      if (c == '\n')
-         lineCount++;
-   }
+      if (error)
+      {
+         DLOG("Next edit suggestions request failed: {}", error.getMessage());
 
-   // Create the retry state
-   auto state = boost::make_shared<NesRetryState>();
-   state->continuation = continuation;
-   state->pDoc = pDoc;
-   state->uri = lsp::uriFromDocument(pDoc);
-   state->documentVersion = lsp::documentVersionFromUri(state->uri);
-   state->originalRow = cursorRow;
-   state->currentRow = cursorRow;
-   state->column = cursorColumn;
-   state->retryCount = 0;
-   state->sequenceNumber = sequenceNumber;
-   state->documentLineCount = lineCount;
+         json::Object cancelledResult;
+         cancelledResult["cancelled"] = true;
 
-   // Send the initial request with retry support
-   sendNesRequestWithRetry(state);
+         json::JsonRpcResponse response;
+         response.setResult(cancelledResult);
+
+         continuation(Success(), &response);
+         return;
+      }
+
+      if (pResponse && pResponse->result().isObject())
+      {
+         json::Object resultJson = pResponse->result().getObject();
+         resultJson["cancelled"] = false;
+
+         // Drop the edit history for now, since it can be quite large,
+         // and we don't need / use it anywhere currently.
+         if (resultJson.hasMember("editHistory"))
+            resultJson["editHistory"] = json::Array();
+
+         DLOG("Next edit suggestions request succeeded.");
+         DLOG("{}", resultJson.writeFormatted());
+         DLOG("\n");
+
+         json::JsonRpcResponse response;
+         response.setResult(resultJson);
+
+         continuation(Success(), &response);
+      }
+      else
+      {
+         DLOG("Next edit suggestions request returned no result.");
+         json::JsonRpcResponse response;
+         continuation(Success(), &response);
+      }
+   };
+
+   // Send the request
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/copilotInlineEdit", requestId, paramsJson, AssistantContinuation(wrappedContinuation));
 
    return Success();
 }
@@ -2016,9 +1973,18 @@ Error assistantSignOut(const json::JsonRpcRequest& request,
 Error assistantStatus(const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Read optional assistantType parameter (used by preferences dialog)
+   std::string assistantType;
+   if (request.params.getSize() > 0)
+   {
+      Error error = core::json::readParams(request.params, &assistantType);
+      if (error)
+         assistantType = "";
+   }
+
    // Make sure assistant is running
    Error launchError;
-   if (!ensureAgentRunning(&launchError))
+   if (!ensureAgentRunning(assistantType, &launchError))
    {
       json::JsonRpcResponse response;
       json::Object resultJson;
@@ -2187,15 +2153,30 @@ Error assistantRegisterOpenFiles(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+int assistantRuntimeStatus()
+{
+   return static_cast<int>(s_agentRuntimeStatus);
+}
 
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
-   // Read default log level
-   // TODO: Also PAI_LOG_LEVEL?
-   std::string assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
+   // Read default log level from environment variable.
+   // RSTUDIO_ASSISTANT_LOG_LEVEL applies to all assistant types;
+   // COPILOT_LOG_LEVEL and PAI_LOG_LEVEL only apply to their respective types.
+   std::string assistantLogLevel;
+   {
+      std::string assistant = prefs::userPrefs().assistant();
+      if (assistant == kAssistantCopilot)
+         assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
+      else if (assistant == kAssistantPosit)
+         assistantLogLevel = core::system::getenv("PAI_LOG_LEVEL");
+   }
+   if (assistantLogLevel.empty())
+      assistantLogLevel = core::system::getenv("AI_LOG_LEVEL");
+
    if (!assistantLogLevel.empty())
       s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
    
@@ -2221,9 +2202,6 @@ Error initialize()
    lsp::events().didChange.connect(didChange);
    lsp::events().didClose.connect(didClose);
 
-   // TODO: Do we need this _and_ the preferences saved callback?
-   // This one seems required so that we see preference changes while
-   // editting preferences within the Assistant prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    RS_REGISTER_CALL_METHOD(rs_assistantSendRequest);

@@ -24,6 +24,7 @@
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionAir.hpp"
+#include "modules/SessionAssistant.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionRAddins.hpp"
@@ -678,6 +679,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
          assistantOptionsJson["copilot_enabled"] = false;
 #endif
          assistantOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
+         sessionInfo["assistant_runtime_status"] = modules::assistant::assistantRuntimeStatus();
          sessionInfo["assistant_project_options"] = assistantOptionsJson;
       }
    }

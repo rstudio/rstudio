@@ -140,6 +140,7 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -1901,15 +1902,42 @@ public class TextEditingTarget implements
             AssistantEvent.TYPE,
             new AssistantEvent.Handler()
             {
-               @Override
-               public void onAssistant(AssistantEvent event)
+               private String activeAssistantLabel()
                {
-                  // TODO: These should be updated to indicate the current agent (Posit AI or Copilot)
+                  // Check project options first
+                  RProjectAssistantOptions projectOptions =
+                        session_.getSessionInfo().getAssistantProjectOptions();
 
-                  // If copilot is disabled, hide the status message as a catch-all for
+                  if (projectOptions != null &&
+                      session_.getSessionInfo().getActiveProjectFile() != null)
+                  {
+                     String projectAssistant = projectOptions.assistant;
+                     if (projectAssistant != null &&
+                         !projectAssistant.isEmpty() &&
+                         !projectAssistant.equals("default"))
+                     {
+                        if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                           return "Posit AI";
+                        else
+                           return "Copilot";
+                     }
+                  }
+
+                  // Fall back to global preference
+                  String assistant = prefs_.assistant().getValue();
+                  if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                     return "Posit AI";
+                  else
+                     return "Copilot";
+               }
+
+               @Override
+               public void onAssistantEvent(AssistantEvent event)
+               {
+                  // If disabled, hide the status message as a catch-all for
                   // this report of messages appearing when they shouldn't:
                   // https://github.com/rstudio/rstudio/issues/16471
-                  if (!assistant_.isAssistantEnabled())
+                  if (!assistant_.isAssistantAvailable())
                   {
                      view_.getStatusBar().hideStatus();
                      return;
@@ -1925,15 +1953,15 @@ public class TextEditingTarget implements
                   case COMPLETION_REQUESTED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           constants_.copilotWaiting());
+                           constants_.assistantWaiting(activeAssistantLabel()));
                      break;
-                     
+
                   case COMPLETION_CANCELLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           constants_.copilotNoCompletions());
+                           constants_.assistantNoCompletions(activeAssistantLabel()));
                      break;
-                     
+
                   case COMPLETION_RECEIVED_SOME:
 
                      ClickHandler handler = null;
@@ -1967,34 +1995,34 @@ public class TextEditingTarget implements
 
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_OK,
-                           constants_.copilotResponseReceived(),
+                           constants_.assistantResponseReceived(activeAssistantLabel()),
                            handler);
 
                      break;
-                     
+
                   case COMPLETION_RECEIVED_NONE:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           constants_.copilotNoCompletions());
+                           constants_.assistantNoCompletions(activeAssistantLabel()));
                      break;
-                     
+
                   case COMPLETION_ERROR:
                      String message = (String) event.getData();
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_ERROR,
-                           constants_.copilotResponseErrorMessage(message));
+                           constants_.assistantResponseErrorMessage(activeAssistantLabel(), message));
                      break;
-                     
+
                   case COMPLETIONS_ENABLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           constants_.copilotEnabled());
+                           constants_.assistantCompletionsEnabled(activeAssistantLabel()));
                      break;
-                     
+
                   case COMPLETIONS_DISABLED:
                      view_.getStatusBar().showStatus(
                            StatusBarIconType.TYPE_INFO,
-                           constants_.copilotDisabled());
+                           constants_.assistantCompletionsDisabled(activeAssistantLabel()));
                      break;
                      
                   }

@@ -58,7 +58,7 @@ public class AssistantEvent extends GwtEvent<AssistantEvent.Handler>
    // Boilerplate ----
    public interface Handler extends EventHandler
    {
-      void onAssistant(AssistantEvent event);
+      void onAssistantEvent(AssistantEvent event);
    }
 
    @Override
@@ -70,7 +70,7 @@ public class AssistantEvent extends GwtEvent<AssistantEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onAssistant(this);
+      handler.onAssistantEvent(this);
    }
 
    public static final Type<Handler> TYPE = new Type<>();

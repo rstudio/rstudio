@@ -37,7 +37,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
@@ -76,7 +76,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Save assistant selection
       // Map "none" (used as default placeholder in UI) to "default" for storage
       String selectedAssistant = selAssistant_.getValue();
-      if (selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
+      if (selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
          assistantOptions.assistant = "default";
       else
          assistantOptions.assistant = selectedAssistant;
@@ -118,24 +118,24 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       {
          assistantLabels = new String[] {
                constants_.defaultInParentheses(),
-               prefsConstants_.rstudioAssistantEnum_posit_ai(),
-               prefsConstants_.rstudioAssistantEnum_copilot()
+               prefsConstants_.assistantEnum_posit(),
+               prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+               UserPrefsAccessor.ASSISTANT_NONE,
+               UserPrefsAccessor.ASSISTANT_POSIT,
+               UserPrefsAccessor.ASSISTANT_COPILOT
          };
       }
       else
       {
          assistantLabels = new String[] {
                constants_.defaultInParentheses(),
-               prefsConstants_.rstudioAssistantEnum_copilot()
+               prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE,
-               UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT
+               UserPrefsAccessor.ASSISTANT_NONE,
+               UserPrefsAccessor.ASSISTANT_COPILOT
          };
       }
       selAssistant_ = new SelectWidget(
@@ -145,7 +145,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             false,
             true,
             false);
-      selAssistant_.setValue(prefs_.rstudioAssistant().getGlobalValue());
+      selAssistant_.setValue(prefs_.assistant().getGlobalValue());
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -184,8 +184,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) -> {
-         copilotStarted_ = event.getStatus() == AssistantStatusChangedEvent.RUNNING;
+      copilotStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      {
+         copilotStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
       });
    }
 
@@ -230,24 +231,26 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistant_.getValue();
-            if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE))
+            if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
             }
-            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
+            else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
             }
-            else if (value.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+            else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
-                  refresh();
+                  // Pass assistantType so backend knows which language server to use
+                  // even if the preference hasn't been saved yet
+                  refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
                   copilotRefreshed_ = true;
                }
             }
@@ -263,14 +266,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       VerticalPanel panel = new VerticalPanel();
 
       // Show what global assistant is currently active
-      String globalAssistant = prefs_.rstudioAssistant().getGlobalValue();
+      String globalAssistant = prefs_.assistant().getGlobalValue();
       String globalAssistantName;
-      if (globalAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
-         globalAssistantName = prefsConstants_.rstudioAssistantEnum_copilot();
-      else if (globalAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI))
-         globalAssistantName = prefsConstants_.rstudioAssistantEnum_posit_ai();
+      if (globalAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
+         globalAssistantName = prefsConstants_.assistantEnum_copilot();
+      else if (globalAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+         globalAssistantName = prefsConstants_.assistantEnum_posit();
       else
-         globalAssistantName = prefsConstants_.rstudioAssistantEnum_none();
+         globalAssistantName = prefsConstants_.assistantEnum_none();
 
       Label lblInfo = new Label(constants_.projectAssistantDefaultInfo(globalAssistantName));
       panel.add(spaced(lblInfo));
@@ -362,15 +365,21 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    
    private void refresh()
    {
+      refresh("");
+   }
+
+   private void refresh(String assistantType)
+   {
       hideButtons();
 
-      server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
+      // Use overloaded method to pass assistantType if provided
+      ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
             hideButtons();
-            
+
             if (response == null)
             {
                lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
@@ -381,7 +390,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                {
                   // Copilot still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
-                     refresh();
+                     refresh(assistantType);
                   });
                }
                else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
@@ -424,13 +433,22 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                lblCopilotStatus_.setText(message);
             }
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
          }
-      });
+      };
+
+      if (assistantType.isEmpty())
+      {
+         server_.assistantStatus(callback);
+      }
+      else
+      {
+         server_.assistantStatus(assistantType, callback);
+      }
    }
 
    @Override
@@ -442,7 +460,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Map "default" (or null/empty) to "none" which represents "(Default)" in UI
       String projectAssistant = options.getAssistantOptions().assistant;
       if (projectAssistant == null || projectAssistant.isEmpty() || projectAssistant.equals("default"))
-         selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE);
+         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
       else
          selAssistant_.setValue(projectAssistant);
 
@@ -450,7 +468,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       initModel();
 
       // Only refresh Copilot status if Copilot is the selected assistant
-      if (selAssistant_.getValue().equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
+      if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
          refresh();
          copilotRefreshed_ = true;
