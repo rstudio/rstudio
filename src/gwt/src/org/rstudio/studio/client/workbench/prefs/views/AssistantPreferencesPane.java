@@ -41,19 +41,18 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.assistant.Assistant;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
-import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 
 import com.google.gwt.aria.client.Roles;
@@ -570,16 +569,6 @@ public class AssistantPreferencesPane extends PreferencesPane
             commands_.projectOptions().execute();
          }
       });
-      
-      events_.addHandler(CopilotEnabledEvent.TYPE, (event) ->
-      {
-         refresh(selAssistant_.getValue());
-      });
-   }
-   
-   private void refresh()
-   {
-      refresh("");
    }
 
    private void refresh(String assistantType)
