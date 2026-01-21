@@ -691,6 +691,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void assistantVerifyInstalled(String assistantType,
+                                        ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(assistantType)
+            .get();
+      sendRequest(RPC_SCOPE, "assistant_verify_installed", params, requestCallback);
+   }
+
+   @Override
    public void assistantDiagnostics(ServerRequestCallback<AssistantDiagnosticsResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "assistant_diagnostics", requestCallback);
@@ -712,6 +722,16 @@ public class RemoteServer implements Server
    public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "assistant_status", requestCallback);
+   }
+
+   @Override
+   public void assistantStatus(String assistantType,
+                               ServerRequestCallback<AssistantStatusResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(assistantType)
+            .get();
+      sendRequest(RPC_SCOPE, "assistant_status", params, requestCallback);
    }
 
    @Override

@@ -314,7 +314,7 @@ protected:
       value<bool>(&allowCopilot_)->default_value(true),
       "Indicates whether or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
-      value<bool>(&allowPositAssistant_)->default_value(false),
+      value<bool>(&allowPositAssistant_)->default_value(true),
       "Indicates whether or not to allow use of the Posit AI assistant feature.");
 
    pR->add_options()
@@ -481,7 +481,7 @@ protected:
 
    pPai->add_options()
       ("posit-assistant-enabled",
-      value<bool>(&positAssistantEnabled_)->default_value(false),
+      value<bool>(&positAssistantEnabled_)->default_value(true),
       "Indicates whether or not Posit Assistant integration can be enabled.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),

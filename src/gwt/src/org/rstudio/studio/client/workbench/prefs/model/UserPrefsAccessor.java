@@ -3705,7 +3705,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String ASSISTANT_COPILOT = "copilot";
 
    /**
-    * Control when AI code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    public PrefValue<String> assistantCompletionsTrigger()
    {
@@ -3823,7 +3823,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    public PrefValue<String> copilotCompletionsTrigger()
    {

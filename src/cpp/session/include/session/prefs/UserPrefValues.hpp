@@ -2039,7 +2039,7 @@ public:
    core::Error setAssistant(std::string val);
 
    /**
-    * Control when AI code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    std::string assistantCompletionsTrigger();
    core::Error setAssistantCompletionsTrigger(std::string val);
@@ -2087,7 +2087,7 @@ public:
    core::Error setCopilotEnabled(bool val);
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    std::string copilotCompletionsTrigger();
    core::Error setCopilotCompletionsTrigger(std::string val);

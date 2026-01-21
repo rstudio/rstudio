@@ -3378,7 +3378,7 @@ core::Error UserPrefValues::setAssistant(std::string val)
 }
 
 /**
- * Control when AI code suggestions are displayed in the editor.
+ * Control when code suggestions are displayed in the editor.
  */
 std::string UserPrefValues::assistantCompletionsTrigger()
 {
@@ -3482,7 +3482,7 @@ core::Error UserPrefValues::setCopilotEnabled(bool val)
 }
 
 /**
- * Control when Copilot code suggestions are displayed in the editor.
+ * Control when code suggestions are displayed in the editor.
  */
 std::string UserPrefValues::copilotCompletionsTrigger()
 {

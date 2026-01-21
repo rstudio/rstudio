@@ -2160,11 +2160,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantEnum_copilot();
 
    /**
-    * Control when AI code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
-   @DefaultStringValue("Show AI code suggestions:")
+   @DefaultStringValue("Show code suggestions:")
    String assistantCompletionsTriggerTitle();
-   @DefaultStringValue("Control when AI code suggestions are displayed in the editor.")
+   @DefaultStringValue("Control when code suggestions are displayed in the editor.")
    String assistantCompletionsTriggerDescription();
    @DefaultStringValue("Automatically")
    String assistantCompletionsTriggerEnum_auto();
@@ -2232,11 +2232,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotEnabledDescription();
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
-   @DefaultStringValue("Show Copilot code suggestions:")
+   @DefaultStringValue("Show code suggestions:")
    String copilotCompletionsTriggerTitle();
-   @DefaultStringValue("Control when Copilot code suggestions are displayed in the editor.")
+   @DefaultStringValue("Control when code suggestions are displayed in the editor.")
    String copilotCompletionsTriggerDescription();
    @DefaultStringValue("Automatically")
    String copilotCompletionsTriggerEnum_auto();

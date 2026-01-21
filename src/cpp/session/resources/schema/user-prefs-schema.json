@@ -1782,8 +1782,8 @@
             "enumReadable": ["Automatically", "Manually (Ctrl + Backslash)"],
             "default": "auto",
             "fallback": "copilot_completions_trigger",
-            "title": "Show AI code suggestions:",
-            "description": "Control when AI code suggestions are displayed in the editor."
+            "title": "Show code suggestions:",
+            "description": "Control when code suggestions are displayed in the editor."
         },
         "assistant_completions_delay": {
             "type": "integer",
@@ -1839,8 +1839,8 @@
             "enum": ["auto", "manual"],
             "enumReadable": ["Automatically", "Manually (Ctrl + Backslash)"],
             "default": "auto",
-            "title": "Show Copilot code suggestions:",
-            "description": "Control when Copilot code suggestions are displayed in the editor."
+            "title": "Show code suggestions:",
+            "description": "Control when code suggestions are displayed in the editor."
         },
         "copilot_completions_delay": {
             "type": "integer",

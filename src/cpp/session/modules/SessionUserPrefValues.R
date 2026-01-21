@@ -2405,9 +2405,9 @@
    clear = function() { .rs.clearUserPref("assistant") }
 )
 
-# Show AI code suggestions:
+# Show code suggestions:
 #
-# Control when AI code suggestions are displayed in the editor.
+# Control when code suggestions are displayed in the editor.
 .rs.uiPrefs$assistantCompletionsTrigger <- list(
    get = function() { .rs.getUserPref("assistant_completions_trigger") },
    set = function(value) { .rs.setUserPref("assistant_completions_trigger", value) },
@@ -2482,9 +2482,9 @@
    clear = function() { .rs.clearUserPref("copilot_enabled") }
 )
 
-# Show Copilot code suggestions:
+# Show code suggestions:
 #
-# Control when Copilot code suggestions are displayed in the editor.
+# Control when code suggestions are displayed in the editor.
 .rs.uiPrefs$copilotCompletionsTrigger <- list(
    get = function() { .rs.getUserPref("copilot_completions_trigger") },
    set = function(value) { .rs.setUserPref("copilot_completions_trigger", value) },

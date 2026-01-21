@@ -595,6 +595,9 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String copilotCompletionsHeader();
     String copilotSuggestionsHeader();
     String copilotSuggestionsShortcutHint(String modifier);
+    String assistantCompletionsHeader();
+    String assistantSuggestionsHeader();
+    String assistantSuggestionsShortcutHint(String modifier);
     String copilotCompletionsDelayLabel();
     String copilotDisabledByAdmin();
     String copilotStatusDialogCaption();

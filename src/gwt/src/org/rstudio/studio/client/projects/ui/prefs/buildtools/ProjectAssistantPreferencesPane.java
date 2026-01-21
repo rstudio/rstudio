@@ -247,7 +247,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
-                  refresh();
+                  // Pass assistantType so backend knows which language server to use
+                  // even if the preference hasn't been saved yet
+                  refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
                   copilotRefreshed_ = true;
                }
             }
@@ -362,15 +364,21 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    
    private void refresh()
    {
+      refresh("");
+   }
+
+   private void refresh(String assistantType)
+   {
       hideButtons();
 
-      server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
+      // Use overloaded method to pass assistantType if provided
+      ServerRequestCallback<AssistantStatusResponse> callback = new ServerRequestCallback<AssistantStatusResponse>()
       {
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
             hideButtons();
-            
+
             if (response == null)
             {
                lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
@@ -381,7 +389,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                {
                   // Copilot still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
-                     refresh();
+                     refresh(assistantType);
                   });
                }
                else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
@@ -424,13 +432,22 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                lblCopilotStatus_.setText(message);
             }
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
             Debug.logError(error);
          }
-      });
+      };
+
+      if (assistantType.isEmpty())
+      {
+         server_.assistantStatus(callback);
+      }
+      else
+      {
+         server_.assistantStatus(assistantType, callback);
+      }
    }
 
    @Override

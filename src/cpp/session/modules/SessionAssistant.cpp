@@ -368,15 +368,18 @@ FilePath copilotLanguageServerPath()
    return copilotPath;
 }
 
-FilePath assistantLanguageServerPath()
+FilePath assistantLanguageServerPath(const std::string& assistantType = "")
 {
    // Allow override via environment variable
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
 
-   // Otherwise, determine path based on selected assistant type
-   std::string assistant = prefs::userPrefs().assistant();
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
+
    if (assistant == kAssistantPosit)
    {
       return paiLanguageServerPath();
@@ -393,16 +396,17 @@ FilePath assistantLanguageServerPath()
    }
 }
 
-bool isAgentInstalled()
+bool isAgentInstalled(const std::string& assistantType = "")
 {
-   return assistantLanguageServerPath().exists();
+   return assistantLanguageServerPath(assistantType).exists();
 }
 
-bool isAssistantEnabled()
+bool isAssistantEnabled(const std::string& assistantType = "")
 {
-   // First, check the user preference to see if the user is requesting
-   // a specific assistant type (Posit AI, Copilot, None).
-   std::string assistant = prefs::userPrefs().assistant();
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
 
    // If no assistant is selected, we're done.
    if (assistant == kAssistantNone)
@@ -411,19 +415,22 @@ bool isAssistantEnabled()
       return false;
    }
 
-   // Check for project-level override.
-   std::string projectAssistant = s_assistantProjectOptions.assistant;
-   if (!projectAssistant.empty() && projectAssistant != "default")
+   // Check for project-level override (only if not using an explicit assistantType)
+   if (assistantType.empty())
    {
-      // If the project explicitly disables the assistant, respect that.
-      if (projectAssistant == kAssistantNone)
+      std::string projectAssistant = s_assistantProjectOptions.assistant;
+      if (!projectAssistant.empty() && projectAssistant != "default")
       {
-         s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
-         return false;
-      }
+         // If the project explicitly disables the assistant, respect that.
+         if (projectAssistant == kAssistantNone)
+         {
+            s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
+            return false;
+         }
 
-      // Otherwise, use the project-specified assistant type.
-      assistant = projectAssistant;
+         // Otherwise, use the project-specified assistant type.
+         assistant = projectAssistant;
+      }
    }
 
    // Check whether the selected assistant type is allowed by the administrator.
@@ -445,7 +452,7 @@ bool isAssistantEnabled()
    }
 
    // Finally, check whether the selected assistant type is installed.
-   if (!isAgentInstalled())
+   if (!isAgentInstalled(assistant))
    {
       s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
       return false;
@@ -894,7 +901,7 @@ bool stopAgentSync()
    return waitFor([]() { return s_agentPid == -1; });
 }
 
-Error startAgent()
+Error startAgent(const std::string& assistantType = "")
 {
    if (s_agentRuntimeStatus != AgentRuntimeStatus::Unknown &&
        s_agentRuntimeStatus != AgentRuntimeStatus::Stopped)
@@ -906,10 +913,15 @@ Error startAgent()
 
    Error error;
 
+   // Use provided assistant type, or read from preferences if not specified
+   std::string assistant = assistantType.empty()
+      ? prefs::userPrefs().assistant()
+      : assistantType;
+
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
-   
+
    // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
    std::string certificatesFile = session::options().copilotSslCertificatesFile();
    if (!certificatesFile.empty())
@@ -947,7 +959,6 @@ Error startAgent()
 #endif
 
    // Launch the assistant, using a helper script if one is configured.
-   std::string assistant = prefs::userPrefs().assistant();
    FilePath copilotHelper = session::options().copilotHelper();
    FilePath positAssistantHelper = session::options().positAssistantHelper();
 
@@ -990,7 +1001,7 @@ Error startAgent()
    else
    {
       // Run assistant directly (no helper script)
-      FilePath assistantPath = assistantLanguageServerPath();
+      FilePath assistantPath = assistantLanguageServerPath(assistant);
       if (!assistantPath.exists())
          return fileNotFoundError(assistantPath, ERROR_LOCATION);
 
@@ -1088,7 +1099,8 @@ Error startAgent()
    return Success();
 }
 
-bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
+bool ensureAgentRunning(const std::string& assistantType = "",
+                        Error* pAgentLaunchError = nullptr)
 {
    if (s_agentPid != -1)
    {
@@ -1100,30 +1112,44 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    if (s_isSessionShuttingDown)
       return false;
 
-   // bail if we haven't enabled assistant
-   if (!s_assistantEnabled)
+   // Check if assistant is enabled
+   // When assistantType is explicitly provided (e.g., from preferences dialog),
+   // check directly rather than relying on cached state
+   if (assistantType.empty())
    {
-      if (!s_assistantInitialized)
+      // Use cached state for normal operation
+      if (!s_assistantEnabled)
       {
-         DLOG("Assistant is not enabled; not starting agent.");
-         s_assistantInitialized = true;
+         if (!s_assistantInitialized)
+         {
+            DLOG("Assistant is not enabled; not starting agent.");
+            s_assistantInitialized = true;
+         }
+         return false;
       }
-      return false;
+   }
+   else
+   {
+      // Check directly for explicit assistant type
+      if (!isAssistantEnabled(assistantType))
+      {
+         return false;
+      }
    }
 
    // bail if we're not on the main thread; we make use of R when attempting
    // to start R so we cannot safely start on a child thread
    if (!thread::isMainThread())
       return false;
-   
+
    // preflight checks passed; try to start the agent
-   Error error = startAgent();
+   Error error = startAgent(assistantType);
    if (error)
       LOG_ERROR(error);
-   
+
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
-   
+
    s_assistantInitialized = true;
    return error == Success();
 }
@@ -1651,8 +1677,16 @@ SEXP rs_assistantStopAgent()
 Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
-   json::Object responseJson;
-   pResponse->setResult(isAgentInstalled());
+   // Read optional assistantType parameter (used by preferences dialog)
+   std::string assistantType;
+   if (request.params.getSize() > 0)
+   {
+      Error error = core::json::readParams(request.params, &assistantType);
+      if (error)
+         assistantType = "";
+   }
+
+   pResponse->setResult(isAgentInstalled(assistantType));
    return Success();
 }
 
@@ -2102,9 +2136,18 @@ Error assistantSignOut(const json::JsonRpcRequest& request,
 Error assistantStatus(const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Read optional assistantType parameter (used by preferences dialog)
+   std::string assistantType;
+   if (request.params.getSize() > 0)
+   {
+      Error error = core::json::readParams(request.params, &assistantType);
+      if (error)
+         assistantType = "";
+   }
+
    // Make sure assistant is running
    Error launchError;
-   if (!ensureAgentRunning(&launchError))
+   if (!ensureAgentRunning(assistantType, &launchError))
    {
       json::JsonRpcResponse response;
       json::Object resultJson;
