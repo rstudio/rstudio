@@ -856,7 +856,7 @@ public class TextEditingTargetAssistantHelper
    private void resetCompletion()
    {
       display_.removeGhostText();
-      completionTimer_.cancel();
+      suggestionTimer_.cancel();
       activeCompletion_ = null;
       detachCompletionAnchors();
    }
@@ -929,7 +929,7 @@ public class TextEditingTargetAssistantHelper
 
       registrations_ = new HandlerRegistrations();
 
-      completionTimer_ = new Timer()
+      suggestionTimer_ = new Timer()
       {
          @Override
          public void run()
@@ -1168,22 +1168,13 @@ public class TextEditingTargetAssistantHelper
          display_.removeGhostText();
          registrations_.removeHandler();
          requestId_ = 0;
-         completionTimer_.cancel();
+         suggestionTimer_.cancel();
          completionTriggeredByCommand_ = false;
          events_.fireEvent(new AssistantEvent(AssistantEventType.ASSISTANT_DISABLED));
       }
       else
       {
          registrations_.addAll(
-
-               display_.addValueChangeHandler((event) ->
-               {
-                  // Clear any active NES suggestion on document change
-                  resetSuggestion();
-
-                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
-                  nesTimer_.schedule(delayMs);
-               }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
@@ -1324,7 +1315,7 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addCursorChangedHandler((event) ->
+               display_.addValueChangeHandler((event) ->
                {
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
@@ -1345,14 +1336,14 @@ public class TextEditingTargetAssistantHelper
                   // Don't do anything if we have a selection.
                   if (display_.hasSelection())
                   {
-                     completionTimer_.cancel();
+                     suggestionTimer_.cancel();
                      completionTriggeredByCommand_ = false;
                      return;
                   }
 
                   // Request completions on cursor navigation.
                   int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
-                  completionTimer_.schedule(delayMs);
+                  suggestionTimer_.schedule(delayMs);
 
                   // Delay handler so we can handle a Tab keypress
                   Timers.singleShot(0, () -> {
@@ -1676,7 +1667,7 @@ public class TextEditingTargetAssistantHelper
       if (isAssistantAvailable() && display_.isFocused())
       {
          completionTriggeredByCommand_ = true;
-         completionTimer_.schedule(0);
+         suggestionTimer_.schedule(0);
       }
    }
 
@@ -2104,7 +2095,7 @@ public class TextEditingTargetAssistantHelper
 
    private final TextEditingTarget target_;
    private final DocDisplay display_;
-   private final Timer completionTimer_;
+   private final Timer suggestionTimer_;
    private final Timer suspendTimer_;
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
