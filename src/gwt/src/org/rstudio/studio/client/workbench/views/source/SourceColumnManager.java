@@ -73,8 +73,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -138,7 +138,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             SourceExtendedTypeDetectedEvent.Handler,
                                             DocumentCloseAllNoSaveEvent.Handler,
                                             DocumentCloseEvent.Handler,
-                                            AssistantStatusChangedEvent.Handler,
+                                            AssistantRuntimeStatusChangedEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
@@ -250,7 +250,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
-      events_.addHandler(AssistantStatusChangedEvent.TYPE, this);
+      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, this);
       
       events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
@@ -1287,20 +1287,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    }
 
    @Override
-   public void onAssistantStatusChangedEvent(AssistantStatusChangedEvent event)
+   public void onAssistantRuntimeStatusChangedEvent(AssistantRuntimeStatusChangedEvent event)
    {
       int status = event.getStatus();
 
       // After Copilot first starts let it know about documents that were loaded before
       // it started (i.e. files loaded from a previous session).
-      if (status == AssistantStatusChangedEvent.RUNNING && !copilotNotifiedAboutOpenFiles_)
+      if (status == AssistantRuntimeStatusChangedEvent.RUNNING && !copilotNotifiedAboutOpenFiles_)
       {
          server_.assistantRegisterOpenFiles(getOpenFilePaths(), new VoidServerRequestCallback());
          copilotNotifiedAboutOpenFiles_ = true;
 
       }
-      else if (status == AssistantStatusChangedEvent.STOPPING ||
-               status == AssistantStatusChangedEvent.STOPPED)
+      else if (status == AssistantRuntimeStatusChangedEvent.STOPPING ||
+               status == AssistantRuntimeStatusChangedEvent.STOPPED)
       {
          // In case Copilot gets turned back on during the current session...
          copilotNotifiedAboutOpenFiles_ = false;

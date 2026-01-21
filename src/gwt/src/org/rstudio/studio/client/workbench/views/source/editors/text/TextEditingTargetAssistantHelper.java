@@ -47,7 +47,7 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
@@ -1124,16 +1124,19 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
-      events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) ->
+      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
       {
-         assistantStatus_ = event.getStatus();
+         assistantRuntimeStatus_ = event.getStatus();
          manageHandlers();
       });
 
+      // Initialize the assistant status from the session info (in case the
+      // session was already initialized before this helper was created)
+      assistantRuntimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
       events_.addHandler(SessionInitEvent.TYPE, (event) ->
       {
          SessionInfo info = session_.getSessionInfo();
-         assistantStatus_ = info.getAssistantRuntimeStatus();
+         assistantRuntimeStatus_ = info.getAssistantRuntimeStatus();
          manageHandlers();
       });
 
@@ -1841,7 +1844,7 @@ public class TextEditingTargetAssistantHelper
 
    public boolean isAssistantAvailable()
    {
-      return assistantStatus_ == AssistantStatusChangedEvent.RUNNING;
+      return assistantRuntimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
    }
 
    // Normalize an inline completion by trimming overlapping prefix/suffix.
@@ -2143,7 +2146,7 @@ public class TextEditingTargetAssistantHelper
    private boolean pendingSuggestionRevealed_ = false;
 
    // Assistant status
-   private int assistantStatus_ = AssistantStatusChangedEvent.UNKNOWN;
+   private int assistantRuntimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
 
    // Injected ----
    private Copilot copilot_;

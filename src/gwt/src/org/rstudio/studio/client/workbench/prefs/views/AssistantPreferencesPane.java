@@ -43,7 +43,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
@@ -242,8 +242,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) -> {
-         copilotStarted_ = event.getStatus() == AssistantStatusChangedEvent.RUNNING;
+      copilotStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) -> {
+         copilotStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
       });
    }
    
