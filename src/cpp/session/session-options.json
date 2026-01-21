@@ -583,7 +583,7 @@
             "type": "bool",
             "memberName": "allowCopilot_",
             "defaultValue": true,
-            "description": "Indicates where or not to allow use of Copilot-related features."
+            "description": "Indicates whether or not to allow use of Copilot-related features."
          },
          {
             "name": "allow-posit-assistant",

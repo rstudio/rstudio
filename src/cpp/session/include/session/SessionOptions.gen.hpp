@@ -312,7 +312,7 @@ protected:
       "Sessions will be aborted if there is less than 100 MiB of free RAM or this configured percentage. Disable abort entirely by enabling allow-over-limit-sessions. Increase this value for easily reproducing this scenario in a test environment or to more strictly enforce memory limits on the system.")
       ("allow-copilot",
       value<bool>(&allowCopilot_)->default_value(true),
-      "Indicates where or not to allow use of Copilot-related features.")
+      "Indicates whether or not to allow use of Copilot-related features.")
       ("allow-posit-assistant",
       value<bool>(&allowPositAssistant_)->default_value(false),
       "Indicates whether or not to allow use of the Posit AI assistant feature.");
