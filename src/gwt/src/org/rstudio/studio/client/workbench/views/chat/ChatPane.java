@@ -439,6 +439,10 @@ public class ChatPane
             // UI is loaded, hide messages
             hideMessage();
             break;
+         case ASSISTANT_NOT_SELECTED:
+            updateFrameContent(generateMessageHTML(
+               constants_.chatAssistantNotSelected()));
+            break;
       }
    }
 

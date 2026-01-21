@@ -59,4 +59,5 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatBackendStartTimeout();
     String chatBackendStatusCheckFailed(String error);
     String chatRestartFailed(String error);
+    String chatAssistantNotSelected();
 }

@@ -677,6 +677,14 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_COPILOT);
       }
 
+      // Reset to "none" if user has Posit AI selected but PAI is no longer enabled
+      if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
+          !PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs))
+      {
+         prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
+         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
+      }
+
       initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
