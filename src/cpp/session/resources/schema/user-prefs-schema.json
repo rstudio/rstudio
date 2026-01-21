@@ -1943,11 +1943,6 @@
             "default": "errors_warnings_messages",
             "title": "Use extended display for",
             "description": "When enabled, R errors, warnings, and messages will receive an extended display with custom styles applied."
-        },
-        "pai": {
-            "type": "boolean",
-            "description": "Experimental",
-            "default": false
         }
       }
 }

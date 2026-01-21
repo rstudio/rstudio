@@ -484,7 +484,6 @@ namespace prefs {
 #define kConsoleHighlightConditionsErrorsWarnings "errors_warnings"
 #define kConsoleHighlightConditionsErrors "errors"
 #define kConsoleHighlightConditionsNone "none"
-#define kPai "pai"
 
 class UserPrefValues: public Preferences
 {
@@ -2187,12 +2186,6 @@ public:
     */
    std::string consoleHighlightConditions();
    core::Error setConsoleHighlightConditions(std::string val);
-
-   /**
-    * Experimental
-    */
-   bool pai();
-   core::Error setPai(bool val);
 
 };
 

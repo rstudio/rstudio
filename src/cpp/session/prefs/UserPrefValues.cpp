@@ -3702,19 +3702,6 @@ core::Error UserPrefValues::setConsoleHighlightConditions(std::string val)
    return writePref("console_highlight_conditions", val);
 }
 
-/**
- * Experimental
- */
-bool UserPrefValues::pai()
-{
-   return readPref<bool>("pai");
-}
-
-core::Error UserPrefValues::setPai(bool val)
-{
-   return writePref("pai", val);
-}
-
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -4001,7 +3988,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReformatOnSave,
       kProjectUserDataDirectory,
       kConsoleHighlightConditions,
-      kPai,
    });
 }
    

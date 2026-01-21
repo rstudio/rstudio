@@ -98,11 +98,6 @@ bool isCopilotAllowedByAdmin()
 
 bool isPositAssistantAllowedByAdmin()
 {
-   // The 'pai' user preference is used as a (temporary) control
-   // for enabling/disabling the Posit Assistant.
-   if (!prefs::userPrefs().pai())
-      return false;
-
    return
       session::options().allowPositAssistant() &&
       session::options().positAssistantEnabled();

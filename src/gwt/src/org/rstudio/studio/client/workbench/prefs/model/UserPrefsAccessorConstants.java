@@ -2393,14 +2393,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("(None)")
    String consoleHighlightConditionsEnum_none();
 
-   /**
-    * Experimental
-    */
-   @DefaultStringValue("")
-   String paiTitle();
-   @DefaultStringValue("Experimental")
-   String paiDescription();
-
 
 
 }
