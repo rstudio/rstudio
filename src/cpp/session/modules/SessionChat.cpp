@@ -138,6 +138,12 @@ bool isPaiEnabled()
    return options().allowPositAssistant() && prefs::userPrefs().pai();
 }
 
+// Returns true if the user has selected Posit AI as their assistant
+bool isPaiSelected()
+{
+   return prefs::userPrefs().rstudioAssistant() == kRstudioAssistantPositAi;
+}
+
 // Selective imports from chat modules to avoid namespace pollution
 namespace chat_constants = rstudio::session::modules::chat::constants;
 namespace chat_types = rstudio::session::modules::chat::types;
@@ -2945,9 +2951,9 @@ Error checkForUpdatesOnStartup()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiEnabled())
+   if (!isPaiSelected())
    {
-      DLOG("Update check skipped: posit assistant not configured");
+      DLOG("Update check skipped: posit assistant not selected");
       return Success();
    }
 
@@ -3532,9 +3538,9 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiEnabled())
+   if (!isPaiSelected())
    {
-      // Return empty/negative response - don't reveal feature
+      // Return empty/negative response - feature not selected
       json::Object result;
       result["updateAvailable"] = false;
       result["noCompatibleVersion"] = false;
@@ -3563,10 +3569,10 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiEnabled())
+   if (!isPaiSelected())
    {
       return systemError(boost::system::errc::operation_not_permitted,
-                        "Feature not enabled",
+                        "Feature not selected",
                         ERROR_LOCATION);
    }
 
@@ -3696,9 +3702,9 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiEnabled())
+   if (!isPaiSelected())
    {
-      // Return idle status - don't reveal feature exists
+      // Return idle status - feature not selected
       json::Object result;
       result["status"] = "idle";
       pResponse->setResult(result);
@@ -3962,6 +3968,13 @@ Error initialize()
       {
          WLOG("Invalid CHAT_BACKEND_MIN_LEVEL value '{}', using default 'error'", backendMinLevel);
       }
+   }
+
+   // Validate assistant preference consistency
+   // If user has Posit AI selected but PAI is no longer available, reset to "none"
+   if (isPaiSelected() && !isPaiEnabled())
+   {
+      prefs::userPrefs().setRstudioAssistant(kRstudioAssistantNone);
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);

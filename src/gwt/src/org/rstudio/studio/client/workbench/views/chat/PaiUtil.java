@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 /**
  * Utility class for Posit AI (PAI) feature availability checks.
@@ -34,5 +35,18 @@ public class PaiUtil
    public static boolean isPaiEnabled(SessionInfo sessionInfo, UserPrefs userPrefs)
    {
       return sessionInfo.getAllowPositAssistant() && userPrefs.pai().getGlobalValue();
+   }
+
+   /**
+    * Returns true if the user has selected Posit AI as their assistant.
+    * Use this to gate features that should only be active when PAI is selected.
+    *
+    * @param userPrefs The user preferences
+    * @return true if user has selected Posit AI, false otherwise
+    */
+   public static boolean isPaiSelected(UserPrefs userPrefs)
+   {
+      return userPrefs.rstudioAssistant().getGlobalValue()
+            .equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_POSIT_AI);
    }
 }

@@ -126,8 +126,8 @@ public class AboutDialog extends ModalDialogBase
 
    private void fetchPositAssistantVersion()
    {
-      // Only fetch if pai is allowed and preference is enabled
-      if (!PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
+      // Only fetch if user has selected Posit AI as their assistant
+      if (!PaiUtil.isPaiSelected(userPrefs_))
          return;
 
       chatServer_.chatGetVersion(new ServerRequestCallback<String>()

@@ -22,6 +22,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
@@ -45,7 +46,8 @@ public class ChatPresenter extends BasePresenter
          RESTARTING,
          NOT_INSTALLED,
          ERROR,
-         READY
+         READY,
+         ASSISTANT_NOT_SELECTED
       }
 
       interface Observer
@@ -91,7 +93,8 @@ public class ChatPresenter extends BasePresenter
       EventBus events,
       Commands commands,
       Binder binder,
-      ChatServerOperations server)
+      ChatServerOperations server,
+      UserPrefs prefs)
    {
       super(display);
       binder.bind(commands, this);
@@ -99,6 +102,7 @@ public class ChatPresenter extends BasePresenter
       events_ = events;
       commands_ = commands;
       server_ = server;
+      prefs_ = prefs;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -185,6 +189,13 @@ public class ChatPresenter extends BasePresenter
     */
    public void initializeChat()
    {
+      // Check if Posit AI is selected before initializing
+      if (!PaiUtil.isPaiSelected(prefs_))
+      {
+         display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+         return;
+      }
+
       checkForUpdates();
    }
 
@@ -480,6 +491,7 @@ public class ChatPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Commands commands_;
    private final ChatServerOperations server_;
+   private final UserPrefs prefs_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
