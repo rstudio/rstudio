@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.assistant.model;
 
 import org.rstudio.core.client.jsonrpc.RpcError;
-import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
+import org.rstudio.studio.client.workbench.assistant.AssistantUIConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletionCommand;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantRange;
@@ -38,35 +38,35 @@ public class AssistantResponseTypes
    // Used to communicate to the user why the assistant agent might not be running.
    public static class AssistantAgentNotRunningReason
    {
-      public static String reasonToString(int reason)
+      public static String reasonToString(int reason, String assistantName)
       {
          if (reason == Unknown)
          {
-            return constants_.copilotUnknownError();
+            return constants_.assistantUnknownError();
          }
          else if (reason == NotInstalled)
          {
-            return constants_.copilotNotInstalledError();
+            return constants_.assistantNotInstalledError(assistantName);
          }
          else if (reason == DisabledByAdministrator)
          {
-            return constants_.copilotDisabledByAdministratorError();
+            return constants_.assistantDisabledByAdministratorError(assistantName);
          }
          else if (reason == DisabledViaProjectPreferences)
          {
-            return constants_.copilotDisabledViaProjectPreferencesError();
+            return constants_.assistantDisabledViaProjectPreferencesError(assistantName);
          }
          else if (reason == DisabledViaGlobalOptions)
          {
-            return constants_.copilotDisabledViaGlobalOptionsError();
+            return constants_.assistantDisabledViaGlobalOptionsError(assistantName);
          }
          else if (reason == LaunchError)
          {
-            return constants_.copilotLaunchError();
+            return constants_.assistantLaunchError(assistantName);
          }
          else
          {
-            return constants_.copilotUnknownErrorShort();
+            return constants_.assistantUnknownErrorShort();
          }
       }
 
@@ -196,5 +196,5 @@ public class AssistantResponseTypes
       public AssistantNextEditSuggestionsResult result;
    }
 
-   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
+   private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
 }

@@ -2092,60 +2092,40 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Show code completions at the current cursor location"
         context="editor"/>
 
-   <cmd id="copilotDiagnostics"
-        label="Copilot: Show Diagnostics"
-        menuLabel="Show Copilot Diagnostics"
-        desc="Print a Copilot diagnostic report, indicating how the Copilot agent has been configured."/>
-        
-   <cmd id="copilotSignIn"
-        label="Copilot: Sign In"
+   <cmd id="assistantDiagnostics"
+        label="Assistant: Show Diagnostics"
+        menuLabel="Show Assistant Diagnostics"
+        desc="Print an assistant diagnostic report, indicating how the assistant agent has been configured."/>
+
+   <cmd id="assistantSignIn"
+        label="Assistant: Sign In"
         menuLabel="Sign In"
-        desc="Sign in to the GitHub Copilot service."/>
-        
-   <cmd id="copilotSignOut"
-        label="Copilot: Sign Out"
+        desc="Sign in to the assistant service."/>
+
+   <cmd id="assistantSignOut"
+        label="Assistant: Sign Out"
         menuLabel="Sign Out"
-        desc="Sign out from the GitHub Copilot service."/>
-        
-   <cmd id="copilotStatus"
-        label="Copilot: Check Status"
+        desc="Sign out from the assistant service."/>
+
+   <cmd id="assistantStatus"
+        label="Assistant: Check Status"
         menuLabel="Status"
-        desc="Check the status of the GitHub Copilot agent."/>
+        desc="Check the status of the assistant agent."/>
         
-   <cmd id="copilotRequestCompletions"
-        label="Copilot: Request Completions"
+   <cmd id="assistantRequestCompletions"
+        label="Assistant: Request Completions"
         menuLabel="Request Completions"
-        desc="Request Copilot completions at the cursor position."/>
-   
-   <cmd id="copilotAcceptNextWord"
-        label="Copilot: Accept Next Word"
-        menuLabel="Accept Next Word"
-        desc="Accept the next word of the current Copilot suggestion, if any."/>
-   
-   <cmd id="copilotToggleAutomaticCompletions"
-        label="Copilot: Toggle Automatic Completions"
-        menuLabel="Toggle Automatic Completions"
-        desc="When Copilot is enabled, this can be used to temporarily toggle GitHub Copilot on and off in a session."/>
-
-   <cmd id="copilotAcceptNextEditSuggestion"
-        label="Copilot: Accept Next Edit Suggestion"
-        menuLabel="Accept Next Edit Suggestion"
-        desc="Accept the current Copilot next edit suggestion, if any."/>
-
-   <cmd id="copilotDismissNextEditSuggestion"
-        label="Copilot: Dismiss Next Edit Suggestion"
-        menuLabel="Dismiss Next Edit Suggestion"
-        desc="Dismiss the current Copilot next edit suggestion, if any."/>
-
-   <cmd id="assistantRequestSuggestions"
-        label="Assistant: Request Suggestions"
-        menuLabel="Request Suggestions"
-        desc="Request assistant suggestions at the cursor position."/>
+        desc="Request assistant completions at the cursor position."/>
 
    <cmd id="assistantAcceptNextWord"
         label="Assistant: Accept Next Word"
         menuLabel="Accept Next Word"
         desc="Accept the next word of the current assistant suggestion, if any."/>
+
+   <cmd id="assistantToggleAutomaticCompletions"
+        label="Assistant: Toggle Automatic Completions"
+        menuLabel="Toggle Automatic Completions"
+        desc="Toggle assistant completions on and off in a session."/>
 
    <cmd id="assistantAcceptNextEditSuggestion"
         label="Assistant: Accept Next Edit Suggestion"
@@ -2156,6 +2136,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Assistant: Dismiss Next Edit Suggestion"
         menuLabel="Dismiss Next Edit Suggestion"
         desc="Dismiss the current assistant next edit suggestion, if any."/>
+
+   <cmd id="assistantRequestSuggestions"
+        label="Assistant: Request Suggestions"
+        menuLabel="Request Suggestions"
+        desc="Request assistant suggestions at the cursor position."/>
 
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"

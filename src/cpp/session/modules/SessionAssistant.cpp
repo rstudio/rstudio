@@ -198,6 +198,9 @@ bool s_assistantInitialized = false;
 // The PID of the active agent process.
 PidType s_agentPid = -1;
 
+// The type of the currently running agent (e.g., "copilot", "posit").
+std::string s_runningAgentType;
+
 // Error output (if any) that was written during startup.
 std::string s_agentStartupError;
 
@@ -886,12 +889,14 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
+   s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
+   s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
@@ -1056,7 +1061,10 @@ Error startAgent(const std::string& assistantType = "")
       s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    }
-   
+
+   // Record which assistant type is now running
+   s_runningAgentType = assistant;
+
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
    clientInfoJson["name"] = "RStudio";
@@ -1121,14 +1129,41 @@ Error startAgent(const std::string& assistantType = "")
 bool ensureAgentRunning(const std::string& assistantType = "",
                         Error* pAgentLaunchError = nullptr)
 {
-   if (s_agentPid != -1)
-   {
-      return true;
-   }
-
-   // bail if we're shutting down
+   // Bail if we're shutting down
    if (s_isSessionShuttingDown)
       return false;
+
+   // Check if we need to switch assistant types
+   if (s_agentPid != -1)
+   {
+      // If a specific assistant type is requested and it differs from
+      // the currently running agent, stop the current agent first
+      bool switchingAgents =
+         !assistantType.empty() &&
+         !s_runningAgentType.empty() &&
+         assistantType != s_runningAgentType;
+      
+      if (switchingAgents)
+      {
+         DLOG("Switching assistant type from '{}' to '{}'",
+              s_runningAgentType, assistantType);
+
+         // Stop the current agent synchronously
+         if (!stopAgentSync())
+         {
+            ELOG("Failed to stop current agent for assistant type switch");
+            return false;
+         }
+
+         // Reset initialized flag so we properly initialize the new agent
+         s_agentInitialized = false;
+      }
+      else
+      {
+         // Same type or no specific type requested - agent is already running
+         return true;
+      }
+   }
 
    // Check if assistant is enabled
    // When assistantType is explicitly provided (e.g., from preferences dialog),
@@ -1696,13 +1731,13 @@ SEXP rs_assistantStopAgent()
 Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
                                json::JsonRpcResponse* pResponse)
 {
-   // Read optional assistantType parameter (used by preferences dialog)
+   // Read assistantType parameter
    std::string assistantType;
-   if (request.params.getSize() > 0)
+   Error error = core::json::readParams(request.params, &assistantType);
+   if (error)
    {
-      Error error = core::json::readParams(request.params, &assistantType);
-      if (error)
-         assistantType = "";
+      LOG_ERROR(error);
+      return error;
    }
 
    pResponse->setResult(isAgentInstalled(assistantType));
@@ -1712,17 +1747,26 @@ Error assistantVerifyInstalled(const json::JsonRpcRequest& request,
 Error assistantDiagnostics(const json::JsonRpcRequest& request,
                            const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Read assistantType parameter
+   std::string assistantType;
+   Error error = core::json::readParams(request.params, &assistantType);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
    // Make sure assistant is running
-   if (!ensureAgentRunning())
+   if (!ensureAgentRunning(assistantType))
    {
       json::JsonRpcResponse response;
       continuation(Success(), &response);
       return Success();
    }
-   
+
    std::string requestId = core::system::generateUuid();
    sendRequest("debug/diagnostics", requestId, json::Object(), AssistantContinuation(continuation));
-   
+
    return Success();
 }
 
@@ -1938,8 +1982,17 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
 Error assistantSignIn(const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Read assistantType parameter
+   std::string assistantType;
+   Error error = core::json::readParams(request.params, &assistantType);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
    // Make sure assistant is running
-   if (!ensureAgentRunning())
+   if (!ensureAgentRunning(assistantType))
    {
       json::JsonRpcResponse response;
       continuation(Success(), &response);
@@ -1956,8 +2009,17 @@ Error assistantSignIn(const json::JsonRpcRequest& request,
 Error assistantSignOut(const json::JsonRpcRequest& request,
                        const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Read assistantType parameter
+   std::string assistantType;
+   Error error = core::json::readParams(request.params, &assistantType);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
    // Make sure assistant is running
-   if (!ensureAgentRunning())
+   if (!ensureAgentRunning(assistantType))
    {
       json::JsonRpcResponse response;
       continuation(Success(), &response);
@@ -1973,13 +2035,13 @@ Error assistantSignOut(const json::JsonRpcRequest& request,
 Error assistantStatus(const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation)
 {
-   // Read optional assistantType parameter (used by preferences dialog)
+   // Read assistantType parameter
    std::string assistantType;
-   if (request.params.getSize() > 0)
+   Error error = core::json::readParams(request.params, &assistantType);
+   if (error)
    {
-      Error error = core::json::readParams(request.params, &assistantType);
-      if (error)
-         assistantType = "";
+      LOG_ERROR(error);
+      return error;
    }
 
    // Make sure assistant is running

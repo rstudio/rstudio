@@ -1,5 +1,5 @@
 /*
- * Copilot.java
+ * Assistant.java
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot;
+package org.rstudio.studio.client.workbench.assistant;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -26,12 +26,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
-import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
@@ -43,11 +41,13 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseType
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantDiagnostics;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
-import org.rstudio.studio.client.workbench.copilot.ui.CopilotDiagnosticsDialog;
-import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
+import org.rstudio.studio.client.workbench.assistant.ui.AssistantDiagnosticsDialog;
+import org.rstudio.studio.client.workbench.assistant.ui.AssistantSignInDialog;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
@@ -56,17 +56,17 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class Copilot implements ProjectOptionsChangedEvent.Handler
+public class Assistant implements ProjectOptionsChangedEvent.Handler
 {
    @Inject
-   public Copilot(GlobalDisplay display,
-                  Commands commands,
-                  GlobalDisplay globalDisplay,
-                  EventBus events,
-                  UserPrefs prefs,
-                  Session session,
-                  CopilotCommandBinder binder,
-                  AssistantServerOperations server)
+   public Assistant(GlobalDisplay display,
+                    Commands commands,
+                    GlobalDisplay globalDisplay,
+                    EventBus events,
+                    UserPrefs prefs,
+                    Session session,
+                    AssistantCommandBinder binder,
+                    AssistantServerOperations server)
    {
       display_ = display;
       commands_ = commands;
@@ -75,9 +75,9 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       prefs_ = prefs;
       session_ = session;
       server_ = server;
-      
+
       binder.bind(commands_, this);
-      
+
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
          @Override
@@ -86,7 +86,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             assistantProjectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
          }
       });
-      
+
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, new ProjectOptionsChangedEvent.Handler()
       {
          @Override
@@ -101,31 +101,43 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       });
 
    }
-   
+
    public boolean isEnabled()
    {
+      String assistantType = getAssistantType();
+      return !StringUtil.equals(assistantType, UserPrefsAccessor.ASSISTANT_NONE);
+   }
+
+   public String getAssistantType()
+   {
+      // Check project options first
       if (assistantProjectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
       {
-         switch (assistantProjectOptions_.copilot_enabled)
+         String projectAssistant = assistantProjectOptions_.assistant;
+         if (projectAssistant != null && !projectAssistant.isEmpty() && !projectAssistant.equals("default"))
          {
-         case YesNoAskDefault.YES_VALUE: return true;
-         case YesNoAskDefault.NO_VALUE: return false;
-         default: {}
+            return projectAssistant;
          }
       }
-      
-      return prefs_.copilotEnabled().getGlobalValue();
+
+      // Fall back to global preference
+      return prefs_.assistant().getGlobalValue();
    }
-   
+
    @Handler
-   public void onCopilotDiagnostics()
+   public void onAssistantDiagnostics()
    {
-      onCopilotDiagnostics(() -> {});
+      showDiagnostics(() -> {});
    }
-   
-   public void onCopilotDiagnostics(Command onCompleted)
+
+   public void showDiagnostics(Command onCompleted)
    {
-      server_.assistantDiagnostics(new ServerRequestCallback<AssistantDiagnosticsResponse>()
+      showDiagnostics(getAssistantType(), onCompleted);
+   }
+
+   public void showDiagnostics(String assistantType, Command onCompleted)
+   {
+      server_.assistantDiagnostics(assistantType, new ServerRequestCallback<AssistantDiagnosticsResponse>()
       {
 
          @Override
@@ -140,7 +152,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             else
             {
                AssistantDiagnostics diagnostics = response.result.cast();
-               CopilotDiagnosticsDialog dialog = new CopilotDiagnosticsDialog(diagnostics.report);
+               AssistantDiagnosticsDialog dialog = new AssistantDiagnosticsDialog(diagnostics.report, getDisplayName(assistantType));
                dialog.showModal();
             }
          }
@@ -153,11 +165,12 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          }
       });
    }
-   
+
    @Handler
-   public void onCopilotSignIn()
+   public void onAssistantSignIn()
    {
-      onCopilotSignIn((response) ->
+      String assistantType = getAssistantType();
+      signIn(assistantType, (response) ->
       {
          if (response.error != null)
          {
@@ -167,15 +180,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          {
             globalDisplay_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  constants_.copilotSignInDialogTitle(),
-                  constants_.copilotSignedIn(response.result.user));
+                  constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
+                  constants_.assistantSignedIn(response.result.user));
          }
       });
    }
 
-   public void onCopilotSignIn(CommandWithArg<AssistantStatusResponse> callback)
+   public void signIn(String assistantType, CommandWithArg<AssistantStatusResponse> callback)
    {
-      server_.assistantSignIn(new DelayedProgressRequestCallback<AssistantSignInResponse>(constants_.copilotSigningIn())
+      server_.assistantSignIn(assistantType, new DelayedProgressRequestCallback<AssistantSignInResponse>(constants_.assistantSigningIn())
       {
          private ModalDialogBase signInDialog_;
          private Timer statusTimer_;
@@ -188,16 +201,16 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             {
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_ERROR,
-                     constants_.copilotSignInDialogTitle(),
-                     constants_.copilotError(error.code, error.message));
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
+                     constants_.assistantError(error.code, error.message));
                return;
             }
 
             AssistantSignInResponseResult result = response.result.cast();
-            if (result.status == CopilotConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
+            if (result.status == AssistantConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
             {
                // Generate the dialog.
-               signInDialog_ = new CopilotSignInDialog(result.verificationUri, result.userCode);
+               signInDialog_ = new AssistantSignInDialog(result.verificationUri, result.userCode, getDisplayName(assistantType));
                signInDialog_.showModal();
 
                // Start polling for status, to see when the user has finished authenticating.
@@ -206,17 +219,17 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                   @Override
                   public void run()
                   {
-                     server_.assistantStatus(new ServerRequestCallback<AssistantStatusResponse>()
+                     server_.assistantStatus(assistantType, new ServerRequestCallback<AssistantStatusResponse>()
                      {
                         @Override
                         public void onResponseReceived(AssistantStatusResponse response)
                         {
-                           if (response.result.status == CopilotConstants.STATUS_OK)
+                           if (response.result.status == AssistantConstants.STATUS_OK)
                            {
                               signInDialog_.closeDialog();
                               callback.execute(response);
                            }
-                           else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+                           else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
                            {
                               signInDialog_.closeDialog();
                               callback.execute(response);
@@ -238,49 +251,50 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
 
                statusTimer_.schedule(1000);
             }
-            else if (result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
+            else if (result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               String message = constants_.copilotAlreadySignedIn(result.user);
+               String message = constants_.assistantAlreadySignedIn(result.user);
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotSignInDialogTitle(),
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      message);
             }
             else
             {
                showGenericResponseMessage(
-                     constants_.copilotSignInDialogTitle(),
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      response.result);
             }
          }
       });
    }
-   
+
    @Handler
-   public void onCopilotSignOut()
+   public void onAssistantSignOut()
    {
-      onCopilotSignOut((response) ->
+      String assistantType = getAssistantType();
+      signOut(assistantType, (response) ->
       {
          String status = response.result.status;
-         if (StringUtil.equals(status, CopilotConstants.STATUS_NOT_SIGNED_IN))
+         if (StringUtil.equals(status, AssistantConstants.STATUS_NOT_SIGNED_IN))
          {
             display_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  constants_.copilotSignOutDialogTitle(),
-                  constants_.copilotSignedOut());
+                  constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)),
+                  constants_.assistantSignedOut(getDisplayName(assistantType)));
          }
          else
          {
             showGenericResponseMessage(
-                  constants_.copilotSignOutDialogTitle(),
+                  constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)),
                   response.result);
          }
       });
    }
 
-   public void onCopilotSignOut(CommandWithArg<AssistantSignOutResponse> callback)
+   public void signOut(String assistantType, CommandWithArg<AssistantSignOutResponse> callback)
    {
-      server_.assistantSignOut(new DelayedProgressRequestCallback<AssistantSignOutResponse>(constants_.copilotSigningOut())
+      server_.assistantSignOut(assistantType, new DelayedProgressRequestCallback<AssistantSignOutResponse>(constants_.assistantSigningOut())
       {
          @Override
          protected void onSuccess(AssistantSignOutResponse response)
@@ -291,14 +305,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    }
 
    @Handler
-   public void onCopilotStatus()
+   public void onAssistantStatus()
    {
-      onCopilotStatusImpl();
+      checkStatus(getAssistantType());
    }
 
-   private void onCopilotStatusImpl()
+   public void checkStatus(String assistantType)
    {
-      server_.assistantStatus(new DelayedProgressRequestCallback<AssistantStatusResponse>(constants_.copilotCheckingStatus())
+      String displayName = getDisplayName(assistantType);
+      server_.assistantStatus(assistantType, new DelayedProgressRequestCallback<AssistantStatusResponse>(constants_.assistantCheckingStatus())
       {
          @Override
          protected void onSuccess(AssistantStatusResponse response)
@@ -307,22 +322,22 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotCheckStatusDialogTitle(),
-                     constants_.copilotEmptyResponse());
+                     constants_.assistantCheckStatusDialogTitle(displayName),
+                     constants_.assistantEmptyResponse(displayName));
 
             }
             else if (response.error != null)
             {
                String output = response.output;
                if (StringUtil.isNullOrEmpty(output))
-                  output = constants_.copilotNoOutput();
+                  output = constants_.assistantNoOutput();
 
-               String message = constants_.copilotErrorStartingAgent(
-                     response.error.getEndUserMessage(), output);
+               String message = constants_.assistantErrorStartingAgent(
+                     displayName, response.error.getEndUserMessage(), output);
 
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotCheckStatusDialogTitle(),
+                     constants_.assistantCheckStatusDialogTitle(displayName),
                      message);
             }
             else if (response.reason != null)
@@ -330,27 +345,27 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                int reason = (int) response.reason.valueOf();
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotCheckStatusDialogTitle(),
-                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
+                     constants_.assistantCheckStatusDialogTitle(displayName),
+                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotStatusDialogTitle(),
-                     constants_.copilotNotSignedIn());
+                     constants_.assistantStatusDialogTitle(displayName),
+                     constants_.assistantNotSignedIn(displayName));
             }
-            else if (response.result.status == CopilotConstants.STATUS_OK)
+            else if (response.result.status == AssistantConstants.STATUS_OK)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.copilotStatusDialogTitle(),
-                     constants_.copilotCurrentlySignedIn(response.result.user));
+                     constants_.assistantStatusDialogTitle(displayName),
+                     constants_.assistantCurrentlySignedIn(response.result.user));
             }
             else
             {
                showGenericResponseMessage(
-                     constants_.copilotCheckStatusDialogTitle(),
+                     constants_.assistantCheckStatusDialogTitle(displayName),
                      response.result);
             }
 
@@ -362,17 +377,17 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    public String messageForError(AssistantError error)
    {
       Integer code = error.code;
-      
-      if (code == CopilotConstants.ErrorCodes.NOT_SIGNED_IN)
+
+      if (code == AssistantConstants.ErrorCodes.NOT_SIGNED_IN)
       {
-         return constants_.copilotNotSignedInShort();
+         return constants_.assistantNotSignedInShort();
       }
       else
       {
          return error.message;
       }
    }
-   
+
    private void showGenericResponseMessage(String title, Object object)
    {
       globalDisplay_.showMessage(
@@ -380,20 +395,20 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
             title,
             JSON.stringify(object, 4));
    }
-   
+
    @Override
    public void onProjectOptionsChanged(ProjectOptionsChangedEvent event)
    {
       assistantProjectOptions_ = event.getData().getAssistantOptions();
    }
-   
-   interface CopilotCommandBinder
-         extends CommandBinder<Commands, Copilot>
+
+   interface AssistantCommandBinder
+         extends CommandBinder<Commands, Assistant>
    {
    }
-   
+
    private RProjectAssistantOptions assistantProjectOptions_;
-   
+
    private final GlobalDisplay display_;
    private final Commands commands_;
    private final EventBus events_;
@@ -402,5 +417,24 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    private final GlobalDisplay globalDisplay_;
    private final AssistantServerOperations server_;
 
-   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
+   private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
+
+   // Display names for assistant types
+   public static final String DISPLAY_NAME_COPILOT = "GitHub Copilot";
+   public static final String DISPLAY_NAME_POSIT = "Posit AI";
+   public static final String DISPLAY_NAME_UNKNOWN = "Assistant";
+
+   /**
+    * Convert an assistant type (e.g., "copilot", "posit") to a display name
+    * (e.g., "GitHub Copilot", "Posit AI").
+    */
+   public static String getDisplayName(String assistantType)
+   {
+      if (StringUtil.equals(assistantType, UserPrefsAccessor.ASSISTANT_COPILOT))
+         return DISPLAY_NAME_COPILOT;
+      else if (StringUtil.equals(assistantType, UserPrefsAccessor.ASSISTANT_POSIT))
+         return DISPLAY_NAME_POSIT;
+      else
+         return DISPLAY_NAME_UNKNOWN;
+   }
 }

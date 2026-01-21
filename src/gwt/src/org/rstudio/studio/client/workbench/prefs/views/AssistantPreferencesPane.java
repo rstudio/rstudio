@@ -41,19 +41,18 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
-import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 
 import com.google.gwt.aria.client.Roles;
@@ -105,7 +104,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Commands commands,
                                  AriaLiveService ariaLive,
-                                 Copilot copilot,
+                                 Assistant assistant,
                                  AssistantServerOperations server,
                                  ProjectsServerOperations projectServer)
    {
@@ -113,7 +112,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
-      copilot_ = copilot;
+      assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
 
@@ -157,82 +156,82 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
 
-      lblCopilotStatus_ = new Label(constants_.copilotLoadingMessage());
-      lblCopilotStatus_.addStyleName(RES.styles().copilotStatusLabel());
+      lblAssistantStatus_ = new Label(constants_.assistantLoadingMessage());
+      lblAssistantStatus_.addStyleName(RES.styles().assistantStatusLabel());
       
       statusButtons_ = new ArrayList<SmallButton>();
       
-      btnShowError_ = new SmallButton(constants_.copilotShowErrorLabel());
+      btnShowError_ = new SmallButton(constants_.assistantShowErrorLabel());
       btnShowError_.addStyleName(RES.styles().button());
       statusButtons_.add(btnShowError_);
-      
-      btnSignIn_ = new SmallButton(constants_.copilotSignInLabel());
+
+      btnSignIn_ = new SmallButton(constants_.assistantSignInLabel());
       btnSignIn_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignIn_);
-      
-      btnSignOut_ = new SmallButton(constants_.copilotSignOutLabel());
+
+      btnSignOut_ = new SmallButton(constants_.assistantSignOutLabel());
       btnSignOut_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignOut_);
-      
+
       btnActivate_ = new SmallButton(constants_.copilotActivateLabel());
       Roles.getLinkRole().set(btnActivate_.getElement());
       btnActivate_.getElement().setPropertyString("href", "https://github.com/settings/copilot");
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
       
-      btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
+      btnRefresh_ = new SmallButton(constants_.assistantRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
-      
-      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+
+      btnDiagnostics_ = new SmallButton(constants_.assistantDiagnosticsLabel());
       btnDiagnostics_.addStyleName(RES.styles().button());
       statusButtons_.add(btnDiagnostics_);
-      
-      btnProjectOptions_ = new SmallButton(constants_.copilotProjectOptionsLabel());
+
+      btnProjectOptions_ = new SmallButton(constants_.assistantProjectOptionsLabel());
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
       
-      cbAssistantShowMessages_ = checkboxPref(prefs_.copilotShowMessages(), true);
+      cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
-            prefsConstants_.copilotTabKeyBehaviorTitle(),
+            prefsConstants_.assistantTabKeyBehaviorTitle(),
             new String[] {
-                  prefsConstants_.copilotTabKeyBehaviorEnum_suggestion(),
-                  prefsConstants_.copilotTabKeyBehaviorEnum_completions()
+                  prefsConstants_.assistantTabKeyBehaviorEnum_suggestion(),
+                  prefsConstants_.assistantTabKeyBehaviorEnum_completions()
             },
             new String[] {
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
+                  UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR_SUGGESTION,
+                  UserPrefsAccessor.ASSISTANT_TAB_KEY_BEHAVIOR_COMPLETIONS
             },
             false,
             true,
             false);
-      
-      selAssistantTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
-      
+
+      selAssistantTabKeyBehavior_.setValue(prefs_.assistantTabKeyBehavior().getGlobalValue());
+
       selAssistantCompletionsTrigger_ = new SelectWidget(
-            prefsConstants_.copilotCompletionsTriggerTitle(),
+            prefsConstants_.assistantCompletionsTriggerTitle(),
             new String[] {
-                  prefsConstants_.copilotCompletionsTriggerEnum_auto(),
-                  prefsConstants_.copilotCompletionsTriggerEnum_manual()
+                  prefsConstants_.assistantCompletionsTriggerEnum_auto(),
+                  prefsConstants_.assistantCompletionsTriggerEnum_manual()
             },
             new String[] {
-                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO,
-                  UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_MANUAL
+                  UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO,
+                  UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_MANUAL
             },
             false,
             true,
             false);
-      
-      selAssistantCompletionsTrigger_.setValue(prefs_.copilotCompletionsTrigger().getGlobalValue());
- 
+
+      selAssistantCompletionsTrigger_.setValue(prefs_.assistantCompletionsTrigger().getGlobalValue());
+
       nvwAssistantCompletionsDelay_ = numericPref(
-            constants_.copilotCompletionsDelayLabel(),
+            constants_.assistantCompletionsDelayLabel(),
             10,
             5000,
-            prefs_.copilotCompletionsDelay());
+            prefs_.assistantCompletionsDelay());
 
-      cbAssistantNesEnabled_ = checkboxPref(prefs_.copilotNesEnabled(), true);
-      cbAssistantNesAutoshow_ = checkboxPref(prefs_.copilotNesAutoshow(), true);
+      cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
+      cbAssistantNesAutoshow_ = checkboxPref(prefs_.assistantNesAutoshow(), true);
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -242,18 +241,19 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
 
-      copilotStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) -> {
-         copilotStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
+      assistantRuntimeStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      {
+         assistantStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
       });
    }
    
    @Override
    public void onUnload()
    {
-      if (copilotStatusHandler_ != null)
+      if (assistantRuntimeStatusHandler_ != null)
       {
-         copilotStatusHandler_.removeHandler();
-         copilotStatusHandler_ = null;
+         assistantRuntimeStatusHandler_.removeHandler();
+         assistantRuntimeStatusHandler_ = null;
       }
       super.onUnload();
    }
@@ -264,6 +264,9 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Add assistant selector
       add(selAssistant_);
+
+      // Create the status panel (shared between Copilot and Posit AI)
+      statusPanel_ = createStatusPanel();
 
       // Create the common settings panel (shared between Copilot and Posit AI)
       commonSettingsPanel_ = createCommonSettingsPanel();
@@ -299,22 +302,62 @@ public class AssistantPreferencesPane extends PreferencesPane
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
+               positAiRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
-               // Move common settings panel to Posit AI panel
+               // Move status panel and common settings panel to Posit AI panel
+               positAiPanel_.insert(spaced(statusPanel_), 0);
                positAiPanel_.add(commonSettingsPanel_);
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
+
+               // Refresh Posit AI status when panel is shown
+               if (!positAiRefreshed_)
+               {
+                  positAiRefreshed_ = true;
+
+                  // Check if Posit AI is installed
+                  server_.assistantVerifyInstalled(
+                     UserPrefsAccessor.ASSISTANT_POSIT,
+                     new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+                           }
+                           else
+                           {
+                              lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblAssistantStatus_.setText(constants_.assistantStartupError());
+                        }
+                     });
+               }
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
-               // Move common settings panel and Copilot-specific "Other" panel to Copilot panel
+               // Move status panel, common settings panel and Copilot-specific "Other" panel to Copilot panel
+               if (session_.getSessionInfo().getCopilotEnabled())
+               {
+                  copilotPanel_.insert(spaced(statusPanel_), 0);
+               }
                copilotPanel_.add(commonSettingsPanel_);
                copilotPanel_.add(copilotOtherPanel_);
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
+               positAiRefreshed_ = false;
+
                // Refresh Copilot status when panel is shown
                if (!copilotRefreshed_)
                {
@@ -337,7 +380,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                            }
                            else
                            {
-                              lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                              lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
                            }
                         }
 
@@ -345,7 +388,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                         public void onError(ServerError error)
                         {
                            Debug.logError(error);
-                           lblCopilotStatus_.setText(constants_.copilotStartupError());
+                           lblAssistantStatus_.setText(constants_.assistantStartupError());
                         }
                      });
                }
@@ -365,10 +408,19 @@ public class AssistantPreferencesPane extends PreferencesPane
       return panel;
    }
 
+   private HorizontalPanel createStatusPanel()
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(lblAssistantStatus_);
+      for (SmallButton button : statusButtons_)
+         panel.add(button);
+      return panel;
+   }
+
    private VerticalPanel createPositAiPanel()
    {
       VerticalPanel panel = new VerticalPanel();
-      // TODO: Add Posit AI-specific status/sign-in UI here when available
+      // Status panel and common settings will be added dynamically
       return panel;
    }
 
@@ -376,20 +428,11 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       VerticalPanel panel = new VerticalPanel();
 
-      if (session_.getSessionInfo().getCopilotEnabled())
-      {
-         // Copilot-specific: sign-in status panel
-         HorizontalPanel statusPanel = new HorizontalPanel();
-         statusPanel.add(lblCopilotStatus_);
-         for (SmallButton button : statusButtons_)
-            statusPanel.add(button);
-         panel.add(spaced(statusPanel));
-         // Common settings and "Other" section will be added dynamically
-      }
-      else
+      if (!session_.getSessionInfo().getCopilotEnabled())
       {
          panel.add(new Label(constants_.copilotDisabledByAdmin()));
       }
+      // Status panel, common settings and "Other" section will be added dynamically
 
       return panel;
    }
@@ -432,7 +475,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistantCompletionsTrigger_.getValue();
-            if (value == UserPrefsAccessor.COPILOT_COMPLETIONS_TRIGGER_AUTO)
+            if (value == UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
             {
                nvwAssistantCompletionsDelay_.setVisible(true);
             }
@@ -459,8 +502,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
             DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
-                  constants_.copilotStatusDialogCaption(),
-                  copilotStartupError_,
+                  constants_.assistantStatusDialogCaption(),
+                  assistantStartupError_,
                   options);
             
             dialog.showModal();
@@ -472,17 +515,19 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignIn((response) -> refresh());
+            String selectedType = selAssistant_.getValue();
+            assistant_.signIn(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnSignOut_.addClickHandler(new ClickHandler()
       {
-         
+
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignOut((response) -> refresh());
+            String selectedType = selAssistant_.getValue();
+            assistant_.signOut(selectedType, (response) -> refresh(selectedType));
          }
       });
       
@@ -501,18 +546,18 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            refresh();
+            refresh(selAssistant_.getValue());
          }
       });
-      
+
       btnDiagnostics_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
             ProgressIndicator indicator = getProgressIndicator();
-            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
-            copilot_.onCopilotDiagnostics(() ->
+            indicator.onProgress(constants_.assistantDiagnosticReportProgressLabel());
+            assistant_.showDiagnostics(selAssistant_.getValue(), () ->
             {
                indicator.onCompleted();
             });
@@ -527,16 +572,6 @@ public class AssistantPreferencesPane extends PreferencesPane
             commands_.projectOptions().execute();
          }
       });
-      
-      events_.addHandler(CopilotEnabledEvent.TYPE, (event) ->
-      {
-         refresh();
-      });
-   }
-   
-   private void refresh()
-   {
-      refresh("");
    }
 
    private void refresh(String assistantType)
@@ -553,68 +588,64 @@ public class AssistantPreferencesPane extends PreferencesPane
 
             if (response == null)
             {
-               lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
+               lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
             }
             else if (response.result == null)
             {
-               if (response.error != null && response.error.getCode() == CopilotConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
+               if (response.error != null && response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
                {
-                  // Copilot still starting up, so wait a second and refresh again
+                  // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
                      refresh(assistantType);
                   });
                }
-               else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
+               else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
-                  lblCopilotStatus_.setText(constants_.copilotStartupError());
+                  lblAssistantStatus_.setText(constants_.assistantStartupError());
                   if (!StringUtil.isNullOrEmpty(response.output))
                   {
-                     copilotStartupError_ = response.output;
+                     assistantStartupError_ = response.output;
                      showButtons(btnShowError_);
                   }
                }
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblCopilotStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
                   showButtons(btnRefresh_, btnDiagnostics_);
                }
-               else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               else if (projectOptions_ != null &&
+                        UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
                {
-                  lblCopilotStatus_.setText(constants_.copilotDisabledInProject());
+                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(assistantType)));
                   showButtons(btnProjectOptions_);
-               }
-               else if (prefs_.copilotEnabled().getValue())
-               {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
-                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
                else
                {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
                   showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }
-            else if (response.result.status == CopilotConstants.STATUS_OK ||
-                     response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_OK ||
+                     response.result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
+               lblAssistantStatus_.setText(constants_.assistantSignedInAsLabel(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
+               lblAssistantStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
+               lblAssistantStatus_.setText(constants_.assistantNotSignedIn());
             }
             else
             {
-               String message = constants_.copilotUnknownResponse(JSON.stringify(response));
-               lblCopilotStatus_.setText(message);
+               String message = constants_.assistantUnknownResponse(JSON.stringify(response));
+               lblAssistantStatus_.setText(message);
             }
          }
 
@@ -625,14 +656,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       };
 
-      if (assistantType.isEmpty())
-      {
-         server_.assistantStatus(callback);
-      }
-      else
-      {
-         server_.assistantStatus(assistantType, callback);
-      }
+      // If no assistantType specified, use current preference
+      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+      server_.assistantStatus(type, callback);
    }
 
    private void disableCopilot(String newAssistant)
@@ -649,7 +675,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void reset()
    {
-      copilotStartupError_ = null;
+      assistantStartupError_ = null;
       hideButtons();
    }
    
@@ -712,7 +738,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Only refresh Copilot status if Copilot is the selected assistant
       if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
-         refresh();
+         refresh(selAssistant_.getValue());
          copilotRefreshed_ = true;
       }
    }
@@ -738,7 +764,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    public interface Styles extends CssResource
    {
       String button();
-      String copilotStatusLabel();
+      String assistantStatusLabel();
       String copilotTosLabel();
    }
 
@@ -755,11 +781,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    }
    
    // State
-   private String copilotStartupError_;
+   private String assistantStartupError_;
    private boolean initialCopilotWorkspaceEnabled_;
-   private HandlerRegistration copilotStatusHandler_;
-   private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
+   private HandlerRegistration assistantRuntimeStatusHandler_;
+   private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
+   private boolean positAiRefreshed_ = false; // has Posit AI status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
 
    // Assistant panels (created in initDisplay)
@@ -769,11 +796,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel copilotTosPanel_;
    private VerticalPanel commonSettingsPanel_;
    private VerticalPanel copilotOtherPanel_;
+   private HorizontalPanel statusPanel_;
 
    // UI
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
-   private final Label lblCopilotStatus_;
+   private final Label lblAssistantStatus_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesAutoshow_;
@@ -796,7 +824,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Session session_;
    private final UserPrefs prefs_;
    private final Commands commands_;
-   private final Copilot copilot_;
+   private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    

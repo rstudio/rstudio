@@ -307,7 +307,7 @@ public class CppCompletionManager implements CompletionManager
 
       // see if we even have a completion position
       boolean alwaysComplete =
-            userPrefs_.copilotEnabled().getValue() == false &&
+            UserPrefs.ASSISTANT_NONE.equals(userPrefs_.assistant().getValue()) &&
             userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS;
       
       int autoChars = userPrefs_.codeCompletionCharacters().getValue();

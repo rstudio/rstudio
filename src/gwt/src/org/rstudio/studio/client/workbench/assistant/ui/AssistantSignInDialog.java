@@ -1,5 +1,5 @@
 /*
- * CopilotSignInDialog.java
+ * AssistantSignInDialog.java
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -12,14 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot.ui;
+package org.rstudio.studio.client.workbench.assistant.ui;
 
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ElementPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
-import org.rstudio.studio.client.workbench.copilot.CopilotUIConstants;
+import org.rstudio.studio.client.workbench.assistant.AssistantUIConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -35,21 +35,22 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
-public class CopilotSignInDialog extends ModalDialogBase
+public class AssistantSignInDialog extends ModalDialogBase
 {
 
-   private static CopilotSignInDialogUiBinder uiBinder =
-         GWT.create(CopilotSignInDialogUiBinder.class);
+   private static AssistantSignInDialogUiBinder uiBinder =
+         GWT.create(AssistantSignInDialogUiBinder.class);
 
-   interface CopilotSignInDialogUiBinder extends UiBinder<DivElement, CopilotSignInDialog>
+   interface AssistantSignInDialogUiBinder extends UiBinder<DivElement, AssistantSignInDialog>
    {
    }
 
-   public CopilotSignInDialog(String verificationUri,
-                              String verificationCode)
+   public AssistantSignInDialog(String verificationUri,
+                                String verificationCode,
+                                String assistantName)
    {
       super(Roles.getDialogRole());
-      setText(constants_.copilotSignInDialogTitle());
+      setText(constants_.assistantSignInDialogTitle(assistantName));
 
       ui_ = uiBinder.createAndBindUi(this);
       progress_ = addProgressIndicator(true, false);
@@ -57,23 +58,23 @@ public class CopilotSignInDialog extends ModalDialogBase
       verificationUri_.setHref(verificationUri);
       verificationCode_.setInnerText(verificationCode);
       verificationCode_.getStyle().setProperty("userSelect", "all");
-      
+
       Event.sinkEvents(verificationUri_, Event.ONCLICK | Event.ONMOUSEUP | Event.ONKEYDOWN);
       Event.setEventListener(verificationUri_, (event) ->
       {
          if (BrowserEvents.KEYDOWN.equals(event.getType()) && event.getKeyCode() != KeyCodes.KEY_ENTER)
             return;
-         
+
          if (!progressShowing_)
          {
             progressShowing_ = true;
-            progress_.onProgress(constants_.copilotAuthenticating());
+            progress_.onProgress(constants_.assistantAuthenticating());
          }
       });
 
       addCancelButton();
    }
-   
+
    @Override
    protected Widget createMainWidget()
    {
@@ -85,10 +86,10 @@ public class CopilotSignInDialog extends ModalDialogBase
 
    @UiField AnchorElement verificationUri_;
    @UiField SpanElement verificationCode_;
-   
+
    private boolean progressShowing_ = false;
    private final DivElement ui_;
    private final ProgressIndicator progress_;
 
-   private static final CopilotUIConstants constants_ = GWT.create(CopilotUIConstants.class);
+   private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
 }

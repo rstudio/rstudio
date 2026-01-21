@@ -35,12 +35,11 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -98,14 +97,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                                         Session session,
                                         UserPrefs prefs,
                                         AriaLiveService ariaLive,
-                                        Copilot copilot,
+                                        Assistant assistant,
                                         AssistantServerOperations server,
                                         ProjectsServerOperations projectServer)
    {
       events_ = events;
       session_ = session;
       prefs_ = prefs;
-      copilot_ = copilot;
+      assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
 
@@ -150,29 +149,29 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
 
-      lblCopilotStatus_ = new Label(constants_.copilotLoadingMessage());
-      
+      lblAssistantStatus_ = new Label(constants_.assistantLoadingMessage());
+
       statusButtons_ = new ArrayList<SmallButton>();
-      
-      btnSignIn_ = new SmallButton(constants_.copilotSignInLabel());
+
+      btnSignIn_ = new SmallButton(constants_.assistantSignInLabel());
       btnSignIn_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignIn_);
-      
-      btnSignOut_ = new SmallButton(constants_.copilotSignOutLabel());
+
+      btnSignOut_ = new SmallButton(constants_.assistantSignOutLabel());
       btnSignOut_.addStyleName(RES.styles().button());
       statusButtons_.add(btnSignOut_);
-      
+
       btnActivate_ = new SmallButton(constants_.copilotActivateLabel());
       Roles.getLinkRole().set(btnActivate_.getElement());
       btnActivate_.getElement().setPropertyString("href", "https://github.com/settings/copilot");
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
-      
-      btnRefresh_ = new SmallButton(constants_.copilotRefreshLabel());
+
+      btnRefresh_ = new SmallButton(constants_.assistantRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
-      
-      btnDiagnostics_ = new SmallButton(constants_.copilotDiagnosticsLabel());
+
+      btnDiagnostics_ = new SmallButton(constants_.assistantDiagnosticsLabel());
       btnDiagnostics_.addStyleName(RES.styles().button());
       statusButtons_.add(btnDiagnostics_);
 
@@ -183,20 +182,15 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
-
-      copilotStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
-      {
-         copilotStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
-      });
    }
 
    @Override
    public void onUnload()
    {
-      if (copilotStatusHandler_ != null)
+      if (assistantRuntimeStatusHandler_ != null)
       {
-         copilotStatusHandler_.removeHandler();
-         copilotStatusHandler_ = null;
+         assistantRuntimeStatusHandler_.removeHandler();
+         assistantRuntimeStatusHandler_ = null;
       }
       super.onUnload();
    }
@@ -240,19 +234,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
+               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
-               // Refresh Copilot status when panel is shown
-               if (!copilotRefreshed_)
-               {
-                  // Pass assistantType so backend knows which language server to use
-                  // even if the preference hasn't been saved yet
-                  refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
-                  copilotRefreshed_ = true;
-               }
+               refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
             }
          }
       };
@@ -295,7 +283,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (session_.getSessionInfo().getCopilotEnabled())
       {
          HorizontalPanel statusPanel = new HorizontalPanel();
-         statusPanel.add(lblCopilotStatus_);
+         statusPanel.add(lblAssistantStatus_);
          for (SmallButton button : statusButtons_)
             statusPanel.add(button);
          panel.add(spaced(statusPanel));
@@ -315,20 +303,22 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignIn((response) -> refresh());
+            String selectedType = getSelectedAssistantType();
+            assistant_.signIn(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnSignOut_.addClickHandler(new ClickHandler()
       {
-         
+
          @Override
          public void onClick(ClickEvent event)
          {
-            copilot_.onCopilotSignOut((response) -> refresh());
+            String selectedType = getSelectedAssistantType();
+            assistant_.signOut(selectedType, (response) -> refresh(selectedType));
          }
       });
-      
+
       btnActivate_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -338,13 +328,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             Window.open(href, "_blank", "");
          }
       });
-      
+
       btnRefresh_.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            refresh();
+            refresh(getSelectedAssistantType());
          }
       });
       
@@ -354,13 +344,25 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          public void onClick(ClickEvent event)
          {
             ProgressIndicator indicator = getProgressIndicator();
-            indicator.onProgress(constants_.copilotDiagnosticReportProgressLabel());
-            copilot_.onCopilotDiagnostics(() ->
+            indicator.onProgress(constants_.assistantDiagnosticReportProgressLabel());
+            assistant_.showDiagnostics(getSelectedAssistantType(), () ->
             {
                indicator.onCompleted();
             });
          }
-      }); 
+      });
+   }
+
+   private String getSelectedAssistantType()
+   {
+      // For project settings, "none" means use default (global preference)
+      // Map it to the actual global preference value
+      String selected = selAssistant_.getValue();
+      if (selected.equals(UserPrefsAccessor.ASSISTANT_NONE))
+      {
+         return prefs_.assistant().getGlobalValue();
+      }
+      return selected;
    }
    
    private void refresh()
@@ -382,55 +384,51 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
             if (response == null)
             {
-               lblCopilotStatus_.setText(constants_.copilotUnexpectedError());
+               lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
             }
             else if (response.result == null)
             {
-               if (response.error != null && response.error.getCode() == CopilotConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
+               if (response.error != null && response.error.getCode() == AssistantConstants.ErrorCodes.AGENT_NOT_INITIALIZED)
                {
-                  // Copilot still starting up, so wait a second and refresh again
+                  // Assistant still starting up, so wait a second and refresh again
                   SingleShotTimer.fire(1000, () -> {
                      refresh(assistantType);
                   });
                }
-               else if (response.error != null && response.error.getCode() != CopilotConstants.ErrorCodes.AGENT_SHUT_DOWN)
+               else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
-                  lblCopilotStatus_.setText(constants_.copilotStartupError());
+                  lblAssistantStatus_.setText(constants_.assistantStartupError());
                }
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
-                  lblCopilotStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
-               }
-               else if (prefs_.copilotEnabled().getValue())
-               {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotRunning());
+                  lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
                }
                else
                {
-                  lblCopilotStatus_.setText(constants_.copilotAgentNotEnabled());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
                }
             }
-            else if (response.result.status == CopilotConstants.STATUS_OK ||
-                     response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_OK ||
+                     response.result.status == AssistantConstants.STATUS_ALREADY_SIGNED_IN)
             {
                showButtons(btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotSignedInAsLabel(response.result.user));
+               lblAssistantStatus_.setText(constants_.assistantSignedInAsLabel(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_AUTHORIZED)
             {
                showButtons(btnActivate_, btnSignOut_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
+               lblAssistantStatus_.setText(constants_.copilotAccountNotActivated(response.result.user));
             }
-            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
-               lblCopilotStatus_.setText(constants_.copilotNotSignedIn());
+               lblAssistantStatus_.setText(constants_.assistantNotSignedIn());
             }
             else
             {
-               String message = constants_.copilotUnknownResponse(JSON.stringify(response));
-               lblCopilotStatus_.setText(message);
+               String message = constants_.assistantUnknownResponse(JSON.stringify(response));
+               lblAssistantStatus_.setText(message);
             }
          }
 
@@ -441,14 +439,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          }
       };
 
-      if (assistantType.isEmpty())
-      {
-         server_.assistantStatus(callback);
-      }
-      else
-      {
-         server_.assistantStatus(assistantType, callback);
-      }
+      // If no assistantType specified, use current preference
+      String type = assistantType.isEmpty() ? prefs_.assistant().getGlobalValue() : assistantType;
+      server_.assistantStatus(type, callback);
    }
 
    @Override
@@ -471,7 +464,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
          refresh();
-         copilotRefreshed_ = true;
       }
    }
    
@@ -507,9 +499,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    
    // State
    private RProjectOptions options_;
-   private HandlerRegistration copilotStatusHandler_;
-   private boolean copilotStarted_ = false; // did Copilot get started while the dialog was open?
-   private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
+   private HandlerRegistration assistantRuntimeStatusHandler_;
 
    // Assistant panels (created in initDisplay)
    private VerticalPanel nonePanel_;
@@ -520,7 +510,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    // UI
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
-   private final Label lblCopilotStatus_;
+   private final Label lblAssistantStatus_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;
@@ -534,7 +524,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final EventBus events_;
    private final Session session_;
    private final UserPrefs prefs_;
-   private final Copilot copilot_;
+   private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    

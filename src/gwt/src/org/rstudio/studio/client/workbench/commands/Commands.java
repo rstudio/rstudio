@@ -752,22 +752,17 @@ public abstract class
    public abstract AppCommand focusPreviousPane();
    public abstract AppCommand showAccessibilityHelp();
    
-   // Copilot
-   public abstract AppCommand copilotDiagnostics();
-   public abstract AppCommand copilotSignIn();
-   public abstract AppCommand copilotSignOut();
-   public abstract AppCommand copilotStatus();
-   public abstract AppCommand copilotRequestCompletions();
-   public abstract AppCommand copilotAcceptNextWord();
-   public abstract AppCommand copilotToggleAutomaticCompletions();
-   public abstract AppCommand copilotAcceptNextEditSuggestion();
-   public abstract AppCommand copilotDismissNextEditSuggestion();
-
    // Assistant
-   public abstract AppCommand assistantRequestSuggestions();
+   public abstract AppCommand assistantDiagnostics();
+   public abstract AppCommand assistantSignIn();
+   public abstract AppCommand assistantSignOut();
+   public abstract AppCommand assistantStatus();
+   public abstract AppCommand assistantRequestCompletions();
    public abstract AppCommand assistantAcceptNextWord();
+   public abstract AppCommand assistantToggleAutomaticCompletions();
    public abstract AppCommand assistantAcceptNextEditSuggestion();
    public abstract AppCommand assistantDismissNextEditSuggestion();
+   public abstract AppCommand assistantRequestSuggestions();
 
    // Databricks
    public abstract AppCommand layoutZoomDatabricks();

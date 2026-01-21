@@ -40,7 +40,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -197,14 +197,14 @@ public class RCompletionManager implements CompletionManager
                           EventBus eventBus,
                           HelpStrategy helpStrategy,
                           UserPrefs uiPrefs,
-                          Copilot copilot)
+                          Assistant assistant)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
       userPrefs_ = uiPrefs;
-      copilot_ = copilot;
+      assistant_ = assistant;
    }
    
    public void detach()
@@ -1880,7 +1880,7 @@ public class RCompletionManager implements CompletionManager
          }
          else
          {
-            boolean preferBottom = !copilot_.isEnabled();
+            boolean preferBottom = !assistant_.isEnabled();
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(rect, popup_, preferBottom),
@@ -2265,7 +2265,7 @@ public class RCompletionManager implements CompletionManager
    private EventBus eventBus_;
    private HelpStrategy helpStrategy_;
    private UserPrefs userPrefs_;
-   private Copilot copilot_;
+   private Assistant assistant_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;

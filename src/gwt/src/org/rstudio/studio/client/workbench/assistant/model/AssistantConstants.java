@@ -1,5 +1,5 @@
 /*
- * CopilotConstants.java
+ * AssistantConstants.java
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -12,16 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.copilot.model;
+package org.rstudio.studio.client.workbench.assistant.model;
 
-public class CopilotConstants
+public class AssistantConstants
 {
    public static final String STATUS_OK = "OK";
    public static final String STATUS_ALREADY_SIGNED_IN = "AlreadySignedIn";
    public static final String STATUS_NOT_AUTHORIZED = "NotAuthorized";
    public static final String STATUS_NOT_SIGNED_IN = "NotSignedIn";
    public static final String STATUS_PROMPT_USER_DEVICE_FLOW = "PromptUserDeviceFlow";
-   
+
    public static class ErrorCodes
    {
       public static final int AGENT_NOT_INITIALIZED = -32002;
