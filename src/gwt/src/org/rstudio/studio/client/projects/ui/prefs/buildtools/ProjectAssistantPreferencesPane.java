@@ -398,15 +398,18 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                else if (response.error != null && response.error.getCode() != AssistantConstants.ErrorCodes.AGENT_SHUT_DOWN)
                {
                   lblAssistantStatus_.setText(constants_.assistantStartupError());
+                  showButtons(btnRefresh_, btnDiagnostics_);
                }
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
                {
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
+                  showButtons(btnRefresh_, btnDiagnostics_);
                }
                else
                {
                   lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
+                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }
             else if (response.result.status == AssistantConstants.STATUS_OK ||

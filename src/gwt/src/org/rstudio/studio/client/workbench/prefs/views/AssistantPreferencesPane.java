@@ -605,7 +605,11 @@ public class AssistantPreferencesPane extends PreferencesPane
                   if (!StringUtil.isNullOrEmpty(response.output))
                   {
                      assistantStartupError_ = response.output;
-                     showButtons(btnShowError_);
+                     showButtons(btnShowError_, btnRefresh_, btnDiagnostics_);
+                  }
+                  else
+                  {
+                     showButtons(btnRefresh_, btnDiagnostics_);
                   }
                }
                else if (AssistantResponseTypes.AssistantAgentNotRunningReason.isError(response.reason))
