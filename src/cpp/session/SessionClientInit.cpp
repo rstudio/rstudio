@@ -662,6 +662,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["is_automation_host"] = options.runAutomation();
    sessionInfo["is_automation_agent"] = options.isAutomationAgent();
    
+   // assistant running?
+   sessionInfo["assistant_runtime_status"] = modules::assistant::assistantRuntimeStatus();
+
    if (projects::projectContext().hasProject())
    {
       projects::RProjectAssistantOptions options;
@@ -679,7 +682,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
          assistantOptionsJson["copilot_enabled"] = false;
 #endif
          assistantOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
-         sessionInfo["assistant_runtime_status"] = modules::assistant::assistantRuntimeStatus();
          sessionInfo["assistant_project_options"] = assistantOptionsJson;
       }
    }
