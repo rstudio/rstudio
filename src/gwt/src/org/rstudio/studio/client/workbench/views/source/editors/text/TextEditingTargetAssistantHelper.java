@@ -42,17 +42,21 @@ import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedE
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
@@ -852,7 +856,7 @@ public class TextEditingTargetAssistantHelper
    private void resetCompletion()
    {
       display_.removeGhostText();
-      completionTimer_.cancel();
+      suggestionTimer_.cancel();
       activeCompletion_ = null;
       detachCompletionAnchors();
    }
@@ -925,7 +929,7 @@ public class TextEditingTargetAssistantHelper
 
       registrations_ = new HandlerRegistrations();
 
-      completionTimer_ = new Timer()
+      suggestionTimer_ = new Timer()
       {
          @Override
          public void run()
@@ -1120,11 +1124,26 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
+      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      {
+         assistantRuntimeStatus_ = event.getStatus();
+         manageHandlers();
+      });
+
+      // Initialize the assistant status from the session info (in case the
+      // session was already initialized before this helper was created)
+      assistantRuntimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
+      events_.addHandler(SessionInitEvent.TYPE, (event) ->
+      {
+         SessionInfo info = session_.getSessionInfo();
+         assistantRuntimeStatus_ = info.getAssistantRuntimeStatus();
+         manageHandlers();
+      });
+
       Scheduler.get().scheduleDeferred(() ->
       {
          manageHandlers();
       });
-
    }
 
    private boolean isValidCompletion(AssistantCompletion completion)
@@ -1147,27 +1166,18 @@ public class TextEditingTargetAssistantHelper
 
    private void manageHandlers()
    {
-      if (!copilot_.isEnabled())
+      if (!isAssistantAvailable())
       {
          display_.removeGhostText();
          registrations_.removeHandler();
          requestId_ = 0;
-         completionTimer_.cancel();
+         suggestionTimer_.cancel();
          completionTriggeredByCommand_ = false;
          events_.fireEvent(new AssistantEvent(AssistantEventType.ASSISTANT_DISABLED));
       }
       else
       {
          registrations_.addAll(
-
-               display_.addValueChangeHandler((event) ->
-               {
-                  // Clear any active NES suggestion on document change
-                  resetSuggestion();
-
-                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
-                  nesTimer_.schedule(delayMs);
-               }),
 
                // click handler for next-edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
@@ -1308,7 +1318,7 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addCursorChangedHandler((event) ->
+               display_.addValueChangeHandler((event) ->
                {
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
@@ -1329,14 +1339,14 @@ public class TextEditingTargetAssistantHelper
                   // Don't do anything if we have a selection.
                   if (display_.hasSelection())
                   {
-                     completionTimer_.cancel();
+                     suggestionTimer_.cancel();
                      completionTriggeredByCommand_ = false;
                      return;
                   }
 
                   // Request completions on cursor navigation.
                   int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
-                  completionTimer_.schedule(delayMs);
+                  suggestionTimer_.schedule(delayMs);
 
                   // Delay handler so we can handle a Tab keypress
                   Timers.singleShot(0, () -> {
@@ -1473,7 +1483,7 @@ public class TextEditingTargetAssistantHelper
                         event.stopPropagation();
                         event.preventDefault();
 
-                        commands_.copilotAcceptNextWord().execute();
+                        commands_.assistantAcceptNextWord().execute();
                      }
 
                   }
@@ -1655,17 +1665,23 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotRequestCompletions()
+   public void onAssistantRequestSuggestions()
    {
-      if (copilot_.isEnabled() && display_.isFocused())
+      if (isAssistantAvailable() && display_.isFocused())
       {
          completionTriggeredByCommand_ = true;
-         completionTimer_.schedule(0);
+         suggestionTimer_.schedule(0);
       }
    }
 
    @Handler
-   public void onCopilotAcceptNextWord()
+   public void onCopilotRequestCompletions()
+   {
+      onAssistantRequestSuggestions();
+   }
+
+   @Handler
+   public void onAssistantAcceptNextWord()
    {
       if (!display_.isFocused())
          return;
@@ -1717,6 +1733,12 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
+   public void onCopilotAcceptNextWord()
+   {
+      onAssistantAcceptNextWord();
+   }
+
+   @Handler
    public void onCopilotToggleAutomaticCompletions()
    {
       if (display_.isFocused())
@@ -1735,7 +1757,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotAcceptNextEditSuggestion()
+   public void onAssistantAcceptNextEditSuggestion()
    {
       if (!display_.isFocused())
          return;
@@ -1764,7 +1786,13 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotDismissNextEditSuggestion()
+   public void onCopilotAcceptNextEditSuggestion()
+   {
+      onAssistantAcceptNextEditSuggestion();
+   }
+
+   @Handler
+   public void onAssistantDismissNextEditSuggestion()
    {
       if (!display_.isFocused())
          return;
@@ -1774,6 +1802,12 @@ public class TextEditingTargetAssistantHelper
       {
          reset();
       }
+   }
+
+   @Handler
+   public void onCopilotDismissNextEditSuggestion()
+   {
+      onAssistantDismissNextEditSuggestion();
    }
 
    private void updateCompletion(String key)
@@ -1808,9 +1842,9 @@ public class TextEditingTargetAssistantHelper
       assistantDisabledInThisDocument_ = false;
    }
 
-   public boolean isAssistantEnabled()
+   public boolean isAssistantAvailable()
    {
-      return copilot_.isEnabled();
+      return assistantRuntimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
    }
 
    // Normalize an inline completion by trimming overlapping prefix/suffix.
@@ -1944,6 +1978,7 @@ public class TextEditingTargetAssistantHelper
 
    @Inject
    private void initialize(Copilot copilot,
+                           Session session,
                            EventBus events,
                            UserPrefs prefs,
                            Commands commands,
@@ -1951,6 +1986,7 @@ public class TextEditingTargetAssistantHelper
                            AssistantServerOperations server)
    {
       copilot_ = copilot;
+      session_ = session;
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
@@ -2062,7 +2098,7 @@ public class TextEditingTargetAssistantHelper
 
    private final TextEditingTarget target_;
    private final DocDisplay display_;
-   private final Timer completionTimer_;
+   private final Timer suggestionTimer_;
    private final Timer suspendTimer_;
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
@@ -2109,9 +2145,12 @@ public class TextEditingTargetAssistantHelper
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
 
+   // Assistant status
+   private int assistantRuntimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
 
    // Injected ----
    private Copilot copilot_;
+   private Session session_;
    private EventBus events_;
    private UserPrefs prefs_;
    private Commands commands_;

@@ -1,5 +1,5 @@
 /*
- * AssistantStatusChangedEvent.java
+ * AssistantRuntimeStatusChangedEvent.java
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -18,7 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChangedEvent.Handler>
+public class AssistantRuntimeStatusChangedEvent extends GwtEvent<AssistantRuntimeStatusChangedEvent.Handler>
 {
    // keep in sync with CopilotAgentRuntimeStatus in SessionAssistant.cpp
    public static final int UNKNOWN = 0;
@@ -30,7 +30,7 @@ public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChanged
 
    public interface Handler extends EventHandler
    {
-      void onAssistantStatusChangedEvent(AssistantStatusChangedEvent event);
+      void onAssistantRuntimeStatusChangedEvent(AssistantRuntimeStatusChangedEvent event);
    }
 
    public static class Data extends JavaScriptObject
@@ -44,7 +44,7 @@ public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChanged
       }-*/;
    }
 
-   public AssistantStatusChangedEvent(int status)
+   public AssistantRuntimeStatusChangedEvent(int status)
    {
       status_ = status;
    }
@@ -63,7 +63,7 @@ public class AssistantStatusChangedEvent extends GwtEvent<AssistantStatusChanged
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onAssistantStatusChangedEvent(this);
+      handler.onAssistantRuntimeStatusChangedEvent(this);
    }
 
    public static final Type<Handler> TYPE = new Type<>();

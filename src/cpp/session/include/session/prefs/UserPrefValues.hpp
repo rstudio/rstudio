@@ -438,10 +438,21 @@ namespace prefs {
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
-#define kRstudioAssistant "rstudio_assistant"
-#define kRstudioAssistantNone "none"
-#define kRstudioAssistantPositAi "posit_ai"
-#define kRstudioAssistantCopilot "copilot"
+#define kAssistant "assistant"
+#define kAssistantNone "none"
+#define kAssistantPosit "posit"
+#define kAssistantCopilot "copilot"
+#define kAssistantCompletionsTrigger "assistant_completions_trigger"
+#define kAssistantCompletionsTriggerAuto "auto"
+#define kAssistantCompletionsTriggerManual "manual"
+#define kAssistantCompletionsDelay "assistant_completions_delay"
+#define kAssistantTabKeyBehavior "assistant_tab_key_behavior"
+#define kAssistantTabKeyBehaviorSuggestion "suggestion"
+#define kAssistantTabKeyBehaviorCompletions "completions"
+#define kAssistantIndexingEnabled "assistant_indexing_enabled"
+#define kAssistantNesEnabled "assistant_nes_enabled"
+#define kAssistantNesAutoshow "assistant_nes_autoshow"
+#define kAssistantShowMessages "assistant_show_messages"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2024,8 +2035,50 @@ public:
    /**
     * Select which AI assistant to use for code suggestions and assistance.
     */
-   std::string rstudioAssistant();
-   core::Error setRstudioAssistant(std::string val);
+   std::string assistant();
+   core::Error setAssistant(std::string val);
+
+   /**
+    * Control when code suggestions are displayed in the editor.
+    */
+   std::string assistantCompletionsTrigger();
+   core::Error setAssistantCompletionsTrigger(std::string val);
+
+   /**
+    * The delay (in milliseconds) before AI completions are requested after the cursor position has changed.
+    */
+   int assistantCompletionsDelay();
+   core::Error setAssistantCompletionsDelay(int val);
+
+   /**
+    * Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.
+    */
+   std::string assistantTabKeyBehavior();
+   core::Error setAssistantTabKeyBehavior(std::string val);
+
+   /**
+    * When enabled, RStudio will index project files with the AI assistant.
+    */
+   bool assistantIndexingEnabled();
+   core::Error setAssistantIndexingEnabled(bool val);
+
+   /**
+    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    */
+   bool assistantNesEnabled();
+   core::Error setAssistantNesEnabled(bool val);
+
+   /**
+    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    */
+   bool assistantNesAutoshow();
+   core::Error setAssistantNesAutoshow(bool val);
+
+   /**
+    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    */
+   bool assistantShowMessages();
+   core::Error setAssistantShowMessages(bool val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -2034,7 +2087,7 @@ public:
    core::Error setCopilotEnabled(bool val);
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    std::string copilotCompletionsTrigger();
    core::Error setCopilotCompletionsTrigger(std::string val);

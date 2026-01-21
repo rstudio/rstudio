@@ -2399,10 +2399,78 @@
 # AI Assistant
 #
 # Select which AI assistant to use for code suggestions and assistance.
-.rs.uiPrefs$rstudioAssistant <- list(
-   get = function() { .rs.getUserPref("rstudio_assistant") },
-   set = function(value) { .rs.setUserPref("rstudio_assistant", value) },
-   clear = function() { .rs.clearUserPref("rstudio_assistant") }
+.rs.uiPrefs$assistant <- list(
+   get = function() { .rs.getUserPref("assistant") },
+   set = function(value) { .rs.setUserPref("assistant", value) },
+   clear = function() { .rs.clearUserPref("assistant") }
+)
+
+# Show code suggestions:
+#
+# Control when code suggestions are displayed in the editor.
+.rs.uiPrefs$assistantCompletionsTrigger <- list(
+   get = function() { .rs.getUserPref("assistant_completions_trigger") },
+   set = function(value) { .rs.setUserPref("assistant_completions_trigger", value) },
+   clear = function() { .rs.clearUserPref("assistant_completions_trigger") }
+)
+
+# AI completions delay
+#
+# The delay (in milliseconds) before AI completions are requested after the
+# cursor position has changed.
+.rs.uiPrefs$assistantCompletionsDelay <- list(
+   get = function() { .rs.getUserPref("assistant_completions_delay") },
+   set = function(value) { .rs.setUserPref("assistant_completions_delay", value) },
+   clear = function() { .rs.clearUserPref("assistant_completions_delay") }
+)
+
+# Pressing Tab key will prefer inserting:
+#
+# Control the behavior of the Tab key when both AI code suggestions and RStudio
+# code completions are visible.
+.rs.uiPrefs$assistantTabKeyBehavior <- list(
+   get = function() { .rs.getUserPref("assistant_tab_key_behavior") },
+   set = function(value) { .rs.setUserPref("assistant_tab_key_behavior", value) },
+   clear = function() { .rs.clearUserPref("assistant_tab_key_behavior") }
+)
+
+# Index project files with AI assistant
+#
+# When enabled, RStudio will index project files with the AI assistant.
+.rs.uiPrefs$assistantIndexingEnabled <- list(
+   get = function() { .rs.getUserPref("assistant_indexing_enabled") },
+   set = function(value) { .rs.setUserPref("assistant_indexing_enabled", value) },
+   clear = function() { .rs.clearUserPref("assistant_indexing_enabled") }
+)
+
+# Enable next-edit suggestions
+#
+# When enabled, RStudio will display next-edit suggestions as provided by the AI
+# assistant when available.
+.rs.uiPrefs$assistantNesEnabled <- list(
+   get = function() { .rs.getUserPref("assistant_nes_enabled") },
+   set = function(value) { .rs.setUserPref("assistant_nes_enabled", value) },
+   clear = function() { .rs.clearUserPref("assistant_nes_enabled") }
+)
+
+# Automatically show next-edit suggestions
+#
+# When enabled, next-edit suggestions will be automatically displayed. When
+# disabled, suggestions will only be shown when hovering over the gutter icon.
+.rs.uiPrefs$assistantNesAutoshow <- list(
+   get = function() { .rs.getUserPref("assistant_nes_autoshow") },
+   set = function(value) { .rs.setUserPref("assistant_nes_autoshow", value) },
+   clear = function() { .rs.clearUserPref("assistant_nes_autoshow") }
+)
+
+# Display account and billing messages from AI assistant
+#
+# When enabled, RStudio will show messages from the Posit AI assistant in a
+# message box.
+.rs.uiPrefs$assistantShowMessages <- list(
+   get = function() { .rs.getUserPref("assistant_show_messages") },
+   set = function(value) { .rs.setUserPref("assistant_show_messages", value) },
+   clear = function() { .rs.clearUserPref("assistant_show_messages") }
 )
 
 # Enable GitHub Copilot
@@ -2414,9 +2482,9 @@
    clear = function() { .rs.clearUserPref("copilot_enabled") }
 )
 
-# Show Copilot code suggestions:
+# Show code suggestions:
 #
-# Control when Copilot code suggestions are displayed in the editor.
+# Control when code suggestions are displayed in the editor.
 .rs.uiPrefs$copilotCompletionsTrigger <- list(
    get = function() { .rs.getUserPref("copilot_completions_trigger") },
    set = function(value) { .rs.setUserPref("copilot_completions_trigger", value) },

@@ -2149,15 +2149,79 @@ public interface UserPrefsAccessorConstants extends Constants {
     * Select which AI assistant to use for code suggestions and assistance.
     */
    @DefaultStringValue("AI Assistant")
-   String rstudioAssistantTitle();
+   String assistantTitle();
    @DefaultStringValue("Select which AI assistant to use for code suggestions and assistance.")
-   String rstudioAssistantDescription();
+   String assistantDescription();
    @DefaultStringValue("(None)")
-   String rstudioAssistantEnum_none();
+   String assistantEnum_none();
    @DefaultStringValue("Posit Assistant")
-   String rstudioAssistantEnum_posit_ai();
+   String assistantEnum_posit();
    @DefaultStringValue("GitHub Copilot")
-   String rstudioAssistantEnum_copilot();
+   String assistantEnum_copilot();
+
+   /**
+    * Control when code suggestions are displayed in the editor.
+    */
+   @DefaultStringValue("Show code suggestions:")
+   String assistantCompletionsTriggerTitle();
+   @DefaultStringValue("Control when code suggestions are displayed in the editor.")
+   String assistantCompletionsTriggerDescription();
+   @DefaultStringValue("Automatically")
+   String assistantCompletionsTriggerEnum_auto();
+   @DefaultStringValue("Manually (Ctrl + Backslash)")
+   String assistantCompletionsTriggerEnum_manual();
+
+   /**
+    * The delay (in milliseconds) before AI completions are requested after the cursor position has changed.
+    */
+   @DefaultStringValue("AI completions delay")
+   String assistantCompletionsDelayTitle();
+   @DefaultStringValue("The delay (in milliseconds) before AI completions are requested after the cursor position has changed.")
+   String assistantCompletionsDelayDescription();
+
+   /**
+    * Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.
+    */
+   @DefaultStringValue("Pressing Tab key will prefer inserting:")
+   String assistantTabKeyBehaviorTitle();
+   @DefaultStringValue("Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.")
+   String assistantTabKeyBehaviorDescription();
+   @DefaultStringValue("AI Suggestion")
+   String assistantTabKeyBehaviorEnum_suggestion();
+   @DefaultStringValue("Code Completion")
+   String assistantTabKeyBehaviorEnum_completions();
+
+   /**
+    * When enabled, RStudio will index project files with the AI assistant.
+    */
+   @DefaultStringValue("Index project files with AI assistant")
+   String assistantIndexingEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will index project files with the AI assistant.")
+   String assistantIndexingEnabledDescription();
+
+   /**
+    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    */
+   @DefaultStringValue("Enable next-edit suggestions")
+   String assistantNesEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.")
+   String assistantNesEnabledDescription();
+
+   /**
+    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    */
+   @DefaultStringValue("Automatically show next-edit suggestions")
+   String assistantNesAutoshowTitle();
+   @DefaultStringValue("When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.")
+   String assistantNesAutoshowDescription();
+
+   /**
+    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    */
+   @DefaultStringValue("Display account and billing messages from AI assistant")
+   String assistantShowMessagesTitle();
+   @DefaultStringValue("When enabled, RStudio will show messages from the Posit AI assistant in a message box.")
+   String assistantShowMessagesDescription();
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -2168,11 +2232,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotEnabledDescription();
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
-   @DefaultStringValue("Show Copilot code suggestions:")
+   @DefaultStringValue("Show code suggestions:")
    String copilotCompletionsTriggerTitle();
-   @DefaultStringValue("Control when Copilot code suggestions are displayed in the editor.")
+   @DefaultStringValue("Control when code suggestions are displayed in the editor.")
    String copilotCompletionsTriggerDescription();
    @DefaultStringValue("Automatically")
    String copilotCompletionsTriggerEnum_auto();

@@ -3681,28 +3681,134 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Select which AI assistant to use for code suggestions and assistance.
     */
-   public PrefValue<String> rstudioAssistant()
+   public PrefValue<String> assistant()
    {
       return enumeration(
-         "rstudio_assistant",
-         _constants.rstudioAssistantTitle(), 
-         _constants.rstudioAssistantDescription(), 
+         "assistant",
+         _constants.assistantTitle(), 
+         _constants.assistantDescription(), 
          new String[] {
-            RSTUDIO_ASSISTANT_NONE,
-            RSTUDIO_ASSISTANT_POSIT_AI,
-            RSTUDIO_ASSISTANT_COPILOT
+            ASSISTANT_NONE,
+            ASSISTANT_POSIT,
+            ASSISTANT_COPILOT
          },
          "none",
          new String[] {
-            _constants.rstudioAssistantEnum_none(),
-            _constants.rstudioAssistantEnum_posit_ai(),
-            _constants.rstudioAssistantEnum_copilot()
+            _constants.assistantEnum_none(),
+            _constants.assistantEnum_posit(),
+            _constants.assistantEnum_copilot()
          });
    }
 
-   public final static String RSTUDIO_ASSISTANT_NONE = "none";
-   public final static String RSTUDIO_ASSISTANT_POSIT_AI = "posit_ai";
-   public final static String RSTUDIO_ASSISTANT_COPILOT = "copilot";
+   public final static String ASSISTANT_NONE = "none";
+   public final static String ASSISTANT_POSIT = "posit";
+   public final static String ASSISTANT_COPILOT = "copilot";
+
+   /**
+    * Control when code suggestions are displayed in the editor.
+    */
+   public PrefValue<String> assistantCompletionsTrigger()
+   {
+      return enumeration(
+         "assistant_completions_trigger",
+         _constants.assistantCompletionsTriggerTitle(), 
+         _constants.assistantCompletionsTriggerDescription(), 
+         new String[] {
+            ASSISTANT_COMPLETIONS_TRIGGER_AUTO,
+            ASSISTANT_COMPLETIONS_TRIGGER_MANUAL
+         },
+         "auto",
+         new String[] {
+            _constants.assistantCompletionsTriggerEnum_auto(),
+            _constants.assistantCompletionsTriggerEnum_manual()
+         });
+   }
+
+   public final static String ASSISTANT_COMPLETIONS_TRIGGER_AUTO = "auto";
+   public final static String ASSISTANT_COMPLETIONS_TRIGGER_MANUAL = "manual";
+
+   /**
+    * The delay (in milliseconds) before AI completions are requested after the cursor position has changed.
+    */
+   public PrefValue<Integer> assistantCompletionsDelay()
+   {
+      return integer(
+         "assistant_completions_delay",
+         _constants.assistantCompletionsDelayTitle(), 
+         _constants.assistantCompletionsDelayDescription(), 
+         300);
+   }
+
+   /**
+    * Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.
+    */
+   public PrefValue<String> assistantTabKeyBehavior()
+   {
+      return enumeration(
+         "assistant_tab_key_behavior",
+         _constants.assistantTabKeyBehaviorTitle(), 
+         _constants.assistantTabKeyBehaviorDescription(), 
+         new String[] {
+            ASSISTANT_TAB_KEY_BEHAVIOR_SUGGESTION,
+            ASSISTANT_TAB_KEY_BEHAVIOR_COMPLETIONS
+         },
+         "suggestion",
+         new String[] {
+            _constants.assistantTabKeyBehaviorEnum_suggestion(),
+            _constants.assistantTabKeyBehaviorEnum_completions()
+         });
+   }
+
+   public final static String ASSISTANT_TAB_KEY_BEHAVIOR_SUGGESTION = "suggestion";
+   public final static String ASSISTANT_TAB_KEY_BEHAVIOR_COMPLETIONS = "completions";
+
+   /**
+    * When enabled, RStudio will index project files with the AI assistant.
+    */
+   public PrefValue<Boolean> assistantIndexingEnabled()
+   {
+      return bool(
+         "assistant_indexing_enabled",
+         _constants.assistantIndexingEnabledTitle(), 
+         _constants.assistantIndexingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    */
+   public PrefValue<Boolean> assistantNesEnabled()
+   {
+      return bool(
+         "assistant_nes_enabled",
+         _constants.assistantNesEnabledTitle(), 
+         _constants.assistantNesEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    */
+   public PrefValue<Boolean> assistantNesAutoshow()
+   {
+      return bool(
+         "assistant_nes_autoshow",
+         _constants.assistantNesAutoshowTitle(), 
+         _constants.assistantNesAutoshowDescription(), 
+         true);
+   }
+
+   /**
+    * When enabled, RStudio will show messages from the Posit AI assistant in a message box.
+    */
+   public PrefValue<Boolean> assistantShowMessages()
+   {
+      return bool(
+         "assistant_show_messages",
+         _constants.assistantShowMessagesTitle(), 
+         _constants.assistantShowMessagesDescription(), 
+         true);
+   }
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
@@ -3717,7 +3823,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Control when Copilot code suggestions are displayed in the editor.
+    * Control when code suggestions are displayed in the editor.
     */
    public PrefValue<String> copilotCompletionsTrigger()
    {
@@ -4512,8 +4618,22 @@ public class UserPrefsAccessor extends Prefs
          textRendering().setValue(layer, source.getString("text_rendering"));
       if (source.hasKey("disable_renderer_accessibility"))
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
-      if (source.hasKey("rstudio_assistant"))
-         rstudioAssistant().setValue(layer, source.getString("rstudio_assistant"));
+      if (source.hasKey("assistant"))
+         assistant().setValue(layer, source.getString("assistant"));
+      if (source.hasKey("assistant_completions_trigger"))
+         assistantCompletionsTrigger().setValue(layer, source.getString("assistant_completions_trigger"));
+      if (source.hasKey("assistant_completions_delay"))
+         assistantCompletionsDelay().setValue(layer, source.getInteger("assistant_completions_delay"));
+      if (source.hasKey("assistant_tab_key_behavior"))
+         assistantTabKeyBehavior().setValue(layer, source.getString("assistant_tab_key_behavior"));
+      if (source.hasKey("assistant_indexing_enabled"))
+         assistantIndexingEnabled().setValue(layer, source.getBool("assistant_indexing_enabled"));
+      if (source.hasKey("assistant_nes_enabled"))
+         assistantNesEnabled().setValue(layer, source.getBool("assistant_nes_enabled"));
+      if (source.hasKey("assistant_nes_autoshow"))
+         assistantNesAutoshow().setValue(layer, source.getBool("assistant_nes_autoshow"));
+      if (source.hasKey("assistant_show_messages"))
+         assistantShowMessages().setValue(layer, source.getBool("assistant_show_messages"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -4813,7 +4933,14 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
-      prefs.add(rstudioAssistant());
+      prefs.add(assistant());
+      prefs.add(assistantCompletionsTrigger());
+      prefs.add(assistantCompletionsDelay());
+      prefs.add(assistantTabKeyBehavior());
+      prefs.add(assistantIndexingEnabled());
+      prefs.add(assistantNesEnabled());
+      prefs.add(assistantNesAutoshow());
+      prefs.add(assistantShowMessages());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());

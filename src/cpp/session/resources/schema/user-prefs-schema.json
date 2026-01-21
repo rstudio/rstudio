@@ -1768,13 +1768,65 @@
             "title": "Disable Electron accessibility support",
             "description": "Disable Electron accessibility support."
         },
-        "rstudio_assistant": {
+        "assistant": {
             "type": "string",
-            "enum": ["none", "posit_ai", "copilot"],
+            "enum": ["none", "posit", "copilot"],
             "enumReadable": ["(None)", "Posit Assistant", "GitHub Copilot"],
             "default": "none",
             "title": "AI Assistant",
             "description": "Select which AI assistant to use for code suggestions and assistance."
+        },
+        "assistant_completions_trigger": {
+            "type": "string",
+            "enum": ["auto", "manual"],
+            "enumReadable": ["Automatically", "Manually (Ctrl + Backslash)"],
+            "default": "auto",
+            "fallback": "copilot_completions_trigger",
+            "title": "Show code suggestions:",
+            "description": "Control when code suggestions are displayed in the editor."
+        },
+        "assistant_completions_delay": {
+            "type": "integer",
+            "default": 300,
+            "title": "AI completions delay",
+            "description": "The delay (in milliseconds) before AI completions are requested after the cursor position has changed.",
+            "fallback": "copilot_completions_delay"
+        },
+        "assistant_tab_key_behavior": {
+            "type": "string",
+            "enum": ["suggestion", "completions"],
+            "enumReadable": ["AI Suggestion", "Code Completion"],
+            "default": "suggestion",
+            "title": "Pressing Tab key will prefer inserting:",
+            "description": "Control the behavior of the Tab key when both AI code suggestions and RStudio code completions are visible.",
+            "fallback": "copilot_tab_key_behavior"
+        },
+        "assistant_indexing_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Index project files with AI assistant",
+            "description": "When enabled, RStudio will index project files with the AI assistant.",
+            "fallback": "copilot_indexing_enabled"
+        },
+        "assistant_nes_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Enable next-edit suggestions",
+            "description": "When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.",
+            "fallback": "copilot_nes_enabled"
+        },
+        "assistant_nes_autoshow": {
+            "type": "boolean",
+            "default": true,
+            "title": "Automatically show next-edit suggestions",
+            "description": "When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.",
+            "fallback": "copilot_nes_autoshow"
+        },
+        "assistant_show_messages": {
+            "type": "boolean",
+            "default": true,
+            "title": "Display account and billing messages from AI assistant",
+            "description": "When enabled, RStudio will show messages from the Posit AI assistant in a message box."
         },
         "copilot_enabled": {
             "type": "boolean",
@@ -1787,8 +1839,8 @@
             "enum": ["auto", "manual"],
             "enumReadable": ["Automatically", "Manually (Ctrl + Backslash)"],
             "default": "auto",
-            "title": "Show Copilot code suggestions:",
-            "description": "Control when Copilot code suggestions are displayed in the editor."
+            "title": "Show code suggestions:",
+            "description": "Control when code suggestions are displayed in the editor."
         },
         "copilot_completions_delay": {
             "type": "integer",

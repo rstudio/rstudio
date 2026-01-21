@@ -685,10 +685,6 @@ public class SessionInfo extends JavaScriptObject
       return this.copilot_enabled || false;
    }-*/;
    
-   public final native RProjectAssistantOptions getAssistantProjectOptions() /*-{
-      return this.assistant_project_options;
-   }-*/;
-   
    public final native boolean isAutomationHost() /*-{
       return this.is_automation_host;
    }-*/;
@@ -711,6 +707,14 @@ public class SessionInfo extends JavaScriptObject
 
    public final native String getPpmRepositoryUrl() /*-{
       return this.ppm_repository_url;
+   }-*/;
+
+   public final native int getAssistantRuntimeStatus() /*-{
+      return this.assistant_runtime_status || 0;
+   }-*/;
+
+   public final native RProjectAssistantOptions getAssistantProjectOptions() /*-{
+      return this.assistant_project_options;
    }-*/;
 
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);

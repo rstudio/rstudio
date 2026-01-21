@@ -46,7 +46,7 @@ public:
    core::json::Object getLayer(const std::string& name);
    core::Error writeLayer(int layer, const core::json::Object& prefs);
 
-   template <typename T> T readPref(const std::string& name)
+   template <typename T> T readPref(const std::string& name, const std::string& fallback = "")
    {
       // Work backwards through the layers, starting with the most specific (project or user-level
       // settings) and working towards the most general (basic defaults)
@@ -54,19 +54,30 @@ public:
       {
          for (auto layer: boost::adaptors::reverse(layers_))
          {
+            // Try primary preference first
             boost::optional<T> val = layer->readPref<T>(name);
             if (val)
             {
                return *val;
             }
+
+            // If not found and we have a fallback, try that in this layer
+            if (!fallback.empty())
+            {
+               val = layer->readPref<T>(fallback);
+               if (val)
+               {
+                  return *val;
+               }
+            }
          }
       }
       END_LOCK_MUTEX
-      
+
       // Every value must have a default (and we enforce this with tests), so it's an error to reach
       // this code. Return zero-initialized value in this case.
       core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
-      error.addProperty("description", "missing default value for preference '" + 
+      error.addProperty("description", "missing default value for preference '" +
             name + "'");
       LOG_ERROR(error);
       return T();

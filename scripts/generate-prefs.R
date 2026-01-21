@@ -314,15 +314,24 @@ generate <- function(schemaPath, className) {
       # Add C++ header and implementation accessors for the preferences
       hpp <- paste0(hpp, comment,
                     "   ", cpptype, " ", camel, "();\n")
-      hpp <- paste0(hpp, 
+      hpp <- paste0(hpp,
                     "   core::Error set", capitalize(camel), "(", cpptype, " val);\n\n")
-      cpp <- paste0(cpp, 
+
+      # Check for fallback preference (for backwards compatibility)
+      fallback <- def[["fallback"]]
+      readPrefCall <- if (!is.null(fallback)) {
+         paste0("   return readPref<", cpptype, ">(\"", pref, "\", \"", fallback, "\");\n")
+      } else {
+         paste0("   return readPref<", cpptype, ">(\"", pref, "\");\n")
+      }
+
+      cpp <- paste0(cpp,
          "/**\n",
          " * ", def[["description"]], "\n",
          " */\n",
          cpptype, " ", className, "::", camel, "()\n",
          "{\n",
-         "   return readPref<", cpptype, ">(\"", pref, "\");\n",
+         readPrefCall,
          "}\n\n",
          "core::Error ", className, "::set", capitalize(camel), "(", cpptype, " val)\n",
          "{\n",

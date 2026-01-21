@@ -33,11 +33,17 @@ public interface AssistantServerOperations
 
    public void assistantVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
 
+   public void assistantVerifyInstalled(String assistantType,
+                                        ServerRequestCallback<Boolean> requestCallback);
+
    public void assistantSignIn(ServerRequestCallback<AssistantSignInResponse> requestCallback);
 
    public void assistantSignOut(ServerRequestCallback<AssistantSignOutResponse> requestCallback);
 
    public void assistantStatus(ServerRequestCallback<AssistantStatusResponse> requestCallback);
+
+   public void assistantStatus(String assistantType,
+                               ServerRequestCallback<AssistantStatusResponse> requestCallback);
 
    public void assistantDocFocused(String documentId,
                                    ServerRequestCallback<Void> requestCallback);

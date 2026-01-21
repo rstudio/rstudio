@@ -243,11 +243,11 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String renderingR();
     String specifyingKnit();
     String creatingRMarkdown();
-    String copilotWaiting();
-    String copilotNoCompletions();
-    String copilotResponseReceived();
-    String copilotResponseErrorMessage(String message);
-    String copilotEnabled();
-    String copilotDisabled();
+    String assistantWaiting(String prefix);
+    String assistantNoCompletions(String prefix);
+    String assistantResponseReceived(String prefix);
+    String assistantResponseErrorMessage(String prefix, String message);
+    String assistantCompletionsEnabled(String prefix);
+    String assistantCompletionsDisabled(String prefix);
     String reformatDocumentOnSave();
 }
