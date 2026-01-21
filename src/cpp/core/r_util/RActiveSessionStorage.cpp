@@ -43,8 +43,9 @@ Error createError(const std::string& errorName, const std::string& preamble,
 }
 } // anonymous namespace
 
-FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
-   scratchPath_ (scratchPath)
+FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath, const FilePathToProjectId& projectToIdFunction) :
+   scratchPath_ (scratchPath),
+   projectToIdFunction_ (projectToIdFunction)
 {
    // Do not create the directory here or else any attempt to look for a session ends up creating it. The API is designed
    // to return an empty object if it does not exist.
@@ -216,8 +217,6 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
 #ifdef _WIN32
    return Success();
 #else
-   LOG_DEBUG_MESSAGE("Reading property " + name + " from server for session " + id_);
-
    json::Array fields;
    fields.push_back(name);
    
@@ -260,8 +259,12 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
       return error;
    }
 
-
-   return json::readObject(response.result().getObject(), name, *pValue);
+   error = json::readObject(response.result().getObject(), name, *pValue);
+   if (error)
+      LOG_DEBUG_MESSAGE("Error reading session metadata property " + name + " from server for session " + id_ + " error: " + error.asString());
+   else
+      LOG_DEBUG_MESSAGE("Read session metadata property " + name + " from server for session " + id_ + " value: " + *pValue);
+   return error;
 #endif
 }
 
@@ -298,6 +301,9 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
       LOG_ERROR(error);
       return error;
    }
+
+   if (!names.empty())
+      LOG_DEBUG_MESSAGE("Read properties { " + boost::join(names, ", ") + " } from server for session " + id_ + " result: " + response.result().writeFormatted());
 
    resultObj = response.result().getObject();
 
@@ -435,8 +441,9 @@ Error RpcActiveSessionStorage::destroy()
       return error;
    }
 
-   // Deletion was successful on the server side.
-   if (response.result().getBool())
+   // Deletion was successful on the server side - just in case we are in the session process, and are doing a migration, we should remove the
+   // file path for the session here too.
+   if (response.result().getBool() && !scratchPath_.isEmpty())
       return scratchPath_.removeIfExists();
 
    error = Error(json::errc::ExecutionError, ERROR_LOCATION);

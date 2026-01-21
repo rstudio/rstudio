@@ -175,7 +175,19 @@ public:
 
    static SessionScope positronSession(const std::string& id);
 
+   static SessionScope projectNone(const std::string& id, uid_t uid);
+
+   static SessionScope jupyterLabSession(const std::string& id, uid_t uid);
+   static SessionScope jupyterNotebookSession(const std::string& id, uid_t uid);
+
+   static SessionScope vscodeSession(const std::string& id, uid_t uid);
+
+   static SessionScope positronSession(const std::string& id, uid_t uid);
+
+   // Only use this if you are in the session user's process as it uses the effective uid
    static SessionScope fromSessionId(const std::string &id, const std::string& editor);
+
+   static SessionScope fromSessionId(const std::string &id, const std::string& editor, uid_t uid);
 
    SessionScope()
    {
@@ -291,6 +303,9 @@ std::string sessionContextFile(const SessionContext& context);
 std::string generateScopeId();
 std::string generateScopeId(const std::vector<std::string>& reserved);
 
+r_util::SessionScope getSessionScope(const std::string& workbench, const std::string& sessionId, const std::string& projectId, const uid_t uid);
+
+std::string getSessionUrlForScope(const r_util::SessionScope& scope, const std::string& hostPageUrl);
 
 } // namespace r_util
 } // namespace core 

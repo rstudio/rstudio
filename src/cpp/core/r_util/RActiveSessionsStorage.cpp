@@ -58,7 +58,7 @@ FilePath getSessionDirPath(const FilePath& storagePath, const std::string& sessi
 
 } // anonymous namespace
 
-FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStoragePath)
+FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStoragePath, const FilePathToProjectId& projectToIdFunction) : projectToIdFunction_ (projectToIdFunction)
 {
    storagePath_ = ActiveSessions::storagePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
@@ -111,7 +111,7 @@ size_t FileActiveSessionsStorage::getSessionCount() const
 std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
-   return std::make_shared<FileActiveSessionStorage>(scratchPath);
+   return std::make_shared<FileActiveSessionStorage>(scratchPath, projectToIdFunction_);
 }
 
 
