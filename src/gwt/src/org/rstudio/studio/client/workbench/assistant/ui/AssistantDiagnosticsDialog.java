@@ -36,7 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class AssistantDiagnosticsDialog extends ModalDialogBase
 {
-   public AssistantDiagnosticsDialog(String markdownContent)
+   public AssistantDiagnosticsDialog(String markdownContent, String assistantName)
    {
       super(Roles.getDialogRole());
       setSize("560px", "460px");
@@ -78,7 +78,7 @@ public class AssistantDiagnosticsDialog extends ModalDialogBase
          }
       });
 
-      setText(constants_.assistantDiagnosticsTitle());
+      setText(constants_.assistantDiagnosticsTitle(assistantName));
       addLeftButton(copyButton_, ElementIds.ASSISTANT_DIAGNOSTICS_COPY_BUTTON);
       addOkButton(closeButton_, ElementIds.ASSISTANT_DIAGNOSTICS_CLOSE_BUTTON);
    }

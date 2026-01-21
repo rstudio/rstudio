@@ -152,7 +152,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
             else
             {
                AssistantDiagnostics diagnostics = response.result.cast();
-               AssistantDiagnosticsDialog dialog = new AssistantDiagnosticsDialog(diagnostics.report);
+               AssistantDiagnosticsDialog dialog = new AssistantDiagnosticsDialog(diagnostics.report, getDisplayName(assistantType));
                dialog.showModal();
             }
          }
@@ -169,7 +169,8 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onAssistantSignIn()
    {
-      signIn(getAssistantType(), (response) ->
+      String assistantType = getAssistantType();
+      signIn(assistantType, (response) ->
       {
          if (response.error != null)
          {
@@ -179,7 +180,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
          {
             globalDisplay_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  constants_.assistantSignInDialogTitle(),
+                  constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                   constants_.assistantSignedIn(response.result.user));
          }
       });
@@ -200,7 +201,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
             {
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_ERROR,
-                     constants_.assistantSignInDialogTitle(),
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      constants_.assistantError(error.code, error.message));
                return;
             }
@@ -209,7 +210,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
             if (result.status == AssistantConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
             {
                // Generate the dialog.
-               signInDialog_ = new AssistantSignInDialog(result.verificationUri, result.userCode);
+               signInDialog_ = new AssistantSignInDialog(result.verificationUri, result.userCode, getDisplayName(assistantType));
                signInDialog_.showModal();
 
                // Start polling for status, to see when the user has finished authenticating.
@@ -255,13 +256,13 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                String message = constants_.assistantAlreadySignedIn(result.user);
                globalDisplay_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantSignInDialogTitle(),
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      message);
             }
             else
             {
                showGenericResponseMessage(
-                     constants_.assistantSignInDialogTitle(),
+                     constants_.assistantSignInDialogTitle(getDisplayName(assistantType)),
                      response.result);
             }
          }
@@ -271,20 +272,21 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onAssistantSignOut()
    {
-      signOut(getAssistantType(), (response) ->
+      String assistantType = getAssistantType();
+      signOut(assistantType, (response) ->
       {
          String status = response.result.status;
          if (StringUtil.equals(status, AssistantConstants.STATUS_NOT_SIGNED_IN))
          {
             display_.showMessage(
                   MessageDisplay.MSG_INFO,
-                  constants_.assistantSignOutDialogTitle(),
-                  constants_.assistantSignedOut());
+                  constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)),
+                  constants_.assistantSignedOut(getDisplayName(assistantType)));
          }
          else
          {
             showGenericResponseMessage(
-                  constants_.assistantSignOutDialogTitle(),
+                  constants_.assistantSignOutDialogTitle(getDisplayName(assistantType)),
                   response.result);
          }
       });
@@ -310,6 +312,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
    public void checkStatus(String assistantType)
    {
+      String displayName = getDisplayName(assistantType);
       server_.assistantStatus(assistantType, new DelayedProgressRequestCallback<AssistantStatusResponse>(constants_.assistantCheckingStatus())
       {
          @Override
@@ -319,8 +322,8 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantCheckStatusDialogTitle(),
-                     constants_.assistantEmptyResponse());
+                     constants_.assistantCheckStatusDialogTitle(displayName),
+                     constants_.assistantEmptyResponse(displayName));
 
             }
             else if (response.error != null)
@@ -330,11 +333,11 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                   output = constants_.assistantNoOutput();
 
                String message = constants_.assistantErrorStartingAgent(
-                     response.error.getEndUserMessage(), output);
+                     displayName, response.error.getEndUserMessage(), output);
 
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantCheckStatusDialogTitle(),
+                     constants_.assistantCheckStatusDialogTitle(displayName),
                      message);
             }
             else if (response.reason != null)
@@ -342,27 +345,27 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
                int reason = (int) response.reason.valueOf();
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantCheckStatusDialogTitle(),
-                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason));
+                     constants_.assistantCheckStatusDialogTitle(displayName),
+                     AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, displayName));
             }
             else if (response.result.status == AssistantConstants.STATUS_NOT_SIGNED_IN)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantStatusDialogTitle(),
-                     constants_.assistantNotSignedIn());
+                     constants_.assistantStatusDialogTitle(displayName),
+                     constants_.assistantNotSignedIn(displayName));
             }
             else if (response.result.status == AssistantConstants.STATUS_OK)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
-                     constants_.assistantStatusDialogTitle(),
+                     constants_.assistantStatusDialogTitle(displayName),
                      constants_.assistantCurrentlySignedIn(response.result.user));
             }
             else
             {
                showGenericResponseMessage(
-                     constants_.assistantCheckStatusDialogTitle(),
+                     constants_.assistantCheckStatusDialogTitle(displayName),
                      response.result);
             }
 
@@ -415,4 +418,23 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
    private final AssistantServerOperations server_;
 
    private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
+
+   // Display names for assistant types
+   public static final String DISPLAY_NAME_COPILOT = "GitHub Copilot";
+   public static final String DISPLAY_NAME_POSIT = "Posit AI";
+   public static final String DISPLAY_NAME_UNKNOWN = "Assistant";
+
+   /**
+    * Convert an assistant type (e.g., "copilot", "posit") to a display name
+    * (e.g., "GitHub Copilot", "Posit AI").
+    */
+   public static String getDisplayName(String assistantType)
+   {
+      if (StringUtil.equals(assistantType, UserPrefsAccessor.ASSISTANT_COPILOT))
+         return DISPLAY_NAME_COPILOT;
+      else if (StringUtil.equals(assistantType, UserPrefsAccessor.ASSISTANT_POSIT))
+         return DISPLAY_NAME_POSIT;
+      else
+         return DISPLAY_NAME_UNKNOWN;
+   }
 }

@@ -46,10 +46,11 @@ public class AssistantSignInDialog extends ModalDialogBase
    }
 
    public AssistantSignInDialog(String verificationUri,
-                                String verificationCode)
+                                String verificationCode,
+                                String assistantName)
    {
       super(Roles.getDialogRole());
-      setText(constants_.assistantSignInDialogTitle());
+      setText(constants_.assistantSignInDialogTitle(assistantName));
 
       ui_ = uiBinder.createAndBindUi(this);
       progress_ = addProgressIndicator(true, false);

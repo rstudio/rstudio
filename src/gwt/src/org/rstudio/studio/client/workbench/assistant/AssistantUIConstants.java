@@ -14,32 +14,33 @@
  */
 package org.rstudio.studio.client.workbench.assistant;
 
-public interface AssistantUIConstants extends com.google.gwt.i18n.client.Messages {
-    String assistantDiagnosticsTitle();
-    String assistantSignInDialogTitle();
-    String assistantSignOutDialogTitle();
+public interface AssistantUIConstants extends com.google.gwt.i18n.client.Messages
+{
+    String assistantDiagnosticsTitle(String assistantName);
+    String assistantSignInDialogTitle(String assistantName);
+    String assistantSignOutDialogTitle(String assistantName);
     String assistantAuthenticating();
-    String assistantVerifyingInstallation();
+    String assistantVerifyingInstallation(String assistantName);
     String assistantSignedIn(String user);
     String assistantSigningIn();
     String assistantSigningOut();
     String assistantError(int code, String message);
     String assistantAlreadySignedIn(String name);
-    String assistantSignedOut();
+    String assistantSignedOut(String assistantName);
     String assistantCheckingStatus();
-    String assistantCheckStatusDialogTitle();
-    String assistantStatusDialogTitle();
-    String assistantEmptyResponse();
+    String assistantCheckStatusDialogTitle(String assistantName);
+    String assistantStatusDialogTitle(String assistantName);
+    String assistantEmptyResponse(String assistantName);
     String assistantNoOutput();
-    String assistantErrorStartingAgent(String error, String output);
-    String assistantNotSignedIn();
+    String assistantErrorStartingAgent(String assistantName, String error, String output);
+    String assistantNotSignedIn(String assistantName);
     String assistantNotSignedInShort();
     String assistantCurrentlySignedIn(String user);
     String assistantUnknownError();
-    String assistantNotInstalledError();
-    String assistantDisabledByAdministratorError();
-    String assistantDisabledViaProjectPreferencesError();
-    String assistantDisabledViaGlobalOptionsError();
-    String assistantLaunchError();
+    String assistantNotInstalledError(String assistantName);
+    String assistantDisabledByAdministratorError(String assistantName);
+    String assistantDisabledViaProjectPreferencesError(String assistantName);
+    String assistantDisabledViaGlobalOptionsError(String assistantName);
+    String assistantLaunchError(String assistantName);
     String assistantUnknownErrorShort();
 }

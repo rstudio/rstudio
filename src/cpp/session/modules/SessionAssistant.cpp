@@ -199,7 +199,7 @@ bool s_assistantInitialized = false;
 PidType s_agentPid = -1;
 
 // The type of the currently running agent (e.g., "copilot", "posit").
-std::string s_currentAgentType;
+std::string s_runningAgentType;
 
 // Error output (if any) that was written during startup.
 std::string s_agentStartupError;
@@ -889,14 +889,14 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
-   s_currentAgentType.clear();
+   s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
-   s_currentAgentType.clear();
+   s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
 }
 
@@ -1063,7 +1063,7 @@ Error startAgent(const std::string& assistantType = "")
    }
 
    // Record which assistant type is now running
-   s_currentAgentType = assistant;
+   s_runningAgentType = assistant;
 
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
@@ -1140,13 +1140,13 @@ bool ensureAgentRunning(const std::string& assistantType = "",
       // the currently running agent, stop the current agent first
       bool switchingAgents =
          !assistantType.empty() &&
-         !s_currentAgentType.empty() &&
-         assistantType != s_currentAgentType;
+         !s_runningAgentType.empty() &&
+         assistantType != s_runningAgentType;
       
       if (switchingAgents)
       {
          DLOG("Switching assistant type from '{}' to '{}'",
-              s_currentAgentType, assistantType);
+              s_runningAgentType, assistantType);
 
          // Stop the current agent synchronously
          if (!stopAgentSync())

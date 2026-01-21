@@ -38,7 +38,7 @@ public class AssistantResponseTypes
    // Used to communicate to the user why the assistant agent might not be running.
    public static class AssistantAgentNotRunningReason
    {
-      public static String reasonToString(int reason)
+      public static String reasonToString(int reason, String assistantName)
       {
          if (reason == Unknown)
          {
@@ -46,23 +46,23 @@ public class AssistantResponseTypes
          }
          else if (reason == NotInstalled)
          {
-            return constants_.assistantNotInstalledError();
+            return constants_.assistantNotInstalledError(assistantName);
          }
          else if (reason == DisabledByAdministrator)
          {
-            return constants_.assistantDisabledByAdministratorError();
+            return constants_.assistantDisabledByAdministratorError(assistantName);
          }
          else if (reason == DisabledViaProjectPreferences)
          {
-            return constants_.assistantDisabledViaProjectPreferencesError();
+            return constants_.assistantDisabledViaProjectPreferencesError(assistantName);
          }
          else if (reason == DisabledViaGlobalOptions)
          {
-            return constants_.assistantDisabledViaGlobalOptionsError();
+            return constants_.assistantDisabledViaGlobalOptionsError(assistantName);
          }
          else if (reason == LaunchError)
          {
-            return constants_.assistantLaunchError();
+            return constants_.assistantLaunchError(assistantName);
          }
          else
          {
