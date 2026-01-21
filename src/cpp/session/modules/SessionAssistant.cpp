@@ -252,6 +252,27 @@ constexpr int kNesRetryLineOffset = 4;
 // allow cancellation of in-flight requests when a new request arrives.
 std::atomic<int> s_nesRequestSequence{0};
 
+std::string agentNotRunningReason()
+{
+   switch (s_agentNotRunningReason)
+   {
+      case AgentNotRunningReason::Unknown:
+         return "Unknown";
+      case AgentNotRunningReason::NotInstalled:
+         return "The required assistant agent is not installed.";
+      case AgentNotRunningReason::DisabledByAdministrator:
+         return "AI assistant use has been disabled by the system administrator.";
+      case AgentNotRunningReason::DisabledViaProjectPreferences:
+         return "AI assistant has been disabled via project preferences.";
+      case AgentNotRunningReason::DisabledViaGlobalPreferences:
+         return "AI assistant has been disabled via global preferences.";
+      case AgentNotRunningReason::LaunchError:
+         return "The AI assistant agent failed to launch: " + s_agentStartupError;
+   }
+
+   return "Unknown";
+}
+
 int assistantLogLevel()
 {
    return s_assistantLogLevel;
@@ -317,17 +338,21 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
 
 FilePath paiLanguageServerPath()
 {
-   FilePath languageServerPath = xdg::userDataDir()
-      .completeChildPath("pai/bin/dist/nes/language-server.js");
-   
-   if (!languageServerPath.exists())
-   {
-      ELOG("Posit AI Language Server not found at '{}'.", languageServerPath.getAbsolutePath());
-      return FilePath();
-   }
+   FilePath languageServerDir = xdg::userDataDir().completePath("pai/bin/dist/nes");
 
-   DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
-   return languageServerPath;
+   for (auto&& suffix : { "language-server.cjs", "language-server.js" })
+   {
+      FilePath languageServerPath = languageServerDir.completePath(suffix);
+
+      if (languageServerPath.exists())
+      {        
+         DLOG("Posit AI Language Server found at '{}'.", languageServerPath.getAbsolutePath());
+         return languageServerPath;
+      }
+   }
+   
+   ELOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+   return FilePath();
 }
 
 FilePath copilotLanguageServerPath()
@@ -1104,7 +1129,6 @@ bool ensureAgentRunning(const std::string& assistantType = "",
 {
    if (s_agentPid != -1)
    {
-      //DLOG("Assistant is already running; nothing to do.");
       return true;
    }
 
@@ -1122,7 +1146,8 @@ bool ensureAgentRunning(const std::string& assistantType = "",
       {
          if (!s_assistantInitialized)
          {
-            DLOG("Assistant is not enabled; not starting agent.");
+            std::string reason = agentNotRunningReason();
+            DLOG("Assistant is not enabled; not starting agent. Reason: {}", reason);
             s_assistantInitialized = true;
          }
          return false;
