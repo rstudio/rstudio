@@ -614,19 +614,15 @@ public class AssistantPreferencesPane extends PreferencesPane
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
                   showButtons(btnRefresh_, btnDiagnostics_);
                }
-               else if (projectOptions_ != null && projectOptions_.getAssistantOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               else if (projectOptions_ != null &&
+                        UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
                {
-                  lblAssistantStatus_.setText(constants_.copilotDisabledInProject());
+                  lblAssistantStatus_.setText(constants_.assistantDisabledInProject(Assistant.getDisplayName(assistantType)));
                   showButtons(btnProjectOptions_);
-               }
-               else if (prefs_.copilotEnabled().getValue())
-               {
-                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
-                  showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
                else
                {
-                  lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
                   showButtons(btnSignIn_, btnRefresh_, btnDiagnostics_);
                }
             }

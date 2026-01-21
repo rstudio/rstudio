@@ -1129,7 +1129,7 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
-      prefs_.copilotEnabled().addValueChangeHandler((event) ->
+      prefs_.assistant().addValueChangeHandler((event) ->
       {
          manageHandlers();
       });

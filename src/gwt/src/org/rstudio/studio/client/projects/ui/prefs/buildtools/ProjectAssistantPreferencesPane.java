@@ -416,13 +416,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
                }
-               else if (prefs_.copilotEnabled().getValue())
-               {
-                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
-               }
                else
                {
-                  lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                  lblAssistantStatus_.setText(constants_.assistantAgentNotRunning());
                }
             }
             else if (response.result.status == AssistantConstants.STATUS_OK ||
