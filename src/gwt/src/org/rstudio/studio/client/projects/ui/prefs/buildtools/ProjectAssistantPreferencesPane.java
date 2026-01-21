@@ -240,19 +240,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             {
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
+               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
-               // Refresh Copilot status when panel is shown
-               if (!copilotRefreshed_)
-               {
-                  // Pass assistantType so backend knows which language server to use
-                  // even if the preference hasn't been saved yet
-                  refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
-                  copilotRefreshed_ = true;
-               }
+               refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
             }
          }
       };
@@ -513,8 +507,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    // State
    private RProjectOptions options_;
    private HandlerRegistration assistantRuntimeStatusHandler_;
-   private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
-   private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
 
    // Assistant panels (created in initDisplay)
    private VerticalPanel nonePanel_;
