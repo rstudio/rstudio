@@ -87,7 +87,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       // Save assistant selection and sync deprecated copilot_enabled preference
       String selectedAssistant = selAssistant_.getValue();
-      prefs.rstudioAssistant().setGlobalValue(selectedAssistant);
+      prefs.assistant().setGlobalValue(selectedAssistant);
       prefs.copilotEnabled().setGlobalValue(
             selectedAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT));
 
@@ -154,7 +154,7 @@ public class AssistantPreferencesPane extends PreferencesPane
             false,
             true,
             false);
-      selAssistant_.setValue(prefs_.rstudioAssistant().getGlobalValue());
+      selAssistant_.setValue(prefs_.assistant().getGlobalValue());
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -328,7 +328,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                            if (isInstalled)
                            {
                               prefs_.copilotEnabled().setGlobalValue(true);
-                              prefs_.rstudioAssistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+                              prefs_.assistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
                               prefs_.writeUserPrefs((completed) ->
                               {
                                  refresh();
@@ -612,7 +612,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       if (prefs_.copilotEnabled().getValue())
       {
          prefs_.copilotEnabled().setGlobalValue(false);
-         prefs_.rstudioAssistant().setGlobalValue(newAssistant);
+         prefs_.assistant().setGlobalValue(newAssistant);
          prefs_.writeUserPrefs((completed) -> {});
          copilotRefreshed_ = false;
       }
@@ -640,11 +640,11 @@ public class AssistantPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       // Migration: if rstudio_assistant is "none" but copilot_enabled is true, auto-migrate to "copilot"
-      String assistant = prefs.rstudioAssistant().getGlobalValue();
+      String assistant = prefs.assistant().getGlobalValue();
       if (assistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_NONE) &&
           prefs.copilotEnabled().getGlobalValue())
       {
-         prefs.rstudioAssistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
+         prefs.assistant().setGlobalValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
          selAssistant_.setValue(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT);
       }
 

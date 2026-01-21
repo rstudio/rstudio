@@ -145,7 +145,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             false,
             true,
             false);
-      selAssistant_.setValue(prefs_.rstudioAssistant().getGlobalValue());
+      selAssistant_.setValue(prefs_.assistant().getGlobalValue());
 
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
@@ -263,7 +263,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       VerticalPanel panel = new VerticalPanel();
 
       // Show what global assistant is currently active
-      String globalAssistant = prefs_.rstudioAssistant().getGlobalValue();
+      String globalAssistant = prefs_.assistant().getGlobalValue();
       String globalAssistantName;
       if (globalAssistant.equals(UserPrefsAccessor.RSTUDIO_ASSISTANT_COPILOT))
          globalAssistantName = prefsConstants_.rstudioAssistantEnum_copilot();

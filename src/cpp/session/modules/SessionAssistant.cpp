@@ -376,12 +376,12 @@ FilePath assistantLanguageServerPath()
       return FilePath(rstudioAgentPath);
 
    // Otherwise, determine path based on selected assistant type
-   std::string assistant = prefs::userPrefs().rstudioAssistant();
-   if (assistant == kRstudioAssistantPositAi)
+   std::string assistant = prefs::userPrefs().assistant();
+   if (assistant == kAssistantPosit)
    {
       return paiLanguageServerPath();
    }
-   else if (assistant == kRstudioAssistantCopilot)
+   else if (assistant == kAssistantCopilot)
    {
       return copilotLanguageServerPath();
    }
@@ -402,10 +402,10 @@ bool isAssistantEnabled()
 {
    // First, check the user preference to see if the user is requesting
    // a specific assistant type (Posit AI, Copilot, None).
-   std::string assistant = prefs::userPrefs().rstudioAssistant();
+   std::string assistant = prefs::userPrefs().assistant();
 
    // If no assistant is selected, we're done.
-   if (assistant == kRstudioAssistantNone)
+   if (assistant == kAssistantNone)
    {
       s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
       return false;
@@ -416,7 +416,7 @@ bool isAssistantEnabled()
    if (!projectAssistant.empty() && projectAssistant != "default")
    {
       // If the project explicitly disables the assistant, respect that.
-      if (projectAssistant == kRstudioAssistantNone)
+      if (projectAssistant == kAssistantNone)
       {
          s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
          return false;
@@ -427,7 +427,7 @@ bool isAssistantEnabled()
    }
 
    // Check whether the selected assistant type is allowed by the administrator.
-   if (assistant == kRstudioAssistantCopilot)
+   if (assistant == kAssistantCopilot)
    {
       if (!isCopilotAllowedByAdmin())
       {
@@ -435,7 +435,7 @@ bool isAssistantEnabled()
          return false;
       }
    }
-   else if (assistant == kRstudioAssistantPositAi)
+   else if (assistant == kAssistantPosit)
    {
       if (!isPositAssistantAllowedByAdmin())
       {
@@ -685,7 +685,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Agent has started [PID = {}, type = {}]",
         operations.getPid(),
-        prefs::userPrefs().rstudioAssistant());
+        prefs::userPrefs().assistant());
    s_agentPid = operations.getPid();
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
@@ -947,11 +947,11 @@ Error startAgent()
 #endif
 
    // Launch the assistant, using a helper script if one is configured.
-   std::string assistant = prefs::userPrefs().rstudioAssistant();
+   std::string assistant = prefs::userPrefs().assistant();
    FilePath copilotHelper = session::options().copilotHelper();
    FilePath positAssistantHelper = session::options().positAssistantHelper();
 
-   if (assistant == kRstudioAssistantCopilot && !copilotHelper.isEmpty())
+   if (assistant == kAssistantCopilot && !copilotHelper.isEmpty())
    {
       // Run Copilot via helper script
       if (!copilotHelper.exists())
@@ -969,7 +969,7 @@ Error startAgent()
                options,
                callbacks);
    }
-   else if (assistant == kRstudioAssistantPositAi && !positAssistantHelper.isEmpty())
+   else if (assistant == kAssistantPosit && !positAssistantHelper.isEmpty())
    {
       // Run Posit AI via helper script
       if (!positAssistantHelper.exists())
@@ -1074,10 +1074,10 @@ Error startAgent()
       sendNotification("initialized", json::Object());
 
       // Send assistant-specific configuration
-      std::string assistant = prefs::userPrefs().rstudioAssistant();
-      if (assistant == kRstudioAssistantCopilot)
+      std::string assistant = prefs::userPrefs().assistant();
+      if (assistant == kAssistantCopilot)
          setCopilotConfiguration();
-      else if (assistant == kRstudioAssistantPositAi)
+      else if (assistant == kAssistantPosit)
          setPositAiConfiguration();
    };
    
@@ -1562,7 +1562,7 @@ void onProjectOptionsUpdated()
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   if (name == kRstudioAssistant || name == kCopilotEnabled)
+   if (name == kAssistant || name == kCopilotEnabled)
    {
       synchronize();
    }
@@ -2284,10 +2284,10 @@ Error initialize()
    // COPILOT_LOG_LEVEL and PAI_LOG_LEVEL only apply to their respective types.
    std::string assistantLogLevel;
    {
-      std::string assistant = prefs::userPrefs().rstudioAssistant();
-      if (assistant == kRstudioAssistantCopilot)
+      std::string assistant = prefs::userPrefs().assistant();
+      if (assistant == kAssistantCopilot)
          assistantLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
-      else if (assistant == kRstudioAssistantPositAi)
+      else if (assistant == kAssistantPosit)
          assistantLogLevel = core::system::getenv("PAI_LOG_LEVEL");
    }
    if (assistantLogLevel.empty())
