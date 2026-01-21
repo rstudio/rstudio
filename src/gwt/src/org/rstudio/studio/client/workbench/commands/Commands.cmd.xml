@@ -2137,6 +2137,26 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Dismiss Next Edit Suggestion"
         desc="Dismiss the current Copilot next edit suggestion, if any."/>
 
+   <cmd id="assistantRequestSuggestions"
+        label="Assistant: Request Suggestions"
+        menuLabel="Request Suggestions"
+        desc="Request assistant suggestions at the cursor position."/>
+
+   <cmd id="assistantAcceptNextWord"
+        label="Assistant: Accept Next Word"
+        menuLabel="Accept Next Word"
+        desc="Accept the next word of the current assistant suggestion, if any."/>
+
+   <cmd id="assistantAcceptNextEditSuggestion"
+        label="Assistant: Accept Next Edit Suggestion"
+        menuLabel="Accept Next Edit Suggestion"
+        desc="Accept the current assistant next edit suggestion, if any."/>
+
+   <cmd id="assistantDismissNextEditSuggestion"
+        label="Assistant: Dismiss Next Edit Suggestion"
+        menuLabel="Dismiss Next Edit Suggestion"
+        desc="Dismiss the current assistant next edit suggestion, if any."/>
+
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

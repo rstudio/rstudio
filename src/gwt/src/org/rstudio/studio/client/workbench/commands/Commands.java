@@ -763,6 +763,12 @@ public abstract class
    public abstract AppCommand copilotAcceptNextEditSuggestion();
    public abstract AppCommand copilotDismissNextEditSuggestion();
 
+   // Assistant
+   public abstract AppCommand assistantRequestSuggestions();
+   public abstract AppCommand assistantAcceptNextWord();
+   public abstract AppCommand assistantAcceptNextEditSuggestion();
+   public abstract AppCommand assistantDismissNextEditSuggestion();
+
    // Databricks
    public abstract AppCommand layoutZoomDatabricks();
 

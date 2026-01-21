@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
@@ -1120,6 +1121,12 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
+      events_.addHandler(AssistantStatusChangedEvent.TYPE, (event) ->
+      {
+         assistantStatus_ = event.getStatus();
+         manageHandlers();
+      });
+
       Scheduler.get().scheduleDeferred(() ->
       {
          manageHandlers();
@@ -1147,7 +1154,7 @@ public class TextEditingTargetAssistantHelper
 
    private void manageHandlers()
    {
-      if (!copilot_.isEnabled())
+      if (!isAssistantAvailable())
       {
          display_.removeGhostText();
          registrations_.removeHandler();
@@ -1473,7 +1480,7 @@ public class TextEditingTargetAssistantHelper
                         event.stopPropagation();
                         event.preventDefault();
 
-                        commands_.copilotAcceptNextWord().execute();
+                        commands_.assistantAcceptNextWord().execute();
                      }
 
                   }
@@ -1655,9 +1662,9 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotRequestCompletions()
+   public void onAssistantRequestSuggestions()
    {
-      if (copilot_.isEnabled() && display_.isFocused())
+      if (isAssistantAvailable() && display_.isFocused())
       {
          completionTriggeredByCommand_ = true;
          completionTimer_.schedule(0);
@@ -1665,7 +1672,13 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotAcceptNextWord()
+   public void onCopilotRequestCompletions()
+   {
+      commands_.assistantRequestSuggestions().execute();
+   }
+
+   @Handler
+   public void onAssistantAcceptNextWord()
    {
       if (!display_.isFocused())
          return;
@@ -1717,6 +1730,12 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
+   public void onCopilotAcceptNextWord()
+   {
+      commands_.assistantAcceptNextWord().execute();
+   }
+
+   @Handler
    public void onCopilotToggleAutomaticCompletions()
    {
       if (display_.isFocused())
@@ -1735,7 +1754,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotAcceptNextEditSuggestion()
+   public void onAssistantAcceptNextEditSuggestion()
    {
       if (!display_.isFocused())
          return;
@@ -1764,7 +1783,13 @@ public class TextEditingTargetAssistantHelper
    }
 
    @Handler
-   public void onCopilotDismissNextEditSuggestion()
+   public void onCopilotAcceptNextEditSuggestion()
+   {
+      commands_.assistantAcceptNextEditSuggestion().execute();
+   }
+
+   @Handler
+   public void onAssistantDismissNextEditSuggestion()
    {
       if (!display_.isFocused())
          return;
@@ -1774,6 +1799,12 @@ public class TextEditingTargetAssistantHelper
       {
          reset();
       }
+   }
+
+   @Handler
+   public void onCopilotDismissNextEditSuggestion()
+   {
+      commands_.assistantDismissNextEditSuggestion().execute();
    }
 
    private void updateCompletion(String key)
@@ -1808,9 +1839,9 @@ public class TextEditingTargetAssistantHelper
       assistantDisabledInThisDocument_ = false;
    }
 
-   public boolean isAssistantEnabled()
+   public boolean isAssistantAvailable()
    {
-      return copilot_.isEnabled();
+      return assistantStatus_ == AssistantStatusChangedEvent.RUNNING;
    }
 
    // Normalize an inline completion by trimming overlapping prefix/suffix.
@@ -2109,6 +2140,8 @@ public class TextEditingTargetAssistantHelper
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
 
+   // Assistant status
+   private int assistantStatus_ = AssistantStatusChangedEvent.UNKNOWN;
 
    // Injected ----
    private Copilot copilot_;
