@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantStatusResponse;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
@@ -183,11 +182,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
-
-      assistantRuntimeStatusHandler_ = events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
-      {
-         assistantStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
-      });
    }
 
    @Override
@@ -470,7 +464,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
       {
          refresh();
-         copilotRefreshed_ = true;
       }
    }
    

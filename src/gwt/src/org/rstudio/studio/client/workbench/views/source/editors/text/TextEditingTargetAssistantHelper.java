@@ -42,6 +42,8 @@ import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedE
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
@@ -52,8 +54,6 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.assistant.Assistant;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -1019,11 +1019,12 @@ public class TextEditingTargetAssistantHelper
                            }
 
                            // Check for null result. This might occur if the completion request
-                           // was cancelled by the copilot agent.
+                           // was cancelled by the copilot agent. But it also might just imply there
+                           // weren't any completions available.
                            Any result = response.result;
                            if (result == null)
                            {
-                              events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_CANCELLED));
+                              nesTimer_.schedule(20);
                               return;
                            }
 
