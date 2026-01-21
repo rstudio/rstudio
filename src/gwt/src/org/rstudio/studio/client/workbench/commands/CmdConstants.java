@@ -1456,6 +1456,38 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Dismiss the current Copilot next edit suggestion, if any.") // $NON-NLS-1$
     String copilotDismissNextEditSuggestionDesc();
     
+    // assistantRequestSuggestions
+    @DefaultStringValue("Assistant: Request Suggestions") // $NON-NLS-1$
+    String assistantRequestSuggestionsLabel();
+    @DefaultStringValue("Request Suggestions") // $NON-NLS-1$
+    String assistantRequestSuggestionsMenuLabel();
+    @DefaultStringValue("Request assistant suggestions at the cursor position.") // $NON-NLS-1$
+    String assistantRequestSuggestionsDesc();
+    
+    // assistantAcceptNextWord
+    @DefaultStringValue("Assistant: Accept Next Word") // $NON-NLS-1$
+    String assistantAcceptNextWordLabel();
+    @DefaultStringValue("Accept Next Word") // $NON-NLS-1$
+    String assistantAcceptNextWordMenuLabel();
+    @DefaultStringValue("Accept the next word of the current assistant suggestion, if any.") // $NON-NLS-1$
+    String assistantAcceptNextWordDesc();
+    
+    // assistantAcceptNextEditSuggestion
+    @DefaultStringValue("Assistant: Accept Next Edit Suggestion") // $NON-NLS-1$
+    String assistantAcceptNextEditSuggestionLabel();
+    @DefaultStringValue("Accept Next Edit Suggestion") // $NON-NLS-1$
+    String assistantAcceptNextEditSuggestionMenuLabel();
+    @DefaultStringValue("Accept the current assistant next edit suggestion, if any.") // $NON-NLS-1$
+    String assistantAcceptNextEditSuggestionDesc();
+    
+    // assistantDismissNextEditSuggestion
+    @DefaultStringValue("Assistant: Dismiss Next Edit Suggestion") // $NON-NLS-1$
+    String assistantDismissNextEditSuggestionLabel();
+    @DefaultStringValue("Dismiss Next Edit Suggestion") // $NON-NLS-1$
+    String assistantDismissNextEditSuggestionMenuLabel();
+    @DefaultStringValue("Dismiss the current assistant next edit suggestion, if any.") // $NON-NLS-1$
+    String assistantDismissNextEditSuggestionDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();
