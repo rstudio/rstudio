@@ -49,6 +49,17 @@ public class ChatPane
       URL
    }
 
+   private enum NotificationType
+   {
+      NONE,
+      UPDATE_AVAILABLE,
+      INSTALL_AVAILABLE,
+      UPDATING,
+      UPDATE_COMPLETE,
+      UPDATE_ERROR,
+      UPDATE_CHECK_FAILURE
+   }
+
    @Inject
    protected ChatPane(GlobalDisplay globalDisplay,
                       EventBus events,
@@ -333,6 +344,7 @@ public class ChatPane
             }
          });
 
+      currentNotificationType_ = NotificationType.UPDATE_AVAILABLE;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -357,6 +369,7 @@ public class ChatPane
             }
          });
 
+      currentNotificationType_ = NotificationType.INSTALL_AVAILABLE;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -369,6 +382,7 @@ public class ChatPane
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
          .clear();
 
+      currentNotificationType_ = NotificationType.UPDATING;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -381,6 +395,7 @@ public class ChatPane
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
          .clear();
 
+      currentNotificationType_ = NotificationType.UPDATE_COMPLETE;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -400,6 +415,7 @@ public class ChatPane
          })
          .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
 
+      currentNotificationType_ = NotificationType.UPDATE_ERROR;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -407,8 +423,19 @@ public class ChatPane
    @Override
    public void hideUpdateNotification()
    {
+      currentNotificationType_ = NotificationType.NONE;
       updateNotificationPanel_.setVisible(false);
       updateFrameLayout();
+   }
+
+   @Override
+   public void hideErrorNotification()
+   {
+      if (currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         hideUpdateNotification();
+      }
    }
 
    @Override
@@ -420,6 +447,7 @@ public class ChatPane
          .clear()
          .addButton(constants_.chatDismiss(), () -> hideUpdateNotification());
 
+      currentNotificationType_ = NotificationType.UPDATE_CHECK_FAILURE;
       updateNotificationPanel_.setVisible(true);
       updateFrameLayout();
    }
@@ -764,6 +792,7 @@ public class ChatPane
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
    private ChatPresenter.Display.Status currentStatus_ = null;
+   private NotificationType currentNotificationType_ = NotificationType.NONE;
 
    // Update notification UI components
    private FlowPanel updateNotificationPanel_;
