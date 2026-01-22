@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.Assistant;
@@ -190,7 +191,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnProjectOptions_ = new SmallButton(constants_.assistantProjectOptionsLabel());
       btnProjectOptions_.addStyleName(RES.styles().button());
       statusButtons_.add(btnProjectOptions_);
-      
+
+      // Label for when project has overridden the assistant selection
+      lblProjectOverride_ = new Label();
+      lblProjectOverride_.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
+
       cbAssistantShowMessages_ = checkboxPref(prefs_.assistantShowMessages(), true);
       selAssistantTabKeyBehavior_ = new SelectWidget(
             prefsConstants_.assistantTabKeyBehaviorTitle(),
@@ -245,8 +250,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          assistantStarted_ = event.getStatus() == AssistantRuntimeStatusChangedEvent.RUNNING;
       });
+
+      projectOptionsChangedHandler_ = events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
+      {
+         onProjectOptionsChanged(event.getData());
+      });
    }
-   
+
    @Override
    public void onUnload()
    {
@@ -254,6 +264,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          assistantRuntimeStatusHandler_.removeHandler();
          assistantRuntimeStatusHandler_ = null;
+      }
+      if (projectOptionsChangedHandler_ != null)
+      {
+         projectOptionsChangedHandler_.removeHandler();
+         projectOptionsChangedHandler_ = null;
       }
       super.onUnload();
    }
@@ -264,6 +279,16 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Add assistant selector
       add(selAssistant_);
+
+      // Create project override panel (shown when project has a specific assistant configured)
+      projectOverridePanel_ = new HorizontalPanel();
+      projectOverridePanel_.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+      projectOverridePanel_.add(lblProjectOverride_);
+      SmallButton btnOpenProjectOptions = new SmallButton(constants_.assistantProjectOptionsLabel());
+      btnOpenProjectOptions.addClickHandler((event) -> commands_.projectOptions().execute());
+      btnOpenProjectOptions.getElement().getStyle().setMarginLeft(8, Unit.PX);
+      projectOverridePanel_.add(btnOpenProjectOptions);
+      projectOverridePanel_.setVisible(false);
 
       // Create the status panel (shared between Copilot and Posit AI)
       statusPanel_ = createStatusPanel();
@@ -306,8 +331,9 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
-               // Move status panel and common settings panel to Posit AI panel
+               // Move status panel, project override panel, and common settings panel to Posit AI panel
                positAiPanel_.insert(spaced(statusPanel_), 0);
+               positAiPanel_.insert(spaced(projectOverridePanel_), 1);
                positAiPanel_.add(commonSettingsPanel_);
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
@@ -347,10 +373,15 @@ public class AssistantPreferencesPane extends PreferencesPane
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
-               // Move status panel, common settings panel and Copilot-specific "Other" panel to Copilot panel
+               // Move status panel, project override panel, common settings panel and Copilot-specific "Other" panel to Copilot panel
                if (session_.getSessionInfo().getCopilotEnabled())
                {
                   copilotPanel_.insert(spaced(statusPanel_), 0);
+                  copilotPanel_.insert(spaced(projectOverridePanel_), 1);
+               }
+               else
+               {
+                  copilotPanel_.insert(spaced(projectOverridePanel_), 0);
                }
                copilotPanel_.add(commonSettingsPanel_);
                copilotPanel_.add(copilotOtherPanel_);
@@ -739,14 +770,95 @@ public class AssistantPreferencesPane extends PreferencesPane
       initDisplay();
       initModel();
 
-      // Only refresh Copilot status if Copilot is the selected assistant
-      if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
+      // Check if project has a specific assistant configured (overrides global setting)
+      String projectAssistant = getProjectAssistant();
+      if (projectAssistant != null)
       {
-         refresh(selAssistant_.getValue());
-         copilotRefreshed_ = true;
+         // Project has overridden the assistant selection
+         projectAssistantOverride_ = projectAssistant;
+         String assistantName = Assistant.getDisplayName(projectAssistant);
+         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+         projectOverridePanel_.setVisible(true);
+
+         // Disable the selector and set it to match project's assistant
+         selAssistant_.setEnabled(false);
+         selAssistant_.setValue(projectAssistant);
+
+         // Trigger the change handler to update the displayed panel
+         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
       }
    }
-   
+
+   /**
+    * Returns the project-specific assistant if one is configured, or null if
+    * the project uses the default (global) setting.
+    */
+   private String getProjectAssistant()
+   {
+      if (projectOptions_ == null)
+         return null;
+
+      String projectAssistant = projectOptions_.getAssistantOptions().assistant;
+
+      // "default", null, or empty means use global setting
+      if (projectAssistant == null ||
+          projectAssistant.isEmpty() ||
+          projectAssistant.equals("default"))
+      {
+         return null;
+      }
+
+      return projectAssistant;
+   }
+
+   /**
+    * Called when project options are changed (e.g., from the Project Options dialog).
+    * Updates the UI to reflect any changes to the project's assistant setting.
+    */
+   private void onProjectOptionsChanged(RProjectOptions options)
+   {
+      // Update our cached project options
+      projectOptions_ = options;
+
+      // Re-check if there's a project override
+      String projectAssistant = getProjectAssistant();
+
+      if (projectAssistant != null)
+      {
+         // Project has a specific assistant configured
+         projectAssistantOverride_ = projectAssistant;
+         String assistantName = Assistant.getDisplayName(projectAssistant);
+         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+         projectOverridePanel_.setVisible(true);
+         selAssistant_.setEnabled(false);
+         selAssistant_.setValue(projectAssistant);
+
+         // Reset refresh flags so status gets refreshed for the new assistant
+         copilotRefreshed_ = false;
+         positAiRefreshed_ = false;
+
+         // Trigger the change handler to update the displayed panel
+         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+      }
+      else
+      {
+         // Project is using global default
+         projectAssistantOverride_ = null;
+         projectOverridePanel_.setVisible(false);
+         selAssistant_.setEnabled(true);
+
+         // Restore selector to global preference value
+         selAssistant_.setValue(prefs_.assistant().getGlobalValue());
+
+         // Reset refresh flags
+         copilotRefreshed_ = false;
+         positAiRefreshed_ = false;
+
+         // Trigger the change handler to update the displayed panel
+         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+      }
+   }
+
    private void hideButtons()
    {
       for (SmallButton button : statusButtons_)
@@ -788,10 +900,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    private String assistantStartupError_;
    private boolean initialCopilotWorkspaceEnabled_;
    private HandlerRegistration assistantRuntimeStatusHandler_;
+   private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?
    private boolean copilotRefreshed_ = false; // has Copilot status been refreshed for this pane instance?
    private boolean positAiRefreshed_ = false; // has Posit AI status been refreshed for this pane instance?
    private RProjectOptions projectOptions_;
+   private String projectAssistantOverride_; // non-null when project has overridden assistant
 
    // Assistant panels (created in initDisplay)
    private VerticalPanel nonePanel_;
@@ -801,6 +915,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel commonSettingsPanel_;
    private VerticalPanel copilotOtherPanel_;
    private HorizontalPanel statusPanel_;
+   private HorizontalPanel projectOverridePanel_;
 
    // UI
    private final SelectWidget selAssistant_;
@@ -822,7 +937,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
-   
+   private final Label lblProjectOverride_;
+
    // Injected
    private final EventBus events_;
    private final Session session_;
