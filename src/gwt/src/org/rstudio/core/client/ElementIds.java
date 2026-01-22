@@ -191,6 +191,9 @@ public class ElementIds
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
 
+   public final static String ASSISTANT_COMPLETIONS_PREFS = "assistant_completions_prefs";
+   public final static String ASSISTANT_CHAT_PREFS = "assistant_chat_prefs";
+
    public final static String NEW_PROJECT_DIRECTORY = "directory_name";
    public final static String NEW_PROJECT_TYPE = "project_type";
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";

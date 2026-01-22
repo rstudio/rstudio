@@ -1776,6 +1776,14 @@
             "title": "AI Assistant",
             "description": "Select which AI assistant to use for code suggestions and assistance."
         },
+        "chat_provider": {
+            "type": "string",
+            "enum": ["none", "posit"],
+            "enumReadable": ["(None)", "Posit AI"],
+            "default": "posit",
+            "title": "Chat Provider",
+            "description": "Select which AI assistant to use for chat functionality."
+        },
         "assistant_completions_trigger": {
             "type": "string",
             "enum": ["auto", "manual"],

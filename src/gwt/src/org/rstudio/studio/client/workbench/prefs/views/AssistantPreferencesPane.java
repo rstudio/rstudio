@@ -20,12 +20,15 @@ import java.util.List;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
+import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -91,6 +94,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
+      prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
 
       RestartRequirement requirement = super.onApply(prefs);
       if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
@@ -238,6 +242,38 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
       cbAssistantNesAutoshow_ = checkboxPref(prefs_.assistantNesAutoshow(), true);
 
+      // Create chat provider selector - conditionally include Posit AI option
+      String[] chatProviderLabels;
+      String[] chatProviderValues;
+      if (paiEnabled)
+      {
+         chatProviderLabels = new String[] {
+               prefsConstants_.chatProviderEnum_none(),
+               prefsConstants_.chatProviderEnum_posit()
+         };
+         chatProviderValues = new String[] {
+               UserPrefsAccessor.CHAT_PROVIDER_NONE,
+               UserPrefsAccessor.CHAT_PROVIDER_POSIT
+         };
+      }
+      else
+      {
+         chatProviderLabels = new String[] {
+               prefsConstants_.chatProviderEnum_none()
+         };
+         chatProviderValues = new String[] {
+               UserPrefsAccessor.CHAT_PROVIDER_NONE
+         };
+      }
+      selChatProvider_ = new SelectWidget(
+            constants_.assistantChatProviderLabel(),
+            chatProviderLabels,
+            chatProviderValues,
+            false,
+            true,
+            false);
+      selChatProvider_.setValue(prefs_.chatProvider().getGlobalValue());
+
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -275,10 +311,13 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      add(headerLabel(constants_.assistantDisplayName()));
+      // Create Completions tab panel
+      VerticalTabPanel completionsPanel = new VerticalTabPanel(ElementIds.ASSISTANT_COMPLETIONS_PREFS);
+
+      completionsPanel.add(headerLabel(constants_.assistantDisplayName()));
 
       // Add assistant selector
-      add(selAssistant_);
+      completionsPanel.add(selAssistant_);
 
       // Create project override panel (shown when project has a specific assistant configured)
       projectOverridePanel_ = new HorizontalPanel();
@@ -305,15 +344,15 @@ public class AssistantPreferencesPane extends PreferencesPane
       copilotPanel_ = createCopilotPanel();
 
       // Add container for dynamic content
-      add(assistantDetailsPanel_);
+      completionsPanel.add(assistantDetailsPanel_);
 
-      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      // Create Copilot Terms of Service panel (will be added to pane after tab panel)
       copilotTosPanel_ = new VerticalPanel();
       copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
       copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
+      copilotTosPanel_.getElement().getStyle().setPaddingLeft(14, Unit.PX);
       copilotTosPanel_.add(spaced(lblCopilotTos_));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
-      add(copilotTosPanel_);
 
       // Set up panel swapping based on assistant selection
       ChangeHandler assistantChangedHandler = new ChangeHandler()
@@ -429,6 +468,37 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      // Create Chat tab panel
+      VerticalTabPanel chatPanel = new VerticalTabPanel(ElementIds.ASSISTANT_CHAT_PREFS);
+      chatPanel.add(headerLabel(constants_.assistantChatTab()));
+      chatPanel.add(selChatProvider_);
+
+      // Create tab layout panel and add both tabs
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.assistantTabPanel());
+      setTabPanelSize(tabPanel);
+      tabPanel.add(completionsPanel, constants_.assistantCompletionsTab(), completionsPanel.getBasePanelId());
+      tabPanel.add(chatPanel, constants_.assistantChatTab(), chatPanel.getBasePanelId());
+      tabPanel.selectTab(0);
+      add(tabPanel);
+
+      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
+      // This must be added after the tab panel so it appears at the bottom of the pane
+      add(copilotTosPanel_);
+
+      // Hide TOS panel when Chat tab is selected
+      tabPanel.addSelectionHandler((event) -> {
+         if (event.getSelectedItem() == 1) // Chat tab
+         {
+            copilotTosPanel_.setVisible(false);
+         }
+         else // Completions tab
+         {
+            // Only show TOS if Copilot is selected
+            copilotTosPanel_.setVisible(
+               selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT));
+         }
+      });
    }
 
    private VerticalPanel createNonePanel()
@@ -935,6 +1005,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final NumericValueWidget nvwAssistantCompletionsDelay_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
+   private final SelectWidget selChatProvider_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    private final Label lblProjectOverride_;

@@ -3378,6 +3378,19 @@ core::Error UserPrefValues::setAssistant(std::string val)
 }
 
 /**
+ * Select which AI assistant to use for chat functionality.
+ */
+std::string UserPrefValues::chatProvider()
+{
+   return readPref<std::string>("chat_provider");
+}
+
+core::Error UserPrefValues::setChatProvider(std::string val)
+{
+   return writePref("chat_provider", val);
+}
+
+/**
  * Control when code suggestions are displayed in the editor.
  */
 std::string UserPrefValues::assistantCompletionsTrigger()
@@ -3963,6 +3976,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTextRendering,
       kDisableRendererAccessibility,
       kAssistant,
+      kChatProvider,
       kAssistantCompletionsTrigger,
       kAssistantCompletionsDelay,
       kAssistantTabKeyBehavior,

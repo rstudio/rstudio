@@ -2405,6 +2405,15 @@
    clear = function() { .rs.clearUserPref("assistant") }
 )
 
+# Chat Provider
+#
+# Select which AI assistant to use for chat functionality.
+.rs.uiPrefs$chatProvider <- list(
+   get = function() { .rs.getUserPref("chat_provider") },
+   set = function(value) { .rs.setUserPref("chat_provider", value) },
+   clear = function() { .rs.clearUserPref("chat_provider") }
+)
+
 # Show code suggestions:
 #
 # Control when code suggestions are displayed in the editor.
