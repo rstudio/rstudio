@@ -167,14 +167,14 @@ if exist quarto\bin\quarto.exe (
 )
 %RUN% install QUARTO
 
-REM Determine if we have the correct version of copilot-language-server.exe already installed
-if exist copilot-language-server\copilot-language-server.exe (
-  for /f "usebackq" %%v in (`copilot-language-server\copilot-language-server.exe --version`) do (
-    if not "%%v" == "%COPILOT_VERSION%" (
-      echo -- Copilot version mismatch: found %%v, expected %COPILOT_VERSION%
-      rmdir /s /q copilot-language-server
-    )
-  )
+REM Always remove any existing copilot-language-server installations to ensure latest version
+if exist copilot-language-server (
+  echo -- Removing old copilot-language-server directory
+  rmdir /s /q copilot-language-server
+)
+if exist copilot-language-server-js (
+  echo -- Removing existing copilot-language-server-js directory
+  rmdir /s /q copilot-language-server-js
 )
 %RUN% install COPILOT
 
