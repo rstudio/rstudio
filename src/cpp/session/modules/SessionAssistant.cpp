@@ -392,17 +392,36 @@ FilePath copilotLanguageServerPath()
    return copilotPath;
 }
 
-FilePath assistantLanguageServerPath(const std::string& assistantType = "")
+FilePath assistantLanguageServerPath(const std::string& assistantType = "");
+
+// Returns the configured assistant type, checking in order:
+// 1. Explicit assistantType parameter (if provided)
+// 2. Project-level assistant setting (if set and not "default")
+// 3. Global user preference
+std::string getConfiguredAssistantType(const std::string& assistantType = "")
+{
+   // If an explicit type was provided, use it
+   if (!assistantType.empty())
+      return assistantType;
+
+   // Check for project-level override
+   std::string projectAssistant = s_assistantProjectOptions.assistant;
+   if (!projectAssistant.empty() && projectAssistant != "default")
+      return projectAssistant;
+
+   // Fall back to global preference
+   return prefs::userPrefs().assistant();
+}
+
+FilePath assistantLanguageServerPath(const std::string& assistantType)
 {
    // Allow override via environment variable
    std::string rstudioAgentPath = core::system::getenv("RSTUDIO_AGENT_PATH");
    if (!rstudioAgentPath.empty() && FilePath::exists(rstudioAgentPath))
       return FilePath(rstudioAgentPath);
 
-   // Use provided assistant type, or read from preferences if not specified
-   std::string assistant = assistantType.empty()
-      ? prefs::userPrefs().assistant()
-      : assistantType;
+   // Get the configured assistant type
+   std::string assistant = getConfiguredAssistantType(assistantType);
 
    if (assistant == kAssistantPosit)
    {
@@ -427,34 +446,19 @@ bool isAgentInstalled(const std::string& assistantType = "")
 
 bool isAssistantEnabled(const std::string& assistantType = "")
 {
-   // Use provided assistant type, or read from preferences if not specified
-   std::string assistant = assistantType.empty()
-      ? prefs::userPrefs().assistant()
-      : assistantType;
+   // Get the configured assistant type
+   std::string assistant = getConfiguredAssistantType(assistantType);
 
    // If no assistant is selected, we're done.
    if (assistant == kAssistantNone)
    {
-      s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
-      return false;
-   }
-
-   // Check for project-level override (only if not using an explicit assistantType)
-   if (assistantType.empty())
-   {
+      // Determine if disabled via project or global preferences
       std::string projectAssistant = s_assistantProjectOptions.assistant;
       if (!projectAssistant.empty() && projectAssistant != "default")
-      {
-         // If the project explicitly disables the assistant, respect that.
-         if (projectAssistant == kAssistantNone)
-         {
-            s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
-            return false;
-         }
-
-         // Otherwise, use the project-specified assistant type.
-         assistant = projectAssistant;
-      }
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledViaProjectPreferences;
+      else
+         s_agentNotRunningReason = AgentNotRunningReason::DisabledViaGlobalPreferences;
+      return false;
    }
 
    // Check whether the selected assistant type is allowed by the administrator.
@@ -710,7 +714,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Agent has started [PID = {}, type = {}]",
         operations.getPid(),
-        prefs::userPrefs().assistant());
+        s_runningAgentType);
    s_agentPid = operations.getPid();
    setAgentRuntimeStatus(AgentRuntimeStatus::Starting);
 }
@@ -936,10 +940,8 @@ Error startAgent(const std::string& assistantType = "")
 
    Error error;
 
-   // Use provided assistant type, or read from preferences if not specified
-   std::string assistant = assistantType.empty()
-      ? prefs::userPrefs().assistant()
-      : assistantType;
+   // Determine effective assistant type
+   std::string assistant = getConfiguredAssistantType(assistantType);
 
    // Create environment for agent process
    core::system::Options environment;
@@ -980,6 +982,9 @@ Error startAgent(const std::string& assistantType = "")
 #else
    options.detachProcess = true;
 #endif
+
+   // Record which assistant type we're starting (before launching so onStarted can use it)
+   s_runningAgentType = assistant;
 
    // Launch the assistant, using a helper script if one is configured.
    FilePath copilotHelper = session::options().copilotHelper();
@@ -1058,11 +1063,9 @@ Error startAgent(const std::string& assistantType = "")
    if (s_agentPid == -1)
    {
       s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+      s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    }
-
-   // Record which assistant type is now running
-   s_runningAgentType = assistant;
 
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
@@ -1630,7 +1633,7 @@ void synchronize()
 
    // Update cached enabled state.
    s_assistantEnabled = isAssistantEnabled();
-   
+
    // Start or stop the agent as appropriate.
    if (s_assistantEnabled)
    {
@@ -1640,7 +1643,6 @@ void synchronize()
    {
       stopAgent();
    }
-   
 }
 
 void onPreferencesSaved()
@@ -2269,7 +2271,7 @@ Error initialize()
       if (error)
          LOG_ERROR(error);
    }
-    
+
    // Synchronize user + project preferences with internal caches
    synchronize();
 
