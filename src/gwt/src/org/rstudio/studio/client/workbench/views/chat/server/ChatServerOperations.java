@@ -20,6 +20,7 @@ public interface ChatServerOperations
 {
    public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
    public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
+   public void chatStopBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetVersion(ServerRequestCallback<String> requestCallback);
