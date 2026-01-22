@@ -920,6 +920,9 @@ bool stopAgentSync()
    return waitFor([]() { return s_agentPid == -1; });
 }
 
+// Forward declaration; defined after docOpened()
+void syncOpenDocuments();
+
 Error startAgent(const std::string& assistantType = "")
 {
    if (s_agentRuntimeStatus != AgentRuntimeStatus::Unknown &&
@@ -1112,6 +1115,9 @@ Error startAgent(const std::string& assistantType = "")
          setCopilotConfiguration();
       else if (assistant == kAssistantPosit)
          setPositAiConfiguration();
+
+      // Sync currently open documents with the agent
+      syncOpenDocuments();
    };
    
    std::string requestId = core::system::generateUuid();
@@ -1256,6 +1262,44 @@ void didChangeIncremental(const std::string& uri,
    };
 
    sendNotification("textDocument/didChange", lsp::toJson(params));
+}
+
+void syncOpenDocuments()
+{
+   std::vector<boost::shared_ptr<source_database::SourceDocument>> docs;
+   Error error = source_database::list(&docs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   for (auto&& pDoc : docs)
+   {
+      if (!isIndexableDocument(pDoc))
+         continue;
+
+      std::string uri = lsp::uriFromDocument(pDoc);
+      int64_t version = lsp::documentVersionFromUri(uri);
+
+      // Derive languageId from document
+      std::string languageId;
+      if (pDoc->isUntitled())
+      {
+         languageId = pDoc->type();
+      }
+      else
+      {
+         FilePath docPath(pDoc->path());
+         std::string ext = docPath.getExtensionLowerCase();
+         languageId = lsp::languageIdFromExtension(ext);
+      }
+
+      if (languageId.empty())
+         continue;
+
+      docOpened(uri, version, languageId, pDoc->contents());
+   }
 }
 
 namespace file_monitor {
