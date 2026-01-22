@@ -442,6 +442,9 @@ namespace prefs {
 #define kAssistantNone "none"
 #define kAssistantPosit "posit"
 #define kAssistantCopilot "copilot"
+#define kChatProvider "chat_provider"
+#define kChatProviderNone "none"
+#define kChatProviderPosit "posit"
 #define kAssistantCompletionsTrigger "assistant_completions_trigger"
 #define kAssistantCompletionsTriggerAuto "auto"
 #define kAssistantCompletionsTriggerManual "manual"
@@ -2036,6 +2039,12 @@ public:
     */
    std::string assistant();
    core::Error setAssistant(std::string val);
+
+   /**
+    * Select which AI assistant to use for chat functionality.
+    */
+   std::string chatProvider();
+   core::Error setChatProvider(std::string val);
 
    /**
     * Control when code suggestions are displayed in the editor.

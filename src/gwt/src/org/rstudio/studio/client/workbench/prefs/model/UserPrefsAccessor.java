@@ -3705,6 +3705,29 @@ public class UserPrefsAccessor extends Prefs
    public final static String ASSISTANT_COPILOT = "copilot";
 
    /**
+    * Select which AI assistant to use for chat functionality.
+    */
+   public PrefValue<String> chatProvider()
+   {
+      return enumeration(
+         "chat_provider",
+         _constants.chatProviderTitle(), 
+         _constants.chatProviderDescription(), 
+         new String[] {
+            CHAT_PROVIDER_NONE,
+            CHAT_PROVIDER_POSIT
+         },
+         "none",
+         new String[] {
+            _constants.chatProviderEnum_none(),
+            _constants.chatProviderEnum_posit()
+         });
+   }
+
+   public final static String CHAT_PROVIDER_NONE = "none";
+   public final static String CHAT_PROVIDER_POSIT = "posit";
+
+   /**
     * Control when code suggestions are displayed in the editor.
     */
    public PrefValue<String> assistantCompletionsTrigger()
@@ -4608,6 +4631,8 @@ public class UserPrefsAccessor extends Prefs
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
       if (source.hasKey("assistant"))
          assistant().setValue(layer, source.getString("assistant"));
+      if (source.hasKey("chat_provider"))
+         chatProvider().setValue(layer, source.getString("chat_provider"));
       if (source.hasKey("assistant_completions_trigger"))
          assistantCompletionsTrigger().setValue(layer, source.getString("assistant_completions_trigger"));
       if (source.hasKey("assistant_completions_delay"))
@@ -4920,6 +4945,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
       prefs.add(assistant());
+      prefs.add(chatProvider());
       prefs.add(assistantCompletionsTrigger());
       prefs.add(assistantCompletionsDelay());
       prefs.add(assistantTabKeyBehavior());

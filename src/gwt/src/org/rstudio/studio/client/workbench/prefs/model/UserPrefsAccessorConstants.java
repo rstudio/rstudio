@@ -2160,6 +2160,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantEnum_copilot();
 
    /**
+    * Select which AI assistant to use for chat functionality.
+    */
+   @DefaultStringValue("Chat Provider")
+   String chatProviderTitle();
+   @DefaultStringValue("Select which AI assistant to use for chat functionality.")
+   String chatProviderDescription();
+   @DefaultStringValue("(None)")
+   String chatProviderEnum_none();
+   @DefaultStringValue("Posit AI")
+   String chatProviderEnum_posit();
+
+   /**
     * Control when code suggestions are displayed in the editor.
     */
    @DefaultStringValue("Show code suggestions:")
