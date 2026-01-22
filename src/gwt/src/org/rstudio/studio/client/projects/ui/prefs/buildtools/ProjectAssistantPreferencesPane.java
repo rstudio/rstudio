@@ -202,6 +202,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Add assistant selector
       add(selAssistant_);
 
+      // Create the status panel (shared between Copilot and Posit AI)
+      statusPanel_ = createStatusPanel();
+
       // Create the three panels
       nonePanel_ = createNonePanel();
       positAiPanel_ = createPositAiPanel();
@@ -229,18 +232,91 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
+               positAiRefreshed_ = false;
+               copilotRefreshed_ = false;
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_POSIT))
             {
+               // Move status panel to Posit AI panel
+               positAiPanel_.insert(spaced(statusPanel_), 0);
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
-               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+               copilotRefreshed_ = false;
+
+               // Refresh Posit AI status when panel is shown
+               if (!positAiRefreshed_)
+               {
+                  positAiRefreshed_ = true;
+
+                  // Check if Posit AI is installed
+                  server_.assistantVerifyInstalled(
+                     UserPrefsAccessor.ASSISTANT_POSIT,
+                     new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+                           }
+                           else
+                           {
+                              lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblAssistantStatus_.setText(constants_.assistantStartupError());
+                        }
+                     });
+               }
             }
             else if (value.equals(UserPrefsAccessor.ASSISTANT_COPILOT))
             {
+               // Move status panel to Copilot panel
+               if (session_.getSessionInfo().getCopilotEnabled())
+               {
+                  copilotPanel_.insert(spaced(statusPanel_), 0);
+               }
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
-               refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
+               positAiRefreshed_ = false;
+
+               // Refresh Copilot status when panel is shown
+               if (!copilotRefreshed_)
+               {
+                  copilotRefreshed_ = true;
+
+                  // Check if Copilot is installed
+                  server_.assistantVerifyInstalled(
+                     UserPrefsAccessor.ASSISTANT_COPILOT,
+                     new ServerRequestCallback<Boolean>()
+                     {
+                        @Override
+                        public void onResponseReceived(Boolean isInstalled)
+                        {
+                           if (isInstalled)
+                           {
+                              refresh(UserPrefsAccessor.ASSISTANT_COPILOT);
+                           }
+                           else
+                           {
+                              lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           lblAssistantStatus_.setText(constants_.assistantStartupError());
+                        }
+                     });
+               }
             }
          }
       };
@@ -268,11 +344,19 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       return panel;
    }
 
+   private HorizontalPanel createStatusPanel()
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.add(lblAssistantStatus_);
+      for (SmallButton button : statusButtons_)
+         panel.add(button);
+      return panel;
+   }
+
    private VerticalPanel createPositAiPanel()
    {
       VerticalPanel panel = new VerticalPanel();
-      Label lblPlaceholder = new Label(constants_.positAiPlaceholder());
-      panel.add(spaced(lblPlaceholder));
+      // Status panel will be added dynamically when this assistant is selected
       return panel;
    }
 
@@ -280,18 +364,11 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    {
       VerticalPanel panel = new VerticalPanel();
 
-      if (session_.getSessionInfo().getCopilotEnabled())
-      {
-         HorizontalPanel statusPanel = new HorizontalPanel();
-         statusPanel.add(lblAssistantStatus_);
-         for (SmallButton button : statusButtons_)
-            statusPanel.add(button);
-         panel.add(spaced(statusPanel));
-      }
-      else
+      if (!session_.getSessionInfo().getCopilotEnabled())
       {
          panel.add(new Label(constants_.copilotDisabledByAdmin()));
       }
+      // Status panel will be added dynamically when this assistant is selected
 
       return panel;
    }
@@ -365,11 +442,6 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       return selected;
    }
    
-   private void refresh()
-   {
-      refresh("");
-   }
-
    private void refresh(String assistantType)
    {
       hideButtons();
@@ -463,11 +535,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       initDisplay(options);
       initModel();
 
-      // Only refresh Copilot status if Copilot is the selected assistant
-      if (selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT))
-      {
-         refresh();
-      }
+      // Note: Status refresh is now handled in the onChange handler
+      // which is triggered by assistantChangedHandler.onChange(null) in initDisplay()
    }
    
    @Override
@@ -503,12 +572,15 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    // State
    private RProjectOptions options_;
    private HandlerRegistration assistantRuntimeStatusHandler_;
+   private boolean copilotRefreshed_ = false;
+   private boolean positAiRefreshed_ = false;
 
    // Assistant panels (created in initDisplay)
    private VerticalPanel nonePanel_;
    private VerticalPanel positAiPanel_;
    private VerticalPanel copilotPanel_;
    private VerticalPanel copilotTosPanel_;
+   private HorizontalPanel statusPanel_;
 
    // UI
    private final SelectWidget selAssistant_;
