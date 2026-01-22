@@ -47,4 +47,18 @@ public class PaiUtil
       return userPrefs.assistant().getGlobalValue()
             .equals(UserPrefsAccessor.ASSISTANT_POSIT);
    }
+
+   /**
+    * Returns true if the user has selected Posit AI as their chat provider.
+    * Use this to gate chat features that should only be active when Posit AI
+    * is selected as the chat provider.
+    *
+    * @param userPrefs The user preferences
+    * @return true if user has selected Posit AI for chat, false otherwise
+    */
+   public static boolean isChatProviderPosit(UserPrefs userPrefs)
+   {
+      return userPrefs.chatProvider().getGlobalValue()
+            .equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT);
+   }
 }

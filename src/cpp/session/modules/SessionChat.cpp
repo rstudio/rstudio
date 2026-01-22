@@ -138,10 +138,16 @@ bool isPaiEnabled()
    return options().allowPositAssistant() && options().positAssistantEnabled();
 }
 
-// Returns true if the user has selected Posit AI as their assistant
+// Returns true if the user has selected Posit AI as their assistant (for code completions)
 bool isPaiSelected()
 {
    return prefs::userPrefs().assistant() == kAssistantPosit;
+}
+
+// Returns true if the user has selected Posit AI as their chat provider (for Chat pane)
+bool isChatProviderPosit()
+{
+   return prefs::userPrefs().chatProvider() == kChatProviderPosit;
 }
 
 // Selective imports from chat modules to avoid namespace pollution
@@ -2951,9 +2957,9 @@ Error checkForUpdatesOnStartup()
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiSelected())
+   if (!isChatProviderPosit())
    {
-      DLOG("Update check skipped: posit assistant not selected");
+      DLOG("Update check skipped: posit not selected as chat provider");
       return Success();
    }
 
@@ -3538,9 +3544,9 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiSelected())
+   if (!isChatProviderPosit())
    {
-      // Return empty/negative response - feature not selected
+      // Return empty/negative response - chat provider not set to posit
       json::Object result;
       result["updateAvailable"] = false;
       result["noCompatibleVersion"] = false;
@@ -3569,10 +3575,10 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiSelected())
+   if (!isChatProviderPosit())
    {
       return systemError(boost::system::errc::operation_not_permitted,
-                        "Feature not selected",
+                        "Chat provider not set to posit",
                         ERROR_LOCATION);
    }
 
@@ -3702,9 +3708,9 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isPaiSelected())
+   if (!isChatProviderPosit())
    {
-      // Return idle status - feature not selected
+      // Return idle status - chat provider not set to posit
       json::Object result;
       result["status"] = "idle";
       pResponse->setResult(result);
@@ -3975,6 +3981,13 @@ Error initialize()
    if (isPaiSelected() && !isPaiEnabled())
    {
       prefs::userPrefs().setAssistant(kAssistantNone);
+   }
+
+   // Validate chat provider preference consistency
+   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
+   if (isChatProviderPosit() && !isPaiEnabled())
+   {
+      prefs::userPrefs().setChatProvider(kChatProviderNone);
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
