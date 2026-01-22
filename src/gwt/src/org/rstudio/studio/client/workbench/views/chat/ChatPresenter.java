@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -22,8 +23,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
@@ -186,30 +185,19 @@ public class ChatPresenter extends BasePresenter
          }
       });
 
-      // Listen for preference changes to react when chat provider selection changes
-      events_.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedEvent.Handler()
+      // Listen for chat provider preference changes
+      prefs_.chatProvider().addValueChangeHandler((event) ->
       {
-         @Override
-         public void onUserPrefsChanged(UserPrefsChangedEvent e)
+         if (StringUtil.equals(event.getValue(), UserPrefs.CHAT_PROVIDER_POSIT))
          {
-            if (e.getName().equals(PrefLayer.LAYER_USER))
-            {
-               JsObject values = e.getValues();
-               if (values.hasKey("chat_provider"))
-               {
-                  // Re-evaluate preference and update UI accordingly
-                  if (PaiUtil.isChatProviderPosit(prefs_))
-                  {
-                     // Posit AI was just selected as chat provider, initialize chat
-                     checkForUpdates();
-                  }
-                  else
-                  {
-                     // Posit AI was deselected as chat provider, show not-selected message
-                     display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
-                  }
-               }
-            }
+            // Posit AI was just selected as chat provider, initialize chat
+            checkForUpdates();
+         }
+         else
+         {
+            // Posit AI was deselected as chat provider, stop backend and show not-selected message
+            stopBackend();
+            display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          }
       });
    }
@@ -496,6 +484,25 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             display_.showError(constants_.chatRestartFailed(error.getMessage()));
+         }
+      });
+   }
+
+   private void stopBackend()
+   {
+      server_.chatStopBackend(new ServerRequestCallback<JsObject>()
+      {
+         @Override
+         public void onResponseReceived(JsObject response)
+         {
+            // Backend stopped (or wasn't running) - nothing to do
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // Log error but don't show to user - the UI will already show
+            // ASSISTANT_NOT_SELECTED status
          }
       });
    }

@@ -6999,6 +6999,12 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void chatStopBackend(ServerRequestCallback<JsObject> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_stop_backend", requestCallback);
+   }
+
+   @Override
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_get_backend_url", requestCallback);

@@ -3488,6 +3488,83 @@ Error chatStartBackend(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error chatStopBackend(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+
+   // Check if backend is running
+   if (s_chatBackendPid == -1)
+   {
+      result["success"] = true;
+      result["message"] = "Backend not running";
+      pResponse->setResult(result);
+      return Success();
+   }
+
+   // Capture shared_ptr atomically to avoid race conditions
+   auto backendOps = s_chatBackendOps;
+
+   // Request graceful shutdown if we have ProcessOperations
+   if (backendOps)
+   {
+      const int SHUTDOWN_GRACE_PERIOD_MS = 1000;
+
+      // Mark this as an expected shutdown to prevent crash notification
+      s_expectedShutdown = true;
+
+      requestBackendShutdown(*backendOps, "preference_change", SHUTDOWN_GRACE_PERIOD_MS);
+      DLOG("Sent graceful shutdown request for preference change, waiting up to {}ms", SHUTDOWN_GRACE_PERIOD_MS);
+
+      // Poll for backend exit with short intervals
+      const int POLL_INTERVAL_MS = 50;
+      int elapsed = 0;
+
+      while (s_chatBackendPid != -1 && elapsed < SHUTDOWN_GRACE_PERIOD_MS)
+      {
+         module_context::onBackgroundProcessing(false);
+         r::session::event_loop::processEvents();
+         boost::this_thread::sleep(boost::posix_time::milliseconds(POLL_INTERVAL_MS));
+         elapsed += POLL_INTERVAL_MS;
+      }
+
+      if (s_chatBackendPid != -1)
+      {
+         DLOG("Backend did not exit within grace period, force terminating");
+      }
+      else
+      {
+         DLOG("Backend exited gracefully after {}ms", elapsed);
+      }
+   }
+
+   // Release ProcessOperations reference before force termination
+   s_chatBackendOps.reset();
+
+   // Force terminate if still running after grace period
+   if (s_chatBackendPid != -1)
+   {
+      Error error = core::system::terminateProcess(s_chatBackendPid);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   s_chatBackendPid = -1;
+
+   // Clear port and URL
+   s_chatBackendPort = -1;
+   s_chatBackendUrl.clear();
+
+   // Clear busy state
+   s_chatBusy = false;
+   s_backendOutputBuffer.clear();
+
+   result["success"] = true;
+   result["message"] = "Backend stopped";
+   pResponse->setResult(result);
+   return Success();
+}
+
 Error chatGetBackendUrl(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -4019,6 +4096,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "chat_verify_installed", chatVerifyInstalled))
       (bind(registerRpcMethod, "chat_start_backend", chatStartBackend))
+      (bind(registerRpcMethod, "chat_stop_backend", chatStopBackend))
       (bind(registerRpcMethod, "chat_get_backend_url", chatGetBackendUrl))
       (bind(registerRpcMethod, "chat_get_backend_status", chatGetBackendStatus))
       (bind(registerRpcMethod, "chat_get_version", chatGetVersion))
