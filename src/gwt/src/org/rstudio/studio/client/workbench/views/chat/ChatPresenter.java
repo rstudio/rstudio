@@ -172,6 +172,12 @@ public class ChatPresenter extends BasePresenter
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
+               // Prevent concurrent initialization
+               if (initializing_)
+               {
+                  return;
+               }
+
                // Don't poll for backend if Posit AI isn't selected as chat provider
                if (!PaiUtil.isChatProviderPosit(prefs_))
                {
@@ -181,6 +187,7 @@ public class ChatPresenter extends BasePresenter
 
                // Backend will be restarted by onResume() handler in SessionChat.cpp
                // Just need to wait for it to become available
+               initializing_ = true;
                pollForBackendUrl(0);
             }
          }
@@ -191,12 +198,20 @@ public class ChatPresenter extends BasePresenter
       {
          if (StringUtil.equals(event.getValue(), UserPrefs.CHAT_PROVIDER_POSIT))
          {
+            // Prevent concurrent initialization
+            if (initializing_)
+            {
+               return;
+            }
+
             // Posit AI was just selected as chat provider, initialize chat
+            initializing_ = true;
             checkForUpdates();
          }
          else
          {
             // Posit AI was deselected as chat provider, stop backend and show not-selected message
+            initializing_ = false;  // Cancel any ongoing initialization
             stopBackend();
             display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          }
@@ -214,6 +229,12 @@ public class ChatPresenter extends BasePresenter
     */
    public void initializeChat()
    {
+      // Prevent concurrent initialization (e.g., from multiple event sources)
+      if (initializing_)
+      {
+         return;
+      }
+
       // Check if Posit AI is selected as chat provider before initializing
       if (!PaiUtil.isChatProviderPosit(prefs_))
       {
@@ -221,6 +242,7 @@ public class ChatPresenter extends BasePresenter
          return;
       }
 
+      initializing_ = true;
       checkForUpdates();
    }
 
@@ -243,6 +265,7 @@ public class ChatPresenter extends BasePresenter
             else
             {
                String error = response.getString("error");
+               initializing_ = false;
                display_.setStatus(Display.Status.ERROR);
                display_.showError(constants_.chatBackendStartFailed(error));
             }
@@ -251,6 +274,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            initializing_ = false;
             display_.setStatus(Display.Status.ERROR);
             display_.showError(constants_.chatBackendStartError(error.getMessage()));
          }
@@ -268,6 +292,7 @@ public class ChatPresenter extends BasePresenter
             boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
             if (noCompatibleVersion)
             {
+               initializing_ = false;
                display_.showIncompatibleVersion();
                return;  // Don't try to start backend
             }
@@ -278,6 +303,9 @@ public class ChatPresenter extends BasePresenter
             if (updateAvailable)
             {
                String newVersion = result.getString("newVersion");
+
+               // Reset initialization flag - we're pausing for user action
+               initializing_ = false;
 
                if (isInitialInstall)
                {
@@ -419,6 +447,7 @@ public class ChatPresenter extends BasePresenter
    {
       if (attemptCount > 30) // 30 seconds timeout
       {
+         initializing_ = false;
          display_.setStatus(Display.Status.ERROR);
          display_.showError(constants_.chatBackendStartTimeout());
          return;
@@ -455,6 +484,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            initializing_ = false;
             display_.setStatus(Display.Status.ERROR);
             display_.showError(constants_.chatBackendStatusCheckFailed(error.getMessage()));
          }
@@ -463,6 +493,13 @@ public class ChatPresenter extends BasePresenter
 
    private void restartBackend()
    {
+      // Prevent concurrent initialization
+      if (initializing_)
+      {
+         return;
+      }
+
+      initializing_ = true;
       display_.setStatus(Display.Status.RESTARTING);
 
       server_.chatStartBackend(new ServerRequestCallback<JsObject>()
@@ -477,6 +514,7 @@ public class ChatPresenter extends BasePresenter
             }
             else
             {
+               initializing_ = false;
                display_.showError(constants_.chatRestartFailed(response.getString("error")));
             }
          }
@@ -484,6 +522,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            initializing_ = false;
             display_.showError(constants_.chatRestartFailed(error.getMessage()));
          }
       });
@@ -509,6 +548,14 @@ public class ChatPresenter extends BasePresenter
 
    private void loadChatUI(String wsUrl)
    {
+      // Re-check preference before loading (guards against preference change during polling)
+      if (!PaiUtil.isChatProviderPosit(prefs_))
+      {
+         initializing_ = false;
+         display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+         return;
+      }
+
       // In dev mode, GWT.getHostPageBaseURL() may not include session prefix
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
@@ -519,6 +566,9 @@ public class ChatPresenter extends BasePresenter
 
       display_.loadUrl(urlWithWsParam);
       display_.setStatus(Display.Status.READY);
+
+      // Reset initialization flag - we're done
+      initializing_ = false;
 
       // Only hide notification if we're reloading after an install/update completion
       // Otherwise, keep any "Update available" notification visible
@@ -538,6 +588,9 @@ public class ChatPresenter extends BasePresenter
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
+
+   // Guard against concurrent initialization (multiple polling loops)
+   private boolean initializing_ = false;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
