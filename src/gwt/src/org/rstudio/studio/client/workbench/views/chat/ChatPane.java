@@ -12,10 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import java.util.Map;
+
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
-
-import java.util.Map;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
