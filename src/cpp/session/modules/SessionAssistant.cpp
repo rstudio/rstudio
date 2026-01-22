@@ -89,6 +89,15 @@ namespace assistant {
 
 namespace {
 
+class OnceGuard
+{
+public:
+   operator bool() { return value_++ == 0; }
+   void reset() { value_ = 0; }
+private:
+   int value_ = 0;
+};
+
 bool isCopilotAllowedByAdmin()
 {
    return
@@ -159,7 +168,8 @@ private:
    boost::posix_time::ptime time_;
 };
 
-enum class AgentNotRunningReason {
+enum class AgentNotRunningReason
+{
    Unknown,
    NotInstalled,
    DisabledByAdministrator,
@@ -169,7 +179,8 @@ enum class AgentNotRunningReason {
 };
 
 // keep in sync with constants in AssistantStatusChangedEvent.java
-enum class AgentRuntimeStatus {
+enum class AgentRuntimeStatus
+{
    Unknown,
    Preparing,
    Starting,
@@ -178,17 +189,12 @@ enum class AgentRuntimeStatus {
    Stopped,
 };
 
-// The log level for agent-specific logs. Primarily for developer use.
+// The log level for agent-specific logs. Primarily for developer use and debugging.
 int s_assistantLogLevel = 0;
 
-// Whether the agent is enabled.
+// Whether the AI assistant is enabled.
+// Computed and cached from user and project preferences.
 bool s_assistantEnabled = false;
-
-// Whether the agent has been allowed to index project files.
-bool s_assistantIndexingEnabled = false;
-
-// Have we checked the config files at least once
-bool s_assistantInitialized = false;
 
 // The PID of the active agent process.
 PidType s_agentPid = -1;
@@ -206,20 +212,6 @@ AgentNotRunningReason s_agentNotRunningReason = AgentNotRunningReason::Unknown;
 // The current runtime status of the agent process.
 AgentRuntimeStatus s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
 
-void setAgentRuntimeStatus(AgentRuntimeStatus status)
-{
-   if (s_agentRuntimeStatus != status)
-   {
-      s_agentRuntimeStatus = status;
-
-      // notify client of agent status change
-      json::Object dataJson;
-      dataJson["status"] = static_cast<int>(status);
-      ClientEvent event(client_events::kAssistantStatusChanged, dataJson);
-      module_context::enqueClientEvent(event);
-   }
-}
-
 // Whether or not we've handled the Assistant 'initialized' notification.
 // Primarily done to allow proper sequencing of Assistant callbacks.
 bool s_agentInitialized = false;
@@ -227,8 +219,8 @@ bool s_agentInitialized = false;
 // A queue of pending requests, to be sent via the agent's stdin.
 std::vector<AssistantRequest> s_pendingRequests;
 
-// Metadata related to pending requests. Mainly used to map
-// responses to their expected result types.
+// Metadata related to pending requests.
+// Mainly used to map responses to their expected result types.
 std::map<std::string, AssistantContinuation> s_pendingContinuations;
 
 // A queue of pending responses, sent via the agent's stdout.
@@ -243,6 +235,21 @@ projects::RProjectAssistantOptions s_assistantProjectOptions;
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
+
+void setAgentRuntimeStatus(AgentRuntimeStatus status)
+{
+   if (s_agentRuntimeStatus != status)
+   {
+      s_agentRuntimeStatus = status;
+
+      // notify client of agent status change
+      json::Object dataJson;
+      dataJson["status"] = static_cast<int>(status);
+      ClientEvent event(client_events::kAssistantStatusChanged, dataJson);
+      module_context::enqueClientEvent(event);
+   }
+}
+
 
 std::string agentNotRunningReason()
 {
@@ -476,12 +483,6 @@ bool isAssistantEnabled(const std::string& assistantType = "")
    }
 
    return true;
-}
-
-bool isAssistantIndexingEnabled()
-{
-   // Indexing is disabled for now; may be removed entirely in the future.
-   return false;
 }
 
 template <typename F>
@@ -1166,6 +1167,9 @@ bool ensureAgentRunning(const std::string& assistantType = "",
       }
    }
 
+   // OnceGuard used to ensure we only log a not-running reason once.
+   static OnceGuard once;
+
    // Check if assistant is enabled
    // When assistantType is explicitly provided (e.g., from preferences dialog),
    // check directly rather than relying on cached state
@@ -1174,13 +1178,12 @@ bool ensureAgentRunning(const std::string& assistantType = "",
       // Use cached state for normal operation
       if (!s_assistantEnabled)
       {
-         if (!s_assistantInitialized)
+         if (once)
          {
             std::string reason = agentNotRunningReason();
             DLOG("Assistant is not enabled; not starting agent. Reason: {}", reason);
-            s_assistantInitialized = true;
+            return false;
          }
-         return false;
       }
    }
    else
@@ -1205,7 +1208,7 @@ bool ensureAgentRunning(const std::string& assistantType = "",
    if (pAgentLaunchError)
       *pAgentLaunchError = error;
 
-   s_assistantInitialized = true;
+   once.reset();
    return error == Success();
 }
 
@@ -1340,29 +1343,16 @@ void indexFile(const core::FileInfo& info)
 
 } // end anonymous namespace
 
-void onMonitoringEnabled(const tree<core::FileInfo>& tree)
-{
-   if (s_assistantIndexingEnabled)
-      for (auto&& file : tree)
-         s_indexQueue.push_back(file);
-}
-
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
-{
-   if (s_assistantIndexingEnabled)
-      for (auto&& event : events)
-         s_indexQueue.push_back(event.fileInfo());
-}
-
-void onMonitoringDisabled()
-{
-}
-
 } // end namespace file_monitor
 
 void didOpen(lsp::DidOpenTextDocumentParams params)
 {
    if (!ensureAgentRunning())
+      return;
+
+   // Skip if agent isn't fully initialized yet; syncOpenDocuments()
+   // will handle syncing all open documents after initialization
+   if (!s_agentInitialized)
       return;
 
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
@@ -1386,6 +1376,11 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
 void didChange(lsp::DidChangeTextDocumentParams params)
 {
    if (!ensureAgentRunning())
+      return;
+
+   // Skip if agent isn't fully initialized yet; syncOpenDocuments()
+   // will send the current document state after initialization
+   if (!s_agentInitialized)
       return;
 
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
@@ -1412,6 +1407,11 @@ void didChange(lsp::DidChangeTextDocumentParams params)
 void didClose(lsp::DidCloseTextDocumentParams params)
 {
    if (!ensureAgentRunning())
+      return;
+
+   // Skip if agent isn't fully initialized yet; the agent won't have
+   // received a didOpen for this document anyway
+   if (!s_agentInitialized)
       return;
 
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
@@ -1622,35 +1622,16 @@ void onBackgroundProcessing(bool isIdle)
    
 }
 
-// TODO: Can we remove this?
-bool subscribeToFileMonitor()
-{
-   session::projects::FileMonitorCallbacks callbacks;
-   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
-   callbacks.onFilesChanged = file_monitor::onFilesChanged;
-   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor("Posit Assistant", callbacks);
-   return true;
-}
-
 void synchronize()
 {
    // Bail if we're shutting down.
    if (s_isSessionShuttingDown)
       return;
 
-   // Update flags
+   // Update cached enabled state.
    s_assistantEnabled = isAssistantEnabled();
-   s_assistantIndexingEnabled = s_assistantEnabled && isAssistantIndexingEnabled();
    
-   // Subscribe to file monitor if enabled
-   if (s_assistantIndexingEnabled)
-   {
-      static bool once = subscribeToFileMonitor();
-      (void) once;
-   }
-   
-   // Start or stop the agent as appropriate
+   // Start or stop the agent as appropriate.
    if (s_assistantEnabled)
    {
       startAgent();
