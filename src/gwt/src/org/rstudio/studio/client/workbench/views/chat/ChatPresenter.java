@@ -77,6 +77,7 @@ public class ChatPresenter extends BasePresenter
       void showUpdateError(String errorMessage);
       void showUpdateCheckFailure();
       void hideUpdateNotification();
+      void hideErrorNotification();
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
       void showIncompatibleVersion();
@@ -213,6 +214,7 @@ public class ChatPresenter extends BasePresenter
             // Posit AI was deselected as chat provider, stop backend and show not-selected message
             initializing_ = false;  // Cancel any ongoing initialization
             stopBackend();
+            display_.hideUpdateNotification();  // Clean up all notifications
             display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          }
       });
@@ -570,12 +572,18 @@ public class ChatPresenter extends BasePresenter
       // Reset initialization flag - we're done
       initializing_ = false;
 
-      // Only hide notification if we're reloading after an install/update completion
-      // Otherwise, keep any "Update available" notification visible
+      // Handle notifications after successful load
       if (reloadingAfterUpdate_)
       {
+         // After update/install completion, hide all notifications
          display_.hideUpdateNotification();
-         reloadingAfterUpdate_ = false;  // Reset flag
+         reloadingAfterUpdate_ = false;
+      }
+      else
+      {
+         // Hide error notifications since backend started successfully
+         // Keep "Update available" notifications visible so user can update later
+         display_.hideErrorNotification();
       }
    }
 
