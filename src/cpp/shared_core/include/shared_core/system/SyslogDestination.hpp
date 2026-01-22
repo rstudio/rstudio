@@ -32,10 +32,24 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+#ifdef _WIN32
+
+inline void safeLogToSyslog(
+   const std::string& in_programId,
+   log::LogLevel in_logLevel,
+   const std::string& in_message)
+{
+   rstudio::core::log::logErrorMessage(in_programId + ": " + in_message);
+}
+
+#else
+
 void safeLogToSyslog(
    const std::string& in_programId,
    log::LogLevel in_logLevel,
    const std::string& in_message);
+
+#endif
 
 /**
  * @brief A class which logs messages to syslog.
