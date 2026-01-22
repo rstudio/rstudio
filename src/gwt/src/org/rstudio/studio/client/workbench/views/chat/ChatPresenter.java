@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
@@ -501,8 +502,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            // Log error but don't show to user - the UI will already show
-            // ASSISTANT_NOT_SELECTED status
+            Debug.logError(error);
          }
       });
    }
