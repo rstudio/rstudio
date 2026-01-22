@@ -282,11 +282,24 @@ public class ChatPane
    @Override
    public void loadUrl(String url)
    {
+      // Cancel any pending load handler from updateFrameContent() to prevent
+      // it from overwriting the URL content when it fires
+      cancelPendingLoadHandler(frame_);
+
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
       frame_.setUrl(url);
    }
+
+   private native void cancelPendingLoadHandler(RStudioThemedFrame frame) /*-{
+      var iframe = frame.@org.rstudio.core.client.widget.RStudioFrame::getElement()();
+      if (iframe._rstudioPendingLoadHandler) {
+         iframe.removeEventListener('load', iframe._rstudioPendingLoadHandler);
+         iframe._rstudioPendingLoadHandler = null;
+         console.log("ChatPane: Cancelled pending load handler before loading URL");
+      }
+   }-*/;
 
    @Override
    public void setObserver(ChatPresenter.Display.Observer observer)
