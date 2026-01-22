@@ -249,24 +249,20 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          chatProviderLabels = new String[] {
                prefsConstants_.chatProviderEnum_none(),
-               prefsConstants_.chatProviderEnum_posit(),
-               prefsConstants_.chatProviderEnum_copilot()
+               prefsConstants_.chatProviderEnum_posit()
          };
          chatProviderValues = new String[] {
                UserPrefsAccessor.CHAT_PROVIDER_NONE,
-               UserPrefsAccessor.CHAT_PROVIDER_POSIT,
-               UserPrefsAccessor.CHAT_PROVIDER_COPILOT
+               UserPrefsAccessor.CHAT_PROVIDER_POSIT
          };
       }
       else
       {
          chatProviderLabels = new String[] {
-               prefsConstants_.chatProviderEnum_none(),
-               prefsConstants_.chatProviderEnum_copilot()
+               prefsConstants_.chatProviderEnum_none()
          };
          chatProviderValues = new String[] {
-               UserPrefsAccessor.CHAT_PROVIDER_NONE,
-               UserPrefsAccessor.CHAT_PROVIDER_COPILOT
+               UserPrefsAccessor.CHAT_PROVIDER_NONE
          };
       }
       selChatProvider_ = new SelectWidget(
