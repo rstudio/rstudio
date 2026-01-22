@@ -58,8 +58,6 @@ public:
    Error destroy() override;
    Error isValid(bool* pValue) override;
 
-   uintmax_t getSuspendSize();
-
 private:
    // Scratch Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18
    // This contains the properties directory, as well as susspended session data, session-persistence-state etc
