@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.commands;
 
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
@@ -24,13 +27,11 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
-import java.io.PrintWriter;
-import java.util.ArrayList;
-
 /**
  * GWT generator that creates a dummy implementation of DummyCommands.
- * Generated implementations return null for all AppCommand methods and have
- * empty bodies for menu methods.
+ * Generated implementations return AppCommand instances with a valid
+ * ImageResource (1x1 transparent PNG) for all AppCommand methods
+ * and have empty bodies for menu methods.
  */
 public class DummyCommandsGenerator extends Generator
 {
@@ -115,9 +116,11 @@ public class DummyCommandsGenerator extends Generator
          {
             ClassSourceFileComposerFactory factory =
                   new ClassSourceFileComposerFactory(packageName_, simpleName);
-            factory.setSuperclass(commandBundleType_.getQualifiedSourceName());
+            factory.setSuperclass(bundleType_.getQualifiedSourceName());
             factory.addImport("org.rstudio.core.client.command.AppCommand");
             factory.addImport("org.rstudio.core.client.command.MenuCallback");
+            factory.addImport("org.rstudio.core.client.resources.ImageResourceUrl");
+            factory.addImport("com.google.gwt.safehtml.shared.SafeUri");
             SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
             emitStubMethods(writer);
@@ -192,7 +195,15 @@ public class DummyCommandsGenerator extends Generator
          // Emit body based on return type
          if (isAppCommandMethod(method))
          {
-            writer.println("return null;");
+            // Create an AppCommand with a valid ImageResource (1x1 transparent PNG)
+            writer.println("AppCommand cmd = new AppCommand();");
+            writer.println("cmd.setImageResource(new ImageResourceUrl(");
+            writer.println("   new SafeUri() {");
+            writer.println("      @Override public String asString() {");
+            writer.println("         return \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\";");
+            writer.println("      }");
+            writer.println("   }, 1, 1));");
+            writer.println("return cmd;");
          }
          // void methods have empty body
 
