@@ -421,6 +421,7 @@ public class ChatPane
    @Override
    public void setStatus(ChatPresenter.Display.Status status)
    {
+      currentStatus_ = status;
       switch (status)
       {
          case STARTING:
@@ -643,46 +644,46 @@ public class ChatPane
    protected void onLoad()
    {
       super.onLoad();
-      if (!initialized_)
+
+      // Set up message listener once (guards against duplicate listeners)
+      if (!listenerSetup_)
       {
-         initialized_ = true;
-
-         // Set up message listener for restart button
+         listenerSetup_ = true;
          setupMessageListener();
+      }
 
-         // Show pending message now that frame is loaded
-         if (pendingMessage_ != null)
+      // Show pending message now that frame is loaded
+      if (pendingMessage_ != null)
+      {
+         updateFrameContent(pendingMessage_);
+         pendingMessage_ = null;
+      }
+
+      // Check if Chat features are installed (this triggers the initialization flow)
+      server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
+      {
+         @Override
+         public void onResponseReceived(Boolean result)
          {
-            updateFrameContent(pendingMessage_);
-            pendingMessage_ = null;
+            // Don't call setStatus("not_installed") here - let the update check
+            // flow determine what message to show. If noCompatibleVersion is true,
+            // showIncompatibleVersion() will be called. If an update/install is
+            // available, that notification will be shown. This avoids competing
+            // updateFrameContent() calls that cause rendering issues.
+
+            // Trigger observer so update/install check can happen
+            if (observer_ != null)
+            {
+               observer_.onPaneReady();
+            }
          }
 
-         // Check if Chat features are installed
-         server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
+         @Override
+         public void onError(ServerError error)
          {
-            @Override
-            public void onResponseReceived(Boolean result)
-            {
-               // Don't call setStatus("not_installed") here - let the update check
-               // flow determine what message to show. If noCompatibleVersion is true,
-               // showIncompatibleVersion() will be called. If an update/install is
-               // available, that notification will be shown. This avoids competing
-               // updateFrameContent() calls that cause rendering issues.
-
-               // Trigger observer so update/install check can happen
-               if (observer_ != null)
-               {
-                  observer_.onPaneReady();
-               }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               updateFrameContent(generateMessageHTML(constants_.errorDetectingInstallationMessage()));
-            }
-         });
-      }
+            updateFrameContent(generateMessageHTML(constants_.errorDetectingInstallationMessage()));
+         }
+      });
    }
 
    private native void setupMessageListener() /*-{
@@ -708,12 +709,12 @@ public class ChatPane
    public void onSelected()
    {
       super.onSelected();
-      // Refresh iframe content when pane becomes visible
-      if (contentType_ == ContentType.HTML && currentContent_ != null)
-      {
-         setFrameContent(frame_, currentContent_);
-      }
-      else if (contentType_ == ContentType.URL && currentUrl_ != null)
+      // Only refresh URL content (actual chat UI) when pane becomes visible
+      // HTML status messages are already displayed and don't need refresh
+      // Refreshing HTML content can cause timing issues with pending load handlers
+      if (currentStatus_ == ChatPresenter.Display.Status.READY &&
+          contentType_ == ContentType.URL &&
+          currentUrl_ != null)
       {
          frame_.setUrl(currentUrl_);
       }
@@ -742,13 +743,14 @@ public class ChatPane
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
    private Toolbar toolbar_;
-   private boolean initialized_ = false;
+   private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
    private ContentType contentType_ = ContentType.HTML;
    private String currentContent_ = null;
    private String currentUrl_ = null;
    private ChatPresenter.Display.Observer observer_;
    private ChatPresenter.Display.UpdateObserver updateObserver_;
+   private ChatPresenter.Display.Status currentStatus_ = null;
 
    // Update notification UI components
    private FlowPanel updateNotificationPanel_;
