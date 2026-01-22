@@ -1780,7 +1780,7 @@
             "type": "string",
             "enum": ["none", "posit"],
             "enumReadable": ["(None)", "Posit AI"],
-            "default": "posit",
+            "default": "none",
             "title": "Chat Provider",
             "description": "Select which AI assistant to use for chat functionality."
         },
