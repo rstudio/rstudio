@@ -27,6 +27,8 @@
 #include <core/http/Util.hpp>
 #include <core/system/System.hpp>
 
+#include "../SessionThemes.hpp"
+
 using namespace rstudio::session::modules::chat::constants;
 using namespace rstudio::session::modules::chat::installation;
 using namespace rstudio::core;
@@ -42,6 +44,63 @@ namespace {
 // URI prefix for AI Chat requests
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
+
+/**
+ * Inject theme-related modifications into HTML content:
+ * - CSS variables for --ui-background and --ui-foreground
+ * - 'dark' class on body element if using a dark theme
+ */
+void injectThemeInfo(std::string* pContent)
+{
+   themes::ThemeColors colors = themes::getThemeColors();
+
+   // Build CSS injection
+   std::string css = "<style>:root{--ui-background:" + colors.background +
+                     ";--ui-foreground:" + colors.foreground + ";}</style>";
+
+   // Find </head> tag and inject CSS (case-insensitive search)
+   std::string lowerContent = boost::to_lower_copy(*pContent);
+   size_t headPos = lowerContent.find("</head>");
+   if (headPos != std::string::npos)
+   {
+      pContent->insert(headPos, css);
+      // Update lower content to reflect the insertion
+      lowerContent = boost::to_lower_copy(*pContent);
+   }
+
+   // Add 'dark' class to body if theme is dark
+   if (colors.isDark)
+   {
+      size_t bodyPos = lowerContent.find("<body");
+      if (bodyPos != std::string::npos)
+      {
+         size_t bodyEnd = pContent->find('>', bodyPos);
+         if (bodyEnd != std::string::npos)
+         {
+            // Check if there's an existing class attribute
+            std::string bodyTag = pContent->substr(bodyPos, bodyEnd - bodyPos);
+            std::string lowerBodyTag = boost::to_lower_copy(bodyTag);
+            size_t classPos = lowerBodyTag.find("class=");
+
+            if (classPos != std::string::npos)
+            {
+               // Find the opening quote of the class attribute
+               size_t quotePos = bodyTag.find_first_of("\"'", classPos + 6);
+               if (quotePos != std::string::npos)
+               {
+                  // Insert 'dark ' after the opening quote
+                  pContent->insert(bodyPos + quotePos + 1, "dark ");
+               }
+            }
+            else
+            {
+               // No class attribute, add one before the closing >
+               pContent->insert(bodyEnd, " class=\"dark\"");
+            }
+         }
+      }
+   }
+}
 
 } // anonymous namespace
 
@@ -186,7 +245,7 @@ Error handleAIChatRequest(const http::Request& request,
       return Success();
    }
 
-   // Read file BYTE-FOR-BYTE (no modifications)
+   // Read file content
    std::string content;
    error = readStringFromFile(resolvedPath, &content);
    if (error)
@@ -197,6 +256,12 @@ Error handleAIChatRequest(const http::Request& request,
 
    // Set content type
    std::string extension = resolvedPath.getExtension();
+
+   // Inject theme CSS variables into HTML files
+   if (extension == ".html" || extension == ".htm")
+   {
+      injectThemeInfo(&content);
+   }
    pResponse->setContentType(getContentType(extension));
 
    // Set caching headers

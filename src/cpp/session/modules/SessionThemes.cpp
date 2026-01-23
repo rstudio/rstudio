@@ -54,12 +54,6 @@ namespace themes {
 
 namespace {
 
-struct ThemeInfo
-{
-   std::string foreground;
-   std::string background;
-};
-
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
 const std::string kLocalCustomThemeLocation = "theme/custom/local/";
@@ -68,24 +62,35 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 // whether or not the theme is dark.
 typedef std::map<std::string, std::tuple<std::string, std::string, bool>> ThemeMap;
 
-ThemeInfo getThemeInfo()
+} // anonymous namespace
+
+ThemeColors getThemeColors()
 {
-   ThemeInfo themeInfo { "#000000", "#ffffff" };
-   
+   ThemeColors colors { "#000000", "#ffffff", false };
+
+   // Get foreground/background from client state
    json::Value valueJson =
          r::session::clientState().getPersistent("themes", "themeInfo");
-   
-   if (!valueJson.isObject())
-      return themeInfo;
-   
-   Error error = json::readObject(valueJson.getObject(),
-                                  "foreground", themeInfo.foreground,
-                                  "background", themeInfo.background);
-   if (error)
-      LOG_ERROR(error);
-   
-   return themeInfo;
+
+   if (valueJson.isObject())
+   {
+      Error error = json::readObject(valueJson.getObject(),
+                                     "foreground", colors.foreground,
+                                     "background", colors.background);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // Get isDark from user state theme
+   json::Object theme = prefs::userState().theme();
+   auto isDarkIt = theme.find(kThemeIsDark);
+   if (isDarkIt != theme.end())
+      colors.isDark = (*isDarkIt).getValue().getBool();
+
+   return colors;
 }
+
+namespace {
 
 /**
  * @brief Gets an error out of the object, if there is one, and updates pResponse.
@@ -380,14 +385,14 @@ SEXP rs_getThemes()
  */
 SEXP rs_getThemeColors()
 {
-   ThemeInfo info = getThemeInfo();
+   ThemeColors colors = getThemeColors();
 
-   // Form the list and return to caller 
+   // Form the list and return to caller
    r::sexp::Protect protect;
-   r::sexp::ListBuilder themeColors(&protect);
-   themeColors.add("foreground", info.foreground);
-   themeColors.add("background", info.background);
-   return r::sexp::create(themeColors, &protect);
+   r::sexp::ListBuilder result(&protect);
+   result.add("foreground", colors.foreground);
+   result.add("background", colors.background);
+   return r::sexp::create(result, &protect);
 }
 
 /**

@@ -29,6 +29,19 @@ namespace session {
 namespace modules {
 namespace themes {
 
+struct ThemeColors
+{
+   std::string foreground;
+   std::string background;
+   bool isDark;
+};
+
+/**
+ * Get the foreground and background colors of the active editor theme.
+ * Colors are retrieved from client state; defaults to black on white if unavailable.
+ */
+ThemeColors getThemeColors();
+
 core::Error initialize();
 
 } // namespace themes
