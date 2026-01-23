@@ -19,6 +19,7 @@
 
 #include <map>
 #include <boost/algorithm/string.hpp>
+#include <fmt/format.h>
 
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
@@ -26,6 +27,8 @@
 #include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/System.hpp>
+
+#include "../SessionThemes.hpp"
 
 using namespace rstudio::session::modules::chat::constants;
 using namespace rstudio::session::modules::chat::installation;
@@ -42,6 +45,39 @@ namespace {
 // URI prefix for AI Chat requests
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
+
+/**
+ * Inject theme-related modifications into HTML content:
+ * - CSS variables for --ui-background and --ui-foreground
+ * - 'dark' class on body element if using a dark theme
+ *
+ * Injects a script after </body> to ensure document.body is available.
+ */
+void injectThemeInfo(std::string* pContent)
+{
+   themes::ThemeColors colors = themes::getThemeColors();
+
+   // Build script injection
+   std::string script = fmt::format(R"(
+<script>
+(function() {{
+   document.documentElement.style.setProperty('--ui-background', '{background}');
+   document.documentElement.style.setProperty('--ui-foreground', '{foreground}');
+   if ({isDark}) document.body.classList.add('dark');
+}})();
+</script>)",
+      fmt::arg("background", colors.background),
+      fmt::arg("foreground", colors.foreground),
+      fmt::arg("isDark", colors.isDark ? "true" : "false"));
+
+   // Insert after </body>
+   constexpr const char* kBodyCloseTag = "</body>";
+   size_t bodyPos = pContent->find(kBodyCloseTag);
+   if (bodyPos != std::string::npos)
+   {
+      pContent->insert(bodyPos + strlen(kBodyCloseTag), script);
+   }
+}
 
 } // anonymous namespace
 
@@ -186,7 +222,7 @@ Error handleAIChatRequest(const http::Request& request,
       return Success();
    }
 
-   // Read file BYTE-FOR-BYTE (no modifications)
+   // Read file content
    std::string content;
    error = readStringFromFile(resolvedPath, &content);
    if (error)
@@ -197,6 +233,12 @@ Error handleAIChatRequest(const http::Request& request,
 
    // Set content type
    std::string extension = resolvedPath.getExtension();
+
+   // Inject theme CSS variables into HTML files
+   if (extension == ".html" || extension == ".htm")
+   {
+      injectThemeInfo(&content);
+   }
    pResponse->setContentType(getContentType(extension));
 
    // Set caching headers
