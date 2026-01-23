@@ -49,10 +49,9 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 /**
  * Inject theme-related modifications into HTML content:
  * - CSS variables for --ui-background and --ui-foreground
- * - 'dark' class on html element if using a dark theme
+ * - 'dark' class on body element if using a dark theme
  *
- * Injects a script immediately after <head> to ensure it runs before
- * any other scripts that may depend on these values.
+ * Injects a script after </body> to ensure document.body is available.
  */
 void injectThemeInfo(std::string* pContent)
 {
@@ -62,22 +61,21 @@ void injectThemeInfo(std::string* pContent)
    std::string script = fmt::format(R"(
 <script>
 (function() {{
-   var root = document.documentElement;
-   root.style.setProperty('--ui-background', '{background}');
-   root.style.setProperty('--ui-foreground', '{foreground}');
-   if ({isDark}) root.classList.add('dark');
+   document.documentElement.style.setProperty('--ui-background', '{background}');
+   document.documentElement.style.setProperty('--ui-foreground', '{foreground}');
+   if ({isDark}) document.body.classList.add('dark');
 }})();
 </script>)",
       fmt::arg("background", colors.background),
       fmt::arg("foreground", colors.foreground),
       fmt::arg("isDark", colors.isDark ? "true" : "false"));
 
-   // Insert immediately after <head>
-   constexpr const char* kHeadTag = "<head>";
-   size_t headPos = pContent->find(kHeadTag);
-   if (headPos != std::string::npos)
+   // Insert after </body>
+   constexpr const char* kBodyCloseTag = "</body>";
+   size_t bodyPos = pContent->find(kBodyCloseTag);
+   if (bodyPos != std::string::npos)
    {
-      pContent->insert(headPos + strlen(kHeadTag), script);
+      pContent->insert(bodyPos + strlen(kBodyCloseTag), script);
    }
 }
 
