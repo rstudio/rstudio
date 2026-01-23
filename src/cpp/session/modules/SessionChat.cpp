@@ -66,8 +66,11 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 
+#include <r/session/RBusy.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
@@ -126,6 +129,15 @@ static std::string s_positAssistantVersion;
 // NOTE: This must match EXECUTION_CANCELED_ERROR constant in
 // @databot/core/errors/constants.ts: "Execution canceled by user"
 static const char* const kExecutionCanceledError = "Execution canceled by user";
+
+// ============================================================================
+// Code Execution Queue Limits
+// ============================================================================
+// Limit queued execution requests to prevent unbounded growth when R is busy
+static const size_t kMaxQueuedExecutions = 10;
+
+// Maximum time (milliseconds) an execution can wait in queue before timing out
+static const int kMaxQueueWaitMs = 60000;  // 60 seconds
 
 // ============================================================================
 // Feature availability helper
@@ -253,6 +265,7 @@ struct PendingExecutionRequest
    bool captureOutput;
    bool capturePlot;
    int timeout;
+   std::chrono::steady_clock::time_point queuedTime;
 
    PendingExecutionRequest(
       boost::weak_ptr<core::system::ProcessOperations> ops,
@@ -263,7 +276,8 @@ struct PendingExecutionRequest
       bool plot,
       int to)
       : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), timeout(to)
+        captureOutput(capture), capturePlot(plot), timeout(to),
+        queuedTime(std::chrono::steady_clock::now())
    {
    }
 };
@@ -1017,6 +1031,39 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
+   // Check for timeout - if request waited too long in queue, return error
+   auto now = std::chrono::steady_clock::now();
+   auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+      now - request.queuedTime).count();
+
+   if (waitTimeMs > kMaxQueueWaitMs)
+   {
+      WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
+           waitTimeMs, request.trackingId);
+
+      // Send timeout error response if backend is still alive
+      boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
+      if (pOps)
+      {
+         sendJsonRpcError(*pOps, request.requestId, -32000,
+            "Execution timed out. The R console was busy for too long.");
+      }
+
+      // Schedule next request if queued
+      {
+         boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+         if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+         {
+            s_executionScheduled = true;
+            module_context::scheduleDelayedWork(
+               boost::posix_time::milliseconds(1),
+               processPendingExecution,
+               true);  // idleOnly=true - wait for R to be idle
+         }
+      }
+      return;
+   }
+
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
@@ -1031,7 +1078,7 @@ void processPendingExecution()
          module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(1),
             processPendingExecution,
-            false);
+            true);  // idleOnly=true - wait for R to be idle
       }
    }
 }
@@ -1069,9 +1116,27 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "timeout", timeout);
 
+   // Check if R console is busy and log for debugging
+   bool rIsBusy = console_input::executing() || r::session::isBusy();
+   if (rIsBusy)
+   {
+      DLOG("R console is busy, execution will be queued until idle for trackingId: {}", trackingId);
+   }
+
    // Queue the request for deferred execution
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+
+      // Check queue limit to prevent unbounded growth when R is busy
+      if (s_pendingExecutionQueue.size() >= kMaxQueuedExecutions)
+      {
+         WLOG("Execution queue full ({} pending), rejecting request for trackingId: {}",
+              s_pendingExecutionQueue.size(), trackingId);
+         sendJsonRpcError(ops, requestId, -32000,
+            "R console is busy. Execution queue is full. Please wait for current operations to complete.");
+         return;
+      }
+
       s_pendingExecutionQueue.push(PendingExecutionRequest(
          ops.getWeakPtr(), requestId, code, trackingId,
          captureOutput, capturePlot, timeout));
@@ -1082,7 +1147,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(1),
             processPendingExecution,
-            false);  // idleOnly=false - run immediately
+            true);  // idleOnly=true - wait for R to be idle
       }
    }
 
