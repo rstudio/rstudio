@@ -99,7 +99,6 @@ namespace {
 // ============================================================================
 PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
-std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
@@ -3454,7 +3453,6 @@ void onBackendExit(int exitCode)
    // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
    s_chatBackendRestartCount = kMaxRestartAttempts;
@@ -3508,9 +3506,6 @@ Error startChatBackend(bool resumeConversation)
       return error;
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
-
-   // Build WebSocket URL BEFORE launching (so it's ready when needed)
-   s_chatBackendUrl = buildWebSocketUrl(s_chatBackendPort);
 
    // Build command arguments
    // Use relative path so Node.js resolves modules from working directory
@@ -3615,7 +3610,6 @@ Error startChatBackend(bool resumeConversation)
    {
       LOG_ERROR(error);
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
       return error;
    }
 
@@ -3724,9 +3718,8 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
 
    s_chatBackendPid = -1;
 
-   // Clear port and URL
+   // Clear port
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
 
    // Clear busy state
    s_chatBusy = false;
@@ -3894,7 +3887,6 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       }
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
    }
 
    // Download package
@@ -4105,7 +4097,6 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
    }
 
    // Clear busy state and JSON-RPC buffer
@@ -4193,9 +4184,8 @@ void onShutdown(bool terminatedNormally)
       s_chatBackendPid = -1;
    }
 
-   // Clear port and URL
+   // Clear port
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
 
    // Clear notification queue
    {
