@@ -103,6 +103,9 @@ echo "0" > version/PATCH
     echo "### Fixed"
     echo "-"
     echo ""
+    echo "### Dependencies"
+    echo "-"
+    echo ""
 } > NEWS.md
 
 
