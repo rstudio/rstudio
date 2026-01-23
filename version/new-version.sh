@@ -98,11 +98,9 @@ echo "0" > version/PATCH
     echo "## RStudio ${CALENDAR_VERSION}.0 \"$RELEASE_FLOWER\" Release Notes"
     echo ""
     echo "### New"
-    echo "#### RStudio"
     echo "-"
     echo ""
     echo "### Fixed"
-    echo "#### RStudio"
     echo "-"
     echo ""
 } > NEWS.md
