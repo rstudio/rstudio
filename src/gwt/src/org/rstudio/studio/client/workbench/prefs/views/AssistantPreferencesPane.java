@@ -31,6 +31,7 @@ import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
@@ -58,6 +59,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
+import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -111,7 +114,9 @@ public class AssistantPreferencesPane extends PreferencesPane
                                  AriaLiveService ariaLive,
                                  Assistant assistant,
                                  AssistantServerOperations server,
-                                 ProjectsServerOperations projectServer)
+                                 ProjectsServerOperations projectServer,
+                                 GlobalDisplay globalDisplay,
+                                 ChatServerOperations chatServer)
    {
       events_ = events;
       session_ = session;
@@ -120,6 +125,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
+      globalDisplay_ = globalDisplay;
+      installManager_ = new PositAiInstallManager(chatServer);
 
       // Create assistant selector - conditionally include Posit AI option
       boolean paiEnabled = PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs_);
@@ -397,7 +404,8 @@ public class AssistantPreferencesPane extends PreferencesPane
                            }
                            else
                            {
-                              lblAssistantStatus_.setText(constants_.assistantAgentNotEnabled());
+                              // Offer to install Posit AI
+                              checkPositAiInstallation(/* forAssistant= */ true);
                            }
                         }
 
@@ -473,6 +481,15 @@ public class AssistantPreferencesPane extends PreferencesPane
       VerticalTabPanel chatPanel = new VerticalTabPanel(ElementIds.ASSISTANT_CHAT_PREFS);
       chatPanel.add(headerLabel(constants_.assistantChatTab()));
       chatPanel.add(selChatProvider_);
+
+      // Add change handler for chat provider to check for Posit AI installation
+      selChatProvider_.addChangeHandler((event) -> {
+         String value = selChatProvider_.getValue();
+         if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
+         {
+            checkPositAiInstallation(/* forAssistant= */ false);
+         }
+      });
 
       // Create tab layout panel and add both tabs
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.assistantTabPanel());
@@ -778,6 +795,220 @@ public class AssistantPreferencesPane extends PreferencesPane
       }
    }
 
+   /**
+    * Checks if Posit AI needs to be installed and prompts the user to install it.
+    *
+    * @param forAssistant True if this check is for the assistant (completions) preference,
+    *                     false if it's for the chat provider preference.
+    */
+   private void checkPositAiInstallation(boolean forAssistant)
+   {
+      // Remember the previous value so we can revert if user declines
+      final String previousAssistantValue = forAssistant ?
+         prefs_.assistant().getGlobalValue() : null;
+      final String previousChatProviderValue = !forAssistant ?
+         prefs_.chatProvider().getGlobalValue() : null;
+
+      installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
+      {
+         @Override
+         public void onNoUpdateAvailable()
+         {
+            // Posit AI is already installed and up-to-date
+            if (forAssistant)
+            {
+               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+            }
+         }
+
+         @Override
+         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         {
+            showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
+               previousAssistantValue, previousChatProviderValue);
+         }
+
+         @Override
+         public void onIncompatibleVersion()
+         {
+            // No compatible version available - show error and revert
+            globalDisplay_.showErrorMessage(
+               constants_.positAiIncompatibleTitle(),
+               constants_.positAiIncompatibleMessage(),
+               (Operation) () -> {
+                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+               });
+         }
+
+         @Override
+         public void onCheckFailed(String errorMessage)
+         {
+            // Check failed - this often happens when calling from Preferences pane
+            // before the preference is saved. Since we know Posit AI isn't installed
+            // (we got here because assistantVerifyInstalled returned false, or user
+            // just selected Posit AI), offer to install without version info.
+            showInstallUpdatePrompt(null, true, forAssistant,
+               previousAssistantValue, previousChatProviderValue);
+         }
+      });
+   }
+
+   /**
+    * Shows the install/update prompt dialog.
+    */
+   private void showInstallUpdatePrompt(String newVersion, boolean isInitialInstall,
+                                        boolean forAssistant,
+                                        String previousAssistantValue,
+                                        String previousChatProviderValue)
+   {
+      String title = isInitialInstall ?
+         constants_.positAiInstallTitle() :
+         constants_.positAiUpdateTitle();
+      String message = isInitialInstall ?
+         (newVersion != null ?
+            constants_.positAiInstallMessage(newVersion) :
+            constants_.positAiInstallMessageNoVersion()) :
+         constants_.positAiUpdateMessage(newVersion);
+      String yesLabel = isInitialInstall ?
+         constants_.positAiInstallButton() :
+         constants_.positAiUpdateButton();
+
+      globalDisplay_.showYesNoMessage(
+         GlobalDisplay.MSG_QUESTION,
+         title,
+         message,
+         false,  // includeCancel
+         (Operation) () -> {
+            // User chose to install/update
+            performPositAiInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+         },
+         (Operation) () -> {
+            // User declined - revert the preference
+            revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+         },
+         null,  // cancelOperation - not used since includeCancel is false
+         yesLabel,
+         constants_.positAiCancelButton(),
+         true);  // yesIsDefault
+   }
+
+   /**
+    * Performs the Posit AI installation with progress dialog.
+    */
+   private void performPositAiInstall(boolean forAssistant,
+                                      String previousAssistantValue,
+                                      String previousChatProviderValue)
+   {
+      // Save the appropriate preference first - the server requires either
+      // chatProvider or assistant to be set to "posit" before it will allow installation
+      if (forAssistant)
+      {
+         prefs_.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_POSIT);
+      }
+      else
+      {
+         prefs_.chatProvider().setGlobalValue(UserPrefsAccessor.CHAT_PROVIDER_POSIT);
+      }
+
+      // Write prefs and then start installation
+      prefs_.writeUserPrefs((completed) -> {
+         doInstall(forAssistant, previousAssistantValue, previousChatProviderValue);
+      });
+   }
+
+   /**
+    * Actually performs the installation after preferences are saved.
+    */
+   private void doInstall(boolean forAssistant,
+                          String previousAssistantValue,
+                          String previousChatProviderValue)
+   {
+      final com.google.gwt.user.client.Command dismissProgress =
+         globalDisplay_.showProgress(constants_.positAiInstallingMessage());
+
+      installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
+      {
+         @Override
+         public void onInstallStarted()
+         {
+            // Progress dialog is already showing
+         }
+
+         @Override
+         public void onInstallProgress(String status)
+         {
+            // Progress dialog shows a generic message; no additional status updates
+         }
+
+         @Override
+         public void onInstallComplete()
+         {
+            dismissProgress.execute();
+            globalDisplay_.showMessage(
+               GlobalDisplay.MSG_INFO,
+               constants_.positAiInstallCompleteTitle(),
+               constants_.positAiInstallCompleteMessage(),
+               (Operation) () -> {
+                  // Refresh the assistant status if this was for the completions pref
+                  if (forAssistant)
+                  {
+                     positAiRefreshed_ = false;
+                     refresh(UserPrefsAccessor.ASSISTANT_POSIT);
+                  }
+               });
+         }
+
+         @Override
+         public void onInstallFailed(String errorMessage)
+         {
+            dismissProgress.execute();
+
+            globalDisplay_.showErrorMessage(
+               constants_.positAiInstallFailedTitle(),
+               constants_.positAiInstallFailedMessage(errorMessage),
+               (Operation) () -> {
+                  // Revert the preference since installation failed
+                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+               });
+         }
+      });
+   }
+
+   /**
+    * Reverts the Posit AI preference to its previous value.
+    */
+   private void revertPositAiPreference(boolean forAssistant,
+                                        String previousAssistantValue,
+                                        String previousChatProviderValue)
+   {
+      if (forAssistant)
+      {
+         // Revert assistant preference to previous value
+         String revertTo = previousAssistantValue != null ?
+            previousAssistantValue : UserPrefsAccessor.ASSISTANT_NONE;
+         selAssistant_.setValue(revertTo);
+         prefs_.assistant().setGlobalValue(revertTo);
+         positAiRefreshed_ = false;
+
+         // Write the reverted preference
+         prefs_.writeUserPrefs((completed) -> {});
+
+         // Trigger the change handler to update the UI
+         selAssistant_.getListBox().fireEvent(new ChangeEvent() {});
+      }
+      else
+      {
+         // Revert chat provider preference to previous value
+         String revertTo = previousChatProviderValue != null ?
+            previousChatProviderValue : UserPrefsAccessor.CHAT_PROVIDER_NONE;
+         selChatProvider_.setValue(revertTo);
+         prefs_.chatProvider().setGlobalValue(revertTo);
+
+         // Write the reverted preference
+         prefs_.writeUserPrefs((completed) -> {});
+      }
+   }
+
    private void reset()
    {
       assistantStartupError_ = null;
@@ -1018,6 +1249,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
+   private final GlobalDisplay globalDisplay_;
+   private final PositAiInstallManager installManager_;
    
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);

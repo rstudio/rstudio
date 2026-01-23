@@ -639,4 +639,21 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String resetPaneLayoutToDefaults();
     String restoreDefaultPaneAndTabLayoutCaption();
     String restoreDefaultPaneAndTabLayoutMessage();
+    String positAiInstallTitle();
+    String positAiUpdateTitle();
+    String positAiInstallMessage(String version);
+    String positAiInstallMessageNoVersion();
+    String positAiUpdateMessage(String version);
+    String positAiInstallButton();
+    String positAiUpdateButton();
+    String positAiCancelButton();
+    String positAiIncompatibleTitle();
+    String positAiIncompatibleMessage();
+    String positAiCheckFailedTitle();
+    String positAiCheckFailedMessage(String error);
+    String positAiInstallingMessage();
+    String positAiInstallCompleteTitle();
+    String positAiInstallCompleteMessage();
+    String positAiInstallFailedTitle();
+    String positAiInstallFailedMessage(String error);
 }

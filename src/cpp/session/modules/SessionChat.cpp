@@ -150,6 +150,13 @@ bool isChatProviderPosit()
    return prefs::userPrefs().chatProvider() == kChatProviderPosit;
 }
 
+// Returns true if the user wants Posit AI for either chat or completions
+// Used to determine if install/update operations should be allowed
+bool isPositAiWanted()
+{
+   return isChatProviderPosit() || isPaiSelected();
+}
+
 // Selective imports from chat modules to avoid namespace pollution
 namespace chat_constants = rstudio::session::modules::chat::constants;
 namespace chat_types = rstudio::session::modules::chat::types;
@@ -2952,14 +2959,74 @@ Error installPackage(const FilePath& packagePath)
    return Success();
 }
 
+// Performs the actual update check logic (must be called with mutex NOT held)
+// This populates s_updateState with current version info and available updates
+void doUpdateCheck()
+{
+   DLOG("Performing update check");
+
+   // Get installed version
+   std::string installedVersion = getInstalledVersion();
+   if (installedVersion.empty())
+   {
+      DLOG("No installation found, checking for initial install");
+      installedVersion = "0.0.0";
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.currentVersion = installedVersion;
+   }
+
+   // Download manifest (silent failure)
+   json::Object manifest;
+   Error error = downloadManifest(&manifest);
+   if (error)
+   {
+      WLOG("Failed to download manifest: {}", error.getMessage());
+      return;
+   }
+
+   // Get package info for our protocol version
+   std::string packageVersion;
+   std::string downloadUrl;
+   error = getPackageInfoFromManifest(manifest, kProtocolVersion, &packageVersion, &downloadUrl);
+   if (error)
+   {
+      WLOG("Failed to get package info from manifest: {}", error.getMessage());
+
+      // Check if this is specifically a "protocol not found" error
+      if (error.getCode() == boost::system::errc::protocol_not_supported)
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+      return;
+   }
+
+   // Compare versions - offer install if versions differ (upgrade or downgrade)
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   if (shouldInstallVersion(installedVersion, packageVersion))
+   {
+      DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+      s_updateState.updateAvailable = true;
+      s_updateState.newVersion = packageVersion;
+      s_updateState.downloadUrl = downloadUrl;
+   }
+   else
+   {
+      DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
+      s_updateState.updateAvailable = false;
+   }
+}
+
 // Called during session initialization to check for updates
 Error checkForUpdatesOnStartup()
 {
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
-
-   if (!isChatProviderPosit())
+   if (!isPositAiWanted())
    {
-      DLOG("Update check skipped: posit not selected as chat provider");
+      DLOG("Update check skipped: posit not selected for chat or assistant");
       return Success();
    }
 
@@ -3619,19 +3686,23 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
-
-   if (!isChatProviderPosit())
+   // Perform on-demand update check if state hasn't been populated yet.
+   // This happens when user selects Posit AI in Preferences before the pref is saved.
+   // We allow the check regardless of isPositAiWanted() since checking for available
+   // updates doesn't require the preference - only actual installation does.
    {
-      // Return empty/negative response - chat provider not set to posit
-      json::Object result;
-      result["updateAvailable"] = false;
-      result["noCompatibleVersion"] = false;
-      pResponse->setResult(result);
-      return Success();
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      if (s_updateState.currentVersion.empty())
+      {
+         DLOG("Update state not populated, performing on-demand check");
+         lock.unlock();
+         doUpdateCheck();
+      }
    }
 
-   // Return cached startup check result
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+
+   // Return cached/computed check result
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
@@ -3650,14 +3721,26 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
 Error chatInstallUpdate(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
-
-   if (!isChatProviderPosit())
+   if (!isPositAiWanted())
    {
       return systemError(boost::system::errc::operation_not_permitted,
-                        "Chat provider not set to posit",
+                        "Posit AI not selected for chat or assistant",
                         ERROR_LOCATION);
    }
+
+   // Check if we need to perform an update check first
+   // This happens when the user selects Posit AI after session startup
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      if (s_updateState.currentVersion.empty())
+      {
+         DLOG("Update state not populated, performing on-demand check");
+         lock.unlock();
+         doUpdateCheck();
+      }
+   }
+
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
 
    // Check if update is available
    if (!s_updateState.updateAvailable)
@@ -3785,9 +3868,9 @@ Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
 {
    boost::mutex::scoped_lock lock(s_updateStateMutex);
 
-   if (!isChatProviderPosit())
+   if (!isPositAiWanted())
    {
-      // Return idle status - chat provider not set to posit
+      // Return idle status - posit not selected for chat or assistant
       json::Object result;
       result["status"] = "idle";
       pResponse->setResult(result);

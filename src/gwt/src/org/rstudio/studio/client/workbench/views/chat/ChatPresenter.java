@@ -21,7 +21,6 @@ import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -106,6 +105,7 @@ public class ChatPresenter extends BasePresenter
       commands_ = commands;
       server_ = server;
       prefs_ = prefs;
+      installManager_ = new PositAiInstallManager(server);
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -285,50 +285,43 @@ public class ChatPresenter extends BasePresenter
 
    private void checkForUpdates()
    {
-      server_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
+      installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
-         public void onResponseReceived(JsObject result)
+         public void onNoUpdateAvailable()
          {
-            // Check for incompatible protocol version first
-            boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
-            if (noCompatibleVersion)
-            {
-               initializing_ = false;
-               display_.showIncompatibleVersion();
-               return;  // Don't try to start backend
-            }
-
-            boolean updateAvailable = result.getBoolean("updateAvailable");
-            boolean isInitialInstall = result.getBoolean("isInitialInstall");
-
-            if (updateAvailable)
-            {
-               String newVersion = result.getString("newVersion");
-
-               // Reset initialization flag - we're pausing for user action
-               initializing_ = false;
-
-               if (isInitialInstall)
-               {
-                  display_.showInstallNotification(newVersion);
-               }
-               else
-               {
-                  display_.showUpdateNotification(newVersion);
-               }
-               // Do NOT start backend when update/install is available
-               // Backend will start after user clicks "Update/Install Now" and it completes,
-               // or after user clicks "Ignore"
-               return;
-            }
-
             // No update available - start backend normally
             startBackend();
          }
 
          @Override
-         public void onError(ServerError error)
+         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         {
+            // Reset initialization flag - we're pausing for user action
+            initializing_ = false;
+
+            if (isInitialInstall)
+            {
+               display_.showInstallNotification(newVersion);
+            }
+            else
+            {
+               display_.showUpdateNotification(newVersion);
+            }
+            // Do NOT start backend when update/install is available
+            // Backend will start after user clicks "Update/Install Now" and it completes,
+            // or after user clicks "Ignore"
+         }
+
+         @Override
+         public void onIncompatibleVersion()
+         {
+            initializing_ = false;
+            display_.showIncompatibleVersion();
+         }
+
+         @Override
+         public void onCheckFailed(String errorMessage)
          {
             // Network failure or other error - show message but don't block
             display_.showUpdateCheckFailure();
@@ -344,98 +337,44 @@ public class ChatPresenter extends BasePresenter
 
    private void installUpdate()
    {
-      display_.showUpdatingStatus();
-
-      server_.chatInstallUpdate(new ServerRequestCallback<Void>()
+      installManager_.installUpdate(new PositAiInstallManager.InstallCallback()
       {
          @Override
-         public void onResponseReceived(Void result)
+         public void onInstallStarted()
          {
-            // Start polling for update status
-            pollUpdateStatus();
+            display_.showUpdatingStatus();
          }
 
          @Override
-         public void onError(ServerError error)
+         public void onInstallProgress(String status)
          {
-            display_.showUpdateError(error.getMessage());
+            // Status is shown via showUpdatingStatus(), no additional action needed
          }
-      });
-   }
 
-   private void pollUpdateStatus()
-   {
-      pollUpdateStatus(0);
-   }
-
-   private void pollUpdateStatus(final int attemptCount)
-   {
-      if (attemptCount > 60)
-      {
-         display_.showUpdateError(constants_.chatUpdateTimeout());
-         return;
-      }
-
-      server_.chatGetUpdateStatus(new ServerRequestCallback<JsObject>()
-      {
          @Override
-         public void onResponseReceived(JsObject response)
+         public void onInstallComplete()
          {
-            String status = response.getString("status");
+            // Update complete - restart backend and reload UI
+            display_.showUpdateComplete();
 
-            if (status.equals("complete"))
+            // Give user a moment to see the success message
+            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
             {
-               // Update complete - restart backend and reload UI
-               display_.showUpdateComplete();
-
-               // Give user a moment to see the success message
-               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+               @Override
+               public boolean execute()
                {
-                  @Override
-                  public boolean execute()
-                  {
-                     // Set flag so we know to hide the notification after reload
-                     reloadingAfterUpdate_ = true;
-                     initializeChat();
-                     return false;
-                  }
-               }, 1000);
-            }
-            else if (status.equals("error"))
-            {
-               String message = response.getString("message");
-               display_.showUpdateError(message);
-            }
-            else if (status.equals("downloading") || status.equals("installing"))
-            {
-               // Keep polling - update in progress
-               Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-               {
-                  @Override
-                  public boolean execute()
-                  {
-                     pollUpdateStatus(attemptCount + 1);
-                     return false;
-                  }
-               }, 1000);
-            }
-            else if (status.equals("idle"))
-            {
-               // Unexpected: update not actually running
-               // This shouldn't happen, but handle it to prevent infinite polling
-               display_.showUpdateError(constants_.chatUpdateNotStarted());
-            }
-            else
-            {
-               // Unknown status - stop polling to prevent infinite loop
-               display_.showUpdateError(constants_.chatUpdateStatusUnknown(status));
-            }
+                  // Set flag so we know to hide the notification after reload
+                  reloadingAfterUpdate_ = true;
+                  initializeChat();
+                  return false;
+               }
+            }, 1000);
          }
 
          @Override
-         public void onError(ServerError error)
+         public void onInstallFailed(String errorMessage)
          {
-            display_.showUpdateError(constants_.chatUpdateStatusCheckFailed(error.getMessage()));
+            display_.showUpdateError(errorMessage);
          }
       });
    }
@@ -593,6 +532,7 @@ public class ChatPresenter extends BasePresenter
    private final Commands commands_;
    private final ChatServerOperations server_;
    private final UserPrefs prefs_;
+   private final PositAiInstallManager installManager_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
