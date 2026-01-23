@@ -3717,7 +3717,7 @@ public class UserPrefsAccessor extends Prefs
             CHAT_PROVIDER_NONE,
             CHAT_PROVIDER_POSIT
          },
-         "none",
+         "posit",
          new String[] {
             _constants.chatProviderEnum_none(),
             _constants.chatProviderEnum_posit()
