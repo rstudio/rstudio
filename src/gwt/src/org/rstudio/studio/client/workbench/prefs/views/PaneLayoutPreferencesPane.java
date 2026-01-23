@@ -130,7 +130,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
             if (StringUtil.equals(module, PaneManager.CHAT_PANE) &&
-                !PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
+                !paiUtil_.isPaiEnabled())
               checkBox.setVisible(false);
          }
 
@@ -215,11 +215,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,
                                     Session session,
+                                    PaiUtil paiUtil,
                                     Provider<PaneManager> pPaneManager)
    {
       res_ = res;
       userPrefs_ = userPrefs;
       session_ = session;
+      paiUtil_ = paiUtil;
       paneManager_ = pPaneManager.get();
 
       PaneConfig paneConfig = userPrefs.panes().getGlobalValue().cast();
@@ -983,6 +985,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final UserPrefs userPrefs_;
    private final Session session_;
+   private final PaiUtil paiUtil_;
    private final ListBox leftTop_;
    private final ListBox leftBottom_;
    private final ListBox rightTop_;

@@ -221,6 +221,7 @@ public class PaneManager
                       Binder binder,
                       Commands commands,
                       UserPrefs userPrefs,
+                      PaiUtil paiUtil,
                       @Named(CONSOLE_PANE) final Widget consolePane,
                       FileTypeRegistry fileTypeRegistry,
                       Source source,
@@ -257,6 +258,7 @@ public class PaneManager
       session_ = session;
       commands_ = commands;
       userPrefs_ = userPrefs;
+      paiUtil_ = paiUtil;
       consolePane_ = (ConsolePane)consolePane;
       fileTypeRegistry_ = fileTypeRegistry;
       source_ = source;
@@ -1748,7 +1750,7 @@ public class PaneManager
          for (int j = 0; j < tabNames.length(); j++)
          {
             Tab tab = Enum.valueOf(Tab.class, tabNames.get(j));
-            if (tab == Tab.Chat && !PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
+            if (tab == Tab.Chat && !paiUtil_.isPaiEnabled())
                continue;
             tabList.add(tab);
          }
@@ -1829,7 +1831,7 @@ public class PaneManager
       tabs.add(presentation2Tab_);
       tabs.add(environmentTab_);
       tabs.add(viewerTab_);
-      if (PaiUtil.isPaiEnabled(session_.getSessionInfo(), userPrefs_))
+      if (paiUtil_.isPaiEnabled())
          tabs.add(chatTab_);
       tabs.add(connectionsTab_);
       tabs.add(jobsTab_);
@@ -2639,7 +2641,7 @@ public class PaneManager
 
    private void manageChatCommands()
    {
-      boolean showPaiUi = PaiUtil.isPaiSelected(userPrefs_);
+      boolean showPaiUi = paiUtil_.isPaiSelected();
       commands_.activateChat().setVisible(showPaiUi);
       commands_.layoutZoomChat().setVisible(showPaiUi);
    }
@@ -2663,7 +2665,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
       commands.add(commands_.layoutZoomPresentation2());
-      if (PaiUtil.isPaiSelected(userPrefs_))
+      if (paiUtil_.isPaiSelected())
          commands.add(commands_.layoutZoomChat());
 
       return commands;
@@ -2698,6 +2700,7 @@ public class PaneManager
    private final Session session_;
    private final Commands commands_;
    private final UserPrefs userPrefs_;
+   private final PaiUtil paiUtil_;
    private final FindOutputTab findOutputTab_;
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;

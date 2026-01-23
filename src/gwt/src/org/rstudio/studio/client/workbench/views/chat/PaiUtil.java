@@ -14,51 +14,110 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
-import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 /**
  * Utility class for Posit AI (PAI) feature availability checks.
  */
+@Singleton
 public class PaiUtil
 {
+   @Inject
+   public PaiUtil(Session session, UserPrefs userPrefs, EventBus events)
+   {
+      session_ = session;
+      userPrefs_ = userPrefs;
+
+      // Initialize cached project options from session info
+      projectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
+
+      // Listen for project options changes to keep cache updated
+      events.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
+      {
+         projectOptions_ = event.getData().getAssistantOptions();
+      });
+   }
+
    /**
     * Returns true if the Posit AI feature is enabled.
     *
-    * @param sessionInfo The session info containing admin settings
-    * @param userPrefs The user preferences
     * @return true if PAI is enabled, false otherwise
     */
-   public static boolean isPaiEnabled(SessionInfo sessionInfo, UserPrefs userPrefs)
+   public boolean isPaiEnabled()
    {
-      return sessionInfo.getPositAssistantEnabled();
+      return session_.getSessionInfo().getPositAssistantEnabled();
    }
 
    /**
     * Returns true if the user has selected Posit AI as their assistant.
     * Use this to gate features that should only be active when PAI is selected.
     *
-    * @param userPrefs The user preferences
     * @return true if user has selected Posit AI, false otherwise
     */
-   public static boolean isPaiSelected(UserPrefs userPrefs)
+   public boolean isPaiSelected()
    {
-      return userPrefs.assistant().getGlobalValue()
+      return userPrefs_.assistant().getGlobalValue()
             .equals(UserPrefsAccessor.ASSISTANT_POSIT);
    }
 
    /**
-    * Returns true if the user has selected Posit AI as their chat provider.
-    * Use this to gate chat features that should only be active when Posit AI
-    * is selected as the chat provider.
+    * Returns true if Posit AI is the configured chat provider, checking:
+    * 1. Project-level chat provider setting (if set and not "default")
+    * 2. Global user preference
     *
-    * @param userPrefs The user preferences
-    * @return true if user has selected Posit AI for chat, false otherwise
+    * @return true if Posit AI is the effective chat provider, false otherwise
     */
-   public static boolean isChatProviderPosit(UserPrefs userPrefs)
+   public boolean isChatProviderPosit()
    {
-      return userPrefs.chatProvider().getGlobalValue()
-            .equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT);
+      return getConfiguredChatProvider().equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT);
    }
+
+   /**
+    * Returns true if chat is disabled (provider set to "none"), checking:
+    * 1. Project-level chat provider setting (if set and not "default")
+    * 2. Global user preference
+    *
+    * @return true if chat is disabled, false otherwise
+    */
+   public boolean isChatProviderNone()
+   {
+      return getConfiguredChatProvider().equals(UserPrefsAccessor.CHAT_PROVIDER_NONE);
+   }
+
+   /**
+    * Returns the configured chat provider, checking:
+    * 1. Project-level chat provider setting (if set and not "default")
+    * 2. Global user preference
+    *
+    * @return The effective chat provider value
+    */
+   public String getConfiguredChatProvider()
+   {
+      // Check for project-level override
+      if (projectOptions_ != null)
+      {
+         String projectChatProvider = projectOptions_.chat_provider;
+         if (projectChatProvider != null &&
+             !projectChatProvider.isEmpty() &&
+             !projectChatProvider.equals("default"))
+         {
+            return projectChatProvider;
+         }
+      }
+
+      // Fall back to global preference
+      return userPrefs_.chatProvider().getGlobalValue();
+   }
+
+   private final Session session_;
+   private final UserPrefs userPrefs_;
+   private RProjectAssistantOptions projectOptions_;
 }

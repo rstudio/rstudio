@@ -549,6 +549,7 @@ json::Object projectAssistantOptionsJson()
 
    json::Object assistantOptionsJson;
    assistantOptionsJson["assistant"] = assistantOptions.assistant;
+   assistantOptionsJson["chat_provider"] = assistantOptions.chatProvider;
    assistantOptionsJson["copilot_enabled"] = assistantOptions.copilotEnabled;
    assistantOptionsJson["copilot_indexing_enabled"] = assistantOptions.copilotIndexingEnabled;
    return assistantOptionsJson;
@@ -654,10 +655,12 @@ Error rProjectAssistantOptionsFromJson(const json::Object& optionsJson,
                                        RProjectAssistantOptions* pOptions)
 {
    std::string assistant;
+   std::string chatProvider;
    int copilotEnabled, copilotIndexingEnabled;
    Error error = json::readObject(
             optionsJson,
             "assistant", assistant,
+            "chat_provider", chatProvider,
             "copilot_enabled", copilotEnabled,
             "copilot_indexing_enabled", copilotIndexingEnabled);
    if (error)
@@ -665,6 +668,7 @@ Error rProjectAssistantOptionsFromJson(const json::Object& optionsJson,
 
    using r_util::YesNoAskValue;
    pOptions->assistant = assistant;
+   pOptions->chatProvider = chatProvider;
    pOptions->copilotEnabled = static_cast<YesNoAskValue>(copilotEnabled);
    pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(copilotIndexingEnabled);
    return Success();

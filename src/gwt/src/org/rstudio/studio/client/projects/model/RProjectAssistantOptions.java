@@ -26,13 +26,17 @@ public class RProjectAssistantOptions
    {
       RProjectAssistantOptions options = new RProjectAssistantOptions();
       options.assistant = "default";
+      options.chat_provider = "default";
       options.copilot_enabled = -1;  // DefaultValue
       options.copilot_indexing_enabled = -1;  // DefaultValue
       return options;
    }
 
-   // Assistant selection: "default", "none", "posit_ai", "copilot"
+   // Assistant selection: "default", "none", "posit", "copilot"
    public String assistant;
+
+   // Chat provider selection: "default", "none", "posit"
+   public String chat_provider;
 
    // NOTE: These map to the 'YesNoAskValue' enum used for project options.
    public int copilot_enabled;  // deprecated, use assistant

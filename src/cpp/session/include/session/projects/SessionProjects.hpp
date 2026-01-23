@@ -91,7 +91,8 @@ struct RProjectBuildOptions
 // assistant options
 struct RProjectAssistantOptions
 {
-   std::string assistant;  // "default", "none", "posit_ai", "copilot"
+   std::string assistant;      // "default", "none", "posit", "copilot"
+   std::string chatProvider;   // "default", "none", "posit"
    core::r_util::YesNoAskValue copilotEnabled;  // deprecated, use assistant
    core::r_util::YesNoAskValue copilotIndexingEnabled;
 };

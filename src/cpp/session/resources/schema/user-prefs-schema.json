@@ -1779,7 +1779,7 @@
         "chat_provider": {
             "type": "string",
             "enum": ["none", "posit"],
-            "enumReadable": ["(None)", "Posit AI"],
+            "enumReadable": ["(None)", "Posit Assistant"],
             "default": "none",
             "title": "Chat Provider",
             "description": "Select which AI assistant to use for chat functionality."

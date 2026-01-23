@@ -73,12 +73,12 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       RProjectAssistantOptions assistantOptions = options.getAssistantOptions();
 
       // Save assistant selection
-      // Map "none" (used as default placeholder in UI) to "default" for storage
       String selectedAssistant = selAssistant_.getValue();
-      if (selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
-         assistantOptions.assistant = "default";
-      else
-         assistantOptions.assistant = selectedAssistant;
+      assistantOptions.assistant = selectedAssistant;
+
+      // Save chat provider selection
+      String selectedChatProvider = selChatProvider_.getValue();
+      assistantOptions.chat_provider = selectedChatProvider;
 
       RestartRequirement requirement = new RestartRequirement();
 
@@ -87,6 +87,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       if (originalAssistant == null)
          originalAssistant = "default";
       if (!originalAssistant.equals(assistantOptions.assistant))
+         requirement.setSessionRestartRequired(true);
+
+      // Check if chat provider changed
+      String originalChatProvider = options_.getAssistantOptions().chat_provider;
+      if (originalChatProvider == null)
+         originalChatProvider = "default";
+      if (!originalChatProvider.equals(assistantOptions.chat_provider))
          requirement.setSessionRestartRequired(true);
 
       return requirement;
@@ -99,7 +106,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
                                         AriaLiveService ariaLive,
                                         Assistant assistant,
                                         AssistantServerOperations server,
-                                        ProjectsServerOperations projectServer)
+                                        ProjectsServerOperations projectServer,
+                                        PaiUtil paiUtil)
    {
       events_ = events;
       session_ = session;
@@ -107,20 +115,22 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       assistant_ = assistant;
       server_ = server;
       projectServer_ = projectServer;
+      paiUtil_ = paiUtil;
 
       // Create assistant selector - conditionally include Posit AI option
-      // Note: Use "(Default)" instead of "(None)" since project settings inherit from global
-      boolean paiEnabled = PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs_);
+      boolean paiEnabled = paiUtil_.isPaiEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)
       {
          assistantLabels = new String[] {
                constants_.defaultInParentheses(),
+               constants_.none(),
                prefsConstants_.assistantEnum_posit(),
                prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
+               ASSISTANT_DEFAULT,
                UserPrefsAccessor.ASSISTANT_NONE,
                UserPrefsAccessor.ASSISTANT_POSIT,
                UserPrefsAccessor.ASSISTANT_COPILOT
@@ -130,9 +140,11 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       {
          assistantLabels = new String[] {
                constants_.defaultInParentheses(),
+               constants_.none(),
                prefsConstants_.assistantEnum_copilot()
          };
          assistantValues = new String[] {
+               ASSISTANT_DEFAULT,
                UserPrefsAccessor.ASSISTANT_NONE,
                UserPrefsAccessor.ASSISTANT_COPILOT
          };
@@ -179,9 +191,46 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
             false);
-      
+
       lblCopilotTos_ = new Label(constants_.copilotTermsOfServiceLabel());
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
+
+      // Create chat provider selector - conditionally include Posit AI option
+      // Note: Use "(Default)" instead of "(None)" since project settings inherit from global
+      String[] chatProviderLabels;
+      String[] chatProviderValues;
+      if (paiEnabled)
+      {
+         chatProviderLabels = new String[] {
+               constants_.defaultInParentheses(),
+               constants_.none(),
+               prefsConstants_.chatProviderEnum_posit()
+         };
+         chatProviderValues = new String[] {
+               CHAT_PROVIDER_DEFAULT,
+               UserPrefsAccessor.CHAT_PROVIDER_NONE,
+               UserPrefsAccessor.CHAT_PROVIDER_POSIT
+         };
+      }
+      else
+      {
+         chatProviderLabels = new String[] {
+               constants_.defaultInParentheses(),
+               constants_.none()
+         };
+         chatProviderValues = new String[] {
+               CHAT_PROVIDER_DEFAULT,
+               UserPrefsAccessor.CHAT_PROVIDER_NONE
+         };
+      }
+      selChatProvider_ = new SelectWidget(
+            constants_.assistantChatProviderLabel(),
+            chatProviderLabels,
+            chatProviderValues,
+            false,
+            true,
+            false);
+      selChatProvider_.setValue(CHAT_PROVIDER_DEFAULT);
    }
 
    @Override
@@ -197,7 +246,27 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    
    private void initDisplay(RProjectOptions options)
    {
-      add(headerLabel(constants_.assistantDisplayName()));
+      // Chat section (displayed first)
+      add(headerLabel(constants_.assistantChatTab()));
+      add(selChatProvider_);
+
+      // Add info label showing global chat provider when using default
+      chatProviderInfoPanel_ = createChatProviderInfoPanel();
+      add(chatProviderInfoPanel_);
+
+      // Set up change handler for chat provider to show/hide info panel
+      selChatProvider_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String value = selChatProvider_.getValue();
+            chatProviderInfoPanel_.setVisible(value.equals(CHAT_PROVIDER_DEFAULT));
+         }
+      });
+
+      // Completions section
+      add(spacedBefore(headerLabel(constants_.assistantCompletionsTab())));
 
       // Add assistant selector
       add(selAssistant_);
@@ -205,7 +274,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       // Create the status panel (shared between Copilot and Posit AI)
       statusPanel_ = createStatusPanel();
 
-      // Create the three panels
+      // Create the assistant detail panels
+      defaultPanel_ = createDefaultPanel();
       nonePanel_ = createNonePanel();
       positAiPanel_ = createPositAiPanel();
       copilotPanel_ = createCopilotPanel(options);
@@ -228,7 +298,14 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          public void onChange(ChangeEvent event)
          {
             String value = selAssistant_.getValue();
-            if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
+            if (value.equals(ASSISTANT_DEFAULT))
+            {
+               assistantDetailsPanel_.setWidget(defaultPanel_);
+               copilotTosPanel_.setVisible(false);
+               positAiRefreshed_ = false;
+               copilotRefreshed_ = false;
+            }
+            else if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
@@ -325,7 +402,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       assistantChangedHandler.onChange(null); // Initialize
    }
 
-   private VerticalPanel createNonePanel()
+   private VerticalPanel createDefaultPanel()
    {
       VerticalPanel panel = new VerticalPanel();
 
@@ -337,9 +414,17 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       else if (globalAssistant.equals(UserPrefsAccessor.ASSISTANT_POSIT))
          globalAssistantName = prefsConstants_.assistantEnum_posit();
       else
-         globalAssistantName = prefsConstants_.assistantEnum_none();
+         globalAssistantName = constants_.none();
 
       Label lblInfo = new Label(constants_.projectAssistantDefaultInfo(globalAssistantName));
+      panel.add(spaced(lblInfo));
+      return panel;
+   }
+
+   private VerticalPanel createNonePanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      Label lblInfo = new Label(constants_.assistantNoneInfo());
       panel.add(spaced(lblInfo));
       return panel;
    }
@@ -372,7 +457,24 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
       return panel;
    }
-   
+
+   private VerticalPanel createChatProviderInfoPanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+
+      // Show what global chat provider is currently active
+      String globalChatProvider = prefs_.chatProvider().getGlobalValue();
+      String globalChatProviderName;
+      if (globalChatProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
+         globalChatProviderName = prefsConstants_.chatProviderEnum_posit();
+      else
+         globalChatProviderName = constants_.none();
+
+      Label lblInfo = new Label(constants_.projectChatProviderDefaultInfo(globalChatProviderName));
+      panel.add(spaced(lblInfo));
+      return panel;
+   }
+
    private void initModel()
    {
       btnSignIn_.addClickHandler(new ClickHandler()
@@ -525,12 +627,18 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       options_ = options;
 
       // Load assistant selection from project options
-      // Map "default" (or null/empty) to "none" which represents "(Default)" in UI
       String projectAssistant = options.getAssistantOptions().assistant;
-      if (projectAssistant == null || projectAssistant.isEmpty() || projectAssistant.equals("default"))
-         selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
+      if (projectAssistant == null || projectAssistant.isEmpty())
+         selAssistant_.setValue(ASSISTANT_DEFAULT);
       else
          selAssistant_.setValue(projectAssistant);
+
+      // Load chat provider selection from project options
+      String projectChatProvider = options.getAssistantOptions().chat_provider;
+      if (projectChatProvider == null || projectChatProvider.isEmpty())
+         selChatProvider_.setValue(CHAT_PROVIDER_DEFAULT);
+      else
+         selChatProvider_.setValue(projectChatProvider);
 
       initDisplay(options);
       initModel();
@@ -576,6 +684,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private boolean positAiRefreshed_ = false;
 
    // Assistant panels (created in initDisplay)
+   private VerticalPanel defaultPanel_;
    private VerticalPanel nonePanel_;
    private VerticalPanel positAiPanel_;
    private VerticalPanel copilotPanel_;
@@ -584,6 +693,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
    // UI
    private final SelectWidget selAssistant_;
+   private final SelectWidget selChatProvider_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
    private final List<SmallButton> statusButtons_;
@@ -594,6 +704,7 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final SmallButton btnDiagnostics_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
+   private VerticalPanel chatProviderInfoPanel_;
    
    // Injected
    private final EventBus events_;
@@ -602,10 +713,13 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
    private final Assistant assistant_;
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
+   private final PaiUtil paiUtil_;
    
    private static final AssistantPreferencesPane.Resources RES = AssistantPreferencesPane.RES;
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
-   
-   
+
+   // Internal constants for project-level "(Default)" options
+   private static final String ASSISTANT_DEFAULT = "default";
+   private static final String CHAT_PROVIDER_DEFAULT = "default";
 }
