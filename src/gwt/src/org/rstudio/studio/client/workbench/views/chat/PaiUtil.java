@@ -57,15 +57,40 @@ public class PaiUtil
    }
 
    /**
-    * Returns true if the user has selected Posit AI as their assistant.
-    * Use this to gate features that should only be active when PAI is selected.
+    * Returns true if the user has selected Posit AI as their assistant, checking:
+    * 1. Project-level assistant setting (if set and not "default")
+    * 2. Global user preference
     *
-    * @return true if user has selected Posit AI, false otherwise
+    * @return true if Posit AI is the effective assistant, false otherwise
     */
    public boolean isPaiSelected()
    {
-      return userPrefs_.assistant().getGlobalValue()
-            .equals(UserPrefsAccessor.ASSISTANT_POSIT);
+      return getConfiguredAssistant().equals(UserPrefsAccessor.ASSISTANT_POSIT);
+   }
+
+   /**
+    * Returns the configured assistant, checking:
+    * 1. Project-level assistant setting (if set and not "default")
+    * 2. Global user preference
+    *
+    * @return The effective assistant value
+    */
+   public String getConfiguredAssistant()
+   {
+      // Check for project-level override (only if there's an active project)
+      if (projectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
+      {
+         String projectAssistant = projectOptions_.assistant;
+         if (projectAssistant != null &&
+             !projectAssistant.isEmpty() &&
+             !projectAssistant.equals("default"))
+         {
+            return projectAssistant;
+         }
+      }
+
+      // Fall back to global preference
+      return userPrefs_.assistant().getGlobalValue();
    }
 
    /**
