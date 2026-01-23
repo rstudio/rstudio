@@ -93,7 +93,15 @@ std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
       if (boost::algorithm::starts_with(child.getFilename(), prefix))
       {
          std::string id = child.getFilename().substr(prefix.length());
-         sessions.push_back(id);
+
+         const std::string propertiesDirName = "properites";
+
+         FilePath propsDir = child.completeChildPath(propertiesDirName);
+         // Only include sessions with a properites dir as file based sessions.
+         if (propsDir.isDirectory())
+         {
+            sessions.push_back(id);
+         }
       }
 
    }
