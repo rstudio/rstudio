@@ -101,8 +101,8 @@ public class PaiUtil
     */
    public String getConfiguredChatProvider()
    {
-      // Check for project-level override
-      if (projectOptions_ != null)
+      // Check for project-level override (only if there's an active project)
+      if (projectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
       {
          String projectChatProvider = projectOptions_.chat_provider;
          if (projectChatProvider != null &&
