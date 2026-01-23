@@ -265,6 +265,9 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          }
       });
 
+      // Set initial visibility based on current value
+      chatProviderInfoPanel_.setVisible(selChatProvider_.getValue().equals(CHAT_PROVIDER_DEFAULT));
+
       // Completions section
       add(spacedBefore(headerLabel(constants_.assistantCompletionsTab())));
 
