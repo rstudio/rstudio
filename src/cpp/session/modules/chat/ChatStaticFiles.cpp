@@ -49,64 +49,35 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 /**
  * Inject theme-related modifications into HTML content:
  * - CSS variables for --ui-background and --ui-foreground
- * - 'dark' class on body element if using a dark theme
+ * - 'dark' class on html element if using a dark theme
+ *
+ * Injects a script immediately after <head> to ensure it runs before
+ * any other scripts that may depend on these values.
  */
 void injectThemeInfo(std::string* pContent)
 {
    themes::ThemeColors colors = themes::getThemeColors();
 
-   // Build CSS injection
-   std::string css = fmt::format(R"(
-<style>
-:root {{
-   --ui-background: {background};
-   --ui-foreground: {foreground};
-}}
-</style>)",
+   // Build script injection
+   std::string script = fmt::format(R"(
+<script>
+(function() {{
+   var root = document.documentElement;
+   root.style.setProperty('--ui-background', '{background}');
+   root.style.setProperty('--ui-foreground', '{foreground}');
+   if ({isDark}) root.classList.add('dark');
+}})();
+</script>)",
       fmt::arg("background", colors.background),
-      fmt::arg("foreground", colors.foreground));
+      fmt::arg("foreground", colors.foreground),
+      fmt::arg("isDark", colors.isDark ? "true" : "false"));
 
-   // Find </head> tag and inject CSS (case-insensitive search)
-   std::string lowerContent = boost::to_lower_copy(*pContent);
-   size_t headPos = lowerContent.find("</head>");
+   // Insert immediately after <head>
+   constexpr const char* kHeadTag = "<head>";
+   size_t headPos = pContent->find(kHeadTag);
    if (headPos != std::string::npos)
    {
-      pContent->insert(headPos, css);
-      // Update lower content to reflect the insertion
-      lowerContent = boost::to_lower_copy(*pContent);
-   }
-
-   // Add 'dark' class to body if theme is dark
-   if (colors.isDark)
-   {
-      size_t bodyPos = lowerContent.find("<body");
-      if (bodyPos != std::string::npos)
-      {
-         size_t bodyEnd = pContent->find('>', bodyPos);
-         if (bodyEnd != std::string::npos)
-         {
-            // Check if there's an existing class attribute
-            std::string bodyTag = pContent->substr(bodyPos, bodyEnd - bodyPos);
-            std::string lowerBodyTag = boost::to_lower_copy(bodyTag);
-            size_t classPos = lowerBodyTag.find("class=");
-
-            if (classPos != std::string::npos)
-            {
-               // Find the opening quote of the class attribute
-               size_t quotePos = bodyTag.find_first_of("\"'", classPos + 6);
-               if (quotePos != std::string::npos)
-               {
-                  // Insert 'dark ' after the opening quote
-                  pContent->insert(bodyPos + quotePos + 1, "dark ");
-               }
-            }
-            else
-            {
-               // No class attribute, add one before the closing >
-               pContent->insert(bodyEnd, " class=\"dark\"");
-            }
-         }
-      }
+      pContent->insert(headPos + strlen(kHeadTag), script);
    }
 }
 
