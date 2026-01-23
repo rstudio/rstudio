@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import java.util.Map;
+
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
@@ -163,6 +165,11 @@ public class ChatPane
     */
    private String generateMessageHTML(String message)
    {
+      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#000");
+
       StringBuilder html = new StringBuilder();
       html.append("<!DOCTYPE html>");
       html.append("<html lang='");
@@ -186,8 +193,8 @@ public class ChatPane
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
       html.append("  font-size: 12px;");
-      html.append("  color: var(--rstudio-editor-foreground, #000);");
-      html.append("  background-color: var(--rstudio-editor-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
@@ -520,6 +527,12 @@ public class ChatPane
 
    private String generateSuspendedMessageHTML()
    {
+      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+
       StringBuilder html = new StringBuilder();
       html.append("<!DOCTYPE html>");
       html.append("<html lang='");
@@ -542,19 +555,19 @@ public class ChatPane
       html.append("  font-family: ");
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
-      html.append("  color: var(--rstudio-editor-foreground, #333);");
-      html.append("  background-color: var(--rstudio-editor-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
       html.append("  padding: 40px;");
       html.append("}");
       html.append("h2 {");
-      html.append("  color: var(--rstudio-editor-foreground, #333);");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
       html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append("p {");
-      html.append("  color: var(--rstudio-disabledForeground, #666);");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
       html.append("  margin: 8px 0;");
       html.append("}");
       html.append("</style>");
@@ -599,6 +612,15 @@ public class ChatPane
          message = constants_.chatProcessExitedMessage();
       }
 
+      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
       StringBuilder html = new StringBuilder();
       html.append("<!DOCTYPE html>");
       html.append("<html lang='");
@@ -621,32 +643,32 @@ public class ChatPane
       html.append("  font-family: ");
       html.append(ThemeFonts.getProportionalFont());
       html.append(";");
-      html.append("  color: var(--rstudio-editor-foreground, #333);");
-      html.append("  background-color: var(--rstudio-editor-background, #fff);");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
       html.append("}");
       html.append(".message {");
       html.append("  text-align: center;");
       html.append("  padding: 40px;");
       html.append("}");
       html.append("h2 {");
-      html.append("  color: var(--rstudio-editor-foreground, #333);");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
       html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append("p {");
-      html.append("  color: var(--rstudio-disabledForeground, #666);");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
       html.append("  margin: 0 0 24px 0;");
       html.append("}");
       html.append(".chatIframeButton {");
       html.append("  padding: 10px 20px;");
       html.append("  font-size: 14px;");
       html.append("  cursor: pointer;");
-      html.append("  background-color: var(--rstudio-editorWidget-background, #f4f8f9);");
-      html.append("  color: var(--rstudio-editor-foreground, #333);");
-      html.append("  border: 1px solid var(--rstudio-panel-border, #d6dadc);");
+      html.append("  background-color: var(--rstudio-editorWidget-background, " + widgetBgColor + ");");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
       html.append("  border-radius: 4px;");
       html.append("}");
       html.append(".chatIframeButton:hover {");
-      html.append("  background-color: var(--rstudio-list-hoverBackground, #d6dadc);");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
       html.append("}");
       html.append("</style>");
       html.append("</head>");
