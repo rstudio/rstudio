@@ -381,6 +381,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             String value = selAssistant_.getValue();
             if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
+               // Insert project override panel at the top of nonePanel_ if there's a project override
+               nonePanel_.insert(spaced(projectOverridePanel_), 0);
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
@@ -1048,8 +1050,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          // Project has overridden the assistant selection
          projectAssistantOverride_ = projectAssistant;
-         String assistantName = Assistant.getDisplayName(projectAssistant);
-         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+
+         // Use appropriate message for disabled vs configured
+         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
+            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
+         else
+            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
+               Assistant.getDisplayName(projectAssistant)));
+
          projectOverridePanel_.setVisible(true);
 
          // Disable the selector and set it to match project's assistant
@@ -1099,8 +1107,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          // Project has a specific assistant configured
          projectAssistantOverride_ = projectAssistant;
-         String assistantName = Assistant.getDisplayName(projectAssistant);
-         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+
+         // Use appropriate message for disabled vs configured
+         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
+            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
+         else
+            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
+               Assistant.getDisplayName(projectAssistant)));
+
          projectOverridePanel_.setVisible(true);
          selAssistant_.setEnabled(false);
          selAssistant_.setValue(projectAssistant);

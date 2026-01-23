@@ -618,6 +618,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String assistantUnknownResponse(String response);
     String assistantDisabledInProject(String assistantName);
     String assistantConfiguredInProject(String assistantName);
+    String codeAssistantDisabledInProject();
     String assistantTabPanel();
     String assistantCompletionsTab();
     String assistantChatTab();
