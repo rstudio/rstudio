@@ -20,8 +20,8 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.events.ThemeColorsComputedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
+import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -142,16 +143,29 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // force eager refresh of client state after changing themes
       events_.fireEvent(new PushClientStateEvent(true));
+
+      // notify listeners that theme colors have been computed
+      events_.fireEvent(new ThemeColorsComputedEvent());
    }
 
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
       RStudioThemes.initializeThemes(userPrefs_.get(), userState_.get(), Document.get(), root_);
-      
-      // Wait a small amount of time for the theme to be applied
-      Timers.singleShot(1000, () -> {
+
+      // Compute theme colors over multiple animation frames to ensure that
+      // all styles have been properly applied.
+      AnimationScheduler.get().requestAnimationFrame(t1 ->
+      {
          onComputeThemeColors();
+         AnimationScheduler.get().requestAnimationFrame(t2 ->
+         {
+            onComputeThemeColors();
+            AnimationScheduler.get().requestAnimationFrame(t3 ->
+            {
+               onComputeThemeColors();
+            });
+         });
       });
    }
    

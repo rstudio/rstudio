@@ -118,6 +118,10 @@ public class ThemeColorExtractor
          colors.put("--rstudio-editor-background", background);
          colors.put("--rstudio-editor-foreground", foreground);
 
+         // UI background/foreground (same as editor, for iframe theming)
+         colors.put("--ui-background", background);
+         colors.put("--ui-foreground", foreground);
+
          // Clean up sampler
          sampler.removeFromParent();
 
@@ -189,6 +193,8 @@ public class ThemeColorExtractor
          // Fall back to safe defaults if extraction fails
          colors.put("--rstudio-editor-background", "#ffffff");
          colors.put("--rstudio-editor-foreground", "#000000");
+         colors.put("--ui-background", "#ffffff");
+         colors.put("--ui-foreground", "#000000");
          colors.put("--rstudio-focusBorder", "#4d9de0");
          colors.put("--rstudio-button-foreground", "#000000");
          colors.put("--rstudio-panel-border", "#d0d0d0");
