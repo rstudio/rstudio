@@ -8,9 +8,6 @@
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): Deleting files from Files pane on Linux Desktop now sends files to the Trash
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
 
-#### Posit Workbench
--
-
 ### Fixed
 #### RStudio
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
@@ -24,21 +21,3 @@
 - ([#16814](https://github.com/rstudio/rstudio/issues/16814)): Fixed an issue where apostrophes in file names were displayed as HTML entities in the Files pane
 - ([#16834](https://github.com/rstudio/rstudio/issues/16834)): Fixed an issue where an error message was shown on Windows when using "Write Diagnostics File"
 - ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
-
-#### Posit Workbench
-- 
-
-### Upgrade Instructions
-
-#### Posit Workbench
-
-### Dependencies
-- Ace 1.43.5
-- Copilot Language Server 1.409.0
-- Electron 39.2.7
-- Node.js 22.22.0 (copilot completions)
-- Node.js 22.20.0 (vscode server)
-- Quarto 1.8.26
-- xterm.js 6.0.0
-- Launcher 2.21.0
-- rserver-saml 0.9.2
