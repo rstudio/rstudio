@@ -3742,9 +3742,17 @@ Error chatGetBackendUrl(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   result["url"] = s_chatBackendUrl;
+
+   // Rebuild URL on-demand to use current port token (which changes on page reload)
+   std::string url;
+   if (s_chatBackendPid != -1 && s_chatBackendPort != -1)
+   {
+      url = buildWebSocketUrl(s_chatBackendPort);
+   }
+
+   result["url"] = url;
    result["port"] = s_chatBackendPort;
-   result["ready"] = (s_chatBackendPid != -1 && !s_chatBackendUrl.empty());
+   result["ready"] = (s_chatBackendPid != -1 && !url.empty());
 
    pResponse->setResult(result);
    return Success();
@@ -3765,14 +3773,16 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    {
       result["status"] = "stopped";
    }
-   else if (s_chatBackendUrl.empty())
+   else if (s_chatBackendPort == -1)
    {
       result["status"] = "starting";
    }
    else
    {
+      // Rebuild URL on-demand to use current port token (which changes on page reload)
+      std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
-      result["url"] = s_chatBackendUrl;
+      result["url"] = url;
    }
 
    pResponse->setResult(result);
