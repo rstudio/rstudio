@@ -19,6 +19,7 @@
 
 #include <map>
 #include <boost/algorithm/string.hpp>
+#include <fmt/format.h>
 
 #include <core/FileSerializer.hpp>
 #include <core/http/Request.hpp>
@@ -55,8 +56,15 @@ void injectThemeInfo(std::string* pContent)
    themes::ThemeColors colors = themes::getThemeColors();
 
    // Build CSS injection
-   std::string css = "<style>:root{--ui-background:" + colors.background +
-                     ";--ui-foreground:" + colors.foreground + ";}</style>";
+   std::string css = fmt::format(R"(
+<style>
+:root {{
+   --ui-background: {background};
+   --ui-foreground: {foreground};
+}}
+</style>)",
+      fmt::arg("background", colors.background),
+      fmt::arg("foreground", colors.foreground));
 
    // Find </head> tag and inject CSS (case-insensitive search)
    std::string lowerContent = boost::to_lower_copy(*pContent);
