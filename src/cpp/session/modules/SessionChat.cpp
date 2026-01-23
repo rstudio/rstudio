@@ -1132,6 +1132,9 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
       {
          WLOG("Execution queue full ({} pending), rejecting request for trackingId: {}",
               s_pendingExecutionQueue.size(), trackingId);
+
+         // Release mutex before I/O operation
+         lock.unlock();
          sendJsonRpcError(ops, requestId, -32000,
             "R console is busy. Execution queue is full. Please wait for current operations to complete.");
          return;
