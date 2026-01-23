@@ -65,6 +65,7 @@
 #include <session/SessionScopes.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -121,6 +122,11 @@ static std::string s_focusedDocumentId;
 static std::string s_positAssistantVersion;
 
 // ============================================================================
+// Project-specific assistant options (for chat provider)
+// ============================================================================
+static projects::RProjectAssistantOptions s_chatProjectOptions;
+
+// ============================================================================
 // Error Messages
 // ============================================================================
 // NOTE: This must match EXECUTION_CANCELED_ERROR constant in
@@ -144,10 +150,32 @@ bool isPaiSelected()
    return prefs::userPrefs().assistant() == kAssistantPosit;
 }
 
-// Returns true if the user has selected Posit AI as their chat provider (for Chat pane)
+// Returns the configured chat provider, checking:
+// 1. Project-level chat provider setting (if set and not "default")
+// 2. Global user preference
+std::string getConfiguredChatProvider()
+{
+   // Check for project-level override
+   std::string projectChatProvider = s_chatProjectOptions.chatProvider;
+   if (!projectChatProvider.empty() && projectChatProvider != "default")
+      return projectChatProvider;
+
+   // Fall back to global preference
+   return prefs::userPrefs().chatProvider();
+}
+
+// Returns true if chat provider is set to Posit AI (for Chat pane)
+// Checks project-level setting first, then falls back to global preference
 bool isChatProviderPosit()
 {
-   return prefs::userPrefs().chatProvider() == kChatProviderPosit;
+   return getConfiguredChatProvider() == kChatProviderPosit;
+}
+
+// Returns true if chat is disabled (provider set to "none")
+// Checks project-level setting first, then falls back to global preference
+bool isChatProviderNone()
+{
+   return getConfiguredChatProvider() == kChatProviderNone;
 }
 
 // Returns true if the user wants Posit AI for either chat or completions
@@ -2362,6 +2390,17 @@ void handleSetBusyStatus(const json::Object& params)
    DLOG("Chat backend busy status: {}", busy ? "busy" : "idle");
 }
 
+void onProjectOptionsUpdated()
+{
+   // Update internal cache of project options
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void onBackgroundProcessing(bool isIdle)
 {
    std::vector<PendingNotification> toProcess;
@@ -4136,6 +4175,14 @@ Error initialize()
       }
    }
 
+   // Read project options (must be done before validation to get accurate state)
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // Validate assistant preference consistency
    // If user has Posit AI selected but PAI is no longer available, reset to "none"
    if (isPaiSelected() && !isPaiEnabled())
@@ -4161,6 +4208,7 @@ Error initialize()
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+   events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
 
    // Register handler to detect session close (vs suspend/restart)
    events().onQuit.connect([]() {

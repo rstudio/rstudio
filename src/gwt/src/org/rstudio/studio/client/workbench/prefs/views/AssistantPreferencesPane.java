@@ -27,8 +27,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.DialogTabLayoutPanel;
-import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.Operation;
@@ -116,6 +114,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                                  AssistantServerOperations server,
                                  ProjectsServerOperations projectServer,
                                  GlobalDisplay globalDisplay,
+                                 PaiUtil paiUtil,
                                  ChatServerOperations chatServer)
    {
       events_ = events;
@@ -126,10 +125,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       server_ = server;
       projectServer_ = projectServer;
       globalDisplay_ = globalDisplay;
+      paiUtil_ = paiUtil;
       installManager_ = new PositAiInstallManager(chatServer);
 
       // Create assistant selector - conditionally include Posit AI option
-      boolean paiEnabled = PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs_);
+      boolean paiEnabled = paiUtil_.isPaiEnabled();
       String[] assistantLabels;
       String[] assistantValues;
       if (paiEnabled)
@@ -318,13 +318,24 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      // Create Completions tab panel
-      VerticalTabPanel completionsPanel = new VerticalTabPanel(ElementIds.ASSISTANT_COMPLETIONS_PREFS);
+      // Chat section (displayed first)
+      add(headerLabel(constants_.assistantChatTab()));
+      add(selChatProvider_);
 
-      completionsPanel.add(headerLabel(constants_.assistantDisplayName()));
+      // Add change handler for chat provider to check for Posit AI installation
+      selChatProvider_.addChangeHandler((event) -> {
+         String value = selChatProvider_.getValue();
+         if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
+         {
+            checkPositAiInstallation(/* forAssistant= */ false);
+         }
+      });
+
+      // Completions section
+      add(spacedBefore(headerLabel(constants_.assistantCompletionsTab())));
 
       // Add assistant selector
-      completionsPanel.add(selAssistant_);
+      add(selAssistant_);
 
       // Create project override panel (shown when project has a specific assistant configured)
       projectOverridePanel_ = new HorizontalPanel();
@@ -351,15 +362,15 @@ public class AssistantPreferencesPane extends PreferencesPane
       copilotPanel_ = createCopilotPanel();
 
       // Add container for dynamic content
-      completionsPanel.add(assistantDetailsPanel_);
+      add(assistantDetailsPanel_);
 
-      // Create Copilot Terms of Service panel (will be added to pane after tab panel)
+      // Create Copilot Terms of Service panel at the bottom (absolute positioning)
       copilotTosPanel_ = new VerticalPanel();
       copilotTosPanel_.getElement().getStyle().setBottom(0, Unit.PX);
       copilotTosPanel_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-      copilotTosPanel_.getElement().getStyle().setPaddingLeft(14, Unit.PX);
       copilotTosPanel_.add(spaced(lblCopilotTos_));
       copilotTosPanel_.add(spaced(linkCopilotTos_));
+      add(copilotTosPanel_);
 
       // Set up panel swapping based on assistant selection
       ChangeHandler assistantChangedHandler = new ChangeHandler()
@@ -370,6 +381,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             String value = selAssistant_.getValue();
             if (value.equals(UserPrefsAccessor.ASSISTANT_NONE))
             {
+               // Insert project override panel at the top of nonePanel_ if there's a project override
+               nonePanel_.insert(spaced(projectOverridePanel_), 0);
                assistantDetailsPanel_.setWidget(nonePanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_NONE);
@@ -476,46 +489,6 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
-
-      // Create Chat tab panel
-      VerticalTabPanel chatPanel = new VerticalTabPanel(ElementIds.ASSISTANT_CHAT_PREFS);
-      chatPanel.add(headerLabel(constants_.assistantChatTab()));
-      chatPanel.add(selChatProvider_);
-
-      // Add change handler for chat provider to check for Posit AI installation
-      selChatProvider_.addChangeHandler((event) -> {
-         String value = selChatProvider_.getValue();
-         if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
-         {
-            checkPositAiInstallation(/* forAssistant= */ false);
-         }
-      });
-
-      // Create tab layout panel and add both tabs
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.assistantTabPanel());
-      setTabPanelSize(tabPanel);
-      tabPanel.add(completionsPanel, constants_.assistantCompletionsTab(), completionsPanel.getBasePanelId());
-      tabPanel.add(chatPanel, constants_.assistantChatTab(), chatPanel.getBasePanelId());
-      tabPanel.selectTab(0);
-      add(tabPanel);
-
-      // Add Copilot Terms of Service panel at the bottom (absolute positioning)
-      // This must be added after the tab panel so it appears at the bottom of the pane
-      add(copilotTosPanel_);
-
-      // Hide TOS panel when Chat tab is selected
-      tabPanel.addSelectionHandler((event) -> {
-         if (event.getSelectedItem() == 1) // Chat tab
-         {
-            copilotTosPanel_.setVisible(false);
-         }
-         else // Completions tab
-         {
-            // Only show TOS if Copilot is selected
-            copilotTosPanel_.setVisible(
-               selAssistant_.getValue().equals(UserPrefsAccessor.ASSISTANT_COPILOT));
-         }
-      });
    }
 
    private VerticalPanel createNonePanel()
@@ -1041,7 +1014,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Reset to "none" if user has Posit AI selected but PAI is no longer enabled
       if (assistant.equals(UserPrefsAccessor.ASSISTANT_POSIT) &&
-          !PaiUtil.isPaiEnabled(session_.getSessionInfo(), prefs))
+          !paiUtil_.isPaiEnabled())
       {
          prefs.assistant().setGlobalValue(UserPrefsAccessor.ASSISTANT_NONE);
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
@@ -1077,8 +1050,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          // Project has overridden the assistant selection
          projectAssistantOverride_ = projectAssistant;
-         String assistantName = Assistant.getDisplayName(projectAssistant);
-         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+
+         // Use appropriate message for disabled vs configured
+         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
+            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
+         else
+            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
+               Assistant.getDisplayName(projectAssistant)));
+
          projectOverridePanel_.setVisible(true);
 
          // Disable the selector and set it to match project's assistant
@@ -1128,8 +1107,14 @@ public class AssistantPreferencesPane extends PreferencesPane
       {
          // Project has a specific assistant configured
          projectAssistantOverride_ = projectAssistant;
-         String assistantName = Assistant.getDisplayName(projectAssistant);
-         lblProjectOverride_.setText(constants_.assistantConfiguredInProject(assistantName));
+
+         // Use appropriate message for disabled vs configured
+         if (projectAssistant.equals(UserPrefsAccessor.ASSISTANT_NONE))
+            lblProjectOverride_.setText(constants_.codeAssistantDisabledInProject());
+         else
+            lblProjectOverride_.setText(constants_.assistantConfiguredInProject(
+               Assistant.getDisplayName(projectAssistant)));
+
          projectOverridePanel_.setVisible(true);
          selAssistant_.setEnabled(false);
          selAssistant_.setValue(projectAssistant);
@@ -1250,6 +1235,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final AssistantServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    private final GlobalDisplay globalDisplay_;
+   private final PaiUtil paiUtil_;
    private final PositAiInstallManager installManager_;
    
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);

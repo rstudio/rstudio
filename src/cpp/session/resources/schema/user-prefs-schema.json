@@ -1779,7 +1779,7 @@
         "chat_provider": {
             "type": "string",
             "enum": ["none", "posit"],
-            "enumReadable": ["(None)", "Posit AI"],
+            "enumReadable": ["(None)", "Posit Assistant"],
             "default": "posit",
             "title": "Chat Provider",
             "description": "Select which AI assistant to use for chat functionality."
@@ -1818,7 +1818,7 @@
         },
         "assistant_nes_enabled": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "title": "Enable next-edit suggestions",
             "description": "When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.",
             "fallback": "copilot_nes_enabled"

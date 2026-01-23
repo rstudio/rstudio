@@ -3806,7 +3806,7 @@ public class UserPrefsAccessor extends Prefs
          "assistant_nes_enabled",
          _constants.assistantNesEnabledTitle(), 
          _constants.assistantNesEnabledDescription(), 
-         false);
+         true);
    }
 
    /**
