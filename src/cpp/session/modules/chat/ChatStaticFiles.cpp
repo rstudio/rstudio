@@ -51,7 +51,7 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
  * - CSS variables for --ui-background and --ui-foreground
  * - 'dark' class on body element if using a dark theme
  *
- * Injects a script after </body> to ensure document.body is available.
+ * Injects a script before </body> to ensure document.body is available.
  */
 void injectThemeInfo(std::string* pContent)
 {
@@ -70,12 +70,12 @@ void injectThemeInfo(std::string* pContent)
       fmt::arg("foreground", colors.foreground),
       fmt::arg("isDark", colors.isDark ? "true" : "false"));
 
-   // Insert after </body>
+   // Insert before </body>
    constexpr const char* kBodyCloseTag = "</body>";
    size_t bodyPos = pContent->find(kBodyCloseTag);
    if (bodyPos != std::string::npos)
    {
-      pContent->insert(bodyPos + strlen(kBodyCloseTag), script);
+      pContent->insert(bodyPos, script);
    }
 }
 
