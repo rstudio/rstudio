@@ -2589,15 +2589,15 @@ bool shouldSkipUpdateCheck()
          return false;
       }
 
-      // Skip if less than 1 hour has passed
-      if (elapsed.hours() < 1)
+      // Skip if less than 10 minutes has passed
+      if (elapsed.total_seconds() < 600)
       {
          DLOG("Update check throttled: only {} minutes since last check",
               elapsed.total_seconds() / 60);
          return true;
       }
 
-      DLOG("Over 1 hour since last update check, will check for updates");
+      DLOG("Over 10 minutes since last update check, will check for updates");
       return false;
    }
    catch (const std::exception& e)
@@ -3145,10 +3145,10 @@ Error checkForUpdatesOnStartup()
    // Skip check if:
    // - Posit Assistant IS installed (version != "0.0.0")
    // - AND RStudio version hasn't changed
-   // - AND less than 1 hour since last check
+   // - AND less than 10 minutes since last check
    if (installedVersion != "0.0.0" && shouldSkipUpdateCheck())
    {
-      DLOG("Update check skipped: throttled (checked within last hour)");
+      DLOG("Update check skipped: throttled (checked within last 10 minutes)");
       return Success();
    }
 
