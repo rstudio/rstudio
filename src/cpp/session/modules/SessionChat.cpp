@@ -3524,7 +3524,21 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace");
    args.push_back(workspacePath.getAbsolutePath());
 
-   // Generate workspace ID first (needed for storage path)
+   // Create storage base path: {XDG_DATA_HOME}/pai/
+   FilePath storagePath = xdg::userDataDir().completePath("pai");
+   error = storagePath.ensureDirectory();
+   if (error)
+      return(error);
+
+   args.push_back("--storage");
+   args.push_back(storagePath.getAbsolutePath());
+
+   // Pass config file path (config is in pai/, but working dir is pai/bin/)
+   FilePath configPath = storagePath.completePath("paconfig.json");
+   args.push_back("--config");
+   args.push_back(configPath.getAbsolutePath());
+
+   // Generate a persistent ID for this workspace directory
    std::string workspacePathStr = workspacePath.getAbsolutePath();
    std::string workspaceId = session::projectToProjectId(
        module_context::userScratchPath(),
@@ -3534,26 +3548,6 @@ Error startChatBackend(bool resumeConversation)
 
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
-
-   // Create base path for shared config: {XDG_DATA_HOME}/pai/
-   FilePath basePath = xdg::userDataDir().completePath("pai");
-   error = basePath.ensureDirectory();
-   if (error)
-      return(error);
-
-   // Pass config file path (shared across all workspaces)
-   FilePath configPath = basePath.completePath("paconfig.json");
-   args.push_back("--config");
-   args.push_back(configPath.getAbsolutePath());
-
-   // Create workspace-specific storage path: {XDG_DATA_HOME}/pai/workspaces/{workspaceId}/
-   FilePath storagePath = basePath.completePath("workspaces").completePath(workspaceId);
-   error = storagePath.ensureDirectory();
-   if (error)
-      return(error);
-
-   args.push_back("--storage");
-   args.push_back(storagePath.getAbsolutePath());
 
    // Add resume-conversation flag if resuming after suspend/restart
    if (resumeConversation)
