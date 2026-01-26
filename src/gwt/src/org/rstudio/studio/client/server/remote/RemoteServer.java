@@ -6988,6 +6988,12 @@ public class RemoteServer implements Server
    };
 
    @Override
+   public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "assistant_notify_installed", requestCallback);
+   };
+
+   @Override
    public void chatVerifyInstalled(ServerRequestCallback<ChatServerOperations.ChatVerifyInstalledResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_verify_installed", requestCallback);

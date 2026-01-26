@@ -74,4 +74,6 @@ public interface AssistantServerOperations
 
    public void assistantRegisterOpenFiles(ArrayList<String> filePaths,
                                           ServerRequestCallback<Void> requestCallback);
+
+   public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback);
 }

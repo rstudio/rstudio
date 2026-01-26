@@ -109,7 +109,7 @@ public class ChatPresenter extends BasePresenter
       server_ = server;
       paiUtil_ = paiUtil;
       prefs_ = prefs;
-      installManager_ = new PositAiInstallManager(server);
+      installManager_ = new PositAiInstallManager();
 
       // Set up observer
       display_.setObserver(new Display.Observer()

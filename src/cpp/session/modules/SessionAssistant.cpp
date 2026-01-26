@@ -1641,6 +1641,7 @@ void synchronize()
    }
    else
    {
+      DLOG("Assistant is not enabled: {}", agentNotRunningReason());
       stopAgent();
    }
 }
@@ -2235,6 +2236,20 @@ Error assistantRegisterOpenFiles(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // Reset the cached state and re-synchronize.
+   // This allows the agent to start if it was previously marked as not installed.
+   DLOG("Assistant installation notification received; re-synchronizing.");
+
+   // Reset the runtime status to allow the agent to start fresh
+   s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+
+   synchronize();
+   return Success();
+}
+
 } // end anonymous namespace
 
 int assistantRuntimeStatus()
@@ -2312,6 +2327,7 @@ Error initialize()
          (bind(registerRpcMethod, "assistant_did_accept_completion", assistantDidAcceptCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_partial_completion", assistantDidAcceptPartialCompletion))
          (bind(registerRpcMethod, "assistant_register_open_files", assistantRegisterOpenFiles))
+         (bind(registerRpcMethod, "assistant_notify_installed", assistantNotifyInstalled))
          (bind(sourceModuleRFile, "SessionAssistant.R"))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
