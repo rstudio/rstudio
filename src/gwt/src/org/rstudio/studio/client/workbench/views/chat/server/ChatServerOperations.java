@@ -18,7 +18,7 @@ import org.rstudio.studio.client.server.Void;
 
 public interface ChatServerOperations
 {
-   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
+   public void chatVerifyInstalled(ServerRequestCallback<JsObject> requestCallback);
    public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatStopBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);

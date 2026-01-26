@@ -795,7 +795,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
          {
             showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
                previousAssistantValue, previousChatProviderValue);

@@ -71,6 +71,8 @@ public class ChatPresenter extends BasePresenter
       void loadUrl(String url);
       void showUpdateNotification(String newVersion);
       void showInstallNotification(String newVersion);
+      void showNotInstalledWithInstall(String newVersion);
+      void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
       void showUpdatingStatus();
       void showUpdateComplete();
       void showUpdateError(String errorMessage);
@@ -312,18 +314,20 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
          {
             // Reset initialization flag - we're pausing for user action
             initializing_ = false;
 
             if (isInitialInstall)
             {
-               display_.showInstallNotification(newVersion);
+               // Show "not installed" message with install button in main content area
+               display_.showNotInstalledWithInstall(newVersion);
             }
             else
             {
-               display_.showUpdateNotification(newVersion);
+               // Show update available message with version info in main content area
+               display_.showUpdateAvailableWithVersions(currentVersion, newVersion);
             }
             // Do NOT start backend when update/install is available
             // Backend will start after user clicks "Update/Install Now" and it completes,

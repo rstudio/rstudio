@@ -14,6 +14,7 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import java.util.Map;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
@@ -467,6 +468,197 @@ public class ChatPane
    }
 
    @Override
+   public void showNotInstalledWithInstall(String newVersion)
+   {
+      String html = generateNotInstalledWithInstallHTML(newVersion);
+      updateFrameContent(html);
+   }
+
+   @Override
+   public void showUpdateAvailableWithVersions(String currentVersion, String newVersion)
+   {
+      String html = generateUpdateAvailableHTML(currentVersion, newVersion);
+      updateFrameContent(html);
+   }
+
+   private String generateNotInstalledWithInstallHTML(String newVersion)
+   {
+      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
+      html.append("  margin: 0 0 24px 0;");
+      html.append("}");
+      html.append(".chatIframeButton {");
+      html.append("  padding: 10px 20px;");
+      html.append("  font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, " + widgetBgColor + ");");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
+      html.append("  border-radius: 4px;");
+      html.append("}");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(constants_.chatNotInstalledTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(constants_.chatNotInstalledWithVersionMessage(newVersion));
+      html.append("</p>");
+      html.append("<button id='install-btn' class='chatIframeButton'>");
+      html.append(constants_.chatInstallButton());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('install-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('install-now', '*');");
+      html.append("});");
+      html.append("</script>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   private String generateUpdateAvailableHTML(String currentVersion, String newVersion)
+   {
+      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
+      html.append("  margin: 0 0 24px 0;");
+      html.append("}");
+      html.append(".chatIframeButton {");
+      html.append("  padding: 10px 20px;");
+      html.append("  font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, " + widgetBgColor + ");");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
+      html.append("  border-radius: 4px;");
+      html.append("  margin: 0 8px;");
+      html.append("}");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(constants_.chatUpdateAvailableTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(constants_.chatUpdateAvailableWithVersionsMessage(currentVersion, newVersion));
+      html.append("</p>");
+      html.append("<button id='update-btn' class='chatIframeButton'>");
+      html.append(constants_.chatUpdateButton());
+      html.append("</button>");
+      html.append("<button id='ignore-btn' class='chatIframeButton'>");
+      html.append(constants_.chatIgnore());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('update-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('install-now', '*');");
+      html.append("});");
+      html.append("document.getElementById('ignore-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('remind-later', '*');");
+      html.append("});");
+      html.append("</script>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   @Override
    public void setStatus(ChatPresenter.Display.Status status)
    {
       currentStatus_ = status;
@@ -723,16 +915,18 @@ public class ChatPane
       }
 
       // Check if Chat features are installed (this triggers the initialization flow)
-      server_.chatVerifyInstalled(new ServerRequestCallback<Boolean>()
+      server_.chatVerifyInstalled(new ServerRequestCallback<JsObject>()
       {
          @Override
-         public void onResponseReceived(Boolean result)
+         public void onResponseReceived(JsObject result)
          {
-            // Don't call setStatus("not_installed") here - let the update check
-            // flow determine what message to show. If noCompatibleVersion is true,
-            // showIncompatibleVersion() will be called. If an update/install is
-            // available, that notification will be shown. This avoids competing
-            // updateFrameContent() calls that cause rendering issues.
+            boolean installed = result.getBoolean("installed");
+            if (!installed)
+            {
+               // Show "not installed" message immediately
+               // Version check will add install button once available
+               setStatus(ChatPresenter.Display.Status.NOT_INSTALLED);
+            }
 
             // Trigger observer so update/install check can happen
             if (observer_ != null)
@@ -752,10 +946,16 @@ public class ChatPane
    private native void setupMessageListener() /*-{
       var self = this;
 
-      // Listen for restart button clicks via postMessage
+      // Listen for button clicks via postMessage
       $wnd.addEventListener('message', function(event) {
          if (event.data === 'restart-backend') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
+         }
+         else if (event.data === 'install-now') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleInstallNowRequest()();
+         }
+         else if (event.data === 'remind-later') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRemindLaterRequest()();
          }
       });
    }-*/;
@@ -765,6 +965,22 @@ public class ChatPane
       if (observer_ != null)
       {
          observer_.onRestartBackend();
+      }
+   }
+
+   private void handleInstallNowRequest()
+   {
+      if (updateObserver_ != null)
+      {
+         updateObserver_.onUpdateNow();
+      }
+   }
+
+   private void handleRemindLaterRequest()
+   {
+      if (updateObserver_ != null)
+      {
+         updateObserver_.onRemindLater();
       }
    }
 

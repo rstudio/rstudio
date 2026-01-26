@@ -44,10 +44,11 @@ public class PositAiInstallManager
       /**
        * Called when an update or initial install is available.
        *
+       * @param currentVersion The currently installed version (empty string if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        */
-      void onUpdateAvailable(String newVersion, boolean isInitialInstall);
+      void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall);
 
       /**
        * Called when no compatible version of Posit AI is available for this RStudio version.
@@ -127,8 +128,9 @@ public class PositAiInstallManager
 
             if (updateAvailable)
             {
+               String currentVersion = result.getString("currentVersion");
                String newVersion = result.getString("newVersion");
-               callback.onUpdateAvailable(newVersion, isInitialInstall);
+               callback.onUpdateAvailable(currentVersion, newVersion, isInitialInstall);
             }
             else
             {

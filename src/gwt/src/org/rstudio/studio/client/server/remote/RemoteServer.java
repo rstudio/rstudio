@@ -6987,7 +6987,7 @@ public class RemoteServer implements Server
    };
 
    @Override
-   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   public void chatVerifyInstalled(ServerRequestCallback<JsObject> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_verify_installed", requestCallback);
    };
