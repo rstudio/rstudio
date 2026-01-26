@@ -969,11 +969,15 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
             json::Object fileObj;
 
-            // Construct URI based on document type
+            // Construct URI and fileName based on document type
             if (pDoc->isUntitled())
             {
                // Use untitled: scheme for unsaved documents (matches Positron/VSCode convention)
                fileObj["uri"] = fmt::format("untitled:{}", pDoc->id());
+
+               // Use tempName property (matches UI display like "Untitled1").
+               // This is guaranteed to be set when isUntitled() is true.
+               fileObj["tempName"] = pDoc->getProperty("tempName");
             }
             else
             {
@@ -1008,8 +1012,12 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             // relativeOrder == 0 means document is loaded but not visible in a tab
             fileObj["isVisible"] = (pDoc->relativeOrder() > 0);
 
-            // Text selections (empty for now, will be populated when selection tracking is implemented)
-            fileObj["textSelections"] = json::Array();
+            // Active: the document currently focused in the editor
+            // s_focusedDocumentId is set by chat_doc_focused RPC from GWT client
+            fileObj["isActiveEditor"] = (pDoc->id() == s_focusedDocumentId);
+
+            // Selections (empty for now, will be populated when selection tracking is implemented)
+            fileObj["selections"] = json::Array();
 
             openFilesArray.push_back(fileObj);
          }
@@ -1882,6 +1890,13 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    result["isModified"] = doc->dirty();
    result["languageId"] = languageIdFromDocument(doc);
 
+   // Set fileName for display purposes
+   if (doc->isUntitled())
+   {
+      // Use tempName property if available (matches UI display like "Untitled1")
+      result["tempName"] = doc->getProperty("tempName");
+   }
+
    DLOG("Read file content from editor buffer (modified: {})", doc->dirty());
 
    sendJsonRpcResponse(ops, requestId, result);
@@ -2001,6 +2016,11 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       module_context::enqueClientEvent(event);
 
       result["success"] = true;
+      if (doc->isUntitled())
+      {
+         // For untitled documents, return the tempName for display purposes
+         result["tempName"] = doc->getProperty("tempName");
+      }
 
       DLOG("Sent editor command to replace document content");
    }
