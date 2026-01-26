@@ -2242,6 +2242,11 @@ int assistantRuntimeStatus()
    return static_cast<int>(s_agentRuntimeStatus);
 }
 
+bool stopAgentForUpdate()
+{
+   return stopAgentSync();
+}
+
 Error initialize()
 {
    using boost::bind;

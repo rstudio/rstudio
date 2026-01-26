@@ -28,6 +28,7 @@ namespace modules {
 namespace assistant {
 
 int assistantRuntimeStatus();
+bool stopAgentForUpdate();
 core::Error initialize();
 
 } // end namespace assistant
