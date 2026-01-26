@@ -22,6 +22,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -126,6 +127,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       projectServer_ = projectServer;
       globalDisplay_ = globalDisplay;
       paiUtil_ = paiUtil;
+      chatServer_ = chatServer;
       installManager_ = new PositAiInstallManager(chatServer);
 
       // Create assistant selector - conditionally include Posit AI option
@@ -327,7 +329,28 @@ public class AssistantPreferencesPane extends PreferencesPane
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
-            checkPositAiInstallation(/* forAssistant= */ false);
+            // First check if Posit AI is installed
+            chatServer_.chatVerifyInstalled(new ServerRequestCallback<JsObject>()
+            {
+               @Override
+               public void onResponseReceived(JsObject result)
+               {
+                  boolean installed = result.getBoolean("installed");
+                  if (!installed)
+                  {
+                     // Offer to install Posit AI
+                     checkPositAiInstallation(/* forAssistant= */ false);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  // On error, still try to check for updates which will handle the install prompt
+                  checkPositAiInstallation(/* forAssistant= */ false);
+               }
+            });
          }
       });
 
@@ -1236,6 +1259,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final ProjectsServerOperations projectServer_;
    private final GlobalDisplay globalDisplay_;
    private final PaiUtil paiUtil_;
+   private final ChatServerOperations chatServer_;
    private final PositAiInstallManager installManager_;
    
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
