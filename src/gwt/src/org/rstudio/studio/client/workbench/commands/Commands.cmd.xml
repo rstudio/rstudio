@@ -3355,6 +3355,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="_Global Options..."
         windowMode="main"/>
 
+   <cmd id="showAssistantOptions"
+        label="Assistant Options..."
+        windowMode="main"/>
+
    <cmd id="showCodeOptions"
         label="Code Options..."
         windowMode="main"/>

@@ -3638,7 +3638,14 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 {
    FilePath installation = locatePositAiInstallation();
    bool installed = !installation.isEmpty();
-   pResponse->setResult(installed);
+
+   json::Object result;
+   result["installed"] = installed;
+   if (installed)
+   {
+      result["version"] = getInstalledVersion();
+   }
+   pResponse->setResult(result);
    return Success();
 }
 

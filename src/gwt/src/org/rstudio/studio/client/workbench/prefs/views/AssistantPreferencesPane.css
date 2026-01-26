@@ -11,3 +11,7 @@
 .copilotTosLabel {
 	font-style: oblique;
 }
+
+.refreshSpinner {
+	margin-right: 6px;
+}

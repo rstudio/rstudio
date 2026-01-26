@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.AppearancePreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.AssistantPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.CodePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.ConsolePreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.PackagesPreferencesPane;
@@ -420,6 +421,12 @@ public class WorkbenchScreen extends Composite
    void onShowOptions()
    {
       optionsLoader_.showOptions();
+   }
+
+   @Handler
+   void onShowAssistantOptions()
+   {
+      optionsLoader_.showOptions(AssistantPreferencesPane.class, true);
    }
 
    @Handler

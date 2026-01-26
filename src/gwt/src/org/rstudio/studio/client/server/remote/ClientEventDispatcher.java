@@ -1197,6 +1197,11 @@ public class ClientEventDispatcher
             AssistantRuntimeStatusChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new AssistantRuntimeStatusChangedEvent(data.getStatus()));
          }
+         else if (type == ClientEvent.AssistantStatusChanged)
+         {
+            AssistantRuntimeStatusChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new AssistantRuntimeStatusChangedEvent(data.getStatus()));
+         }
          else if (type == ClientEvent.ChatBackendExit)
          {
             ChatBackendExitEvent.Data data = event.getData();
