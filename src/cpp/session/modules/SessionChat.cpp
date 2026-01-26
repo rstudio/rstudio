@@ -14,6 +14,7 @@
  */
 
 #include "SessionChat.hpp"
+#include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
 #include "chat/ChatConstants.hpp"
@@ -21,10 +22,6 @@
 #include "chat/ChatLogging.hpp"
 #include "chat/ChatInstallation.hpp"
 #include "chat/ChatStaticFiles.hpp"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 #include <algorithm>
 #include <chrono>
@@ -35,7 +32,6 @@
 #include <functional>
 
 #include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -3879,58 +3875,20 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    if (s_chatBackendPid != -1)
    {
       DLOG("Stopping backend for update");
-      PidType pidToTerminate = s_chatBackendPid;
-      Error error = core::system::terminateProcess(pidToTerminate);
+      Error error = core::system::terminateProcess(s_chatBackendPid);
       if (error)
       {
          WLOG("Failed to stop backend: {}", error.getMessage());
       }
-
-#ifdef _WIN32
-      // Wait for process to fully exit to avoid file access conflicts
-      if (!error)
-      {
-         DLOG("Waiting for backend process {} to exit...", pidToTerminate);
-
-         HANDLE hProc = ::OpenProcess(SYNCHRONIZE, FALSE, pidToTerminate);
-         if (hProc)
-         {
-            DWORD waitResult = ::WaitForSingleObject(hProc, 10000); // 10 second timeout
-            ::CloseHandle(hProc);
-
-            if (waitResult == WAIT_OBJECT_0)
-            {
-               DLOG("Backend process exited successfully");
-            }
-            else if (waitResult == WAIT_TIMEOUT)
-            {
-               WLOG("Timeout waiting for backend process to exit after 10 seconds");
-            }
-            else
-            {
-               WLOG("Error waiting for backend process: {}", ::GetLastError());
-            }
-         }
-         else
-         {
-            DWORD lastError = ::GetLastError();
-            if (lastError == ERROR_INVALID_PARAMETER)
-            {
-               DLOG("Backend process already exited");
-            }
-            else
-            {
-               WLOG("Failed to open process handle for waiting: {}", lastError);
-            }
-         }
-
-         // Short delay to ensure file handles are fully released by the OS
-         boost::this_thread::sleep(boost::posix_time::milliseconds(500));
-      }
-#endif
-
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
+   }
+
+   // Stop assistant agent (language server) if running - it also uses pai/bin/
+   DLOG("Stopping assistant agent for update");
+   if (!assistant::stopAgentForUpdate())
+   {
+      WLOG("Timeout waiting for assistant agent to stop");
    }
 
    // Download package
