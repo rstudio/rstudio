@@ -244,41 +244,15 @@ public class ChatPane
       // Force a complete iframe reload by navigating to about:blank first
       // This kills the existing JavaScript context (stops WebSocket reconnection attempts)
 
-      // Set up a one-time load handler to write content after about:blank loads
-      setupOneShotLoadHandler(frame_, html);
+      // Set up a one-time load action to write content after about:blank loads
+      frame_.setOnLoadAction(() -> {
+         setFrameContent(frame_, html);
+         injectThemeVariablesDelayed(frame_);
+      });
 
-      // Navigate to about:blank
+      // Navigate to about:blank - the load action will fire when it completes
       frame_.setUrl("about:blank");
    }
-
-   private native void setupOneShotLoadHandler(RStudioThemedFrame frame, String html) /*-{
-      var self = this;
-      var iframe = frame.@org.rstudio.core.client.widget.RStudioFrame::getElement()();
-
-      // Remove any existing pending handler
-      if (iframe._rstudioPendingLoadHandler) {
-         iframe.removeEventListener('load', iframe._rstudioPendingLoadHandler);
-         console.log("ChatPane: Removed previous pending load handler");
-      }
-
-      var handler = function() {
-         console.log("ChatPane: Load handler fired, writing content");
-         // Remove this handler so it only fires once
-         iframe.removeEventListener('load', handler);
-         iframe._rstudioPendingLoadHandler = null;
-
-         // Now write the content
-         self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::setFrameContent(Lorg/rstudio/core/client/widget/RStudioThemedFrame;Ljava/lang/String;)(frame, html);
-
-         // Inject theme variables after writing content
-         self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::injectThemeVariablesDelayed(Lorg/rstudio/core/client/widget/RStudioThemedFrame;)(frame);
-      };
-
-      // Store reference so we can cancel it if needed
-      iframe._rstudioPendingLoadHandler = handler;
-      iframe.addEventListener('load', handler);
-      console.log("ChatPane: Set up load handler, html length: " + html.length);
-   }-*/;
 
    /**
     * Injects theme variables into the frame after a short delay.
@@ -301,24 +275,15 @@ public class ChatPane
    @Override
    public void loadUrl(String url)
    {
-      // Cancel any pending load handler from updateFrameContent() to prevent
+      // Clear any pending load action from updateFrameContent() to prevent
       // it from overwriting the URL content when it fires
-      cancelPendingLoadHandler(frame_);
+      frame_.clearOnLoadAction();
 
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
       frame_.setUrl(url);
    }
-
-   private native void cancelPendingLoadHandler(RStudioThemedFrame frame) /*-{
-      var iframe = frame.@org.rstudio.core.client.widget.RStudioFrame::getElement()();
-      if (iframe._rstudioPendingLoadHandler) {
-         iframe.removeEventListener('load', iframe._rstudioPendingLoadHandler);
-         iframe._rstudioPendingLoadHandler = null;
-         console.log("ChatPane: Cancelled pending load handler before loading URL");
-      }
-   }-*/;
 
    @Override
    public void setObserver(ChatPresenter.Display.Observer observer)

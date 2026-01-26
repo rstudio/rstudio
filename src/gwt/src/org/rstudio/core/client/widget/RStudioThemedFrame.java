@@ -114,23 +114,88 @@ public class RStudioThemedFrame extends RStudioFrame
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      setAceThemeAndCustomStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      applyThemesIfEnabled();
    }
 
    @Override
    public void onThemeColorsComputed(ThemeColorsComputedEvent event)
    {
       injectThemeVariables();
-      addLoadHandler(new LoadHandler()
-      {      
-         @Override
-         public void onLoad(LoadEvent event)
-         {
-            injectThemeVariables();
-         }
-      });
+      ensureLoadHandlerInitialized();
    }
-   
+
+   /**
+    * Sets a custom action to be executed when the frame loads.
+    * This action will be executed INSTEAD of the default theming behavior.
+    * The action is cleared after execution (one-shot).
+    *
+    * @param action The action to execute on load, or null to clear
+    */
+   public void setOnLoadAction(Runnable action)
+   {
+      pendingLoadAction_ = action;
+      ensureLoadHandlerInitialized();
+   }
+
+   /**
+    * Clears any pending load action without executing it.
+    */
+   public void clearOnLoadAction()
+   {
+      pendingLoadAction_ = null;
+   }
+
+   /**
+    * Ensures the single load handler is initialized.
+    * This should be called whenever we need load handling.
+    */
+   private void ensureLoadHandlerInitialized()
+   {
+      if (!loadHandlerInitialized_)
+      {
+         loadHandlerInitialized_ = true;
+         addLoadHandler(new LoadHandler()
+         {
+            @Override
+            public void onLoad(LoadEvent event)
+            {
+               onFrameLoaded();
+            }
+         });
+      }
+   }
+
+   /**
+    * Called when the frame loads. Executes any pending action,
+    * or falls back to default theming behavior.
+    */
+   private void onFrameLoaded()
+   {
+      if (pendingLoadAction_ != null)
+      {
+         // Execute and clear the pending action (one-shot)
+         Runnable action = pendingLoadAction_;
+         pendingLoadAction_ = null;
+         action.run();
+      }
+      else
+      {
+         // Default behavior: apply themes
+         applyThemesIfEnabled();
+      }
+   }
+
+   /**
+    * Applies themes immediately if enabled.
+    */
+   private void applyThemesIfEnabled()
+   {
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
+   }
+
    private void addThemesStyle(String customStyle, String urlStyle, boolean removeBodyStyle)
    {
       if (getWindow() != null && getWindow().getDocument() != null)
@@ -193,15 +258,11 @@ public class RStudioThemedFrame extends RStudioFrame
       if (!enableThemes_)
          return;
 
+      // Apply themes immediately (for already-loaded content)
       addThemesStyle(customStyle, urlStyle, removeBodyStyle);
-      this.addLoadHandler(new LoadHandler()
-      {      
-         @Override
-         public void onLoad(LoadEvent event)
-         {
-            addThemesStyle(customStyle, urlStyle, removeBodyStyle);
-         }
-      });
+
+      // Ensure the single load handler is set up for future loads
+      ensureLoadHandlerInitialized();
    }
    
    /**
@@ -297,10 +358,14 @@ public class RStudioThemedFrame extends RStudioFrame
    }
 
    // Private members ----
-   
+
    private EventBus events_;
    private String customStyle_;
    private String urlStyle_;
    private boolean removeBodyStyle_;
    private boolean enableThemes_;
+
+   // Single load handler state
+   private boolean loadHandlerInitialized_ = false;
+   private Runnable pendingLoadAction_ = null;
 }
