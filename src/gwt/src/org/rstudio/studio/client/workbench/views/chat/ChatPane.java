@@ -20,7 +20,7 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
-import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
@@ -1005,13 +1005,13 @@ public class ChatPane
       }
 
       // Check if Posit Assistant is installed, then trigger observer with result
-      server_.chatVerifyInstalled(new ServerRequestCallback<JsObject>()
+      server_.chatVerifyInstalled(new ServerRequestCallback<ChatVerifyInstalledResponse>()
       {
          @Override
-         public void onResponseReceived(JsObject result)
+         public void onResponseReceived(ChatVerifyInstalledResponse result)
          {
-            boolean installed = result.getBoolean("installed");
-            String installedVersion = installed ? result.getString("version") : null;
+            boolean installed = result.installed;
+            String installedVersion = installed ? result.version : null;
 
             // Trigger observer to start initialization flow
             // The ChatPresenter will handle preference checks and update checks,

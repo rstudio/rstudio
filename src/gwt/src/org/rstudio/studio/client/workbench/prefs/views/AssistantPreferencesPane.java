@@ -22,7 +22,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -60,6 +59,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstant
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -330,13 +330,12 @@ public class AssistantPreferencesPane extends PreferencesPane
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
             // First check if Posit AI is installed
-            chatServer_.chatVerifyInstalled(new ServerRequestCallback<JsObject>()
+            chatServer_.chatVerifyInstalled(new ServerRequestCallback<ChatVerifyInstalledResponse>()
             {
                @Override
-               public void onResponseReceived(JsObject result)
+               public void onResponseReceived(ChatVerifyInstalledResponse result)
                {
-                  boolean installed = result.getBoolean("installed");
-                  if (!installed)
+                  if (!result.installed)
                   {
                      // Offer to install Posit AI
                      checkPositAiInstallation(/* forAssistant= */ false);
