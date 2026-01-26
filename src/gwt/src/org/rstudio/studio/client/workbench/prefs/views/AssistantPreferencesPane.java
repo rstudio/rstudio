@@ -25,6 +25,7 @@ import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
@@ -75,6 +76,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -168,9 +170,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
 
-      lblAssistantStatus_ = new Label(constants_.assistantLoadingMessage());
+      lblAssistantStatus_ = new Label();
       lblAssistantStatus_.addStyleName(RES.styles().assistantStatusLabel());
-      
+
+      imgRefreshSpinner_ = new Image(CoreResources.INSTANCE.progress_gray());
+      imgRefreshSpinner_.addStyleName(RES.styles().refreshSpinner());
+      imgRefreshSpinner_.setVisible(false);
+
       statusButtons_ = new ArrayList<SmallButton>();
       
       btnShowError_ = new SmallButton(constants_.assistantShowErrorLabel());
@@ -527,6 +533,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private HorizontalPanel createStatusPanel()
    {
       HorizontalPanel panel = new HorizontalPanel();
+      panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+      panel.add(imgRefreshSpinner_);
+      panel.setCellWidth(imgRefreshSpinner_, "24px");
       panel.add(lblAssistantStatus_);
       for (SmallButton button : statusButtons_)
          panel.add(button);
@@ -701,6 +710,7 @@ public class AssistantPreferencesPane extends PreferencesPane
 
    private void refresh(String assistantType)
    {
+      imgRefreshSpinner_.setVisible(true);
       reset();
 
       // Use overloaded method to pass assistantType if provided
@@ -709,6 +719,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
+            imgRefreshSpinner_.setVisible(false);
             hideButtons();
 
             if (response == null)
@@ -792,6 +803,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onError(ServerError error)
          {
             Debug.logError(error);
+            hideButtons();
+            lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
+            showButtons(btnRefresh_, btnDiagnostics_);
          }
       };
 
@@ -1039,7 +1053,6 @@ public class AssistantPreferencesPane extends PreferencesPane
    private void reset()
    {
       assistantStartupError_ = null;
-      lblAssistantStatus_.setText(constants_.assistantLoadingMessage());
       hideButtons();
    }
    
@@ -1223,6 +1236,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       String button();
       String assistantStatusLabel();
       String copilotTosLabel();
+      String refreshSpinner();
    }
 
    public interface Resources extends ClientBundle
@@ -1262,6 +1276,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
+   private final Image imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesAutoshow_;
