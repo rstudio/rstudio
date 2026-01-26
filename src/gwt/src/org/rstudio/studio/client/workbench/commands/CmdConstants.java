@@ -2978,6 +2978,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("_Global Options...") // $NON-NLS-1$
     String showOptionsMenuLabel();
     
+    // showAssistantOptions
+    @DefaultStringValue("Assistant Options...") // $NON-NLS-1$
+    String showAssistantOptionsLabel();
+    
     // showCodeOptions
     @DefaultStringValue("Code Options...") // $NON-NLS-1$
     String showCodeOptionsLabel();

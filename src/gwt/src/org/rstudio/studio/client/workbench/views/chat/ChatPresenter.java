@@ -53,7 +53,7 @@ public class ChatPresenter extends BasePresenter
 
       interface Observer
       {
-         void onPaneReady();
+         void onPaneReady(boolean installed, String installedVersion);
          void onRestartBackend();
       }
 
@@ -115,9 +115,9 @@ public class ChatPresenter extends BasePresenter
       display_.setObserver(new Display.Observer()
       {
          @Override
-         public void onPaneReady()
+         public void onPaneReady(boolean installed, String installedVersion)
          {
-            initializeChat();
+            initializeChat(installed, installedVersion);
          }
 
          @Override
@@ -249,6 +249,17 @@ public class ChatPresenter extends BasePresenter
     * Flow: initializeChat() -> checkForUpdates() -> startBackend() -> pollForBackendUrl() -> loadChatUI()
     */
    public void initializeChat()
+   {
+      initializeChat(false, null);
+   }
+
+   /**
+    * Initialize the Chat pane with known installation status.
+    *
+    * @param installed Whether Posit Assistant is currently installed
+    * @param installedVersion The currently installed version (null if not installed)
+    */
+   public void initializeChat(boolean installed, String installedVersion)
    {
       // Prevent concurrent initialization (e.g., from multiple event sources)
       if (initializing_)

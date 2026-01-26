@@ -66,4 +66,7 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatBackendStatusCheckFailed(String error);
     String chatRestartFailed(String error);
     String chatAssistantNotSelected();
+    String chatAssistantNotEnabledTitle();
+    String chatAssistantNotEnabledMessage();
+    String chatGlobalOptionsButton();
 }
