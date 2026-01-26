@@ -146,7 +146,7 @@ public class RStudioThemedFrame extends RStudioFrame
 
    /**
     * Called when the frame loads. Executes any pending action,
-    * or falls back to default theming behavior.
+    * then applies themes if enabled.
     */
    private void onFrameLoaded()
    {
@@ -157,9 +157,10 @@ public class RStudioThemedFrame extends RStudioFrame
          pendingLoadAction_ = null;
          action.run();
       }
-      else if (enableThemes_)
+
+      // Always apply themes on load if enabled
+      if (enableThemes_)
       {
-         // Default behavior: apply themes
          addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
       }
    }
