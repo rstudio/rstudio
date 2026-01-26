@@ -20,7 +20,6 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
-import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
@@ -30,6 +29,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -221,10 +221,12 @@ public class ChatPane
     */
    private native void setFrameContent(RStudioThemedFrame frame, String html) /*-{
       try {
+         debugger;
          var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
          doc.open();
          doc.write(html);
          doc.close();
+         debugger;
       } catch (e) {
          console.error("Error setting frame content:", e);
       }
@@ -277,7 +279,7 @@ public class ChatPane
    {
       // Clear any pending load action from updateFrameContent() to prevent
       // it from overwriting the URL content when it fires
-      frame_.clearOnLoadAction();
+      frame_.setOnLoadAction(null);
 
       contentType_ = ContentType.URL;
       currentUrl_ = url;

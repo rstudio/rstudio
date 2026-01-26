@@ -32,8 +32,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.StyleElement;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
@@ -91,15 +89,22 @@ public class RStudioThemedFrame extends RStudioFrame
       boolean enableThemes)
    {
       super(title, url, sandbox, sandboxAllow);
-      
+
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;
       removeBodyStyle_ = removeBodyStyle;
       enableThemes_ = enableThemes;
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setAceThemeAndCustomStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      // Set up single load handler
+      addLoadHandler(event -> onFrameLoaded());
+
+      // Apply themes immediately for any already-loaded content
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
    }
 
    @Inject
@@ -114,55 +119,29 @@ public class RStudioThemedFrame extends RStudioFrame
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      applyThemesIfEnabled();
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
    }
 
    @Override
    public void onThemeColorsComputed(ThemeColorsComputedEvent event)
    {
       injectThemeVariables();
-      ensureLoadHandlerInitialized();
    }
 
    /**
     * Sets a custom action to be executed when the frame loads.
     * This action will be executed INSTEAD of the default theming behavior.
     * The action is cleared after execution (one-shot).
+    * Pass null to clear any pending action.
     *
     * @param action The action to execute on load, or null to clear
     */
    public void setOnLoadAction(Runnable action)
    {
       pendingLoadAction_ = action;
-      ensureLoadHandlerInitialized();
-   }
-
-   /**
-    * Clears any pending load action without executing it.
-    */
-   public void clearOnLoadAction()
-   {
-      pendingLoadAction_ = null;
-   }
-
-   /**
-    * Ensures the single load handler is initialized.
-    * This should be called whenever we need load handling.
-    */
-   private void ensureLoadHandlerInitialized()
-   {
-      if (!loadHandlerInitialized_)
-      {
-         loadHandlerInitialized_ = true;
-         addLoadHandler(new LoadHandler()
-         {
-            @Override
-            public void onLoad(LoadEvent event)
-            {
-               onFrameLoaded();
-            }
-         });
-      }
    }
 
    /**
@@ -178,20 +157,9 @@ public class RStudioThemedFrame extends RStudioFrame
          pendingLoadAction_ = null;
          action.run();
       }
-      else
+      else if (enableThemes_)
       {
          // Default behavior: apply themes
-         applyThemesIfEnabled();
-      }
-   }
-
-   /**
-    * Applies themes immediately if enabled.
-    */
-   private void applyThemesIfEnabled()
-   {
-      if (enableThemes_)
-      {
          addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
       }
    }
@@ -250,21 +218,6 @@ public class RStudioThemedFrame extends RStudioFrame
       }
    }
 
-   private void setAceThemeAndCustomStyle(
-      final String customStyle,
-      final String urlStyle,
-      final boolean removeBodyStyle)
-   {
-      if (!enableThemes_)
-         return;
-
-      // Apply themes immediately (for already-loaded content)
-      addThemesStyle(customStyle, urlStyle, removeBodyStyle);
-
-      // Ensure the single load handler is set up for future loads
-      ensureLoadHandlerInitialized();
-   }
-   
    /**
     * Inject CSS variables representing theme colors into the iframe document.
     */
@@ -316,7 +269,8 @@ public class RStudioThemedFrame extends RStudioFrame
     */
    private native void injectCSSVariable(Element htmlElement,
                                         String property,
-                                        String value) /*-{
+                                        String value)
+   /*-{
       htmlElement.style.setProperty(property, value);
    }-*/;
 
@@ -365,7 +319,6 @@ public class RStudioThemedFrame extends RStudioFrame
    private boolean removeBodyStyle_;
    private boolean enableThemes_;
 
-   // Single load handler state
-   private boolean loadHandlerInitialized_ = false;
+   // Pending action to execute on next frame load (one-shot)
    private Runnable pendingLoadAction_ = null;
 }
