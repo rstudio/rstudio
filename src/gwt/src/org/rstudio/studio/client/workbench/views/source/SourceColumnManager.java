@@ -104,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selecti
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
@@ -622,6 +623,39 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (hasActiveEditor())
          return activeColumn_.getActiveEditor().getPath();
       return null;
+   }
+
+   /**
+    * Get selections from the active editor as a JSON array.
+    * Format: [{ "startLine": n, "startCharacter": n, "endLine": n, "endCharacter": n, "text": "..." }, ...]
+    * For cursor position (no selection), start and end will be the same position and text will be empty.
+    * Returns empty array if no active editor or editor is not a TextEditingTarget.
+    */
+   public JsArray<JavaScriptObject> getActiveEditorSelectionsJson()
+   {
+      if (!hasActiveEditor())
+         return JavaScriptObject.createArray().cast();
+
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (!(target instanceof TextEditingTarget))
+         return JavaScriptObject.createArray().cast();
+
+      TextEditingTarget textTarget = (TextEditingTarget) target;
+      DocDisplay display = textTarget.getDocDisplay();
+
+      // Get all selection ranges (supports multi-cursor)
+      Range[] ranges = display.getNativeSelection().getAllRanges();
+      if (ranges == null || ranges.length == 0)
+         return JavaScriptObject.createArray().cast();
+
+      // Build the selections array with text for each range
+      JsArray<JavaScriptObject> result = JavaScriptObject.createArray().cast();
+      for (Range range : ranges)
+      {
+         String text = display.getTextForRange(range);
+         result.push(DocSelectionChangedEvent.Selection.create(range, text));
+      }
+      return result;
    }
 
    public boolean hasActiveEditor()

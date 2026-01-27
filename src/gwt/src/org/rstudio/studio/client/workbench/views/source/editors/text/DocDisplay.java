@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spellin
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -268,6 +269,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler);
+   HandlerRegistration addSelectionChangedHandler(AceSelectionChangedEvent.Handler handler);
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
    HandlerRegistration addSaveCompletedHandler(SaveFileEvent.Handler handler);
    HandlerRegistration addPasteHandler(PasteEvent.Handler handler);

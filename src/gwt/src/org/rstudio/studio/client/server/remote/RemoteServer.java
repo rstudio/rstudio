@@ -7048,6 +7048,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(documentId));
+      params.set(1, new JSONArray(selections));
+      sendRequest(RPC_SCOPE, "chat_doc_focused", params, requestCallback);
+   }
+
+   @Override
    public void chatGetVersion(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_get_version", requestCallback);
