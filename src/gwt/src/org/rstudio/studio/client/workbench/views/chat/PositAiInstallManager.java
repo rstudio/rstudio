@@ -12,15 +12,20 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.inject.Inject;
 
 /**
  * Manages Posit AI installation and updates.
@@ -95,12 +100,18 @@ public class PositAiInstallManager
 
    /**
     * Creates a new PositAiInstallManager.
-    *
-    * @param server The ChatServerOperations instance for making server calls
     */
-   public PositAiInstallManager(ChatServerOperations server)
+   public PositAiInstallManager()
    {
-      server_ = server;
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   @Inject
+   private void initialize(ChatServerOperations chatServer,
+                           AssistantServerOperations assistantServer)
+   {
+      chatServer_ = chatServer;
+      assistantServer_ = assistantServer;
    }
 
    /**
@@ -110,7 +121,7 @@ public class PositAiInstallManager
     */
    public void checkForUpdates(UpdateCheckCallback callback)
    {
-      server_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
+      chatServer_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject result)
@@ -155,7 +166,7 @@ public class PositAiInstallManager
    {
       callback.onInstallStarted();
 
-      server_.chatInstallUpdate(new ServerRequestCallback<Void>()
+      chatServer_.chatInstallUpdate(new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void result)
@@ -183,7 +194,7 @@ public class PositAiInstallManager
          return;
       }
 
-      server_.chatGetUpdateStatus(new ServerRequestCallback<JsObject>()
+      chatServer_.chatGetUpdateStatus(new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject response)
@@ -192,6 +203,17 @@ public class PositAiInstallManager
 
             if (status.equals("complete"))
             {
+               // Notify the assistant module that installation is complete
+               // so it can reset its cached state and start the agent
+               assistantServer_.assistantNotifyInstalled(new VoidServerRequestCallback()
+               {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+
                callback.onInstallComplete();
             }
             else if (status.equals("error"))
@@ -235,7 +257,8 @@ public class PositAiInstallManager
       });
    }
 
-   private final ChatServerOperations server_;
+   private ChatServerOperations chatServer_;
+   private AssistantServerOperations assistantServer_;
 
    // Polling configuration
    private static final int MAX_POLL_ATTEMPTS = 60; // 60 seconds timeout

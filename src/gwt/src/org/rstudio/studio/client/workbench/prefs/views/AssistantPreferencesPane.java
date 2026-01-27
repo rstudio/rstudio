@@ -128,7 +128,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       paiUtil_ = paiUtil;
       chatServer_ = chatServer;
-      installManager_ = new PositAiInstallManager(chatServer);
+      installManager_ = new PositAiInstallManager();
 
       // Create assistant selector - conditionally include Posit AI option
       boolean paiEnabled = paiUtil_.isPaiEnabled();
