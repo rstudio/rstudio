@@ -769,12 +769,9 @@ public class TextEditingTargetAssistantHelper
       clearDiffState();
       clearNesVisuals();
 
-      // Restore gutter-only state using the anchor's current position
-      // (the anchor tracks document changes, but pendingGutterRow_ doesn't)
-      int row = nesStartAnchor_ != null ? nesStartAnchor_.getRow() : pendingGutterRow_;
+      // Restore gutter-only state
       String gutterClass = getGutterClassForType(nesType_);
-      pendingGutterRow_ = row;
-      pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
+      pendingGutterRegistration_ = display_.addGutterItem(pendingGutterRow_, gutterClass);
 
       pendingSuggestionRevealed_ = false;
    }
@@ -1335,8 +1332,9 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
-                  // Eagerly reset Tab acceptance flag
+                  // Eagerly reset Tab acceptance flag and NES state
                   canAcceptSuggestionWithTab_ = false;
+                  resetSuggestion();
 
                   // Avoid re-triggering on newline insertions
                   AceDocumentChangeEventNative nativeEvent = event.getEvent();
@@ -1380,7 +1378,6 @@ public class TextEditingTargetAssistantHelper
                   Timers.singleShot(0, () -> {
                      activeCompletion_ = null;
                      display_.removeGhostText();
-                     resetSuggestion();
                   });
                }),
 
