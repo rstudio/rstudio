@@ -848,6 +848,7 @@ Error terminateProcess(PidType pid)
    {
       return LAST_SYSTEM_ERROR();
    }
+   CloseHandleOnExitScope closeHandle(&hProc, ERROR_LOCATION);
    if (!::TerminateProcess(hProc, 1))
    {
       return LAST_SYSTEM_ERROR();
@@ -954,6 +955,7 @@ Error getProcesses(std::vector<ProcessInfo> *pOutProcesses)
    {
       return LAST_SYSTEM_ERROR();
    }
+   CloseHandleOnExitScope closeSnap(&hSnap, ERROR_LOCATION);
 
    if (Process32First(hSnap, &processEntry))
    {
