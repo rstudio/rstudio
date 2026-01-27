@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -768,9 +769,12 @@ public class TextEditingTargetAssistantHelper
       clearDiffState();
       clearNesVisuals();
 
-      // Restore gutter-only state
+      // Restore gutter-only state using the anchor's current position
+      // (the anchor tracks document changes, but pendingGutterRow_ doesn't)
+      int row = nesStartAnchor_ != null ? nesStartAnchor_.getRow() : pendingGutterRow_;
       String gutterClass = getGutterClassForType(nesType_);
-      pendingGutterRegistration_ = display_.addGutterItem(pendingGutterRow_, gutterClass);
+      pendingGutterRow_ = row;
+      pendingGutterRegistration_ = display_.addGutterItem(row, gutterClass);
 
       pendingSuggestionRevealed_ = false;
    }
@@ -1329,10 +1333,23 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addValueChangeHandler((event) ->
+               display_.addDocumentChangedHandler((event) ->
                {
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
+
+                  // Avoid re-triggering on newline insertions
+                  AceDocumentChangeEventNative nativeEvent = event.getEvent();
+                  if (nativeEvent != null)
+                  {
+                     boolean isNewlineInsertion =
+                        nativeEvent.lines.length() == 2 &&
+                        nativeEvent.lines.get(0).isEmpty() &&
+                        nativeEvent.lines.get(1).isEmpty();
+
+                     if (isNewlineInsertion)
+                        return;
+                  }
 
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
