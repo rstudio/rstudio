@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -1209,6 +1211,13 @@ public class AceEditorWidget extends Composite
    // is hovered
    private class AnchoredAceAnnotation
    {
+      // Constructor for gutter-only annotations (no inline marker).
+      public AnchoredAceAnnotation(AceAnnotation annotation)
+      {
+         this(annotation, null, -1);
+      }
+
+      // Constructor for annotations with an associated inline marker.
       public AnchoredAceAnnotation(AceAnnotation annotation,
                                    AnchoredRange range,
                                    int markerId)
@@ -1278,6 +1287,22 @@ public class AceEditorWidget extends Composite
       editor_.getRenderer().renderMarkers();
    }
 
+   private void updateGutterAnnotations()
+   {
+      JsArray<AceAnnotation> aceAnnotations = JsArray.createArray().cast();
+
+      // Add annotations from gutterAnnotations_.
+      for (int i = 0, n = gutterAnnotations_.size(); i < n; i++)
+         aceAnnotations.push(gutterAnnotations_.get(i).asAceAnnotation());
+
+      // Add external gutter annotations.
+      for (AnchoredAceAnnotation annotation : externalGutterAnnotations_.values())
+         aceAnnotations.push(annotation.asAceAnnotation());
+
+      editor_.getSession().setAnnotations(aceAnnotations);
+      editor_.getRenderer().renderMarkers();
+   }
+
    public void setAnnotations(JsArray<AceAnnotation> annotations)
    {
       clearAnnotations();
@@ -1329,16 +1354,8 @@ public class AceEditorWidget extends Composite
             gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
       }
 
-      // Add external gutter annotations (gutter-only, no inline markers).
-      JsArray<LintItem> externalItems = externalGutterAnnotations_.values();
-      for (int i = 0, n = externalItems.length(); i < n; i++)
-      {
-         LintItem item = externalItems.get(i);
-         gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), null, -1));
-      }
-
-      // Update the gutter display from gutterAnnotations_.
-      updateAnnotations(gutterAnnotations_);
+      // Update the gutter display, including external gutter annotations.
+      updateGutterAnnotations();
    }
 
    public void clearLint()
@@ -1350,7 +1367,8 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addGutterItem(LintItem item)
    {
       String id = StringUtil.makeRandomId(16);
-      externalGutterAnnotations_.set(id, item);
+      AnchoredAceAnnotation annotation = new AnchoredAceAnnotation(item.asAceAnnotation());
+      externalGutterAnnotations_.put(id, annotation);
       Timers.singleShot(() ->
       {
          renderMarkers();
@@ -1361,7 +1379,9 @@ public class AceEditorWidget extends Composite
          @Override
          public void removeHandler()
          {
-            externalGutterAnnotations_.delete(id);
+            AnchoredAceAnnotation removed = externalGutterAnnotations_.remove(id);
+            if (removed != null)
+               removed.detach();
             Timers.singleShot(() ->
             {
                renderMarkers();
@@ -1492,7 +1512,7 @@ public class AceEditorWidget extends Composite
       {
          removeMarkersImpl(gutterAnnotations_, predicate);
          removeMarkersImpl(inlineAnnotations_, predicate);
-         updateAnnotations(gutterAnnotations_);
+         updateGutterAnnotations();
       });
    }
 
@@ -1566,7 +1586,7 @@ public class AceEditorWidget extends Composite
    private boolean isRendered_ = false;
    private final ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
    private final List<AnchoredAceAnnotation> gutterAnnotations_ = new ArrayList<>();
-   private final JsMap<LintItem> externalGutterAnnotations_ = JsMap.create().cast();
+   private final Map<String, AnchoredAceAnnotation> externalGutterAnnotations_ = new HashMap<>();
    private final List<AnchoredAceAnnotation> inlineAnnotations_ = new ArrayList<>();
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
