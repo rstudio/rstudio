@@ -707,6 +707,58 @@ void setPositAiConfiguration()
    // Stub for Posit AI configuration.
 }
 
+// Forward declarations for warmup request
+void docOpened(const std::string& uri,
+               int64_t version,
+               const std::string& languageId,
+               const std::string& contents);
+void docClosed(const std::string& uri);
+
+void sendWarmupRequest()
+{
+   // Send a dummy inline completion request to warm up the LLM backend.
+   // This helps reduce latency on the first real completion request.
+   // We use a proper sequence: didOpen => inlineCompletion => didClose
+   DLOG("Sending warmup request to Posit AI.");
+
+   std::string warmupUri = "rstudio-document://00000000";
+
+   // First, register the document with the LLM via didOpen
+   docOpened(warmupUri, 0, "r", "# warmup\n");
+
+   // Build the completion request
+   json::Object positionJson;
+   positionJson["line"] = 0;
+   positionJson["character"] = 0;
+
+   json::Object docJson;
+   docJson["uri"] = warmupUri;
+   docJson["version"] = 0;
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Create a continuation that closes the document and discards the response
+   auto warmupContinuation = [warmupUri](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      // Close the warmup document
+      docClosed(warmupUri);
+
+      if (error)
+         DLOG("Warmup request failed: {}", error.getMessage());
+      else
+         DLOG("Warmup request completed.");
+   };
+
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/inlineCompletion", requestId, paramsJson, AssistantContinuation(warmupContinuation));
+}
+
 namespace agent {
 
 void onStarted(ProcessOperations& operations)
@@ -1122,6 +1174,10 @@ Error startAgent(const std::string& assistantType = "")
 
       // Sync currently open documents with the agent
       syncOpenDocuments();
+
+      // For Posit AI, send a warmup request to reduce latency on first real request
+      if (assistant == kAssistantPosit)
+         sendWarmupRequest();
    };
    
    std::string requestId = core::system::generateUuid();
