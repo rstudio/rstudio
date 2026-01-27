@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -601,17 +602,17 @@ public class TextEditingTargetAssistantHelper
          if (hasDeletions && hasInsertions)
          {
             boundsClass = "ace_next-edit-suggestion-replacement-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_REPLACEMENT;
          }
          else if (hasDeletions)
          {
             boundsClass = "ace_next-edit-suggestion-deletion-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_DELETION;
          }
          else
          {
             boundsClass = "ace_next-edit-suggestion-insertion-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_INSERTION;
          }
 
          Range boundsRange = Range.create(minRow, 0, maxRow, 0);
@@ -619,6 +620,12 @@ public class TextEditingTargetAssistantHelper
 
          HandlerRegistration registration = display_.addGutterItem(minRow, gutterClass);
          nesGutterRegistrations_.add(registration);
+
+         for (int row = minRow + 1; row <= maxRow; row++)
+         {
+            registration = display_.addGutterItem(row, AceEditorGutterStyles.NES_GUTTER_BACKGROUND);
+            nesGutterRegistrations_.add(registration);
+         }
       }
    }
 
@@ -661,7 +668,7 @@ public class TextEditingTargetAssistantHelper
    private static boolean isNesSuggestionGutterCell(Element el)
    {
       // Just check for the base class since all NES gutter icons use it
-      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE);
+      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER);
    }
 
    /**
@@ -825,16 +832,16 @@ public class TextEditingTargetAssistantHelper
       switch (type)
       {
          case DELETION:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+            return AceEditorGutterStyles.NES_GUTTER_DELETION;
          case INSERTION:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+            return AceEditorGutterStyles.NES_GUTTER_INSERTION;
          case REPLACEMENT:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+            return AceEditorGutterStyles.NES_GUTTER_REPLACEMENT;
          case GHOST_TEXT:
          case MIXED:
          case DIFF:
          default:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION;
+            return AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT;
       }
    }
 
@@ -1201,7 +1208,7 @@ public class TextEditingTargetAssistantHelper
 
                   // Check for clicks on any NES gutter icon (uses base class)
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
-                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE));
+                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER));
 
                   if (nesGutterEl != null && nesType_ != SuggestionType.NONE)
                   {
@@ -1329,10 +1336,24 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addValueChangeHandler((event) ->
+               display_.addDocumentChangedHandler((event) ->
                {
-                  // Eagerly reset Tab acceptance flag
+                  // Eagerly reset Tab acceptance flag and NES state
                   canAcceptSuggestionWithTab_ = false;
+                  resetSuggestion();
+
+                  // Avoid re-triggering on newline insertions
+                  AceDocumentChangeEventNative nativeEvent = event.getEvent();
+                  if (nativeEvent != null)
+                  {
+                     boolean isNewlineInsertion =
+                        nativeEvent.lines.length() == 2 &&
+                        nativeEvent.lines.get(0).isEmpty() &&
+                        nativeEvent.lines.get(1).isEmpty();
+
+                     if (isNewlineInsertion)
+                        return;
+                  }
 
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
@@ -1589,7 +1610,7 @@ public class TextEditingTargetAssistantHelper
                      renderNesSuggestion();
                   else
                      showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+                        AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
                   server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
@@ -1608,7 +1629,7 @@ public class TextEditingTargetAssistantHelper
                      renderNesSuggestion();
                   else
                      showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
+                        AceEditorGutterStyles.NES_GUTTER_DELETION);
                   server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
@@ -1621,7 +1642,7 @@ public class TextEditingTargetAssistantHelper
                      renderNesSuggestion();
                   else
                      showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
+                        AceEditorGutterStyles.NES_GUTTER_INSERTION);
                   server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                   return;
                }
@@ -1638,7 +1659,7 @@ public class TextEditingTargetAssistantHelper
                         renderNesSuggestion();
                      else
                         showSuggestionGutterOnly(normalized.range.start.line,
-                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                           AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
                      server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                      return;
                   }
@@ -1653,7 +1674,7 @@ public class TextEditingTargetAssistantHelper
                      renderNesSuggestion();
                   else
                      showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
+                        AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
                   server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                }
                else
@@ -1663,7 +1684,7 @@ public class TextEditingTargetAssistantHelper
                      showEditSuggestion(nesCompletion_);
                   else
                      showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
+                        AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
                }
             }
 
@@ -1782,6 +1803,27 @@ public class TextEditingTargetAssistantHelper
       else if (nesCompletion_ != null)
       {
          applyNesSuggestion();
+      }
+      else if (display_.hasGhostText() && activeCompletion_ != null)
+      {
+         // Accept ghost text completion
+         Range aceRange = Range.create(
+               completionStartAnchor_.getRow(),
+               completionStartAnchor_.getColumn(),
+               completionEndAnchor_.getRow(),
+               completionEndAnchor_.getColumn());
+         display_.replaceRange(aceRange, activeCompletion_.insertText);
+
+         Position cursorPos = Position.create(
+            completionEndAnchor_.getRow(),
+            completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+         display_.setCursorPosition(cursorPos);
+
+         server_.assistantDidAcceptCompletion(
+            activeCompletion_.originalCompletion.command,
+            new VoidServerRequestCallback());
+
+         reset();
       }
       else
       {

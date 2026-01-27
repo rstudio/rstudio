@@ -14,6 +14,7 @@
  */
 
 #include "SessionChat.hpp"
+#include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
 #include "chat/ChatConstants.hpp"
@@ -2564,6 +2565,9 @@ boost::mutex s_updateStateMutex;
 
 // Check if we should skip the update check due to throttling
 // Returns true if we should skip (recently checked with same RStudio version)
+//
+// NOTE: During development this delay is causing confusion. For now we will record
+// the update check time but skip the throttling so updates are checked every time.
 bool shouldSkipUpdateCheck()
 {
    json::Object positAssistantState = prefs::userState().positAssistant();
@@ -2599,41 +2603,44 @@ bool shouldSkipUpdateCheck()
       return false;
    }
 
+   return false;  // Temporarily disable throttling during development
+
+   // FUTURE: Re-enable throttling after testing
    // Parse the timestamp and check if an hour has passed
-   try
-   {
-      boost::posix_time::ptime lastCheck =
-         boost::posix_time::from_iso_string(lastCheckStr);
-      boost::posix_time::ptime now =
-         boost::posix_time::second_clock::universal_time();
+   // try
+   // {
+   //    boost::posix_time::ptime lastCheck =
+   //       boost::posix_time::from_iso_string(lastCheckStr);
+   //    boost::posix_time::ptime now =
+   //       boost::posix_time::second_clock::universal_time();
 
-      boost::posix_time::time_duration elapsed = now - lastCheck;
+   //    boost::posix_time::time_duration elapsed = now - lastCheck;
 
-      // Handle clock skew: if elapsed time is negative, the stored timestamp
-      // is in the future. Don't skip in this case.
-      if (elapsed.is_negative())
-      {
-         DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
-         return false;
-      }
+   //    // Handle clock skew: if elapsed time is negative, the stored timestamp
+   //    // is in the future. Don't skip in this case.
+   //    if (elapsed.is_negative())
+   //    {
+   //       DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
+   //       return false;
+   //    }
 
-      // Skip if less than 10 minutes has passed
-      if (elapsed.total_seconds() < 600)
-      {
-         DLOG("Update check throttled: only {} minutes since last check",
-              elapsed.total_seconds() / 60);
-         return true;
-      }
+   //    // Skip if less than 10 minutes has passed
+   //    if (elapsed.total_seconds() < 600)
+   //    {
+   //       DLOG("Update check throttled: only {} minutes since last check",
+   //            elapsed.total_seconds() / 60);
+   //       return true;
+   //    }
 
-      DLOG("Over 10 minutes since last update check, will check for updates");
-      return false;
-   }
-   catch (const std::exception& e)
-   {
-      WLOG("Failed to parse update check timestamp '{}': {}",
-           lastCheckStr, e.what());
-      return false;
-   }
+   //    DLOG("Over 10 minutes since last update check, will check for updates");
+   //    return false;
+   // }
+   // catch (const std::exception& e)
+   // {
+   //    WLOG("Failed to parse update check timestamp '{}': {}",
+   //         lastCheckStr, e.what());
+   //    return false;
+   // }
 }
 
 // Save the update check state (timestamp and RStudio version)
@@ -3669,7 +3676,14 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 {
    FilePath installation = locatePositAiInstallation();
    bool installed = !installation.isEmpty();
-   pResponse->setResult(installed);
+
+   json::Object result;
+   result["installed"] = installed;
+   if (installed)
+   {
+      result["version"] = getInstalledVersion();
+   }
+   pResponse->setResult(result);
    return Success();
 }
 
@@ -3919,6 +3933,13 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       }
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
+   }
+
+   // Stop assistant agent (language server) if running - it also uses pai/bin/
+   DLOG("Stopping assistant agent for update");
+   if (!assistant::stopAgentForUpdate())
+   {
+      WLOG("Timeout waiting for assistant agent to stop");
    }
 
    // Download package

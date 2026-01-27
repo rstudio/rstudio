@@ -119,6 +119,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.ui.polyfill.FocusVisibleStyles;
+import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionInstallOdbcHost;
@@ -363,6 +364,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(LoggedOutDialog loggedOutDialog);
    void injectMembers(ShellWidget shellWidget);
    void injectMembers(ConsoleError consoleError);
+   void injectMembers(PositAiInstallManager installManager);
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

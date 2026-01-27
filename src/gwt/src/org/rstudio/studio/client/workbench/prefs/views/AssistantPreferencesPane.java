@@ -20,12 +20,12 @@ import java.util.List;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.NumericValueWidget;
@@ -39,7 +39,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -59,6 +58,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstant
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -76,6 +76,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -126,7 +127,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       projectServer_ = projectServer;
       globalDisplay_ = globalDisplay;
       paiUtil_ = paiUtil;
-      installManager_ = new PositAiInstallManager(chatServer);
+      chatServer_ = chatServer;
+      installManager_ = new PositAiInstallManager();
 
       // Create assistant selector - conditionally include Posit AI option
       boolean paiEnabled = paiUtil_.isPaiEnabled();
@@ -168,9 +170,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Container for dynamic assistant-specific content
       assistantDetailsPanel_ = new SimplePanel();
 
-      lblAssistantStatus_ = new Label(constants_.assistantLoadingMessage());
+      lblAssistantStatus_ = new Label();
       lblAssistantStatus_.addStyleName(RES.styles().assistantStatusLabel());
-      
+
+      imgRefreshSpinner_ = new Image(CoreResources.INSTANCE.progress_gray());
+      imgRefreshSpinner_.addStyleName(RES.styles().refreshSpinner());
+      imgRefreshSpinner_.setVisible(false);
+
       statusButtons_ = new ArrayList<SmallButton>();
       
       btnShowError_ = new SmallButton(constants_.assistantShowErrorLabel());
@@ -190,7 +196,11 @@ public class AssistantPreferencesPane extends PreferencesPane
       btnActivate_.getElement().setPropertyString("href", "https://github.com/settings/copilot");
       btnActivate_.addStyleName(RES.styles().button());
       statusButtons_.add(btnActivate_);
-      
+
+      btnInstall_ = new SmallButton(constants_.positAiInstallButton());
+      btnInstall_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnInstall_);
+
       btnRefresh_ = new SmallButton(constants_.assistantRefreshLabel());
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
@@ -323,11 +333,32 @@ public class AssistantPreferencesPane extends PreferencesPane
       add(selChatProvider_);
 
       // Add change handler for chat provider to check for Posit AI installation
-      selChatProvider_.addChangeHandler((event) -> {
+      selChatProvider_.addChangeHandler((event) ->
+      {
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
-            checkPositAiInstallation(/* forAssistant= */ false);
+            // First check if Posit AI is installed
+            chatServer_.chatVerifyInstalled(new ServerRequestCallback<ChatVerifyInstalledResponse>()
+            {
+               @Override
+               public void onResponseReceived(ChatVerifyInstalledResponse result)
+               {
+                  if (!result.installed)
+                  {
+                     // Offer to install Posit AI
+                     checkPositAiInstallation(/* forAssistant= */ false);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  // On error, still try to check for updates which will handle the install prompt
+                  checkPositAiInstallation(/* forAssistant= */ false);
+               }
+            });
          }
       });
 
@@ -411,13 +442,13 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
-                           if (isInstalled)
+                           if (isInstalled || event == null)
                            {
                               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
                            }
                            else
                            {
-                              // Offer to install Posit AI
+                              // Offer to install Posit AI (only if user changed the selection)
                               checkPositAiInstallation(/* forAssistant= */ true);
                            }
                         }
@@ -502,6 +533,9 @@ public class AssistantPreferencesPane extends PreferencesPane
    private HorizontalPanel createStatusPanel()
    {
       HorizontalPanel panel = new HorizontalPanel();
+      panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+      panel.add(imgRefreshSpinner_);
+      panel.setCellWidth(imgRefreshSpinner_, "24px");
       panel.add(lblAssistantStatus_);
       for (SmallButton button : statusButtons_)
          panel.add(button);
@@ -663,10 +697,20 @@ public class AssistantPreferencesPane extends PreferencesPane
             commands_.projectOptions().execute();
          }
       });
+
+      btnInstall_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            checkPositAiInstallation(/* forAssistant= */ true);
+         }
+      });
    }
 
    private void refresh(String assistantType)
    {
+      imgRefreshSpinner_.setVisible(true);
       reset();
 
       // Use overloaded method to pass assistantType if provided
@@ -675,6 +719,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          @Override
          public void onResponseReceived(AssistantStatusResponse response)
          {
+            imgRefreshSpinner_.setVisible(false);
             hideButtons();
 
             if (response == null)
@@ -707,7 +752,17 @@ public class AssistantPreferencesPane extends PreferencesPane
                {
                   int reason = (int) response.reason.valueOf();
                   lblAssistantStatus_.setText(AssistantResponseTypes.AssistantAgentNotRunningReason.reasonToString(reason, Assistant.getDisplayName(assistantType)));
-                  showButtons(btnRefresh_, btnDiagnostics_);
+
+                  // Show Install button for Posit AI when not installed
+                  if (reason == AssistantResponseTypes.AssistantAgentNotRunningReason.NotInstalled &&
+                      assistantType.equals(UserPrefsAccessor.ASSISTANT_POSIT))
+                  {
+                     showButtons(btnInstall_, btnRefresh_);
+                  }
+                  else
+                  {
+                     showButtons(btnRefresh_, btnDiagnostics_);
+                  }
                }
                else if (projectOptions_ != null &&
                         UserPrefsAccessor.ASSISTANT_NONE.equals(projectOptions_.getAssistantOptions().assistant))
@@ -748,6 +803,9 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onError(ServerError error)
          {
             Debug.logError(error);
+            hideButtons();
+            lblAssistantStatus_.setText(constants_.assistantUnexpectedError());
+            showButtons(btnRefresh_, btnDiagnostics_);
          }
       };
 
@@ -795,7 +853,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
          {
             showInstallUpdatePrompt(newVersion, isInitialInstall, forAssistant,
                previousAssistantValue, previousChatProviderValue);
@@ -957,8 +1015,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       if (forAssistant)
       {
          // Revert assistant preference to previous value
-         String revertTo = previousAssistantValue != null ?
-            previousAssistantValue : UserPrefsAccessor.ASSISTANT_NONE;
+         String revertTo = previousAssistantValue != null
+            ? previousAssistantValue
+            : UserPrefsAccessor.ASSISTANT_NONE;
+
+         if (revertTo.equals(selAssistant_.getValue()))
+            return;
+
          selAssistant_.setValue(revertTo);
          prefs_.assistant().setGlobalValue(revertTo);
          positAiRefreshed_ = false;
@@ -972,8 +1035,13 @@ public class AssistantPreferencesPane extends PreferencesPane
       else
       {
          // Revert chat provider preference to previous value
-         String revertTo = previousChatProviderValue != null ?
-            previousChatProviderValue : UserPrefsAccessor.CHAT_PROVIDER_NONE;
+         String revertTo = previousChatProviderValue != null
+            ?  previousChatProviderValue
+            : UserPrefsAccessor.CHAT_PROVIDER_NONE;
+         
+         if (revertTo.equals(selChatProvider_.getValue()))
+            return;
+
          selChatProvider_.setValue(revertTo);
          prefs_.chatProvider().setGlobalValue(revertTo);
 
@@ -1168,6 +1236,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       String button();
       String assistantStatusLabel();
       String copilotTosLabel();
+      String refreshSpinner();
    }
 
    public interface Resources extends ClientBundle
@@ -1207,6 +1276,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
+   private final Image imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesAutoshow_;
@@ -1218,6 +1288,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SmallButton btnRefresh_;
    private final SmallButton btnDiagnostics_;
    private final SmallButton btnProjectOptions_;
+   private final SmallButton btnInstall_;
    private final NumericValueWidget nvwAssistantCompletionsDelay_;
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
@@ -1236,6 +1307,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final ProjectsServerOperations projectServer_;
    private final GlobalDisplay globalDisplay_;
    private final PaiUtil paiUtil_;
+   private final ChatServerOperations chatServer_;
    private final PositAiInstallManager installManager_;
    
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);

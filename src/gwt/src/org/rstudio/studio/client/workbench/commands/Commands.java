@@ -492,6 +492,7 @@ public abstract class
    public abstract AppCommand showVcsOptions();
    public abstract AppCommand showPublishingOptions();
    public abstract AppCommand showPythonOptions();
+   public abstract AppCommand showAssistantOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
    public abstract AppCommand editCodeSnippets();
    public abstract AppCommand showCommandPalette();
