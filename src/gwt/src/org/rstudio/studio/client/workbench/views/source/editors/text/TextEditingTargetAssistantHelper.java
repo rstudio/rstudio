@@ -674,6 +674,28 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
+    * Checks if a document change intersects with the active NES suggestion range.
+    * Returns true if there is an active suggestion and the change range overlaps it.
+    */
+   private boolean doesChangeIntersectNesSuggestion(AceDocumentChangeEventNative nativeEvent)
+   {
+      if (nesStartAnchor_ == null || nesEndAnchor_ == null)
+         return false;
+
+      Range nesRange = Range.create(
+         nesStartAnchor_.getRow(),
+         nesStartAnchor_.getColumn(),
+         nesEndAnchor_.getRow(),
+         nesEndAnchor_.getColumn());
+
+      Range changeRange = nativeEvent.getRange();
+
+      // Ranges intersect if either contains the other's start position
+      return nesRange.contains(changeRange.getStart()) ||
+             changeRange.contains(nesRange.getStart());
+   }
+
+   /**
     * Converts a delta range (relative to the edit) to a document range.
     * Handles the offset logic where the first line needs column offset but subsequent lines don't.
     */
@@ -1369,11 +1391,18 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
-                  // Eagerly reset Tab acceptance flag and NES state
+                  // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
 
-                  // Avoid re-triggering on newline insertions
                   AceDocumentChangeEventNative nativeEvent = event.getEvent();
+
+                  // Dismiss NES suggestion if the edit intersects the suggestion range
+                  if (nativeEvent != null && doesChangeIntersectNesSuggestion(nativeEvent))
+                  {
+                     resetSuggestion();
+                  }
+
+                  // Avoid re-triggering on newline insertions
                   if (nativeEvent != null)
                   {
                      boolean isNewlineInsertion =
