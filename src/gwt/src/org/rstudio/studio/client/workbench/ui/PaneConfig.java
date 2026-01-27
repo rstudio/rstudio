@@ -91,7 +91,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
       JsArrayString sidebarTabs = createArray().cast();
       sidebarTabs.push(PaneManager.CHAT_PANE);
-      String sidebarLocation = "right";
+      String sidebarLocation = "left";
       boolean sidebarVisible = false;
       boolean consoleLeftOnTop = false;
       boolean consoleRightOnTop = true;
