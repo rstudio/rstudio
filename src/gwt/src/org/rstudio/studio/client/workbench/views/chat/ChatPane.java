@@ -221,7 +221,6 @@ public class ChatPane
     */
    private native void setFrameContent(RStudioThemedFrame frame, String html) /*-{
       try {
-         debugger;
          var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
          doc.open();
          doc.write(html);
