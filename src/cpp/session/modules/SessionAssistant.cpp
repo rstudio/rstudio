@@ -2243,6 +2243,9 @@ Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
    // This allows the agent to start if it was previously marked as not installed.
    DLOG("Assistant installation notification received; re-synchronizing.");
 
+   // Stop a running agent in case we had one
+   stopAgentSync();
+
    // Reset the runtime status to allow the agent to start fresh
    s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
 
