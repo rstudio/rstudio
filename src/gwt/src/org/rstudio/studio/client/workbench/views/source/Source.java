@@ -498,11 +498,21 @@ public class Source implements InsertSourceEvent.Handler,
                String activeDocId = columnManager_.getActiveDocId();
                if (activeDocId != null)
                {
-                  server_.chatDocFocused(activeDocId, new VoidServerRequestCallback());
+                  JsArray<JavaScriptObject> selections = columnManager_.getActiveEditorSelectionsJson();
+                  server_.chatDocFocused(activeDocId, selections, new VoidServerRequestCallback());
                }
             }
          }
       });
+   }
+
+   /**
+    * Get the selections from the active editor as a JSON array.
+    * Used by SourceWindowManager to send selections to the chat backend.
+    */
+   public JsArray<JavaScriptObject> getActiveEditorSelectionsJson()
+   {
+      return columnManager_.getActiveEditorSelectionsJson();
    }
 
    public void load()
@@ -636,7 +646,8 @@ public class Source implements InsertSourceEvent.Handler,
          String activeDocId = columnManager_.getActiveDocId();
          if (activeDocId != null)
          {
-            server_.chatDocFocused(activeDocId, new VoidServerRequestCallback());
+            JsArray<JavaScriptObject> selections = columnManager_.getActiveEditorSelectionsJson();
+            server_.chatDocFocused(activeDocId, selections, new VoidServerRequestCallback());
          }
       }
    }

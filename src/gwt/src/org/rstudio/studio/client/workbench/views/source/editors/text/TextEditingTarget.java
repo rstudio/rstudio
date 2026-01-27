@@ -180,6 +180,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChu
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -206,6 +207,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabExternalEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocWindowChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -2333,6 +2335,19 @@ public class TextEditingTarget implements
          }
       });
 
+      // Fire selection change events for Chat context (debounced)
+      // Use AceSelectionChangedEvent instead of CursorChangedEvent because
+      // the latter only fires when cursor position changes, not when selection
+      // anchor changes (e.g., clicking to deselect without moving cursor)
+      docDisplay_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+      {
+         @Override
+         public void onSelectionChanged(AceSelectionChangedEvent event)
+         {
+            // Debounce selection updates - wait 250ms after selection stops changing
+            selectionChangedTimer_.schedule(250);
+         }
+      });
 
       // initialize visual mode
       visualMode_ = new VisualMode(
@@ -3765,7 +3780,10 @@ public class TextEditingTarget implements
 
       if (inlinePreviewer_ != null)
          inlinePreviewer_.onDismiss();
-      
+
+      if (selectionChangedTimer_ != null)
+         selectionChangedTimer_.cancel();
+
       if (autoSaveTimer_ != null)
          autoSaveTimer_.cancel();
       
@@ -9758,6 +9776,28 @@ public class TextEditingTarget implements
          new IntervalTracker(1000, true);
    private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
+
+   // Timer for debounced selection change events (for Chat context)
+   private final Timer selectionChangedTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // Get current selections and fire event
+         Range[] ranges = docDisplay_.getNativeSelection().getAllRanges();
+         if (ranges == null || ranges.length == 0)
+            return;
+
+         JsArray<JavaScriptObject> selections = JavaScriptObject.createArray().cast();
+         for (Range range : ranges)
+         {
+            String text = docDisplay_.getTextForRange(range);
+            selections.push(DocSelectionChangedEvent.Selection.create(range, text));
+         }
+
+         events_.fireEvent(new DocSelectionChangedEvent(getId(), selections));
+      }
+   };
 
    // Timer for autosave
    private final Timer autoSaveTimer_ = new Timer()

@@ -117,6 +117,7 @@ static bool s_chatBusy = false;
 // Focused document tracking for insertAtCursor
 // ============================================================================
 static std::string s_focusedDocumentId;
+static json::Array s_focusedDocumentSelections;
 
 // ============================================================================
 // Posit Assistant version tracking for About dialog
@@ -1016,8 +1017,15 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             // s_focusedDocumentId is set by chat_doc_focused RPC from GWT client
             fileObj["isActiveEditor"] = (pDoc->id() == s_focusedDocumentId);
 
-            // Selections (empty for now, will be populated when selection tracking is implemented)
-            fileObj["selections"] = json::Array();
+            // Selections for active editor
+            if (pDoc->id() == s_focusedDocumentId && !s_focusedDocumentSelections.isEmpty())
+            {
+               fileObj["selections"] = s_focusedDocumentSelections;
+            }
+            else
+            {
+               fileObj["selections"] = json::Array();
+            }
 
             openFilesArray.push_back(fileObj);
          }
@@ -3638,11 +3646,21 @@ Error chatDocFocused(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string documentId;
-   Error error = core::json::readParams(request.params, &documentId);
+   json::Array selections;
+
+   // Try new signature with selections first
+   Error error = core::json::readParams(request.params, &documentId, &selections);
    if (error)
-      return error;
+   {
+      // Fall back to old signature without selections
+      error = core::json::readParams(request.params, &documentId);
+      if (error)
+         return error;
+      selections = json::Array();
+   }
 
    s_focusedDocumentId = documentId;
+   s_focusedDocumentSelections = selections;
    return Success();
 }
 

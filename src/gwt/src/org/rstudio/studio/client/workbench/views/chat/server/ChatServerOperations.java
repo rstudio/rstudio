@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.chat.server;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -30,4 +33,6 @@ public interface ChatServerOperations
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
 
    public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
+   public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
+                              ServerRequestCallback<Void> requestCallback);
 }
