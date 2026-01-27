@@ -49,6 +49,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -2913,6 +2914,69 @@ Error getPackageInfoFromManifest(
    return Success();
 }
 
+// Extract recommended RStudio version from manifest
+// Returns Success() and populates output params if field is present and valid
+// Returns error if field is missing or invalid (caller should handle gracefully)
+Error getRecommendedRStudioVersion(
+    const json::Object& manifest,
+    std::string* pVersion,
+    std::string* pUrl)
+{
+   if (!pVersion || !pUrl)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Look for "recommendedRStudioVersion" object
+   json::Object versionObj;
+   Error error = json::readObject(manifest, "recommendedRStudioVersion", versionObj);
+   if (error)
+   {
+      // Field not present - this is expected for older manifests
+      return error;
+   }
+
+   // Extract "version" and "url" fields
+   std::string version, url;
+   error = json::readObject(versionObj, "version", version, "url", url);
+   if (error)
+   {
+      WLOG("recommendedRStudioVersion missing required fields: {}", error.getMessage());
+      return error;
+   }
+
+   // Validate URL is HTTPS
+   if (!isHttpsUrl(url))
+   {
+      WLOG("Rejecting recommendedRStudioVersion with non-HTTPS URL: {}", url);
+      return systemError(boost::system::errc::protocol_error,
+                        "recommendedRStudioVersion URL must use HTTPS",
+                        ERROR_LOCATION);
+   }
+
+   *pVersion = version;
+   *pUrl = url;
+
+   DLOG("Found recommended RStudio version: {} at {}", version, url);
+   return Success();
+}
+
+// Show warning bar about outdated RStudio version
+void showRStudioVersionWarning(
+    const std::string& recommendedVersion,
+    const std::string& downloadUrl)
+{
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   boost::format fmt(
+      "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
+      "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
+   );
+   msgJson["message"] = boost::str(fmt %
+      string_utils::htmlEscape(recommendedVersion, true) %
+      string_utils::htmlEscape(downloadUrl, true));
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -3253,6 +3317,50 @@ Error checkForUpdatesOnStartup()
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
       s_updateState.updateAvailable = false;
+   }
+
+   // Check for recommended RStudio version
+   std::string recommendedVersion, downloadPageUrl;
+   Error versionError = getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
+   if (!versionError)
+   {
+      core::Version current(RSTUDIO_VERSION);
+      core::Version recommended(recommendedVersion);
+
+      // Validate version parsed successfully (non-empty with at least major version)
+      if (recommended.empty())
+      {
+         WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
+      }
+      else
+      {
+         // Dev builds use 999 as patch version
+         bool isDevBuild = current.versionPatch() == 999;
+         bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+
+         DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
+              RSTUDIO_VERSION, recommendedVersion, isDevBuild);
+
+         // Skip if Posit Assistant not installed (user hasn't completed beta signup)
+         if (installedVersion == "0.0.0")
+         {
+            DLOG("  Skipping version warning (Posit Assistant not installed)");
+         }
+         // Skip for dev builds unless overridden
+         else if (isDevBuild && !forceDevCheck)
+         {
+            DLOG("  Skipping version warning (dev build)");
+         }
+         else if (current < recommended)
+         {
+            DLOG("  Showing version warning");
+            showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
+         }
+         else
+         {
+            DLOG("  No warning needed (version is current or newer)");
+         }
+      }
    }
 
    return Success();
