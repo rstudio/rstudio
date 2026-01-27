@@ -2969,12 +2969,10 @@ void showRStudioVersionWarning(
    msgJson["severe"] = false;
    boost::format fmt(
       "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
-      "You are currently running %2%. "
-      "<a href=\"%3%\" target=\"_blank\">Download the update</a>"
+      "<a href=\"%2%\" target=\"_blank\">Download the update</a>"
    );
    msgJson["message"] = boost::str(fmt %
       recommendedVersion %
-      currentVersion %
       downloadUrl);
    ClientEvent event(client_events::kShowWarningBar, msgJson);
    module_context::enqueClientEvent(event);
@@ -3364,7 +3362,18 @@ Error checkForUpdatesOnStartup()
          DLOG("  Comparison: current < recommended = {}, current > recommended = {}",
               isOlder ? "true" : "false", isNewer ? "true" : "false");
 
-         if (isOlder)
+         // Skip version warning if Posit Assistant not installed (user hasn't completed beta signup)
+         if (installedVersion == "0.0.0")
+         {
+            DLOG("  Result: Skipping version warning (Posit Assistant not installed)");
+         }
+         // Skip version warning for dev builds (build number 999) unless overridden
+         else if (current.dailyBuildNumber == 999 &&
+                  core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty())
+         {
+            DLOG("  Result: Skipping version warning (dev build)");
+         }
+         else if (isOlder)
          {
             DLOG("  Result: Showing version warning");
             showRStudioVersionWarning(RSTUDIO_VERSION, recommendedVersion, downloadPageUrl);
