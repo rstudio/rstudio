@@ -449,9 +449,16 @@ pre {
 }
 
 /* Darker blue background for all NES gutter cells */
-.ace_nes-gutter, .ace_nes-gutter-background {
+.rstudio-themes-dark .ace_nes-gutter,
+.rstudio-themes-dark .ace_nes-gutter-background {
    background-color: rgba(20, 60, 120, 0.75);
 }
+
+.ace_nes-gutter,
+.ace_nes-gutter-background {
+   background-color: rgba(20, 60, 120, 0.15);
+}
+
 
 /* Type-specific colored dots at bottom-right corner of the icon */
 .ace_nes-gutter-deletion .ace_gutter_annotation::before {
