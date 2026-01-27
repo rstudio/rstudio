@@ -209,6 +209,7 @@ using chat_constants::kServerScriptPath;
 
 // Types used throughout
 using chat_types::SemanticVersion;
+using chat_types::RStudioVersion;
 
 // Logging functions used throughout
 using chat_logging::chatLogLevel;
@@ -2913,6 +2914,72 @@ Error getPackageInfoFromManifest(
    return Success();
 }
 
+// Extract recommended RStudio version from manifest
+// Returns Success() and populates output params if field is present and valid
+// Returns error if field is missing or invalid (caller should handle gracefully)
+Error getRecommendedRStudioVersion(
+    const json::Object& manifest,
+    std::string* pVersion,
+    std::string* pUrl)
+{
+   if (!pVersion || !pUrl)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Look for "recommendedRStudioVersion" object
+   json::Object versionObj;
+   Error error = json::readObject(manifest, "recommendedRStudioVersion", versionObj);
+   if (error)
+   {
+      // Field not present - this is expected for older manifests
+      return error;
+   }
+
+   // Extract "version" and "url" fields
+   std::string version, url;
+   error = json::readObject(versionObj, "version", version, "url", url);
+   if (error)
+   {
+      WLOG("recommendedRStudioVersion missing required fields: {}", error.getMessage());
+      return error;
+   }
+
+   // Validate URL is HTTPS
+   if (!isHttpsUrl(url))
+   {
+      WLOG("Rejecting recommendedRStudioVersion with non-HTTPS URL: {}", url);
+      return systemError(boost::system::errc::protocol_error,
+                        "recommendedRStudioVersion URL must use HTTPS",
+                        ERROR_LOCATION);
+   }
+
+   *pVersion = version;
+   *pUrl = url;
+
+   DLOG("Found recommended RStudio version: {} at {}", version, url);
+   return Success();
+}
+
+// Show warning bar about outdated RStudio version
+void showRStudioVersionWarning(
+    const std::string& currentVersion,
+    const std::string& recommendedVersion,
+    const std::string& downloadUrl)
+{
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   boost::format fmt(
+      "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
+      "You are currently running %2%. "
+      "<a href=\"%3%\" target=\"_blank\">Download the update</a>"
+   );
+   msgJson["message"] = boost::str(fmt %
+      recommendedVersion %
+      currentVersion %
+      downloadUrl);
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -3253,6 +3320,69 @@ Error checkForUpdatesOnStartup()
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
       s_updateState.updateAvailable = false;
+   }
+
+   // Check for recommended RStudio version
+   std::string recommendedVersion, downloadPageUrl;
+   Error versionError = getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
+   if (!versionError)
+   {
+      // Parse and compare versions
+      RStudioVersion current, recommended;
+      bool currentParsed = current.parse(RSTUDIO_VERSION);
+      bool recommendedParsed = recommended.parse(recommendedVersion);
+
+      DLOG("RStudio version check:");
+      DLOG("  Current version string: {}", RSTUDIO_VERSION);
+      if (currentParsed)
+      {
+         DLOG("  Current parsed: {}.{}.{}, suffix='{}', buildNum={}",
+              current.major, current.minor, current.patch,
+              current.suffix, current.dailyBuildNumber);
+      }
+      else
+      {
+         DLOG("  Current version FAILED to parse");
+      }
+
+      DLOG("  Recommended version string: {}", recommendedVersion);
+      if (recommendedParsed)
+      {
+         DLOG("  Recommended parsed: {}.{}.{}, suffix='{}', buildNum={}",
+              recommended.major, recommended.minor, recommended.patch,
+              recommended.suffix, recommended.dailyBuildNumber);
+      }
+      else
+      {
+         DLOG("  Recommended version FAILED to parse");
+      }
+
+      if (currentParsed && recommendedParsed)
+      {
+         bool isOlder = current < recommended;
+         bool isNewer = current > recommended;
+         DLOG("  Comparison: current < recommended = {}, current > recommended = {}",
+              isOlder ? "true" : "false", isNewer ? "true" : "false");
+
+         if (isOlder)
+         {
+            DLOG("  Result: Showing version warning");
+            showRStudioVersionWarning(RSTUDIO_VERSION, recommendedVersion, downloadPageUrl);
+         }
+         else
+         {
+            DLOG("  Result: No warning needed (version is current or newer)");
+         }
+      }
+      else
+      {
+         WLOG("Failed to parse RStudio version(s): current={}, recommended={}",
+              RSTUDIO_VERSION, recommendedVersion);
+      }
+   }
+   else
+   {
+      DLOG("No recommendedRStudioVersion in manifest (this is normal for older manifests)");
    }
 
    return Success();
