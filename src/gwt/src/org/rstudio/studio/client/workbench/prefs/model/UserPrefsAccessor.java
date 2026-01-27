@@ -428,7 +428,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native String getSidebarLocation() /*-{
-         return this && this.sidebar_location || "right";
+         return this && this.sidebar_location || "left";
       }-*/;
 
    }
