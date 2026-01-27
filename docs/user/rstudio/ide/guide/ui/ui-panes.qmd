@@ -9,7 +9,7 @@ The RStudio user interface has 4 primary panes and an optional sidebar pane:
 -  **Console pane**\
 -  **Environment pane**, containing the **Environment**, **History**, **Connections**, **Build**, **VCS** , and **Tutorial** tabs\
 -  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Viewer**, and **Presentation** tabs\
--  **Sidebar pane**, initially empty and hidden but can be configured to show any of the tabs from the **Environment pane** or the **Output pane**, and can be displayed to the right (default) or left of the other panes
+-  **Sidebar pane**, initially empty and hidden but can be configured to show any of the tabs from the **Environment pane** or the **Output pane**, and can be displayed to the left (default) or right of the other panes
 
 Each pane can be minimized or maximized within the column by clicking the minimize/maximize buttons ![](images/min-max.png){width="30" fig-alt="The min-max button which shows a collapsed or expanded Window."}.
 
@@ -193,4 +193,4 @@ The Presentation tab is used to display HTML slides generated via Quarto's `reve
 
 ## Sidebar pane
 
-By default, the Sidebar pane is hidden, and can be displayed using the Sidebar toggle button or View / Show Sidebar. The Sidebar can be configured to display on the left, if desired, and to show any of the tabs from the Environment or Output panes.
+By default, the Sidebar pane is hidden, and can be displayed using the Sidebar toggle button or View / Show Sidebar. The Sidebar can be configured to display on the right, if desired, and to show any of the tabs from the Environment or Output panes.
