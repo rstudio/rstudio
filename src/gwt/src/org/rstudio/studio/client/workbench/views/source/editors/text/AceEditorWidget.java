@@ -1235,7 +1235,8 @@ public class AceEditorWidget extends Composite
          if (anchor_ != null)
             anchor_.detach();
 
-         editor_.getSession().removeMarker(markerId_);
+         if (markerId_ >= 0)
+            editor_.getSession().removeMarker(markerId_);
       }
 
       public AceAnnotation asAceAnnotation()
@@ -1283,30 +1284,25 @@ public class AceEditorWidget extends Composite
       editor_.getSession().setAnnotations(annotations);
    }
 
+   // Show Lint items in the editor.
+   //
+   // Ace provides two mechanisms for displaying 'annotations' in the editor:
+   // - Gutter annotations, which appear in the gutter next to line numbers.
+   // - Inline markers, which underline or highlight text in the editor.
+   //
+   // Lint items can be displayed using different combinations of these mechanisms.
+   //
+   // - Spelling errors have inline markers, but no gutter annotation;
+   // - Other lint items (errors, warnings, info, style) have both markers and annotations;
+   // - Things like NES suggestions are displayed only as gutter annotations (no inline markers).
+   //   (More specifically, the NES system handles inline markers itself via its own architecture.)
+   //
    public void showLint(JsVector<LintItem> lint)
    {
       lint_ = lint;
       clearAnnotations();
-      
-      // Set gutter annotations. Don't include 'spelling' items in gutter.
-      JsVector<LintItem> gutterLint = lint.filter(new Predicate<LintItem>()
-      {
-         @Override
-         public boolean test(LintItem item)
-         {
-            return item.getType() != "spelling";
-         }
-      });
-      
-      // Add the external gutter lint items.
-      JsArray<LintItem> externalItems = externalGutterAnnotations_.values();
-      for (int i = 0, n = externalItems.length(); i < n; i++)
-         gutterLint.push(externalItems.get(i));
 
-      JsArray<AceAnnotation> annotations = LintItem.asAceAnnotations(gutterLint.cast());
-      editor_.getSession().setAnnotations(annotations);
-
-      // Now, set (and cache) inline markers.
+      // Create anchored annotations with inline markers for lint items.
       for (int i = 0; i < lint.length(); i++)
       {
          LintItem item = lint.get(i);
@@ -1325,13 +1321,24 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.style();
          else if (item.getType() == "spelling")
             clazz = lintStyles_.spelling();
-         
-         int id = editor_.getSession().addMarker(range, clazz, "text", true);
+
+         int id = editor_.getSession().addMarker(range, clazz, "text", "spelling", true);
          if (StringUtil.equals(item.getType(), "spelling"))
             inlineAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
          else
             gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), range, id));
       }
+
+      // Add external gutter annotations (gutter-only, no inline markers).
+      JsArray<LintItem> externalItems = externalGutterAnnotations_.values();
+      for (int i = 0, n = externalItems.length(); i < n; i++)
+      {
+         LintItem item = externalItems.get(i);
+         gutterAnnotations_.add(new AnchoredAceAnnotation(item.asAceAnnotation(), null, -1));
+      }
+
+      // Update the gutter display from gutterAnnotations_.
+      updateAnnotations(gutterAnnotations_);
    }
 
    public void clearLint()
@@ -1391,13 +1398,19 @@ public class AceEditorWidget extends Composite
 
    private void updateAnnotations(AceDocumentChangeEventNative event)
    {
+      // Remove any annotations with markers that intersect the changed range.
       Range range = event.getRange();
       removeMarkers(new BiPredicate<AceAnnotation, Marker>()
       {
          @Override
          public boolean test(AceAnnotation annotation, Marker marker)
          {
-            return range.contains(annotation.row(), annotation.column());
+            if (marker == null)
+               return false;
+
+            return
+               annotation != null &&
+               range.contains(annotation.row(), annotation.column());
          }
       });
    }
@@ -1421,7 +1434,11 @@ public class AceEditorWidget extends Composite
    public void removeMarkersOnCursorLine()
    {
       int cursorRow = editor_.getCursorPosition().getRow();
-      removeMarkers((annotation, marker) -> {
+      removeMarkers((annotation, marker) ->
+      {
+         if (marker == null)
+            return false;
+
          Range range = marker.getRange();
          int rowStart = range.getStart().getRow();
          int rowEnd = range.getEnd().getRow();
@@ -1431,7 +1448,11 @@ public class AceEditorWidget extends Composite
 
    public void removeMarkersAtWord(String word)
    {
-      removeMarkers((annotation, marker) -> {
+      removeMarkers((annotation, marker) ->
+      {
+         if (marker == null)
+            return false;
+
          String textRange = editor_.getSession().getTextRange(marker.getRange());
          return textRange.equals(word);
       });
@@ -1445,16 +1466,11 @@ public class AceEditorWidget extends Composite
          @Override
          public boolean test(AnchoredAceAnnotation annotation)
          {
-            // check whether the marker has already been removed, or doesn't exist
+            // retrieve the associated marker, if any
             int markerId = annotation.getMarkerId();
             Marker marker = editor_.getSession().getMarker(markerId);
-            if (marker == null)
-            {
-               annotation.detach();
-               return true;
-            }
 
-            // otherwise, apply the supplied predicate
+            // apply the supplied predicate
             if (predicate.test(annotation.annotation_, marker))
             {
                annotation.detach();
@@ -1480,7 +1496,7 @@ public class AceEditorWidget extends Composite
       });
    }
 
-   public void removeMarkersAtCursorPosition()
+   public void removeSpellingMarkersAtCursorPosition()
    {
       // Defer this so other event handling can update anchors etc.
       Scheduler.get().scheduleDeferred(() ->
@@ -1488,7 +1504,10 @@ public class AceEditorWidget extends Composite
          Position cursorPos = editor_.getCursorPosition();
          removeMarkers((annotation, marker) ->
          {
-            return marker.getRange().contains(cursorPos);
+            return
+               marker != null &&
+               StringUtil.equals(marker.getInfo(), "spelling") &&
+               marker.getRange().contains(cursorPos);
          });
       });
    }

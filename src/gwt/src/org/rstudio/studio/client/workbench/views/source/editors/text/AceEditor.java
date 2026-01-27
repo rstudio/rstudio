@@ -4308,9 +4308,9 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
-   public void removeMarkersAtCursorPosition()
+   public void removeSpellingMarkersAtCursorPosition()
    {
-      widget_.removeMarkersAtCursorPosition();
+      widget_.removeSpellingMarkersAtCursorPosition();
    }
 
    @Override

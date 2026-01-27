@@ -21,10 +21,10 @@ public class Marker extends JavaScriptObject
    protected Marker() {}
    
    // NOTE: no constructor as these are generated internally by Ace
-   public final native Range getRange() /*-{ return this.range; }-*/;
+   public final native int getId() /*-{ return this.id; }-*/;
    public final native String getType() /*-{ return this.type; }-*/;
    public final native String getClazz() /*-{ return this.clazz; }-*/;
+   public final native String getInfo() /*-{ return this.info || ""; }-*/;
+   public final native Range getRange() /*-{ return this.range; }-*/;
    public final native boolean getInFront() /*-{ return this.inFront; }-*/;
-   public final native int getId() /*-{ return this.id; }-*/;
-   
 }

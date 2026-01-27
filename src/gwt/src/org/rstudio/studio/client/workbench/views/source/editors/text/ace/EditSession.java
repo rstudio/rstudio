@@ -241,7 +241,36 @@ public class EditSession extends JavaScriptObject
    public native final int addMarker(Range range,
                                      String clazz,
                                      String type,
-                                     boolean inFront) /*-{
+                                     String info,
+                                     boolean inFront)
+   /*-{
+        var id = this.$markerId++;
+        var marker = {
+            range: range,
+            type: type || "line",
+            clazz: clazz,
+            inFront: !!inFront,
+            id: id,
+            info: info
+        };
+
+        if (inFront) {
+            this.$frontMarkers[id] = marker;
+            this._signal("changeFrontMarker");
+        }
+        else {
+            this.$backMarkers[id] = marker;
+            this._signal("changeBackMarker");
+        }
+
+        return id;
+   }-*/;
+
+   public native final int addMarker(Range range,
+                                     String clazz,
+                                     String type,
+                                     boolean inFront)
+   /*-{
       return this.addMarker(range, clazz, type, inFront);
    }-*/;
    

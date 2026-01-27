@@ -1340,7 +1340,6 @@ public class TextEditingTargetAssistantHelper
                {
                   // Eagerly reset Tab acceptance flag and NES state
                   canAcceptSuggestionWithTab_ = false;
-                  resetSuggestion();
 
                   // Avoid re-triggering on newline insertions
                   AceDocumentChangeEventNative nativeEvent = event.getEvent();

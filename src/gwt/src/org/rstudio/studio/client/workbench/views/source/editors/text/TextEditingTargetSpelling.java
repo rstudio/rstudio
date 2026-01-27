@@ -244,7 +244,7 @@ public class TextEditingTargetSpelling extends SpellingContext
 
                                    MenuItem suggestionItem = new MenuItem(AppCommand.formatMenuLabel(null, suggestion, ""), true, () ->
                                    {
-                                      docDisplay_.removeMarkersAtCursorPosition();
+                                      docDisplay_.removeSpellingMarkersAtCursorPosition();
                                       docDisplay_.replaceRange(replaceRange, suggestion);
                                       lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
                                    });
@@ -260,7 +260,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 MenuItem ignoreItem = new MenuItem(AppCommand.formatMenuLabel(null, constants_.ignoreWord(), ""), true, () ->
                                 {
                                    spellChecker().addIgnoredWord(replaceWord);
-                                   docDisplay_.removeMarkersAtCursorPosition();
+                                   docDisplay_.removeSpellingMarkersAtCursorPosition();
                                 });
 
                                 menu.addItem(ignoreItem);
@@ -269,7 +269,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 MenuItem addToDictionaryItem = new MenuItem(AppCommand.formatMenuLabel(RES.addToDictIcon(), constants_.addToUserDictionary(), ""), true, () ->
                                 {
                                    spellChecker().addToUserDictionary(replaceWord);
-                                   docDisplay_.removeMarkersAtCursorPosition();
+                                   docDisplay_.removeSpellingMarkersAtCursorPosition();
                                 });
 
                                 menu.addItem(addToDictionaryItem);

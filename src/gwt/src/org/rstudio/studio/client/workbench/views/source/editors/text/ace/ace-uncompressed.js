@@ -52715,6 +52715,7 @@ var Gutter = /** @class */ (function () {
         this.session.removeGutterDecoration(row, className);
     };
     Gutter.prototype.setAnnotations = function (annotations) {
+        debugger;
         this.$annotations = [];
         for (var i = 0; i < annotations.length; i++) {
             var annotation = annotations[i];
