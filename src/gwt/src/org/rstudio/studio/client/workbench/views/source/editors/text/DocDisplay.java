@@ -438,11 +438,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void clearLint();
    
    JsMap<Marker> getMarkers(boolean inFront);
-   void removeMarkersAtCursorPosition();
    void removeMarkersOnCursorLine();
    void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate);
    void removeMarkersAtWord(String word);
 
+   void removeSpellingMarkersAtCursorPosition();
    
    void beginCollabSession(CollabEditStartParams params, DirtyState dirtyState);
    boolean hasActiveCollabSession();

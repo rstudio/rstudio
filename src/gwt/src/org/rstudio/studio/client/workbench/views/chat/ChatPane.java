@@ -225,7 +225,6 @@ public class ChatPane
          doc.open();
          doc.write(html);
          doc.close();
-         debugger;
       } catch (e) {
          console.error("Error setting frame content:", e);
       }

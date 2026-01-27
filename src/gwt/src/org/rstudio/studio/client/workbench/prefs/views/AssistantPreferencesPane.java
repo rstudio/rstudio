@@ -88,21 +88,20 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public RestartRequirement onApply(UserPrefs prefs)
    {
-      // Save assistant selection and sync deprecated copilot_enabled preference
+      // Update preferences
       String selectedAssistant = selAssistant_.getValue();
       prefs.assistant().setGlobalValue(selectedAssistant);
+      prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
+      prefs.assistantTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
+      prefs.assistantCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
+
+      // Also sync (deprecated) Copilot settings for now
       prefs.copilotEnabled().setGlobalValue(
             selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
-
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
-      prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
 
-      RestartRequirement requirement = super.onApply(prefs);
-      if (initialCopilotWorkspaceEnabled_ != prefs.copilotProjectWorkspace().getGlobalValue())
-         requirement.setSessionRestartRequired(true);
-
-      return requirement;
+      return super.onApply(prefs);
    }
 
    @Inject
@@ -1088,7 +1087,6 @@ public class AssistantPreferencesPane extends PreferencesPane
          selAssistant_.setValue(UserPrefsAccessor.ASSISTANT_NONE);
       }
 
-      initialCopilotWorkspaceEnabled_ = prefs.copilotProjectWorkspace().getGlobalValue();
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
          @Override
@@ -1253,7 +1251,6 @@ public class AssistantPreferencesPane extends PreferencesPane
    
    // State
    private String assistantStartupError_;
-   private boolean initialCopilotWorkspaceEnabled_;
    private HandlerRegistration assistantRuntimeStatusHandler_;
    private HandlerRegistration projectOptionsChangedHandler_;
    private boolean assistantStarted_ = false; // did Copilot get started while the dialog was open?

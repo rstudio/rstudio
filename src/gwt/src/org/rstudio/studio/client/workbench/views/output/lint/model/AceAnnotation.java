@@ -25,26 +25,29 @@ public class AceAnnotation extends JavaScriptObject
                                              String html,
                                              String text,
                                              String type,
-                                             String className)
+                                             String className,
+                                             String tooltip)
    /*-{
       
       if (type !== "error" && type !== "warning") {
          type = "info";
       }
       
-      var aceAnnotation = {
+      var annotation = {
          row: row,
          column: column,
          type: type
       };
       
       if (html) 
-         aceAnnotation.html = html;
+         annotation.html = html;
       else
-         aceAnnotation.text = text;
+         annotation.text = text;
 
-      aceAnnotation.className = className;
-      return aceAnnotation;
+      annotation.className = className;
+      annotation.tooltip = tooltip;
+
+      return annotation;
    }-*/;
    
    public final native int row() /*-{ return this.row; }-*/;
@@ -53,4 +56,5 @@ public class AceAnnotation extends JavaScriptObject
    public final native String html() /*-{ return this.html; }-*/;
    public final native String type() /*-{ return this.type; }-*/;
    public final native String className() /*-{ return this.className; }-*/;
+   public final native String tooltip() /*-{ return this.tooltip; }-*/;
 }

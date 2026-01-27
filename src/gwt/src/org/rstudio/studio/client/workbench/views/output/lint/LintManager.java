@@ -154,7 +154,7 @@ public class LintManager
                public void execute()
                {
                   // only remove spelling markers at cursor position
-                  docDisplay_.removeMarkersAtCursorPosition();
+                  docDisplay_.removeSpellingMarkersAtCursorPosition();
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
