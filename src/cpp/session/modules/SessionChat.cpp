@@ -2961,7 +2961,6 @@ Error getRecommendedRStudioVersion(
 
 // Show warning bar about outdated RStudio version
 void showRStudioVersionWarning(
-    const std::string& currentVersion,
     const std::string& recommendedVersion,
     const std::string& downloadUrl)
 {
@@ -2969,11 +2968,11 @@ void showRStudioVersionWarning(
    msgJson["severe"] = false;
    boost::format fmt(
       "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
-      "<a href=\"%2%\" target=\"_blank\">Download the update</a>"
+      "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
    );
    msgJson["message"] = boost::str(fmt %
-      recommendedVersion %
-      downloadUrl);
+      string_utils::htmlEscape(recommendedVersion, true) %
+      string_utils::htmlEscape(downloadUrl, true));
    ClientEvent event(client_events::kShowWarningBar, msgJson);
    module_context::enqueClientEvent(event);
 }
@@ -3328,31 +3327,39 @@ Error checkForUpdatesOnStartup()
       core::Version current(RSTUDIO_VERSION);
       core::Version recommended(recommendedVersion);
 
-      // Dev builds use 999 as patch version
-      bool isDevBuild = current.versionPatch() == 999;
-      bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
-
-      DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
-           RSTUDIO_VERSION, recommendedVersion, isDevBuild);
-
-      // Skip if Posit Assistant not installed (user hasn't completed beta signup)
-      if (installedVersion == "0.0.0")
+      // Validate version parsed successfully (non-empty with at least major version)
+      if (recommended.empty())
       {
-         DLOG("  Skipping version warning (Posit Assistant not installed)");
-      }
-      // Skip for dev builds unless overridden
-      else if (isDevBuild && !forceDevCheck)
-      {
-         DLOG("  Skipping version warning (dev build)");
-      }
-      else if (current < recommended)
-      {
-         DLOG("  Showing version warning");
-         showRStudioVersionWarning(RSTUDIO_VERSION, recommendedVersion, downloadPageUrl);
+         WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
       }
       else
       {
-         DLOG("  No warning needed (version is current or newer)");
+         // Dev builds use 999 as patch version
+         bool isDevBuild = current.versionPatch() == 999;
+         bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+
+         DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
+              RSTUDIO_VERSION, recommendedVersion, isDevBuild);
+
+         // Skip if Posit Assistant not installed (user hasn't completed beta signup)
+         if (installedVersion == "0.0.0")
+         {
+            DLOG("  Skipping version warning (Posit Assistant not installed)");
+         }
+         // Skip for dev builds unless overridden
+         else if (isDevBuild && !forceDevCheck)
+         {
+            DLOG("  Skipping version warning (dev build)");
+         }
+         else if (current < recommended)
+         {
+            DLOG("  Showing version warning");
+            showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
+         }
+         else
+         {
+            DLOG("  No warning needed (version is current or newer)");
+         }
       }
    }
 
