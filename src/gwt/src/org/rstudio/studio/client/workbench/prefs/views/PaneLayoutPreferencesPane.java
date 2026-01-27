@@ -367,10 +367,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       // Set initial selection based on current preference
       String currentLocation = currentConfig.getSidebarLocation();
-      if ("left".equals(currentLocation))
-         sidebarLocation_.setSelectedIndex(0);
+      if ("right".equals(currentLocation))
+         sidebarLocation_.setSelectedIndex(1);
       else
-         sidebarLocation_.setSelectedIndex(1); // default to right
+         sidebarLocation_.setSelectedIndex(0); // default to left
 
       // Add change handler to track changes and rebuild grid
       sidebarLocation_.addChangeHandler(event -> {
@@ -498,6 +498,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private void resetToDefaults()
    {
+      // Suppress auto-check behavior during reset
+      isResetting_ = true;
+
       // Get default configuration
       PaneConfig defaultConfig = PaneConfig.createDefault();
 
@@ -540,6 +543,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       // Mark as dirty so changes apply on OK/Apply
       dirty_ = true;
+
+      // Re-enable auto-check behavior
+      isResetting_ = false;
    }
 
    private String updateTable(int newCount)
@@ -894,7 +900,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          boolean sidebarVisible = sidebarVisibleCheckbox_.getValue();
 
          // Get the selected sidebar location from dropdown
-         String sidebarLocation = "right"; // default
+         String sidebarLocation = "left"; // default
          if (sidebarLocation_ != null)
          {
             int selectedIndex = sidebarLocation_.getSelectedIndex();
@@ -959,6 +965,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private void updateSidebarVisibilityCheckbox()
    {
+      // Don't auto-update during reset - reset sets visibility explicitly
+      if (isResetting_)
+         return;
+
       boolean hasTabs = hasSidebarTabs();
       boolean currentlyVisible = sidebarVisibleCheckbox_.getValue();
 
@@ -1000,6 +1010,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final CheckBox sidebarVisibleCheckbox_;
    private final PaneManager paneManager_;
    private boolean dirty_ = false;
+   private boolean isResetting_ = false;
    private Toolbar columnToolbar_;
 
    private VerticalPanel leftTopPanel_;

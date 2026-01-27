@@ -53,7 +53,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_RIGHT_BOTTOM, expectedTabSet2Tabs)
 
    # Check that Sidebar dropdown shows correct text
-   expectedSidebarTabs <- c("Sidebar on Right")
+   expectedSidebarTabs <- c("Sidebar on Left")
    .rs.verifyQuadrantTabs(remote, PANE_LAYOUT_SIDEBAR, expectedSidebarTabs)
 
    # Check that Sidebar visible checkbox is unchecked
@@ -76,7 +76,7 @@ withr::defer(.rs.automation.deleteRemote())
    
    # Test sidebar dropdown
    expectedTexts <- c("Sidebar on Left", "Sidebar on Right")
-   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_SIDEBAR_SELECT, expectedTexts, 2)
+   .rs.verifyQuadrantDropdownOptions(remote, PANE_LAYOUT_SIDEBAR_SELECT, expectedTexts, 1)
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
@@ -414,10 +414,10 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
                info = "Sidebar should now be checked")
 
-   # Move sidebar to left
-   .rs.selectDropdownOption(remote, PANE_LAYOUT_SIDEBAR, "Sidebar on Left")
+   # Move sidebar to right (away from the default of left)
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_SIDEBAR, "Sidebar on Right")
    sidebarPosition <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
-   expect_equal(sidebarPosition, "Sidebar on Left", info = "Sidebar should be on left")
+   expect_equal(sidebarPosition, "Sidebar on Right", info = "Sidebar should be on right")
 
    # Add some tabs to the sidebar (Files, Environment, History)
    expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Files"))
@@ -441,14 +441,14 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Verify all settings are back to defaults
 
-   # 1. Sidebar should be unchecked
+   # 1. Sidebar should be unchecked (hidden by default, even though Posit Assistant is in sidebar)
    expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
                 info = "Sidebar visible checkbox should be unchecked after reset")
 
-   # 2. Sidebar should be on right
+   # 2. Sidebar should be on left (the default)
    sidebarPositionAfter <- .rs.getQuadrantDropdownText(remote, PANE_LAYOUT_SIDEBAR)
-   expect_equal(sidebarPositionAfter, "Sidebar on Right",
-                info = "Sidebar should be on right after reset")
+   expect_equal(sidebarPositionAfter, "Sidebar on Left",
+                info = "Sidebar should be on left after reset")
 
    # 3. Only Posit Assistant should be checked in Sidebar
    expect_true(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Posit Assistant"),
@@ -526,10 +526,15 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
                info = "Sidebar visibility should remain checked when tabs remain")
 
-   # Uncheck the last visible tab (Environment)
+   # Uncheck Environment
    expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"))
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
                 info = "Environment should no longer be checked in sidebar")
+
+   # Also uncheck Posit Assistant (which is checked by default) to truly empty the sidebar
+   expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Posit Assistant"))
+   expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should no longer be checked in sidebar")
 
    # Verify sidebar visibility checkbox was automatically unchecked
    expect_false(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
