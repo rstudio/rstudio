@@ -1363,6 +1363,7 @@ public class TextEditingTargetAssistantHelper
                   Timers.singleShot(0, () -> {
                      activeCompletion_ = null;
                      display_.removeGhostText();
+                     resetSuggestion();
                   });
                }),
 
@@ -1782,6 +1783,27 @@ public class TextEditingTargetAssistantHelper
       else if (nesCompletion_ != null)
       {
          applyNesSuggestion();
+      }
+      else if (display_.hasGhostText() && activeCompletion_ != null)
+      {
+         // Accept ghost text completion
+         Range aceRange = Range.create(
+               completionStartAnchor_.getRow(),
+               completionStartAnchor_.getColumn(),
+               completionEndAnchor_.getRow(),
+               completionEndAnchor_.getColumn());
+         display_.replaceRange(aceRange, activeCompletion_.insertText);
+
+         Position cursorPos = Position.create(
+            completionEndAnchor_.getRow(),
+            completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+         display_.setCursorPosition(cursorPos);
+
+         server_.assistantDidAcceptCompletion(
+            activeCompletion_.originalCompletion.command,
+            new VoidServerRequestCallback());
+
+         reset();
       }
       else
       {
