@@ -471,6 +471,34 @@ public class TextEditingTargetAssistantHelper
       }
    }
 
+   // Helper class for storing ranges using anchors so they update on document changes
+   private static class AnchoredRange
+   {
+      AnchoredRange(Anchor startAnchor, Anchor endAnchor)
+      {
+         this.startAnchor = startAnchor;
+         this.endAnchor = endAnchor;
+      }
+
+      Range toRange()
+      {
+         return Range.create(
+            startAnchor.getRow(),
+            startAnchor.getColumn(),
+            endAnchor.getRow(),
+            endAnchor.getColumn());
+      }
+
+      void detach()
+      {
+         startAnchor.detach();
+         endAnchor.detach();
+      }
+
+      private final Anchor startAnchor;
+      private final Anchor endAnchor;
+   }
+
    /**
     * Applies the current NES suggestion (insertion, deletion, or replacement).
     */
@@ -528,8 +556,10 @@ public class TextEditingTargetAssistantHelper
          int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
          nesMarkerIds_.add(markerId);
 
-         // Store the document range for click detection
-         nesClickableRanges_.add(documentRange);
+         // Store the document range for click detection using anchors
+         Anchor startAnchor = display_.createAnchor(documentRange.getStart());
+         Anchor endAnchor = display_.createAnchor(documentRange.getEnd());
+         nesClickableRanges_.add(new AnchoredRange(startAnchor, endAnchor));
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, documentRange.getStart().getRow());
@@ -556,10 +586,11 @@ public class TextEditingTargetAssistantHelper
          // Track the position for cleanup
          nesTokenPositions_.add(Position.create(insertRow, insertCol));
 
-         // Store the range for click detection
+         // Store the range for click detection using anchors
          int insertEndCol = insertCol + delta.text.length();
-         Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
-         nesClickableRanges_.add(insertionRange);
+         Anchor insertStartAnchor = display_.createAnchor(Position.create(insertRow, insertCol));
+         Anchor insertEndAnchor = display_.createAnchor(Position.create(insertRow, insertEndCol));
+         nesClickableRanges_.add(new AnchoredRange(insertStartAnchor, insertEndAnchor));
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, insertRow);
@@ -634,9 +665,9 @@ public class TextEditingTargetAssistantHelper
     */
    private boolean isPositionInNesRange(Position pos)
    {
-      for (Range range : nesClickableRanges_)
+      for (AnchoredRange anchoredRange : nesClickableRanges_)
       {
-         if (range.contains(pos))
+         if (anchoredRange.toRange().contains(pos))
             return true;
       }
       return false;
@@ -2097,7 +2128,9 @@ public class TextEditingTargetAssistantHelper
          reg.removeHandler();
       nesGutterRegistrations_.clear();
 
-      // Clear clickable ranges
+      // Detach and clear clickable range anchors
+      for (AnchoredRange anchoredRange : nesClickableRanges_)
+         anchoredRange.detach();
       nesClickableRanges_.clear();
 
       // Reset tokens for all tracked positions
@@ -2159,7 +2192,7 @@ public class TextEditingTargetAssistantHelper
    private EditDeltas nesDeltas_;
    private List<Integer> nesMarkerIds_ = new ArrayList<>();
    private List<HandlerRegistration> nesGutterRegistrations_ = new ArrayList<>();
-   private List<Range> nesClickableRanges_ = new ArrayList<>();
+   private List<AnchoredRange> nesClickableRanges_ = new ArrayList<>();
    private List<Position> nesTokenPositions_ = new ArrayList<>();
    private int nesBoundsMarkerId_ = -1;
    private Anchor nesStartAnchor_;
