@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -1329,10 +1330,24 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addValueChangeHandler((event) ->
+               display_.addDocumentChangedHandler((event) ->
                {
-                  // Eagerly reset Tab acceptance flag
+                  // Eagerly reset Tab acceptance flag and NES state
                   canAcceptSuggestionWithTab_ = false;
+                  resetSuggestion();
+
+                  // Avoid re-triggering on newline insertions
+                  AceDocumentChangeEventNative nativeEvent = event.getEvent();
+                  if (nativeEvent != null)
+                  {
+                     boolean isNewlineInsertion =
+                        nativeEvent.lines.length() == 2 &&
+                        nativeEvent.lines.get(0).isEmpty() &&
+                        nativeEvent.lines.get(1).isEmpty();
+
+                     if (isNewlineInsertion)
+                        return;
+                  }
 
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
@@ -1782,6 +1797,27 @@ public class TextEditingTargetAssistantHelper
       else if (nesCompletion_ != null)
       {
          applyNesSuggestion();
+      }
+      else if (display_.hasGhostText() && activeCompletion_ != null)
+      {
+         // Accept ghost text completion
+         Range aceRange = Range.create(
+               completionStartAnchor_.getRow(),
+               completionStartAnchor_.getColumn(),
+               completionEndAnchor_.getRow(),
+               completionEndAnchor_.getColumn());
+         display_.replaceRange(aceRange, activeCompletion_.insertText);
+
+         Position cursorPos = Position.create(
+            completionEndAnchor_.getRow(),
+            completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+         display_.setCursorPosition(cursorPos);
+
+         server_.assistantDidAcceptCompletion(
+            activeCompletion_.originalCompletion.command,
+            new VoidServerRequestCallback());
+
+         reset();
       }
       else
       {
