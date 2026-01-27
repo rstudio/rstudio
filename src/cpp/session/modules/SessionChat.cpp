@@ -49,6 +49,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -209,7 +210,6 @@ using chat_constants::kServerScriptPath;
 
 // Types used throughout
 using chat_types::SemanticVersion;
-using chat_types::RStudioVersion;
 
 // Logging functions used throughout
 using chat_logging::chatLogLevel;
@@ -3325,73 +3325,35 @@ Error checkForUpdatesOnStartup()
    Error versionError = getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
    if (!versionError)
    {
-      // Parse and compare versions
-      RStudioVersion current, recommended;
-      bool currentParsed = current.parse(RSTUDIO_VERSION);
-      bool recommendedParsed = recommended.parse(recommendedVersion);
+      core::Version current(RSTUDIO_VERSION);
+      core::Version recommended(recommendedVersion);
 
-      DLOG("RStudio version check:");
-      DLOG("  Current version string: {}", RSTUDIO_VERSION);
-      if (currentParsed)
+      // Dev builds use 999 as patch version
+      bool isDevBuild = current.versionPatch() == 999;
+      bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+
+      DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
+           RSTUDIO_VERSION, recommendedVersion, isDevBuild);
+
+      // Skip if Posit Assistant not installed (user hasn't completed beta signup)
+      if (installedVersion == "0.0.0")
       {
-         DLOG("  Current parsed: {}.{}.{}, suffix='{}', buildNum={}",
-              current.major, current.minor, current.patch,
-              current.suffix, current.dailyBuildNumber);
+         DLOG("  Skipping version warning (Posit Assistant not installed)");
+      }
+      // Skip for dev builds unless overridden
+      else if (isDevBuild && !forceDevCheck)
+      {
+         DLOG("  Skipping version warning (dev build)");
+      }
+      else if (current < recommended)
+      {
+         DLOG("  Showing version warning");
+         showRStudioVersionWarning(RSTUDIO_VERSION, recommendedVersion, downloadPageUrl);
       }
       else
       {
-         DLOG("  Current version FAILED to parse");
+         DLOG("  No warning needed (version is current or newer)");
       }
-
-      DLOG("  Recommended version string: {}", recommendedVersion);
-      if (recommendedParsed)
-      {
-         DLOG("  Recommended parsed: {}.{}.{}, suffix='{}', buildNum={}",
-              recommended.major, recommended.minor, recommended.patch,
-              recommended.suffix, recommended.dailyBuildNumber);
-      }
-      else
-      {
-         DLOG("  Recommended version FAILED to parse");
-      }
-
-      if (currentParsed && recommendedParsed)
-      {
-         bool isOlder = current < recommended;
-         bool isNewer = current > recommended;
-         DLOG("  Comparison: current < recommended = {}, current > recommended = {}",
-              isOlder ? "true" : "false", isNewer ? "true" : "false");
-
-         // Skip version warning if Posit Assistant not installed (user hasn't completed beta signup)
-         if (installedVersion == "0.0.0")
-         {
-            DLOG("  Result: Skipping version warning (Posit Assistant not installed)");
-         }
-         // Skip version warning for dev builds (build number 999) unless overridden
-         else if (current.dailyBuildNumber == 999 &&
-                  core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty())
-         {
-            DLOG("  Result: Skipping version warning (dev build)");
-         }
-         else if (isOlder)
-         {
-            DLOG("  Result: Showing version warning");
-            showRStudioVersionWarning(RSTUDIO_VERSION, recommendedVersion, downloadPageUrl);
-         }
-         else
-         {
-            DLOG("  Result: No warning needed (version is current or newer)");
-         }
-      }
-      else
-      {
-         WLOG("Failed to parse RStudio version(s): current={}, recommended={}",
-              RSTUDIO_VERSION, recommendedVersion);
-      }
-   }
-   else
-   {
-      DLOG("No recommendedRStudioVersion in manifest (this is normal for older manifests)");
    }
 
    return Success();

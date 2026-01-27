@@ -43,29 +43,6 @@ struct SemanticVersion
    bool operator!=(const SemanticVersion& other) const;
 };
 
-// Parse RStudio version string with daily build support
-// Format: "YYYY.MM.P[-suffix[+buildNum]]"
-// Examples: "2026.04.0", "2026.04.0-daily+172", "2026.04.0-preview"
-struct RStudioVersion
-{
-   int major;           // 2026
-   int minor;           // 04
-   int patch;           // 0
-   std::string suffix;  // "-daily+172" or "-preview" or ""
-   int dailyBuildNumber; // 172 (or -1 if not a daily build)
-
-   RStudioVersion();
-
-   bool parse(const std::string& versionStr);
-
-   bool operator<(const RStudioVersion& other) const;
-   bool operator>(const RStudioVersion& other) const;
-   bool operator<=(const RStudioVersion& other) const;
-   bool operator>=(const RStudioVersion& other) const;
-   bool operator==(const RStudioVersion& other) const;
-   bool operator!=(const RStudioVersion& other) const;
-};
-
 } // namespace types
 } // namespace chat
 } // namespace modules
