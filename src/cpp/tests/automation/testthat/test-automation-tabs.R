@@ -173,10 +173,12 @@ isElementSelected <- function(selector) {
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Files"),
                "Files should be unchecked in sidebar after toggling")
 
-   # Keep the sidebar visible despite having no tabs
-   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   # Keep the sidebar visible (Posit Assistant is still in sidebar by default, so it may already be checked)
+   if (!remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE))) {
+      remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   }
    expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
-               info = "Sidebar should now be checked")
+               info = "Sidebar should be checked")
 
    # Apply changes by clicking OK button
    remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
@@ -282,14 +284,16 @@ isElementSelected <- function(selector) {
    expect_true(.rs.toggleTab(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
                "Should successfully toggle Environment off sidebar")
 
-   # Verify Files is now unchecked in the sidebar
+   # Verify Environment is now unchecked in the sidebar
    expect_false(.rs.isTabChecked(remote, PANE_LAYOUT_SIDEBAR, "Environment"),
                "Environment should be unchecked in sidebar after toggling")
 
-   # Keep the sidebar visible despite having no tabs
-   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   # Keep the sidebar visible (Posit Assistant is still in sidebar by default, so it may already be checked)
+   if (!remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE))) {
+      remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+   }
    expect_true(remote$dom.isChecked(remote$dom.querySelector(PANE_LAYOUT_SIDEBAR_VISIBLE)),
-               info = "Sidebar should now be checked")
+               info = "Sidebar should be checked")
 
    # Apply changes by clicking OK button
    remote$dom.clickElement(selector = "#rstudio_preferences_confirm")

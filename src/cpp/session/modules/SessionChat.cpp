@@ -118,6 +118,7 @@ static bool s_chatBusy = false;
 // Focused document tracking for insertAtCursor
 // ============================================================================
 static std::string s_focusedDocumentId;
+static json::Array s_focusedDocumentSelections;
 
 // ============================================================================
 // Posit Assistant version tracking for About dialog
@@ -970,11 +971,15 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
             json::Object fileObj;
 
-            // Construct URI based on document type
+            // Construct URI and fileName based on document type
             if (pDoc->isUntitled())
             {
                // Use untitled: scheme for unsaved documents (matches Positron/VSCode convention)
                fileObj["uri"] = fmt::format("untitled:{}", pDoc->id());
+
+               // Use tempName property (matches UI display like "Untitled1").
+               // This is guaranteed to be set when isUntitled() is true.
+               fileObj["tempName"] = pDoc->getProperty("tempName");
             }
             else
             {
@@ -1009,8 +1014,19 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             // relativeOrder == 0 means document is loaded but not visible in a tab
             fileObj["isVisible"] = (pDoc->relativeOrder() > 0);
 
-            // Text selections (empty for now, will be populated when selection tracking is implemented)
-            fileObj["textSelections"] = json::Array();
+            // Active: the document currently focused in the editor
+            // s_focusedDocumentId is set by chat_doc_focused RPC from GWT client
+            fileObj["isActiveEditor"] = (pDoc->id() == s_focusedDocumentId);
+
+            // Selections for active editor
+            if (pDoc->id() == s_focusedDocumentId && !s_focusedDocumentSelections.isEmpty())
+            {
+               fileObj["selections"] = s_focusedDocumentSelections;
+            }
+            else
+            {
+               fileObj["selections"] = json::Array();
+            }
 
             openFilesArray.push_back(fileObj);
          }
@@ -1883,6 +1899,13 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    result["isModified"] = doc->dirty();
    result["languageId"] = languageIdFromDocument(doc);
 
+   // Set fileName for display purposes
+   if (doc->isUntitled())
+   {
+      // Use tempName property if available (matches UI display like "Untitled1")
+      result["tempName"] = doc->getProperty("tempName");
+   }
+
    DLOG("Read file content from editor buffer (modified: {})", doc->dirty());
 
    sendJsonRpcResponse(ops, requestId, result);
@@ -2002,6 +2025,11 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       module_context::enqueClientEvent(event);
 
       result["success"] = true;
+      if (doc->isUntitled())
+      {
+         // For untitled documents, return the tempName for display purposes
+         result["tempName"] = doc->getProperty("tempName");
+      }
 
       DLOG("Sent editor command to replace document content");
    }
@@ -3625,11 +3653,21 @@ Error chatDocFocused(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string documentId;
-   Error error = core::json::readParams(request.params, &documentId);
+   json::Array selections;
+
+   // Try new signature with selections first
+   Error error = core::json::readParams(request.params, &documentId, &selections);
    if (error)
-      return error;
+   {
+      // Fall back to old signature without selections
+      error = core::json::readParams(request.params, &documentId);
+      if (error)
+         return error;
+      selections = json::Array();
+   }
 
    s_focusedDocumentId = documentId;
+   s_focusedDocumentSelections = selections;
    return Success();
 }
 

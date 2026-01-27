@@ -889,7 +889,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private Widget center_;
    private Widget right_;
    private Widget sidebar_;
-   private String sidebarLocation_ = "right";
+   private String sidebarLocation_ = "left";
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
    private Command layoutCommand_;

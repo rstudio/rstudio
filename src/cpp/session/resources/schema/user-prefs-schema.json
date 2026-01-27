@@ -233,7 +233,7 @@
                 "console_right_on_top": true,
                 "additional_source_columns": 0,
                 "sidebar_visible": false,
-                "sidebar_location": "right"
+                "sidebar_location": "left"
             },
             "description": "Layout of panes in the RStudio workbench."
         },
