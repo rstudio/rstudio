@@ -1250,13 +1250,16 @@ public class AceEditorWidget extends Composite
 
       public AceAnnotation asAceAnnotation()
       {
-         return AceAnnotation.create(
+         AceAnnotation annotation = AceAnnotation.create(
                anchor_.getRow(),
                anchor_.getColumn(),
                annotation_.html(),
                annotation_.text(),
                annotation_.type(),
-               annotation_.className());
+               annotation_.className(),
+               annotation_.tooltip());
+
+         return annotation;
       }
 
       private final AceAnnotation annotation_;

@@ -121,6 +121,10 @@ public class LintItem extends JavaScriptObject
    public final native String getClassName() /*-{
       return this.className;
    }-*/;
+
+   public final native String getTooltip() /*-{
+      return this.tooltip;
+   }-*/;
    
    public final Range asRange()
    {
@@ -137,7 +141,8 @@ public class LintItem extends JavaScriptObject
             getHtml(),
             getText(),
             getType(),
-            getClassName());
+            getClassName(),
+            getTooltip());
    }
    
    public static final native JsArray<AceAnnotation> asAceAnnotations(JsArray<LintItem> items)
