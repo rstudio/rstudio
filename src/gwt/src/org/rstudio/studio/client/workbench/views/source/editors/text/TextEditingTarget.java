@@ -71,7 +71,6 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -108,6 +107,7 @@ import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -140,7 +140,6 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
-import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -1975,20 +1974,6 @@ public class TextEditingTarget implements
                            {
                               int scrollLine = completion.range.start.line - 5;
                               docDisplay_.scrollToLine(scrollLine, false);
-
-                              for (int line = completion.range.start.line;
-                                   line <= completion.range.end.line;
-                                   line++)
-                              {
-                                 HandlerRegistration registration =
-                                    docDisplay_.addGutterItem(line, AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-
-                                 Timers.singleShot(2000, () ->
-                                 {
-                                    registration.removeHandler();
-                                 });
-
-                              }
                            }
                         };
                      }

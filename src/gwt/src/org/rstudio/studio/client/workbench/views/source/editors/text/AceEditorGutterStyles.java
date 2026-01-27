@@ -22,9 +22,13 @@ public class AceEditorGutterStyles
    public static final String PENDING_BREAKPOINT           = "ace_pending-breakpoint";
 
    // NES (Next Edit Suggestion) gutter styles - base class + color modifier
-   public static final String NES_GUTTER_BASE              = "ace_nes-gutter";
-   public static final String NEXT_EDIT_SUGGESTION         = "ace_nes-gutter ace_nes-gutter-highlight";
-   public static final String NEXT_EDIT_SUGGESTION_DELETION = "ace_nes-gutter ace_nes-gutter-deletion";
-   public static final String NEXT_EDIT_SUGGESTION_INSERTION = "ace_nes-gutter ace_nes-gutter-insertion";
-   public static final String NEXT_EDIT_SUGGESTION_REPLACEMENT = "ace_nes-gutter ace_nes-gutter-replacement";
+   public static final String NES_GUTTER             = "ace_nes-gutter";
+   public static final String NES_GUTTER_HIGHLIGHT   = "ace_nes-gutter ace_nes-gutter-highlight";
+   public static final String NES_GUTTER_DELETION    = "ace_nes-gutter ace_nes-gutter-deletion";
+   public static final String NES_GUTTER_INSERTION   = "ace_nes-gutter ace_nes-gutter-insertion";
+   public static final String NES_GUTTER_REPLACEMENT = "ace_nes-gutter ace_nes-gutter-replacement";
+
+   // NES gutter background style (darker blue background for all NES gutter cells)
+   public static final String NES_GUTTER_BACKGROUND  = "ace_nes-gutter-background";
+
 }
