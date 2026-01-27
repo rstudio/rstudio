@@ -145,6 +145,7 @@ bool isDirectoryLockedWin32(const std::wstring& filePath)
          if (dwError == ERROR_SHARING_VIOLATION)
          {
             // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            FindClose(hFind);
             return true;
          }
       }
@@ -158,6 +159,7 @@ bool isDirectoryLockedWin32(const std::wstring& filePath)
          if (isDirectoryLockedWin32(childPath))
          {
             // REprintf("[!] %s is locked.\n", string_utils::wideToUtf8(childPath).c_str());
+            FindClose(hFind);
             return true;
          }
       }
