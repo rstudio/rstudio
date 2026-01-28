@@ -29,6 +29,11 @@ const char* kAnsiMatch = "[\\x1b\\x9b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0
 // Match xterm title sequence (followed by text, ended by BEL)
 const char* kXTermTitleMatch = "\\x1b]0;.*?\\x07";
 
+// Match simple ESC + letter sequences with optional numeric parameters
+// e.g., ESC G, ESC H1;, ESC g (used by RStudio for clickable error links)
+// Raw ESC byte (0x1B) followed by letter and optional params
+const char* kSimpleEscapeMatch = "\\x1b[A-Za-z][0-9;]*";
+
 } // anonymous namespace
 
 void stripAnsiCodes(std::string* pStr)
@@ -37,6 +42,9 @@ void stripAnsiCodes(std::string* pStr)
       return;
 
    std::string replacement;
+   // Strip simple ESC sequences first (they include params like "1;")
+   // before kAnsiMatch which would only match "ESC G" without the params
+   *pStr = boost::regex_replace(*pStr, boost::regex(kSimpleEscapeMatch), replacement);
    *pStr = boost::regex_replace(*pStr, boost::regex(kAnsiMatch), replacement);
    *pStr = boost::regex_replace(*pStr, boost::regex(kXTermTitleMatch), replacement);
 }

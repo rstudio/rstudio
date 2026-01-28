@@ -56,6 +56,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
@@ -2269,6 +2270,40 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+void handleGetConsoleContent(core::system::ProcessOperations& ops,
+                             const json::Value& requestId,
+                             const json::Object& params)
+{
+   DLOG("Handling runtime/getConsoleContent request");
+
+   // Extract parameters with defaults
+   int limit = 50;
+   int offset = 0;
+   bool fromBottom = true;
+   int maxChars = 8000;
+
+   json::readObject(params, "limit", limit);
+   json::readObject(params, "offset", offset);
+   json::readObject(params, "fromBottom", fromBottom);
+   json::readObject(params, "maxChars", maxChars);
+
+   // Get console lines from the console actions buffer
+   std::vector<std::string> lines =
+       r::session::consoleActions().getConsoleLines(limit, offset, fromBottom, maxChars);
+
+   // Build response
+   json::Array linesArray;
+   for (const std::string& line : lines)
+   {
+      linesArray.push_back(line);
+   }
+
+   json::Object result;
+   result["lines"] = linesArray;
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleRequest(core::system::ProcessOperations& ops,
                    const std::string& method,
                    const json::Value& requestId,
@@ -2285,6 +2320,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "runtime/executeCode")
    {
       handleExecuteCode(ops, requestId, params);
+   }
+   else if (method == "runtime/getConsoleContent")
+   {
+      handleGetConsoleContent(ops, requestId, params);
    }
    else if (method == "protocol/getVersion")
    {
@@ -3197,7 +3236,11 @@ void doUpdateCheck()
       if (error.getCode() == boost::system::errc::protocol_not_supported)
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
-         s_updateState.noCompatibleVersion = true;
+         // Only block if there's no installed version to fall back on
+         if (installedVersion == "0.0.0")
+         {
+            s_updateState.noCompatibleVersion = true;
+         }
          s_updateState.updateAvailable = false;
       }
       return;
@@ -3277,8 +3320,12 @@ Error checkForUpdatesOnStartup()
       // Check if this is specifically a "protocol not found" error
       if (error.getCode() == boost::system::errc::protocol_not_supported)
       {
-         // Protocol version not in manifest - incompatible RStudio version
-         s_updateState.noCompatibleVersion = true;
+         // Protocol version not in manifest - only block if there's no installed
+         // version to fall back on
+         if (installedVersion == "0.0.0")
+         {
+            s_updateState.noCompatibleVersion = true;
+         }
          s_updateState.updateAvailable = false;
       }
 
