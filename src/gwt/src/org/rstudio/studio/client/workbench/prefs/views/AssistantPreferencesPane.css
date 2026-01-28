@@ -15,3 +15,11 @@
 .refreshSpinner {
 	margin-right: 6px;
 }
+
+.keyboardShortcut {
+	background-color: rgba(0, 0, 0, 0.03);
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 3px;
+	padding: 2px 6px;
+	text-align: right;
+}

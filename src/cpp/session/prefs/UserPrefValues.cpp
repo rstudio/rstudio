@@ -3443,7 +3443,7 @@ core::Error UserPrefValues::setAssistantIndexingEnabled(bool val)
 }
 
 /**
- * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+ * When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.
  */
 bool UserPrefValues::assistantNesEnabled()
 {
@@ -3456,7 +3456,7 @@ core::Error UserPrefValues::setAssistantNesEnabled(bool val)
 }
 
 /**
- * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+ * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
  */
 bool UserPrefValues::assistantNesAutoshow()
 {
@@ -3547,7 +3547,7 @@ core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
 }
 
 /**
- * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+ * When enabled, RStudio will display next edit suggestions as provided by Copilot when available.
  */
 bool UserPrefValues::copilotNesEnabled()
 {
@@ -3560,7 +3560,7 @@ core::Error UserPrefValues::setCopilotNesEnabled(bool val)
 }
 
 /**
- * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+ * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
  */
 bool UserPrefValues::copilotNesAutoshow()
 {

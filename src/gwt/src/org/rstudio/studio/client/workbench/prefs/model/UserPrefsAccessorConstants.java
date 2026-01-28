@@ -2180,7 +2180,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantCompletionsTriggerDescription();
    @DefaultStringValue("Automatically")
    String assistantCompletionsTriggerEnum_auto();
-   @DefaultStringValue("Manually (Ctrl + Backslash)")
+   @DefaultStringValue("Manually")
    String assistantCompletionsTriggerEnum_manual();
 
    /**
@@ -2212,19 +2212,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String assistantIndexingEnabledDescription();
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    * When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.
     */
-   @DefaultStringValue("Enable next-edit suggestions")
+   @DefaultStringValue("Enable next edit suggestions")
    String assistantNesEnabledTitle();
-   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.")
+   @DefaultStringValue("When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.")
    String assistantNesEnabledDescription();
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
-   @DefaultStringValue("Automatically show next-edit suggestions")
+   @DefaultStringValue("Automatically display next edit suggestions in editor")
    String assistantNesAutoshowTitle();
-   @DefaultStringValue("When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.")
+   @DefaultStringValue("When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.")
    String assistantNesAutoshowDescription();
 
    /**
@@ -2284,19 +2284,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String copilotIndexingEnabledDescription();
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    * When enabled, RStudio will display next edit suggestions as provided by Copilot when available.
     */
-   @DefaultStringValue("Enable next-edit suggestions")
+   @DefaultStringValue("Enable next edit suggestions")
    String copilotNesEnabledTitle();
-   @DefaultStringValue("When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.")
+   @DefaultStringValue("When enabled, RStudio will display next edit suggestions as provided by Copilot when available.")
    String copilotNesEnabledDescription();
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
-   @DefaultStringValue("Automatically show next-edit suggestions")
+   @DefaultStringValue("Automatically show next edit suggestions")
    String copilotNesAutoshowTitle();
-   @DefaultStringValue("When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.")
+   @DefaultStringValue("When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.")
    String copilotNesAutoshowDescription();
 
    /**

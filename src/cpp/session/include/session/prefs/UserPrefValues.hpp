@@ -2071,13 +2071,13 @@ public:
    core::Error setAssistantIndexingEnabled(bool val);
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    * When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.
     */
    bool assistantNesEnabled();
    core::Error setAssistantNesEnabled(bool val);
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
    bool assistantNesAutoshow();
    core::Error setAssistantNesAutoshow(bool val);
@@ -2119,13 +2119,13 @@ public:
    core::Error setCopilotIndexingEnabled(bool val);
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    * When enabled, RStudio will display next edit suggestions as provided by Copilot when available.
     */
    bool copilotNesEnabled();
    core::Error setCopilotNesEnabled(bool val);
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
    bool copilotNesAutoshow();
    core::Error setCopilotNesAutoshow(bool val);

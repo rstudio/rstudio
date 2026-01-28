@@ -17,17 +17,18 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.SingleShotTimer;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -75,6 +76,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -94,6 +96,9 @@ public class AssistantPreferencesPane extends PreferencesPane
       prefs.chatProvider().setGlobalValue(selChatProvider_.getValue());
       prefs.assistantTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.assistantCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
+
+      // Invert the collapse checkbox to get autoshow value
+      prefs.assistantNesAutoshow().setGlobalValue(!cbAssistantNesCollapse_.getValue());
 
       // Also sync (deprecated) Copilot settings for now
       prefs.copilotEnabled().setGlobalValue(
@@ -256,7 +261,10 @@ public class AssistantPreferencesPane extends PreferencesPane
             prefs_.assistantCompletionsDelay());
 
       cbAssistantNesEnabled_ = checkboxPref(prefs_.assistantNesEnabled(), true);
-      cbAssistantNesAutoshow_ = checkboxPref(prefs_.assistantNesAutoshow(), true);
+      cbAssistantNesCollapse_ = new CheckBox(constants_.assistantNesCollapseLabel());
+      lessSpaced(cbAssistantNesCollapse_);
+      cbAssistantNesCollapse_.setValue(!prefs_.assistantNesAutoshow().getGlobalValue());
+      cbAssistantNesCollapse_.setTitle(constants_.assistantNesCollapseDescription());
 
       // Create chat provider selector - conditionally include Posit AI option
       String[] chatProviderLabels;
@@ -361,8 +369,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
       });
 
-      // Completions section
-      add(spacedBefore(headerLabel(constants_.assistantCompletionsTab())));
+      // Code suggestions section
+      add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
 
       // Add assistant selector
       add(selAssistant_);
@@ -385,6 +393,9 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       // Create Copilot-specific "Other" panel
       copilotOtherPanel_ = createCopilotOtherPanel();
+
+      // Create Quick Reference panel (always displayed last)
+      quickReferencePanel_ = createQuickReferencePanel();
 
       // Create the three panels
       nonePanel_ = createNonePanel();
@@ -424,6 +435,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                positAiPanel_.insert(spaced(statusPanel_), 0);
                positAiPanel_.insert(spaced(projectOverridePanel_), 1);
                positAiPanel_.add(commonSettingsPanel_);
+               positAiPanel_.add(quickReferencePanel_);
                assistantDetailsPanel_.setWidget(positAiPanel_);
                copilotTosPanel_.setVisible(false);
                disableCopilot(UserPrefsAccessor.ASSISTANT_POSIT);
@@ -475,6 +487,7 @@ public class AssistantPreferencesPane extends PreferencesPane
                }
                copilotPanel_.add(commonSettingsPanel_);
                copilotPanel_.add(copilotOtherPanel_);
+               copilotPanel_.add(quickReferencePanel_);
                assistantDetailsPanel_.setWidget(copilotPanel_);
                copilotTosPanel_.setVisible(true);
                positAiRefreshed_ = false;
@@ -573,24 +586,54 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       VerticalPanel panel = new VerticalPanel();
 
-      // Completions section
-      panel.add(spacedBefore(headerLabel(constants_.assistantCompletionsHeader())));
+      // Suggestions section
       panel.add(selAssistantCompletionsTrigger_);
-      panel.add(nvwAssistantCompletionsDelay_);
-
-      // Suggestions section (Next Edit Suggestions)
-      panel.add(spacedBefore(headerLabel(constants_.assistantSuggestionsHeader())));
       panel.add(cbAssistantNesEnabled_);
-      panel.add(cbAssistantNesAutoshow_);
-
-      String modifier = BrowseCap.isMacintosh() ? "Cmd" : "Ctrl";
-      Label lblNesShortcutHint = new Label(constants_.assistantSuggestionsShortcutHint(modifier));
-      lblNesShortcutHint.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
-      panel.add(spaced(lblNesShortcutHint));
+      panel.add(cbAssistantNesCollapse_);
 
       return panel;
    }
-   
+
+   private VerticalPanel createQuickReferencePanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+
+      // Quick Reference section
+      panel.add(spacedBefore(headerLabel(constants_.assistantQuickReferenceHeader())));
+
+      LayoutGrid shortcutGrid = new LayoutGrid(2, 2);
+      shortcutGrid.setCellPadding(4);
+      shortcutGrid.setCellSpacing(0);
+
+      String acceptShortcut = getStyledShortcut(commands_.assistantAcceptNextEditSuggestion());
+      String dismissShortcut = getStyledShortcut(commands_.assistantDismissNextEditSuggestion());
+
+      HTML acceptShortcutHtml = new HTML(acceptShortcut);
+      acceptShortcutHtml.addStyleName(RES.styles().keyboardShortcut());
+      HTML dismissShortcutHtml = new HTML(dismissShortcut);
+      dismissShortcutHtml.addStyleName(RES.styles().keyboardShortcut());
+
+      shortcutGrid.setWidget(0, 0, acceptShortcutHtml);
+      shortcutGrid.setText(0, 1, constants_.assistantSuggestionsRequestAcceptHint());
+      shortcutGrid.setWidget(1, 0, dismissShortcutHtml);
+      shortcutGrid.setText(1, 1, constants_.assistantSuggestionsDismissHint());
+
+      panel.add(shortcutGrid);
+
+      return panel;
+   }
+
+   private String getStyledShortcut(AppCommand command)
+   {
+      String shortcut = command.getShortcutPrettyHtml();
+      if (shortcut != null && shortcut.endsWith(";"))
+      {
+         shortcut = shortcut.substring(0, shortcut.length() - 1) +
+                    "<span style=\"font-family:monospace;position:relative;top:-1px;\">;</span>";
+      }
+      return shortcut;
+   }
+
    private void initModel()
    {
       selAssistantCompletionsTrigger_.addChangeHandler(new ChangeHandler()
@@ -1235,6 +1278,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       String assistantStatusLabel();
       String copilotTosLabel();
       String refreshSpinner();
+      String keyboardShortcut();
    }
 
    public interface Resources extends ClientBundle
@@ -1266,6 +1310,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel copilotTosPanel_;
    private VerticalPanel commonSettingsPanel_;
    private VerticalPanel copilotOtherPanel_;
+   private VerticalPanel quickReferencePanel_;
    private HorizontalPanel statusPanel_;
    private HorizontalPanel projectOverridePanel_;
 
@@ -1276,7 +1321,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final Image imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantNesEnabled_;
-   private final CheckBox cbAssistantNesAutoshow_;
+   private final CheckBox cbAssistantNesCollapse_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;

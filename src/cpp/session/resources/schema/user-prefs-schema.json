@@ -1787,7 +1787,7 @@
         "assistant_completions_trigger": {
             "type": "string",
             "enum": ["auto", "manual"],
-            "enumReadable": ["Automatically", "Manually (Ctrl + Backslash)"],
+            "enumReadable": ["Automatically", "Manually"],
             "default": "auto",
             "fallback": "copilot_completions_trigger",
             "title": "Show code suggestions:",
@@ -1819,15 +1819,15 @@
         "assistant_nes_enabled": {
             "type": "boolean",
             "default": true,
-            "title": "Enable next-edit suggestions",
-            "description": "When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.",
+            "title": "Enable next edit suggestions",
+            "description": "When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.",
             "fallback": "copilot_nes_enabled"
         },
         "assistant_nes_autoshow": {
             "type": "boolean",
             "default": true,
-            "title": "Automatically show next-edit suggestions",
-            "description": "When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.",
+            "title": "Automatically display next edit suggestions in editor",
+            "description": "When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.",
             "fallback": "copilot_nes_autoshow"
         },
         "assistant_show_messages": {
@@ -1873,14 +1873,14 @@
         "copilot_nes_enabled": {
             "type": "boolean",
             "default": false,
-            "title": "Enable next-edit suggestions",
-            "description": "When enabled, RStudio will display next-edit suggestions as provided by Copilot when available."
+            "title": "Enable next edit suggestions",
+            "description": "When enabled, RStudio will display next edit suggestions as provided by Copilot when available."
         },
         "copilot_nes_autoshow": {
             "type": "boolean",
             "default": true,
-            "title": "Automatically show next-edit suggestions",
-            "description": "When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon."
+            "title": "Automatically show next edit suggestions",
+            "description": "When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon."
         },
         "copilot_show_messages": {
             "type": "boolean",
