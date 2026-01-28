@@ -312,7 +312,8 @@ SessionScopeState validateSessionScope(
    const core::FilePath& userScratchPath,
    core::r_util::ProjectIdToFilePath projectIdToFilePath,
    bool projectSharingEnabled,
-   std::string* pProjectFilePath)
+   std::string* pProjectFilePath,
+   std::string* pErrorMsg)
 {
    // does this session exist?
    r_util::ActiveSessions activeSessions(storage, userScratchPath);
@@ -320,7 +321,10 @@ SessionScopeState validateSessionScope(
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate())
    {
-      core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Invalid session id: " + scope.id());
+      if (pSession->empty())
+         *pErrorMsg = "Empty active session with id: " + scope.id();
+      else
+         *pErrorMsg = "Session validation failed for: " + scope.id();
       return ScopeInvalidSession;
    }
 
@@ -337,8 +341,7 @@ SessionScopeState validateSessionScope(
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
       {
-         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project paths do not match:" + project + " and " + pSession->project());
-
+         *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
          return ScopeInvalidProject;
       }
 
@@ -346,8 +349,7 @@ SessionScopeState validateSessionScope(
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
       if (!projectDir.exists())
       {
-         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project directory does not exist:" + projectDir.getAbsolutePath());
-
+         *pErrorMsg = "Project directory does not exist:" + projectDir.getAbsolutePath();
          return ScopeMissingProject;
       }
 
@@ -355,7 +357,7 @@ SessionScopeState validateSessionScope(
       FilePath projectPath = r_util::projectFromDirectory(projectDir);
       if (!projectPath.exists())
       {
-         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project file does not exist:" + projectPath.getAbsolutePath());
+         *pErrorMsg = "Project file does not exist:" + projectPath.getAbsolutePath() + " for session: " + scope.id();
          return ScopeMissingProject;
       }
 
@@ -367,7 +369,7 @@ SessionScopeState validateSessionScope(
       // if the session project isn't project none then it's invalid
       if (pSession->project() != kProjectNone)
       {
-         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project session metadata is not none: " + pSession->project());
+         *pErrorMsg = "Expected project of 'none' but found: " + pSession->project() + " for session: " + scope.id();
          return ScopeInvalidProject;
       }
    }
@@ -377,7 +379,7 @@ SessionScopeState validateSessionScope(
    if (!projectSharingEnabled &&
        r_util::isSharedPath(*pProjectFilePath, userHomePath))
    {
-      core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "Project path is shared but sharing not enabled.");
+      *pErrorMsg = "Project path requires project sharing but sharing is not enabled for: " + *pProjectFilePath;
       return r_util::ScopeMissingProject;
    }
    else
