@@ -32,7 +32,7 @@ const char* kXTermTitleMatch = "\\x1b]0;.*?\\x07";
 // Match simple ESC + letter sequences with optional numeric parameters
 // e.g., ESC G, ESC H1;, ESC g (used by RStudio for clickable error links)
 // Raw ESC byte (0x1B) followed by letter and optional params
-const char* kSimpleEscapeMatch = "\x1b[A-Za-z][0-9;]*";
+const char* kSimpleEscapeMatch = "\\x1b[A-Za-z][0-9;]*";
 
 } // anonymous namespace
 
