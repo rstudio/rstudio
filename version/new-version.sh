@@ -3,7 +3,7 @@
 # new-version.sh
 #
 # A helper script to update and generate version files for RStudio. 
-# It should be run from the root directory of the repository.
+# It should be run from the root directory of the open source repository.
 #
 # This script is intended to be used when branching for release, or for when creating a new release branch 
 # to start work on future development for that release. Upon completion, the script will stage the changes.
@@ -98,17 +98,12 @@ echo "0" > version/PATCH
     echo "## RStudio ${CALENDAR_VERSION}.0 \"$RELEASE_FLOWER\" Release Notes"
     echo ""
     echo "### New"
-    echo "#### RStudio"
-    echo "-"
-    echo ""
-    echo "#### Posit Workbench"
     echo "-"
     echo ""
     echo "### Fixed"
-    echo "#### RStudio"
     echo "-"
     echo ""
-    echo "#### Posit Workbench"
+    echo "### Dependencies"
     echo "-"
     echo ""
 } > NEWS.md

@@ -1,7 +1,6 @@
 ## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
-#### RStudio
 - ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors
 - ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
 - (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
@@ -9,11 +8,7 @@
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
 - ([#16903](https://github.com/rstudio/rstudio/issues/16903)): Changed the default location of the Sidebar pane to be on the left side of the window
 
-#### Posit Workbench
--
-
 ### Fixed
-#### RStudio
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 - ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
 - ([#16733](https://github.com/rstudio/rstudio/issues/16733)): Fixed an issue where a Presentation tab would be added to TabSet2 when it was assigned to the Sidebar
@@ -26,20 +21,10 @@
 - ([#16834](https://github.com/rstudio/rstudio/issues/16834)): Fixed an issue where an error message was shown on Windows when using "Write Diagnostics File"
 - ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
 
-#### Posit Workbench
-- 
-
-### Upgrade Instructions
-
-#### Posit Workbench
-
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.409.0
 - Electron 39.2.7
 - Node.js 22.22.0 (copilot completions)
-- Node.js 22.20.0 (vscode server)
 - Quarto 1.8.26
 - xterm.js 6.0.0
-- Launcher 2.21.0
-- rserver-saml 0.9.2
