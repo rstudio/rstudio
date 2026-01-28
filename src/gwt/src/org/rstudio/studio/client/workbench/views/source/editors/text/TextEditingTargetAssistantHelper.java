@@ -1209,7 +1209,15 @@ public class TextEditingTargetAssistantHelper
                            Any result = response.result;
                            if (result == null)
                            {
-                              nesTimer_.schedule(20);
+                              // For Copilot, fall back to NES; for Posit AI, just report no completions
+                              if (shouldFallbackToNes())
+                              {
+                                 nesTimer_.schedule(20);
+                              }
+                              else
+                              {
+                                 events_.fireEvent(new AssistantEvent(AssistantEventType.COMPLETION_RECEIVED_NONE));
+                              }
                               return;
                            }
 
@@ -1245,10 +1253,13 @@ public class TextEditingTargetAssistantHelper
                                     ? AssistantEventType.COMPLETION_RECEIVED_NONE
                                     : AssistantEventType.COMPLETION_RECEIVED_SOME));
 
-                           // If we don't have any completions available, request next edit suggestions instead.
+                           // If we don't have any completions available, fall back to NES for Copilot
                            if (completions.isEmpty())
                            {
-                              nesTimer_.schedule(20);
+                              if (shouldFallbackToNes())
+                              {
+                                 nesTimer_.schedule(20);
+                              }
                               return;
                            }
 
@@ -1358,6 +1369,31 @@ public class TextEditingTargetAssistantHelper
 
       // Otherwise, assume it's a valid completion.
       return true;
+   }
+
+   /**
+    * Returns true if we should request NES directly instead of regular completions.
+    * This is the case for Posit AI when NES is enabled.
+    */
+   private boolean shouldRequestNesDirectly()
+   {
+      boolean isPositAi = StringUtil.equals(
+            assistant_.getAssistantType(),
+            UserPrefsAccessor.ASSISTANT_POSIT);
+      boolean nesEnabled = prefs_.assistantNesEnabled().getGlobalValue();
+      return isPositAi && nesEnabled;
+   }
+
+   /**
+    * Returns true if we should fall back to NES when regular completions are empty.
+    * This is the case for non-Posit AI assistants (e.g., Copilot).
+    */
+   private boolean shouldFallbackToNes()
+   {
+      boolean isPositAi = StringUtil.equals(
+            assistant_.getAssistantType(),
+            UserPrefsAccessor.ASSISTANT_POSIT);
+      return !isPositAi;
    }
 
    private void manageHandlers()
@@ -1562,7 +1598,16 @@ public class TextEditingTargetAssistantHelper
 
                   // Request completions on cursor navigation.
                   int delayMs = MathUtil.clamp(prefs_.assistantCompletionsDelay().getValue(), 10, 5000);
-                  suggestionTimer_.schedule(delayMs);
+
+                  // For Posit AI with NES enabled, request NES directly instead of regular completions
+                  if (shouldRequestNesDirectly())
+                  {
+                     nesTimer_.schedule(delayMs);
+                  }
+                  else
+                  {
+                     suggestionTimer_.schedule(delayMs);
+                  }
 
                   // Delay handler so we can handle a Tab keypress
                   Timers.singleShot(0, () -> {
