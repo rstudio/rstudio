@@ -126,7 +126,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Enum representing the type of next-edit suggestion display.
+    * Enum representing the type of next edit suggestion display.
     */
    private enum SuggestionType
    {
@@ -1375,7 +1375,7 @@ public class TextEditingTargetAssistantHelper
       {
          registrations_.addAll(
 
-               // click handler for next-edit suggestion gutter icon. we use a capturing
+               // click handler for next edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
                DomUtils.addEventListener(display_.getElement(), "mousedown", true, (event) ->
                {

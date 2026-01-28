@@ -2452,19 +2452,19 @@
    clear = function() { .rs.clearUserPref("assistant_indexing_enabled") }
 )
 
-# Enable next-edit suggestions
+# Enable next edit suggestions
 #
-# When enabled, RStudio will display next-edit suggestions as provided by the AI
-# assistant when available.
+# When enabled, RStudio will display next edit suggestions as provided by the
+# active AI assistant when available.
 .rs.uiPrefs$assistantNesEnabled <- list(
    get = function() { .rs.getUserPref("assistant_nes_enabled") },
    set = function(value) { .rs.setUserPref("assistant_nes_enabled", value) },
    clear = function() { .rs.clearUserPref("assistant_nes_enabled") }
 )
 
-# Automatically show next-edit suggestions
+# Automatically display next edit suggestions in editor
 #
-# When enabled, next-edit suggestions will be automatically displayed. When
+# When enabled, next edit suggestions will be automatically displayed. When
 # disabled, suggestions will only be shown when hovering over the gutter icon.
 .rs.uiPrefs$assistantNesAutoshow <- list(
    get = function() { .rs.getUserPref("assistant_nes_autoshow") },
@@ -2529,9 +2529,9 @@
    clear = function() { .rs.clearUserPref("copilot_indexing_enabled") }
 )
 
-# Enable next-edit suggestions
+# Enable next edit suggestions
 #
-# When enabled, RStudio will display next-edit suggestions as provided by Copilot
+# When enabled, RStudio will display next edit suggestions as provided by Copilot
 # when available.
 .rs.uiPrefs$copilotNesEnabled <- list(
    get = function() { .rs.getUserPref("copilot_nes_enabled") },
@@ -2539,9 +2539,9 @@
    clear = function() { .rs.clearUserPref("copilot_nes_enabled") }
 )
 
-# Automatically show next-edit suggestions
+# Automatically show next edit suggestions
 #
-# When enabled, next-edit suggestions will be automatically displayed. When
+# When enabled, next edit suggestions will be automatically displayed. When
 # disabled, suggestions will only be shown when hovering over the gutter icon.
 .rs.uiPrefs$copilotNesAutoshow <- list(
    get = function() { .rs.getUserPref("copilot_nes_autoshow") },

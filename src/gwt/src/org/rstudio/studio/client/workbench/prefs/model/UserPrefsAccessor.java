@@ -3798,7 +3798,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by the AI assistant when available.
+    * When enabled, RStudio will display next edit suggestions as provided by the active AI assistant when available.
     */
    public PrefValue<Boolean> assistantNesEnabled()
    {
@@ -3810,7 +3810,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
    public PrefValue<Boolean> assistantNesAutoshow()
    {
@@ -3916,7 +3916,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will display next-edit suggestions as provided by Copilot when available.
+    * When enabled, RStudio will display next edit suggestions as provided by Copilot when available.
     */
    public PrefValue<Boolean> copilotNesEnabled()
    {
@@ -3928,7 +3928,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, next-edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
+    * When enabled, next edit suggestions will be automatically displayed. When disabled, suggestions will only be shown when hovering over the gutter icon.
     */
    public PrefValue<Boolean> copilotNesAutoshow()
    {
