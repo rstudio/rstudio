@@ -759,11 +759,11 @@ public abstract class
    public abstract AppCommand assistantSignOut();
    public abstract AppCommand assistantStatus();
    public abstract AppCommand assistantRequestCompletions();
+   public abstract AppCommand assistantRequestSuggestions();
    public abstract AppCommand assistantAcceptNextWord();
    public abstract AppCommand assistantToggleAutomaticCompletions();
    public abstract AppCommand assistantAcceptNextEditSuggestion();
    public abstract AppCommand assistantDismissNextEditSuggestion();
-   public abstract AppCommand assistantRequestSuggestions();
 
    // Databricks
    public abstract AppCommand layoutZoomDatabricks();
