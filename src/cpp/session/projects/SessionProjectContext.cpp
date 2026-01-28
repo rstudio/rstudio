@@ -1140,6 +1140,7 @@ Error ProjectContext::readAssistantOptions(RProjectAssistantOptions* pOptions) c
 
    using r_util::YesNoAskValue;
    pOptions->assistant = settings.get("assistant", "default");
+   pOptions->chatProvider = settings.get("chat_provider", "default");
    pOptions->copilotEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_enabled"));
    pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_indexing_enabled"));
 
@@ -1155,6 +1156,7 @@ Error ProjectContext::writeAssistantOptions(const RProjectAssistantOptions& opti
 
    settings.beginUpdate();
    settings.set("assistant", options.assistant);
+   settings.set("chat_provider", options.chatProvider);
    settings.set("copilot_enabled", options.copilotEnabled);
    settings.set("copilot_indexing_enabled", options.copilotIndexingEnabled);
    settings.endUpdate();

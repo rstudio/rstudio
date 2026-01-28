@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CollabEditEndedEv
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -121,6 +122,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                                             CollabEditStartedEvent.Handler,
                                             CollabEditEndedEvent.Handler,
                                             DocFocusedEvent.Handler,
+                                            DocSelectionChangedEvent.Handler,
                                             EditorCommandDispatchEvent.Handler,
                                             RestartStatusEvent.Handler,
                                             ScrollToPositionEvent.Handler
@@ -168,6 +170,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          events_.addHandler(CollabEditStartedEvent.TYPE, this);
          events_.addHandler(CollabEditEndedEvent.TYPE, this);
          events_.addHandler(DocFocusedEvent.TYPE, this);
+         events_.addHandler(DocSelectionChangedEvent.TYPE, this);
          events_.addHandler(RestartStatusEvent.TYPE, this);
 
          JsArray<SourceDocument> docs =
@@ -915,7 +918,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             if (event.getId() != null)
             {
                server_.assistantDocFocused(event.getId(), new VoidServerRequestCallback());
-               server_.chatDocFocused(event.getId(), new VoidServerRequestCallback());
+               // Get selections from the active editor and send to Chat
+               JsArray<JavaScriptObject> selections = pSource_.get().getActiveEditorSelectionsJson();
+               server_.chatDocFocused(event.getId(), selections, new VoidServerRequestCallback());
             }
 
             // ignore this event if it's from main window but the main window
@@ -929,6 +934,20 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             MainWindowObject.lastFocusedSourceWindowId().set(id);
          }
       });
+   }
+
+   @Override
+   public void onDocSelectionChanged(DocSelectionChangedEvent event)
+   {
+      // Only process events from the main source window
+      if (!isMainSourceWindow())
+         return;
+
+      // Send selection update to Chat backend
+      if (event.getId() != null)
+      {
+         server_.chatDocFocused(event.getId(), event.getSelections(), new VoidServerRequestCallback());
+      }
    }
 
    @Override

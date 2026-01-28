@@ -707,6 +707,58 @@ void setPositAiConfiguration()
    // Stub for Posit AI configuration.
 }
 
+// Forward declarations for warmup request
+void docOpened(const std::string& uri,
+               int64_t version,
+               const std::string& languageId,
+               const std::string& contents);
+void docClosed(const std::string& uri);
+
+void sendWarmupRequest()
+{
+   // Send a dummy inline completion request to warm up the LLM backend.
+   // This helps reduce latency on the first real completion request.
+   // We use a proper sequence: didOpen => inlineCompletion => didClose
+   DLOG("Sending warmup request to Posit AI.");
+
+   std::string warmupUri = "rstudio-document://00000000";
+
+   // First, register the document with the LLM via didOpen
+   docOpened(warmupUri, 0, "r", "# warmup\n");
+
+   // Build the completion request
+   json::Object positionJson;
+   positionJson["line"] = 0;
+   positionJson["character"] = 0;
+
+   json::Object docJson;
+   docJson["uri"] = warmupUri;
+   docJson["version"] = 0;
+
+   json::Object contextJson;
+   contextJson["triggerKind"] = kAssistantCompletionTriggerAutomatic;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = docJson;
+   paramsJson["position"] = positionJson;
+   paramsJson["context"] = contextJson;
+
+   // Create a continuation that closes the document and discards the response
+   auto warmupContinuation = [warmupUri](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      // Close the warmup document
+      docClosed(warmupUri);
+
+      if (error)
+         DLOG("Warmup request failed: {}", error.getMessage());
+      else
+         DLOG("Warmup request completed.");
+   };
+
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/inlineCompletion", requestId, paramsJson, AssistantContinuation(warmupContinuation));
+}
+
 namespace agent {
 
 void onStarted(ProcessOperations& operations)
@@ -1122,6 +1174,10 @@ Error startAgent(const std::string& assistantType = "")
 
       // Sync currently open documents with the agent
       syncOpenDocuments();
+
+      // For Posit AI, send a warmup request to reduce latency on first real request
+      if (assistant == kAssistantPosit)
+         sendWarmupRequest();
    };
    
    std::string requestId = core::system::generateUuid();
@@ -1641,6 +1697,7 @@ void synchronize()
    }
    else
    {
+      DLOG("Assistant is not enabled: {}", agentNotRunningReason());
       stopAgent();
    }
 }
@@ -2235,11 +2292,33 @@ Error assistantRegisterOpenFiles(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // Reset the cached state and re-synchronize.
+   // This allows the agent to start if it was previously marked as not installed.
+   DLOG("Assistant installation notification received; re-synchronizing.");
+
+   // Stop a running agent in case we had one
+   stopAgentSync();
+
+   // Reset the runtime status to allow the agent to start fresh
+   s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
+
+   synchronize();
+   return Success();
+}
+
 } // end anonymous namespace
 
 int assistantRuntimeStatus()
 {
    return static_cast<int>(s_agentRuntimeStatus);
+}
+
+bool stopAgentForUpdate()
+{
+   return stopAgentSync();
 }
 
 Error initialize()
@@ -2307,6 +2386,7 @@ Error initialize()
          (bind(registerRpcMethod, "assistant_did_accept_completion", assistantDidAcceptCompletion))
          (bind(registerRpcMethod, "assistant_did_accept_partial_completion", assistantDidAcceptPartialCompletion))
          (bind(registerRpcMethod, "assistant_register_open_files", assistantRegisterOpenFiles))
+         (bind(registerRpcMethod, "assistant_notify_installed", assistantNotifyInstalled))
          (bind(sourceModuleRFile, "SessionAssistant.R"))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;

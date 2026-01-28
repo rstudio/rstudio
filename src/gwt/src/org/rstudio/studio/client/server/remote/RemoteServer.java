@@ -179,6 +179,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreters;
 import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
+import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
@@ -6987,7 +6988,13 @@ public class RemoteServer implements Server
    };
 
    @Override
-   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback)
+   public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "assistant_notify_installed", requestCallback);
+   };
+
+   @Override
+   public void chatVerifyInstalled(ServerRequestCallback<ChatServerOperations.ChatVerifyInstalledResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_verify_installed", requestCallback);
    };
@@ -7038,6 +7045,16 @@ public class RemoteServer implements Server
    public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_doc_focused", documentId, requestCallback);
+   }
+
+   @Override
+   public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(documentId));
+      params.set(1, new JSONArray(selections));
+      sendRequest(RPC_SCOPE, "chat_doc_focused", params, requestCallback);
    }
 
    @Override

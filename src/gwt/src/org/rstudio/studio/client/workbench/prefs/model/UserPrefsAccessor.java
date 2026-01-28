@@ -428,7 +428,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native String getSidebarLocation() /*-{
-         return this && this.sidebar_location || "right";
+         return this && this.sidebar_location || "left";
       }-*/;
 
    }
@@ -3717,7 +3717,7 @@ public class UserPrefsAccessor extends Prefs
             CHAT_PROVIDER_NONE,
             CHAT_PROVIDER_POSIT
          },
-         "none",
+         "posit",
          new String[] {
             _constants.chatProviderEnum_none(),
             _constants.chatProviderEnum_posit()
@@ -3806,7 +3806,7 @@ public class UserPrefsAccessor extends Prefs
          "assistant_nes_enabled",
          _constants.assistantNesEnabledTitle(), 
          _constants.assistantNesEnabledDescription(), 
-         false);
+         true);
    }
 
    /**

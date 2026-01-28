@@ -1427,9 +1427,9 @@ void rCleanup(bool terminatedNormally)
       // destroy session if requested
       if (s_destroySession)
       {
-         // If the launcher is enabled, keeping the activeSession around until the job shows an exit status
-         // at which point it will be removed by rworkspaces
-         if (options().getBoolOverlayOption(kLauncherSessionOption))
+         // If the launcher is enabled with rworkspaces, keep the activeSession around until the job shows an exit status
+         // at which point it will be removed by rworkspaces. Otherwise, just remove the session at this point.
+         if (options().getBoolOverlayOption(kLauncherSessionOption) && options().sessionUseFileStorage())
             module_context::activeSession().setActivityState(r_util::kActivityStateDestroyPending, true);
          else
          {

@@ -23,8 +23,8 @@ import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
+import org.rstudio.studio.client.application.events.ThemeColorsComputedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
-import org.rstudio.studio.client.common.Timers;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BodyElement;
@@ -32,14 +32,13 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.StyleElement;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 public class RStudioThemedFrame extends RStudioFrame
-                                implements ThemeChangedEvent.Handler
+                                implements ThemeChangedEvent.Handler,
+                                           ThemeColorsComputedEvent.Handler
 {
    public RStudioThemedFrame(String title)
    {
@@ -90,15 +89,22 @@ public class RStudioThemedFrame extends RStudioFrame
       boolean enableThemes)
    {
       super(title, url, sandbox, sandboxAllow);
-      
+
       customStyle_ = customStyle;
       urlStyle_ = urlStyle;
       removeBodyStyle_ = removeBodyStyle;
       enableThemes_ = enableThemes;
-      
+
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setAceThemeAndCustomStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      // Set up single load handler
+      addLoadHandler(event -> onFrameLoaded());
+
+      // Apply themes immediately for any already-loaded content
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
    }
 
    @Inject
@@ -107,14 +113,58 @@ public class RStudioThemedFrame extends RStudioFrame
       events_ = events;
 
       events_.addHandler(ThemeChangedEvent.TYPE, this);
+      events_.addHandler(ThemeColorsComputedEvent.TYPE, this);
    }
 
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      setAceThemeAndCustomStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
    }
-   
+
+   @Override
+   public void onThemeColorsComputed(ThemeColorsComputedEvent event)
+   {
+      injectThemeVariables();
+   }
+
+   /**
+    * Sets a custom action to be executed when the frame loads.
+    * This action will be executed INSTEAD of the default theming behavior.
+    * The action is cleared after execution (one-shot).
+    * Pass null to clear any pending action.
+    *
+    * @param action The action to execute on load, or null to clear
+    */
+   public void setOnLoadAction(Runnable action)
+   {
+      pendingLoadAction_ = action;
+   }
+
+   /**
+    * Called when the frame loads. Executes any pending action,
+    * then applies themes if enabled.
+    */
+   private void onFrameLoaded()
+   {
+      if (pendingLoadAction_ != null)
+      {
+         // Execute and clear the pending action (one-shot)
+         Runnable action = pendingLoadAction_;
+         pendingLoadAction_ = null;
+         action.run();
+      }
+
+      // Always apply themes on load if enabled
+      if (enableThemes_)
+      {
+         addThemesStyle(customStyle_, urlStyle_, removeBodyStyle_);
+      }
+   }
+
    private void addThemesStyle(String customStyle, String urlStyle, boolean removeBodyStyle)
    {
       if (getWindow() != null && getWindow().getDocument() != null)
@@ -169,44 +219,10 @@ public class RStudioThemedFrame extends RStudioFrame
       }
    }
 
-   private void setAceThemeAndCustomStyle(
-      final String customStyle,
-      final String urlStyle,
-      final boolean removeBodyStyle)
-   {
-      if (!enableThemes_) return;
-
-      addThemesStyle(customStyle, urlStyle, removeBodyStyle);
-      
-      this.addLoadHandler(new LoadHandler()
-      {      
-         @Override
-         public void onLoad(LoadEvent arg0)
-         {
-            addThemesStyle(customStyle, urlStyle, removeBodyStyle);
-         }
-      });
-   }
-   
    /**
-    * Inject CSS theme variables into the iframe's document element.
-    * Uses a 1000ms delay to ensure theme CSS is fully loaded before sampling.
-    * This method is public to allow components like ChatPane to explicitly
-    * trigger re-injection after dynamically writing HTML content.
+    * Inject CSS variables representing theme colors into the iframe document.
     */
    public void injectThemeVariables()
-   {
-      // Use same 1000ms delay as ApplicationThemes.onComputeThemeColors()
-      // to ensure theme CSS is fully loaded before sampling
-      Timers.singleShot(1000, () -> {
-         doInjectThemeVariables();
-      });
-   }
-
-   /**
-    * Internal implementation of CSS variable injection with comprehensive error handling.
-    */
-   private void doInjectThemeVariables()
    {
       try
       {
@@ -254,7 +270,8 @@ public class RStudioThemedFrame extends RStudioFrame
     */
    private native void injectCSSVariable(Element htmlElement,
                                         String property,
-                                        String value) /*-{
+                                        String value)
+   /*-{
       htmlElement.style.setProperty(property, value);
    }-*/;
 
@@ -296,10 +313,13 @@ public class RStudioThemedFrame extends RStudioFrame
    }
 
    // Private members ----
-   
+
    private EventBus events_;
    private String customStyle_;
    private String urlStyle_;
    private boolean removeBodyStyle_;
    private boolean enableThemes_;
+
+   // Pending action to execute on next frame load (one-shot)
+   private Runnable pendingLoadAction_ = null;
 }

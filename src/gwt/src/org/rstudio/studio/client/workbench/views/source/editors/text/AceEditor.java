@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -3255,18 +3256,24 @@ public class AceEditor implements DocDisplay
    @Override
    public int addHighlight(Range range, String className)
    {
-      return getSession().addMarker(range, className, "text", false);
+      return addHighlight(range, className, "text");
    }
 
    @Override
    public int addHighlight(Range range, String className, String highlightType)
    {
-      return getSession().addMarker(range, className, highlightType, false);
+      AnchoredRange anchored = getSession().createAnchoredRange(range.getStart(), range.getEnd());
+      int markerId = getSession().addMarker(anchored, className, highlightType, false);
+      highlightRanges_.put(markerId, anchored);
+      return markerId;
    }
 
    @Override
    public void removeHighlight(int markerId)
    {
+      AnchoredRange range = highlightRanges_.remove(markerId);
+      if (range != null)
+         range.detach();
       getSession().removeMarker(markerId);
    }
 
@@ -4308,9 +4315,9 @@ public class AceEditor implements DocDisplay
    }
 
    @Override
-   public void removeMarkersAtCursorPosition()
+   public void removeSpellingMarkersAtCursorPosition()
    {
-      widget_.removeMarkersAtCursorPosition();
+      widget_.removeSpellingMarkersAtCursorPosition();
    }
 
    @Override
@@ -4927,6 +4934,7 @@ public class AceEditor implements DocDisplay
    private CompletionContext context_ = null;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
+   private final Map<Integer, AnchoredRange> highlightRanges_ = new HashMap<>();
    private Integer executionLine_ = null;
    private boolean valueChangeSuppressed_ = false;
    private AceInfoBar infoBar_;

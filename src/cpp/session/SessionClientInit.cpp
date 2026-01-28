@@ -676,6 +676,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       else
       {
          json::Object assistantOptionsJson;
+         assistantOptionsJson["assistant"] = options.assistant;
+         assistantOptionsJson["chat_provider"] = options.chatProvider;
 #ifdef COPILOT_ENABLED
          assistantOptionsJson["copilot_enabled"] = options.copilotEnabled;
 #else

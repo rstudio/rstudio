@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -376,7 +377,132 @@ public class TextEditingTargetAssistantHelper
    /**
     * Shows an inline edit suggestion diff view for the given completion.
     */
-   private void showEditSuggestion(AssistantCompletion completion)
+   /**
+    * Shows an edit suggestion in the editor.
+    * This is the main entry point for displaying edit suggestions from the API.
+    * The suggestion is always shown immediately (autoshow behavior).
+    * 
+    * @param completion The completion containing the range and replacement text
+    */
+   public void showEditSuggestion(AssistantCompletion completion)
+   {
+      showEditSuggestionImpl(completion, true, false);
+   }
+   
+   /**
+    * Internal implementation for showing edit suggestions.
+    * 
+    * @param completion The completion containing the range and replacement text
+    * @param autoshow If true, render the suggestion immediately; if false, show gutter icon only
+    * @param notifyServer Whether to notify the server that the completion was shown
+    *                     (true for Assistant/Copilot flow, false for API callers)
+    */
+   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
+   {
+      resetSuggestion();
+      
+      // The completion data gets modified when doing partial (word-by-word)
+      // completions, so we need to use a copy and preserve the original
+      // (which we need to send back to the server as-is in some language-server methods).
+      AssistantCompletion normalized = normalizeSuggestion(completion);
+      
+      // Check if this is a zero-width range (insertion at cursor)
+      if (normalized.range.start.line == normalized.range.end.line &&
+          normalized.range.start.character == normalized.range.end.character)
+      {
+         // Ghost text at cursor position
+         activeCompletion_ = new Completion(normalized);
+         setNesState(normalized, SuggestionType.GHOST_TEXT, null);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Get the original text from the document at the edit range
+      String originalText = display_.getCode(
+         Position.create(normalized.range.start.line, normalized.range.start.character),
+         Position.create(normalized.range.end.line, normalized.range.end.character));
+      
+      // Check if this is a deletion-only change
+      EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
+      if (deltas.isDeletionOnly())
+      {
+         setNesState(normalized, SuggestionType.DELETION, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_DELETION);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Check if this consists only of single-line insertions
+      if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
+      {
+         setNesState(normalized, SuggestionType.INSERTION, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_INSERTION);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Check if this is a single-line replacement (one deletion + one insertion)
+      if (deltas.isSingleLineReplacement())
+      {
+         EditDelta deletion = deltas.getSingleDeletion();
+         EditDelta addition = deltas.getSingleAddition();
+         if (deletion != null && addition != null)
+         {
+            setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
+            if (autoshow)
+               renderNesSuggestion();
+            else
+               showSuggestionGutterOnly(normalized.range.start.line,
+                  AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
+            if (notifyServer)
+               server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+            return;
+         }
+      }
+      
+      // For single-line deltas, use mixed in-document rendering;
+      // for multiline deltas, fall back to the inline diff view.
+      if (deltas.isSingleLineDeltas())
+      {
+         setNesState(normalized, SuggestionType.MIXED, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+      }
+      else
+      {
+         setNesState(normalized, SuggestionType.DIFF, deltas);
+         if (autoshow)
+            showDiffViewEditSuggestion(nesCompletion_);
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+      }
+   }
+   
+   private void showDiffViewEditSuggestion(AssistantCompletion completion)
    {
       // Note that we can accept the diff suggestion with Tab
       Scheduler.get().scheduleDeferred(() ->
@@ -470,6 +596,34 @@ public class TextEditingTargetAssistantHelper
       }
    }
 
+   // Helper class for storing ranges using anchors so they update on document changes
+   private static class AnchoredRange
+   {
+      AnchoredRange(Anchor startAnchor, Anchor endAnchor)
+      {
+         this.startAnchor = startAnchor;
+         this.endAnchor = endAnchor;
+      }
+
+      Range toRange()
+      {
+         return Range.create(
+            startAnchor.getRow(),
+            startAnchor.getColumn(),
+            endAnchor.getRow(),
+            endAnchor.getColumn());
+      }
+
+      void detach()
+      {
+         startAnchor.detach();
+         endAnchor.detach();
+      }
+
+      private final Anchor startAnchor;
+      private final Anchor endAnchor;
+   }
+
    /**
     * Applies the current NES suggestion (insertion, deletion, or replacement).
     */
@@ -527,8 +681,10 @@ public class TextEditingTargetAssistantHelper
          int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
          nesMarkerIds_.add(markerId);
 
-         // Store the document range for click detection
-         nesClickableRanges_.add(documentRange);
+         // Store the document range for click detection using anchors
+         Anchor startAnchor = display_.createAnchor(documentRange.getStart());
+         Anchor endAnchor = display_.createAnchor(documentRange.getEnd());
+         nesClickableRanges_.add(new AnchoredRange(startAnchor, endAnchor));
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, documentRange.getStart().getRow());
@@ -555,10 +711,11 @@ public class TextEditingTargetAssistantHelper
          // Track the position for cleanup
          nesTokenPositions_.add(Position.create(insertRow, insertCol));
 
-         // Store the range for click detection
+         // Store the range for click detection using anchors
          int insertEndCol = insertCol + delta.text.length();
-         Range insertionRange = Range.create(insertRow, insertCol, insertRow, insertEndCol);
-         nesClickableRanges_.add(insertionRange);
+         Anchor insertStartAnchor = display_.createAnchor(Position.create(insertRow, insertCol));
+         Anchor insertEndAnchor = display_.createAnchor(Position.create(insertRow, insertEndCol));
+         nesClickableRanges_.add(new AnchoredRange(insertStartAnchor, insertEndAnchor));
 
          // Track min/max rows for bounding rectangle
          minRow = Math.min(minRow, insertRow);
@@ -601,17 +758,17 @@ public class TextEditingTargetAssistantHelper
          if (hasDeletions && hasInsertions)
          {
             boundsClass = "ace_next-edit-suggestion-replacement-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_REPLACEMENT;
          }
          else if (hasDeletions)
          {
             boundsClass = "ace_next-edit-suggestion-deletion-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_DELETION;
          }
          else
          {
             boundsClass = "ace_next-edit-suggestion-insertion-bounds";
-            gutterClass = AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+            gutterClass = AceEditorGutterStyles.NES_GUTTER_INSERTION;
          }
 
          Range boundsRange = Range.create(minRow, 0, maxRow, 0);
@@ -619,6 +776,12 @@ public class TextEditingTargetAssistantHelper
 
          HandlerRegistration registration = display_.addGutterItem(minRow, gutterClass);
          nesGutterRegistrations_.add(registration);
+
+         for (int row = minRow + 1; row <= maxRow; row++)
+         {
+            registration = display_.addGutterItem(row, AceEditorGutterStyles.NES_GUTTER_BACKGROUND);
+            nesGutterRegistrations_.add(registration);
+         }
       }
    }
 
@@ -627,12 +790,34 @@ public class TextEditingTargetAssistantHelper
     */
    private boolean isPositionInNesRange(Position pos)
    {
-      for (Range range : nesClickableRanges_)
+      for (AnchoredRange anchoredRange : nesClickableRanges_)
       {
-         if (range.contains(pos))
+         if (anchoredRange.toRange().contains(pos))
             return true;
       }
       return false;
+   }
+
+   /**
+    * Checks if a document change intersects with the active NES suggestion range.
+    * Returns true if there is an active suggestion and the change range overlaps it.
+    */
+   private boolean doesChangeIntersectNesSuggestion(AceDocumentChangeEventNative nativeEvent)
+   {
+      if (nesStartAnchor_ == null || nesEndAnchor_ == null)
+         return false;
+
+      Range nesRange = Range.create(
+         nesStartAnchor_.getRow(),
+         nesStartAnchor_.getColumn(),
+         nesEndAnchor_.getRow(),
+         nesEndAnchor_.getColumn());
+
+      Range changeRange = nativeEvent.getRange();
+
+      // Ranges intersect if either contains the other's start position
+      return nesRange.contains(changeRange.getStart()) ||
+             changeRange.contains(nesRange.getStart());
    }
 
    /**
@@ -661,7 +846,7 @@ public class TextEditingTargetAssistantHelper
    private static boolean isNesSuggestionGutterCell(Element el)
    {
       // Just check for the base class since all NES gutter icons use it
-      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE);
+      return el.hasClassName(AceEditorGutterStyles.NES_GUTTER);
    }
 
    /**
@@ -809,7 +994,7 @@ public class TextEditingTargetAssistantHelper
 
          case MIXED:
          case DIFF:
-            showEditSuggestion(nesCompletion_);
+            showDiffViewEditSuggestion(nesCompletion_);
             break;
 
          default:
@@ -825,16 +1010,16 @@ public class TextEditingTargetAssistantHelper
       switch (type)
       {
          case DELETION:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION;
+            return AceEditorGutterStyles.NES_GUTTER_DELETION;
          case INSERTION:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION;
+            return AceEditorGutterStyles.NES_GUTTER_INSERTION;
          case REPLACEMENT:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT;
+            return AceEditorGutterStyles.NES_GUTTER_REPLACEMENT;
          case GHOST_TEXT:
          case MIXED:
          case DIFF:
          default:
-            return AceEditorGutterStyles.NEXT_EDIT_SUGGESTION;
+            return AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT;
       }
    }
 
@@ -1201,7 +1386,7 @@ public class TextEditingTargetAssistantHelper
 
                   // Check for clicks on any NES gutter icon (uses base class)
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
-                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER_BASE));
+                     el.hasClassName(AceEditorGutterStyles.NES_GUTTER));
 
                   if (nesGutterEl != null && nesType_ != SuggestionType.NONE)
                   {
@@ -1329,10 +1514,30 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
-               display_.addValueChangeHandler((event) ->
+               display_.addDocumentChangedHandler((event) ->
                {
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
+
+                  AceDocumentChangeEventNative nativeEvent = event.getEvent();
+
+                  // Dismiss NES suggestion if the edit intersects the suggestion range
+                  if (nativeEvent != null && doesChangeIntersectNesSuggestion(nativeEvent))
+                  {
+                     resetSuggestion();
+                  }
+
+                  // Avoid re-triggering on newline insertions
+                  if (nativeEvent != null)
+                  {
+                     boolean isNewlineInsertion =
+                        nativeEvent.lines.length() == 2 &&
+                        nativeEvent.lines.get(0).isEmpty() &&
+                        nativeEvent.lines.get(1).isEmpty();
+
+                     if (isNewlineInsertion)
+                        return;
+                  }
 
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
@@ -1558,7 +1763,6 @@ public class TextEditingTargetAssistantHelper
                   return;
                }
 
-               resetSuggestion();
                AssistantNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
 
                // Construct an Assistant completion object from the response
@@ -1571,100 +1775,11 @@ public class TextEditingTargetAssistantHelper
                   AssistantEventType.COMPLETION_RECEIVED_SOME,
                   completion));
 
-               // The completion data gets modified when doing partial (word-by-word)
-               // completions, so we need to use a copy and preserve the original
-               // (which we need to send back to the server as-is in some language-server methods).
-               AssistantCompletion normalized = normalizeSuggestion(completion);
-
                // Check if autoshow is enabled
                boolean autoshow = prefs_.assistantNesAutoshow().getValue();
-
-               if (normalized.range.start.line == normalized.range.end.line &&
-                   normalized.range.start.character == normalized.range.end.character)
-               {
-                  // Ghost text at cursor position
-                  activeCompletion_ = new Completion(normalized);
-                  setNesState(normalized, SuggestionType.GHOST_TEXT, null);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Get the original text from the document at the edit range
-               String originalText = display_.getCode(
-                  Position.create(normalized.range.start.line, normalized.range.start.character),
-                  Position.create(normalized.range.end.line, normalized.range.end.character));
-
-               // Check if this is a deletion-only change
-               EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
-               if (deltas.isDeletionOnly())
-               {
-                  setNesState(normalized, SuggestionType.DELETION, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_DELETION);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Check if this consists only of single-line insertions
-               if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
-               {
-                  setNesState(normalized, SuggestionType.INSERTION, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_INSERTION);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Check if this is a single-line replacement (one deletion + one insertion)
-               if (deltas.isSingleLineReplacement())
-               {
-                  EditDelta deletion = deltas.getSingleDeletion();
-                  EditDelta addition = deltas.getSingleAddition();
-                  if (deletion != null && addition != null)
-                  {
-                     setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
-                     if (autoshow)
-                        renderNesSuggestion();
-                     else
-                        showSuggestionGutterOnly(normalized.range.start.line,
-                           AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                     server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                     return;
-                  }
-               }
-
-               // For single-line deltas, use mixed in-document rendering;
-               // for multiline deltas, fall back to the inline diff view.
-               if (deltas.isSingleLineDeltas())
-               {
-                  setNesState(normalized, SuggestionType.MIXED, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION_REPLACEMENT);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-               }
-               else
-               {
-                  setNesState(normalized, SuggestionType.DIFF, deltas);
-                  if (autoshow)
-                     showEditSuggestion(nesCompletion_);
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NEXT_EDIT_SUGGESTION);
-               }
+               
+               // Display the suggestion using the common helper
+               showEditSuggestionImpl(completion, autoshow, true);
             }
 
             @Override
@@ -1782,6 +1897,27 @@ public class TextEditingTargetAssistantHelper
       else if (nesCompletion_ != null)
       {
          applyNesSuggestion();
+      }
+      else if (display_.hasGhostText() && activeCompletion_ != null)
+      {
+         // Accept ghost text completion
+         Range aceRange = Range.create(
+               completionStartAnchor_.getRow(),
+               completionStartAnchor_.getColumn(),
+               completionEndAnchor_.getRow(),
+               completionEndAnchor_.getColumn());
+         display_.replaceRange(aceRange, activeCompletion_.insertText);
+
+         Position cursorPos = Position.create(
+            completionEndAnchor_.getRow(),
+            completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+         display_.setCursorPosition(cursorPos);
+
+         server_.assistantDidAcceptCompletion(
+            activeCompletion_.originalCompletion.command,
+            new VoidServerRequestCallback());
+
+         reset();
       }
       else
       {
@@ -2056,7 +2192,9 @@ public class TextEditingTargetAssistantHelper
          reg.removeHandler();
       nesGutterRegistrations_.clear();
 
-      // Clear clickable ranges
+      // Detach and clear clickable range anchors
+      for (AnchoredRange anchoredRange : nesClickableRanges_)
+         anchoredRange.detach();
       nesClickableRanges_.clear();
 
       // Reset tokens for all tracked positions
@@ -2118,7 +2256,7 @@ public class TextEditingTargetAssistantHelper
    private EditDeltas nesDeltas_;
    private List<Integer> nesMarkerIds_ = new ArrayList<>();
    private List<HandlerRegistration> nesGutterRegistrations_ = new ArrayList<>();
-   private List<Range> nesClickableRanges_ = new ArrayList<>();
+   private List<AnchoredRange> nesClickableRanges_ = new ArrayList<>();
    private List<Position> nesTokenPositions_ = new ArrayList<>();
    private int nesBoundsMarkerId_ = -1;
    private Anchor nesStartAnchor_;

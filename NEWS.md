@@ -6,6 +6,7 @@
 - (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): Deleting files from Files pane on Linux Desktop now sends files to the Trash
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
+- ([#16903](https://github.com/rstudio/rstudio/issues/16903)): Changed the default location of the Sidebar pane to be on the left side of the window
 
 ### Fixed
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack

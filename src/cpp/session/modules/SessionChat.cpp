@@ -14,6 +14,7 @@
  */
 
 #include "SessionChat.hpp"
+#include "SessionAssistant.hpp"
 #include "SessionNodeTools.hpp"
 
 #include "chat/ChatConstants.hpp"
@@ -48,6 +49,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/Version.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -65,9 +67,13 @@
 #include <session/SessionScopes.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
+#include <session/projects/SessionProjects.hpp>
+
+#include <r/session/RBusy.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
@@ -95,7 +101,6 @@ namespace {
 // ============================================================================
 PidType s_chatBackendPid = -1;
 int s_chatBackendPort = -1;
-std::string s_chatBackendUrl;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
@@ -114,6 +119,7 @@ static bool s_chatBusy = false;
 // Focused document tracking for insertAtCursor
 // ============================================================================
 static std::string s_focusedDocumentId;
+static json::Array s_focusedDocumentSelections;
 
 // ============================================================================
 // Posit Assistant version tracking for About dialog
@@ -121,11 +127,25 @@ static std::string s_focusedDocumentId;
 static std::string s_positAssistantVersion;
 
 // ============================================================================
+// Project-specific assistant options (for chat provider)
+// ============================================================================
+static projects::RProjectAssistantOptions s_chatProjectOptions;
+
+// ============================================================================
 // Error Messages
 // ============================================================================
 // NOTE: This must match EXECUTION_CANCELED_ERROR constant in
 // @databot/core/errors/constants.ts: "Execution canceled by user"
 static const char* const kExecutionCanceledError = "Execution canceled by user";
+
+// ============================================================================
+// Code Execution Queue Limits
+// ============================================================================
+// Limit queued execution requests to prevent unbounded growth when R is busy
+static const size_t kMaxQueuedExecutions = 10;
+
+// Maximum time (milliseconds) an execution can wait in queue before timing out
+static const int kMaxQueueWaitMs = 60000;  // 60 seconds
 
 // ============================================================================
 // Feature availability helper
@@ -144,10 +164,25 @@ bool isPaiSelected()
    return prefs::userPrefs().assistant() == kAssistantPosit;
 }
 
-// Returns true if the user has selected Posit AI as their chat provider (for Chat pane)
+// Returns the configured chat provider, checking:
+// 1. Project-level chat provider setting (if set and not "default")
+// 2. Global user preference
+std::string getConfiguredChatProvider()
+{
+   // Check for project-level override
+   std::string projectChatProvider = s_chatProjectOptions.chatProvider;
+   if (!projectChatProvider.empty() && projectChatProvider != "default")
+      return projectChatProvider;
+
+   // Fall back to global preference
+   return prefs::userPrefs().chatProvider();
+}
+
+// Returns true if chat provider is set to Posit AI (for Chat pane)
+// Checks project-level setting first, then falls back to global preference
 bool isChatProviderPosit()
 {
-   return prefs::userPrefs().chatProvider() == kChatProviderPosit;
+   return getConfiguredChatProvider() == kChatProviderPosit;
 }
 
 // Returns true if the user wants Posit AI for either chat or completions
@@ -253,6 +288,7 @@ struct PendingExecutionRequest
    bool captureOutput;
    bool capturePlot;
    int timeout;
+   std::chrono::steady_clock::time_point queuedTime;
 
    PendingExecutionRequest(
       boost::weak_ptr<core::system::ProcessOperations> ops,
@@ -263,7 +299,8 @@ struct PendingExecutionRequest
       bool plot,
       int to)
       : weakOps(ops), requestId(reqId), code(c), trackingId(tid),
-        captureOutput(capture), capturePlot(plot), timeout(to)
+        captureOutput(capture), capturePlot(plot), timeout(to),
+        queuedTime(std::chrono::steady_clock::now())
    {
    }
 };
@@ -935,11 +972,15 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
             json::Object fileObj;
 
-            // Construct URI based on document type
+            // Construct URI and fileName based on document type
             if (pDoc->isUntitled())
             {
                // Use untitled: scheme for unsaved documents (matches Positron/VSCode convention)
                fileObj["uri"] = fmt::format("untitled:{}", pDoc->id());
+
+               // Use tempName property (matches UI display like "Untitled1").
+               // This is guaranteed to be set when isUntitled() is true.
+               fileObj["tempName"] = pDoc->getProperty("tempName");
             }
             else
             {
@@ -974,8 +1015,19 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             // relativeOrder == 0 means document is loaded but not visible in a tab
             fileObj["isVisible"] = (pDoc->relativeOrder() > 0);
 
-            // Text selections (empty for now, will be populated when selection tracking is implemented)
-            fileObj["textSelections"] = json::Array();
+            // Active: the document currently focused in the editor
+            // s_focusedDocumentId is set by chat_doc_focused RPC from GWT client
+            fileObj["isActiveEditor"] = (pDoc->id() == s_focusedDocumentId);
+
+            // Selections for active editor
+            if (pDoc->id() == s_focusedDocumentId && !s_focusedDocumentSelections.isEmpty())
+            {
+               fileObj["selections"] = s_focusedDocumentSelections;
+            }
+            else
+            {
+               fileObj["selections"] = json::Array();
+            }
 
             openFilesArray.push_back(fileObj);
          }
@@ -1017,6 +1069,39 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
+   // Check for timeout - if request waited too long in queue, return error
+   auto now = std::chrono::steady_clock::now();
+   auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+      now - request.queuedTime).count();
+
+   if (waitTimeMs > kMaxQueueWaitMs)
+   {
+      WLOG("Execution request timed out after {}ms in queue for trackingId: {}",
+           waitTimeMs, request.trackingId);
+
+      // Send timeout error response if backend is still alive
+      boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
+      if (pOps)
+      {
+         sendJsonRpcError(*pOps, request.requestId, -32000,
+            "Execution timed out. The R console was busy for too long.");
+      }
+
+      // Schedule next request if queued
+      {
+         boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+         if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
+         {
+            s_executionScheduled = true;
+            module_context::scheduleDelayedWork(
+               boost::posix_time::milliseconds(1),
+               processPendingExecution,
+               true);  // idleOnly=true - wait for R to be idle
+         }
+      }
+      return;
+   }
+
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
@@ -1031,7 +1116,7 @@ void processPendingExecution()
          module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(1),
             processPendingExecution,
-            false);
+            true);  // idleOnly=true - wait for R to be idle
       }
    }
 }
@@ -1069,9 +1154,30 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
    json::readObject(options, "capturePlot", capturePlot);
    json::readObject(options, "timeout", timeout);
 
+   // Check if R console is busy and log for debugging
+   bool rIsBusy = console_input::executing() || r::session::isBusy();
+   if (rIsBusy)
+   {
+      DLOG("R console is busy, execution will be queued until idle for trackingId: {}", trackingId);
+   }
+
    // Queue the request for deferred execution
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
+
+      // Check queue limit to prevent unbounded growth when R is busy
+      if (s_pendingExecutionQueue.size() >= kMaxQueuedExecutions)
+      {
+         WLOG("Execution queue full ({} pending), rejecting request for trackingId: {}",
+              s_pendingExecutionQueue.size(), trackingId);
+
+         // Release mutex before I/O operation
+         lock.unlock();
+         sendJsonRpcError(ops, requestId, -32000,
+            "R console is busy. Execution queue is full. Please wait for current operations to complete.");
+         return;
+      }
+
       s_pendingExecutionQueue.push(PendingExecutionRequest(
          ops.getWeakPtr(), requestId, code, trackingId,
          captureOutput, capturePlot, timeout));
@@ -1082,7 +1188,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
          module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(1),
             processPendingExecution,
-            false);  // idleOnly=false - run immediately
+            true);  // idleOnly=true - wait for R to be idle
       }
    }
 
@@ -1794,6 +1900,13 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    result["isModified"] = doc->dirty();
    result["languageId"] = languageIdFromDocument(doc);
 
+   // Set fileName for display purposes
+   if (doc->isUntitled())
+   {
+      // Use tempName property if available (matches UI display like "Untitled1")
+      result["tempName"] = doc->getProperty("tempName");
+   }
+
    DLOG("Read file content from editor buffer (modified: {})", doc->dirty());
 
    sendJsonRpcResponse(ops, requestId, result);
@@ -1913,6 +2026,11 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       module_context::enqueClientEvent(event);
 
       result["success"] = true;
+      if (doc->isUntitled())
+      {
+         // For untitled documents, return the tempName for display purposes
+         result["tempName"] = doc->getProperty("tempName");
+      }
 
       DLOG("Sent editor command to replace document content");
    }
@@ -2362,6 +2480,17 @@ void handleSetBusyStatus(const json::Object& params)
    DLOG("Chat backend busy status: {}", busy ? "busy" : "idle");
 }
 
+void onProjectOptionsUpdated()
+{
+   // Update internal cache of project options
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void onBackgroundProcessing(bool isIdle)
 {
    std::vector<PendingNotification> toProcess;
@@ -2437,6 +2566,9 @@ boost::mutex s_updateStateMutex;
 
 // Check if we should skip the update check due to throttling
 // Returns true if we should skip (recently checked with same RStudio version)
+//
+// NOTE: During development this delay is causing confusion. For now we will record
+// the update check time but skip the throttling so updates are checked every time.
 bool shouldSkipUpdateCheck()
 {
    json::Object positAssistantState = prefs::userState().positAssistant();
@@ -2472,41 +2604,44 @@ bool shouldSkipUpdateCheck()
       return false;
    }
 
+   return false;  // Temporarily disable throttling during development
+
+   // FUTURE: Re-enable throttling after testing
    // Parse the timestamp and check if an hour has passed
-   try
-   {
-      boost::posix_time::ptime lastCheck =
-         boost::posix_time::from_iso_string(lastCheckStr);
-      boost::posix_time::ptime now =
-         boost::posix_time::second_clock::universal_time();
+   // try
+   // {
+   //    boost::posix_time::ptime lastCheck =
+   //       boost::posix_time::from_iso_string(lastCheckStr);
+   //    boost::posix_time::ptime now =
+   //       boost::posix_time::second_clock::universal_time();
 
-      boost::posix_time::time_duration elapsed = now - lastCheck;
+   //    boost::posix_time::time_duration elapsed = now - lastCheck;
 
-      // Handle clock skew: if elapsed time is negative, the stored timestamp
-      // is in the future. Don't skip in this case.
-      if (elapsed.is_negative())
-      {
-         DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
-         return false;
-      }
+   //    // Handle clock skew: if elapsed time is negative, the stored timestamp
+   //    // is in the future. Don't skip in this case.
+   //    if (elapsed.is_negative())
+   //    {
+   //       DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
+   //       return false;
+   //    }
 
-      // Skip if less than 1 hour has passed
-      if (elapsed.hours() < 1)
-      {
-         DLOG("Update check throttled: only {} minutes since last check",
-              elapsed.total_seconds() / 60);
-         return true;
-      }
+   //    // Skip if less than 10 minutes has passed
+   //    if (elapsed.total_seconds() < 600)
+   //    {
+   //       DLOG("Update check throttled: only {} minutes since last check",
+   //            elapsed.total_seconds() / 60);
+   //       return true;
+   //    }
 
-      DLOG("Over 1 hour since last update check, will check for updates");
-      return false;
-   }
-   catch (const std::exception& e)
-   {
-      WLOG("Failed to parse update check timestamp '{}': {}",
-           lastCheckStr, e.what());
-      return false;
-   }
+   //    DLOG("Over 10 minutes since last update check, will check for updates");
+   //    return false;
+   // }
+   // catch (const std::exception& e)
+   // {
+   //    WLOG("Failed to parse update check timestamp '{}': {}",
+   //         lastCheckStr, e.what());
+   //    return false;
+   // }
 }
 
 // Save the update check state (timestamp and RStudio version)
@@ -2779,6 +2914,69 @@ Error getPackageInfoFromManifest(
    return Success();
 }
 
+// Extract recommended RStudio version from manifest
+// Returns Success() and populates output params if field is present and valid
+// Returns error if field is missing or invalid (caller should handle gracefully)
+Error getRecommendedRStudioVersion(
+    const json::Object& manifest,
+    std::string* pVersion,
+    std::string* pUrl)
+{
+   if (!pVersion || !pUrl)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   // Look for "recommendedRStudioVersion" object
+   json::Object versionObj;
+   Error error = json::readObject(manifest, "recommendedRStudioVersion", versionObj);
+   if (error)
+   {
+      // Field not present - this is expected for older manifests
+      return error;
+   }
+
+   // Extract "version" and "url" fields
+   std::string version, url;
+   error = json::readObject(versionObj, "version", version, "url", url);
+   if (error)
+   {
+      WLOG("recommendedRStudioVersion missing required fields: {}", error.getMessage());
+      return error;
+   }
+
+   // Validate URL is HTTPS
+   if (!isHttpsUrl(url))
+   {
+      WLOG("Rejecting recommendedRStudioVersion with non-HTTPS URL: {}", url);
+      return systemError(boost::system::errc::protocol_error,
+                        "recommendedRStudioVersion URL must use HTTPS",
+                        ERROR_LOCATION);
+   }
+
+   *pVersion = version;
+   *pUrl = url;
+
+   DLOG("Found recommended RStudio version: {} at {}", version, url);
+   return Success();
+}
+
+// Show warning bar about outdated RStudio version
+void showRStudioVersionWarning(
+    const std::string& recommendedVersion,
+    const std::string& downloadUrl)
+{
+   json::Object msgJson;
+   msgJson["severe"] = false;
+   boost::format fmt(
+      "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
+      "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
+   );
+   msgJson["message"] = boost::str(fmt %
+      string_utils::htmlEscape(recommendedVersion, true) %
+      string_utils::htmlEscape(downloadUrl, true));
+   ClientEvent event(client_events::kShowWarningBar, msgJson);
+   module_context::enqueClientEvent(event);
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -3046,10 +3244,10 @@ Error checkForUpdatesOnStartup()
    // Skip check if:
    // - Posit Assistant IS installed (version != "0.0.0")
    // - AND RStudio version hasn't changed
-   // - AND less than 1 hour since last check
+   // - AND less than 10 minutes since last check
    if (installedVersion != "0.0.0" && shouldSkipUpdateCheck())
    {
-      DLOG("Update check skipped: throttled (checked within last hour)");
+      DLOG("Update check skipped: throttled (checked within last 10 minutes)");
       return Success();
    }
 
@@ -3119,6 +3317,50 @@ Error checkForUpdatesOnStartup()
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
       s_updateState.updateAvailable = false;
+   }
+
+   // Check for recommended RStudio version
+   std::string recommendedVersion, downloadPageUrl;
+   Error versionError = getRecommendedRStudioVersion(manifest, &recommendedVersion, &downloadPageUrl);
+   if (!versionError)
+   {
+      core::Version current(RSTUDIO_VERSION);
+      core::Version recommended(recommendedVersion);
+
+      // Validate version parsed successfully (non-empty with at least major version)
+      if (recommended.empty())
+      {
+         WLOG("Failed to parse recommended RStudio version: {}", recommendedVersion);
+      }
+      else
+      {
+         // Dev builds use 999 as patch version
+         bool isDevBuild = current.versionPatch() == 999;
+         bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+
+         DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
+              RSTUDIO_VERSION, recommendedVersion, isDevBuild);
+
+         // Skip if Posit Assistant not installed (user hasn't completed beta signup)
+         if (installedVersion == "0.0.0")
+         {
+            DLOG("  Skipping version warning (Posit Assistant not installed)");
+         }
+         // Skip for dev builds unless overridden
+         else if (isDevBuild && !forceDevCheck)
+         {
+            DLOG("  Skipping version warning (dev build)");
+         }
+         else if (current < recommended)
+         {
+            DLOG("  Showing version warning");
+            showRStudioVersionWarning(recommendedVersion, downloadPageUrl);
+         }
+         else
+         {
+            DLOG("  No warning needed (version is current or newer)");
+         }
+      }
    }
 
    return Success();
@@ -3354,7 +3596,6 @@ void onBackendExit(int exitCode)
    // Clear state
    s_chatBackendPid = -1;
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
    s_chatBackendRestartCount = kMaxRestartAttempts;
@@ -3408,9 +3649,6 @@ Error startChatBackend(bool resumeConversation)
       return error;
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
-
-   // Build WebSocket URL BEFORE launching (so it's ready when needed)
-   s_chatBackendUrl = buildWebSocketUrl(s_chatBackendPort);
 
    // Build command arguments
    // Use relative path so Node.js resolves modules from working directory
@@ -3509,7 +3747,6 @@ Error startChatBackend(bool resumeConversation)
    {
       LOG_ERROR(error);
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
       return error;
    }
 
@@ -3524,11 +3761,21 @@ Error chatDocFocused(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string documentId;
-   Error error = core::json::readParams(request.params, &documentId);
+   json::Array selections;
+
+   // Try new signature with selections first
+   Error error = core::json::readParams(request.params, &documentId, &selections);
    if (error)
-      return error;
+   {
+      // Fall back to old signature without selections
+      error = core::json::readParams(request.params, &documentId);
+      if (error)
+         return error;
+      selections = json::Array();
+   }
 
    s_focusedDocumentId = documentId;
+   s_focusedDocumentSelections = selections;
    return Success();
 }
 
@@ -3537,7 +3784,14 @@ Error chatVerifyInstalled(const json::JsonRpcRequest& request,
 {
    FilePath installation = locatePositAiInstallation();
    bool installed = !installation.isEmpty();
-   pResponse->setResult(installed);
+
+   json::Object result;
+   result["installed"] = installed;
+   if (installed)
+   {
+      result["version"] = getInstalledVersion();
+   }
+   pResponse->setResult(result);
    return Success();
 }
 
@@ -3618,9 +3872,8 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
 
    s_chatBackendPid = -1;
 
-   // Clear port and URL
+   // Clear port
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
 
    // Clear busy state
    s_chatBusy = false;
@@ -3636,9 +3889,17 @@ Error chatGetBackendUrl(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    json::Object result;
-   result["url"] = s_chatBackendUrl;
+
+   // Rebuild URL on-demand to use current port token (which changes on page reload)
+   std::string url;
+   if (s_chatBackendPid != -1 && s_chatBackendPort != -1)
+   {
+      url = buildWebSocketUrl(s_chatBackendPort);
+   }
+
+   result["url"] = url;
    result["port"] = s_chatBackendPort;
-   result["ready"] = (s_chatBackendPid != -1 && !s_chatBackendUrl.empty());
+   result["ready"] = (s_chatBackendPid != -1 && !url.empty());
 
    pResponse->setResult(result);
    return Success();
@@ -3659,14 +3920,16 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
    {
       result["status"] = "stopped";
    }
-   else if (s_chatBackendUrl.empty())
+   else if (s_chatBackendPort == -1)
    {
       result["status"] = "starting";
    }
    else
    {
+      // Rebuild URL on-demand to use current port token (which changes on page reload)
+      std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
-      result["url"] = s_chatBackendUrl;
+      result["url"] = url;
    }
 
    pResponse->setResult(result);
@@ -3778,7 +4041,13 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       }
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
+   }
+
+   // Stop assistant agent (language server) if running - it also uses pai/bin/
+   DLOG("Stopping assistant agent for update");
+   if (!assistant::stopAgentForUpdate())
+   {
+      WLOG("Timeout waiting for assistant agent to stop");
    }
 
    // Download package
@@ -3989,7 +4258,6 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
       s_chatBackendPort = -1;
-      s_chatBackendUrl.clear();
    }
 
    // Clear busy state and JSON-RPC buffer
@@ -4077,9 +4345,8 @@ void onShutdown(bool terminatedNormally)
       s_chatBackendPid = -1;
    }
 
-   // Clear port and URL
+   // Clear port
    s_chatBackendPort = -1;
-   s_chatBackendUrl.clear();
 
    // Clear notification queue
    {
@@ -4136,6 +4403,14 @@ Error initialize()
       }
    }
 
+   // Read project options (must be done before validation to get accurate state)
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readAssistantOptions(&s_chatProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // Validate assistant preference consistency
    // If user has Posit AI selected but PAI is no longer available, reset to "none"
    if (isPaiSelected() && !isPaiEnabled())
@@ -4161,6 +4436,7 @@ Error initialize()
    // Register event handlers
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onShutdown.connect(onShutdown);
+   events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
 
    // Register handler to detect session close (vs suspend/restart)
    events().onQuit.connect([]() {

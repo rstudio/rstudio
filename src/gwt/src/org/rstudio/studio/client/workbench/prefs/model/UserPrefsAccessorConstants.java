@@ -2168,7 +2168,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String chatProviderDescription();
    @DefaultStringValue("(None)")
    String chatProviderEnum_none();
-   @DefaultStringValue("Posit AI")
+   @DefaultStringValue("Posit Assistant")
    String chatProviderEnum_posit();
 
    /**

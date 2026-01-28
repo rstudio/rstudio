@@ -101,11 +101,13 @@ public class AboutDialog extends ModalDialogBase
    private void initialize(ProductEditionInfo editionInfo,
                            Session session,
                            UserPrefs userPrefs,
+                           PaiUtil paiUtil,
                            ChatServerOperations chatServer)
    {
       editionInfo_ = editionInfo;
       session_ = session;
       userPrefs_ = userPrefs;
+      paiUtil_ = paiUtil;
       chatServer_ = chatServer;
    }
 
@@ -127,7 +129,7 @@ public class AboutDialog extends ModalDialogBase
    private void fetchPositAssistantVersion()
    {
       // Only fetch if user has selected Posit AI as their assistant
-      if (!PaiUtil.isPaiSelected(userPrefs_))
+      if (!paiUtil_.isPaiSelected())
          return;
 
       chatServer_.chatGetVersion(new ServerRequestCallback<String>()
@@ -155,6 +157,7 @@ public class AboutDialog extends ModalDialogBase
    private ProductEditionInfo editionInfo_;
    private Session session_;
    private UserPrefs userPrefs_;
+   private PaiUtil paiUtil_;
    private ChatServerOperations chatServer_;
    private String positAssistantVersion_ = "";
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);

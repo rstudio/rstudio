@@ -65,6 +65,8 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -174,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -485,6 +488,32 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
       events_.addHandler(RStudioApiRequestEvent.TYPE, this);
       events_.addHandler(CloseAllSourceDocsExceptEvent.TYPE, this);
+
+      // Re-notify server of focused document on session resume so features
+      // like Chat know which document is active after the session restarts
+      events_.addHandler(SessionSerializationEvent.TYPE, event -> {
+         if (event.getAction().getType() == SessionSerializationAction.RESUME_SESSION)
+         {
+            if (SourceWindowManager.isMainSourceWindow())
+            {
+               String activeDocId = columnManager_.getActiveDocId();
+               if (activeDocId != null)
+               {
+                  JsArray<JavaScriptObject> selections = columnManager_.getActiveEditorSelectionsJson();
+                  server_.chatDocFocused(activeDocId, selections, new VoidServerRequestCallback());
+               }
+            }
+         }
+      });
+   }
+
+   /**
+    * Get the selections from the active editor as a JSON array.
+    * Used by SourceWindowManager to send selections to the chat backend.
+    */
+   public JsArray<JavaScriptObject> getActiveEditorSelectionsJson()
+   {
+      return columnManager_.getActiveEditorSelectionsJson();
    }
 
    public void load()
@@ -608,6 +637,19 @@ public class Source implements InsertSourceEvent.Handler,
       {
          WindowEx.addFocusHandler(
              (FocusEvent event) -> columnManager_.manageCommands(true));
+      }
+
+      // Notify the server of the currently active document so that features
+      // like Chat know which document is focused on startup (before any
+      // user-initiated focus events fire)
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         String activeDocId = columnManager_.getActiveDocId();
+         if (activeDocId != null)
+         {
+            JsArray<JavaScriptObject> selections = columnManager_.getActiveEditorSelectionsJson();
+            server_.chatDocFocused(activeDocId, selections, new VoidServerRequestCallback());
+         }
       }
    }
 
@@ -3307,6 +3349,31 @@ public class Source implements InsertSourceEvent.Handler,
          {
             server_.rstudioApiResponse(JavaScriptObject.createObject(), null);
          }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_SHOW_EDIT_SUGGESTION)
+      {
+         RStudioApiRequestEvent.ShowEditSuggestionData data = requestEvent.getPayload().cast();
+         invokeEditorApiAction(data.getId(), (TextEditingTarget target) ->
+         {
+            // Extract range from JavaScriptObject
+            JavaScriptObject rangeObj = data.getRange();
+            JsArrayInteger rangeArray = rangeObj.cast();
+            
+            // Convert to int array
+            int[] range = new int[4];
+            for (int i = 0; i < 4 && i < rangeArray.length(); i++)
+            {
+               range[i] = rangeArray.get(i);
+            }
+            
+            // Show the edit suggestion
+            target.showEditSuggestion(range, data.getText(), data.getId());
+            
+            // Send response
+            JsObject response = JsObject.createJsObject();
+            response.setString("id", target.getId());
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
       }
    }
 

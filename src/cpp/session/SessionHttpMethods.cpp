@@ -143,8 +143,13 @@ bool parseAndValidateJsonRpcConnection(
       return false;
    }
 
-   // check for invalid client id
-   if (pJsonRpcRequest->clientId != persistentState().activeClientId())
+   // check for invalid client id - must match, unless it's rserver using quit session from the homepage (no client id in that case)
+#ifdef RSTUDIO_SERVER
+   bool rserverQuitSession = pJsonRpcRequest->clientId == "" && pJsonRpcRequest->method == kQuitSession;
+#else
+   bool rserverQuitSession = false;
+#endif
+   if (pJsonRpcRequest->clientId != persistentState().activeClientId() && !rserverQuitSession)
    {
       Error error(json::errc::InvalidClientId, ERROR_LOCATION);
       ptrConnection->sendJsonRpcError(error);

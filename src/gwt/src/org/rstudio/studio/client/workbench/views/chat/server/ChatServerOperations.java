@@ -12,13 +12,26 @@
  */
 package org.rstudio.studio.client.workbench.views.chat.server;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+
 public interface ChatServerOperations
 {
-   public void chatVerifyInstalled(ServerRequestCallback<Boolean> requestCallback);
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class ChatVerifyInstalledResponse
+   {
+      public boolean installed;
+      public String version;
+   }
+
+   public void chatVerifyInstalled(ServerRequestCallback<ChatVerifyInstalledResponse> requestCallback);
    public void chatStartBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatStopBackend(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetBackendUrl(ServerRequestCallback<JsObject> requestCallback);
@@ -30,4 +43,6 @@ public interface ChatServerOperations
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
 
    public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
+   public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
+                              ServerRequestCallback<Void> requestCallback);
 }

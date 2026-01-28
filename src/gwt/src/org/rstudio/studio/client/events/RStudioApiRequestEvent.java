@@ -111,6 +111,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    public static final int TYPE_FILES_PANE_NAVIGATE  = 6;
    public static final int TYPE_SET_GHOST_TEXT       = 7;
    public static final int TYPE_ASK_FOR_RESTART      = 8;
+   public static final int TYPE_SHOW_EDIT_SUGGESTION = 9;
    
    // list of potential event targets (keep in sync with Api.R)
    public static final int TARGET_UNKNOWN       = 0;
@@ -197,6 +198,17 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       }
 
       public final native String getReason()  /*-{ return this["reason"]; }-*/;
+   }
+   
+   public static class ShowEditSuggestionData extends JavaScriptObject
+   {
+      protected ShowEditSuggestionData()
+      {
+      }
+      
+      public final native JavaScriptObject getRange() /*-{ return this["range"]; }-*/;
+      public final native String getText() /*-{ return this["text"]; }-*/;
+      public final native String getId() /*-{ return this["id"]; }-*/;
    }
    
 }

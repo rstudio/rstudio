@@ -16,14 +16,13 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.user.client.ui.Frame;
-import org.rstudio.studio.client.application.Desktop;
 
 public class RStudioFrame extends Frame
 {
@@ -90,22 +89,24 @@ public class RStudioFrame extends Frame
    @Override
    public void setUrl(String url)
    {
-      if (BrowseCap.isElectron())
-      {
-         // Electron workaround to checking URL for iframe navigation intent
-         Desktop.getFrame().allowNavigation(DomUtils.makeAbsoluteUrl(url), new CommandWithArg<Boolean>() {
-            @Override
-            public void execute(Boolean arg) {
-               if (arg)
-               {
-                  RStudioFrame.super.setUrl(url);
-               }
-            }
-         });
-      }
-      else
+      // In Desktop builds, we need to first check if navigation is permitted
+      // before setting the URL
+      boolean skipNavigationCheck =
+         StringUtil.equals(url, "about:blank") ||
+         !BrowseCap.isElectron();
+
+      if (skipNavigationCheck)
       {
          super.setUrl(url);
+         return;
       }
+
+      Desktop.getFrame().allowNavigation(DomUtils.makeAbsoluteUrl(url), (allowed) ->
+      {
+         if (allowed)
+         {
+            RStudioFrame.super.setUrl(url);
+         }
+      });
    }
 }

@@ -13,11 +13,11 @@
 package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -53,7 +53,7 @@ public class ChatPresenter extends BasePresenter
 
       interface Observer
       {
-         void onPaneReady();
+         void onPaneReady(boolean installed, String installedVersion);
          void onRestartBackend();
       }
 
@@ -71,6 +71,8 @@ public class ChatPresenter extends BasePresenter
       void loadUrl(String url);
       void showUpdateNotification(String newVersion);
       void showInstallNotification(String newVersion);
+      void showNotInstalledWithInstall(String newVersion);
+      void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
       void showUpdatingStatus();
       void showUpdateComplete();
       void showUpdateError(String errorMessage);
@@ -96,6 +98,7 @@ public class ChatPresenter extends BasePresenter
       Commands commands,
       Binder binder,
       ChatServerOperations server,
+      PaiUtil paiUtil,
       UserPrefs prefs)
    {
       super(display);
@@ -104,16 +107,17 @@ public class ChatPresenter extends BasePresenter
       events_ = events;
       commands_ = commands;
       server_ = server;
+      paiUtil_ = paiUtil;
       prefs_ = prefs;
-      installManager_ = new PositAiInstallManager(server);
+      installManager_ = new PositAiInstallManager();
 
       // Set up observer
       display_.setObserver(new Display.Observer()
       {
          @Override
-         public void onPaneReady()
+         public void onPaneReady(boolean installed, String installedVersion)
          {
-            initializeChat();
+            initializeChat(installed, installedVersion);
          }
 
          @Override
@@ -180,7 +184,7 @@ public class ChatPresenter extends BasePresenter
                }
 
                // Don't poll for backend if Posit AI isn't selected as chat provider
-               if (!PaiUtil.isChatProviderPosit(prefs_))
+               if (!paiUtil_.isChatProviderPosit())
                {
                   display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
                   return;
@@ -194,30 +198,45 @@ public class ChatPresenter extends BasePresenter
          }
       });
 
-      // Listen for chat provider preference changes
+      // Listen for chat provider preference changes (global setting)
       prefs_.chatProvider().addValueChangeHandler((event) ->
       {
-         if (StringUtil.equals(event.getValue(), UserPrefs.CHAT_PROVIDER_POSIT))
-         {
-            // Prevent concurrent initialization
-            if (initializing_)
-            {
-               return;
-            }
-
-            // Posit AI was just selected as chat provider, initialize chat
-            initializing_ = true;
-            checkForUpdates();
-         }
-         else
-         {
-            // Posit AI was deselected as chat provider, stop backend and show not-selected message
-            initializing_ = false;  // Cancel any ongoing initialization
-            stopBackend();
-            display_.hideUpdateNotification();  // Clean up all notifications
-            display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
-         }
+         onChatProviderChanged();
       });
+
+      // Listen for project options changes (project-level setting)
+      events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
+      {
+         onChatProviderChanged();
+      });
+   }
+
+   /**
+    * Called when either global chat provider preference or project options change.
+    * Re-evaluates whether chat should be enabled based on the effective provider.
+    */
+   private void onChatProviderChanged()
+   {
+      if (paiUtil_.isChatProviderPosit())
+      {
+         // Prevent concurrent initialization
+         if (initializing_)
+         {
+            return;
+         }
+
+         // Posit AI is the effective chat provider, initialize chat
+         initializing_ = true;
+         checkForUpdates();
+      }
+      else
+      {
+         // Posit AI is not the effective chat provider, stop backend and show not-selected message
+         initializing_ = false;  // Cancel any ongoing initialization
+         stopBackend();
+         display_.hideUpdateNotification();  // Clean up all notifications
+         display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+      }
    }
 
    /**
@@ -231,6 +250,17 @@ public class ChatPresenter extends BasePresenter
     */
    public void initializeChat()
    {
+      initializeChat(false, null);
+   }
+
+   /**
+    * Initialize the Chat pane with known installation status.
+    *
+    * @param installed Whether Posit Assistant is currently installed
+    * @param installedVersion The currently installed version (null if not installed)
+    */
+   public void initializeChat(boolean installed, String installedVersion)
+   {
       // Prevent concurrent initialization (e.g., from multiple event sources)
       if (initializing_)
       {
@@ -238,7 +268,7 @@ public class ChatPresenter extends BasePresenter
       }
 
       // Check if Posit AI is selected as chat provider before initializing
-      if (!PaiUtil.isChatProviderPosit(prefs_))
+      if (!paiUtil_.isChatProviderPosit())
       {
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          return;
@@ -295,18 +325,20 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onUpdateAvailable(String newVersion, boolean isInitialInstall)
+         public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
          {
             // Reset initialization flag - we're pausing for user action
             initializing_ = false;
 
             if (isInitialInstall)
             {
-               display_.showInstallNotification(newVersion);
+               // Show "not installed" message with install button in main content area
+               display_.showNotInstalledWithInstall(newVersion);
             }
             else
             {
-               display_.showUpdateNotification(newVersion);
+               // Show update available message with version info in main content area
+               display_.showUpdateAvailableWithVersions(currentVersion, newVersion);
             }
             // Do NOT start backend when update/install is available
             // Backend will start after user clicks "Update/Install Now" and it completes,
@@ -490,7 +522,7 @@ public class ChatPresenter extends BasePresenter
    private void loadChatUI(String wsUrl)
    {
       // Re-check preference before loading (guards against preference change during polling)
-      if (!PaiUtil.isChatProviderPosit(prefs_))
+      if (!paiUtil_.isChatProviderPosit())
       {
          initializing_ = false;
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
@@ -531,6 +563,7 @@ public class ChatPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Commands commands_;
    private final ChatServerOperations server_;
+   private final PaiUtil paiUtil_;
    private final UserPrefs prefs_;
    private final PositAiInstallManager installManager_;
 
