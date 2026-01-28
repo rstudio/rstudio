@@ -518,7 +518,7 @@ public class TextEditingTargetAssistantHelper
          completion.range.end.line,
          completion.range.end.character);
 
-      diffMarkerId_ = display_.addHighlight(editRange, "ace_next edit-suggestion-highlight", "text");
+      diffMarkerId_ = display_.addHighlight(editRange, "ace_next-edit-suggestion-highlight", "text");
 
       // Get the original text from the document at the edit range
       String originalText = display_.getCode(
@@ -678,7 +678,7 @@ public class TextEditingTargetAssistantHelper
          hasDeletions = true;
          Range documentRange = offsetRangeToDocument(delta.range, baseRow, baseCol);
 
-         int markerId = display_.addHighlight(documentRange, "ace_next edit-suggestion-deletion", "text");
+         int markerId = display_.addHighlight(documentRange, "ace_next-edit-suggestion-deletion", "text");
          nesMarkerIds_.add(markerId);
 
          // Store the document range for click detection using anchors
@@ -757,17 +757,17 @@ public class TextEditingTargetAssistantHelper
          String gutterClass;
          if (hasDeletions && hasInsertions)
          {
-            boundsClass = "ace_next edit-suggestion-replacement-bounds";
+            boundsClass = "ace_next-edit-suggestion-replacement-bounds";
             gutterClass = AceEditorGutterStyles.NES_GUTTER_REPLACEMENT;
          }
          else if (hasDeletions)
          {
-            boundsClass = "ace_next edit-suggestion-deletion-bounds";
+            boundsClass = "ace_next-edit-suggestion-deletion-bounds";
             gutterClass = AceEditorGutterStyles.NES_GUTTER_DELETION;
          }
          else
          {
-            boundsClass = "ace_next edit-suggestion-insertion-bounds";
+            boundsClass = "ace_next-edit-suggestion-insertion-bounds";
             gutterClass = AceEditorGutterStyles.NES_GUTTER_INSERTION;
          }
 

@@ -4,9 +4,9 @@
 @external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_gutter_annotation, ace_info, ace_tooltip, ace_content, ace_line;
 @external ace_info, ace_warning, ace_error;
-@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next edit-suggestion;
+@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line, ace_next-edit-suggestion;
 @external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
-@external ace_active_debug_line, ace_next edit-suggestion-background, ace_next edit-suggestion-highlight, ace_next edit-suggestion-deletion, ace_next edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next edit-suggestion-replacement-bounds, ace_replacement-clickable;
+@external ace_active_debug_line, ace_next-edit-suggestion-background, ace_next-edit-suggestion-highlight, ace_next-edit-suggestion-deletion, ace_next-edit-suggestion-deletion-bounds, ace_deletion-clickable, ace_insertion_preview, ace_next-edit-suggestion-insertion-bounds, ace_insertion-clickable, ace_replacement_deletion, ace_next-edit-suggestion-replacement-bounds, ace_replacement-clickable;
 @external ace_nes-gutter, ace_nes-gutter-background, ace_nes-gutter-highlight, ace_nes-gutter-deletion, ace_nes-gutter-insertion, ace_nes-gutter-replacement;
 @external ace_diff-added, ace_diff-removed;
 @external visual_chunk-queued-line, visual_chunk-executed-line, visual_chunk-resting-line, visual_chunk-error-line;
