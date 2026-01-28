@@ -379,7 +379,7 @@ pre {
 .ace_pending-breakpoint,
 .ace_inactive-breakpoint,
 .ace_executing-line,
-.ace_next edit-suggestion {
+.ace_next-edit-suggestion {
    background-position: 12% center !important;
    background-repeat: no-repeat !important;
 }
@@ -404,7 +404,7 @@ pre {
    background-size: 10px 10px;
 }
 
-.ace_next edit-suggestion::before {
+.ace_next-edit-suggestion::before {
    content: '';
    position: absolute;
    left: 0;
@@ -482,19 +482,19 @@ pre {
       radial-gradient(circle 2.5px at 12px 12px, #000000 100%, transparent 100%);
 }
 
-.ace_next edit-suggestion-highlight {
+.ace_next-edit-suggestion-highlight {
    position: absolute;
    z-index: 1;
    background: rgba(128, 128, 128, 0.2) !important;
 }
 
-.ace_next edit-suggestion-deletion {
+.ace_next-edit-suggestion-deletion {
    position: absolute;
    z-index: 1;
    background: rgba(255, 0, 0, 0.2) !important;
 }
 
-.ace_next edit-suggestion-deletion-bounds {
+.ace_next-edit-suggestion-deletion-bounds {
    position: absolute;
    z-index: 0;
    background: rgba(255, 0, 0, 0.08) !important;
@@ -506,7 +506,7 @@ pre {
    background: rgba(0, 128, 0, 0.2);
 }
 
-.ace_next edit-suggestion-insertion-bounds {
+.ace_next-edit-suggestion-insertion-bounds {
    position: absolute;
    z-index: 0;
    background: rgba(0, 128, 0, 0.08) !important;
@@ -518,7 +518,7 @@ pre {
    background: rgba(255, 0, 0, 0.15);
 }
 
-.ace_next edit-suggestion-replacement-bounds {
+.ace_next-edit-suggestion-replacement-bounds {
    position: absolute;
    z-index: 0;
    background: rgba(128, 128, 0, 0.08) !important;
