@@ -3381,22 +3381,24 @@ Error checkForUpdatesOnStartup()
       }
       else
       {
-         // Dev builds use 999 as patch version
-         bool isDevBuild = current.versionPatch() == 999;
-         bool forceDevCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
+         std::string versionStr(RSTUDIO_VERSION);
+         bool isDailyBuild = versionStr.find("-daily") != std::string::npos;
+         bool isHourlyBuild = versionStr.find("-hourly") != std::string::npos;
+         bool isPrereleaseBuild = isDailyBuild || isHourlyBuild;
+         bool forceCheck = !core::system::getenv("RSTUDIO_FORCE_DEV_UPDATE_CHECK").empty();
 
-         DLOG("RStudio version check: current={}, recommended={}, isDevBuild={}",
-              RSTUDIO_VERSION, recommendedVersion, isDevBuild);
+         DLOG("RStudio version check: current={}, recommended={}, isPrerelease={}",
+              RSTUDIO_VERSION, recommendedVersion, isPrereleaseBuild);
 
          // Skip if Posit Assistant not installed (user hasn't completed beta signup)
          if (installedVersion == "0.0.0")
          {
             DLOG("  Skipping version warning (Posit Assistant not installed)");
          }
-         // Skip for dev builds unless overridden
-         else if (isDevBuild && !forceDevCheck)
+         // Only check for prerelease builds (daily/hourly) unless overridden
+         else if (!isPrereleaseBuild && !forceCheck)
          {
-            DLOG("  Skipping version warning (dev build)");
+            DLOG("  Skipping version warning (release build)");
          }
          else if (current < recommended)
          {

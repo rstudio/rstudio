@@ -42,7 +42,7 @@ public:
       try
       {
          // split version into components
-         static boost::regex reVersion("[._-]+");
+         static boost::regex reVersion("[._+-]+");
          version = core::string_utils::trimWhitespace(version);
          boost::sregex_token_iterator it(version.begin(), version.end(), reVersion, -1);
          boost::sregex_token_iterator end;
