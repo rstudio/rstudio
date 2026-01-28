@@ -73,6 +73,16 @@ public:
 
    std::vector<std::string> pendingInput() const { return pendingInput_; }
 
+   // Get console lines with pagination support
+   // limit: number of lines to return
+   // offset: number of lines to skip
+   // fromBottom: if true, start from most recent; if false, start from oldest
+   // maxChars: maximum total characters to return (truncates early if exceeded)
+   std::vector<std::string> getConsoleLines(int limit,
+                                            int offset = 0,
+                                            bool fromBottom = true,
+                                            int maxChars = 8000);
+
 private:
 
    // NOTE: helper method assumes mutex is already locked

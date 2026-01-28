@@ -25,6 +25,7 @@
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Thread.hpp>
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <r/ROptions.hpp>
 
@@ -268,9 +269,90 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath)
    asJson(&actionsObject);
    std::ostringstream ostr;
    actionsObject.writeFormatted(ostr);
-   
+
    // write to file
    return writeStringToFile(filePath, ostr.str());
+}
+
+std::vector<std::string> ConsoleActions::getConsoleLines(int limit,
+                                                         int offset,
+                                                         bool fromBottom,
+                                                         int maxChars)
+{
+   std::vector<std::string> result;
+
+   LOCK_MUTEX(mutex_)
+   {
+      // Flush pending output to ensure we have all data
+      flush();
+
+      // Concatenate all action data into a single string
+      // Only add newlines after input/output/error actions that don't have them
+      // (prompts should NOT get newlines since input follows on the same line)
+      std::string allContent;
+      for (const auto& action : actions_)
+      {
+         allContent.append(action.data);
+         // Add newline after input/output/error if missing (but not prompts)
+         if (action.type != kConsoleActionPrompt &&
+             !action.data.empty() && action.data.back() != '\n')
+         {
+            allContent.push_back('\n');
+         }
+      }
+
+      // Strip ANSI escape sequences (colors, cursor positioning, etc.)
+      text::stripAnsiCodes(&allContent);
+
+      // Split by newlines to get individual lines
+      std::vector<std::string> allLines;
+      boost::algorithm::split(allLines, allContent, boost::algorithm::is_any_of("\n"));
+
+      // Remove trailing empty line if present (from trailing newline)
+      if (!allLines.empty() && allLines.back().empty())
+      {
+         allLines.pop_back();
+      }
+
+      // Calculate start and end indices based on direction
+      int totalLines = gsl::narrow_cast<int>(allLines.size());
+      int startIdx, endIdx;
+
+      if (fromBottom)
+      {
+         // Start from bottom (most recent)
+         // offset=0 means start at the last line
+         endIdx = totalLines - offset;
+         startIdx = std::max(0, endIdx - limit);
+      }
+      else
+      {
+         // Start from top (oldest)
+         startIdx = offset;
+         endIdx = std::min(totalLines, startIdx + limit);
+      }
+
+      // Collect lines within bounds, respecting maxChars
+      int totalChars = 0;
+      for (int i = startIdx; i < endIdx && i < totalLines; ++i)
+      {
+         if (i < 0)
+            continue;
+
+         const std::string& line = allLines[i];
+         int lineChars = gsl::narrow_cast<int>(line.size());
+
+         // Check if adding this line would exceed maxChars
+         if (totalChars + lineChars > maxChars)
+            break;
+
+         result.push_back(line);
+         totalChars += lineChars;
+      }
+   }
+   END_LOCK_MUTEX
+
+   return result;
 }
    
 } // namespace session
