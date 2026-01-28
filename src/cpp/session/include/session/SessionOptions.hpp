@@ -192,6 +192,11 @@ public:
       return scopeState_;
    }
 
+   std::string scopeValidateError() const
+   {
+      return scopeValidateError_;
+   }
+
    std::string rCRANMultipleRepos() const
    {
       return rCRANMultipleRepos_;
@@ -252,6 +257,7 @@ private:
 
    core::r_util::SessionScope scope_;
    core::r_util::SessionScopeState scopeState_;
+   std::string scopeValidateError_;
 
    std::string userScratchPath_;
    std::string userHomePath_;
