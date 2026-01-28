@@ -1966,8 +1966,15 @@ public class TextEditingTargetAssistantHelper
       }
       else
       {
-         // No active suggestion, request one
-         requestNextEditSuggestions();
+         // No active suggestion, request one based on NES setting
+         if (prefs_.assistantNesEnabled().getGlobalValue())
+         {
+            requestNextEditSuggestions();
+         }
+         else
+         {
+            suggestionTimer_.schedule(0);
+         }
       }
    }
 
