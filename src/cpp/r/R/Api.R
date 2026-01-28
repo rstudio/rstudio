@@ -29,7 +29,8 @@
    TYPE_DOCUMENT_NEW         = 5L,
    TYPE_FILES_PANE_NAVIGATE  = 6L,
    TYPE_SET_GHOST_TEXT       = 7L,
-   TYPE_ASK_FOR_RESTART      = 8L
+   TYPE_ASK_FOR_RESTART      = 8L,
+   TYPE_SHOW_EDIT_SUGGESTION = 9L
 ))
 
 # list of potential event targets
@@ -1280,5 +1281,51 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    
    .rs.api.sendRequest(request)
    invisible(text)
+})
+
+.rs.addApiFunction("showEditSuggestion", function(range, text, id = "")
+{
+   # Validate parameters
+   if (missing(range) || is.null(range))
+      stop("'range' must be specified")
+   
+   if (missing(text) || is.null(text))
+      stop("'text' must be specified")
+   
+   if (!is.character(text))
+      stop("'text' must be a character vector")
+   
+   if (is.null(id))
+      id <- ""
+   
+   if (!is.character(id) || length(id) != 1)
+      stop("'id' must be a character vector of length one")
+   
+   # Validate and transform range
+   ranges <- .rs.validateAndTransformLocation(range)
+   if (length(ranges) != 1)
+      stop("'range' must specify a single range")
+   
+   # Collapse text to single string
+   text <- paste(enc2utf8(text), collapse = "\n")
+   
+   # Create payload
+   payload <- list(
+      range = ranges[[1]],
+      text = .rs.scalar(text),
+      id = .rs.scalar(id)
+   )
+   
+   # Create request
+   request <- .rs.api.createRequest(
+      type    = .rs.api.eventTypes$TYPE_SHOW_EDIT_SUGGESTION,
+      sync    = TRUE,
+      target  = .rs.api.eventTargets$TYPE_ACTIVE_WINDOW,
+      payload = payload
+   )
+   
+   # Send request
+   .rs.api.sendRequest(request)
+   invisible(payload)
 })
 

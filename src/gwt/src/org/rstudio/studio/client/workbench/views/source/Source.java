@@ -176,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -3348,6 +3349,31 @@ public class Source implements InsertSourceEvent.Handler,
          {
             server_.rstudioApiResponse(JavaScriptObject.createObject(), null);
          }
+      }
+      else if (type == RStudioApiRequestEvent.TYPE_SHOW_EDIT_SUGGESTION)
+      {
+         RStudioApiRequestEvent.ShowEditSuggestionData data = requestEvent.getPayload().cast();
+         invokeEditorApiAction(data.getId(), (TextEditingTarget target) ->
+         {
+            // Extract range from JavaScriptObject
+            JavaScriptObject rangeObj = data.getRange();
+            JsArrayInteger rangeArray = rangeObj.cast();
+            
+            // Convert to int array
+            int[] range = new int[4];
+            for (int i = 0; i < 4 && i < rangeArray.length(); i++)
+            {
+               range[i] = rangeArray.get(i);
+            }
+            
+            // Show the edit suggestion
+            target.showEditSuggestion(range, data.getText(), data.getId());
+            
+            // Send response
+            JsObject response = JsObject.createJsObject();
+            response.setString("id", target.getId());
+            server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+         });
       }
    }
 

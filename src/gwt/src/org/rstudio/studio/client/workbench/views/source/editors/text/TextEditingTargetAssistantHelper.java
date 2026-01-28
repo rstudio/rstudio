@@ -377,7 +377,132 @@ public class TextEditingTargetAssistantHelper
    /**
     * Shows an inline edit suggestion diff view for the given completion.
     */
-   private void showEditSuggestion(AssistantCompletion completion)
+   /**
+    * Shows an edit suggestion in the editor.
+    * This is the main entry point for displaying edit suggestions from the API.
+    * The suggestion is always shown immediately (autoshow behavior).
+    * 
+    * @param completion The completion containing the range and replacement text
+    */
+   public void showEditSuggestion(AssistantCompletion completion)
+   {
+      showEditSuggestionImpl(completion, true, false);
+   }
+   
+   /**
+    * Internal implementation for showing edit suggestions.
+    * 
+    * @param completion The completion containing the range and replacement text
+    * @param autoshow If true, render the suggestion immediately; if false, show gutter icon only
+    * @param notifyServer Whether to notify the server that the completion was shown
+    *                     (true for Assistant/Copilot flow, false for API callers)
+    */
+   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
+   {
+      resetSuggestion();
+      
+      // The completion data gets modified when doing partial (word-by-word)
+      // completions, so we need to use a copy and preserve the original
+      // (which we need to send back to the server as-is in some language-server methods).
+      AssistantCompletion normalized = normalizeSuggestion(completion);
+      
+      // Check if this is a zero-width range (insertion at cursor)
+      if (normalized.range.start.line == normalized.range.end.line &&
+          normalized.range.start.character == normalized.range.end.character)
+      {
+         // Ghost text at cursor position
+         activeCompletion_ = new Completion(normalized);
+         setNesState(normalized, SuggestionType.GHOST_TEXT, null);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Get the original text from the document at the edit range
+      String originalText = display_.getCode(
+         Position.create(normalized.range.start.line, normalized.range.start.character),
+         Position.create(normalized.range.end.line, normalized.range.end.character));
+      
+      // Check if this is a deletion-only change
+      EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
+      if (deltas.isDeletionOnly())
+      {
+         setNesState(normalized, SuggestionType.DELETION, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_DELETION);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Check if this consists only of single-line insertions
+      if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
+      {
+         setNesState(normalized, SuggestionType.INSERTION, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_INSERTION);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+         return;
+      }
+      
+      // Check if this is a single-line replacement (one deletion + one insertion)
+      if (deltas.isSingleLineReplacement())
+      {
+         EditDelta deletion = deltas.getSingleDeletion();
+         EditDelta addition = deltas.getSingleAddition();
+         if (deletion != null && addition != null)
+         {
+            setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
+            if (autoshow)
+               renderNesSuggestion();
+            else
+               showSuggestionGutterOnly(normalized.range.start.line,
+                  AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
+            if (notifyServer)
+               server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+            return;
+         }
+      }
+      
+      // For single-line deltas, use mixed in-document rendering;
+      // for multiline deltas, fall back to the inline diff view.
+      if (deltas.isSingleLineDeltas())
+      {
+         setNesState(normalized, SuggestionType.MIXED, deltas);
+         if (autoshow)
+            renderNesSuggestion();
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+      }
+      else
+      {
+         setNesState(normalized, SuggestionType.DIFF, deltas);
+         if (autoshow)
+            showDiffViewEditSuggestion(nesCompletion_);
+         else
+            showSuggestionGutterOnly(normalized.range.start.line,
+               AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
+         if (notifyServer)
+            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
+      }
+   }
+   
+   private void showDiffViewEditSuggestion(AssistantCompletion completion)
    {
       // Note that we can accept the diff suggestion with Tab
       Scheduler.get().scheduleDeferred(() ->
@@ -869,7 +994,7 @@ public class TextEditingTargetAssistantHelper
 
          case MIXED:
          case DIFF:
-            showEditSuggestion(nesCompletion_);
+            showDiffViewEditSuggestion(nesCompletion_);
             break;
 
          default:
@@ -1638,7 +1763,6 @@ public class TextEditingTargetAssistantHelper
                   return;
                }
 
-               resetSuggestion();
                AssistantNextEditSuggestionsResultEntry entry = response.result.edits.getAt(0);
 
                // Construct an Assistant completion object from the response
@@ -1651,100 +1775,11 @@ public class TextEditingTargetAssistantHelper
                   AssistantEventType.COMPLETION_RECEIVED_SOME,
                   completion));
 
-               // The completion data gets modified when doing partial (word-by-word)
-               // completions, so we need to use a copy and preserve the original
-               // (which we need to send back to the server as-is in some language-server methods).
-               AssistantCompletion normalized = normalizeSuggestion(completion);
-
                // Check if autoshow is enabled
                boolean autoshow = prefs_.assistantNesAutoshow().getValue();
-
-               if (normalized.range.start.line == normalized.range.end.line &&
-                   normalized.range.start.character == normalized.range.end.character)
-               {
-                  // Ghost text at cursor position
-                  activeCompletion_ = new Completion(normalized);
-                  setNesState(normalized, SuggestionType.GHOST_TEXT, null);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Get the original text from the document at the edit range
-               String originalText = display_.getCode(
-                  Position.create(normalized.range.start.line, normalized.range.start.character),
-                  Position.create(normalized.range.end.line, normalized.range.end.character));
-
-               // Check if this is a deletion-only change
-               EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
-               if (deltas.isDeletionOnly())
-               {
-                  setNesState(normalized, SuggestionType.DELETION, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NES_GUTTER_DELETION);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Check if this consists only of single-line insertions
-               if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
-               {
-                  setNesState(normalized, SuggestionType.INSERTION, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NES_GUTTER_INSERTION);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                  return;
-               }
-
-               // Check if this is a single-line replacement (one deletion + one insertion)
-               if (deltas.isSingleLineReplacement())
-               {
-                  EditDelta deletion = deltas.getSingleDeletion();
-                  EditDelta addition = deltas.getSingleAddition();
-                  if (deletion != null && addition != null)
-                  {
-                     setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
-                     if (autoshow)
-                        renderNesSuggestion();
-                     else
-                        showSuggestionGutterOnly(normalized.range.start.line,
-                           AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
-                     server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-                     return;
-                  }
-               }
-
-               // For single-line deltas, use mixed in-document rendering;
-               // for multiline deltas, fall back to the inline diff view.
-               if (deltas.isSingleLineDeltas())
-               {
-                  setNesState(normalized, SuggestionType.MIXED, deltas);
-                  if (autoshow)
-                     renderNesSuggestion();
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
-                  server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
-               }
-               else
-               {
-                  setNesState(normalized, SuggestionType.DIFF, deltas);
-                  if (autoshow)
-                     showEditSuggestion(nesCompletion_);
-                  else
-                     showSuggestionGutterOnly(normalized.range.start.line,
-                        AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
-               }
+               
+               // Display the suggestion using the common helper
+               showEditSuggestionImpl(completion, autoshow, true);
             }
 
             @Override

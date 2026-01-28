@@ -140,6 +140,8 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantPosition;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantRange;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -9682,6 +9684,53 @@ public class TextEditingTarget implements
             }
          });
       }
+   }
+   
+   /**
+    * Display an edit suggestion at the specified range.
+    * This method is intended for use by the rstudioapi package.
+    * 
+    * @param range A 4-element integer array [startLine, startChar, endLine, endChar]
+    *              where coordinates are 0-based (already converted from R's 1-based indexing)
+    * @param text The suggested replacement text
+    * @param id Optional identifier for the suggestion
+    */
+   public void showEditSuggestion(int[] range, String text, String id)
+   {
+      // Only show suggestions in text editing mode
+      if (visualMode_.isActivated())
+         return;
+      
+      // Validate range
+      if (range == null || range.length != 4)
+      {
+         Debug.logWarning("Invalid range for edit suggestion: " + 
+                         (range == null ? "null" : "length=" + range.length));
+         return;
+      }
+      
+      // Create AssistantPosition objects
+      AssistantPosition start = new AssistantPosition();
+      start.line = range[0];
+      start.character = range[1];
+      
+      AssistantPosition end = new AssistantPosition();
+      end.line = range[2];
+      end.character = range[3];
+      
+      // Create AssistantRange
+      AssistantRange assistantRange = new AssistantRange();
+      assistantRange.start = start;
+      assistantRange.end = end;
+      
+      // Create AssistantCompletion
+      AssistantCompletion completion = new AssistantCompletion();
+      completion.insertText = text;
+      completion.range = assistantRange;
+      completion.command = null; // No command for API-triggered suggestions
+      
+      // Use the assistant helper to show the suggestion
+      assistant_.showEditSuggestion(completion);
    }
    
    @Override
