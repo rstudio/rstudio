@@ -1328,11 +1328,9 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       });
 
-      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      assistant_.addRuntimeStatusChangedHandler((event) ->
       {
-         // Use scheduleDeferred to ensure Assistant.java has updated its
-         // runtimeStatus_ before we query it via isAssistantAvailable()
-         Scheduler.get().scheduleDeferred(() -> manageHandlers());
+         manageHandlers();
       });
 
       Scheduler.get().scheduleDeferred(() ->

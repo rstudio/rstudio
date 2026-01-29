@@ -51,6 +51,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -82,6 +84,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
       {
          runtimeStatus_ = event.getStatus();
+         handlers_.fireEvent(event);
       });
 
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
@@ -419,6 +422,11 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       return runtimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
    }
 
+   public HandlerRegistration addRuntimeStatusChangedHandler(AssistantRuntimeStatusChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, handler);
+   }
+
    interface AssistantCommandBinder
          extends CommandBinder<Commands, Assistant>
    {
@@ -426,6 +434,7 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
    private RProjectAssistantOptions assistantProjectOptions_;
    private int runtimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
+   private final HandlerManager handlers_ = new HandlerManager(this);
 
    private final GlobalDisplay display_;
    private final Commands commands_;
