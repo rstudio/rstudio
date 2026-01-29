@@ -1400,8 +1400,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // Successful evaluation - result should be a list with $value and $visible
          if (TYPEOF(evalResultSEXP) != VECSXP || Rf_length(evalResultSEXP) < 2)
          {
-            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned unexpected result type for expression " +
-               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            std::string errorMsg = ".rs.chat.safeEval returned unexpected result type for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions);
+            LOG_ERROR_MESSAGE(errorMsg);
+            error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
          }
 
