@@ -1375,7 +1375,8 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          }
 
          // Check if the result is an interrupt or error condition
-         // Treat both as regular errors that get displayed but don't cancel the response
+         // Treat both as regular errors: display them and stop executing further expressions,
+         // but do not cancel the overall LLM/chat response.
          if (Rf_inherits(evalResultSEXP, "interrupt") || Rf_inherits(evalResultSEXP, "error"))
          {
             // Extract the error message using conditionMessage()
