@@ -1017,6 +1017,7 @@ Electron | 30.4.0 | (#14582; Desktop)
 - Fixed an issue where the NEWS button in the Update Packages dialog could fail to find the package NEWS file in some cases. (#12648)
 - Fixed an issue where Tensorflow object completions were not generated in some contexts. (#14524)
 - Fixed an issue in Vim where bracket highlighting followed the bracket behind the cursor when in normal mode. (#4152)
+- Fixed an issue where ELECTRON_RUN_AS_NODE was set to true. Thanks to Mykola Grymalyuk of RIPEDA Consulting for reporting this.
 
 #### Posit Workbench
 - Fixed an issue where Professional Driver installation could fail on macOS. (rstudio-pro#5168)
