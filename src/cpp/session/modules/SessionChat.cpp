@@ -1344,65 +1344,82 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          }
 
          SEXP exprSEXP = VECTOR_ELT(parsedSEXP, i);
-         SEXP withVisibleResultSEXP = R_NilValue;
+         SEXP evalResultSEXP = R_NilValue;
 
          // Store current expression index for error reporting
          currentExpressionIndex = i;
 
-         // Evaluate this expression with withVisible()
-         error = r::exec::RFunction("withVisible")
+         // Evaluate this expression using our safe wrapper that catches errors and interrupts.
+         // The result will be either:
+         //   - A condition object (inherits "interrupt" or "error")
+         //   - A list with $value and $visible (successful evaluation)
+         Error callError = r::exec::RFunction(".rs.chat.safeEval")
             .addParam(exprSEXP)
-            .call(&withVisibleResultSEXP, &protect);
+            .call(&evalResultSEXP, &protect);
 
-         if (error)
+         // This should only fail if there's a problem calling the wrapper itself
+         if (callError)
+         {
+            LOG_ERROR_MESSAGE("Failed to call .rs.chat.safeEval: " + callError.getMessage());
+            error = callError;
             break;
-
-         // Extract result and visibility for this expression
-         // withVisible() should return a list with two elements: value and visible
-         if (withVisibleResultSEXP == R_NilValue)
-         {
-            // This shouldn't happen - withVisible() returned NULL
-            LOG_ERROR_MESSAGE("withVisible() returned NULL for expression " +
-               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
-            continue;  // Skip to next expression
          }
 
-         if (TYPEOF(withVisibleResultSEXP) != VECSXP)
+         if (evalResultSEXP == R_NilValue)
          {
-            // Unexpected type - withVisible() should always return a list
-            LOG_ERROR_MESSAGE("withVisible() returned unexpected type " +
-               r::sexp::typeAsString(withVisibleResultSEXP) + " (expected list) for expression " +
+            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned NULL for expression " +
                std::to_string(i + 1) + " of " + std::to_string(numExpressions));
-            continue;  // Skip to next expression
+            break;
          }
 
-         if (Rf_length(withVisibleResultSEXP) < 2)
+         // Check if the result is an interrupt or error condition
+         // Treat both as regular errors that get displayed but don't cancel the response
+         if (Rf_inherits(evalResultSEXP, "interrupt") || Rf_inherits(evalResultSEXP, "error"))
          {
-            // Malformed result - withVisible() should return 2-element list
-            LOG_ERROR_MESSAGE("withVisible() returned list with length " +
-               std::to_string(Rf_length(withVisibleResultSEXP)) + " (expected 2) for expression " +
-               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
-            continue;  // Skip to next expression
+            // Extract the error message using conditionMessage()
+            std::string errorMsg = Rf_inherits(evalResultSEXP, "interrupt") 
+               ? "Execution interrupted" 
+               : "Error during evaluation";
+            SEXP messageSEXP = R_NilValue;
+            Error msgError = r::exec::RFunction("base:::conditionMessage")
+               .addParam(evalResultSEXP)
+               .call(&messageSEXP, &protect);
+
+            if (!msgError && messageSEXP != R_NilValue &&
+                TYPEOF(messageSEXP) == STRSXP && Rf_length(messageSEXP) > 0)
+            {
+               errorMsg = CHAR(STRING_ELT(messageSEXP, 0));
+            }
+
+            error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
+            break;
          }
 
-         // All validations passed - extract result and visibility
-         SEXP exprResult = VECTOR_ELT(withVisibleResultSEXP, 0);
-         SEXP visibleSEXP = VECTOR_ELT(withVisibleResultSEXP, 1);
+         // Successful evaluation - result should be a list with $value and $visible
+         if (TYPEOF(evalResultSEXP) != VECSXP || Rf_length(evalResultSEXP) < 2)
+         {
+            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned unexpected result type for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            break;
+         }
 
-         // Validate visibility flag type and length
+         // Extract result and visibility
+         SEXP exprResult = VECTOR_ELT(evalResultSEXP, 0);
+         SEXP visibleSEXP = VECTOR_ELT(evalResultSEXP, 1);
+
+         // Validate visibility flag
          if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
              Rf_length(visibleSEXP) == 0)
          {
-            LOG_ERROR_MESSAGE("withVisible() returned invalid visibility flag (NULL, wrong type, or zero-length) for expression " +
+            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned invalid visibility flag for expression " +
                std::to_string(i + 1) + " of " + std::to_string(numExpressions));
-            continue;  // Skip printing this result
+            break;
          }
 
          int visibleValue = Rf_asLogical(visibleSEXP);
          if (visibleValue == NA_LOGICAL)
          {
-            // NA visibility - treat as FALSE but log warning
-            LOG_ERROR_MESSAGE("withVisible() returned NA for visibility flag, treating as FALSE for expression " +
+            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned NA for visibility flag, treating as FALSE for expression " +
                std::to_string(i + 1) + " of " + std::to_string(numExpressions));
             visibleValue = FALSE;
          }

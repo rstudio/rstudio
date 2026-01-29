@@ -13,6 +13,16 @@
 #
 #
 
+# Helper function for evaluating code for the 'runCode' tool.
+.rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
+{
+   tryCatch(
+      withVisible(eval(expr, envir = envir)),
+      error = identity,
+      interrupt = identity
+   )
+})
+
 # Helper function to capture a recorded plot as base64-encoded PNG
 .rs.addFunction("chat.capturePlotFromRecorded", function(recordedPlot)
 {
