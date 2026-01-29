@@ -46,18 +46,8 @@
       replayPlot(recordedPlot)
       dev.off()
 
-      # Read and encode the PNG file
-      pngData <- readBin(tmpFile, "raw", file.info(tmpFile)$size)
-
-      # Base64 encode using available package
-      if (requireNamespace("base64enc", quietly = TRUE)) {
-         encoded <- base64enc::base64encode(pngData)
-      } else if (requireNamespace("jsonlite", quietly = TRUE)) {
-         encoded <- jsonlite::base64_enc(pngData)
-      } else {
-         warning("Neither base64enc nor jsonlite available for plot encoding")
-         return(NULL)
-      }
+      # Base64 encode the PNG file using built-in C++ implementation
+      encoded <- .rs.base64encodeFile(tmpFile)
 
       list(
          data = encoded,
