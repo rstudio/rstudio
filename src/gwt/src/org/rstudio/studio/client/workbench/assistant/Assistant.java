@@ -79,7 +79,8 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
       binder.bind(commands_, this);
 
-      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) -> {
+      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      {
          runtimeStatus_ = event.getStatus();
       });
 
