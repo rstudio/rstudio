@@ -32,6 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantConstants;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.AssistantEventType;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponse;
@@ -78,12 +79,17 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
 
       binder.bind(commands_, this);
 
+      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) -> {
+         runtimeStatus_ = event.getStatus();
+      });
+
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
          @Override
          public void onSessionInit(SessionInitEvent event)
          {
             assistantProjectOptions_ = session_.getSessionInfo().getAssistantProjectOptions();
+            runtimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
          }
       });
 
@@ -402,12 +408,23 @@ public class Assistant implements ProjectOptionsChangedEvent.Handler
       assistantProjectOptions_ = event.getData().getAssistantOptions();
    }
 
+   public int getRuntimeStatus()
+   {
+      return runtimeStatus_;
+   }
+
+   public boolean isRuntimeRunning()
+   {
+      return runtimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
+   }
+
    interface AssistantCommandBinder
          extends CommandBinder<Commands, Assistant>
    {
    }
 
    private RProjectAssistantOptions assistantProjectOptions_;
+   private int runtimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
 
    private final GlobalDisplay display_;
    private final Commands commands_;

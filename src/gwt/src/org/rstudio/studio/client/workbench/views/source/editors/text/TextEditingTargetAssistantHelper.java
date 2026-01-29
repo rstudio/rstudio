@@ -54,9 +54,6 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
@@ -1333,18 +1330,9 @@ public class TextEditingTargetAssistantHelper
 
       events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
       {
-         assistantRuntimeStatus_ = event.getStatus();
-         manageHandlers();
-      });
-
-      // Initialize the assistant status from the session info (in case the
-      // session was already initialized before this helper was created)
-      assistantRuntimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
-      events_.addHandler(SessionInitEvent.TYPE, (event) ->
-      {
-         SessionInfo info = session_.getSessionInfo();
-         assistantRuntimeStatus_ = info.getAssistantRuntimeStatus();
-         manageHandlers();
+         // Use scheduleDeferred to ensure Assistant.java has updated its
+         // runtimeStatus_ before we query it via isAssistantAvailable()
+         Scheduler.get().scheduleDeferred(() -> manageHandlers());
       });
 
       Scheduler.get().scheduleDeferred(() ->
@@ -2025,7 +2013,7 @@ public class TextEditingTargetAssistantHelper
 
    public boolean isAssistantAvailable()
    {
-      return assistantRuntimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
+      return assistant_.isRuntimeRunning();
    }
 
    // Normalize an inline completion by trimming overlapping prefix/suffix.
@@ -2159,7 +2147,6 @@ public class TextEditingTargetAssistantHelper
 
    @Inject
    private void initialize(Assistant assistant,
-                           Session session,
                            EventBus events,
                            UserPrefs prefs,
                            Commands commands,
@@ -2167,7 +2154,6 @@ public class TextEditingTargetAssistantHelper
                            AssistantServerOperations server)
    {
       assistant_ = assistant;
-      session_ = session;
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
@@ -2328,12 +2314,8 @@ public class TextEditingTargetAssistantHelper
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
 
-   // Assistant status
-   private int assistantRuntimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
-
    // Injected ----
    private Assistant assistant_;
-   private Session session_;
    private EventBus events_;
    private UserPrefs prefs_;
    private Commands commands_;
