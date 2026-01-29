@@ -1367,8 +1367,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
 
          if (evalResultSEXP == R_NilValue)
          {
-            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned NULL for expression " +
-               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            std::string errorMsg = ".rs.chat.safeEval returned NULL for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions);
+            LOG_ERROR_MESSAGE(errorMsg);
+            error = Error(boost::system::errc::state_not_recoverable, errorMsg, ERROR_LOCATION);
             break;
          }
 
