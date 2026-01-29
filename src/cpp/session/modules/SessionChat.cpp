@@ -1415,8 +1415,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          if (visibleSEXP == R_NilValue || TYPEOF(visibleSEXP) != LGLSXP ||
              Rf_length(visibleSEXP) == 0)
          {
-            LOG_ERROR_MESSAGE(".rs.chat.safeEval returned invalid visibility flag for expression " +
-               std::to_string(i + 1) + " of " + std::to_string(numExpressions));
+            std::string visibilityErrorMsg = ".rs.chat.safeEval returned invalid visibility flag for expression " +
+               std::to_string(i + 1) + " of " + std::to_string(numExpressions);
+            LOG_ERROR_MESSAGE(visibilityErrorMsg);
+            error = Error(boost::system::errc::state_not_recoverable, visibilityErrorMsg, ERROR_LOCATION);
             break;
          }
 
