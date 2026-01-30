@@ -24,10 +24,10 @@ public class HandlerRegistrations implements HandlerRegistration
    public HandlerRegistrations(HandlerRegistration... registrations)
    {
       registrations_ = new ArrayList<HandlerRegistration>();
-      addAll(registrations);
+      add(registrations);
    }
    
-   public void addAll(HandlerRegistration... registrations)
+   public void add(HandlerRegistration... registrations)
    {
       for (HandlerRegistration registration : registrations)
       {
@@ -35,15 +35,18 @@ public class HandlerRegistrations implements HandlerRegistration
       }
    }
 
-   public void add(HandlerRegistration reg)
+   public void detach()
    {
-      registrations_.add(reg);
+      for (HandlerRegistration registration : registrations_)
+      {
+         registration.removeHandler();
+      }
+      registrations_.clear();
    }
 
    public void removeHandler()
    {
-      while (registrations_.size() > 0)
-         registrations_.remove(0).removeHandler();
+      detach();
    }
 
    private final List<HandlerRegistration> registrations_;

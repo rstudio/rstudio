@@ -127,12 +127,12 @@ public class AceEditorBackgroundLinkHighlighter
       handlers_.add(editor_.addEditorModeChangedHandler(this));
       handlers_.add(editor_.addMouseMoveHandler(this));
       handlers_.add(editor_.addCommandClickHandler(this));
-      
-      userPrefs_.highlightWebLink().bind((Boolean enabled) ->
+
+      handlers_.add(userPrefs_.highlightWebLink().bind((Boolean enabled) ->
       {
          if (editor_ != null)
             refreshHighlighters(editor_.getModeId());
-      });
+      }));
 
       refreshHighlighters(editor_.getModeId());
    }
@@ -590,16 +590,25 @@ public class AceEditorBackgroundLinkHighlighter
       }
       else
       {
-         for (HandlerRegistration handler : handlers_)
-            handler.removeHandler();
-         handlers_.clear();
-
-         if (previewHandler_ != null)
-         {
-            previewHandler_.removeHandler();
-            previewHandler_ = null;
-         }
+         detach();
       }
+   }
+
+   public void detach()
+   {
+      timer_.cancel();
+
+      for (HandlerRegistration handler : handlers_)
+         handler.removeHandler();
+      handlers_.clear();
+
+      if (previewHandler_ != null)
+      {
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
+      }
+
+      clearAllMarkers();
    }
 
    @Override

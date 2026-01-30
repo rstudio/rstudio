@@ -18,6 +18,7 @@ import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 public class AceEditorMonitor
 {
@@ -29,7 +30,7 @@ public class AceEditorMonitor
    
    private void init()
    {
-      editor_.addAttachHandler((AttachEvent event) ->
+      attachHandler_ = editor_.addAttachHandler((AttachEvent event) ->
       {
          if (event.isAttached())
          {
@@ -40,6 +41,17 @@ public class AceEditorMonitor
             endMonitoring();
          }
       });
+   }
+
+   public void detach()
+   {
+      endMonitoring();
+
+      if (attachHandler_ != null)
+      {
+         attachHandler_.removeHandler();
+         attachHandler_ = null;
+      }
    }
    
    private boolean monitor()
@@ -76,5 +88,6 @@ public class AceEditorMonitor
    private AceEditor editor_;
    private boolean monitoring_ = false;
    private double devicePixelRatio_ = 0.0;
-   
+   private HandlerRegistration attachHandler_;
+
 }

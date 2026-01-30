@@ -274,6 +274,7 @@ public class AceEditorWidget extends Composite
       });
 
       aceEventHandlers_ = new ArrayList<>();
+      globalEventHandlers_ = new ArrayList<>();
 
       addAttachHandler(new AttachEvent.Handler()
       {
@@ -370,17 +371,17 @@ public class AceEditorWidget extends Composite
                for (HandlerRegistration registration : aceEventHandlers_)
                   registration.removeHandler();
                aceEventHandlers_.clear();
+
+               for (HandlerRegistration registration : globalEventHandlers_)
+                  registration.removeHandler();
+               globalEventHandlers_.clear();
             }
          }
       });
 
-      if (!hasEditHandlers_)
-      {
-         events_.addHandler(EditEvent.TYPE, this);
-         hasEditHandlers_ = true;
-      }
+      globalEventHandlers_.add(events_.addHandler(EditEvent.TYPE, this));
 
-      events_.addHandler(
+      globalEventHandlers_.add(events_.addHandler(
             RStudioCommandExecutedFromShortcutEvent.TYPE,
             new RStudioCommandExecutedFromShortcutEvent.Handler()
             {
@@ -389,16 +390,16 @@ public class AceEditorWidget extends Composite
                {
                   clearKeyBuffers(editor_);
                }
-            });
-      
-      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+            }));
+
+      globalEventHandlers_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
       {
          @Override
          public void onEditorThemeChanged(EditorThemeChangedEvent event)
          {
             editor_.setTheme(event.getTheme());
          }
-      });
+      }));
       
       if (BrowseCap.isElectron())
       {
@@ -1588,6 +1589,7 @@ public class AceEditorWidget extends Composite
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
+   private final List<HandlerRegistration> globalEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
@@ -1598,7 +1600,6 @@ public class AceEditorWidget extends Composite
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private JsVector<LintItem> lint_ = JsVector.createVector();
-   private static boolean hasEditHandlers_ = false;
    private boolean tabMovesFocus_ = false;
    private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
 

@@ -54,7 +54,7 @@ public class DiagnosticsBackgroundPopup
       docDisplay_ = docDisplay;
       editor_ = (AceEditor) docDisplay_;
 
-      docDisplay_.addFocusHandler(new FocusHandler()
+      focusHandler_ = docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
          public void onFocus(FocusEvent event)
@@ -64,7 +64,7 @@ public class DiagnosticsBackgroundPopup
          }
       });
 
-      docDisplay_.addBlurHandler(new BlurHandler()
+      blurHandler_ = docDisplay_.addBlurHandler(new BlurHandler()
       {
          @Override
          public void onBlur(BlurEvent event)
@@ -82,6 +82,30 @@ public class DiagnosticsBackgroundPopup
       stopRequested_ = false;
       popup_ = null;
       start();
+   }
+
+   public void detach()
+   {
+      stopMonitoring();
+      hidePopup();
+
+      if (focusHandler_ != null)
+      {
+         focusHandler_.removeHandler();
+         focusHandler_ = null;
+      }
+
+      if (blurHandler_ != null)
+      {
+         blurHandler_.removeHandler();
+         blurHandler_ = null;
+      }
+
+      if (handler_ != null)
+      {
+         handler_.removeHandler();
+         handler_ = null;
+      }
    }
 
    public void start()
@@ -229,7 +253,7 @@ public class DiagnosticsBackgroundPopup
       {
          super(true, false);
          range_ = range;
-         editor_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+         cursorHandler_ = editor_.addCursorChangedHandler(new CursorChangedEvent.Handler()
          {
             @Override
             public void onCursorChanged(CursorChangedEvent event)
@@ -242,7 +266,19 @@ public class DiagnosticsBackgroundPopup
          setWidget(new HTML(text));
       }
 
+      @Override
+      public void hide()
+      {
+         if (cursorHandler_ != null)
+         {
+            cursorHandler_.removeHandler();
+            cursorHandler_ = null;
+         }
+         super.hide();
+      }
+
       private final Range range_;
+      private HandlerRegistration cursorHandler_;
    }
 
    private void showPopup(String text, Range range)
@@ -314,6 +350,8 @@ public class DiagnosticsBackgroundPopup
 
    private ScreenCoordinates lastMouseCoords_;
    private HandlerRegistration handler_;
+   private HandlerRegistration focusHandler_;
+   private HandlerRegistration blurHandler_;
    private static final Resources RES = Resources.INSTANCE;
 
    private long lastMouseMoveTime_;
