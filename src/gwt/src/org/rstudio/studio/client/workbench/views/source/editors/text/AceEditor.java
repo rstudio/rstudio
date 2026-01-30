@@ -3736,10 +3736,7 @@ public class AceEditor implements DocDisplay
    
    private void clearGhostText()
    {
-      if (widget_.getEditor().hasGhostText())
-      {
-         widget_.getEditor().removeGhostText();
-      }
+      widget_.getEditor().removeGhostText();
    }
 
    private void applyDebugLineHighlight(

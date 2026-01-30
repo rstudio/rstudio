@@ -28,6 +28,7 @@ import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.diff.JsDiff;
 import org.rstudio.core.client.diff.JsDiff.Delta;
 import org.rstudio.core.client.dom.DomUtils;
@@ -55,7 +56,6 @@ import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOpera
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -532,13 +532,16 @@ public class TextEditingTargetAssistantHelper
          @Override
          protected void apply()
          {
+            // Suspend the document change handler so our edit doesn't reset suggestion state
+            temporarilySuspendDocumentChangeHandler();
+
             // Get edit range using NES-specific anchored positions so the range stays
             // valid even if the document has been edited.
             Range range = Range.create(
-               nesStartAnchor_.getRow(),
-               nesStartAnchor_.getColumn(),
-               nesEndAnchor_.getRow(),
-               nesEndAnchor_.getColumn());
+               suggestionStartAnchor_.getRow(),
+               suggestionStartAnchor_.getColumn(),
+               suggestionEndAnchor_.getRow(),
+               suggestionEndAnchor_.getColumn());
 
             // Move cursor to end of edit range
             display_.setCursorPosition(range.getEnd());
@@ -625,15 +628,19 @@ public class TextEditingTargetAssistantHelper
     */
    private void applyNesSuggestion()
    {
+      // Bail if we don't have a completion
       if (nesCompletion_ == null)
          return;
 
+      // Suspend the document change handler so our edit doesn't reset suggestion state
+      temporarilySuspendDocumentChangeHandler();
+
       // Get edit range using NES-specific anchored positions
       Range range = Range.create(
-         nesStartAnchor_.getRow(),
-         nesStartAnchor_.getColumn(),
-         nesEndAnchor_.getRow(),
-         nesEndAnchor_.getColumn());
+         suggestionStartAnchor_.getRow(),
+         suggestionStartAnchor_.getColumn(),
+         suggestionEndAnchor_.getRow(),
+         suggestionEndAnchor_.getColumn());
 
       // Move cursor to start of range
       display_.setCursorPosition(range.getStart());
@@ -800,14 +807,14 @@ public class TextEditingTargetAssistantHelper
     */
    private boolean doesChangeIntersectNesSuggestion(AceDocumentChangeEventNative nativeEvent)
    {
-      if (nesStartAnchor_ == null || nesEndAnchor_ == null)
+      if (suggestionStartAnchor_ == null || suggestionEndAnchor_ == null)
          return false;
 
       Range nesRange = Range.create(
-         nesStartAnchor_.getRow(),
-         nesStartAnchor_.getColumn(),
-         nesEndAnchor_.getRow(),
-         nesEndAnchor_.getColumn());
+         suggestionStartAnchor_.getRow(),
+         suggestionStartAnchor_.getColumn(),
+         suggestionEndAnchor_.getRow(),
+         suggestionEndAnchor_.getColumn());
 
       Range changeRange = nativeEvent.getRange();
 
@@ -863,7 +870,7 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Sets the NES state and creates NES anchors.
+    * Sets the NES state and creates suggestion anchors.
     * Call this before renderNesSuggestion() or showSuggestionGutterOnly().
     */
    private void setNesState(AssistantCompletion completion, SuggestionType type, EditDeltas deltas)
@@ -872,31 +879,12 @@ public class TextEditingTargetAssistantHelper
       nesType_ = type;
       nesDeltas_ = deltas;
 
-      // Create NES-specific anchors for the completion range
-      detachNesAnchors();
-      nesStartAnchor_ = display_.createAnchor(Position.create(
-         completion.range.start.line, completion.range.start.character));
-      nesStartAnchor_.setInsertRight(true);
-      nesEndAnchor_ = display_.createAnchor(Position.create(
-         completion.range.end.line, completion.range.end.character));
-      nesEndAnchor_.setInsertRight(true);
-   }
-
-   /**
-    * Detaches and clears the NES anchors.
-    */
-   private void detachNesAnchors()
-   {
-      if (nesStartAnchor_ != null)
-      {
-         nesStartAnchor_.detach();
-         nesStartAnchor_ = null;
-      }
-      if (nesEndAnchor_ != null)
-      {
-         nesEndAnchor_.detach();
-         nesEndAnchor_ = null;
-      }
+      // Create anchors for the suggestion range
+      createSuggestionAnchors(
+         completion.range.start.line,
+         completion.range.start.character,
+         completion.range.end.line,
+         completion.range.end.character);
    }
 
    /**
@@ -1045,7 +1033,7 @@ public class TextEditingTargetAssistantHelper
       display_.removeGhostText();
       suggestionTimer_.cancel();
       activeCompletion_ = null;
-      detachCompletionAnchors();
+      detachSuggestionAnchors();
    }
 
    /**
@@ -1076,34 +1064,34 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Detaches and clears the completion anchors.
+    * Detaches and clears the suggestion anchors.
     */
-   private void detachCompletionAnchors()
+   private void detachSuggestionAnchors()
    {
-      if (completionStartAnchor_ != null)
+      if (suggestionStartAnchor_ != null)
       {
-         completionStartAnchor_.detach();
-         completionStartAnchor_ = null;
+         suggestionStartAnchor_.detach();
+         suggestionStartAnchor_ = null;
       }
-      if (completionEndAnchor_ != null)
+      if (suggestionEndAnchor_ != null)
       {
-         completionEndAnchor_.detach();
-         completionEndAnchor_ = null;
+         suggestionEndAnchor_.detach();
+         suggestionEndAnchor_ = null;
       }
    }
 
    /**
-    * Creates anchors for the current completion range.
+    * Creates anchors for the current suggestion range.
     * The start anchor uses insertRight=true so it moves when text is inserted
     * at the anchor position (e.g., during partial word-by-word acceptance).
     */
-   private void createCompletionAnchors(int startLine, int startCharacter, int endLine, int endCharacter)
+   private void createSuggestionAnchors(int startLine, int startCharacter, int endLine, int endCharacter)
    {
-      detachCompletionAnchors();
-      completionStartAnchor_ = display_.createAnchor(Position.create(startLine, startCharacter));
-      completionStartAnchor_.setInsertRight(true);
-      completionEndAnchor_ = display_.createAnchor(Position.create(endLine, endCharacter));
-      completionEndAnchor_.setInsertRight(true);
+      detachSuggestionAnchors();
+      suggestionStartAnchor_ = display_.createAnchor(Position.create(startLine, startCharacter));
+      suggestionStartAnchor_.setInsertRight(true);
+      suggestionEndAnchor_ = display_.createAnchor(Position.create(endLine, endCharacter));
+      suggestionEndAnchor_.setInsertRight(true);
    }
 
    public TextEditingTargetAssistantHelper(TextEditingTarget target, List<HandlerRegistration> releaseOnDismiss)
@@ -1271,7 +1259,7 @@ public class TextEditingTargetAssistantHelper
 
                            resetCompletion();
                            activeCompletion_ = new Completion(normalized);
-                           createCompletionAnchors(
+                           createSuggestionAnchors(
                               activeCompletion_.startLine,
                               activeCompletion_.startCharacter,
                               activeCompletion_.endLine,
@@ -1413,12 +1401,7 @@ public class TextEditingTargetAssistantHelper
                   {
                      event.stopPropagation();
                      event.preventDefault();
-
-                     // Ghost text uses applyGhostText(), all others use applyNesSuggestion()
-                     if (nesType_ == SuggestionType.GHOST_TEXT)
-                        display_.applyGhostText();
-                     else
-                        applyNesSuggestion();
+                     applyNesSuggestion();
                      return;
                   }
 
@@ -1537,6 +1520,10 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
+                  // Skip processing if we're making our own document mutations
+                  if (documentChangeHandlerSuspended_)
+                     return;
+
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
 
@@ -1569,7 +1556,7 @@ public class TextEditingTargetAssistantHelper
                   if (trigger != UserPrefsAccessor.ASSISTANT_COMPLETIONS_TRIGGER_AUTO)
                      return;
 
-                  // Allow one-time suppression of cursor change handler
+                  // Respect suppression flag
                   if (completionRequestsSuspended_)
                      return;
 
@@ -1607,6 +1594,10 @@ public class TextEditingTargetAssistantHelper
                   public void onKeyDown(KeyDownEvent keyEvent)
                   {
                      NativeEvent event = keyEvent.getNativeEvent();
+
+                     // Ignore modifier-only key events
+                     if (KeyboardHelper.isModifierKey(event.getKeyCode()))
+                        return;
 
                      // If we have a pending suggestion (gutter only, not revealed),
                      // Tab should reveal it first before accepting
@@ -1673,8 +1664,8 @@ public class TextEditingTargetAssistantHelper
                         return;
 
                      // Check if the user just inserted some text matching the current
-                     // ghost text. If so, we'll suppress the next cursor change handler,
-                     // so we can continue presenting the current ghost text.
+                     // suggestion. If so, we'll suppress the next cursor change handler,
+                     // so we can continue presenting the current suggestion.
                      String key = EventProperty.key(keyEvent.getNativeEvent());
                      if (activeCompletion_.displayText.startsWith(key))
                      {
@@ -1688,18 +1679,21 @@ public class TextEditingTargetAssistantHelper
                         event.stopPropagation();
                         event.preventDefault();
 
-                        // Accept the ghost text. Use anchored positions
+                        // Suspend the document change handler so our edit doesn't reset suggestion state
+                        temporarilySuspendDocumentChangeHandler();
+
+                        // Accept the suggestion. Use anchored positions
                         // so the range stays valid even if the document has been edited.
                         Range aceRange = Range.create(
-                              completionStartAnchor_.getRow(),
-                              completionStartAnchor_.getColumn(),
-                              completionEndAnchor_.getRow(),
-                              completionEndAnchor_.getColumn());
+                              suggestionStartAnchor_.getRow(),
+                              suggestionStartAnchor_.getColumn(),
+                              suggestionEndAnchor_.getRow(),
+                              suggestionEndAnchor_.getColumn());
                         display_.replaceRange(aceRange, activeCompletion_.insertText);
 
                         Position cursorPos = Position.create(
-                           completionEndAnchor_.getRow(),
-                           completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+                           suggestionEndAnchor_.getRow(),
+                           suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
                         display_.setCursorPosition(cursorPos);
 
                         server_.assistantDidAcceptCompletion(
@@ -1708,13 +1702,9 @@ public class TextEditingTargetAssistantHelper
 
                         reset();
                      }
-                     else if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
-                     {
-                        display_.removeGhostText();
-                     }
                      else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
                      {
-                        // Don't remove ghost text if Ace's autocomplete is active
+                        // Don't remove suggestion if Ace's autocomplete is active;
                         // Let Ace close its popup first
                         if (!display_.hasActiveAceCompleter())
                         {
@@ -1867,11 +1857,33 @@ public class TextEditingTargetAssistantHelper
       activeCompletion_.startCharacter += n;
       activeCompletion_.endCharacter += n;
 
+      // Bail if no suggestion anchors are set
+      if (suggestionStartAnchor_ == null)
+         return;
+
       Timers.singleShot(() ->
       {
-         temporarilySuspendCompletionRequests();
-         display_.insertCode(insertedWord, InsertionBehavior.EditorBehaviorsDisabled);
+         temporarilySuspendDocumentChangeHandler();
+
+         // Use anchored position to insert at the ghost text location,
+         // not the current cursor position
+         Range insertRange = Range.create(
+            suggestionStartAnchor_.getRow(),
+            suggestionStartAnchor_.getColumn(),
+            suggestionStartAnchor_.getRow(),
+            suggestionStartAnchor_.getColumn());
+         display_.replaceRange(insertRange, insertedWord);
+
+         // Update anchor to new position after insertion
+         Position newStart = Position.create(
+            suggestionStartAnchor_.getRow(),
+            suggestionStartAnchor_.getColumn() + insertedWord.length());
+         suggestionStartAnchor_.setPosition(newStart);
+
+         // Move cursor to end of inserted word and show remaining ghost text
+         display_.setCursorPosition(newStart);
          display_.setGhostText(activeCompletion_.displayText);
+
          server_.assistantDidAcceptPartialCompletion(activeCompletion_.originalCompletion,
                                                    activeCompletion_.partialAcceptedLength,
                                                    new VoidServerRequestCallback());
@@ -1930,17 +1942,20 @@ public class TextEditingTargetAssistantHelper
       }
       else if (display_.hasGhostText() && activeCompletion_ != null)
       {
+         // Suspend the document change handler so our edit doesn't reset suggestion state
+         temporarilySuspendDocumentChangeHandler();
+
          // Accept ghost text completion
          Range aceRange = Range.create(
-               completionStartAnchor_.getRow(),
-               completionStartAnchor_.getColumn(),
-               completionEndAnchor_.getRow(),
-               completionEndAnchor_.getColumn());
+               suggestionStartAnchor_.getRow(),
+               suggestionStartAnchor_.getColumn(),
+               suggestionEndAnchor_.getRow(),
+               suggestionEndAnchor_.getColumn());
          display_.replaceRange(aceRange, activeCompletion_.insertText);
 
          Position cursorPos = Position.create(
-            completionEndAnchor_.getRow(),
-            completionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
+            suggestionEndAnchor_.getRow(),
+            suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
          display_.setCursorPosition(cursorPos);
 
          server_.assistantDidAcceptCompletion(
@@ -2142,6 +2157,16 @@ public class TextEditingTargetAssistantHelper
       suspendTimer_.schedule(1200);
    }
 
+   /**
+    * Temporarily suspends the document change handler until the end of the current event loop.
+    * Use this before making document mutations that shouldn't trigger suggestion invalidation.
+    */
+   private void temporarilySuspendDocumentChangeHandler()
+   {
+      documentChangeHandlerSuspended_ = true;
+      Scheduler.get().scheduleFinally(() -> documentChangeHandlerSuspended_ = false);
+   }
+
    @Inject
    private void initialize(Assistant assistant,
                            EventBus events,
@@ -2255,7 +2280,7 @@ public class TextEditingTargetAssistantHelper
    private void clearNesState()
    {
       clearNesVisuals();
-      detachNesAnchors();
+      detachSuggestionAnchors();
       nesCompletion_ = null;
       nesType_ = SuggestionType.NONE;
       nesDeltas_ = null;
@@ -2277,7 +2302,7 @@ public class TextEditingTargetAssistantHelper
       clearDiffState();
 
       // Detach completion anchors
-      detachCompletionAnchors();
+      detachSuggestionAnchors();
 
       // Remove ghost text
       display_.removeGhostText();
@@ -2309,6 +2334,7 @@ public class TextEditingTargetAssistantHelper
 
    private int requestId_;
    private boolean completionRequestsSuspended_;
+   private boolean documentChangeHandlerSuspended_;
    private boolean assistantDisabledInThisDocument_;
 
    // Diff view state (kept separate as it's a fundamentally different UI)
@@ -2329,16 +2355,14 @@ public class TextEditingTargetAssistantHelper
    private List<AnchoredRange> nesClickableRanges_ = new ArrayList<>();
    private List<Position> nesTokenPositions_ = new ArrayList<>();
    private int nesBoundsMarkerId_ = -1;
-   private Anchor nesStartAnchor_;
-   private Anchor nesEndAnchor_;
 
    // Mouse tracking
    private int lastMouseClientX_ = 0;
    private int lastMouseClientY_ = 0;
 
-   // Ghost text completion anchors (separate from NES anchors)
-   private Anchor completionStartAnchor_;
-   private Anchor completionEndAnchor_;
+   // Suggestion anchors (shared by all suggestion types)
+   private Anchor suggestionStartAnchor_;
+   private Anchor suggestionEndAnchor_;
 
    // Autoshow and pending suggestion state
    private boolean automaticCodeSuggestionsEnabled_ = true;
