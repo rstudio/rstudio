@@ -21,6 +21,14 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public class HandlerRegistrations implements HandlerRegistration
 {
+   public static void add(List<HandlerRegistration> handlers, HandlerRegistration... registrations)
+   {
+      for (HandlerRegistration registration : registrations)
+      {
+         handlers.add(registration);
+      }
+   }
+
    public HandlerRegistrations(HandlerRegistration... registrations)
    {
       registrations_ = new ArrayList<HandlerRegistration>();

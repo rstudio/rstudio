@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -33,7 +34,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkCo
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 public class TextEditingTargetChunks
@@ -47,22 +47,21 @@ public class TextEditingTargetChunks
       target_ = target;
       toolbars_ = new ArrayList<>();
       modifiedRanges_ = new ArrayList<>();
-      releaseOnDismiss_ = new ArrayList<>();
+      handlers_ = new HandlerRegistrations();
       renderPass_ = 0;
 
-      releaseOnDismiss_.add(target.getDocDisplay().addScopeTreeReadyHandler(this));
-      releaseOnDismiss_.add(target.getDocDisplay().addEditorModeChangedHandler(this));
-      releaseOnDismiss_.add(target.getDocDisplay().addDocumentChangedHandler(this));
+      handlers_.add(
+         target.getDocDisplay().addScopeTreeReadyHandler(this),
+         target.getDocDisplay().addEditorModeChangedHandler(this),
+         target.getDocDisplay().addDocumentChangedHandler(this)
+      );
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    public void onDismiss()
    {
-      for (HandlerRegistration reg : releaseOnDismiss_)
-         reg.removeHandler();
-      releaseOnDismiss_.clear();
-
+      handlers_.detach();
       removeAllToolbars();
    }
 
@@ -132,7 +131,7 @@ public class TextEditingTargetChunks
       state_ = state;
       dark_ = state.theme().getValue().getIsDark();
       
-      releaseOnDismiss_.add(state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
+      handlers_.add(state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<UserStateAccessor.Theme> theme)
@@ -154,7 +153,7 @@ public class TextEditingTargetChunks
          }
       }));
 
-      releaseOnDismiss_.add(prefs_.showInlineToolbarForRCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      handlers_.add(prefs_.showInlineToolbarForRCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -320,7 +319,7 @@ public class TextEditingTargetChunks
    private UserPrefs prefs_;
    private UserState state_;
 
-   private final List<HandlerRegistration> releaseOnDismiss_;
+   private final HandlerRegistrations handlers_;
 
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow
