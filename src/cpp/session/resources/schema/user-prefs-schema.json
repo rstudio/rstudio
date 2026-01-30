@@ -1872,7 +1872,7 @@
         },
         "copilot_nes_enabled": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "title": "Enable next edit suggestions",
             "description": "When enabled, RStudio will display next edit suggestions as provided by Copilot when available."
         },

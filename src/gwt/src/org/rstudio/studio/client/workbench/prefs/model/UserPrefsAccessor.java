@@ -3924,7 +3924,7 @@ public class UserPrefsAccessor extends Prefs
          "copilot_nes_enabled",
          _constants.copilotNesEnabledTitle(), 
          _constants.copilotNesEnabledDescription(), 
-         false);
+         true);
    }
 
    /**
