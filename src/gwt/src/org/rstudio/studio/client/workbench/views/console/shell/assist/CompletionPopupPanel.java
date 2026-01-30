@@ -81,7 +81,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          }
       });
 
-      WindowEx.addBlurHandler(new BlurHandler()
+      windowBlurHandler_ = WindowEx.addBlurHandler(new BlurHandler()
       {
          @Override
          public void onBlur(BlurEvent event)
@@ -89,6 +89,18 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (windowBlurHandler_ != null)
+      {
+         windowBlurHandler_.removeHandler();
+         windowBlurHandler_ = null;
+      }
    }
 
    private void hideAll()
@@ -520,6 +532,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private final Label truncated_;
    private JavaScriptObject focusHandler_;
    private ShortcutManager.Handle handle_;
+   private HandlerRegistration windowBlurHandler_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

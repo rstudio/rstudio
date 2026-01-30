@@ -146,7 +146,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       input_.addClickHandler(secondaryInputHandler);
       
-      WindowEx.addBlurHandler((BlurEvent event) ->
+      windowBlurHandler_ = WindowEx.addBlurHandler((BlurEvent event) ->
       {
          // https://github.com/rstudio/rstudio/issues/1638
          ignoreNextFocus_ = true;
@@ -1250,8 +1250,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }
 
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (windowBlurHandler_ != null)
+      {
+         windowBlurHandler_.removeHandler();
+         windowBlurHandler_ = null;
+      }
+   }
+
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
+   private HandlerRegistration windowBlurHandler_;
    private final ConsoleOutputWriter output_;
    private final FindBar findBar_;
    private final PreWidget pendingInput_;

@@ -78,6 +78,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -796,7 +797,14 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       if (!sourceColumnEnabled)
          packagesTable_.removeColumn(sourceColumn_);
 
-      prefs_.packagesSourceColumnEnabled().addValueChangeHandler(event ->
+      // remove old handler if it exists (initPackagesTable can be called multiple times)
+      if (sourceColumnPrefHandler_ != null)
+      {
+         sourceColumnPrefHandler_.removeHandler();
+         sourceColumnPrefHandler_ = null;
+      }
+
+      sourceColumnPrefHandler_ = prefs_.packagesSourceColumnEnabled().addValueChangeHandler(event ->
       {
          boolean enabled = prefs_.packagesSourceColumnEnabled().getValue();
          if (enabled)
@@ -1093,6 +1101,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private LayoutPanel packagesTableContainer_;
    private int gridRenderRetryCount_;
    private ProjectContext projectContext_;
+   private HandlerRegistration sourceColumnPrefHandler_;
    private JsObject activeRepository_;
    private RepositoryPackageVulnerabilityListMap vulns_;
 
