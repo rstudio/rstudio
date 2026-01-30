@@ -71,10 +71,10 @@ public class DiagnosticsBackgroundPopup
          {
             hidePopup();
             stopMonitoring();
-            if (handler_ != null)
+            if (previewHandler_ != null)
             {
-               handler_.removeHandler();
-               handler_ = null;
+               previewHandler_.removeHandler();
+               previewHandler_ = null;
             }
          }
       });
@@ -101,10 +101,10 @@ public class DiagnosticsBackgroundPopup
          blurHandler_ = null;
       }
 
-      if (handler_ != null)
+      if (previewHandler_ != null)
       {
-         handler_.removeHandler();
-         handler_ = null;
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
       }
    }
 
@@ -113,13 +113,13 @@ public class DiagnosticsBackgroundPopup
       isRunning_ = true;
       stopRequested_ = false;
 
-      if (handler_ != null)
+      if (previewHandler_ != null)
       {
-         handler_.removeHandler();
-         handler_ = null;
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
       }
 
-      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent event)
@@ -247,9 +247,7 @@ public class DiagnosticsBackgroundPopup
 
    private class DiagnosticsPopupPanel extends PopupPanel
    {
-      public DiagnosticsPopupPanel(
-            String text,
-            Range range)
+      public DiagnosticsPopupPanel(String text, Range range)
       {
          super(true, false);
          range_ = range;
@@ -349,7 +347,7 @@ public class DiagnosticsBackgroundPopup
    private Marker activeMarker_;
 
    private ScreenCoordinates lastMouseCoords_;
-   private HandlerRegistration handler_;
+   private HandlerRegistration previewHandler_;
    private HandlerRegistration focusHandler_;
    private HandlerRegistration blurHandler_;
    private static final Resources RES = Resources.INSTANCE;
