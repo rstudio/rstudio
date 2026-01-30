@@ -426,7 +426,6 @@ public class AceEditor implements DocDisplay
       {
          fixVerticalOffsetBug();
          clearLineHighlight();
-         clearGhostText();
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
@@ -435,7 +434,6 @@ public class AceEditor implements DocDisplay
       {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
-         clearGhostText();
       });
 
       widget_.addAttachHandler(event ->
