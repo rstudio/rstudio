@@ -981,6 +981,11 @@ public class TextEditingTargetRMarkdownHelper
       return display.getCode(start, end);
    }
 
+   public void onDismiss()
+   {
+      rmdParamsReadyUnsubscribe();
+   }
+
    // Private methods ---------------------------------------------------------
 
 

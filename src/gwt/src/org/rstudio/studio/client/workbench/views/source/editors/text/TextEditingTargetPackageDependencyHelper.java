@@ -48,9 +48,9 @@ public class TextEditingTargetPackageDependencyHelper
    private void init()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       toggleHandlers(prefs_.autoDiscoverPackageDependencies().getGlobalValue());
-      prefs_.autoDiscoverPackageDependencies().addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
+      prefsRegistration_ = prefs_.autoDiscoverPackageDependencies().addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          toggleHandlers(event.getValue());
       });
    }
@@ -98,6 +98,22 @@ public class TextEditingTargetPackageDependencyHelper
       server_ = server;
    }
    
+   public void onDismiss()
+   {
+      if (handlers_ != null)
+      {
+         for (HandlerRegistration handler : handlers_)
+            handler.removeHandler();
+         handlers_ = null;
+      }
+
+      if (prefsRegistration_ != null)
+      {
+         prefsRegistration_.removeHandler();
+         prefsRegistration_ = null;
+      }
+   }
+
    public void discoverPackageDependencies()
    {
       if (discoveringDependencies_)
@@ -148,6 +164,7 @@ public class TextEditingTargetPackageDependencyHelper
    
    boolean discoveringDependencies_ = false;
    private HandlerRegistration[] handlers_;
+   private HandlerRegistration prefsRegistration_;
    
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;

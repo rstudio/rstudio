@@ -154,7 +154,7 @@ public class TextEditingTargetSpelling extends SpellingContext
 
    private void injectContextMenuHandler()
    {
-      docDisplay_.addContextMenuHandler((event) ->
+      releaseOnDismiss(docDisplay_.addContextMenuHandler((event) ->
               {
                  // If real time checking is off or
                  // If we have a selection, just return as the user likely wants to cut/copy/paste
@@ -299,10 +299,10 @@ public class TextEditingTargetSpelling extends SpellingContext
                        Debug.logError(error);
                     }
                  });
-              });
+              }));
 
       // relint the viewport as the user scrolls around
-      docDisplay_.addScrollYHandler((event) -> lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY));
+      releaseOnDismiss(docDisplay_.addScrollYHandler((event) -> lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY)));
    }
 
    @Override

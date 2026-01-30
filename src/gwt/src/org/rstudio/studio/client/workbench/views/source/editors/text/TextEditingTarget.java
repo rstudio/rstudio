@@ -1633,7 +1633,8 @@ public class TextEditingTarget implements
                                           extendedType_,
                                           events_,
                                           session_,
-                                          column);
+                                          column,
+                                          releaseOnDismiss_);
       
 
       events_.addHandler(
@@ -2036,7 +2037,7 @@ public class TextEditingTarget implements
       }
 
       // ensure that Makefile and Makevars always use tabs
-      name_.addValueChangeHandler(new ValueChangeHandler<String>() {
+      releaseOnDismiss_.add(name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
@@ -2045,7 +2046,7 @@ public class TextEditingTarget implements
             if (shouldEnforceHardTabs(item))
                docDisplay_.setUseSoftTabs(false);
          }
-      });
+      }));
 
       String name = getNameFromDocument(document, defaultNameProvider);
       name_.setValue(name, true);
@@ -2110,7 +2111,7 @@ public class TextEditingTarget implements
       if (prefs_.autoSaveEnabled())
          sourceOnSave = false;
       view_.getSourceOnSave().setValue(sourceOnSave, false);
-      view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      releaseOnDismiss_.add(view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
@@ -2118,13 +2119,13 @@ public class TextEditingTarget implements
                   event.getValue(),
                   globalDisplay_.getProgressIndicator(constants_.errorSavingSetting()));
          }
-      });
+      }));
 
       if (document.isDirty())
          dirtyState_.markDirty(false);
       else
          dirtyState_.markClean();
-      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss_.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          public void onValueChange(ValueChangeEvent<Void> event)
          {
@@ -2135,7 +2136,7 @@ public class TextEditingTarget implements
             // actively mutating)
             nudgeAutosave();
          }
-      });
+      }));
 
       docDisplay_.addFocusHandler(new FocusHandler()
       {
@@ -2293,40 +2294,40 @@ public class TextEditingTarget implements
          }
       });
 
-      docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+      cursorPositionSaveTimer_ = new Timer()
       {
-         final Timer timer_ = new Timer()
+         @Override
+         public void run()
          {
-            @Override
-            public void run()
-            {
-               HashMap<String, String> properties = new HashMap<>();
+            HashMap<String, String> properties = new HashMap<>();
 
-               properties.put(
-                     PROPERTY_CURSOR_POSITION,
-                     Position.serialize(docDisplay_.getCursorPosition()));
+            properties.put(
+                  PROPERTY_CURSOR_POSITION,
+                  Position.serialize(docDisplay_.getCursorPosition()));
 
-               properties.put(
-                     PROPERTY_SCROLL_LINE,
-                     String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
+            properties.put(
+                  PROPERTY_SCROLL_LINE,
+                  String.valueOf(docDisplay_.getFirstFullyVisibleRow()));
 
-               docUpdateSentinel_.modifyProperties(properties);
-            }
-         };
+            docUpdateSentinel_.modifyProperties(properties);
+         }
+      };
 
+      releaseOnDismiss_.add(docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+      {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
             if (prefs_.restoreSourceDocumentCursorPosition().getValue())
-               timer_.schedule(1000);
+               cursorPositionSaveTimer_.schedule(1000);
          }
-      });
+      }));
 
       // Fire selection change events for Chat context (debounced)
       // Use AceSelectionChangedEvent instead of CursorChangedEvent because
       // the latter only fires when cursor position changes, not when selection
       // anchor changes (e.g., clicking to deselect without moving cursor)
-      docDisplay_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+      releaseOnDismiss_.add(docDisplay_.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
       {
          @Override
          public void onSelectionChanged(AceSelectionChangedEvent event)
@@ -2334,7 +2335,7 @@ public class TextEditingTarget implements
             // Debounce selection updates - wait 250ms after selection stops changing
             selectionChangedTimer_.schedule(250);
          }
-      });
+      }));
 
       // initialize visual mode
       visualMode_ = new VisualMode(
@@ -3771,6 +3772,9 @@ public class TextEditingTarget implements
       if (selectionChangedTimer_ != null)
          selectionChangedTimer_.cancel();
 
+      if (cursorPositionSaveTimer_ != null)
+         cursorPositionSaveTimer_.cancel();
+
       if (autoSaveTimer_ != null)
          autoSaveTimer_.cancel();
       
@@ -3779,6 +3783,24 @@ public class TextEditingTarget implements
 
       if (assistant_ != null)
          assistant_.onDismiss();
+
+      if (packageDependencyHelper_ != null)
+         packageDependencyHelper_.onDismiss();
+
+      if (rmarkdownHelper_ != null)
+         rmarkdownHelper_.onDismiss();
+
+      if (renameHelper_ != null)
+         renameHelper_.onDismiss();
+
+      if (chunks_ != null)
+         chunks_.onDismiss();
+
+      if (themeHelper_ != null)
+         themeHelper_.onDismiss();
+
+      if (lintManager_ != null)
+         lintManager_.onDismiss();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
@@ -9813,6 +9835,9 @@ public class TextEditingTarget implements
          new IntervalTracker(1000, true);
    private boolean isWaitingForUserResponseToExternalEdit_ = false;
    private EditingTargetCodeExecution codeExecution_;
+
+   // Timer for saving cursor position
+   private Timer cursorPositionSaveTimer_;
 
    // Timer for debounced selection change events (for Chat context)
    private final Timer selectionChangedTimer_ = new Timer()

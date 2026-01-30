@@ -179,7 +179,12 @@ public class AceBackgroundHighlighter
          row_ = Math.min(row, row_);
          timer_.schedule(0);
       }
-      
+
+      public void cancel()
+      {
+         timer_.cancel();
+      }
+
       private final Timer timer_;
       private int row_;
       
@@ -190,21 +195,21 @@ public class AceBackgroundHighlighter
    public AceBackgroundHighlighter(AceEditor editor)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       editor_ = editor;
       session_ = editor.getSession();
-      
+
       highlightPatterns_ = new ArrayList<>();
-      editor.addEditorModeChangedHandler(this);
-      
+      modeChangedReg_ = editor.addEditorModeChangedHandler(this);
+
       int n = editor.getRowCount();
       rowStates_ = JavaScriptObject.createArray(n).cast();
       rowPatterns_ = JavaScriptObject.createArray(n).cast();
       markerIds_ = JavaScriptObject.createArray(n).cast();
       worker_ = new Worker();
-      
+
       enabled_ = prefs_.highlightCodeChunks().getGlobalValue();
-      prefs_.highlightCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      prefsReg_ = prefs_.highlightCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -222,9 +227,32 @@ public class AceBackgroundHighlighter
             }
          }
       });
-      
+
       activeModeId_ = editor.getSession().getMode().getId();
       refreshHighlighters();
+   }
+
+   public void detach()
+   {
+      if (modeChangedReg_ != null)
+      {
+         modeChangedReg_.removeHandler();
+         modeChangedReg_ = null;
+      }
+
+      if (prefsReg_ != null)
+      {
+         prefsReg_.removeHandler();
+         prefsReg_ = null;
+      }
+
+      if (documentChangedHandler_ != null)
+      {
+         documentChangedHandler_.removeHandler();
+         documentChangedHandler_ = null;
+      }
+
+      worker_.cancel();
    }
    
    @Inject
@@ -475,6 +503,8 @@ public class AceBackgroundHighlighter
    private HighlightPattern activeHighlightPattern_;
    private String activeModeId_;
    private HandlerRegistration documentChangedHandler_;
+   private HandlerRegistration modeChangedReg_;
+   private HandlerRegistration prefsReg_;
    private boolean enabled_;
    
    private final JsVectorInteger rowStates_;

@@ -54,7 +54,11 @@ public class TextEditingTargetThemeHelper
 
       // do an initial sync after 100ms (to allow initial render)
       timer_.schedule(100);
+   }
 
+   public void onDismiss()
+   {
+      timer_.cancel();
    }
    
    public HandlerRegistration addEditorThemeStyleChangedHandler(
