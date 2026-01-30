@@ -265,14 +265,14 @@ public class DiagnosticsBackgroundPopup
       }
 
       @Override
-      public void hide()
+      protected void onUnload()
       {
          if (cursorHandler_ != null)
          {
             cursorHandler_.removeHandler();
             cursorHandler_ = null;
          }
-         super.hide();
+         super.onUnload();
       }
 
       private final Range range_;
