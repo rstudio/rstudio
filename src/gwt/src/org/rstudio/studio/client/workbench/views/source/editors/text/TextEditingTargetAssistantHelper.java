@@ -1394,7 +1394,7 @@ public class TextEditingTargetAssistantHelper
       }
       else
       {
-         registrations_.addAll(
+         registrations_.add(
 
                // click handler for next edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
