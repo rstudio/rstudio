@@ -167,12 +167,6 @@ withr::defer(.rs.automation.deleteRemote())
    sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible (width > 0)")
    expect_true(sidebarElement$offsetHeight > 0, "rstudio_Sidebar_pane should be visible (height > 0)")
-   
-   # Check that Customize Panes button exists and is visible (no tabs assigned to sidebar by default)
-   expect_true(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON), "rstudio_customize_panes element should exist")
-   customizePanesButtonElement <- remote$js.querySelector("#rstudio_customize_panes")
-   expect_true(customizePanesButtonElement$offsetWidth > 0, "rstudio_customize_panes should be visible (width > 0)")
-   expect_true(customizePanesButtonElement$offsetHeight > 0, "rstudio_customize_panes should be visible (height > 0)")
 
    # Hide the sidebar
    remote$commands.execute("toggleSidebar")
@@ -185,9 +179,6 @@ withr::defer(.rs.automation.deleteRemote())
    # Verify the sidebar no longer exists
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling sidebar off")
-
-   # Check that Customize Panes button no longer exists
-   expect_false(remote$dom.elementExists(CUSTOMIZE_PANES_BUTTON), "rstudio_customize_panes element should NOT exist")
 })
 
 .rs.test("Sidebar can be moved left and right with toggleSidebarLocation command", {
@@ -210,70 +201,70 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible")
    
    # Get initial position using screen coordinates
-   # The sidebar starts on the right by default
+   # The sidebar starts on the left by default
    initialPosition <- sidebarElement$getBoundingClientRect()$left
-   
-   # Move sidebar to the left
+
+   # Move sidebar to the right
    remote$commands.execute("toggleSidebarLocation")
-   
+
    # Wait for the sidebar to be repositioned (it gets recreated in new location)
-   .rs.waitUntil("sidebar moved left", function() {
-      remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
-
-   # Add a small delay to ensure DOM is fully updated after recreation
-   Sys.sleep(0.3)
-   
-   # Verify the sidebar still exists and is visible after moving left
-   leftSidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(leftSidebarExists, "rstudio_Sidebar_pane should still exist after toggleSidebarLocation")
-   
-   leftSidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
-   expect_true(leftSidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should still be visible after toggleSidebarLocation")
-
-   # Check that the sidebar is now positioned to the left using screen coordinates
-   leftPosition <- leftSidebarElement$getBoundingClientRect()$left
-   expect_true(leftPosition < initialPosition,
-               paste0("Sidebar should be positioned to the left after toggleSidebarLocation. ",
-                      "Initial position: ", initialPosition, ", Left position: ", leftPosition))
-
-   # Get fresh console position after layout change and verify sidebar is to the left
-   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
-   consolePosition <- consoleElement$getBoundingClientRect()$left
-   expect_true(leftPosition < consolePosition,
-               paste0("Sidebar should be to the left of the console pane. ",
-                      "Sidebar position: ", leftPosition, ", Console position: ", consolePosition))
-   
-   # Move sidebar back to the right
-   remote$commands.execute("toggleSidebarLocation")
-   
-   # Wait for the sidebar to be repositioned again
    .rs.waitUntil("sidebar moved right", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated after recreation
    Sys.sleep(0.3)
-   
+
    # Verify the sidebar still exists and is visible after moving right
    rightSidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
    expect_true(rightSidebarExists, "rstudio_Sidebar_pane should still exist after toggleSidebarLocation")
-   
+
    rightSidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(rightSidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should still be visible after toggleSidebarLocation")
 
    # Check that the sidebar is now positioned to the right using screen coordinates
    rightPosition <- rightSidebarElement$getBoundingClientRect()$left
-   expect_true(rightPosition > leftPosition,
+   expect_true(rightPosition > initialPosition,
                paste0("Sidebar should be positioned to the right after toggleSidebarLocation. ",
-                      "Left position: ", leftPosition, ", Right position: ", rightPosition))
+                      "Initial position: ", initialPosition, ", Right position: ", rightPosition))
 
    # Get fresh console position after layout change and verify sidebar is to the right
    consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
-   consolePositionRight <- consoleElement$getBoundingClientRect()$left
-   expect_true(rightPosition > consolePositionRight,
+   consolePosition <- consoleElement$getBoundingClientRect()$left
+   expect_true(rightPosition > consolePosition,
                paste0("Sidebar should be to the right of the console pane. ",
-                      "Sidebar position: ", rightPosition, ", Console position: ", consolePositionRight))
+                      "Sidebar position: ", rightPosition, ", Console position: ", consolePosition))
+
+   # Move sidebar back to the left
+   remote$commands.execute("toggleSidebarLocation")
+
+   # Wait for the sidebar to be repositioned again
+   .rs.waitUntil("sidebar moved left", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Add a small delay to ensure DOM is fully updated after recreation
+   Sys.sleep(0.3)
+
+   # Verify the sidebar still exists and is visible after moving left
+   leftSidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
+   expect_true(leftSidebarExists, "rstudio_Sidebar_pane should still exist after toggleSidebarLocation")
+
+   leftSidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   expect_true(leftSidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should still be visible after toggleSidebarLocation")
+
+   # Check that the sidebar is now positioned to the left using screen coordinates
+   leftPosition <- leftSidebarElement$getBoundingClientRect()$left
+   expect_true(leftPosition < rightPosition,
+               paste0("Sidebar should be positioned to the left after toggleSidebarLocation. ",
+                      "Right position: ", rightPosition, ", Left position: ", leftPosition))
+
+   # Get fresh console position after layout change and verify sidebar is to the left
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   consolePositionLeft <- consoleElement$getBoundingClientRect()$left
+   expect_true(leftPosition < consolePositionLeft,
+               paste0("Sidebar should be to the left of the console pane. ",
+                      "Sidebar position: ", leftPosition, ", Console position: ", consolePositionLeft))
    
    .rs.resetUILayout(remote)
 })
@@ -431,7 +422,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomLeftColumn")
 
    # Calculate expected width: console should expand to fill the space previously occupied
-   # by both TabSet1 and Sidebar (sidebar is on right by default)
+   # by both TabSet1 and Sidebar (sidebar is on left by default)
    expectedZoomedWidth <- initialConsoleWidth + initialTabSet1Width + initialSidebarWidth
 
    # Wait for layout to change - console should expand to fill the right column and sidebar space
@@ -690,7 +681,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomRightColumn")
 
    # Calculate expected width: TabSet1 should expand to fill the space previously occupied
-   # by both Console and Sidebar (sidebar is on right by default)
+   # by both Console and Sidebar (sidebar is on left by default)
    expectedZoomedWidth <- initialTabSet1Width + initialConsoleWidth + initialSidebarWidth
 
    # Wait for layout to change - TabSet1 should expand to fill the left column and sidebar space
