@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -36,13 +36,10 @@ import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFin
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class NotebookHtmlRenderer
              implements SaveFileEvent.Handler,
@@ -62,16 +59,15 @@ public class NotebookHtmlRenderer
       events_ = events;
       dependencyManager_ = dependencyManager;
 
-      registrations_.add(events_.addHandler(RmdRenderPendingEvent.TYPE, this));
-      registrations_.add(events_.addHandler(RenderRmdEvent.TYPE, this));
+      registrations_ = new HandlerRegistrations(
+         events_.addHandler(RmdRenderPendingEvent.TYPE, this),
+         events_.addHandler(RenderRmdEvent.TYPE, this)
+      );
    }
 
    public void onDismiss()
    {
-      for (HandlerRegistration reg : registrations_)
-         reg.removeHandler();
-      registrations_.clear();
-
+      registrations_.detach();
       if (renderTimer_ != null)
       {
          renderTimer_.cancel();
@@ -270,8 +266,8 @@ public class NotebookHtmlRenderer
    private boolean isRunning_;
    private Timer renderTimer_;
    private Command renderCommand_;
-   private final List<HandlerRegistration> registrations_ = new ArrayList<>();
 
+   private final HandlerRegistrations registrations_;
    private final DocDisplay display_;
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;

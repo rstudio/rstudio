@@ -39,7 +39,7 @@ public class HandlerRegistrations implements HandlerRegistration
    {
       for (HandlerRegistration registration : registrations)
       {
-         add(registration);
+         registrations_.add(registration);
       }
    }
 
