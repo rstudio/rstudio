@@ -49,14 +49,10 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantEvent.Assist
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantRuntimeStatusChangedEvent;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.InsertionBehavior;
@@ -1110,10 +1106,10 @@ public class TextEditingTargetAssistantHelper
       completionEndAnchor_.setInsertRight(true);
    }
 
-   public TextEditingTargetAssistantHelper(TextEditingTarget target)
+   public TextEditingTargetAssistantHelper(TextEditingTarget target, List<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      binder_.bind(commands_, this);
+      commandsRegistration_ = binder_.bind(commands_, this);
 
       target_ = target;
       display_ = target.getDocDisplay();
@@ -1321,31 +1317,20 @@ public class TextEditingTargetAssistantHelper
          }
       };
 
-      events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
+      releaseOnDismiss.add(events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
          manageHandlers();
-      });
+      }));
 
-      prefs_.assistant().addValueChangeHandler((event) ->
+      releaseOnDismiss.add(prefs_.assistant().addValueChangeHandler((event) ->
       {
          manageHandlers();
-      });
+      }));
 
-      events_.addHandler(AssistantRuntimeStatusChangedEvent.TYPE, (event) ->
+      releaseOnDismiss.add(assistant_.addRuntimeStatusChangedHandler((event) ->
       {
-         assistantRuntimeStatus_ = event.getStatus();
          manageHandlers();
-      });
-
-      // Initialize the assistant status from the session info (in case the
-      // session was already initialized before this helper was created)
-      assistantRuntimeStatus_ = session_.getSessionInfo().getAssistantRuntimeStatus();
-      events_.addHandler(SessionInitEvent.TYPE, (event) ->
-      {
-         SessionInfo info = session_.getSessionInfo();
-         assistantRuntimeStatus_ = info.getAssistantRuntimeStatus();
-         manageHandlers();
-      });
+      }));
 
       Scheduler.get().scheduleDeferred(() ->
       {
@@ -2025,7 +2010,7 @@ public class TextEditingTargetAssistantHelper
 
    public boolean isAssistantAvailable()
    {
-      return assistantRuntimeStatus_ == AssistantRuntimeStatusChangedEvent.RUNNING;
+      return assistant_.isRuntimeRunning();
    }
 
    // Normalize an inline completion by trimming overlapping prefix/suffix.
@@ -2159,7 +2144,6 @@ public class TextEditingTargetAssistantHelper
 
    @Inject
    private void initialize(Assistant assistant,
-                           Session session,
                            EventBus events,
                            UserPrefs prefs,
                            Commands commands,
@@ -2167,7 +2151,6 @@ public class TextEditingTargetAssistantHelper
                            AssistantServerOperations server)
    {
       assistant_ = assistant;
-      session_ = session;
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
@@ -2279,6 +2262,40 @@ public class TextEditingTargetAssistantHelper
       pendingGutterRow_ = -1;
    }
 
+   public void onDismiss()
+   {
+      // Cancel all timers
+      suggestionTimer_.cancel();
+      suspendTimer_.cancel();
+      nesTimer_.cancel();
+      pendingHideTimer_.cancel();
+
+      // Clear NES state (markers, gutter registrations, anchors, etc.)
+      clearNesState();
+
+      // Clear diff view state
+      clearDiffState();
+
+      // Detach completion anchors
+      detachCompletionAnchors();
+
+      // Remove ghost text
+      display_.removeGhostText();
+
+      // Remove pending gutter registration
+      if (pendingGutterRegistration_ != null)
+      {
+         pendingGutterRegistration_.removeHandler();
+         pendingGutterRegistration_ = null;
+      }
+
+      // Remove handler registrations
+      registrations_.removeHandler();
+
+      // Unbind command handlers
+      commandsRegistration_.removeHandler();
+   }
+
    private final TextEditingTarget target_;
    private final DocDisplay display_;
    private final Timer suggestionTimer_;
@@ -2288,6 +2305,7 @@ public class TextEditingTargetAssistantHelper
    private int nesId_ = 0;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
+   private final HandlerRegistration commandsRegistration_;
 
    private int requestId_;
    private boolean completionRequestsSuspended_;
@@ -2328,12 +2346,8 @@ public class TextEditingTargetAssistantHelper
    private HandlerRegistration pendingGutterRegistration_;
    private boolean pendingSuggestionRevealed_ = false;
 
-   // Assistant status
-   private int assistantRuntimeStatus_ = AssistantRuntimeStatusChangedEvent.UNKNOWN;
-
    // Injected ----
    private Assistant assistant_;
-   private Session session_;
    private EventBus events_;
    private UserPrefs prefs_;
    private Commands commands_;

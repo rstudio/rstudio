@@ -180,8 +180,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMark
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -620,7 +620,7 @@ public class TextEditingTarget implements
                                          events_,
                                          this);
 
-      assistant_ = new TextEditingTargetAssistantHelper(this);
+      assistant_ = new TextEditingTargetAssistantHelper(this, releaseOnDismiss_);
       
       EditingTarget target = this;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
@@ -3776,6 +3776,9 @@ public class TextEditingTarget implements
       
       if (bgIdleMonitor_ != null)
          bgIdleMonitor_.endMonitoring();
+
+      if (assistant_ != null)
+         assistant_.onDismiss();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
