@@ -436,7 +436,8 @@ public class ImagePreviewer
                   
                   // if we have the same href as before, don't update
                   // (avoid flickering + re-requests of same URL)
-                  if (hrefToken.getValue() == href_.get() && attributes == attributes_.get())
+                  if (StringUtil.equals(hrefToken.getValue(), href_.get()) &&
+                      StringUtil.equals(attributes, attributes_.get()))
                      return;
 
                   // cache href and schedule refresh of image
