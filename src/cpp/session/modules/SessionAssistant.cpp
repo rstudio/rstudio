@@ -431,6 +431,10 @@ FilePath assistantLanguageServerPath(const std::string& assistantType)
    {
       return copilotLanguageServerPath();
    }
+   else if (assistant == kAssistantNone)
+   {
+      return FilePath();
+   }
    else
    {
       // unknown assistant type
@@ -2230,10 +2234,7 @@ Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
 {
    // Make sure assistant is running
    if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
       return Success();
-   }
 
    // Read params
    json::Object completionCommandJson;

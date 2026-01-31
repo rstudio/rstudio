@@ -104,32 +104,64 @@ public class Range extends JavaScriptObject
       return this.isMultiLine();
    }-*/;
    
+   /**
+    * Returns true if the position is inside this range [start, end).
+    * Inclusive on left/start, exclusive on right/end.
+    */
    public final native boolean containsRightExclusive(Position position)
    /*-{
-      
       var row = position.row;
-      var column = position.column;
-      
-      var startRow = this.start.row;
-      var endRow = this.end.row;
-      
-      var startColumn = this.start.column;
-      var endColumn = this.end.column;
-      
-      if (endRow < row) return false;
-      if (startRow > row) return false;
-      
-      if (startRow === row && endRow === row)
-      {
-         return column >= startColumn && 
-                column <  endColumn;
-      }
-      
-      if (startRow === row) return column >= startColumn;
-      if (endRow === row)   return column <  endColumn;
-      
-      // shouldn't get here
-      return false;
+      var col = position.column;
+
+      // Before start: row < startRow, or same row but col < startCol
+      if (row < this.start.row || (row === this.start.row && col < this.start.column))
+         return false;
+
+      // At or after end: row > endRow, or same row but col >= endCol
+      if (row > this.end.row || (row === this.end.row && col >= this.end.column))
+         return false;
+
+      return true;
    }-*/;
-   
+
+   /**
+    * Returns true if the position is inside this range (start, end].
+    * Exclusive on left/start, inclusive on right/end.
+    */
+   public final native boolean containsLeftExclusive(Position position)
+   /*-{
+      var row = position.row;
+      var col = position.column;
+
+      // At or before start: row < startRow, or same row but col <= startCol
+      if (row < this.start.row || (row === this.start.row && col <= this.start.column))
+         return false;
+
+      // After end: row > endRow, or same row but col > endCol
+      if (row > this.end.row || (row === this.end.row && col > this.end.column))
+         return false;
+
+      return true;
+   }-*/;
+
+   /**
+    * Returns true if the position is strictly inside this range (start, end).
+    * Exclusive on both ends.
+    */
+   public final native boolean containsExclusive(Position position)
+   /*-{
+      var row = position.row;
+      var col = position.column;
+
+      // At or before start
+      if (row < this.start.row || (row === this.start.row && col <= this.start.column))
+         return false;
+
+      // At or after end
+      if (row > this.end.row || (row === this.end.row && col >= this.end.column))
+         return false;
+
+      return true;
+   }-*/;
+
 }

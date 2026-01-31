@@ -13,26 +13,27 @@
  *
  */
 
-      if (!String.prototype.trimRight) {
-         var trimEndRegexp = /\s\s*$/;
-         String.prototype.trimRight = function () {
-            return String(this).replace(trimEndRegexp, '');
-         };
-      }
+if (!String.prototype.trimRight) {
+   var trimEndRegexp = /\s\s*$/;
+   String.prototype.trimRight = function () {
+      return String(this).replace(trimEndRegexp, '');
+   };
+}
 
 define("rstudio/loader", ["require", "exports", "module"], function(require, exports, module) {
 
-var EditSession = require("ace/edit_session").EditSession;
+var Anchor = require("ace/anchor").Anchor;
 var Editor = require("ace/editor").Editor;
+var EditSession = require("ace/edit_session").EditSession;
+var event = require("ace/lib/event");
 var EventEmitter = require("ace/lib/event_emitter").EventEmitter;
 var ExpandSelection = require("util/expand_selection");
+var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
 var Renderer = require("ace/virtual_renderer").VirtualRenderer;
 var TextMode = require("ace/mode/text").Mode;
 var UndoManager = require("ace/undomanager").UndoManager;
 var Utils = require("mode/utils");
-var event = require("ace/lib/event");
-var oop = require("ace/lib/oop");
 
 require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 
@@ -149,10 +150,121 @@ oop.inherits(RStudioEditor, Editor);
 
 var RStudioEditSession = function(text, mode) {
    EditSession.call(this, text, mode);
+
+   // Initialize instance-specific synthetic token storage
+   // (must be per-instance, not on prototype, so sessions don't share the array)
+   this.$syntheticTokens = [];
+
+   var self = this;
+
+   // Remove synthetic tokens that intersect the edit range
+   this.on("change", function(delta) {
+      if (!self.$syntheticTokens.length)
+         return;
+
+      var remaining = [];
+      var rowsToInvalidate = [];
+
+      for (var i = 0; i < self.$syntheticTokens.length; i++) {
+         var token = self.$syntheticTokens[i];
+         var row = token.anchor.row;
+         var col = token.anchor.column;
+
+         // Check if this token is affected by the edit.
+         // For inserts, after Ace updates the anchor (pushing it right by the insertion length),
+         // the anchor will be at delta.end (the position after the inserted text).
+         var atEditPosition = (row === delta.start.row &&
+            (col === delta.start.column ||
+             (delta.action === "insert" && col === delta.end.column)));
+
+         if (!atEditPosition) {
+            // Token not at edit position - keep it
+            remaining.push(token);
+            continue;
+         }
+
+         if (delta.action === "insert") {
+            // Only do prefix matching for ghost_text tokens (inline completions).
+            // Other token types (like insertion_preview for NES) should just dismiss.
+            if (token.type === "ghost_text") {
+               // Get inserted text (only handle single-line inserts for prefix matching)
+               var insertedText = delta.lines.length === 1 ? delta.lines[0] : null;
+
+               // Check if synthetic token text starts with inserted text
+               if (insertedText && token.text.indexOf(insertedText) === 0) {
+                  // Consume the prefix - update token text
+                  token.text = token.text.substring(insertedText.length);
+
+                  // Position anchor after the inserted text so the ghost text appears
+                  // after the newly typed character(s).
+                  var newColumn = delta.start.column + insertedText.length;
+                  token.anchor.setPosition(delta.start.row, newColumn);
+
+                  // Invalidate row to re-render with updated token
+                  rowsToInvalidate.push(delta.start.row);
+
+                  // If token text is now empty, remove it; otherwise keep it
+                  if (token.text.length === 0) {
+                     token.anchor.detach();
+                  } else {
+                     remaining.push(token);
+                  }
+               } else {
+                  // Inserted text doesn't match prefix (or multi-line insert) - dismiss
+                  rowsToInvalidate.push(row);
+                  token.anchor.detach();
+               }
+            } else {
+               // Non-ghost_text token (e.g., insertion_preview) - dismiss on any insert
+               rowsToInvalidate.push(row);
+               token.anchor.detach();
+            }
+         } else if (delta.action === "remove") {
+            // Delete at token position - dismiss
+            rowsToInvalidate.push(row);
+            token.anchor.detach();
+         } else {
+            // Unknown action - keep token
+            remaining.push(token);
+         }
+      }
+
+      if (remaining.length !== self.$syntheticTokens.length || rowsToInvalidate.length > 0) {
+         self.$syntheticTokens = remaining;
+
+         // Invalidate affected rows in background tokenizer
+         var bgTokenizer = self.bgTokenizer;
+         for (var j = 0; j < rowsToInvalidate.length; j++) {
+            var row = rowsToInvalidate[j];
+            bgTokenizer.lines[row] = null;
+         }
+      }
+   });
+
+   // Hook into the background tokenizer to inject synthetic tokens after tokenization
+   var bgTokenizer = this.bgTokenizer;
+   var $tokenizeRow = bgTokenizer.$tokenizeRow;
+
+   bgTokenizer.$tokenizeRow = function(row) {
+      var tokens = $tokenizeRow.call(this, row);
+
+      // Inject any synthetic tokens for this row (skip lookup if none registered)
+      if (self.$syntheticTokens.length) {
+         var synthetics = self.$getSyntheticsForRow(row);
+         if (synthetics.length) {
+            tokens = self.$injectSyntheticTokens(tokens, synthetics);
+            // Update the cache so getTokens() returns consistent results
+            this.lines[row] = tokens;
+         }
+      }
+
+      return tokens;
+   };
 };
 oop.inherits(RStudioEditSession, EditSession);
 
 (function() {
+
    this.insert = function(position, text) {
       if (this.getMode().wrapInsert) {
          return this.getMode().wrapInsert(this, EditSession.prototype.insert, position, text);
@@ -160,6 +272,190 @@ oop.inherits(RStudioEditSession, EditSession);
       else {
          return EditSession.prototype.insert.call(this, position, text);
       }
+   };
+
+   this.addSyntheticToken = function(row, column, text, type) {
+      var anchor = new Anchor(this.getDocument(), row, column);
+      this.$syntheticTokens.push({ anchor: anchor, text: text, type: type });
+   };
+
+   this.removeSyntheticTokensForRow = function(row) {
+      var remaining = [];
+      for (var i = 0; i < this.$syntheticTokens.length; i++) {
+         var token = this.$syntheticTokens[i];
+         if (token.anchor.row === row) {
+            token.anchor.detach();
+         } else {
+            remaining.push(token);
+         }
+      }
+      this.$syntheticTokens = remaining;
+   };
+
+   this.clearSyntheticTokens = function() {
+      for (var i = 0; i < this.$syntheticTokens.length; i++) {
+         this.$syntheticTokens[i].anchor.detach();
+      }
+      this.$syntheticTokens = [];
+   };
+
+   // Helper to get synthetic tokens for a specific row
+   this.$getSyntheticsForRow = function(row) {
+      var synthetics = [];
+      for (var i = 0; i < this.$syntheticTokens.length; i++) {
+         var t = this.$syntheticTokens[i];
+         if (t.anchor.row === row) {
+            synthetics.push({ column: t.anchor.column, text: t.text, type: t.type });
+         }
+      }
+      return synthetics;
+   };
+
+   // Helper to inject synthetic tokens into a token array
+   this.$injectSyntheticTokens = function(tokens, synthetics) {
+      if (!synthetics.length)
+         return tokens;
+
+      // Sort synthetics by column (descending) so we can inject from right to left
+      // without messing up column positions
+      synthetics = synthetics.slice().sort(function(a, b) { return b.column - a.column; });
+
+      // Clone the tokens array so we don't mutate the original
+      tokens = tokens.slice();
+
+      for (var s = 0; s < synthetics.length; s++) {
+         var synth = synthetics[s];
+         var targetColumn = synth.column;
+         var newToken = { value: synth.text, type: synth.type, synthetic: true };
+
+         // Find where to inject
+         var currentCol = 0;
+         var injected = false;
+
+         for (var i = 0; i < tokens.length; i++) {
+            var token = tokens[i];
+            var tokenEnd = currentCol + token.value.length;
+
+            if (targetColumn <= tokenEnd) {
+               // Injection point is within or at end of this token
+               if (targetColumn === currentCol) {
+                  // Insert before this token
+                  tokens.splice(i, 0, newToken);
+               } else if (targetColumn === tokenEnd) {
+                  // Insert after this token
+                  tokens.splice(i + 1, 0, newToken);
+               } else {
+                  // Split this token
+                  var offset = targetColumn - currentCol;
+                  var before = { value: token.value.substring(0, offset), type: token.type };
+                  var after = { value: token.value.substring(offset), type: token.type };
+                  tokens.splice(i, 1, before, newToken, after);
+               }
+               injected = true;
+               break;
+            }
+
+            currentCol = tokenEnd;
+         }
+
+         if (!injected) {
+            // Append at end
+            tokens.push(newToken);
+         }
+      }
+
+      return tokens;
+   };
+
+   // Override documentToScreenPosition to account for synthetic tokens
+   this.documentToScreenPosition = function(docRow, docColumn) {
+      var result = EditSession.prototype.documentToScreenPosition.call(this, docRow, docColumn);
+
+      // Skip if no synthetic tokens registered
+      if (!this.$syntheticTokens.length)
+         return result;
+
+      // Get the row from the input
+      var row = typeof docRow === 'object' ? docRow.row : docRow;
+      var col = typeof docRow === 'object' ? docRow.column : docColumn;
+
+      // Get tokens for this row
+      var tokens = this.getTokens(row);
+      if (!tokens || !tokens.length)
+         return result;
+
+      // Calculate synthetic token width before the document column
+      var syntheticWidth = 0;
+      var currentDocCol = 0;
+
+      for (var i = 0; i < tokens.length; i++) {
+         var token = tokens[i];
+
+         if (token.synthetic) {
+            // Synthetic tokens appear at the current document position
+            // Only count if cursor is AFTER the synthetic token position (not at it)
+            if (currentDocCol < col) {
+               syntheticWidth += token.value.length;
+            }
+         } else {
+            // Real token - advance document column
+            currentDocCol += token.value.length;
+         }
+      }
+
+      if (syntheticWidth > 0) {
+         result.column += syntheticWidth;
+      }
+
+      return result;
+   };
+
+   // Override screenToDocumentPosition to account for synthetic tokens
+   this.screenToDocumentPosition = function(screenRow, screenColumn, offsetX) {
+      // Get the document row first using original implementation
+      var result = EditSession.prototype.screenToDocumentPosition.call(this, screenRow, screenColumn, offsetX);
+
+      // Skip if no synthetic tokens registered
+      if (!this.$syntheticTokens.length)
+         return result;
+
+      var docRow = result.row;
+
+      // Get tokens for this row
+      var tokens = this.getTokens(docRow);
+      if (!tokens || !tokens.length)
+         return result;
+
+      // Walk through tokens, tracking both screen and document positions
+      var screenCol = 0;
+      var docCol = 0;
+
+      for (var i = 0; i < tokens.length; i++) {
+         var token = tokens[i];
+         var tokenScreenEnd = screenCol + token.value.length;
+
+         if (screenColumn < tokenScreenEnd) {
+            // Click is within this token
+            if (token.synthetic) {
+               // Click is in a synthetic token - clamp to start of synthetic token (document position)
+               result.column = docCol;
+            } else {
+               // Click is in a real token - compute offset within token
+               var offsetInToken = screenColumn - screenCol;
+               result.column = docCol + offsetInToken;
+            }
+            return result;
+         }
+
+         screenCol = tokenScreenEnd;
+         if (!token.synthetic) {
+            docCol += token.value.length;
+         }
+      }
+
+      // Click is past all tokens - return document line end
+      result.column = docCol;
+      return result;
    };
 
    this.reindent = function(range) {

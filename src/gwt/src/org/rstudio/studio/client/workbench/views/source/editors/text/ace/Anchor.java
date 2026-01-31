@@ -29,6 +29,14 @@ public class Anchor extends JavaScriptObject
       return this.getPosition();
    }-*/;
 
+   public native final void setPosition(int row, int column) /*-{
+      this.setPosition(row, column);
+   }-*/;
+
+   public final void setPosition(Position position) {
+      setPosition(position.getRow(), position.getColumn());
+   }
+
    public native final void detach() /*-{
       this.removeAllListeners("change");
       this.detach();

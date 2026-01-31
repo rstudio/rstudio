@@ -236,40 +236,46 @@
 #' 
 .rs.automation.addRemoteFunction("keyboard.executeShortcut", function(shortcut)
 {
-   parts <- tolower(strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]])
+   parts <- strsplit(shortcut, "\\s*\\+\\s*", perl = TRUE)[[1L]]
    
    modifiers <- 0L
-   if ("alt" %in% parts)
+   if ("Alt" %in% parts)
       modifiers <- bitwOr(modifiers, 1L)
-   if ("ctrl" %in% parts)
+   if ("Ctrl" %in% parts)
       modifiers <- bitwOr(modifiers, 2L)
-   if ("meta" %in% parts)
+   if ("Meta" %in% parts)
       modifiers <- bitwOr(modifiers, 4L)
-   if ("shift" %in% parts)
+   if ("Shift" %in% parts)
       modifiers <- bitwOr(modifiers, 8L)
    
    # 'cmd' means 'meta' on macOS, 'ctrl' otherwise
-   if ("cmd" %in% parts || "command" %in% parts)
+   if ("Cmd" %in% parts || "Command" %in% parts)
    {
       modifier <- ifelse(.rs.platform.isMacos, 4L, 2L)
       modifiers <- bitwOr(modifiers, modifier)
    }
    
    key <- tail(parts, n = 1L)
-   code <- .rs.automationConstants.keyToKeyCodeMap[[key]]
+   code <- .rs.automationConstants.keyToKeyCodeMap[[tolower(key)]]
    if (is.null(code))
       stop(sprintf("couldn't convert key '%s' to key code", key))
    
    # TODO: These effectively fill out the same values on the associated
    # JavaScript KeyEvent, so ideally we'd populate all the parameters here.
    # Right now, we're just doing the minimal necessary bits.
+
+   # For printable characters (single char, no modifiers), include the text
+   # parameter so the character actually gets inserted
+   text <- if (nchar(key) == 1L && modifiers == 0L) key else NULL
+
    self$client$Input.dispatchKeyEvent(
       type                  = "keyDown",
       key                   = key,
+      text                  = text,
       modifiers             = modifiers,
       windowsVirtualKeyCode = code
    )
-   
+
    self$client$Input.dispatchKeyEvent(
       type                  = "keyUp",
       key                   = key,

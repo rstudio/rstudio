@@ -26,6 +26,7 @@ import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationAutomation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -36,11 +37,11 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.assistant.Assistant;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -197,7 +198,8 @@ public class RCompletionManager implements CompletionManager
                           EventBus eventBus,
                           HelpStrategy helpStrategy,
                           UserPrefs uiPrefs,
-                          Assistant assistant)
+                          Assistant assistant,
+                          ApplicationAutomation automation)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -205,6 +207,7 @@ public class RCompletionManager implements CompletionManager
       helpStrategy_ = helpStrategy;
       userPrefs_ = uiPrefs;
       assistant_ = assistant;
+      automation_ = automation;
    }
    
    public void detach()
@@ -1880,7 +1883,11 @@ public class RCompletionManager implements CompletionManager
          }
          else
          {
-            boolean preferBottom = !assistant_.isEnabled();
+            boolean preferBottom =
+               automation_.isAutomationAgent() ||
+               behavior_ == EditorBehavior.AceBehaviorConsole ||
+               !assistant_.isEnabled();
+
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(rect, popup_, preferBottom),
@@ -2266,6 +2273,7 @@ public class RCompletionManager implements CompletionManager
    private HelpStrategy helpStrategy_;
    private UserPrefs userPrefs_;
    private Assistant assistant_;
+   private ApplicationAutomation automation_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;

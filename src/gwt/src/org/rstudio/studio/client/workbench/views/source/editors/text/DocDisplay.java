@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 import java.util.function.BiPredicate;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.js.JsMap;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
@@ -48,9 +50,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -86,6 +88,7 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -524,10 +527,13 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void applyGhostText();
    void removeGhostText();
 
-   void invalidateTokens(int row);
+   void addSyntheticToken(int row, int column, String text, String type);
    void renderTokens(int row);
-   void resetTokens(int row);
-   void spliceToken(JsArray<Token> tokens, Token newToken, int column);
+   void removeSyntheticTokensForRow(int row);
+   void clearSyntheticTokens();
+
+   HandlerRegistration onTokenizerUpdate(CommandWithArg<AceBackgroundTokenizerUpdateEvent> callback);
+   HandlerRegistration onAfterRender(Command callback);
 
    double getLineHeight();
 }
