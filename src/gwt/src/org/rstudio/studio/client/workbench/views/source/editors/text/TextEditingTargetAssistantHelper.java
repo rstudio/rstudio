@@ -107,7 +107,7 @@ public class TextEditingTargetAssistantHelper
          this.command = completion.command;
          this.originalCompletion = completion;
          this.partialAcceptedLength = 0;
-         this.type = SuggestionType.NONE;
+         this.type = SuggestionType.GHOST_TEXT;
          this.deltas = null;
          this.isRevealed = false;
       }
@@ -193,7 +193,6 @@ public class TextEditingTargetAssistantHelper
     */
    private enum SuggestionType
    {
-      NONE,
       GHOST_TEXT,
       DELETION,
       INSERTION,
@@ -710,8 +709,7 @@ public class TextEditingTargetAssistantHelper
       // For ghost text (pure insertion), use startAnchor for both start and end,
       // since endAnchor doesn't track forward as user types prefix matches.
       Range range;
-      boolean isGhostText = editSuggestion_.type == SuggestionType.NONE ||
-                            editSuggestion_.type == SuggestionType.GHOST_TEXT;
+      boolean isGhostText = editSuggestion_.type == SuggestionType.GHOST_TEXT;
       if (isGhostText)
       {
          range = Range.create(
@@ -738,8 +736,7 @@ public class TextEditingTargetAssistantHelper
          server_.assistantDidAcceptCompletion(editSuggestion_.command, new VoidServerRequestCallback());
 
       // For NES suggestions (not ghost text), schedule another suggestion
-      boolean isNesSuggestion = editSuggestion_.type != SuggestionType.NONE &&
-                                editSuggestion_.type != SuggestionType.GHOST_TEXT;
+      boolean isNesSuggestion = editSuggestion_.type != SuggestionType.GHOST_TEXT;
 
       resetSuggestion();
 
@@ -998,7 +995,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void showPendingSuggestionDetails()
    {
-      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
+      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.GHOST_TEXT)
          return;
 
       // Remove the pending gutter icon (the render methods will add their own)
@@ -1021,7 +1018,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void hidePendingSuggestionDetails()
    {
-      if (!pendingSuggestionRevealed_ || editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
+      if (!pendingSuggestionRevealed_ || editSuggestion_ == null || editSuggestion_.type == SuggestionType.GHOST_TEXT)
          return;
 
       // Clear visual elements but preserve edit suggestion state for re-reveal
@@ -1044,7 +1041,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void renderEditSuggestion()
    {
-      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
+      if (editSuggestion_ == null)
          return;
 
       // Enable Tab acceptance for all types (except DIFF which handles it separately)
@@ -1488,7 +1485,7 @@ public class TextEditingTargetAssistantHelper
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
                      el.hasClassName(AceEditorGutterStyles.NES_GUTTER));
 
-                  if (nesGutterEl != null && editSuggestion_ != null && editSuggestion_.type != SuggestionType.NONE)
+                  if (nesGutterEl != null && editSuggestion_ != null && editSuggestion_.type != SuggestionType.GHOST_TEXT)
                   {
                      event.stopPropagation();
                      event.preventDefault();
@@ -1755,8 +1752,7 @@ public class TextEditingTargetAssistantHelper
                      // For ghost text suggestions, check if the user typed a prefix match.
                      // If so, update the suggestion text and suppress the document change handler.
                      // This only applies to ghost text (not NES edit suggestions).
-                     boolean isGhostText = editSuggestion_.type == SuggestionType.NONE ||
-                                           editSuggestion_.type == SuggestionType.GHOST_TEXT;
+                     boolean isGhostText = editSuggestion_.type == SuggestionType.GHOST_TEXT;
                      if (isGhostText)
                      {
                         String key = EventProperty.key(keyEvent.getNativeEvent());
