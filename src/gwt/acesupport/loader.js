@@ -173,7 +173,6 @@ var RStudioEditSession = function(text, mode) {
          // Check if this token is affected by the edit.
          // For inserts, after Ace updates the anchor (pushing it right by the insertion length),
          // the anchor will be at delta.end (the position after the inserted text).
-         debugger;
          var atEditPosition = (row === delta.start.row &&
             (col === delta.start.column ||
              (delta.action === "insert" && col === delta.end.column)));
