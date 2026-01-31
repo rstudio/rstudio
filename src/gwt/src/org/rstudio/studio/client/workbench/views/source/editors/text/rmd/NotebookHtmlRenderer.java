@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFin
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -58,8 +59,20 @@ public class NotebookHtmlRenderer
       events_ = events;
       dependencyManager_ = dependencyManager;
 
-      events_.addHandler(RmdRenderPendingEvent.TYPE, this);
-      events_.addHandler(RenderRmdEvent.TYPE, this);
+      registrations_ = new HandlerRegistrations(
+         events_.addHandler(RmdRenderPendingEvent.TYPE, this),
+         events_.addHandler(RenderRmdEvent.TYPE, this)
+      );
+   }
+
+   public void onDismiss()
+   {
+      registrations_.detach();
+      if (renderTimer_ != null)
+      {
+         renderTimer_.cancel();
+         renderTimer_ = null;
+      }
    }
 
    @Override
@@ -254,6 +267,7 @@ public class NotebookHtmlRenderer
    private Timer renderTimer_;
    private Command renderCommand_;
 
+   private final HandlerRegistrations registrations_;
    private final DocDisplay display_;
    private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;

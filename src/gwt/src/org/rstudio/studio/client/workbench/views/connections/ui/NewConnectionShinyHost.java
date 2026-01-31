@@ -48,6 +48,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -74,9 +75,9 @@ public class NewConnectionShinyHost extends Composite
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
    {
-      events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
-      events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
-      
+      shinyFrameHandler_ = events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
+      dialogUpdatedHandler_ = events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
+
       initialize(operation, info);
    }
           
@@ -103,6 +104,18 @@ public class NewConnectionShinyHost extends Composite
 
    public void onDeactivate(Operation operation)
    {
+      if (shinyFrameHandler_ != null)
+      {
+         shinyFrameHandler_.removeHandler();
+         shinyFrameHandler_ = null;
+      }
+
+      if (dialogUpdatedHandler_ != null)
+      {
+         dialogUpdatedHandler_.removeHandler();
+         dialogUpdatedHandler_ = null;
+      }
+
       terminateShinyApp(operation);
    }
    
@@ -273,6 +286,8 @@ public class NewConnectionShinyHost extends Composite
    private ConnectionCodePanel codePanel_;
      
    private EventBus events_;
+   private HandlerRegistration shinyFrameHandler_;
+   private HandlerRegistration dialogUpdatedHandler_;
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;

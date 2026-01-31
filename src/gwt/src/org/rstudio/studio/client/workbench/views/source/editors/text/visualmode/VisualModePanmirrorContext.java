@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 import elemental2.promise.Promise;
@@ -87,7 +88,7 @@ public class VisualModePanmirrorContext
       server_ = server;
 
       // notify watchers of file changes
-      events.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler() {
+      fileChangeReg_ = events.addHandler(FileChangeEvent.TYPE, new FileChangeEvent.Handler() {
          @Override
          public void onFileChange(FileChangeEvent event)
          {
@@ -96,6 +97,15 @@ public class VisualModePanmirrorContext
             });
          }
       });
+   }
+
+   public void onDismiss()
+   {
+      if (fileChangeReg_ != null)
+      {
+         fileChangeReg_.removeHandler();
+         fileChangeReg_ = null;
+      }
    }
 
    public PanmirrorContext createContext(PanmirrorUIDisplay.ShowContextMenu showContextMenu)
@@ -482,5 +492,6 @@ public class VisualModePanmirrorContext
    private SessionInfo sessionInfo_;
    private EventBus events_;
    private RMarkdownServerOperations server_;
+   private HandlerRegistration fileChangeReg_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

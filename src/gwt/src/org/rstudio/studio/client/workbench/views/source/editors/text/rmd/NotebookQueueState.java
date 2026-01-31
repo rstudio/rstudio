@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 
 public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
@@ -75,10 +76,17 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       scopeHelper_ = new TextEditingTargetScopeHelper(display);
       rmdHelper_ = new TextEditingTargetRMarkdownHelper();
       
-      events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
-      events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
-      
+      registrations_.add(events_.addHandler(NotebookRangeExecutedEvent.TYPE, this));
+      registrations_.add(events_.addHandler(ChunkExecStateChangedEvent.TYPE, this));
+
       syncWidth();
+   }
+
+   public void onDismiss()
+   {
+      for (HandlerRegistration reg : registrations_)
+         reg.removeHandler();
+      registrations_.clear();
    }
    
    public boolean isExecuting()
@@ -701,6 +709,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private final TextEditingTargetScopeHelper scopeHelper_;
    private final TextEditingTarget editingTarget_;
    private final TextEditingTargetRMarkdownHelper rmdHelper_;
+   private final List<HandlerRegistration> registrations_ = new ArrayList<>();
    
    private int pixelWidth_;
    private int charWidth_;

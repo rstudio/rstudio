@@ -19,11 +19,12 @@ import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -45,9 +46,9 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -60,9 +61,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class AceEditorBackgroundLinkHighlighter
@@ -121,18 +122,19 @@ public class AceEditorBackgroundLinkHighlighter
 
       highlighters_ = new ArrayList<>();
       
-      handlers_ = new ArrayList<>();
-      handlers_.add(editor_.addAttachHandler(this));
-      handlers_.add(editor_.addDocumentChangedHandler(this));
-      handlers_.add(editor_.addEditorModeChangedHandler(this));
-      handlers_.add(editor_.addMouseMoveHandler(this));
-      handlers_.add(editor_.addCommandClickHandler(this));
-      
-      userPrefs_.highlightWebLink().bind((Boolean enabled) ->
+      handlers_ = new HandlerRegistrations(
+         editor_.addAttachHandler(this),
+         editor_.addDocumentChangedHandler(this),
+         editor_.addEditorModeChangedHandler(this),
+         editor_.addMouseMoveHandler(this),
+         editor_.addCommandClickHandler(this)
+      );
+
+      handlers_.add(userPrefs_.highlightWebLink().bind((Boolean enabled) ->
       {
          if (editor_ != null)
             refreshHighlighters(editor_.getModeId());
-      });
+      }));
 
       refreshHighlighters(editor_.getModeId());
    }
@@ -590,16 +592,22 @@ public class AceEditorBackgroundLinkHighlighter
       }
       else
       {
-         for (HandlerRegistration handler : handlers_)
-            handler.removeHandler();
-         handlers_.clear();
-
-         if (previewHandler_ != null)
-         {
-            previewHandler_.removeHandler();
-            previewHandler_ = null;
-         }
+         detach();
       }
+   }
+
+   public void detach()
+   {
+      timer_.cancel();
+      handlers_.detach();
+
+      if (previewHandler_ != null)
+      {
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
+      }
+
+      clearAllMarkers();
    }
 
    @Override
@@ -752,7 +760,7 @@ public class AceEditorBackgroundLinkHighlighter
    private final AceEditor editor_;
    private final List<Highlighter> highlighters_;
    private final Timer timer_;
-   private final List<HandlerRegistration> handlers_;
+   private final HandlerRegistrations handlers_;
 
    private SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private int nextHighlightStart_;

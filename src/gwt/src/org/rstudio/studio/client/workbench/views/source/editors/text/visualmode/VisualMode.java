@@ -205,7 +205,11 @@ public class VisualMode implements VisualModeEditorSync,
    
    public void onDismiss()
    {
-      
+      if (visualModeChunks_ != null)
+         visualModeChunks_.onDismiss();
+
+      if (visualModeContext_ != null)
+         visualModeContext_.onDismiss();
    }
    
    private void initWidgets()

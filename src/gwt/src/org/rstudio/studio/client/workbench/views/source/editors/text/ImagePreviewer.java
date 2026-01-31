@@ -151,8 +151,11 @@ public class ImagePreviewer
       // shared mutable state that we hide in this closure
       final Mutable<PinnedLineWidget>  plw = new Mutable<>();
       final Mutable<ChunkOutputWidget> cow = new Mutable<>();
-      final Mutable<HandlerRegistration> docChangedHandler = new Mutable<>(); 
+      final Mutable<HandlerRegistration> docChangedHandler = new Mutable<>();
       final Mutable<HandlerRegistration> renderHandler = new Mutable<>();
+      final Mutable<Timer> renderTimer = new Mutable<>();
+      final Mutable<Timer> refreshImageTimer = new Mutable<>();
+      final Mutable<Element> imgElement = new Mutable<>();
       
       // command that ensures state is cleaned up when widget hidden
       final Command onDetach = new Command()
@@ -176,6 +179,23 @@ public class ImagePreviewer
             if (docChangedHandler.get() != null)
                docChangedHandler.get().removeHandler();
             docChangedHandler.set(null);
+
+            // cancel timers
+            if (renderTimer.get() != null)
+            {
+               renderTimer.get().cancel();
+               renderTimer.set(null);
+            }
+
+            if (refreshImageTimer.get() != null)
+            {
+               refreshImageTimer.get().cancel();
+               refreshImageTimer.set(null);
+            }
+
+            // clear image event listener
+            if (imgElement.get() != null)
+               DOM.setEventListener(imgElement.get(), null);
          }
          
          @Override
@@ -242,6 +262,7 @@ public class ImagePreviewer
       final Image image = new Image(srcPath);
       image.addStyleName(RES.styles().image());
       final Element imgEl = image.getElement();
+      imgElement.set(imgEl);
       
       // parse and inject attributes, if we have any
       if (attributes != null)
@@ -307,7 +328,7 @@ public class ImagePreviewer
       });
       
       // handle editor resize events
-      final Timer renderTimer = new Timer()
+      renderTimer.set(new Timer()
       {
          @Override
          public void run()
@@ -315,7 +336,7 @@ public class ImagePreviewer
             int height = image.getOffsetHeight() + 30;
             onResize.execute(height);
          }
-      };
+      });
       
       // initialize render handler
       renderHandler.set(display.addRenderFinishedHandler(
@@ -331,53 +352,54 @@ public class ImagePreviewer
                return;
             
             width_ = width;
-            renderTimer.schedule(100);
+            if (renderTimer.get() != null)
+               renderTimer.get().schedule(100);
          }
       }));
       
       // initialize doc changed handler
+      final Mutable<String> href_ = new Mutable<>(href);
+      final Mutable<String> attributes_ = new Mutable<>(StringUtil.notNull(attributes));
+
+      refreshImageTimer.set(new Timer()
+      {
+         @Override
+         public void run()
+         {
+            // if the discovered href isn't an image link, just bail
+            if (!ImagePreviewer.isImageHref(href_.get()))
+               return;
+
+            // set new src location (load handler will replace label as needed)
+            container.setWidget(new SimplePanel());
+            noImageLabel.setText(constants_.noImageLabel(href_.get()));
+            image.getElement().setAttribute("src", imgSrcPathFromHref(
+                  sentinel, href_.get()));
+
+            // parse and inject attributes
+            Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_.get());
+            final Element imgEl = image.getElement();
+            for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
+            {
+               String key = entry.getKey();
+               String val = entry.getValue();
+               if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+                  continue;
+               imgEl.setAttribute(key, val);
+            }
+
+            if (!parsedAttributes.getIdentifier().isEmpty())
+               imgEl.setId(parsedAttributes.getIdentifier());
+
+            for (String className : parsedAttributes.getClasses())
+               if (!className.isEmpty())
+                  imgEl.addClassName(className);
+         }
+      });
+
       docChangedHandler.set(display.addDocumentChangedHandler(
             new DocumentChangedEvent.Handler()
       {
-         private String href_ = href;
-         private String attributes_ = StringUtil.notNull(attributes);
-         
-         private final Timer refreshImageTimer = new Timer()
-         {
-            @Override
-            public void run()
-            {
-               // if the discovered href isn't an image link, just bail
-               if (!ImagePreviewer.isImageHref(href_))
-                  return;
-               
-               // set new src location (load handler will replace label as needed)
-               container.setWidget(new SimplePanel());
-               noImageLabel.setText(constants_.noImageLabel(href_));
-               image.getElement().setAttribute("src", imgSrcPathFromHref(
-                     sentinel, href_));
-               
-               // parse and inject attributes
-               Attributes parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_);
-               final Element imgEl = image.getElement();
-               for (Map.Entry<String, String> entry : parsedAttributes.getAttributes().entrySet())
-               {
-                  String key = entry.getKey();
-                  String val = entry.getValue();
-                  if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
-                     continue;
-                  imgEl.setAttribute(key, val);
-               }
-               
-               if (!parsedAttributes.getIdentifier().isEmpty())
-                  imgEl.setId(parsedAttributes.getIdentifier());
-               
-               for (String className : parsedAttributes.getClasses())
-                  if (!className.isEmpty())
-                     imgEl.addClassName(className);
-            }
-         };
-         
          private void onDocumentChangedImpl(DocumentChangedEvent event)
          {
             int row = plw.get().getRow();
@@ -414,14 +436,16 @@ public class ImagePreviewer
                   
                   // if we have the same href as before, don't update
                   // (avoid flickering + re-requests of same URL)
-                  if (hrefToken.getValue() == href_ && attributes == attributes_)
+                  if (StringUtil.equals(hrefToken.getValue(), href_.get()) &&
+                      StringUtil.equals(attributes, attributes_.get()))
                      return;
-                  
+
                   // cache href and schedule refresh of image
-                  href_ = hrefToken.getValue();
-                  attributes_ = attributes;
-                  
-                  refreshImageTimer.schedule(700);
+                  href_.set(hrefToken.getValue());
+                  attributes_.set(attributes);
+
+                  if (refreshImageTimer.get() != null)
+                     refreshImageTimer.get().schedule(700);
                }
                else
                {

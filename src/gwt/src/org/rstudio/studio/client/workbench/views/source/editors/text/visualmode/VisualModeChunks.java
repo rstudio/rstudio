@@ -57,6 +57,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       parent_ = display;
       sync_ = sync;
       chunks_ = new ArrayList<>();
+      releaseOnDismiss_ = releaseOnDismiss;
 
       // Timer to auto-save the collapsed state of visual mode chunks
       saveCollapseTimer_ = new Timer()
@@ -71,6 +72,11 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       // Load initial collapsed chunk state from doc property bag
       loadCollapsedState(
          sentinel_.getProperty(TextEditingTarget.RMD_VISUAL_MODE_COLLAPSED_CHUNKS));
+   }
+
+   public void onDismiss()
+   {
+      saveCollapseTimer_.cancel();
    }
 
    public PanmirrorUIChunks uiChunks()
@@ -117,10 +123,10 @@ public class VisualModeChunks implements ChunkDefinition.Provider
       });
 
       // Save the collapse state of the visual mode chunks.
-      target_.getDocDisplay().addValueChangeHandler(evt ->
+      releaseOnDismiss_.add(target_.getDocDisplay().addValueChangeHandler(evt ->
       {
          nudgeSaveCollapseState();
-      });
+      }));
 
       return chunks;
    }
@@ -464,6 +470,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
    private final EventBus events_;
    private final FileTypeRegistry fileTypes_;
    private final Timer saveCollapseTimer_;
+   private final ArrayList<HandlerRegistration> releaseOnDismiss_;
    private ArrayList<Integer> collapsedChunkPos_;
    private String collapseState_;
 }

@@ -54,6 +54,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -89,8 +90,7 @@ public class ConsoleInterpreterVersion
    public ConsoleInterpreterVersion(boolean isTabbedView)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      events_.addHandler(ReticulateEvent.TYPE, this);
+
       container_ = new HorizontalPanel();
       label_ = new Label(constants_.unknownLabel());
       setRVersionLabel();
@@ -156,7 +156,30 @@ public class ConsoleInterpreterVersion
       
       setVisible(true);
    }
-   
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+
+      if (reticulateHandler_ == null)
+      {
+         reticulateHandler_ = events_.addHandler(ReticulateEvent.TYPE, this);
+      }
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (reticulateHandler_ != null)
+      {
+         reticulateHandler_.removeHandler();
+         reticulateHandler_ = null;
+      }
+   }
+
    private Widget createLogo(TextResource resource,
                            String languageClass,
                            boolean isTabbedView)
@@ -282,7 +305,8 @@ public class ConsoleInterpreterVersion
    private final Widget rLogo_;
    private final Widget pythonLogo_;
    private final Label label_;
-   
+   private HandlerRegistration reticulateHandler_;
+
    // Injected ----
    private Session session_;
    private Commands commands_;

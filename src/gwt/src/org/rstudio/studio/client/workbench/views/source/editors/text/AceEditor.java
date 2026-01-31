@@ -367,7 +367,7 @@ public class AceEditor implements DocDisplay
 
       widget_.addFoldChangeHandler(event -> AceEditor.this.fireEvent(new FoldChangeEvent()));
 
-      events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
+      editorEventListeners_.add(events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
       {
          @Override
          public void onEdit(EditEvent event)
@@ -384,7 +384,7 @@ public class AceEditor implements DocDisplay
                });
             }
          }
-      });
+      }));
 
       addPasteHandler(event ->
       {
@@ -462,6 +462,36 @@ public class AceEditor implements DocDisplay
                completionManager_ = null;
             }
 
+            if (mixins_ != null)
+            {
+               mixins_.detach();
+            }
+
+            if (bgLinkHighlighter_ != null)
+            {
+               bgLinkHighlighter_.detach();
+            }
+
+            if (bgChunkHighlighter_ != null)
+            {
+               bgChunkHighlighter_.detach();
+            }
+
+            if (diagnosticsBgPopup_ != null)
+            {
+               diagnosticsBgPopup_.detach();
+            }
+
+            if (backgroundTokenizer_ != null)
+            {
+               backgroundTokenizer_.detach();
+            }
+
+            if (monitor_ != null)
+            {
+               monitor_.detach();
+            }
+
             if (s_lastFocusedEditor == AceEditor.this)
             {
                s_lastFocusedEditor = null;
@@ -479,16 +509,16 @@ public class AceEditor implements DocDisplay
       
       // https://github.com/rstudio/rstudio/issues/13118
       setColorPreview(userPrefs_.colorPreview().getValue());
-      userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      editorEventListeners_.add(userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             setColorPreview(event.getValue());
          }
-      });
-      
-      events_.addHandler(
+      }));
+
+      editorEventListeners_.add(events_.addHandler(
             AceEditorCommandEvent.TYPE,
             event ->
             {
@@ -529,7 +559,7 @@ public class AceEditor implements DocDisplay
                case AceEditorCommandEvent.BLOCK_OUTDENT:              blockOutdent();             break;
                case AceEditorCommandEvent.REINDENT:                   reindent();                 break;
                }
-            });
+            }));
    }
 
    public void yankRegion()
@@ -4840,7 +4870,7 @@ public class AceEditor implements DocDisplay
             }
          };
 
-         editor_.addDocumentChangedHandler(event ->
+         documentChangedHandler_ = editor_.addDocumentChangedHandler(event ->
          {
             if (editor_.hasCodeModelScopeTree())
             {
@@ -4855,8 +4885,20 @@ public class AceEditor implements DocDisplay
          return row < row_;
       }
 
+      public void detach()
+      {
+         timer_.cancel();
+
+         if (documentChangedHandler_ != null)
+         {
+            documentChangedHandler_.removeHandler();
+            documentChangedHandler_ = null;
+         }
+      }
+
       private final AceEditor editor_;
       private final Timer timer_;
+      private HandlerRegistration documentChangedHandler_;
 
       private int row_ = 0;
 

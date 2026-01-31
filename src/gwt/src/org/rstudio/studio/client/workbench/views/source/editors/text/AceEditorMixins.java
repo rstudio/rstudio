@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
@@ -43,11 +44,11 @@ public class AceEditorMixins
       };
       
       initializeMixins(editor_);
-      
+
       // on Linux, record whenever the user selects something in Ace
       if (BrowseCap.isLinuxDesktop())
       {
-         editor.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
+         selectionChangedReg_ = editor.addSelectionChangedHandler(new AceSelectionChangedEvent.Handler()
          {
             @Override
             public void onSelectionChanged(AceSelectionChangedEvent event)
@@ -55,13 +56,24 @@ public class AceEditorMixins
                // only relevant if this editor is focused
                if (!editor_.isFocused())
                   return;
-               
+
                // save the current selection, and prepare to update pasteboard
                String selection = editor_.getSelectedText();
                lastSelection_ = selection;
                timer_.schedule(TIMER_DELAY_MS);
             }
          });
+      }
+   }
+
+   public void detach()
+   {
+      timer_.cancel();
+
+      if (selectionChangedReg_ != null)
+      {
+         selectionChangedReg_.removeHandler();
+         selectionChangedReg_ = null;
       }
    }
    
@@ -172,8 +184,9 @@ public class AceEditorMixins
    
    private final AceEditorNative editor_;
    private final Timer timer_;
-   
+
    private String lastSelection_;
+   private HandlerRegistration selectionChangedReg_;
    
    // Injected ----
    private static JavaScriptEventHistory history_;

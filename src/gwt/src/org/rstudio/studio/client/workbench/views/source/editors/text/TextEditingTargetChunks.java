@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -46,13 +47,22 @@ public class TextEditingTargetChunks
       target_ = target;
       toolbars_ = new ArrayList<>();
       modifiedRanges_ = new ArrayList<>();
+      handlers_ = new HandlerRegistrations();
       renderPass_ = 0;
-      
-      target.getDocDisplay().addScopeTreeReadyHandler(this);
-      target.getDocDisplay().addEditorModeChangedHandler(this);
-      target.getDocDisplay().addDocumentChangedHandler(this);
-      
+
+      handlers_.add(
+         target.getDocDisplay().addScopeTreeReadyHandler(this),
+         target.getDocDisplay().addEditorModeChangedHandler(this),
+         target.getDocDisplay().addDocumentChangedHandler(this)
+      );
+
       RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+
+   public void onDismiss()
+   {
+      handlers_.detach();
+      removeAllToolbars();
    }
 
    // Public methods ----------------------------------------------------------
@@ -121,14 +131,14 @@ public class TextEditingTargetChunks
       state_ = state;
       dark_ = state.theme().getValue().getIsDark();
       
-      state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
+      handlers_.add(state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<UserStateAccessor.Theme> theme)
          {
             // recompute dark state
             boolean isDark = theme.getValue().getIsDark();
-            
+
             // redraw all the toolbars if necessary
             if (isDark != dark_)
             {
@@ -141,21 +151,21 @@ public class TextEditingTargetChunks
                syncWidgets(true);
             }
          }
-      });
-      
-      prefs_.showInlineToolbarForRCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      }));
+
+      handlers_.add(prefs_.showInlineToolbarForRCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             boolean showToolbars = event.getValue();
-            
+
             if (showToolbars)
                syncWidgets(true);
             else
                removeAllToolbars();
          }
-      });
+      }));
    }
    
    private void removeAllToolbars()
@@ -303,11 +313,13 @@ public class TextEditingTargetChunks
    private final TextEditingTarget target_;
    private final ArrayList<ChunkContextCodeUi> toolbars_;
    private final List<Range> modifiedRanges_;
-   
+
    private boolean dark_;
-   
+
    private UserPrefs prefs_;
    private UserState state_;
+
+   private final HandlerRegistrations handlers_;
 
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow
