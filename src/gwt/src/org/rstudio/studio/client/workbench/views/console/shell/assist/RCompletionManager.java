@@ -1880,7 +1880,7 @@ public class RCompletionManager implements CompletionManager
          }
          else
          {
-            boolean preferBottom = !assistant_.isEnabled();
+            boolean preferBottom = behavior_ == EditorBehavior.AceBehaviorConsole || !assistant_.isEnabled();
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(rect, popup_, preferBottom),
