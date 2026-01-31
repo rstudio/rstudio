@@ -350,7 +350,7 @@ FilePath paiLanguageServerPath()
       }
    }
    
-   ELOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+   WLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
    return FilePath();
 }
 
