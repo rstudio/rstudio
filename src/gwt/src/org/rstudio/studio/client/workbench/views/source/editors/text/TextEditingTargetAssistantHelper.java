@@ -899,18 +899,9 @@ public class TextEditingTargetAssistantHelper
          editSuggestion_.endAnchor.getColumn());
 
       Range changeRange = nativeEvent.getRange();
-      if (nativeEvent.isInsertion())
-      {
-         boolean nesContains = nesRange.contains(changeRange.getStart());
-         boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
-         return nesContains || changeContains;
-      }
-      else
-      {
-         boolean nesContains = nesRange.contains(changeRange.getStart());
-         boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
-         return nesContains || changeContains;
-      }
+      boolean nesContains = nesRange.contains(changeRange.getStart());
+      boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
+      return nesContains || changeContains;
    }
 
    /**
