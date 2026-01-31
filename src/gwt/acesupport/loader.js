@@ -171,12 +171,12 @@ var RStudioEditSession = function(text, mode) {
          var col = token.anchor.column;
 
          // Check if this token is affected by the edit.
-         // For inserts, we check col + 1 because after consuming a prefix, the anchor
-         // is positioned at the last character of the inserted text, but the next
-         // character will be inserted one position to the right.
+         // For inserts, after Ace updates the anchor (pushing it right by the insertion length),
+         // the anchor will be at delta.end (the position after the inserted text).
+         debugger;
          var atEditPosition = (row === delta.start.row &&
             (col === delta.start.column ||
-             (delta.action === "insert" && col + 1 === delta.start.column)));
+             (delta.action === "insert" && col === delta.end.column)));
 
          if (!atEditPosition) {
             // Token not at edit position - keep it
@@ -196,11 +196,9 @@ var RStudioEditSession = function(text, mode) {
                   // Consume the prefix - update token text
                   token.text = token.text.substring(insertedText.length);
 
-                  // Position anchor at the end of the inserted text.
-                  // The -1 is needed because the synthetic token injection places the token
-                  // after the character at the anchor column, so we want the anchor at the
-                  // last character of the inserted text.
-                  var newColumn = delta.start.column + insertedText.length - 1;
+                  // Position anchor after the inserted text so the ghost text appears
+                  // after the newly typed character(s).
+                  var newColumn = delta.start.column + insertedText.length;
                   token.anchor.setPosition(delta.start.row, newColumn);
 
                   // Invalidate row to re-render with updated token

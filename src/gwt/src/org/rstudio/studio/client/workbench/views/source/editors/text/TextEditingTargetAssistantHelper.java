@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseType
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResultEntry;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletion;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantCompletionCommand;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantTypes.AssistantError;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -82,33 +83,100 @@ public class TextEditingTargetAssistantHelper
    {
    }
 
-   // A wrapper class for Assistant Completions, which is used to track partially-accepted completions.
-   private static class Completion
+   /**
+    * Unified edit suggestion class that consolidates all suggestion state.
+    * Replaces both the old Completion class and separate NES state fields.
+    */
+   private static class EditSuggestion
    {
-      public Completion(AssistantCompletion originalCompletion)
+      public EditSuggestion(AssistantCompletion completion)
       {
          // Copilot includes trailing '```' for some reason in some cases,
          // remove those if we're inserting in an R document.
-         this.insertText = postProcessCompletion(originalCompletion.insertText);
+         this.originalInsertText = postProcessCompletion(completion.insertText);
+         this.insertText = this.originalInsertText;
          this.displayText = this.insertText;
 
-         this.startLine = originalCompletion.range.start.line;
-         this.startCharacter = originalCompletion.range.start.character;
-         this.endLine = originalCompletion.range.end.line;
-         this.endCharacter = originalCompletion.range.end.character;
+         this.startLine = completion.range.start.line;
+         this.originalStartCharacter = completion.range.start.character;
+         this.startCharacter = this.originalStartCharacter;
+         this.endLine = completion.range.end.line;
+         this.originalEndCharacter = completion.range.end.character;
+         this.endCharacter = this.originalEndCharacter;
 
-         this.originalCompletion = originalCompletion;
+         this.command = completion.command;
+         this.originalCompletion = completion;
+         this.partialAcceptedLength = 0;
+         this.type = SuggestionType.NONE;
+         this.deltas = null;
+         this.isRevealed = false;
+      }
+
+      /**
+       * Resets mutable display state back to original values.
+       * Called when re-revealing a suggestion after it was hidden.
+       */
+      public void resetDisplayState()
+      {
+         this.insertText = this.originalInsertText;
+         this.displayText = this.insertText;
+         this.startCharacter = this.originalStartCharacter;
+         this.endCharacter = this.originalEndCharacter;
          this.partialAcceptedLength = 0;
       }
 
+      // Mutable text state (changes as user types matching prefix)
       public String insertText;
       public String displayText;
+
+      // Position (start can change for partial accepts)
       public int startLine;
       public int startCharacter;
       public int endLine;
       public int endCharacter;
-      public AssistantCompletion originalCompletion;
+
+      // Original values for reset
+      private final String originalInsertText;
+      private final int originalStartCharacter;
+      private final int originalEndCharacter;
+
+      // Command to execute on acceptance (may be null)
+      public final AssistantCompletionCommand command;
+
+      // Original completion - ONLY use for assistantDidAcceptPartialCompletion RPC
+      public final AssistantCompletion originalCompletion;
+
+      // Partial acceptance tracking
       public int partialAcceptedLength;
+
+      // Suggestion type and deltas (for NES)
+      public SuggestionType type;
+      public EditDeltas deltas;
+
+      // Whether the suggestion is currently being displayed (ghost text or diff visible)
+      public boolean isRevealed;
+
+      // Anchors that track the suggestion position as the document changes
+      // These must be set externally via setAnchors() since they require display_ access
+      public Anchor startAnchor;
+      public Anchor endAnchor;
+
+      /**
+       * Detaches and clears the anchors.
+       */
+      public void detachAnchors()
+      {
+         if (startAnchor != null)
+         {
+            startAnchor.detach();
+            startAnchor = null;
+         }
+         if (endAnchor != null)
+         {
+            endAnchor.detach();
+            endAnchor = null;
+         }
+      }
    }
 
    /**
@@ -406,10 +474,9 @@ public class TextEditingTargetAssistantHelper
           normalized.range.start.character == normalized.range.end.character)
       {
          // Ghost text at cursor position
-         activeCompletion_ = new Completion(normalized);
-         setNesState(normalized, SuggestionType.GHOST_TEXT, null);
+         setEditSuggestion(normalized, SuggestionType.GHOST_TEXT, null);
          if (autoshow)
-            renderNesSuggestion();
+            renderEditSuggestion();
          else
             showSuggestionGutterOnly(normalized.range.start.line,
                AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
@@ -417,19 +484,19 @@ public class TextEditingTargetAssistantHelper
             server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
          return;
       }
-      
+
       // Get the original text from the document at the edit range
       String originalText = display_.getCode(
          Position.create(normalized.range.start.line, normalized.range.start.character),
          Position.create(normalized.range.end.line, normalized.range.end.character));
-      
+
       // Check if this is a deletion-only change
       EditDeltas deltas = new EditDeltas(originalText, normalized.insertText);
       if (deltas.isDeletionOnly())
       {
-         setNesState(normalized, SuggestionType.DELETION, deltas);
+         setEditSuggestion(normalized, SuggestionType.DELETION, deltas);
          if (autoshow)
-            renderNesSuggestion();
+            renderEditSuggestion();
          else
             showSuggestionGutterOnly(normalized.range.start.line,
                AceEditorGutterStyles.NES_GUTTER_DELETION);
@@ -437,13 +504,13 @@ public class TextEditingTargetAssistantHelper
             server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
          return;
       }
-      
+
       // Check if this consists only of single-line insertions
       if (deltas.isSingleLineInsertions() && !deltas.getAdditions().isEmpty())
       {
-         setNesState(normalized, SuggestionType.INSERTION, deltas);
+         setEditSuggestion(normalized, SuggestionType.INSERTION, deltas);
          if (autoshow)
-            renderNesSuggestion();
+            renderEditSuggestion();
          else
             showSuggestionGutterOnly(normalized.range.start.line,
                AceEditorGutterStyles.NES_GUTTER_INSERTION);
@@ -451,7 +518,7 @@ public class TextEditingTargetAssistantHelper
             server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
          return;
       }
-      
+
       // Check if this is a single-line replacement (one deletion + one insertion)
       if (deltas.isSingleLineReplacement())
       {
@@ -459,9 +526,9 @@ public class TextEditingTargetAssistantHelper
          EditDelta addition = deltas.getSingleAddition();
          if (deletion != null && addition != null)
          {
-            setNesState(normalized, SuggestionType.REPLACEMENT, deltas);
+            setEditSuggestion(normalized, SuggestionType.REPLACEMENT, deltas);
             if (autoshow)
-               renderNesSuggestion();
+               renderEditSuggestion();
             else
                showSuggestionGutterOnly(normalized.range.start.line,
                   AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
@@ -470,14 +537,14 @@ public class TextEditingTargetAssistantHelper
             return;
          }
       }
-      
+
       // For single-line deltas, use mixed in-document rendering;
       // for multiline deltas, fall back to the inline diff view.
       if (deltas.isSingleLineDeltas())
       {
-         setNesState(normalized, SuggestionType.MIXED, deltas);
+         setEditSuggestion(normalized, SuggestionType.MIXED, deltas);
          if (autoshow)
-            renderNesSuggestion();
+            renderEditSuggestion();
          else
             showSuggestionGutterOnly(normalized.range.start.line,
                AceEditorGutterStyles.NES_GUTTER_REPLACEMENT);
@@ -486,9 +553,9 @@ public class TextEditingTargetAssistantHelper
       }
       else
       {
-         setNesState(normalized, SuggestionType.DIFF, deltas);
+         setEditSuggestion(normalized, SuggestionType.DIFF, deltas);
          if (autoshow)
-            showDiffViewEditSuggestion(nesCompletion_);
+            showDiffViewEditSuggestion();
          else
             showSuggestionGutterOnly(normalized.range.start.line,
                AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT);
@@ -497,7 +564,7 @@ public class TextEditingTargetAssistantHelper
       }
    }
    
-   private void showDiffViewEditSuggestion(AssistantCompletion completion)
+   private void showDiffViewEditSuggestion()
    {
       // Note that we can accept the diff suggestion with Tab
       Scheduler.get().scheduleDeferred(() ->
@@ -508,22 +575,25 @@ public class TextEditingTargetAssistantHelper
       // Highlight the range in the document associated with
       // the edit suggestion
       Range editRange = Range.create(
-         completion.range.start.line,
-         completion.range.start.character,
-         completion.range.end.line,
-         completion.range.end.character);
+         editSuggestion_.startLine,
+         editSuggestion_.startCharacter,
+         editSuggestion_.endLine,
+         editSuggestion_.endCharacter);
 
       diffMarkerId_ = display_.addHighlight(editRange, "ace_next-edit-suggestion-highlight", "text");
 
       // Get the original text from the document at the edit range
       String originalText = display_.getCode(
-         Position.create(completion.range.start.line,
-                         completion.range.start.character),
-         Position.create(completion.range.end.line,
-                         completion.range.end.character));
+         Position.create(editSuggestion_.startLine,
+                         editSuggestion_.startCharacter),
+         Position.create(editSuggestion_.endLine,
+                         editSuggestion_.endCharacter));
 
-      // Get the replacement text from the completion
-      String replacementText = completion.insertText;
+      // Get the replacement text from the suggestion
+      String replacementText = editSuggestion_.insertText;
+
+      // Capture values for use in the inner class
+      final AssistantCompletionCommand command = editSuggestion_.command;
 
       // Create the diff view widget
       diffView_ = new AceEditorDiffView(originalText, replacementText, display_.getFileType())
@@ -532,35 +602,35 @@ public class TextEditingTargetAssistantHelper
          protected void apply()
          {
             // Suspend the document change handler so our edit doesn't reset suggestion state
-            temporarilySuspendDocumentChangeHandler();
+            ignoreNextDocumentChangeEvents();
 
-            // Get edit range using NES-specific anchored positions so the range stays
+            // Get edit range using anchored positions so the range stays
             // valid even if the document has been edited.
             Range range = Range.create(
-               suggestionStartAnchor_.getRow(),
-               suggestionStartAnchor_.getColumn(),
-               suggestionEndAnchor_.getRow(),
-               suggestionEndAnchor_.getColumn());
+               editSuggestion_.startAnchor.getRow(),
+               editSuggestion_.startAnchor.getColumn(),
+               editSuggestion_.endAnchor.getRow(),
+               editSuggestion_.endAnchor.getColumn());
 
             // Move cursor to end of edit range
             display_.setCursorPosition(range.getEnd());
 
             // Perform the actual replacement
-            display_.replaceRange(range, completion.insertText);
+            display_.replaceRange(range, replacementText);
 
             // Notify server that completion was accepted
-            if (completion.command != null)
-               server_.assistantDidAcceptCompletion(completion.command, new VoidServerRequestCallback());
+            if (command != null)
+               server_.assistantDidAcceptCompletion(command, new VoidServerRequestCallback());
 
             // Reset and schedule another suggestion
-            reset();
+            resetSuggestion();
             nesTimer_.schedule(20);
          }
 
          @Override
          protected void discard()
          {
-            reset();
+            resetSuggestion();
          }
 
          @Override
@@ -570,8 +640,8 @@ public class TextEditingTargetAssistantHelper
          }
       };
 
-      // Insert as line widget at the end row of the completion
-      int row = completion.range.end.line;
+      // Insert as line widget at the end row
+      int row = editSuggestion_.endLine;
 
       diffWidget_ = new PinnedLineWidget(
          "copilot-diff",
@@ -624,48 +694,68 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Applies the current NES suggestion (insertion, deletion, or replacement).
+    * Applies the current edit suggestion (ghost text, insertion, deletion, or replacement).
+    * Works for all suggestion types with anchors set.
     */
-   private void applyNesSuggestion()
+   private void acceptEditSuggestion()
    {
-      // Bail if we don't have a completion
-      if (nesCompletion_ == null)
+      // Bail if we don't have a suggestion or anchors
+      if (editSuggestion_ == null || editSuggestion_.startAnchor == null)
          return;
 
       // Suspend the document change handler so our edit doesn't reset suggestion state
-      temporarilySuspendDocumentChangeHandler();
+      ignoreNextDocumentChangeEvents();
 
-      // Get edit range using NES-specific anchored positions
-      Range range = Range.create(
-         suggestionStartAnchor_.getRow(),
-         suggestionStartAnchor_.getColumn(),
-         suggestionEndAnchor_.getRow(),
-         suggestionEndAnchor_.getColumn());
+      // Get edit range using anchored positions.
+      // For ghost text (pure insertion), use startAnchor for both start and end,
+      // since endAnchor doesn't track forward as user types prefix matches.
+      Range range;
+      boolean isGhostText = editSuggestion_.type == SuggestionType.NONE ||
+                            editSuggestion_.type == SuggestionType.GHOST_TEXT;
+      if (isGhostText)
+      {
+         range = Range.create(
+            editSuggestion_.startAnchor.getRow(),
+            editSuggestion_.startAnchor.getColumn(),
+            editSuggestion_.startAnchor.getRow(),
+            editSuggestion_.startAnchor.getColumn());
+      }
+      else
+      {
+         range = Range.create(
+            editSuggestion_.startAnchor.getRow(),
+            editSuggestion_.startAnchor.getColumn(),
+            editSuggestion_.endAnchor.getRow(),
+            editSuggestion_.endAnchor.getColumn());
+      }
 
-      // Move cursor to start of range
+      // Move cursor to start of range, then perform the edit
       display_.setCursorPosition(range.getStart());
-
-      // Perform the edit (replace range with insertText)
-      display_.replaceRange(range, nesCompletion_.insertText);
+      display_.replaceRange(range, editSuggestion_.insertText);
 
       // Notify server that completion was accepted
-      if (nesCompletion_.command != null)
-         server_.assistantDidAcceptCompletion(nesCompletion_.command, new VoidServerRequestCallback());
+      if (editSuggestion_.command != null)
+         server_.assistantDidAcceptCompletion(editSuggestion_.command, new VoidServerRequestCallback());
 
-      // Reset and schedule another suggestion
-      reset();
-      nesTimer_.schedule(20);
+      // For NES suggestions (not ghost text), schedule another suggestion
+      boolean isNesSuggestion = editSuggestion_.type != SuggestionType.NONE &&
+                                editSuggestion_.type != SuggestionType.GHOST_TEXT;
+
+      resetSuggestion();
+
+      if (isNesSuggestion)
+         nesTimer_.schedule(20);
    }
 
    /**
     * Renders an edit suggestion inline using deletion highlights and insertion token splicing.
     * Handles deletion-only, insertion-only, and mixed cases with appropriate styling.
-    * Assumes nesCompletion_ and nesDeltas_ are already set, and all deltas are single-line.
+    * Assumes editSuggestion_ and editSuggestion_.deltas are already set, and all deltas are single-line.
     */
    private void renderSuggestion()
    {
-      int baseRow = nesCompletion_.range.start.line;
-      int baseCol = nesCompletion_.range.start.character;
+      int baseRow = editSuggestion_.startLine;
+      int baseCol = editSuggestion_.startCharacter;
 
       // Track bounds for the bounding rectangle highlight
       int minRow = Integer.MAX_VALUE;
@@ -674,7 +764,7 @@ public class TextEditingTargetAssistantHelper
       boolean hasInsertions = false;
 
       // First pass: add deletion highlights
-      for (EditDelta delta : nesDeltas_.getDeltas())
+      for (EditDelta delta : editSuggestion_.deltas.getDeltas())
       {
          if (delta.type != EditType.DELETION)
             continue;
@@ -698,7 +788,7 @@ public class TextEditingTargetAssistantHelper
       // Second pass: collect insertion info grouped by row
       Map<Integer, List<InsertionInfo>> insertionsByRow = new HashMap<>();
 
-      for (EditDelta delta : nesDeltas_.getDeltas())
+      for (EditDelta delta : editSuggestion_.deltas.getDeltas())
       {
          if (delta.type != EditType.ADDITION)
             continue;
@@ -800,27 +890,29 @@ public class TextEditingTargetAssistantHelper
     * Checks if a document change intersects with the active NES suggestion range.
     * Returns true if there is an active suggestion and the change range overlaps it.
     */
-   private boolean doesChangeIntersectNesSuggestion(AceDocumentChangeEventNative nativeEvent)
+   private boolean doesChangeIntersectSuggestion(AceDocumentChangeEventNative nativeEvent)
    {
-      if (suggestionStartAnchor_ == null || suggestionEndAnchor_ == null)
+      if (editSuggestion_ == null || editSuggestion_.startAnchor == null || editSuggestion_.endAnchor == null)
          return false;
 
       Range nesRange = Range.create(
-         suggestionStartAnchor_.getRow(),
-         suggestionStartAnchor_.getColumn(),
-         suggestionEndAnchor_.getRow(),
-         suggestionEndAnchor_.getColumn());
+         editSuggestion_.startAnchor.getRow(),
+         editSuggestion_.startAnchor.getColumn(),
+         editSuggestion_.endAnchor.getRow(),
+         editSuggestion_.endAnchor.getColumn());
 
       Range changeRange = nativeEvent.getRange();
       if (nativeEvent.isInsertion())
       {
-         return nesRange.contains(changeRange.getStart()) ||
-                changeRange.contains(nesRange.getStart());
+         boolean nesContains = nesRange.contains(changeRange.getStart());
+         boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
+         return nesContains || changeContains;
       }
       else
       {
-         return nesRange.containsLeftExclusive(changeRange.getStart()) ||
-                changeRange.containsRightExclusive(nesRange.getStart());
+         boolean nesContains = nesRange.contains(changeRange.getStart());
+         boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
+         return nesContains || changeContains;
       }
    }
 
@@ -871,14 +963,14 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Sets the NES state and creates suggestion anchors.
-    * Call this before renderNesSuggestion() or showSuggestionGutterOnly().
+    * Sets the edit suggestion state and creates suggestion anchors.
+    * Call this before renderEditSuggestion() or showSuggestionGutterOnly().
     */
-   private void setNesState(AssistantCompletion completion, SuggestionType type, EditDeltas deltas)
+   private void setEditSuggestion(AssistantCompletion completion, SuggestionType type, EditDeltas deltas)
    {
-      nesCompletion_ = completion;
-      nesType_ = type;
-      nesDeltas_ = deltas;
+      editSuggestion_ = new EditSuggestion(completion);
+      editSuggestion_.type = type;
+      editSuggestion_.deltas = deltas;
 
       // Create anchors for the suggestion range
       createSuggestionAnchors(
@@ -891,7 +983,7 @@ public class TextEditingTargetAssistantHelper
    /**
     * Shows only the gutter icon for a pending suggestion (when autoshow is disabled).
     * The full details will be shown when the user hovers over the gutter icon.
-    * Assumes setNesState() has already been called.
+    * Assumes setEditSuggestion() has already been called.
     */
    private void showSuggestionGutterOnly(int row, String gutterClass)
    {
@@ -902,11 +994,11 @@ public class TextEditingTargetAssistantHelper
    /**
     * Shows the full details for the pending suggestion.
     * Called when user hovers over the gutter icon (when autoshow is disabled).
-    * The NES state is preserved so we can hide details on mouseleave.
+    * The edit suggestion state is preserved so we can hide details on mouseleave.
     */
    private void showPendingSuggestionDetails()
    {
-      if (nesType_ == SuggestionType.NONE || nesCompletion_ == null)
+      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
          return;
 
       // Remove the pending gutter icon (the render methods will add their own)
@@ -917,7 +1009,7 @@ public class TextEditingTargetAssistantHelper
       }
 
       // Render the visual elements based on type
-      renderNesSuggestion();
+      renderEditSuggestion();
 
       // Mark that details are revealed via hover
       pendingSuggestionRevealed_ = true;
@@ -929,57 +1021,59 @@ public class TextEditingTargetAssistantHelper
     */
    private void hidePendingSuggestionDetails()
    {
-      if (!pendingSuggestionRevealed_ || nesType_ == SuggestionType.NONE)
+      if (!pendingSuggestionRevealed_ || editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
          return;
 
-      // Clear visual elements but preserve NES state (nesCompletion_, nesType_, nesDeltas_)
+      // Clear visual elements but preserve edit suggestion state for re-reveal
       hideGhostText();
-      activeCompletion_ = null;
+      editSuggestion_.isRevealed = false;
+      editSuggestion_.resetDisplayState();
       clearDiffState();
-      clearNesVisuals();
+      clearSuggestionVisuals();
 
       // Restore gutter-only state
-      String gutterClass = getGutterClassForType(nesType_);
+      String gutterClass = getGutterClassForType(editSuggestion_.type);
       pendingGutterRegistration_ = display_.addGutterItem(pendingGutterRow_, gutterClass);
 
       pendingSuggestionRevealed_ = false;
    }
 
    /**
-    * Renders the visual elements for the current NES suggestion based on nesType_.
-    * Assumes nesCompletion_, nesType_, and nesDeltas_ are already set.
+    * Renders the visual elements for the current edit suggestion based on type.
+    * Assumes editSuggestion_ is already set.
     */
-   private void renderNesSuggestion()
+   private void renderEditSuggestion()
    {
-      if (nesCompletion_ == null || nesType_ == SuggestionType.NONE)
+      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.NONE)
          return;
 
-      // Enable Tab acceptance for all NES types (except DIFF which handles it separately)
-      if (nesType_ != SuggestionType.DIFF)
+      // Enable Tab acceptance for all types (except DIFF which handles it separately)
+      if (editSuggestion_.type != SuggestionType.DIFF)
       {
          Scheduler.get().scheduleDeferred(() -> canAcceptSuggestionWithTab_ = true);
       }
 
-      switch (nesType_)
+      editSuggestion_.isRevealed = true;
+
+      switch (editSuggestion_.type)
       {
          case GHOST_TEXT:
-            activeCompletion_ = new Completion(nesCompletion_);
             Position position = Position.create(
-               nesCompletion_.range.start.line,
-               nesCompletion_.range.start.character);
-            showGhostText(activeCompletion_.displayText, position);
+               editSuggestion_.startLine,
+               editSuggestion_.startCharacter);
+            showGhostText(editSuggestion_.displayText, position);
             break;
 
          case DELETION:
          case INSERTION:
          case REPLACEMENT:
-            if (nesDeltas_ != null)
+            if (editSuggestion_.deltas != null)
                renderSuggestion();
             break;
 
          case MIXED:
          case DIFF:
-            showDiffViewEditSuggestion(nesCompletion_);
+            showDiffViewEditSuggestion();
             break;
 
          default:
@@ -1027,24 +1121,21 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Resets ghost text and inline completion state only.
-    */
-   private void resetCompletion()
-   {
-      hideGhostText();
-      suggestionTimer_.cancel();
-      activeCompletion_ = null;
-      detachSuggestionAnchors();
-   }
-
-   /**
-    * Resets NES (Next Edit Suggestion) state only.
+    * Resets all edit suggestion state (ghost text, diff view, NES visuals, etc.).
+    * Call this when the suggestion should be fully cleared.
     */
    private void resetSuggestion()
    {
       hideGhostText();
+      suggestionTimer_.cancel();
       clearDiffState();
-      clearNesState();
+      clearSuggestionVisuals();
+
+      if (editSuggestion_ != null)
+      {
+         editSuggestion_.detachAnchors();
+         editSuggestion_ = null;
+      }
 
       pendingSuggestionRevealed_ = false;
       pendingHideTimer_.cancel();
@@ -1053,33 +1144,7 @@ public class TextEditingTargetAssistantHelper
          pendingGutterRegistration_.removeHandler();
          pendingGutterRegistration_ = null;
       }
-   }
-
-   /**
-    * Resets all state - both inline completions and NES.
-    * Call this when both should be cleared (e.g., document changes, Escape key).
-    */
-   private void reset()
-   {
-      resetCompletion();
-      resetSuggestion();
-   }
-
-   /**
-    * Detaches and clears the suggestion anchors.
-    */
-   private void detachSuggestionAnchors()
-   {
-      if (suggestionStartAnchor_ != null)
-      {
-         suggestionStartAnchor_.detach();
-         suggestionStartAnchor_ = null;
-   }
-      if (suggestionEndAnchor_ != null)
-      {
-         suggestionEndAnchor_.detach();
-         suggestionEndAnchor_ = null;
-      }
+      pendingGutterRow_ = -1;
    }
 
    /**
@@ -1092,10 +1157,13 @@ public class TextEditingTargetAssistantHelper
     */
    private void createSuggestionAnchors(int startLine, int startCharacter, int endLine, int endCharacter)
    {
-      detachSuggestionAnchors();
-      suggestionStartAnchor_ = display_.createAnchor(Position.create(startLine, startCharacter));
-      suggestionEndAnchor_ = display_.createAnchor(Position.create(endLine, endCharacter));
-      suggestionEndAnchor_.setInsertRight(true);
+      if (editSuggestion_ == null)
+         return;
+
+      editSuggestion_.detachAnchors();
+      editSuggestion_.startAnchor = display_.createAnchor(Position.create(startLine, startCharacter));
+      editSuggestion_.endAnchor = display_.createAnchor(Position.create(endLine, endCharacter));
+      editSuggestion_.endAnchor.setInsertRight(true);
    }
 
    public TextEditingTargetAssistantHelper(TextEditingTarget target, List<HandlerRegistration> releaseOnDismiss)
@@ -1264,15 +1332,17 @@ public class TextEditingTargetAssistantHelper
                            // (which we need to send back to the server as-is in some language-server methods).
                            AssistantCompletion normalized = normalizeCompletion(completion);
 
-                           resetCompletion();
-                           activeCompletion_ = new Completion(normalized);
+                           resetSuggestion();
+                           editSuggestion_ = new EditSuggestion(normalized);
+                           editSuggestion_.type = SuggestionType.GHOST_TEXT;
+                           editSuggestion_.isRevealed = true;
                            createSuggestionAnchors(
-                              activeCompletion_.startLine,
-                              activeCompletion_.startCharacter,
-                              activeCompletion_.endLine,
-                              activeCompletion_.endCharacter);
-                           showGhostText(activeCompletion_.displayText,
-                              Position.create(activeCompletion_.startLine, activeCompletion_.startCharacter));
+                              editSuggestion_.startLine,
+                              editSuggestion_.startCharacter,
+                              editSuggestion_.endLine,
+                              editSuggestion_.endCharacter);
+                           showGhostText(editSuggestion_.displayText,
+                              Position.create(editSuggestion_.startLine, editSuggestion_.startCharacter));
                            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                         }
 
@@ -1418,17 +1488,17 @@ public class TextEditingTargetAssistantHelper
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
                      el.hasClassName(AceEditorGutterStyles.NES_GUTTER));
 
-                  if (nesGutterEl != null && nesType_ != SuggestionType.NONE)
+                  if (nesGutterEl != null && editSuggestion_ != null && editSuggestion_.type != SuggestionType.NONE)
                   {
                      event.stopPropagation();
                      event.preventDefault();
-                     applyNesSuggestion();
+                     acceptEditSuggestion();
                      return;
                   }
 
                   // Check for Ctrl/Cmd + click on any NES highlight
                   boolean isModifierHeld = event.getCtrlKey() || event.getMetaKey();
-                  if (isModifierHeld && nesCompletion_ != null)
+                  if (isModifierHeld && editSuggestion_ != null)
                   {
                      // Convert mouse coordinates to document position
                      Position pos = display_.screenCoordinatesToDocumentPosition(
@@ -1439,7 +1509,7 @@ public class TextEditingTargetAssistantHelper
                      {
                         event.stopPropagation();
                         event.preventDefault();
-                        applyNesSuggestion();
+                        acceptEditSuggestion();
                         return;
                      }
                   }
@@ -1465,9 +1535,9 @@ public class TextEditingTargetAssistantHelper
                   display_.getElement().removeClassName("ace_replacement-clickable");
 
                   // Add appropriate clickable class based on type if hovering over NES range
-                  if (nesCompletion_ != null && isModifierHeld && isPositionInNesRange(pos))
+                  if (editSuggestion_ != null && isModifierHeld && isPositionInNesRange(pos))
                   {
-                     String clickableClass = getClickableClassForType(nesType_);
+                     String clickableClass = getClickableClassForType(editSuggestion_.type);
                      if (clickableClass != null)
                         display_.getElement().addClassName(clickableClass);
                   }
@@ -1485,9 +1555,9 @@ public class TextEditingTargetAssistantHelper
                         lastMouseClientX_,
                         lastMouseClientY_);
 
-                     if (nesCompletion_ != null && isPositionInNesRange(pos))
+                     if (editSuggestion_ != null && isPositionInNesRange(pos))
                      {
-                        String clickableClass = getClickableClassForType(nesType_);
+                        String clickableClass = getClickableClassForType(editSuggestion_.type);
                         if (clickableClass != null)
                            display_.getElement().addClassName(clickableClass);
                      }
@@ -1541,19 +1611,18 @@ public class TextEditingTargetAssistantHelper
 
                display_.addDocumentChangedHandler((event) ->
                {
-                  // Skip processing if we're making our own document mutations
-                  if (documentChangeHandlerSuspended_)
-                     return;
-
                   // Eagerly reset Tab acceptance flag
                   canAcceptSuggestionWithTab_ = false;
 
                   AceDocumentChangeEventNative nativeEvent = event.getEvent();
 
                   // Dismiss NES suggestion if the edit intersects the suggestion range
-                  if (nativeEvent != null && doesChangeIntersectNesSuggestion(nativeEvent))
+                  if (!ignoreNextDocumentChangeEvents_)
                   {
-                     resetSuggestion();
+                     if (nativeEvent != null && doesChangeIntersectSuggestion(nativeEvent))
+                     {
+                        resetSuggestion();
+                     }
                   }
 
                   // Avoid re-triggering on newline insertions
@@ -1606,12 +1675,6 @@ public class TextEditingTargetAssistantHelper
                   {
                      suggestionTimer_.schedule(delayMs);
                   }
-
-                  // Delay handler so we can handle a Tab keypress
-                  Timers.singleShot(0, () -> {
-                     activeCompletion_ = null;
-                     hideGhostText();
-                  });
                }),
 
                display_.addCapturingKeyDownHandler(new KeyDownHandler()
@@ -1640,7 +1703,7 @@ public class TextEditingTargetAssistantHelper
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           reset();
+                           resetSuggestion();
                            return;
                         }
                      }
@@ -1657,21 +1720,21 @@ public class TextEditingTargetAssistantHelper
                         }
                      }
 
-                     // Let NES suggestion (deletion, insertion, replacement) accept on Tab if applicable
-                     if (nesCompletion_ != null)
+                     // Let edit suggestion (deletion, insertion, replacement) accept on Tab if applicable
+                     if (editSuggestion_ != null && editSuggestion_.type != SuggestionType.GHOST_TEXT)
                      {
                         if (event.getKeyCode() == KeyCodes.KEY_TAB && canAcceptSuggestionWithTab_)
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           applyNesSuggestion();
+                           acceptEditSuggestion();
                            return;
                         }
                         else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
                         {
                            event.stopPropagation();
                            event.preventDefault();
-                           reset();
+                           resetSuggestion();
                            return;
                         }
                      }
@@ -1682,54 +1745,34 @@ public class TextEditingTargetAssistantHelper
 
                      // If ghost text is being displayed, accept it on a Tab key press.
                      // TODO: Let user choose keybinding for accepting ghost text?
-                     if (activeCompletion_ == null)
+                     if (editSuggestion_ == null || !editSuggestion_.isRevealed)
                         return;
 
                      // TODO: If we have a completion popup, should that take precedence?
                      if (display_.isPopupVisible())
                         return;
 
-                     // Check if the user just inserted some text matching the current
-                     // suggestion. If so, we'll suppress the next cursor change handler,
-                     // so we can continue presenting the current suggestion.
-                     String key = EventProperty.key(keyEvent.getNativeEvent());
-                     if (activeCompletion_.displayText.startsWith(key))
+                     // For ghost text suggestions, check if the user typed a prefix match.
+                     // If so, update the suggestion text and suppress the document change handler.
+                     // This only applies to ghost text (not NES edit suggestions).
+                     boolean isGhostText = editSuggestion_.type == SuggestionType.NONE ||
+                                           editSuggestion_.type == SuggestionType.GHOST_TEXT;
+                     if (isGhostText)
                      {
-                        updateCompletion(key);
-                        temporarilySuspendCompletionRequests();
-                        return;
+                        String key = EventProperty.key(keyEvent.getNativeEvent());
+                        if (editSuggestion_.displayText.startsWith(key))
+                        {
+                           updateCompletion(key);
+                           ignoreNextDocumentChangeEvents();
+                           return;
+                        }
                      }
 
                      if (event.getKeyCode() == KeyCodes.KEY_TAB)
                      {
                         event.stopPropagation();
                         event.preventDefault();
-
-                        // Suspend the document change handler so our edit doesn't reset suggestion state
-                        temporarilySuspendDocumentChangeHandler();
-
-                        // Accept the suggestion. Use anchored positions
-                        // so the range stays valid even if the document has been edited.
-                        Range aceRange = Range.create(
-                              suggestionStartAnchor_.getRow(),
-                              suggestionStartAnchor_.getColumn(),
-                              suggestionEndAnchor_.getRow(),
-                              suggestionEndAnchor_.getColumn());
-                        display_.replaceRange(aceRange, activeCompletion_.insertText);
-
-                        Position cursorPos = Position.create(
-                           suggestionEndAnchor_.getRow(),
-                           suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
-                        display_.setCursorPosition(cursorPos);
-
-                        if (activeCompletion_.originalCompletion.command != null)
-                        {
-                           server_.assistantDidAcceptCompletion(
-                              activeCompletion_.originalCompletion.command,
-                              new VoidServerRequestCallback());
-                        }
-
-                        reset();
+                        acceptEditSuggestion();
                      }
                      else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
                      {
@@ -1738,19 +1781,9 @@ public class TextEditingTargetAssistantHelper
                         if (!display_.hasActiveAceCompleter())
                         {
                            hideGhostText();
-                           activeCompletion_ = null;
+                           editSuggestion_ = null;
                         }
                      }
-                     else if (hasGhostTextVisible() &&
-                              event.getKeyCode() == KeyCodes.KEY_RIGHT &&
-                              (event.getCtrlKey() || event.getMetaKey()))
-                     {
-                        event.stopPropagation();
-                        event.preventDefault();
-
-                        commands_.assistantAcceptNextWord().execute();
-                     }
-
                   }
                })
 
@@ -1862,11 +1895,11 @@ public class TextEditingTargetAssistantHelper
       if (!display_.isFocused())
          return;
 
-      boolean hasActiveSuggestion = hasGhostTextVisible() && activeCompletion_ != null;
+      boolean hasActiveSuggestion = hasGhostTextVisible() && editSuggestion_ != null && editSuggestion_.isRevealed;
       if (!hasActiveSuggestion)
          return;
 
-      String text = activeCompletion_.displayText;
+      String text = editSuggestion_.displayText;
       Pattern pattern = Pattern.create("(?:\\b|$)");
       Match match = pattern.match(text, 1);
       if (match == null)
@@ -1880,40 +1913,40 @@ public class TextEditingTargetAssistantHelper
       // From the docs: "Note that the acceptedLength includes everything from the start of
       //                 insertText to the end of the accepted text. It is not the length of
       //                 the accepted text itself."
-      activeCompletion_.partialAcceptedLength += n;
+      editSuggestion_.partialAcceptedLength += n;
 
-      activeCompletion_.displayText = leftoverText;
-      activeCompletion_.insertText = leftoverText;
-      activeCompletion_.startCharacter += n;
-      activeCompletion_.endCharacter += n;
+      editSuggestion_.displayText = leftoverText;
+      editSuggestion_.insertText = leftoverText;
+      editSuggestion_.startCharacter += n;
+      editSuggestion_.endCharacter += n;
 
       // Bail if no suggestion anchors are set
-      if (suggestionStartAnchor_ == null)
+      if (editSuggestion_.startAnchor == null)
          return;
 
       Timers.singleShot(() ->
       {
-         temporarilySuspendDocumentChangeHandler();
+         ignoreNextDocumentChangeEvents();
 
          // Use anchored position to insert at the ghost text location,
          // not the current cursor position
          Range insertRange = Range.create(
-            suggestionStartAnchor_.getRow(),
-            suggestionStartAnchor_.getColumn(),
-            suggestionStartAnchor_.getRow(),
-            suggestionStartAnchor_.getColumn());
+            editSuggestion_.startAnchor.getRow(),
+            editSuggestion_.startAnchor.getColumn(),
+            editSuggestion_.startAnchor.getRow(),
+            editSuggestion_.startAnchor.getColumn());
          display_.replaceRange(insertRange, insertedWord);
 
          // The anchor automatically moves forward after insertion (insertRight=false),
          // so just read its new position
-         Position newStart = suggestionStartAnchor_.getPosition();
+         Position newStart = editSuggestion_.startAnchor.getPosition();
 
          // Move cursor to end of inserted word and show remaining ghost text
          display_.setCursorPosition(newStart);
-         showGhostText(activeCompletion_.displayText, newStart);
+         showGhostText(editSuggestion_.displayText, newStart);
 
-         server_.assistantDidAcceptPartialCompletion(activeCompletion_.originalCompletion,
-                                                   activeCompletion_.partialAcceptedLength,
+         server_.assistantDidAcceptPartialCompletion(editSuggestion_.originalCompletion,
+                                                   editSuggestion_.partialAcceptedLength,
                                                    new VoidServerRequestCallback());
       });
    }
@@ -1954,36 +1987,13 @@ public class TextEditingTargetAssistantHelper
       {
          diffView_.apply();
       }
-      else if (nesCompletion_ != null)
+      else if (editSuggestion_ != null && editSuggestion_.type != SuggestionType.GHOST_TEXT)
       {
-         applyNesSuggestion();
+         acceptEditSuggestion();
       }
-      else if (hasGhostTextVisible() && activeCompletion_ != null)
+      else if (hasGhostTextVisible() && editSuggestion_ != null && editSuggestion_.isRevealed)
       {
-         // Suspend the document change handler so our edit doesn't reset suggestion state
-         temporarilySuspendDocumentChangeHandler();
-
-         // Accept ghost text completion
-         Range aceRange = Range.create(
-               suggestionStartAnchor_.getRow(),
-               suggestionStartAnchor_.getColumn(),
-               suggestionEndAnchor_.getRow(),
-               suggestionEndAnchor_.getColumn());
-         display_.replaceRange(aceRange, activeCompletion_.insertText);
-
-         Position cursorPos = Position.create(
-            suggestionEndAnchor_.getRow(),
-            suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
-         display_.setCursorPosition(cursorPos);
-
-         if (activeCompletion_.originalCompletion.command != null)
-         {
-            server_.assistantDidAcceptCompletion(
-               activeCompletion_.originalCompletion.command,
-               new VoidServerRequestCallback());
-         }
-
-         reset();
+         acceptEditSuggestion();
       }
       else
       {
@@ -2008,24 +2018,17 @@ public class TextEditingTargetAssistantHelper
       // Dismiss any active next edit suggestion
       if (hasActiveSuggestion())
       {
-         reset();
+         resetSuggestion();
       }
    }
 
    private void updateCompletion(String key)
    {
       int n = key.length();
-      activeCompletion_.displayText = StringUtil.substring(activeCompletion_.displayText, n);
-      activeCompletion_.insertText = StringUtil.substring(activeCompletion_.insertText, n);
-      activeCompletion_.startCharacter += n;
-      activeCompletion_.endCharacter += n;
-
-      // Re-render ghost text at the updated position after the text insertion completes
-      Timers.singleShot(() ->
-      {
-         showGhostText(activeCompletion_.displayText,
-            Position.create(activeCompletion_.startLine, activeCompletion_.startCharacter));
-      });
+      editSuggestion_.displayText = StringUtil.substring(editSuggestion_.displayText, n);
+      editSuggestion_.insertText = StringUtil.substring(editSuggestion_.insertText, n);
+      editSuggestion_.startCharacter += n;
+      editSuggestion_.endCharacter += n;
    }
 
    private static String postProcessCompletion(String text)
@@ -2177,14 +2180,10 @@ public class TextEditingTargetAssistantHelper
       suspendTimer_.schedule(1200);
    }
 
-   /**
-    * Temporarily suspends the document change handler until the end of the current event loop.
-    * Use this before making document mutations that shouldn't trigger suggestion invalidation.
-    */
-   private void temporarilySuspendDocumentChangeHandler()
+   private void ignoreNextDocumentChangeEvents()
    {
-      documentChangeHandlerSuspended_ = true;
-      Scheduler.get().scheduleFinally(() -> documentChangeHandlerSuspended_ = false);
+      ignoreNextDocumentChangeEvents_ = true;
+      Scheduler.get().scheduleDeferred(() -> ignoreNextDocumentChangeEvents_ = false);
    }
 
    @Inject
@@ -2204,11 +2203,11 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Returns true if there is any active next edit suggestion being displayed.
+    * Returns true if there is any active edit suggestion being displayed.
     */
    private boolean hasActiveSuggestion()
    {
-      return diffView_ != null || nesCompletion_ != null;
+      return diffView_ != null || editSuggestion_ != null;
    }
 
    /**
@@ -2293,9 +2292,9 @@ public class TextEditingTargetAssistantHelper
     */
    private void hideGhostText()
    {
-      if (ghostTextVisible_ && suggestionStartAnchor_ != null)
+      if (ghostTextVisible_ && editSuggestion_ != null && editSuggestion_.startAnchor != null)
       {
-         int row = suggestionStartAnchor_.getRow();
+         int row = editSuggestion_.startAnchor.getRow();
          display_.removeSyntheticTokensForRow(row);
          display_.renderTokens(row);
       }
@@ -2340,9 +2339,9 @@ public class TextEditingTargetAssistantHelper
 
    /**
     * Clears only the visual elements for NES suggestions (markers, tokens, gutter icons).
-    * Preserves nesCompletion_, nesType_, and nesDeltas_ for re-rendering on hover.
+    * Preserves editSuggestion_ for re-rendering on hover.
     */
-   private void clearNesVisuals()
+   private void clearSuggestionVisuals()
    {
       // Remove all highlight markers
       for (int markerId : nesMarkerIds_)
@@ -2376,45 +2375,15 @@ public class TextEditingTargetAssistantHelper
       display_.getElement().removeClassName("ace_replacement-clickable");
    }
 
-   /**
-    * Clears the NES state completely (visuals and stored data).
-    */
-   private void clearNesState()
-   {
-      clearNesVisuals();
-      detachSuggestionAnchors();
-      nesCompletion_ = null;
-      nesType_ = SuggestionType.NONE;
-      nesDeltas_ = null;
-      pendingGutterRow_ = -1;
-   }
-
    public void onDismiss()
    {
-      // Cancel all timers
-      suggestionTimer_.cancel();
+      // Cancel all timers and reset suggestion state
       suspendTimer_.cancel();
       nesTimer_.cancel();
-      pendingHideTimer_.cancel();
-
-      // Clear NES state (markers, gutter registrations, anchors, etc.)
-      clearNesState();
+      resetSuggestion();
 
       // Clear diff view state
       clearDiffState();
-
-      // Detach completion anchors
-      detachSuggestionAnchors();
-
-      // Remove ghost text
-      hideGhostText();
-
-      // Remove pending gutter registration
-      if (pendingGutterRegistration_ != null)
-      {
-         pendingGutterRegistration_.removeHandler();
-         pendingGutterRegistration_ = null;
-      }
 
       // Remove handler registrations
       registrations_.removeHandler();
@@ -2436,7 +2405,7 @@ public class TextEditingTargetAssistantHelper
 
    private int requestId_;
    private boolean completionRequestsSuspended_;
-   private boolean documentChangeHandlerSuspended_;
+   private boolean ignoreNextDocumentChangeEvents_;
    private boolean assistantDisabledInThisDocument_;
 
    // Diff view state (kept separate as it's a fundamentally different UI)
@@ -2444,18 +2413,15 @@ public class TextEditingTargetAssistantHelper
    private PinnedLineWidget diffWidget_;
    private int diffMarkerId_ = -1;
 
-   // Ghost text completion state
+   // Unified edit suggestion state (consolidates ghost text and NES)
    private boolean canAcceptSuggestionWithTab_ = false;
-   private Completion activeCompletion_;
+   private EditSuggestion editSuggestion_;
 
    // Custom ghost text rendering state (replaces Ace's ghost text API)
    private boolean ghostTextVisible_ = false;
    private LineWidget ghostTextLineWidget_;
 
-   // Unified NES (Next Edit Suggestion) state
-   private AssistantCompletion nesCompletion_;
-   private SuggestionType nesType_ = SuggestionType.NONE;
-   private EditDeltas nesDeltas_;
+   // NES visual state (markers, gutter items, etc.)
    private List<Integer> nesMarkerIds_ = new ArrayList<>();
    private List<HandlerRegistration> nesGutterRegistrations_ = new ArrayList<>();
    private List<AnchoredRange> nesClickableRanges_ = new ArrayList<>();
@@ -2465,10 +2431,6 @@ public class TextEditingTargetAssistantHelper
    // Mouse tracking
    private int lastMouseClientX_ = 0;
    private int lastMouseClientY_ = 0;
-
-   // Suggestion anchors (shared by all suggestion types)
-   private Anchor suggestionStartAnchor_;
-   private Anchor suggestionEndAnchor_;
 
    // Autoshow and pending suggestion state
    private boolean automaticCodeSuggestionsEnabled_ = true;
