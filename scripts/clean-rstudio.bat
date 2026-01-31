@@ -24,6 +24,9 @@ if EXIST "%appdata%\R\rsconnect" (
 if EXIST "%appdata%\R\config\R\rsconnect" (
     rd /q /s "%appdata%\R\config\R\rsconnect"
 )
+if EXIST "%USERPROFILE%\.positai\" (
+    rd /q /s "%USERPROFILE%\.positai"
+)
 
 for /f "tokens=*" %%i in ('powershell /command "[System.Environment]::GetFolderPath([Environment+SpecialFolder]::MyDocuments)"') do set MyDocsDir=%%i
 if EXIST "%MyDocsDir%\.RData" (
