@@ -36,6 +36,9 @@ rm -rf ~/.config/R/rsconnect
 # Copilot, misc. cache
 rm -rf ~/.cache/rstudio
 
+# Posit-ai conversations and auth info
+rm -rf ~/.positai
+
 if [ "${PLATFORM}" = "Darwin" ]; then
   # Mac session state
   rm -rf ~/Library/Application\ Support/RStudio
