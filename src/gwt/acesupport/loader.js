@@ -178,7 +178,13 @@ var RStudioEditSession = function(text, mode) {
              (delta.action === "insert" && col === delta.end.column)));
 
          if (!atEditPosition) {
-            // Token not at edit position - keep it
+            // Token not at edit position - keep it, but check if its row changed
+            // (e.g., newline inserted above the token)
+            if (token.lastKnownRow !== row) {
+               rowsToInvalidate.push(token.lastKnownRow); // Clear ghost text from old row
+               rowsToInvalidate.push(row);               // Add ghost text to new row
+               token.lastKnownRow = row;
+            }
             remaining.push(token);
             continue;
          }
@@ -207,6 +213,7 @@ var RStudioEditSession = function(text, mode) {
                   if (token.text.length === 0) {
                      token.anchor.detach();
                   } else {
+                     token.lastKnownRow = delta.start.row;
                      remaining.push(token);
                   }
                } else {
@@ -276,7 +283,9 @@ oop.inherits(RStudioEditSession, EditSession);
 
    this.addSyntheticToken = function(row, column, text, type) {
       var anchor = new Anchor(this.getDocument(), row, column);
-      this.$syntheticTokens.push({ anchor: anchor, text: text, type: type });
+      // Track lastKnownRow so we can detect when the anchor moves to a different row
+      // (e.g., when newlines are inserted above)
+      this.$syntheticTokens.push({ anchor: anchor, text: text, type: type, lastKnownRow: row });
    };
 
    this.removeSyntheticTokensForRow = function(row) {
