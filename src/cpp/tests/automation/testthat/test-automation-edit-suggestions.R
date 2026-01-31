@@ -18,6 +18,35 @@ withr::defer(.rs.automation.deleteRemote())
       remote$keyboard.sendKeys("h", "e")
       expect_equal(editor$session$getLine(0L), "he")
       
+      # Try accepting the completion
+      remote$keyboard.executeShortcut("Tab")
+      expect_equal(editor$session$getLine(0L), "hello")
+      
+   })
+   
+})
+
+.rs.test("ghost text edit suggestions survive document mutations", {
+   
+   remote$editor.executeWithContents(".R", "# abc def", function(editor) {
+      
+      # Insert an edit suggestion on the first line
+      remote$console.executeExpr({
+         .rs.api.showEditSuggestion(c(1, 3, 1, 6), "ABC")
+      })
+      
+      # Try inserting some prefix matches
+      editor$focus()
+      remote$keyboard.sendKeys("Right")
+      remote$keyboard.sendKeys("1")
+      remote$keyboard.sendKeys("2")
+      remote$keyboard.sendKeys("3")
+      expect_equal(editor$session$getLine(0L), "#123 abc def")
+      
+      # Try accepting the edit suggestion (should still exist)
+      remote$dom.clickElement(".ace_nes-gutter")
+      expect_equal(editor$session$getLine(0L), "#123 ABC def")
+      
    })
    
 })
