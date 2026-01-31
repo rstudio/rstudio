@@ -75,17 +75,17 @@ public class AceEditorMixins
    /*-{
       // store reference to mixins object
       var self = this;
-      
+
       // override the 'onPaste()' method provided by the Editor prototype
       editor.$onPaste = editor.onPaste;
-      
+
       editor.onPaste = $entry(function(text) {
-         
+
          // call mixins method
          self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(*)(this, text);
-         
+
       });
-      
+
    }-*/;
    
    private final void onPaste(AceEditorNative editor, String text)

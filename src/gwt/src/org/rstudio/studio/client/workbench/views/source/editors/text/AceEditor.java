@@ -104,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -3532,6 +3533,32 @@ public class AceEditor implements DocDisplay
       return widget_.addCapturingKeyUpHandler(handler);
    }
 
+   public HandlerRegistration onTokenizerUpdate(CommandWithArg<AceBackgroundTokenizerUpdateEvent> callback)
+   {
+      final JavaScriptObject jsCallback = widget_.getEditor().addTokenizerUpdateHandler(callback);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            widget_.getEditor().removeTokenizerUpdateHandler(jsCallback);
+         }
+      };
+   }
+
+   public HandlerRegistration onAfterRender(Command callback)
+   {
+      final JavaScriptObject jsCallback = widget_.getEditor().addAfterRenderHandler(callback);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            widget_.getEditor().removeAfterRenderHandler(jsCallback);
+         }
+      };
+   }
+
    public HandlerRegistration addUndoRedoHandler(UndoRedoEvent.Handler handler)
    {
       return widget_.addUndoRedoHandler(handler);
@@ -4742,66 +4769,45 @@ public class AceEditor implements DocDisplay
    }
 
    /**
-    * Invalidates the tokenizer cache for a row, forcing re-tokenization
-    * on the next render. Call this before modifying tokens manually.
-    */
-   public void invalidateTokens(int row)
-   {
-      invalidateTokensImpl(widget_.getEditor(), row);
-   }
-
-   private static final native void invalidateTokensImpl(AceEditorNative editor, int row) /*-{
-      editor.session.bgTokenizer.lines[row] = null;
-   }-*/;
-
-   /**
-    * Renders tokens on a row after manual modification.
-    * Call this after modifying the token array.
+    * Re-renders tokens on a row by invalidating the cache and updating the display.
+    * Call this after adding or removing synthetic tokens to update the display.
     */
    public void renderTokens(int row)
    {
-      widget_.getEditor().getRenderer().updateLines(row, row);
+      renderTokensImpl(widget_.getEditor(), row);
    }
 
-   /**
-    * Resets tokens on a row to their original state by invalidating
-    * the cache and re-rendering. This removes any extra tokens that
-    * were manually spliced in.
-    */
-   public void resetTokens(int row)
-   {
-      invalidateTokens(row);
-      renderTokens(row);
-   }
-
-   /**
-    * Splices a token into the token array at the specified column position.
-    * This splits an existing token if necessary.
-    */
-   public void spliceToken(JsArray<Token> tokens, Token newToken, int column)
-   {
-      spliceTokenImpl(tokens, newToken, column);
-   }
-
-   private static final native void spliceTokenImpl(JsArray<Token> tokens, Token newToken, int column) /*-{
-      var l = 0;
-      for (var i = 0; i < tokens.length; i++) {
-         var token = tokens[i];
-         l += token.value.length;
-         if (column <= l) {
-            var diff = token.value.length - (l - column);
-            var before = token.value.slice(0, diff);
-            var after = token.value.slice(diff);
-            tokens.splice(i, 1,
-               {type: token.type, value: before},
-               newToken,
-               {type: token.type, value: after});
-            return;
-         }
-      }
-      // If column is past end, just append
-      tokens.push(newToken);
+   private static final native void renderTokensImpl(AceEditorNative editor, int row) /*-{
+      // Invalidate the tokenizer cache for this row
+      editor.session.bgTokenizer.lines[row] = null;
+      // Re-render the row
+      editor.renderer.updateLines(row, row);
    }-*/;
+
+   /**
+    * Registers a synthetic token that persists across re-tokenization.
+    * This ensures coordinate conversion works correctly even after document edits.
+    */
+   public void addSyntheticToken(int row, int column, String text, String type)
+   {
+      widget_.getEditor().addSyntheticToken(row, column, text, type);
+   }
+
+   /**
+    * Removes all synthetic tokens for the specified row.
+    */
+   public void removeSyntheticTokensForRow(int row)
+   {
+      widget_.getEditor().removeSyntheticTokensForRow(row);
+   }
+
+   /**
+    * Clears all synthetic tokens.
+    */
+   public void clearSyntheticTokens()
+   {
+      widget_.getEditor().clearSyntheticTokens();
+   }
 
    public double getLineHeight()
    {

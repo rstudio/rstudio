@@ -180,6 +180,30 @@ public class AceEditorNative extends JavaScriptObject
            }));
    }-*/;
 
+   public native final JavaScriptObject addTokenizerUpdateHandler(CommandWithArg<AceBackgroundTokenizerUpdateEvent> command) /*-{
+       var callback = $entry(function (e) {
+           command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(e.data);
+       });
+       this.getSession().on("tokenizerUpdate", callback);
+       return callback;
+   }-*/;
+
+   public native final void removeTokenizerUpdateHandler(JavaScriptObject callback) /*-{
+       this.getSession().off("tokenizerUpdate", callback);
+   }-*/;
+
+   public native final JavaScriptObject addAfterRenderHandler(Command command) /*-{
+       var callback = $entry(function () {
+           command.@com.google.gwt.user.client.Command::execute()();
+       });
+       this.renderer.on("afterRender", callback);
+       return callback;
+   }-*/;
+
+   public native final void removeAfterRenderHandler(JavaScriptObject callback) /*-{
+       this.renderer.off("afterRender", callback);
+   }-*/;
+
    @SuppressWarnings("hiding")
    public native final <Tooltip> void onShowGutterTooltip(CommandWithArg<Tooltip> command) /*-{
        this.on("showGutterTooltip",
@@ -817,6 +841,19 @@ public class AceEditorNative extends JavaScriptObject
    
    public final native void removeGhostText() /*-{
       this.removeGhostText();
+   }-*/;
+
+   // Synthetic token management - tokens that persist across re-tokenization
+   public final native void addSyntheticToken(int row, int column, String text, String type) /*-{
+      this.session.addSyntheticToken(row, column, text, type);
+   }-*/;
+
+   public final native void removeSyntheticTokensForRow(int row) /*-{
+      this.session.removeSyntheticTokensForRow(row);
+   }-*/;
+
+   public final native void clearSyntheticTokens() /*-{
+      this.session.clearSyntheticTokens();
    }-*/;
 
    private static final native void initialize()

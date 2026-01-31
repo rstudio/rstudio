@@ -106,30 +106,89 @@ public class Range extends JavaScriptObject
    
    public final native boolean containsRightExclusive(Position position)
    /*-{
-      
+
       var row = position.row;
       var column = position.column;
-      
+
       var startRow = this.start.row;
       var endRow = this.end.row;
-      
+
       var startColumn = this.start.column;
       var endColumn = this.end.column;
-      
+
       if (endRow < row) return false;
       if (startRow > row) return false;
-      
+
       if (startRow === row && endRow === row)
       {
-         return column >= startColumn && 
+         return column >= startColumn &&
                 column <  endColumn;
       }
-      
+
       if (startRow === row) return column >= startColumn;
       if (endRow === row)   return column <  endColumn;
-      
+
       // shouldn't get here
       return false;
    }-*/;
-   
+
+   /**
+    * Returns true if the position is inside this range, exclusive on the left/start
+    * and inclusive on the right/end.
+    */
+   public final native boolean containsLeftExclusive(Position position)
+   /*-{
+      var row = position.row;
+      var column = position.column;
+
+      var startRow = this.start.row;
+      var endRow = this.end.row;
+
+      var startColumn = this.start.column;
+      var endColumn = this.end.column;
+
+      if (endRow < row) return false;
+      if (startRow > row) return false;
+
+      if (startRow === row && endRow === row)
+      {
+         return column > startColumn &&
+                column <= endColumn;
+      }
+
+      if (startRow === row) return column > startColumn;
+      if (endRow === row)   return column <= endColumn;
+
+      return true;
+   }-*/;
+
+   /**
+    * Returns true if the position is strictly inside this range (exclusive on both ends).
+    */
+   public final native boolean containsExclusive(Position position)
+   /*-{
+      var row = position.row;
+      var column = position.column;
+
+      var startRow = this.start.row;
+      var endRow = this.end.row;
+
+      var startColumn = this.start.column;
+      var endColumn = this.end.column;
+
+      if (endRow < row) return false;
+      if (startRow > row) return false;
+
+      if (startRow === row && endRow === row)
+      {
+         return column > startColumn &&
+                column < endColumn;
+      }
+
+      if (startRow === row) return column > startColumn;
+      if (endRow === row)   return column < endColumn;
+
+      return true;
+   }-*/;
+
 }

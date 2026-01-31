@@ -14,20 +14,31 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import jsinterop.annotations.JsType;
-
 import com.google.gwt.core.client.JsArrayString;
 
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class AceDocumentChangeEventNative
 {
-   public String action;
+   public String action; // "insert" or "remove"
    public Position start;
    public Position end;
    public JsArrayString lines;
+
+   @JsOverlay
+   public final boolean isInsertion()
+   {
+      return ACTION_INSERT.equals(action);
+   }
+
+   @JsOverlay
+   public final boolean isRemoval()
+   {
+      return ACTION_REMOVE.equals(action);
+   }
    
    @JsOverlay
    public final Range getRange()
@@ -40,4 +51,7 @@ public class AceDocumentChangeEventNative
    {
       return action;
    }
+
+   @JsOverlay public static final String ACTION_INSERT = "insert";
+   @JsOverlay public static final String ACTION_REMOVE = "remove";
 }

@@ -56,13 +56,13 @@ import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOpera
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -550,7 +550,8 @@ public class TextEditingTargetAssistantHelper
             display_.replaceRange(range, completion.insertText);
 
             // Notify server that completion was accepted
-            server_.assistantDidAcceptCompletion(completion.command, new VoidServerRequestCallback());
+            if (completion.command != null)
+               server_.assistantDidAcceptCompletion(completion.command, new VoidServerRequestCallback());
 
             // Reset and schedule another suggestion
             reset();
@@ -649,7 +650,8 @@ public class TextEditingTargetAssistantHelper
       display_.replaceRange(range, nesCompletion_.insertText);
 
       // Notify server that completion was accepted
-      server_.assistantDidAcceptCompletion(nesCompletion_.command, new VoidServerRequestCallback());
+      if (nesCompletion_.command != null)
+         server_.assistantDidAcceptCompletion(nesCompletion_.command, new VoidServerRequestCallback());
 
       // Reset and schedule another suggestion
       reset();
@@ -730,25 +732,19 @@ public class TextEditingTargetAssistantHelper
             .add(new InsertionInfo(delta.text, insertCol));
       }
 
-      // Third pass: splice insertion tokens row by row
+      // Third pass: add synthetic tokens for insertions, grouped by row
       for (Map.Entry<Integer, List<InsertionInfo>> entry : insertionsByRow.entrySet())
       {
          int row = entry.getKey();
          List<InsertionInfo> insertions = entry.getValue();
 
-         // Sort by column in descending order so splicing doesn't affect positions
-         insertions.sort((a, b) -> Integer.compare(b.column, a.column));
-
-         // Invalidate tokens for this row, get the token array, splice all insertions, then render
-         display_.invalidateTokens(row);
-         JsArray<Token> tokens = display_.getTokens(row);
-
+         // Add synthetic tokens for each insertion on this row
          for (InsertionInfo info : insertions)
          {
-            Token newToken = Token.create(info.text, "insertion_preview", 0);
-            display_.spliceToken(tokens, newToken, info.column);
+            display_.addSyntheticToken(row, info.column, info.text, "insertion_preview");
          }
 
+         // Re-render the row to show the synthetic tokens
          display_.renderTokens(row);
       }
 
@@ -817,10 +813,23 @@ public class TextEditingTargetAssistantHelper
          suggestionEndAnchor_.getColumn());
 
       Range changeRange = nativeEvent.getRange();
-
-      // Ranges intersect if either contains the other's start position
-      return nesRange.contains(changeRange.getStart()) ||
-             changeRange.contains(nesRange.getStart());
+      if (nativeEvent.isInsertion())
+      {
+         // For insertions, use exclusive bounds - inserting exactly at the
+         // start or end of the suggestion should not dismiss it
+         return nesRange.containsExclusive(changeRange.getStart()) ||
+                changeRange.containsExclusive(nesRange.getStart());
+      }
+      else
+      {
+         // For deletions:
+         // - nesRange uses left-exclusive: deletion starting exactly at suggestion
+         //   start is not "inside", but at suggestion end is
+         // - changeRange uses right-exclusive: if deletion ends exactly at suggestion
+         //   start, the suggestion isn't affected (deletion didn't reach it)
+         return nesRange.containsLeftExclusive(changeRange.getStart()) ||
+                changeRange.containsRightExclusive(nesRange.getStart());
+      }
    }
 
    /**
@@ -932,7 +941,7 @@ public class TextEditingTargetAssistantHelper
          return;
 
       // Clear visual elements but preserve NES state (nesCompletion_, nesType_, nesDeltas_)
-      display_.removeGhostText();
+      hideGhostText();
       activeCompletion_ = null;
       clearDiffState();
       clearNesVisuals();
@@ -966,7 +975,7 @@ public class TextEditingTargetAssistantHelper
             Position position = Position.create(
                nesCompletion_.range.start.line,
                nesCompletion_.range.start.character);
-            display_.setGhostText(activeCompletion_.displayText, position);
+            showGhostText(activeCompletion_.displayText, position);
             break;
 
          case DELETION:
@@ -1030,7 +1039,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void resetCompletion()
    {
-      display_.removeGhostText();
+      hideGhostText();
       suggestionTimer_.cancel();
       activeCompletion_ = null;
       detachSuggestionAnchors();
@@ -1041,6 +1050,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void resetSuggestion()
    {
+      hideGhostText();
       clearDiffState();
       clearNesState();
 
@@ -1082,14 +1092,16 @@ public class TextEditingTargetAssistantHelper
 
    /**
     * Creates anchors for the current suggestion range.
-    * The start anchor uses insertRight=true so it moves when text is inserted
-    * at the anchor position (e.g., during partial word-by-word acceptance).
+    * The start anchor uses the default insertRight=false so it automatically
+    * moves forward when text is inserted at its position (e.g., newlines or
+    * partial word-by-word acceptance).
+    * The end anchor uses insertRight=true so typing at the end doesn't expand
+    * the suggestion range.
     */
    private void createSuggestionAnchors(int startLine, int startCharacter, int endLine, int endCharacter)
    {
       detachSuggestionAnchors();
       suggestionStartAnchor_ = display_.createAnchor(Position.create(startLine, startCharacter));
-      suggestionStartAnchor_.setInsertRight(true);
       suggestionEndAnchor_ = display_.createAnchor(Position.create(endLine, endCharacter));
       suggestionEndAnchor_.setInsertRight(true);
    }
@@ -1109,6 +1121,9 @@ public class TextEditingTargetAssistantHelper
          @Override
          public void run()
          {
+            if (!isAssistantAvailable())
+               return;
+
             if (assistantDisabledInThisDocument_)
                return;
 
@@ -1264,7 +1279,8 @@ public class TextEditingTargetAssistantHelper
                               activeCompletion_.startCharacter,
                               activeCompletion_.endLine,
                               activeCompletion_.endCharacter);
-                           display_.setGhostText(activeCompletion_.displayText);
+                           showGhostText(activeCompletion_.displayText,
+                              Position.create(activeCompletion_.startLine, activeCompletion_.startCharacter));
                            server_.assistantDidShowCompletion(completion, new VoidServerRequestCallback());
                         }
 
@@ -1320,6 +1336,10 @@ public class TextEditingTargetAssistantHelper
          manageHandlers();
       }));
 
+      // Register all event handlers for displaying/managing suggestions
+      registerHandlers();
+
+      // Check initial assistant availability
       Scheduler.get().scheduleDeferred(() ->
       {
          manageHandlers();
@@ -1371,18 +1391,27 @@ public class TextEditingTargetAssistantHelper
 
    private void manageHandlers()
    {
+      // Handle assistant availability changes
       if (!isAssistantAvailable())
       {
-         display_.removeGhostText();
-         registrations_.removeHandler();
+         // Cancel any pending auto-requests
          requestId_ = 0;
          suggestionTimer_.cancel();
+         nesTimer_.cancel();
          completionTriggeredByCommand_ = false;
          events_.fireEvent(new AssistantEvent(AssistantEventType.ASSISTANT_DISABLED));
       }
-      else
-      {
-         registrations_.addAll(
+   }
+
+   /**
+    * Registers all event handlers needed for displaying and managing suggestions.
+    * Called once from the constructor. These handlers are always active regardless
+    * of whether the assistant is available, so that suggestions created through
+    * alternate mechanisms (e.g., automation tests) work correctly.
+    */
+   private void registerHandlers()
+   {
+      registrations_.addAll(
 
                // click handler for next edit suggestion gutter icon. we use a capturing
                // event handler here so we can intercept the event before Ace does.
@@ -1547,6 +1576,11 @@ public class TextEditingTargetAssistantHelper
                         return;
                   }
 
+                  // The rest of this handler auto-triggers new suggestions.
+                  // Only proceed if assistant is available.
+                  if (!isAssistantAvailable())
+                     return;
+
                   // Check if we've been toggled off
                   if (!automaticCodeSuggestionsEnabled_)
                      return;
@@ -1584,7 +1618,7 @@ public class TextEditingTargetAssistantHelper
                   // Delay handler so we can handle a Tab keypress
                   Timers.singleShot(0, () -> {
                      activeCompletion_ = null;
-                     display_.removeGhostText();
+                     hideGhostText();
                   });
                }),
 
@@ -1696,9 +1730,12 @@ public class TextEditingTargetAssistantHelper
                            suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
                         display_.setCursorPosition(cursorPos);
 
-                        server_.assistantDidAcceptCompletion(
-                           activeCompletion_.originalCompletion.command,
-                           new VoidServerRequestCallback());
+                        if (activeCompletion_.originalCompletion.command != null)
+                        {
+                           server_.assistantDidAcceptCompletion(
+                              activeCompletion_.originalCompletion.command,
+                              new VoidServerRequestCallback());
+                        }
 
                         reset();
                      }
@@ -1708,11 +1745,11 @@ public class TextEditingTargetAssistantHelper
                         // Let Ace close its popup first
                         if (!display_.hasActiveAceCompleter())
                         {
-                           display_.removeGhostText();
+                           hideGhostText();
                            activeCompletion_ = null;
                         }
                      }
-                     else if (display_.hasGhostText() &&
+                     else if (hasGhostTextVisible() &&
                               event.getKeyCode() == KeyCodes.KEY_RIGHT &&
                               (event.getCtrlKey() || event.getMetaKey()))
                      {
@@ -1727,11 +1764,38 @@ public class TextEditingTargetAssistantHelper
 
          );
 
-      }
+         // Re-render ghost text after Ace renders, since document changes cause Ace to
+         // clear the token cache and re-render with fresh tokens (without our ghost text).
+         registrations_.add(display_.onAfterRender(() ->
+         {
+            if (hasGhostTextVisible() && activeCompletion_ != null && suggestionStartAnchor_ != null)
+            {
+               Position pos = suggestionStartAnchor_.getPosition();
+               showGhostText(activeCompletion_.displayText, pos);
+            }
+         }));
+
+         // Re-render ghost text when the background tokenizer updates the ghost text row.
+         // This handles cases where the delayed tokenizer invalidates our spliced tokens.
+         registrations_.add(display_.onTokenizerUpdate((AceBackgroundTokenizerUpdateEvent event) ->
+         {
+            if (hasGhostTextVisible() && activeCompletion_ != null && suggestionStartAnchor_ != null)
+            {
+               int ghostRow = suggestionStartAnchor_.getRow();
+               if (event.includesRow(ghostRow))
+               {
+                  Position pos = suggestionStartAnchor_.getPosition();
+                  showGhostText(activeCompletion_.displayText, pos);
+               }
+            }
+         }));
    }
 
    private void requestNextEditSuggestions()
    {
+      if (!isAssistantAvailable())
+         return;
+
       if (!prefs_.assistantNesEnabled().getGlobalValue())
          return;
 
@@ -1832,7 +1896,7 @@ public class TextEditingTargetAssistantHelper
       if (!display_.isFocused())
          return;
 
-      boolean hasActiveSuggestion = display_.hasGhostText() && activeCompletion_ != null;
+      boolean hasActiveSuggestion = hasGhostTextVisible() && activeCompletion_ != null;
       if (!hasActiveSuggestion)
          return;
 
@@ -1874,29 +1938,17 @@ public class TextEditingTargetAssistantHelper
             suggestionStartAnchor_.getColumn());
          display_.replaceRange(insertRange, insertedWord);
 
-         // Update anchor to new position after insertion
-         Position newStart = Position.create(
-            suggestionStartAnchor_.getRow(),
-            suggestionStartAnchor_.getColumn() + insertedWord.length());
-         suggestionStartAnchor_.setPosition(newStart);
+         // The anchor automatically moves forward after insertion (insertRight=false),
+         // so just read its new position
+         Position newStart = suggestionStartAnchor_.getPosition();
 
          // Move cursor to end of inserted word and show remaining ghost text
          display_.setCursorPosition(newStart);
-         display_.setGhostText(activeCompletion_.displayText);
+         showGhostText(activeCompletion_.displayText, newStart);
 
          server_.assistantDidAcceptPartialCompletion(activeCompletion_.originalCompletion,
                                                    activeCompletion_.partialAcceptedLength,
                                                    new VoidServerRequestCallback());
-
-         // Work around issue with ghost text not appearing after inserting
-         // a code suggestion containing a new line
-         if (insertedWord.indexOf('\n') != -1)
-         {
-            Timers.singleShot(20, () ->
-            {
-               display_.setGhostText(activeCompletion_.displayText);
-            });
-         }
       });
    }
 
@@ -1940,7 +1992,7 @@ public class TextEditingTargetAssistantHelper
       {
          applyNesSuggestion();
       }
-      else if (display_.hasGhostText() && activeCompletion_ != null)
+      else if (hasGhostTextVisible() && activeCompletion_ != null)
       {
          // Suspend the document change handler so our edit doesn't reset suggestion state
          temporarilySuspendDocumentChangeHandler();
@@ -1958,9 +2010,12 @@ public class TextEditingTargetAssistantHelper
             suggestionEndAnchor_.getColumn() + activeCompletion_.insertText.length());
          display_.setCursorPosition(cursorPos);
 
-         server_.assistantDidAcceptCompletion(
-            activeCompletion_.originalCompletion.command,
-            new VoidServerRequestCallback());
+         if (activeCompletion_.originalCompletion.command != null)
+         {
+            server_.assistantDidAcceptCompletion(
+               activeCompletion_.originalCompletion.command,
+               new VoidServerRequestCallback());
+         }
 
          reset();
       }
@@ -1999,12 +2054,11 @@ public class TextEditingTargetAssistantHelper
       activeCompletion_.startCharacter += n;
       activeCompletion_.endCharacter += n;
 
-      // Ace's ghost text uses a custom token appended to the current line,
-      // and lines are eagerly re-tokenized when new text is inserted. To
-      // dodge this effect, we reset the ghost text at the end of the event loop.
+      // Re-render ghost text at the updated position after the text insertion completes
       Timers.singleShot(() ->
       {
-         display_.setGhostText(activeCompletion_.displayText);
+         showGhostText(activeCompletion_.displayText,
+            Position.create(activeCompletion_.startLine, activeCompletion_.startCharacter));
       });
    }
 
@@ -2201,17 +2255,99 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Resets tokens for all rows that have positions in the given list.
+    * Re-renders tokens for all rows that have positions in the given list.
     * This efficiently handles multiple positions on the same row by only
-    * resetting each affected row once.
+    * rendering each affected row once. Also removes synthetic tokens for
+    * those rows before rendering.
     */
-   private void resetTokensForPositions(List<Position> positions)
+   private void renderTokensForPositions(List<Position> positions)
    {
-      Set<Integer> rowsToReset = new HashSet<>();
+      Set<Integer> rowsToRender = new HashSet<>();
       for (Position pos : positions)
-         rowsToReset.add(pos.getRow());
-      for (int row : rowsToReset)
-         display_.resetTokens(row);
+         rowsToRender.add(pos.getRow());
+      for (int row : rowsToRender)
+      {
+         display_.removeSyntheticTokensForRow(row);
+         display_.renderTokens(row);
+      }
+   }
+
+   /**
+    * Shows ghost text at the specified position.
+    * For single-line text, uses token splicing.
+    * For multi-line text, uses token splicing for line 1 and a line widget for remaining lines.
+    */
+   private void showGhostText(String text, Position position)
+   {
+      // First, remove any existing ghost text
+      hideGhostText();
+
+      if (text == null || text.isEmpty())
+         return;
+
+      int row = position.getRow();
+      int column = position.getColumn();
+      ghostTextVisible_ = true;
+
+      // Split text into lines
+      String[] lines = text.split("\n", -1);
+
+      // Register the synthetic token with the session (persists across re-tokenization)
+      // This ensures coordinate conversion works correctly even after document edits
+      display_.addSyntheticToken(row, column, lines[0], "ghost_text");
+      display_.renderTokens(row);
+
+      // If multi-line, create a line widget for remaining lines
+      if (lines.length > 1)
+      {
+         StringBuilder html = new StringBuilder();
+         html.append("<div class=\"ace_ghost_text\">");
+         for (int i = 1; i < lines.length; i++)
+         {
+            if (i > 1)
+               html.append("<br/>");
+            // Escape HTML and preserve whitespace
+            String escapedLine = lines[i]
+               .replace("&", "&amp;")
+               .replace("<", "&lt;")
+               .replace(">", "&gt;")
+               .replace(" ", "&nbsp;");
+            html.append(escapedLine);
+         }
+         html.append("</div>");
+
+         ghostTextLineWidget_ = LineWidget.create("ghost_text", row, html.toString());
+         ghostTextLineWidget_.setCoverGutter(false);
+         display_.addLineWidget(ghostTextLineWidget_);
+      }
+   }
+
+   /**
+    * Removes any visible ghost text (both token and line widget).
+    */
+   private void hideGhostText()
+   {
+      if (ghostTextVisible_ && suggestionStartAnchor_ != null)
+      {
+         int row = suggestionStartAnchor_.getRow();
+         display_.removeSyntheticTokensForRow(row);
+         display_.renderTokens(row);
+      }
+      ghostTextVisible_ = false;
+
+      if (ghostTextLineWidget_ != null)
+      {
+         display_.removeLineWidget(ghostTextLineWidget_);
+         ghostTextLineWidget_ = null;
+      }
+   }
+
+   /**
+    * Returns true if ghost text is currently visible.
+    */
+   private boolean hasGhostTextVisible()
+   {
+      return ghostTextVisible_;
    }
 
    /**
@@ -2258,7 +2394,7 @@ public class TextEditingTargetAssistantHelper
       nesClickableRanges_.clear();
 
       // Reset tokens for all tracked positions
-      resetTokensForPositions(nesTokenPositions_);
+      renderTokensForPositions(nesTokenPositions_);
       nesTokenPositions_.clear();
 
       // Remove bounds marker if present
@@ -2305,7 +2441,7 @@ public class TextEditingTargetAssistantHelper
       detachSuggestionAnchors();
 
       // Remove ghost text
-      display_.removeGhostText();
+      hideGhostText();
 
       // Remove pending gutter registration
       if (pendingGutterRegistration_ != null)
@@ -2345,6 +2481,10 @@ public class TextEditingTargetAssistantHelper
    // Ghost text completion state
    private boolean canAcceptSuggestionWithTab_ = false;
    private Completion activeCompletion_;
+
+   // Custom ghost text rendering state (replaces Ace's ghost text API)
+   private boolean ghostTextVisible_ = false;
+   private LineWidget ghostTextLineWidget_;
 
    // Unified NES (Next Edit Suggestion) state
    private AssistantCompletion nesCompletion_;
