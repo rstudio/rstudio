@@ -199,10 +199,45 @@ public class ChunkOutputWidget extends Composite
       DOM.setEventListener(popout_.getElement(), popoutChunkEvent);
       
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
-      events.addHandler(RestartStatusEvent.TYPE, this);
-      events.addHandler(InterruptStatusEvent.TYPE, this);
+      restartReg_ = events.addHandler(RestartStatusEvent.TYPE, this);
+      interruptReg_ = events.addHandler(InterruptStatusEvent.TYPE, this);
 
       chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      // Clean up global event handlers
+      if (restartReg_ != null)
+      {
+         restartReg_.removeHandler();
+         restartReg_ = null;
+      }
+
+      if (interruptReg_ != null)
+      {
+         interruptReg_.removeHandler();
+         interruptReg_ = null;
+      }
+
+      // Clean up console event handlers if still registered
+      unregisterConsoleEvents();
+
+      // Cancel any running timers
+      if (collapseTimer_ != null)
+      {
+         collapseTimer_.cancel();
+         collapseTimer_ = null;
+      }
+
+      // Clear DOM event listeners
+      DOM.setEventListener(clear_.getElement(), null);
+      DOM.setEventListener(expander_.getElement(), null);
+      DOM.setEventListener(expand_.getElement(), null);
+      DOM.setEventListener(popout_.getElement(), null);
    }
    
    // Public methods ----------------------------------------------------------
@@ -754,16 +789,28 @@ public class ChunkOutputWidget extends Composite
    
    private void registerConsoleEvents()
    {
+      // Only register if not already registered
+      if (consoleOutputReg_ != null)
+         return;
+
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
-      events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
-      events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
+      consoleOutputReg_ = events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
+      consoleErrorReg_ = events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
    }
 
    private void unregisterConsoleEvents()
    {
-      EventBus events = RStudioGinjector.INSTANCE.getEventBus();
-      events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
-      events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
+      if (consoleOutputReg_ != null)
+      {
+         consoleOutputReg_.removeHandler();
+         consoleOutputReg_ = null;
+      }
+
+      if (consoleErrorReg_ != null)
+      {
+         consoleErrorReg_.removeHandler();
+         consoleErrorReg_ = null;
+      }
    }
    
    private void showBusyState()
@@ -1108,6 +1155,10 @@ public class ChunkOutputWidget extends Composite
    private String classId_;
    
    private Timer collapseTimer_ = null;
+   private HandlerRegistration restartReg_;
+   private HandlerRegistration interruptReg_;
+   private HandlerRegistration consoleOutputReg_;
+   private HandlerRegistration consoleErrorReg_;
    private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;

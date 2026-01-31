@@ -31,6 +31,11 @@ public class TextEditingTargetRenameHelper
       prefs_ = prefs;
    }
    
+   public void onDismiss()
+   {
+      renameChunkState_.cancel();
+   }
+
    public int renameInScope()
    {
       init();
@@ -652,6 +657,11 @@ public class TextEditingTargetRenameHelper
       public Position getCursorPosition()
       {
          return cursorPosition_;
+      }
+
+      public void cancel()
+      {
+         resetTimer_.cancel();
       }
 
       private void reset()

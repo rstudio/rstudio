@@ -123,9 +123,11 @@ public class TextEditingTargetWidget
                                   String extendedType,
                                   EventBus events,
                                   Session session,
-                                  SourceColumn column)
+                                  SourceColumn column,
+                                  List<HandlerRegistration> releaseOnDismiss)
    {
       target_ = target;
+      releaseOnDismiss_ = releaseOnDismiss;
       docUpdateSentinel_ = docUpdateSentinel;
       commands_ = commands;
       userPrefs_ = userPrefs;
@@ -262,18 +264,18 @@ public class TextEditingTargetWidget
             editor_.setRainbowFencedDivs(rainbowFencedDivs);
          });
 
-      userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
+      releaseOnDismiss_.add(userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
          // back the Source on Save command in the toolbar
          adaptToFileType(editor_.getFileType());
-      });
+      }));
 
-      userPrefs_.autoSaveOnIdle().addValueChangeHandler((evt) ->
+      releaseOnDismiss_.add(userPrefs_.autoSaveOnIdle().addValueChangeHandler((evt) ->
       {
          // Same behavior when modifying auto-save on idle
          adaptToFileType(editor_.getFileType());
-      });
+      }));
 
       Scheduler.get().scheduleDeferred(this::finishInit);
 
@@ -281,7 +283,7 @@ public class TextEditingTargetWidget
 
    private void finishInit()
    {
-      userPrefs_.marginColumnEditorWidth().bind(new CommandWithArg<Boolean>()
+      releaseOnDismiss_.add(userPrefs_.marginColumnEditorWidth().bind(new CommandWithArg<Boolean>()
       {
          private HandlerRegistration renderHandler_;
 
@@ -303,7 +305,7 @@ public class TextEditingTargetWidget
                });
             }
          }
-      });
+      }));
 
    }
 
@@ -562,13 +564,13 @@ public class TextEditingTargetWidget
 
       createTestToolbarButtons(toolbar);
 
-      userPrefs_.sourceWithEcho().addValueChangeHandler(
+      releaseOnDismiss_.add(userPrefs_.sourceWithEcho().addValueChangeHandler(
             event -> {
                if (event.getValue())
                   sourceButton_.setTitle(constants_.sourceButtonTitleWithEcho(SOURCE_BUTTON_TITLE));
                else
                   sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
-            });
+            }));
 
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
       sourceMenu.addItem(
@@ -736,8 +738,8 @@ public class TextEditingTargetWidget
       showWhitespaceCharactersCheckbox_ = new CheckBox(constants_.showWhitespace());
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
-      showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) ->
-            editor_.setShowInvisibles(event.getValue()));
+      releaseOnDismiss_.add(showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) ->
+            editor_.setShowInvisibles(event.getValue())));
 
       if (docUpdateSentinel_ != null && docUpdateSentinel_.getPath() != null)
       {
@@ -2160,6 +2162,7 @@ public class TextEditingTargetWidget
    @SuppressWarnings("unused")
    private final EventBus events_;
    private final UserPrefs userPrefs_;
+   private final List<HandlerRegistration> releaseOnDismiss_;
    private final UserState userState_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;

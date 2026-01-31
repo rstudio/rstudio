@@ -121,7 +121,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (prefs_ != null)
       {
          syncOutputStyles();
-         prefs_.consoleSoftWrap().addValueChangeHandler(event -> syncOutputStyles());
       }
 
       pendingInput_ = new PreWidget();
@@ -146,7 +145,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       input_.addClickHandler(secondaryInputHandler);
       
-      WindowEx.addBlurHandler((BlurEvent event) ->
+      windowBlurHandler_ = WindowEx.addBlurHandler((BlurEvent event) ->
       {
          // https://github.com/rstudio/rstudio/issues/1638
          ignoreNextFocus_ = true;
@@ -409,6 +408,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       ElementIds.assignElementId(this.getElement(), ElementIds.SHELL_WIDGET);
       getElement().addClassName("rstudio_shell_widget");
+
+      if (prefs_ != null && consoleSoftWrapHandler_ == null)
+      {
+         consoleSoftWrapHandler_ = prefs_.consoleSoftWrap().addValueChangeHandler(
+            event -> syncOutputStyles());
+      }
    }
 
    protected void doOnLoad()
@@ -1250,8 +1255,28 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }
 
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (windowBlurHandler_ != null)
+      {
+         windowBlurHandler_.removeHandler();
+         windowBlurHandler_ = null;
+      }
+
+      if (consoleSoftWrapHandler_ != null)
+      {
+         consoleSoftWrapHandler_.removeHandler();
+         consoleSoftWrapHandler_ = null;
+      }
+   }
+
    private boolean cleared_ = false;
    private boolean ignoreNextFocus_ = false;
+   private HandlerRegistration windowBlurHandler_;
+   private HandlerRegistration consoleSoftWrapHandler_;
    private final ConsoleOutputWriter output_;
    private final FindBar findBar_;
    private final PreWidget pendingInput_;

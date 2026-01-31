@@ -134,7 +134,7 @@ public class LintManager
       };
 
       // Background linting
-      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
@@ -162,7 +162,7 @@ public class LintManager
                }
             });
          }
-      });
+      }));
 
       releaseOnDismiss.add(eventBus_.addHandler(
             SourceFileSaveCompletedEvent.TYPE,
@@ -186,6 +186,11 @@ public class LintManager
    public void relintAfterDelay(int delayMills)
    {
       timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? defaultLintDelayMs() : delayMills);
+   }
+
+   public void onDismiss()
+   {
+      timer_.cancel();
    }
 
    @Inject

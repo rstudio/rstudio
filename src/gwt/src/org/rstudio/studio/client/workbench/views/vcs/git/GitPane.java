@@ -81,9 +81,16 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
       
       presenter_ = changelistTablePresenter;
 
-      if (Desktop.isDesktop())
+   }
+
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+
+      if (Desktop.isDesktop() && windowFocusHandler_ == null)
       {
-         WindowEx.addFocusHandler(new FocusHandler()
+         windowFocusHandler_ = WindowEx.addFocusHandler(new FocusHandler()
          {
             @Override
             public void onFocus(FocusEvent event)
@@ -94,6 +101,18 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
                }
             }
          });
+      }
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (windowFocusHandler_ != null)
+      {
+         windowFocusHandler_.removeHandler();
+         windowFocusHandler_ = null;
       }
    }
 
@@ -329,6 +348,7 @@ public class GitPane extends WorkbenchPane implements Display, BranchCaptionChan
    private final GitChangelistTablePresenter presenter_;
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
-   
+   private HandlerRegistration windowFocusHandler_;
+
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

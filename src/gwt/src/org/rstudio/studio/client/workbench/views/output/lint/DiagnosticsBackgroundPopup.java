@@ -54,7 +54,7 @@ public class DiagnosticsBackgroundPopup
       docDisplay_ = docDisplay;
       editor_ = (AceEditor) docDisplay_;
 
-      docDisplay_.addFocusHandler(new FocusHandler()
+      focusHandler_ = docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
          public void onFocus(FocusEvent event)
@@ -64,17 +64,17 @@ public class DiagnosticsBackgroundPopup
          }
       });
 
-      docDisplay_.addBlurHandler(new BlurHandler()
+      blurHandler_ = docDisplay_.addBlurHandler(new BlurHandler()
       {
          @Override
          public void onBlur(BlurEvent event)
          {
             hidePopup();
             stopMonitoring();
-            if (handler_ != null)
+            if (previewHandler_ != null)
             {
-               handler_.removeHandler();
-               handler_ = null;
+               previewHandler_.removeHandler();
+               previewHandler_ = null;
             }
          }
       });
@@ -84,18 +84,42 @@ public class DiagnosticsBackgroundPopup
       start();
    }
 
+   public void detach()
+   {
+      stopMonitoring();
+      hidePopup();
+
+      if (focusHandler_ != null)
+      {
+         focusHandler_.removeHandler();
+         focusHandler_ = null;
+      }
+
+      if (blurHandler_ != null)
+      {
+         blurHandler_.removeHandler();
+         blurHandler_ = null;
+      }
+
+      if (previewHandler_ != null)
+      {
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
+      }
+   }
+
    public void start()
    {
       isRunning_ = true;
       stopRequested_ = false;
 
-      if (handler_ != null)
+      if (previewHandler_ != null)
       {
-         handler_.removeHandler();
-         handler_ = null;
+         previewHandler_.removeHandler();
+         previewHandler_ = null;
       }
 
-      handler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent event)
@@ -223,13 +247,11 @@ public class DiagnosticsBackgroundPopup
 
    private class DiagnosticsPopupPanel extends PopupPanel
    {
-      public DiagnosticsPopupPanel(
-            String text,
-            Range range)
+      public DiagnosticsPopupPanel(String text, Range range)
       {
          super(true, false);
          range_ = range;
-         editor_.addCursorChangedHandler(new CursorChangedEvent.Handler()
+         cursorHandler_ = editor_.addCursorChangedHandler(new CursorChangedEvent.Handler()
          {
             @Override
             public void onCursorChanged(CursorChangedEvent event)
@@ -242,7 +264,19 @@ public class DiagnosticsBackgroundPopup
          setWidget(new HTML(text));
       }
 
+      @Override
+      protected void onUnload()
+      {
+         if (cursorHandler_ != null)
+         {
+            cursorHandler_.removeHandler();
+            cursorHandler_ = null;
+         }
+         super.onUnload();
+      }
+
       private final Range range_;
+      private HandlerRegistration cursorHandler_;
    }
 
    private void showPopup(String text, Range range)
@@ -313,7 +347,9 @@ public class DiagnosticsBackgroundPopup
    private Marker activeMarker_;
 
    private ScreenCoordinates lastMouseCoords_;
-   private HandlerRegistration handler_;
+   private HandlerRegistration previewHandler_;
+   private HandlerRegistration focusHandler_;
+   private HandlerRegistration blurHandler_;
    private static final Resources RES = Resources.INSTANCE;
 
    private long lastMouseMoveTime_;

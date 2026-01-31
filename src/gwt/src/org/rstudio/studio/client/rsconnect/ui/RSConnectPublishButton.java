@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.EnabledChangedEvent;
@@ -162,33 +163,37 @@ public class RSConnectPublishButton extends Composite
       pUserState_ = pUserState;
       plotMru_ = plotMru;
       
-      // initialize visibility if requested
-      if (boundCommand_ != null) 
-      {
-         boundCommand_.addVisibleChangedHandler(
-               new VisibleChangedHandler()
-         {
-            @Override
-            public void onVisibleChanged(VisibleChangedEvent event)
-            {
-               applyVisibility();
-            }
-         });
+      registrations_ = new HandlerRegistrations(
+         events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this),
+         events_.addHandler(RPubsUploadStatusEvent.TYPE, this),
+         events_.addHandler(DeploymentRecordsUpdatedEvent.TYPE, this)
+      );
 
-         boundCommand_.addEnabledChangedHandler(
-               new EnabledChangedHandler()
-         {
-            @Override
-            public void onEnabledChanged(EnabledChangedEvent event)
+      // initialize visibility if requested
+      if (boundCommand_ != null)
+      {
+         registrations_.add(
+         
+            boundCommand_.addVisibleChangedHandler(new VisibleChangedHandler()
             {
-               applyVisibility();
-            }
-         });
+               @Override
+               public void onVisibleChanged(VisibleChangedEvent event)
+               {
+                  applyVisibility();
+               }
+            }),
+
+            boundCommand_.addEnabledChangedHandler(new EnabledChangedHandler()
+            {
+               @Override
+               public void onEnabledChanged(EnabledChangedEvent event)
+               {
+                  applyVisibility();
+               }
+            })
+         
+         );
       }
-      
-      events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
-      events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
-      events_.addHandler(DeploymentRecordsUpdatedEvent.TYPE, this);
    }
    
    public void onPublishInvoked(Command onPublishInvoked)
@@ -447,6 +452,18 @@ public class RSConnectPublishButton extends Composite
             publishButton_, ElementIds.PUBLISH_ITEM + "_" + host_);
       ElementIds.assignElementId(
             publishMenuButton_, ElementIds.PUBLISH_SHOW_DEPLOYMENTS + "_" + host_);
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (registrations_ != null)
+      {
+         registrations_.removeHandler();
+         registrations_ = null;
+      }
    }
 
    // Private methods --------------------------------------------------------
@@ -1038,7 +1055,8 @@ public class RSConnectPublishButton extends Composite
    private Command onPublishInvoked_;
 
    private RSConnectDeploymentRecord defaultRec_;
-   private final String host_;   
+   private final String host_;
+   private HandlerRegistrations registrations_;
    private static boolean anyRmdRenderPending_ = false;
    private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

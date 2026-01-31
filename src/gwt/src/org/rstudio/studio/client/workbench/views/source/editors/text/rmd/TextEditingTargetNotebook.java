@@ -1411,6 +1411,26 @@ public class TextEditingTargetNotebook
    public void onDismiss()
    {
       closeAllSatelliteChunks();
+
+      // Cancel all timers
+      cleanErrorGutter_.cancel();
+      resizePlotsLocal_.cancel();
+      resizePlotsRemote_.cancel();
+
+      // Clean up scope tree handler
+      if (scopeTreeReg_ != null)
+      {
+         scopeTreeReg_.removeHandler();
+         scopeTreeReg_ = null;
+      }
+
+      // Clean up queue state
+      if (queue_ != null)
+         queue_.onDismiss();
+
+      // Clean up HTML renderer
+      if (htmlRenderer_ != null)
+         htmlRenderer_.onDismiss();
    }
 
    // set the output mode based on the global pref (or our local

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.GlassPanel;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
@@ -32,10 +33,24 @@ public class AutoGlassPanel extends GlassPanel
       super(child);
 
       EventBus eventBus = RStudioGinjector.INSTANCE.getEventBus();
-      eventBus.addHandler(GlassVisibilityEvent.TYPE, glassVisibilityEvent ->
+      handlerRegistration_ = eventBus.addHandler(GlassVisibilityEvent.TYPE, glassVisibilityEvent ->
       {
          setGlass(glassVisibilityEvent.isShow());
       });
       setGlass(false);
    }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+
+      if (handlerRegistration_ != null)
+      {
+         handlerRegistration_.removeHandler();
+         handlerRegistration_ = null;
+      }
+   }
+
+   private HandlerRegistration handlerRegistration_;
 }
