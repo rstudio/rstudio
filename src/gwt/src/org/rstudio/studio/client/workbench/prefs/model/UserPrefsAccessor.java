@@ -3692,7 +3692,7 @@ public class UserPrefsAccessor extends Prefs
             ASSISTANT_POSIT,
             ASSISTANT_COPILOT
          },
-         "none",
+         "posit",
          new String[] {
             _constants.assistantEnum_none(),
             _constants.assistantEnum_posit(),
