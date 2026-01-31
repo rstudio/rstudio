@@ -56,7 +56,6 @@ import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOpera
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -815,18 +814,11 @@ public class TextEditingTargetAssistantHelper
       Range changeRange = nativeEvent.getRange();
       if (nativeEvent.isInsertion())
       {
-         // For insertions, use exclusive bounds - inserting exactly at the
-         // start or end of the suggestion should not dismiss it
-         return nesRange.containsExclusive(changeRange.getStart()) ||
-                changeRange.containsExclusive(nesRange.getStart());
+         return nesRange.contains(changeRange.getStart()) ||
+                changeRange.contains(nesRange.getStart());
       }
       else
       {
-         // For deletions:
-         // - nesRange uses left-exclusive: deletion starting exactly at suggestion
-         //   start is not "inside", but at suggestion end is
-         // - changeRange uses right-exclusive: if deletion ends exactly at suggestion
-         //   start, the suggestion isn't affected (deletion didn't reach it)
          return nesRange.containsLeftExclusive(changeRange.getStart()) ||
                 changeRange.containsRightExclusive(nesRange.getStart());
       }
@@ -1082,7 +1074,7 @@ public class TextEditingTargetAssistantHelper
       {
          suggestionStartAnchor_.detach();
          suggestionStartAnchor_ = null;
-      }
+   }
       if (suggestionEndAnchor_ != null)
       {
          suggestionEndAnchor_.detach();
@@ -1763,32 +1755,6 @@ public class TextEditingTargetAssistantHelper
                })
 
          );
-
-         // Re-render ghost text after Ace renders, since document changes cause Ace to
-         // clear the token cache and re-render with fresh tokens (without our ghost text).
-         registrations_.add(display_.onAfterRender(() ->
-         {
-            if (hasGhostTextVisible() && activeCompletion_ != null && suggestionStartAnchor_ != null)
-            {
-               Position pos = suggestionStartAnchor_.getPosition();
-               showGhostText(activeCompletion_.displayText, pos);
-            }
-         }));
-
-         // Re-render ghost text when the background tokenizer updates the ghost text row.
-         // This handles cases where the delayed tokenizer invalidates our spliced tokens.
-         registrations_.add(display_.onTokenizerUpdate((AceBackgroundTokenizerUpdateEvent event) ->
-         {
-            if (hasGhostTextVisible() && activeCompletion_ != null && suggestionStartAnchor_ != null)
-            {
-               int ghostRow = suggestionStartAnchor_.getRow();
-               if (event.includesRow(ghostRow))
-               {
-                  Position pos = suggestionStartAnchor_.getPosition();
-                  showGhostText(activeCompletion_.displayText, pos);
-               }
-            }
-         }));
    }
 
    private void requestNextEditSuggestions()

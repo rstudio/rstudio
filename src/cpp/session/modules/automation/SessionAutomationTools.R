@@ -263,13 +263,19 @@
    # TODO: These effectively fill out the same values on the associated
    # JavaScript KeyEvent, so ideally we'd populate all the parameters here.
    # Right now, we're just doing the minimal necessary bits.
+
+   # For printable characters (single char, no modifiers), include the text
+   # parameter so the character actually gets inserted
+   text <- if (nchar(key) == 1L && modifiers == 0L) key else NULL
+
    self$client$Input.dispatchKeyEvent(
       type                  = "keyDown",
       key                   = key,
+      text                  = text,
       modifiers             = modifiers,
       windowsVirtualKeyCode = code
    )
-   
+
    self$client$Input.dispatchKeyEvent(
       type                  = "keyUp",
       key                   = key,

@@ -155,8 +155,96 @@ var RStudioEditSession = function(text, mode) {
    // (must be per-instance, not on prototype, so sessions don't share the array)
    this.$syntheticTokens = [];
 
-   // Hook into the background tokenizer to inject synthetic tokens after tokenization
    var self = this;
+
+   // Remove synthetic tokens that intersect the edit range
+   this.on("change", function(delta) {
+      if (!self.$syntheticTokens.length)
+         return;
+
+      var remaining = [];
+      var rowsToInvalidate = [];
+
+      for (var i = 0; i < self.$syntheticTokens.length; i++) {
+         var token = self.$syntheticTokens[i];
+         var row = token.anchor.row;
+         var col = token.anchor.column;
+
+         // Check if this token is affected by the edit.
+         // For inserts, we check col + 1 because after consuming a prefix, the anchor
+         // is positioned at the last character of the inserted text, but the next
+         // character will be inserted one position to the right.
+         var atEditPosition = (row === delta.start.row &&
+            (col === delta.start.column ||
+             (delta.action === "insert" && col + 1 === delta.start.column)));
+
+         if (!atEditPosition) {
+            // Token not at edit position - keep it
+            remaining.push(token);
+            continue;
+         }
+
+         if (delta.action === "insert") {
+            // Only do prefix matching for ghost_text tokens (inline completions).
+            // Other token types (like insertion_preview for NES) should just dismiss.
+            if (token.type === "ghost_text") {
+               // Get inserted text (only handle single-line inserts for prefix matching)
+               var insertedText = delta.lines.length === 1 ? delta.lines[0] : null;
+
+               // Check if synthetic token text starts with inserted text
+               if (insertedText && token.text.indexOf(insertedText) === 0) {
+                  // Consume the prefix - update token text
+                  token.text = token.text.substring(insertedText.length);
+
+                  // Position anchor at the end of the inserted text.
+                  // The -1 is needed because the synthetic token injection places the token
+                  // after the character at the anchor column, so we want the anchor at the
+                  // last character of the inserted text.
+                  var newColumn = delta.start.column + insertedText.length - 1;
+                  token.anchor.setPosition(delta.start.row, newColumn);
+
+                  // Invalidate row to re-render with updated token
+                  rowsToInvalidate.push(delta.start.row);
+
+                  // If token text is now empty, remove it; otherwise keep it
+                  if (token.text.length === 0) {
+                     token.anchor.detach();
+                  } else {
+                     remaining.push(token);
+                  }
+               } else {
+                  // Inserted text doesn't match prefix (or multi-line insert) - dismiss
+                  rowsToInvalidate.push(row);
+                  token.anchor.detach();
+               }
+            } else {
+               // Non-ghost_text token (e.g., insertion_preview) - dismiss on any insert
+               rowsToInvalidate.push(row);
+               token.anchor.detach();
+            }
+         } else if (delta.action === "remove") {
+            // Delete at token position - dismiss
+            rowsToInvalidate.push(row);
+            token.anchor.detach();
+         } else {
+            // Unknown action - keep token
+            remaining.push(token);
+         }
+      }
+
+      if (remaining.length !== self.$syntheticTokens.length || rowsToInvalidate.length > 0) {
+         self.$syntheticTokens = remaining;
+
+         // Invalidate affected rows in background tokenizer
+         var bgTokenizer = self.bgTokenizer;
+         for (var j = 0; j < rowsToInvalidate.length; j++) {
+            var row = rowsToInvalidate[j];
+            bgTokenizer.lines[row] = null;
+         }
+      }
+   });
+
+   // Hook into the background tokenizer to inject synthetic tokens after tokenization
    var bgTokenizer = this.bgTokenizer;
    var $tokenizeRow = bgTokenizer.$tokenizeRow;
 
@@ -168,6 +256,8 @@ var RStudioEditSession = function(text, mode) {
          var synthetics = self.$getSyntheticsForRow(row);
          if (synthetics.length) {
             tokens = self.$injectSyntheticTokens(tokens, synthetics);
+            // Update the cache so getTokens() returns consistent results
+            this.lines[row] = tokens;
          }
       }
 
@@ -274,21 +364,6 @@ oop.inherits(RStudioEditSession, EditSession);
          if (!injected) {
             // Append at end
             tokens.push(newToken);
-         }
-      }
-
-      return tokens;
-   };
-
-   // Override getTokens to inject synthetic tokens
-   this.getTokens = function(row) {
-      var tokens = EditSession.prototype.getTokens.call(this, row);
-
-      // Get synthetic tokens for this row (skip lookup if none registered)
-      if (this.$syntheticTokens.length) {
-         var synthetics = this.$getSyntheticsForRow(row);
-         if (synthetics.length) {
-            tokens = this.$injectSyntheticTokens(tokens, synthetics);
          }
       }
 
