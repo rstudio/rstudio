@@ -2119,6 +2119,29 @@ public class TextEditingTargetAssistantHelper
          normalized.range.end.character -= rhs;
       }
 
+      // For multiline insertions, include trailing content from the first line.
+      // This ensures the ghost text display accurately shows where content will end up.
+      // For example, if cursor is at "|" in "before | after" and we insert "1\n2",
+      // we adjust to replace " after" with "1\n2 after" so the display shows:
+      //   "before 1"
+      //   "2 after"
+      // instead of the misleading:
+      //   "before 1 after"
+      //   "2"
+      if (normalized.insertText.contains("\n"))
+      {
+         int row = normalized.range.end.line;
+         int col = normalized.range.end.character;
+         String line = display_.getLine(row);
+
+         if (col < line.length())
+         {
+            String trailingContent = line.substring(col);
+            normalized.insertText = normalized.insertText + trailingContent;
+            normalized.range.end.character = line.length();
+         }
+      }
+
       return normalized;
    }
 
@@ -2154,6 +2177,20 @@ public class TextEditingTargetAssistantHelper
          String suffix = endLine.substring(completion.range.end.character);
          completion.range.end.character = endLine.length();
          completion.insertText = completion.insertText + suffix;
+      }
+      else if (completion.insertText.contains("\n"))
+      {
+         // For multiline insertions on a single-line range, include trailing content.
+         // This ensures the ghost text display accurately shows where content will end up.
+         String line = display_.getLine(completion.range.end.line);
+         int col = completion.range.end.character;
+
+         if (col < line.length())
+         {
+            String trailingContent = line.substring(col);
+            completion.insertText = completion.insertText + trailingContent;
+            completion.range.end.character = line.length();
+         }
       }
 
       // If both the original text and insert text end with a newline,
