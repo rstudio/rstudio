@@ -201,12 +201,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             int expectedCount = leftList_.size() + 1 + (sidebar_ != null ? 1 : 0);
 
             // Don't restore state if it represents a zoomed column layout (issue #16688)
+            // or if sidebar width is below minimum (issue where 0-width sidebar persisted)
             // This avoids broken zoom state on restart - instead use defaults
             if (state != null &&
                 state.validate() &&
                 state.hasSplitterPos() &&
                 state.getSplitterCount() == expectedCount &&
-                !isZoomedColumnState(state))
+                !isZoomedColumnState(state) &&
+                !hasBelowMinimumSidebarWidth(state))
             {
                if (state.hasPanelWidth() && state.hasWindowWidth()
                    && state.getWindowWidth() != Window.getClientWidth())
@@ -414,6 +416,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       };
 
       setWidgetMinSize(right_, 0);
+      if (sidebar_ != null)
+         setWidgetMinSize(sidebar_, MINIMUM_SIDEBAR_WIDTH);
    }
 
    @Override
@@ -892,5 +896,41 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    private String sidebarLocation_ = "left";
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
+   private static final int MINIMUM_SIDEBAR_WIDTH = 175;
    private Command layoutCommand_;
+
+   /**
+    * Check if the saved state has a sidebar width below the minimum allowed.
+    * This handles cases where the user dragged the sidebar too narrow in a previous version.
+    */
+   private boolean hasBelowMinimumSidebarWidth(State state)
+   {
+      if (sidebar_ == null || !state.hasSplitterPos())
+         return false;
+
+      int[] widths = state.getSplitterPos();
+
+      // For left sidebar, it's the first width in the array
+      if ("left".equals(sidebarLocation_))
+      {
+         if (widths.length > 0)
+         {
+            int sidebarWidth = widths[0];
+            if (sidebarWidth > 0 && sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
+               return true;
+         }
+      }
+      else
+      {
+         // For right sidebar, it's stored before the right widget (second-to-last)
+         if (widths.length >= 2)
+         {
+            int sidebarWidth = widths[widths.length - 2];
+            if (sidebarWidth > 0 && sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
+               return true;
+         }
+      }
+
+      return false;
+   }
 }
