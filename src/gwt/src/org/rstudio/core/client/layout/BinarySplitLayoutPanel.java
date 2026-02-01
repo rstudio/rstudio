@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.layout;
 
+import org.rstudio.core.client.AnimationFrameThrottledCommand;
+
 import com.google.gwt.aria.client.OrientationValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
@@ -316,11 +318,10 @@ public class BinarySplitLayoutPanel extends LayoutPanel
 
       event.preventDefault();
       event.stopPropagation();
-      if (topIsFixed_)
-         setSplitterPos(event.getRelativeY(getElement()), true);
-      else
-         setSplitterPos(getOffsetHeight() - event.getRelativeY(getElement()),
-                        false);
+
+      // Store the pending position and throttle layout updates to animation frame rate
+      pendingMouseY_ = event.getRelativeY(getElement());
+      resizeCommand_.nudge();
    }
 
    public void onMouseUp(MouseUpEvent event)
@@ -396,4 +397,18 @@ public class BinarySplitLayoutPanel extends LayoutPanel
    private Widget[] widgets_;
    private boolean resizing_;
    private int offsetHeight_;
+   private int pendingMouseY_;
+   private final AnimationFrameThrottledCommand resizeCommand_ = new AnimationFrameThrottledCommand()
+   {
+      @Override
+      protected void performAction()
+      {
+         if (!resizing_)
+            return;
+         if (topIsFixed_)
+            setSplitterPos(pendingMouseY_, true);
+         else
+            setSplitterPos(getOffsetHeight() - pendingMouseY_, false);
+      }
+   };
 }
