@@ -916,7 +916,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          if (widths.length > 0)
          {
             int sidebarWidth = widths[0];
-            if (sidebarWidth > 0 && sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
+            if (sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
                return true;
          }
       }
@@ -926,7 +926,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          if (widths.length >= 2)
          {
             int sidebarWidth = widths[widths.length - 2];
-            if (sidebarWidth > 0 && sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
+            if (sidebarWidth < MINIMUM_SIDEBAR_WIDTH)
                return true;
          }
       }
