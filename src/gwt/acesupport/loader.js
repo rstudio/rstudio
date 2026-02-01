@@ -276,6 +276,18 @@ oop.inherits(RStudioEditSession, EditSession);
 
    this.addSyntheticToken = function(row, column, text, type) {
       var anchor = new Anchor(this.getDocument(), row, column);
+      var bgTokenizer = this.bgTokenizer;
+
+      // Listen for anchor position changes (e.g., when newlines are inserted above)
+      anchor.on("change", function(e) {
+         var oldRow = e.old.row;
+         var newRow = e.value.row;
+         if (oldRow !== newRow) {
+            bgTokenizer.lines[oldRow] = null;  // Clear ghost text from old row
+            bgTokenizer.lines[newRow] = null;  // Add ghost text to new row
+         }
+      });
+
       this.$syntheticTokens.push({ anchor: anchor, text: text, type: type });
    };
 

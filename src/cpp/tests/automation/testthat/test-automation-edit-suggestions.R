@@ -52,27 +52,57 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 .rs.test("ghost text edit suggestions move on document edit", {
-   
+
    remote$editor.executeWithContents(".R", "\n\n\n\n\n", function(editor) {
-      
+
       # Insert an edit suggestion on line three
       remote$console.executeExpr({
          .rs.api.showEditSuggestion(c(3, 1, 3, 1), "Hello world!")
       })
-      
+
       # Put the cursor on line 1
       editor$gotoLine(1L)
-      
+
       # Insert two newlines
       editor$insert("\n")
       editor$insert("\n")
-      
+
       # Check that ghost text is still visible on line 5
       tokens <- as.vector(editor$session$getTokens(4L))
       expect_equal(tokens[[1L]]$value, "Hello world!")
-      
+
    })
-   
+
+})
+
+.rs.test("ghost text is cleared from old row when newline inserted above", {
+
+   remote$editor.executeWithContents(".R", "\n\n\n\n\n", function(editor) {
+
+      # Insert an edit suggestion on line three
+      remote$console.executeExpr({
+         .rs.api.showEditSuggestion(c(3, 1, 3, 1), "Hello world!")
+      })
+
+      # Verify ghost text is on line 3
+      tokens <- as.vector(editor$session$getTokens(2L))
+      expect_equal(tokens[[1L]]$value, "Hello world!")
+
+      # Put the cursor on line 1 and insert a newline
+      editor$gotoLine(1L)
+      editor$insert("\n")
+
+      # Check that ghost text moved to line 4
+      tokens <- as.vector(editor$session$getTokens(3L))
+      expect_equal(tokens[[1L]]$value, "Hello world!")
+
+      # Check that old line 3 no longer has the ghost text
+      tokens <- as.vector(editor$session$getTokens(2L))
+      hasSynthetic <- any(vapply(tokens, function(t) isTRUE(t$synthetic), logical(1)))
+      expect_false(hasSynthetic)
+
+   })
+
 })
 
 .rs.test("edit suggestions are displayed inline when appropriate", {

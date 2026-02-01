@@ -746,11 +746,28 @@ public class TextEditingTargetAssistantHelper
 
    /**
     * Renders an edit suggestion inline using deletion highlights and insertion token splicing.
-    * Handles deletion-only, insertion-only, and mixed cases with appropriate styling.
-    * Assumes editSuggestion_ and editSuggestion_.deltas are already set, and all deltas are single-line.
+    * Handles ghost text, deletion-only, insertion-only, and mixed cases with appropriate styling.
+    * Assumes editSuggestion_ is already set.
     */
    private void renderSuggestion()
    {
+      // Handle ghost text (pure insertion at cursor, no deltas)
+      if (editSuggestion_.type == SuggestionType.GHOST_TEXT)
+      {
+         Position position = Position.create(
+            editSuggestion_.startLine,
+            editSuggestion_.startCharacter);
+         showGhostText(editSuggestion_.displayText, position);
+         nesGutterRegistrations_.add(display_.addGutterItem(
+            editSuggestion_.startLine,
+            AceEditorGutterStyles.NES_GUTTER_HIGHLIGHT));
+         return;
+      }
+
+      // For delta-based suggestions, deltas must be set
+      if (editSuggestion_.deltas == null)
+         return;
+
       int baseRow = editSuggestion_.startLine;
       int baseCol = editSuggestion_.startCharacter;
 
@@ -986,7 +1003,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void showPendingSuggestionDetails()
    {
-      if (editSuggestion_ == null || editSuggestion_.type == SuggestionType.GHOST_TEXT)
+      if (editSuggestion_ == null)
          return;
 
       // Remove the pending gutter icon (the render methods will add their own)
@@ -1009,7 +1026,7 @@ public class TextEditingTargetAssistantHelper
     */
    private void hidePendingSuggestionDetails()
    {
-      if (!pendingSuggestionRevealed_ || editSuggestion_ == null || editSuggestion_.type == SuggestionType.GHOST_TEXT)
+      if (!pendingSuggestionRevealed_ || editSuggestion_ == null)
          return;
 
       // Clear visual elements but preserve edit suggestion state for re-reveal
@@ -1046,17 +1063,10 @@ public class TextEditingTargetAssistantHelper
       switch (editSuggestion_.type)
       {
          case GHOST_TEXT:
-            Position position = Position.create(
-               editSuggestion_.startLine,
-               editSuggestion_.startCharacter);
-            showGhostText(editSuggestion_.displayText, position);
-            break;
-
          case DELETION:
          case INSERTION:
          case REPLACEMENT:
-            if (editSuggestion_.deltas != null)
-               renderSuggestion();
+            renderSuggestion();
             break;
 
          case MIXED:
@@ -1476,7 +1486,7 @@ public class TextEditingTargetAssistantHelper
                   Element nesGutterEl = DomUtils.findParentElement(target, true, (el) ->
                      el.hasClassName(AceEditorGutterStyles.NES_GUTTER));
 
-                  if (nesGutterEl != null && editSuggestion_ != null && editSuggestion_.type != SuggestionType.GHOST_TEXT)
+                  if (nesGutterEl != null && editSuggestion_ != null)
                   {
                      event.stopPropagation();
                      event.preventDefault();
@@ -2109,6 +2119,29 @@ public class TextEditingTargetAssistantHelper
          normalized.range.end.character -= rhs;
       }
 
+      // For multiline insertions, include trailing content from the first line.
+      // This ensures the ghost text display accurately shows where content will end up.
+      // For example, if cursor is at "|" in "before | after" and we insert "1\n2",
+      // we adjust to replace " after" with "1\n2 after" so the display shows:
+      //   "before 1"
+      //   "2 after"
+      // instead of the misleading:
+      //   "before 1 after"
+      //   "2"
+      if (normalized.insertText.contains("\n"))
+      {
+         int row = normalized.range.end.line;
+         int col = normalized.range.end.character;
+         String line = display_.getLine(row);
+
+         if (col < line.length())
+         {
+            String trailingContent = line.substring(col);
+            normalized.insertText = normalized.insertText + trailingContent;
+            normalized.range.end.character = line.length();
+         }
+      }
+
       return normalized;
    }
 
@@ -2144,6 +2177,20 @@ public class TextEditingTargetAssistantHelper
          String suffix = endLine.substring(completion.range.end.character);
          completion.range.end.character = endLine.length();
          completion.insertText = completion.insertText + suffix;
+      }
+      else if (completion.insertText.contains("\n"))
+      {
+         // For multiline insertions on a single-line range, include trailing content.
+         // This ensures the ghost text display accurately shows where content will end up.
+         String line = display_.getLine(completion.range.end.line);
+         int col = completion.range.end.character;
+
+         if (col < line.length())
+         {
+            String trailingContent = line.substring(col);
+            completion.insertText = completion.insertText + trailingContent;
+            completion.range.end.character = line.length();
+         }
       }
 
       // If both the original text and insert text end with a newline,
@@ -2225,7 +2272,8 @@ public class TextEditingTargetAssistantHelper
    }
 
    /**
-    * Shows ghost text at the specified position.
+    * Shows ghost text at the specified position (without NES gutter visuals).
+    * Used for regular completions at cursor; NES ghost text goes through renderSuggestion().
     * For single-line text, uses token splicing.
     * For multi-line text, uses token splicing for line 1 and a line widget for remaining lines.
     */
