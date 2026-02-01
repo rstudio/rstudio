@@ -900,15 +900,65 @@ public class TextEditingTargetAssistantHelper
       return false;
    }
 
-   /**
-    * Checks if a document change intersects with the active NES suggestion range.
-    * Returns true if there is an active suggestion and the change range overlaps it.
-    */
-   private boolean doesChangeIntersectSuggestion(AceDocumentChangeEventNative nativeEvent)
+   private boolean shouldDismissSuggestion(AceDocumentChangeEventNative nativeEvent)
    {
       if (editSuggestion_ == null || editSuggestion_.startAnchor == null || editSuggestion_.endAnchor == null)
          return false;
 
+      // Treat newline insertions specially.
+      boolean isNewlineInsertion =
+         nativeEvent.lines.length() == 2 &&
+         nativeEvent.lines.get(0).isEmpty() &&
+         nativeEvent.lines.get(1).isEmpty();
+
+      if (isNewlineInsertion)
+      {
+         int row = nativeEvent.start.getRow();
+         int col = nativeEvent.start.getColumn();
+         boolean isMultilineSuggestion =
+            editSuggestion_.startAnchor.getRow() != editSuggestion_.endAnchor.getRow();
+
+         // Inserting a newline before the suggestion is okay.
+         if (row < editSuggestion_.startAnchor.getRow())
+         {
+            return false;
+         }
+
+         // Inserting a newline on a single-line suggestion;
+         // allowed only on first column, or after end anchor.
+         else if (row == editSuggestion_.startAnchor.getRow() &&
+                  row == editSuggestion_.endAnchor.getRow())
+         {
+            return !(col == 0 || col >= editSuggestion_.endAnchor.getColumn());
+         }
+
+         // Inserting newline on start anchor row (multi-line suggestion);
+         // only allowed at first column.
+         else if (row == editSuggestion_.startAnchor.getRow())
+         {
+            return !(col == 0);
+         }
+
+         // Inserting newline on end anchor row (multi-line suggestion);
+         // only allowed after end anchor column.
+         else if (row == editSuggestion_.endAnchor.getRow())
+         {
+            return !(col > editSuggestion_.endAnchor.getColumn());
+         }
+
+         // Inserting a newline after the end anchor row is okay.
+         else if (row > editSuggestion_.endAnchor.getRow())
+         {
+            return false;
+         }
+
+         // Otherwise assume we should dismiss.
+         else
+         {
+            return true;
+         }
+      }
+      
       Range nesRange = Range.create(
          editSuggestion_.startAnchor.getRow(),
          editSuggestion_.startAnchor.getColumn(),
@@ -1617,7 +1667,7 @@ public class TextEditingTargetAssistantHelper
                   // Dismiss NES suggestion if the edit intersects the suggestion range
                   if (!ignoreNextDocumentChangeEvents_)
                   {
-                     if (nativeEvent != null && doesChangeIntersectSuggestion(nativeEvent))
+                     if (nativeEvent != null && shouldDismissSuggestion(nativeEvent))
                      {
                         resetSuggestion();
                      }
