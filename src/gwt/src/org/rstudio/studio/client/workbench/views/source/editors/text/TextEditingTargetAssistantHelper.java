@@ -467,7 +467,15 @@ public class TextEditingTargetAssistantHelper
       // completions, so we need to use a copy and preserve the original
       // (which we need to send back to the server as-is in some language-server methods).
       AssistantCompletion normalized = normalizeSuggestion(completion);
-      
+
+      // If the suggestion starts before the cursor, collapse it by default (show gutter-only)
+      Position cursorPosition = display_.getCursorPosition();
+      Position suggestionStart = Position.create(normalized.range.start.line, normalized.range.start.character);
+      if (suggestionStart.isBefore(cursorPosition))
+      {
+         autoshow = false;
+      }
+
       // Check if this is a zero-width range (insertion at cursor)
       if (normalized.range.start.line == normalized.range.end.line &&
           normalized.range.start.character == normalized.range.end.character)
@@ -926,10 +934,21 @@ public class TextEditingTargetAssistantHelper
 
          // Inserting a newline on a single-line suggestion;
          // allowed only on first column, or after end anchor.
+         // For ghost text (zero-width range), inserting at the cursor position should dismiss.
          else if (row == editSuggestion_.startAnchor.getRow() &&
                   row == editSuggestion_.endAnchor.getRow())
          {
-            return !(col == 0 || col >= editSuggestion_.endAnchor.getColumn());
+            boolean isGhostText = editSuggestion_.type == SuggestionType.GHOST_TEXT;
+            if (isGhostText)
+            {
+               // Ghost text: dismiss if newline is at or after the start position
+               return col >= editSuggestion_.startAnchor.getColumn();
+            }
+            else
+            {
+               // Other cases: dismiss only if not at first column or after end anchor
+               return !(col == 0 || col > editSuggestion_.endAnchor.getColumn());
+            }
          }
 
          // Inserting newline on start anchor row (multi-line suggestion);
@@ -1725,6 +1744,11 @@ public class TextEditingTargetAssistantHelper
                   }
                }),
 
+               display_.addUndoRedoHandler((event) ->
+               {
+                  resetSuggestion();
+               }),
+
                display_.addCapturingKeyDownHandler(new KeyDownHandler()
                {
                   @Override
@@ -2256,12 +2280,6 @@ public class TextEditingTargetAssistantHelper
       }
 
       return completion;
-   }
-
-   private void temporarilySuspendCompletionRequests()
-   {
-      completionRequestsSuspended_ = true;
-      suspendTimer_.schedule(1200);
    }
 
    private void ignoreNextDocumentChangeEvents()
