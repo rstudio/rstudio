@@ -163,6 +163,8 @@ public:
       return type_.size() > 0 && type_ == kSourceDocumentTypeRSource;
    }
 
+   std::string languageId() const;
+
    core::Error readFromJson(core::json::Object* pDocJson);
    void writeToJson(core::json::Object* pDocJson, bool includeContents = true) const;
 
