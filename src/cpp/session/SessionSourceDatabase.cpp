@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -337,6 +338,43 @@ std::string SourceDocument::getProperty(const std::string& name) const
 bool SourceDocument::isUntitled() const
 {
    return path().empty() && !getProperty("tempName").empty();
+}
+
+std::string SourceDocument::languageId() const
+{
+   // Map internal document types to LSP language identifiers.
+   // See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+   if (type_ == kSourceDocumentTypeRSource ||
+       type_ == kSourceDocumentTypeRMarkdown ||
+       type_ == kSourceDocumentTypeRHTML ||
+       type_ == kSourceDocumentTypeSweave)
+   {
+      return "r";
+   }
+   else if (type_ == kSourceDocumentTypeQuartoMarkdown)
+   {
+      return "quarto";
+   }
+   else if (type_ == kSourceDocumentTypeJS)
+   {
+      return "javascript";
+   }
+   else if (type_ == kSourceDocumentTypeShell)
+   {
+      return "shellscript";
+   }
+   else if (type_ == kSourceDocumentTypeCpp ||
+            type_ == kSourceDocumentTypePython ||
+            type_ == kSourceDocumentTypeSQL)
+   {
+      // These types already match LSP language IDs
+      return type_;
+   }
+   else
+   {
+      // For unknown types, return the type as-is (lowercase)
+      return boost::algorithm::to_lower_copy(type_);
+   }
 }
 
 // set contents from string

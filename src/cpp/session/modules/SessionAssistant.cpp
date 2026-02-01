@@ -325,7 +325,7 @@ bool isIndexableDocument(const boost::shared_ptr<source_database::SourceDocument
    // Allow indexing of Untitled documents if they have a known type.
    if (pDoc->isUntitled())
    {
-      std::string type = pDoc->type();
+      std::string type = pDoc->languageId();
       std::string ext = lsp::extensionFromLanguageId(type);
       return !ext.empty();
    }
@@ -1352,7 +1352,7 @@ void syncOpenDocuments()
       std::string languageId;
       if (pDoc->isUntitled())
       {
-         languageId = pDoc->type();
+         languageId = pDoc->languageId();
       }
       else
       {
