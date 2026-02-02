@@ -73,11 +73,15 @@
    if (!is.recursive(value))
       return(result)
    
-   # Get indices, keys, and values
-   idxs <- seq_along(value)
-   keys <- .rs.nullCoalesce(names(value), rep.int("", length(value)))
-   vals <- value
-   
+   # Determine the maximum number of children to include
+   maxChildren <- if (isTRUE(children)) 50L else as.integer(children)
+
+   # Get indices, keys, and values (limited to maxChildren)
+   n <- min(length(value), maxChildren)
+   idxs <- seq_len(n)
+   keys <- .rs.nullCoalesce(names(value), rep.int("", length(value)))[idxs]
+   vals <- value[idxs]
+
    # Iterate over these to build child descriptions
    result$children <- .mapply(function(idx, key, val) {
       list(
@@ -102,12 +106,8 @@
                                                            maxChildren = 50)
 {
    # Get variable names from the environment
-   keys <- ls(envir = envir)
-   length(keys) <- min(length(keys), maxVariables)
-
-   # Limit number of variables to avoid overwhelming the context
-   if (length(varNames) > maxVariables)
-      varNames <- varNames[seq_len(maxVariables)]
+   varNames <- ls(envir = envir)
+   length(varNames) <- min(length(varNames), maxVariables)
 
    # Build descriptions for all variables
    descriptions <- lapply(varNames, function(varName) {
