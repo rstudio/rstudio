@@ -13,7 +13,7 @@
  *
  */
 
-#include "RCompilationDatabase.hpp"
+#include "CompilationDatabase.hpp"
 
 #include <algorithm>
 #include <gsl/gsl-lite.hpp>
@@ -23,18 +23,16 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 
-#include <core/Debug.hpp>
 #include <shared_core/Hash.hpp>
+
 #include <core/Algorithm.hpp>
-#include <core/PerformanceTimer.hpp>
+#include <core/Debug.hpp>
 #include <core/FileSerializer.hpp>
-
-#include <core/r_util/RToolsInfo.hpp>
-
-#include <core/system/ProcessArgs.hpp>
-#include <core/system/FileScanner.hpp>
-
 #include <core/libclang/LibClang.hpp>
+#include <core/PerformanceTimer.hpp>
+#include <core/r_util/RToolsInfo.hpp>
+#include <core/system/FileScanner.hpp>
+#include <core/system/ProcessArgs.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -44,7 +42,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "CodeCompletion.hpp"
-#include "RSourceIndex.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -77,7 +75,7 @@ LibClang& clang()
 
 bool verbose(int level)
 {
-   return rSourceIndex().verbose() >= level;
+   return sourceIndex().verbose() >= level;
 }
 
 bool precompiledHeadersEnabled()
@@ -516,14 +514,14 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 } // anonymous namespace
 
 
-RCompilationDatabase::RCompilationDatabase()
+ClangCompilationDatabase::ClangCompilationDatabase()
    : usePrecompiledHeaders_(true),
      forceRebuildPrecompiledHeaders_(false),
      restoredCompilationConfig_(false)
 {
 }
 
-void RCompilationDatabase::updateForCurrentPackage()
+void ClangCompilationDatabase::updateForCurrentPackage()
 {
    // one time restore of compilation config
    if (!restoredCompilationConfig_)
@@ -578,7 +576,7 @@ void RCompilationDatabase::updateForCurrentPackage()
 
 }
 
-std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
+std::vector<std::string> ClangCompilationDatabase::compileArgsForPackage(
       const core::system::Options& env,
       const FilePath& srcDir,
       bool isCpp)
@@ -638,7 +636,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
 }
 
 
-void RCompilationDatabase::savePackageCompilationConfig()
+void ClangCompilationDatabase::savePackageCompilationConfig()
 {
    json::Object configJson;
    configJson["args"] = json::toJsonArray(packageCompilationConfig_.args);
@@ -665,7 +663,7 @@ void RCompilationDatabase::savePackageCompilationConfig()
    
 }
 
-void RCompilationDatabase::restorePackageCompilationConfig()
+void ClangCompilationDatabase::restorePackageCompilationConfig()
 {
    FilePath configFilePath = compilationConfigFilePath();
    if (!configFilePath.exists())
@@ -736,7 +734,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    }
 }
 
-void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
+void ClangCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 {
    // read the the source cpp hash for this file
    SourceCppFileInfo info = sourceCppFileInfo(srcFile);
@@ -775,7 +773,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 }
 
 
-Error RCompilationDatabase::executeSourceCpp(
+Error ClangCompilationDatabase::executeSourceCpp(
                                       core::system::Options env,
                                       const std::string& cppPkg,
                                       const core::FilePath& srcPath,
@@ -854,7 +852,7 @@ Error RCompilationDatabase::executeSourceCpp(
             pResult);
 }
 
-core::Error RCompilationDatabase::executeRCmdSHLIB(
+core::Error ClangCompilationDatabase::executeRCmdSHLIB(
                                  core::system::Options env,
                                  const core::FilePath& srcPath,
                                  core::system::ProcessResult* pResult)
@@ -898,7 +896,7 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    return result;
 }
 
-bool RCompilationDatabase::isProjectTranslationUnit(
+bool ClangCompilationDatabase::isProjectTranslationUnit(
                                           const std::string& filename) const
 {
    using namespace projects;
@@ -940,7 +938,7 @@ bool isNotDirectory(const FileInfo& fileInfo)
 
 } // anonymous namespace
 
-std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
+std::vector<std::string> ClangCompilationDatabase::projectTranslationUnits() const
 {
    // units to return
    std::vector<std::string> units;
@@ -976,14 +974,14 @@ std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
    return units;
 }
 
-void RCompilationDatabase::rebuildPackageCompilationDatabase()
+void ClangCompilationDatabase::rebuildPackageCompilationDatabase()
 {
    packageBuildFileHash_.clear();
    compilerHash_.clear();
    rVersion_.clear();
 }
 
-bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
+bool ClangCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 {
    // no args
    if (config.args.empty())
@@ -1001,7 +999,7 @@ bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
 }
 
 
-std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
+std::vector<std::string> ClangCompilationDatabase::compileArgsForTranslationUnit(
       const std::string& filename,
       bool usePrecompiledHeaders)
 {
@@ -1076,8 +1074,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    return args;
 }
 
-RCompilationDatabase::CompilationConfig
-         RCompilationDatabase::configForSourceCpp(const std::string& cppPkg,
+ClangCompilationDatabase::CompilationConfig
+         ClangCompilationDatabase::configForSourceCpp(const std::string& cppPkg,
                                                   FilePath srcFile)
 {
    // validation: if this is Rcpp11 and we don't have the attributes
@@ -1140,7 +1138,7 @@ RCompilationDatabase::CompilationConfig
 
 }
 
-std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
+std::vector<std::string> ClangCompilationDatabase::argsForRCmdSHLIB(
       core::system::Options env,
       FilePath srcFile)
 {
@@ -1173,7 +1171,7 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
 }
 
 
-std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) const
+std::vector<std::string> ClangCompilationDatabase::baseCompilationArgs(bool isCpp) const
 {
    std::vector<std::string> args;
    
@@ -1250,7 +1248,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    return args;
 }
 
-std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
+std::vector<std::string> ClangCompilationDatabase::packageCompilationArgs(
       core::r_util::RPackageInfo* pPkgInfo,
       bool* pIsCpp)
 {
@@ -1378,7 +1376,7 @@ core::r_util::RToolsInfo& RCompilationDatabase::rToolsInfo() const
 
 #endif
 
-core::system::Options RCompilationDatabase::compilationEnvironment() const
+core::system::Options ClangCompilationDatabase::compilationEnvironment() const
 {
    // rtools on windows
    core::system::Options env;
@@ -1390,7 +1388,7 @@ core::system::Options RCompilationDatabase::compilationEnvironment() const
    return env;
 }
 
-std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
+std::vector<std::string> ClangCompilationDatabase::precompiledHeaderArgs(
       const CompilationConfig& config)
 {
    // args to return
@@ -1500,7 +1498,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          args.push_back(stdArg);
 
       // create args array
-      if (rSourceIndex().verbose() > 0)
+      if (sourceIndex().verbose() > 0)
       {
          std::cerr << "# GENERATING PRECOMPILED HEADERS (" << pkgName << ") ----" << std::endl;
          core::debug::print(args);
@@ -1559,23 +1557,23 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    return args;
 }
 
-core::libclang::CompilationDatabase rCompilationDatabase()
+core::libclang::CompilationDatabase clangCompilationDatabase()
 {
-   static RCompilationDatabase instance;
+   static ClangCompilationDatabase instance;
 
    CompilationDatabase compilationDatabase;
 
    compilationDatabase.hasTranslationUnit =
-      boost::bind(&RCompilationDatabase::isProjectTranslationUnit,
+      boost::bind(&ClangCompilationDatabase::isProjectTranslationUnit,
                   &instance, _1);
    compilationDatabase.translationUnits =
-      boost::bind(&RCompilationDatabase::projectTranslationUnits,
+      boost::bind(&ClangCompilationDatabase::projectTranslationUnits,
                   &instance);
    compilationDatabase.compileArgsForTranslationUnit =
-      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
+      boost::bind(&ClangCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1, _2);
    compilationDatabase.rebuildPackageCompilationDatabase =
-         boost::bind(&RCompilationDatabase::rebuildPackageCompilationDatabase,
+         boost::bind(&ClangCompilationDatabase::rebuildPackageCompilationDatabase,
                      &instance);
 
    return compilationDatabase;

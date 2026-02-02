@@ -1,5 +1,5 @@
 /*
- * RSourceIndex.hpp
+ * SourceIndex.hpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
-#define SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
+#ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
 
 #include <core/libclang/SourceIndex.hpp>
 
@@ -29,15 +29,15 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-core::libclang::SourceIndex& rSourceIndex();
+core::libclang::SourceIndex& sourceIndex();
 
 bool isIndexableFile(const core::FileInfo& fileInfo,
                      const core::FilePath& pkgSrcDir,
                      const core::FilePath& pkgIncludeDir);
 
 } // namespace clang
-} // namespace handlers
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
+#endif // SESSION_MODULES_CLANG_SOURCE_INDEX_HPP

@@ -262,14 +262,14 @@ set(SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
    modules/automation/SessionAutomation.cpp
+   modules/clang/CompilationDatabase.cpp
    modules/clang/CodeCompletion.cpp
    modules/clang/DefinitionIndex.cpp
    modules/clang/Diagnostics.cpp
    modules/clang/FindReferences.cpp
    modules/clang/GoToDefinition.cpp
-   modules/clang/RCompilationDatabase.cpp
-   modules/clang/RSourceIndex.cpp
    modules/clang/SessionClang.cpp
+   modules/clang/SourceIndex.cpp
    modules/connections/ActiveConnections.cpp
    modules/connections/Connection.cpp
    modules/connections/ConnectionHistory.cpp

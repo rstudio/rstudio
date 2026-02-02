@@ -1,5 +1,5 @@
 /*
- * RSourceIndex.cpp
+ * ClangSourceIndex.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "RSourceIndex.hpp"
+#include "SourceIndex.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/bind/bind.hpp>
@@ -25,7 +25,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-#include "RCompilationDatabase.hpp"
+#include "CompilationDatabase.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -38,11 +38,11 @@ namespace clang {
 
 namespace {
 
-class RSourceIndex : public SourceIndex
+class ClangSourceIndex : public SourceIndex
 {
 public:
-   RSourceIndex()
-      : SourceIndex(rCompilationDatabase(), prefs::userPrefs().clangVerbose())
+   ClangSourceIndex()
+      : SourceIndex(clangCompilationDatabase(), prefs::userPrefs().clangVerbose())
    {
    }
 };
@@ -50,15 +50,15 @@ public:
 // store as a pointer so that it's never destructrued during shutdown
 // (we observed at least one instance of libclang crashing when calling
 // clang_disposeTranslationUnit during shutdown)
-RSourceIndex* s_pRSourceIndex = nullptr;
+ClangSourceIndex* s_pClangSourceIndex = nullptr;
 
 } // anonymous namespace
 
-SourceIndex& rSourceIndex()
+SourceIndex& sourceIndex()
 {
-   if (s_pRSourceIndex == nullptr)
-      s_pRSourceIndex = new RSourceIndex();
-   return *s_pRSourceIndex;
+   if (s_pClangSourceIndex == nullptr)
+      s_pClangSourceIndex = new ClangSourceIndex();
+   return *s_pClangSourceIndex;
 }
 
 bool isIndexableFile(const FileInfo& fileInfo,

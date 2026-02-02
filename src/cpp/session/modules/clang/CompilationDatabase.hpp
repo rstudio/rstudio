@@ -1,5 +1,5 @@
 /*
- * RCompilationDatabase.hpp
+ * ClangCompilationDatabase.hpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_R_COMPILATION_DATABASE_HPP
-#define SESSION_MODULES_CLANG_R_COMPILATION_DATABASE_HPP
+#ifndef SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
+#define SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
 
 #include <map>
 #include <string>
@@ -46,11 +46,11 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-class RCompilationDatabase : boost::noncopyable
+class ClangCompilationDatabase : boost::noncopyable
 {
 public:
-   RCompilationDatabase();
-   virtual ~RCompilationDatabase() {}
+   ClangCompilationDatabase();
+   virtual ~ClangCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
            const std::string& filename, bool usePrecompiledHeaders);
@@ -135,7 +135,7 @@ private:
    bool restoredCompilationConfig_;
 };
 
-core::libclang::CompilationDatabase rCompilationDatabase();
+core::libclang::CompilationDatabase clangCompilationDatabase();
 
 
 } // namespace clang
@@ -143,4 +143,4 @@ core::libclang::CompilationDatabase rCompilationDatabase();
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_MODULES_CLANG_R_COMPILATION_DATABASE_HPP
+#endif // SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
