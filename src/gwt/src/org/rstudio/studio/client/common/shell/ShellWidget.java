@@ -23,6 +23,7 @@ import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.AnimationFrameThrottledCommand;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
@@ -282,10 +283,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.addKeyDownHandler(secondaryInputHandler);
       secondaryInputHandler.setInput(editor);
 
-      resizeCommand_ = new TimeBufferedCommand(5)
+      resizeCommand_ = new AnimationFrameThrottledCommand()
       {
          @Override
-         protected void performAction(boolean shouldSchedulePassive)
+         protected void performAction()
          {
             scrollPanel_.onContentSizeChanged();
             if (!DomUtils.selectionExists() && !scrollPanel_.isScrolledToBottom())
@@ -1288,7 +1289,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    protected final ClickableScrollPanel scrollPanel_;
    private final DockLayoutPanel container_;
    private final ConsoleResources.ConsoleStyles styles_;
-   private final TimeBufferedCommand resizeCommand_;
+   private final AnimationFrameThrottledCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
    private final UserPrefs prefs_;
