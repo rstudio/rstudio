@@ -17,3 +17,120 @@
 {
    .Call("rs_assistantSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
 })
+
+# Extract variable names referenced in R code that also exist in the global environment.
+# Returns a character vector of variable names.
+.rs.addFunction("assistant.extractVariablesInScope", function(code, envir = globalenv())
+{
+   # Try to parse the code; return empty if parsing fails
+   expr <- tryCatch(
+      parse(text = code, keep.source = FALSE),
+      error = function(e) NULL
+   )
+
+   if (is.null(expr))
+      return(character())
+
+   # Get all names referenced in the code
+   referencedNames <- all.names(expr, unique = TRUE)
+
+   # Filter to only include names that exist in the environment
+   existingNames <- ls(envir = envir)
+   intersect(referencedNames, existingNames)
+})
+
+.rs.addFunction("assistant.variableType", function(object)
+{
+   if (is.data.frame(object))
+   {
+      "data.frame"
+   }
+   else
+   {
+      mode(object)
+   }
+})
+
+#' Describe a single variable for assistant context.
+#' Returns a list with name, type, and optionally children.
+#'
+#' @param name The variable name
+#' @param value The variable value
+#' @param children Controls child element inclusion:
+#'   - FALSE or 0: don't include children
+#'   - TRUE: include up to 50 children (default max)
+#'   - integer > 0: include up to that many children
+.rs.addFunction("assistant.describeVariable", function(name, value, children = FALSE)
+{
+   type <- .rs.assistant.variableType(value)
+   result <- list(name = name, type = type)
+
+   # Determine maxChildren from the children parameter
+   if (identical(children, FALSE) || identical(children, 0L))
+      return(result)
+
+   # Skip if this object is not recursive
+   if (!is.recursive(value))
+      return(result)
+   
+   # Get indices, keys, and values
+   idxs <- seq_along(value)
+   keys <- .rs.nullCoalesce(names(value), rep.int("", length(value)))
+   vals <- value
+   
+   # Iterate over these to build child descriptions
+   result$children <- .mapply(function(idx, key, val) {
+      list(
+         name = if (nzchar(key)) key else paste0("[[", idx, "]]"),
+         type = .rs.assistant.variableType(val)
+      )
+   }, list(idxs, keys, vals), NULL)
+   
+   # Return result
+   result
+})
+
+# Generate variable descriptions for the current R session.
+# Returns a list suitable for JSON serialization in the format:
+# list(
+#    list(name = "x", type = "numeric"),
+#    list(name = "df", type = "data.frame", children = list(...))
+# )
+.rs.addFunction("assistant.variableDescriptions", function(envir = globalenv(),
+                                                           variablesInScope = TRUE,
+                                                           maxVariables = 100,
+                                                           maxChildren = 50)
+{
+   # Get variable names from the environment
+   keys <- ls(envir = envir)
+   length(keys) <- min(length(keys), maxVariables)
+
+   # Limit number of variables to avoid overwhelming the context
+   if (length(varNames) > maxVariables)
+      varNames <- varNames[seq_len(maxVariables)]
+
+   # Build descriptions for all variables
+   descriptions <- lapply(varNames, function(varName) {
+      tryCatch({
+         value <- get(varName, envir = envir, inherits = FALSE)
+
+         # Determine if we should examine children:
+         # - TRUE: examine children on all recursive objects
+         # - character vector: examine children only for named variables
+         # - FALSE: don't examine children
+         shouldExamineChildren <- isTRUE(variablesInScope) ||
+            (is.character(variablesInScope) && varName %in% variablesInScope)
+
+         children <- if (shouldExamineChildren) maxChildren else FALSE
+         .rs.assistant.describeVariable(varName, value, children)
+      }, error = function(e) {
+         # Skip variables that can't be accessed
+         NULL
+      })
+   })
+
+   # Remove NULL entries (failed accesses)
+   descriptions <- Filter(Negate(is.null), descriptions)
+
+   descriptions
+})
