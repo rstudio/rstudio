@@ -8373,11 +8373,11 @@ public class TextEditingTarget implements
       if (!formatOnSave)
          return false;
 
-      // If we're using the default formatter (none), then check if the user
-      // has asked us to use air for formatting via the other preference.
       String codeFormatter = prefs_.codeFormatter().getValue();
       if (StringUtil.equals(codeFormatter, UserPrefs.CODE_FORMATTER_NONE))
       {
+         // If we're using the default formatter (none), then check if the user
+         // has asked us to use air for formatting via the other preference.
          boolean hasAirToml = session_.getSessionInfo().hasAirToml();
          boolean userAirFormatter = prefs_.useAirFormatter().getValue();
          return hasAirToml && userAirFormatter;
