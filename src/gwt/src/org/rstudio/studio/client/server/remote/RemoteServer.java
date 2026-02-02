@@ -2510,12 +2510,14 @@ public class RemoteServer implements Server
    }
    
    public void formatCode(String code,
+                          String documentPath,
                           ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(code)
+            .add(documentPath)
             .get();
-      
+
       sendRequest(RPC_SCOPE, FORMAT_CODE, params, requestCallback);
    }
 

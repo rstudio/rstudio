@@ -3961,7 +3961,10 @@ public class TextEditingTarget implements
                }
                
                String selection = editor.getTextForRange(range);
-               server_.formatCode(selection, new ServerRequestCallback<String>()
+               server_.formatCode(
+                  selection,
+                  StringUtil.notNull(docUpdateSentinel_.getPath()),
+                  new ServerRequestCallback<String>()
                {
                   @Override
                   public void onResponseReceived(String response)

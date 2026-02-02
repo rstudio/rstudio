@@ -881,20 +881,48 @@ Error formatCode(
    
    Error error;
 
-   std::string code;
-   error = json::readParams(request.params, &code);
+   std::string code, path;
+   error = json::readParams(request.params, &code, &path);
    if (error)
       return onError(error);
 
-   FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
-   error = writeStringToFile(documentPath, code);
+   // Write selection to a temp file for formatting.
+   // Use the project scratch path if the document is within the current
+   // project (or is an untitled file), so formatters like Air can find the
+   // project's configuration file.
+   FilePath tempFilePath;
+   bool useProjectScratch = false;
+   if (projects::projectContext().hasProject())
+   {
+      if (path.empty())
+      {
+         useProjectScratch = true;
+      }
+      else
+      {
+         FilePath sourcePath = module_context::resolveAliasedPath(path);
+         useProjectScratch = sourcePath.isWithin(projects::projectContext().directory());
+      }
+   }
+
+   if (useProjectScratch)
+   {
+      std::string fileName = core::system::generateUuid() + ".R";
+      tempFilePath = projects::projectContext().scratchPath().completeChildPath(fileName);
+   }
+   else
+   {
+      tempFilePath = module_context::tempFile("rstudio-format-", "R");
+   }
+
+   error = writeStringToFile(tempFilePath, code);
    if (error)
       return onError(error);
 
-   return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
+   return formatDocumentImpl(kFormatContextCommand, tempFilePath, continuation, [=]()
    {
       std::string code;
-      Error error = readStringFromFile(documentPath, &code);
+      Error error = readStringFromFile(tempFilePath, &code);
       if (error)
          LOG_ERROR(error);
       
