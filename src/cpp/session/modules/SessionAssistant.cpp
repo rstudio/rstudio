@@ -285,7 +285,7 @@ std::vector<std::string> extractVariablesInScope(const std::string& code)
    SEXP resultSEXP = R_NilValue;
 
    Error error = r::exec::RFunction(".rs.assistant.extractVariablesInScope")
-         .addParam(code)
+         .addUtf8Param(code)
          .addParam(R_GlobalEnv)
          .call(&resultSEXP, &protect);
 
