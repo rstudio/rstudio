@@ -8359,18 +8359,35 @@ public class TextEditingTarget implements
       // Only enabled for R documents.
       if (fileType_ == null || !fileType_.isR())
          return false;
-      
+
+      // Check for document-level override.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
-         return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
-      
+      {
+         boolean formatOnSave = docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
+         if (!formatOnSave)
+            return false;
+      }
+
+      // Check global reformat on save preference.
+      boolean formatOnSave = prefs_.reformatOnSave().getValue();
+      if (!formatOnSave)
+         return false;
+
+      // If we're using the default formatter (none), then check if the user
+      // has asked us to use air for formatting via the other preference.
       String codeFormatter = prefs_.codeFormatter().getValue();
-      if (codeFormatter == UserPrefsAccessor.CODE_FORMATTER_NONE)
+      if (StringUtil.equals(codeFormatter, UserPrefs.CODE_FORMATTER_NONE))
       {
          boolean hasAirToml = session_.getSessionInfo().hasAirToml();
-         return hasAirToml;
+         boolean userAirFormatter = prefs_.useAirFormatter().getValue();
+         return hasAirToml && userAirFormatter;
       }
-      
-      return prefs_.reformatOnSave().getValue();
+      else
+      {
+         // Otherwise, the user has configured an alternate (external; styler)
+         // formatter that we assume can run on this document.
+         return true;
+      }
    }
 
    private void executeRSourceCommand(boolean forceEcho, boolean focusAfterExec)
