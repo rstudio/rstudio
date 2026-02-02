@@ -921,11 +921,17 @@ Error formatCode(
 
    return formatDocumentImpl(kFormatContextCommand, tempFilePath, continuation, [=]()
    {
+      // read from the tempfile we wrote
       std::string code;
       Error error = readStringFromFile(tempFilePath, &code);
       if (error)
          LOG_ERROR(error);
       
+      // remove the temporary file we created
+      error = tempFilePath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+
       // trim a final newline in the formatted selection
       if (boost::algorithm::ends_with(code, "\r\n"))
          code = code.substr(0, code.length() - 2);
