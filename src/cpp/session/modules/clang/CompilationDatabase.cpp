@@ -1,5 +1,5 @@
 /*
- * RCompilationDatabase.cpp
+ * CompilationDatabase.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -1368,7 +1368,7 @@ core::r_util::RToolsInfo findRtools()
    return core::r_util::RToolsInfo();
 }
 
-core::r_util::RToolsInfo& RCompilationDatabase::rToolsInfo() const
+core::r_util::RToolsInfo& ClangCompilationDatabase::rToolsInfo() const
 {
    static core::r_util::RToolsInfo instance = findRtools();
    return instance;
