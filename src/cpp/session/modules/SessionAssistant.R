@@ -63,7 +63,7 @@
 .rs.addFunction("assistant.describeVariable", function(name, value, children = FALSE)
 {
    type <- .rs.assistant.variableType(value)
-   result <- list(name = name, type = type)
+   result <- list(name = .rs.scalar(name), type = .rs.scalar(type))
 
    # Determine maxChildren from the children parameter
    # Handle both integer and numeric 0
@@ -87,8 +87,8 @@
    # Iterate over these to build child descriptions
    result$children <- .mapply(function(idx, key, val) {
       list(
-         name = if (nzchar(key)) key else paste0("[[", idx, "]]"),
-         type = .rs.assistant.variableType(val)
+         name = .rs.scalar(if (nzchar(key)) key else paste0("[[", idx, "]]")),
+         type = .rs.scalar(.rs.assistant.variableType(val))
       )
    }, list(idxs, keys, vals), NULL)
    
