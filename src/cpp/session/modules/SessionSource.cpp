@@ -880,18 +880,18 @@ Error formatCode(
    };
    
    Error error;
-   
+
    std::string code;
    error = json::readParams(request.params, &code);
    if (error)
       return onError(error);
-   
+
    FilePath documentPath = module_context::tempFile("rstudio-format-", "R");
    error = writeStringToFile(documentPath, code);
    if (error)
       return onError(error);
-   
-   return formatDocumentImpl(documentPath, continuation, [=]()
+
+   return formatDocumentImpl(kFormatContextCommand, documentPath, continuation, [=]()
    {
       std::string code;
       Error error = readStringFromFile(documentPath, &code);
