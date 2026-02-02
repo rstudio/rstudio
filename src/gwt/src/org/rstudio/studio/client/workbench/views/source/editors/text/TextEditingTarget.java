@@ -8360,19 +8360,25 @@ public class TextEditingTarget implements
       if (fileType_ == null || !fileType_.isR())
          return false;
 
-      // Check for document-level override.
+      // First, check if the user has enabled format on save;
+      // either via a document-specific property, or via user prefs.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
       {
+         // Check for document-level override.
          boolean formatOnSave = docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);
          if (!formatOnSave)
             return false;
       }
+      else
+      {
+         // Check global reformat on save preference.
+         boolean formatOnSave = prefs_.reformatOnSave().getValue();
+         if (!formatOnSave)
+            return false;
+      }
 
-      // Check global reformat on save preference.
-      boolean formatOnSave = prefs_.reformatOnSave().getValue();
-      if (!formatOnSave)
-         return false;
-
+      // Next, check what formatter the user has configured, and whether
+      // the configured formatter can be used in this context.
       String codeFormatter = prefs_.codeFormatter().getValue();
       if (StringUtil.equals(codeFormatter, UserPrefs.CODE_FORMATTER_NONE))
       {
