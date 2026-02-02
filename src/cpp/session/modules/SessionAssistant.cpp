@@ -44,6 +44,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionRUtil.hpp>
 
 #include "SessionLSP.hpp"
 
@@ -277,14 +278,25 @@ int assistantLogLevel()
    return s_assistantLogLevel;
 }
 
-std::vector<std::string> extractVariablesInScope(const std::string& code)
+std::vector<std::string> extractVariablesInScope(const std::string& contents,
+                                                  const std::string& documentType)
 {
    std::vector<std::string> result;
 
+   // Extract R code from the document (handles Rmd, Quarto, etc.)
+   std::string code;
+   Error error = r_utils::extractRCode(contents, documentType, &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   // Parse the R code to find variable references
    r::sexp::Protect protect;
    SEXP resultSEXP = R_NilValue;
 
-   Error error = r::exec::RFunction(".rs.assistant.extractVariablesInScope")
+   error = r::exec::RFunction(".rs.assistant.extractVariablesInScope")
          .addUtf8Param(code)
          .addParam(R_GlobalEnv)
          .call(&resultSEXP, &protect);
@@ -2011,10 +2023,10 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
 
-   // Add variable descriptions for R files
-   if (pDoc->isRFile())
+   // Add variable descriptions for R-related files
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
    {
-      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents(), pDoc->type());
       json::Array variablesContext = getVariablesContext(variablesInScope);
       if (!variablesContext.isEmpty())
          paramsJson["variables"] = variablesContext;
@@ -2101,10 +2113,10 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
 
-   // Add variable descriptions for R files
-   if (pDoc->isRFile())
+   // Add variable descriptions for R-related files
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
    {
-      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents(), pDoc->type());
       json::Array variablesContext = getVariablesContext(variablesInScope);
       if (!variablesContext.isEmpty())
          paramsJson["variables"] = variablesContext;
