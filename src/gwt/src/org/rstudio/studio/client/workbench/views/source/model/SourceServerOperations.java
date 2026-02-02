@@ -143,6 +143,7 @@ public interface SourceServerOperations extends FilesServerOperations,
     * Format code with the active formatter.
     */
    void formatCode(String code,
+                   String documentPath,
                    ServerRequestCallback<String> requestCallback);
    
 
