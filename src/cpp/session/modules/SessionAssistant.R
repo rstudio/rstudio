@@ -66,7 +66,8 @@
    result <- list(name = name, type = type)
 
    # Determine maxChildren from the children parameter
-   if (identical(children, FALSE) || identical(children, 0L))
+   # Handle both integer and numeric 0
+   if (identical(children, FALSE) || (is.numeric(children) && children == 0))
       return(result)
 
    # Skip if this object is not recursive
@@ -79,7 +80,8 @@
    # Get indices, keys, and values (limited to maxChildren)
    n <- min(length(value), maxChildren)
    idxs <- seq_len(n)
-   keys <- .rs.nullCoalesce(names(value), rep.int("", length(value)))[idxs]
+   nms <- names(value)
+   keys <- if (is.null(nms)) character(n) else nms[idxs]
    vals <- value[idxs]
 
    # Iterate over these to build child descriptions
