@@ -2011,12 +2011,14 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
 
-   // Add variable descriptions for R session
-   // Extract variables referenced in document that exist in global environment
-   std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
-   json::Array variablesContext = getVariablesContext(variablesInScope);
-   if (!variablesContext.isEmpty())
-      paramsJson["variables"] = variablesContext;
+   // Add variable descriptions for R files
+   if (pDoc->isRFile())
+   {
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
+      json::Array variablesContext = getVariablesContext(variablesInScope);
+      if (!variablesContext.isEmpty())
+         paramsJson["variables"] = variablesContext;
+   }
 
    // Send the request
    std::string requestId = core::system::generateUuid();
@@ -2099,12 +2101,14 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
 
-   // Add variable descriptions for R session
-   // Extract variables referenced in document that exist in global environment
-   std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
-   json::Array variablesContext = getVariablesContext(variablesInScope);
-   if (!variablesContext.isEmpty())
-      paramsJson["variables"] = variablesContext;
+   // Add variable descriptions for R files
+   if (pDoc->isRFile())
+   {
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents());
+      json::Array variablesContext = getVariablesContext(variablesInScope);
+      if (!variablesContext.isEmpty())
+         paramsJson["variables"] = variablesContext;
+   }
 
    // Create the continuation
    auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
