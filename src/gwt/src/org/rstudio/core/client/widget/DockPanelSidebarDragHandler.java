@@ -16,6 +16,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.AnimationFrameThrottledCommand;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.events.MouseDragHandler;
 
@@ -42,27 +43,32 @@ public abstract class DockPanelSidebarDragHandler extends MouseDragHandler
    @Override
    public void onDrag(MouseDragEvent event)
    {
+      // Store pending values and throttle layout updates to animation frame rate
+      pendingXDiff_ = event.getTotalDelta().getMouseX();
+      resizeCommand_.nudge();
+   }
+
+   private void updateSize()
+   {
       double initialWidth = initialWidth_;
-      double xDiff = event.getTotalDelta().getMouseX();
-      double newSize = initialWidth - xDiff;
-      
+      double newSize = initialWidth - pendingXDiff_;
+
       // We allow an extra pixel here just to 'hide' the border
       // if the outline is maximized, since the 'separator'
       // lives as part of the outline instead of 'between' the
       // two widgets
       double maxSize = panel_.getOffsetWidth() + 1;
-      
+
       double clamped = MathUtil.clamp(newSize, 0, maxSize);
-      
+
       // If the size is below '5px', interpret this as a request
       // to close the outline widget.
       if (clamped < 5)
          clamped = 0;
-      
+
       panel_.setWidgetSize(sidebar_, clamped);
-      
+
       onResized(clamped != 0);
-     
    }
    
    @Override
@@ -86,6 +92,15 @@ public abstract class DockPanelSidebarDragHandler extends MouseDragHandler
    final Widget sidebar_;
    final DockLayoutPanel panel_;
    double initialWidth_ = 0;
+   double pendingXDiff_ = 0;
+   private final AnimationFrameThrottledCommand resizeCommand_ = new AnimationFrameThrottledCommand()
+   {
+      @Override
+      protected void performAction()
+      {
+         updateSize();
+      }
+   };
 }
 
       
