@@ -29,8 +29,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include "RSourceIndex.hpp"
-#include "RCompilationDatabase.hpp"
+#include "CompilationDatabase.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -236,14 +236,14 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       // get the compilation arguments for this file and use them to
       // create a translation unit
       std::vector<std::string> compileArgs =
-            rCompilationDatabase().compileArgsForTranslationUnit(file, true);
+            clangCompilationDatabase().compileArgsForTranslationUnit(file, true);
 
       if (!compileArgs.empty())
       {
          // create index
          CXIndex index = libclang::clang().createIndex(
                    1 /* Exclude PCH */,
-                   (rSourceIndex().verbose() > 0) ? 1 : 0);
+                   (sourceIndex().verbose() > 0) ? 1 : 0);
 
          // get args in form clang expects
          core::system::ProcessArgs argsArray(compileArgs);
@@ -367,7 +367,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
       return FileLocation();
 
    // get the definition cursor for this file location
-   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   Cursor cursor = sourceIndex().referencedCursorForFileLocation(location);
    if (cursor.isNull())
       return FileLocation();
 
@@ -376,7 +376,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    if (!USR.empty())
    {
       // first inspect translation units we have an in-memory index for
-      TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
+      TranslationUnits units = sourceIndex().getIndexedTranslationUnits();
       for (const TranslationUnits::value_type& unit : units)
       {
          // search for the definition
@@ -631,7 +631,7 @@ void searchDefinitions(const std::string& term,
 
    // first search translation units we have an in-memory index for
    // (this will reflect unsaved changes in editor buffers)
-   TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
+   TranslationUnits units = sourceIndex().getIndexedTranslationUnits();
    for (TranslationUnits::iterator it = units.begin(); it != units.end(); ++it)
    {
       const TranslationUnit& unit = it->second;

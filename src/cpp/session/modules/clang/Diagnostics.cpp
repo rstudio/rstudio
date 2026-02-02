@@ -19,7 +19,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "RSourceIndex.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -143,7 +143,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
    json::Array diagnosticsJson;
 
    // get diagnostics from translation unit
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(
+   TranslationUnit tu = sourceIndex().getTranslationUnit(
       filePath.getAbsolutePath(),
                                              true);
    if (!tu.empty())

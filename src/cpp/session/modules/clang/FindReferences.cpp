@@ -27,8 +27,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "RSourceIndex.hpp"
-#include "RCompilationDatabase.hpp"
+#include "CompilationDatabase.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -245,7 +245,7 @@ private:
       if (it == sourceFileContents_.end())
       {
          // check unsaved files
-         UnsavedFiles& unsavedFiles = rSourceIndex().unsavedFiles();
+         UnsavedFiles& unsavedFiles = sourceIndex().unsavedFiles();
          unsigned numFiles = unsavedFiles.numUnsavedFiles();
          for (unsigned i = 0; i<numFiles; ++i)
          {
@@ -318,7 +318,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                            std::string* pSpelling,
                            std::vector<core::libclang::FileRange>* pRefs)
 {
-   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   Cursor cursor = sourceIndex().referencedCursorForFileLocation(location);
    if (!cursor.isValid() || !cursor.isDeclaration())
       return Success();
 
@@ -329,16 +329,16 @@ core::Error findReferences(const core::libclang::FileLocation& location,
 
    // determine what translation units to look in -- if this is a package
    // then we look throughout all the source code in the package.
-   if (rCompilationDatabase().hasTranslationUnit(
+   if (clangCompilationDatabase().hasTranslationUnit(
       location.filePath.getAbsolutePath()))
    {
       // get all translation units to search
-      std::vector<std::string> files = rCompilationDatabase()
+      std::vector<std::string> files = clangCompilationDatabase()
                                                 .translationUnits();
 
       // get translation units we've already indexed
       std::map<std::string,TranslationUnit> indexedUnits =
-                           rSourceIndex().getIndexedTranslationUnits();
+                           sourceIndex().getIndexedTranslationUnits();
 
       for (const std::string& filename : files)
       {
@@ -358,7 +358,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
             // get the compilation arguments for this file and use them to
             // create a temporary translation unit to search
             std::vector<std::string> compileArgs =
-               rCompilationDatabase().compileArgsForTranslationUnit(filename,
+               clangCompilationDatabase().compileArgsForTranslationUnit(filename,
                                                                     true);
 
             if (compileArgs.empty())
@@ -367,7 +367,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
             // create temporary index
             CXIndex index = libclang::clang().createIndex(
                               1 /* Exclude PCH */,
-                              (rSourceIndex().verbose() > 0) ? 1 : 0);
+                              (sourceIndex().verbose() > 0) ? 1 : 0);
 
             // get args in form clang expects
             core::system::ProcessArgs argsArray(compileArgs);
@@ -393,7 +393,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
    // not a package, just search locally
    else
    {
-      TranslationUnit tu = rSourceIndex().getTranslationUnit(
+      TranslationUnit tu = sourceIndex().getTranslationUnit(
          location.filePath.getAbsolutePath(),
                                              true);
       if (!tu.empty())

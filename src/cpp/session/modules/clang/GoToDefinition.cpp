@@ -20,8 +20,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "RSourceIndex.hpp"
 #include "DefinitionIndex.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;

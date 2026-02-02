@@ -31,13 +31,13 @@
 
 #include <core/libclang/LibClang.hpp>
 
-#include "Diagnostics.hpp"
+#include "CodeCompletion.hpp"
+#include "CompilationDatabase.hpp"
 #include "DefinitionIndex.hpp"
+#include "Diagnostics.hpp"
 #include "FindReferences.hpp"
 #include "GoToDefinition.hpp"
-#include "CodeCompletion.hpp"
-#include "RSourceIndex.hpp"
-#include "RCompilationDatabase.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -93,7 +93,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
 
    // update unsaved files
-   rSourceIndex().unsavedFiles().update(filename,
+   sourceIndex().unsavedFiles().update(filename,
                                         pDoc->contents(),
                                         pDoc->dirty());
 
@@ -103,7 +103,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::primeEditorTranslationUnit,
-                        &(rSourceIndex()), filename),
+                        &(sourceIndex()), filename),
             true); // require idle
    }
 
@@ -117,7 +117,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::reprimeEditorTranslationUnit,
-                        &(rSourceIndex()), filename),
+                        &(sourceIndex()), filename),
             true); // require idle
    }
 }
@@ -129,21 +129,21 @@ void onSourceDocRemoved(const std::string& id, const std::string& path)
       module_context::resolveAliasedPath(path).getAbsolutePath();
 
    // remove from unsaved files
-   rSourceIndex().unsavedFiles().remove(resolvedPath);
+   sourceIndex().unsavedFiles().remove(resolvedPath);
 
    // remove the translation unit
-   rSourceIndex().removeTranslationUnit(resolvedPath);
+   sourceIndex().removeTranslationUnit(resolvedPath);
 }
 
 void onAllSourceDocsRemoved()
 {
-   rSourceIndex().unsavedFiles().removeAll();
-   rSourceIndex().removeAllTranslationUnits();
+   sourceIndex().unsavedFiles().removeAll();
+   sourceIndex().removeAllTranslationUnits();
 }
 
 void onPackageLibraryMutated()
 {
-   rCompilationDatabase().rebuildPackageCompilationDatabase();
+   clangCompilationDatabase().rebuildPackageCompilationDatabase();
 }
 
 bool cppIndexingDisabled()

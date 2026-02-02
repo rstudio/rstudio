@@ -28,9 +28,8 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "RCompilationDatabase.hpp"
-#include "RSourceIndex.hpp"
-#include "Diagnostics.hpp"
+#include "CompilationDatabase.hpp"
+#include "SourceIndex.hpp"
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -175,7 +174,7 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
                                          std::vector<std::string>* pIncludePaths)
 {
    std::vector<std::string> args =
-         rCompilationDatabase().compileArgsForTranslationUnit(
+         clangCompilationDatabase().compileArgsForTranslationUnit(
             filePath.getAbsolutePathNative(), false);
    
    for (const std::string& arg : args)
@@ -528,7 +527,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
 
    // get the translation unit and do the code completion
    std::string filename = filePath.getAbsolutePath();
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filename);
 
    if (!tu.empty())
    {
