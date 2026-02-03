@@ -19,7 +19,7 @@ PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
 # other controls
 PANE_LAYOUT_RESET_LINK <- "#rstudio_pane_layout_reset_link"
-PANE_LAYOUT_ADD_COLUMN_BUTTON = "rstudio_pane_layout_add_column_button"
+PANE_LAYOUT_ADD_COLUMN_BUTTON <- "rstudio_pane_layout_add_column_button"
 
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
