@@ -34,23 +34,6 @@ namespace r_util {
 namespace
 {
 
-Error sessionIdFromFolder(const FilePath& folder, std::string* pSessionId)
-{
-   std::string baseName = folder.getFilename();
-   std::vector<std::string> result;
-   boost::split(result, baseName, boost::is_any_of("-"));
-
-   if (result.size() != 2)
-   {
-      Error error = Error("SessionMigrationError", 1, ERROR_LOCATION);
-      error.addProperty("description", "Unexpected file in active sessions: " + folder.getAbsolutePath());
-      return error;
-   }
-
-   *pSessionId = result[1];
-   return Success();
-}
-
 FilePath getSessionDirPath(const FilePath& storagePath, const std::string& sessionId)
 {
    return storagePath.completeChildPath(kSessionDirPrefix + sessionId);
@@ -168,9 +151,6 @@ InvokeRpc RpcActiveSessionsStorage::getDefaultRpcFunc()
 
 std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const 
 {   
-   // First attempt to ensure all sessions have been migrated.
-   migrateSessions();
-
    std::vector<std::string> ids;
 
 #ifndef _WIN32
@@ -306,90 +286,6 @@ Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool*
    *pHasSessionId = count > 0;
 
    return error;
-#endif
-}
-
-void RpcActiveSessionsStorage::migrateSessions() const
-{
-#ifndef _WIN32
-   static const std::string migratedFileName = ".migrated";
-   static const std::string properites = "properites";
-
-   FilePath rootMigratedFile = storagePath_.completeChildPath(migratedFileName);
-   if (!rootMigratedFile.exists())
-   {
-      std::vector<FilePath> children;
-      if (storagePath_.isDirectory())
-      {
-         Error error = storagePath_.getChildren(children);
-         if (error)
-         {
-            error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
-            LOG_ERROR(error);
-            return;
-         }
-      }
-
-      for (const FilePath& child: children)
-      {
-         FilePath migratedFile = child.completeChildPath(migratedFileName);
-         if (!migratedFile.exists())
-         {
-            if (child.completeChildPath(properites).exists())
-            {
-               std::string sessionId;
-               Error error = sessionIdFromFolder(child, &sessionId);
-               if (error)
-               {
-                  error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
-                  LOG_ERROR(error);
-                  continue;
-               }
-
-               // Skip workspaces
-               if (sessionId == kWorkspacesId)
-               {
-                  continue;
-               }
-
-               ActiveSession fileActiveSession(
-                  sessionId,
-                  child,
-                  std::shared_ptr<core::r_util::IActiveSessionStorage>(
-                     new FileActiveSessionStorage(child)));
-
-               ActiveSession rpcActiveSession(
-                  sessionId,
-                  child,               
-                  std::shared_ptr<core::r_util::IActiveSessionStorage>(
-                     new RpcActiveSessionStorage(user_, sessionId, child, invokeRpcFunc_)));
-
-               std::map<std::string, std::string> props;
-               error = fileActiveSession.readProperties({}, &props);
-               if (error)
-               {
-                  error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
-                  error.addProperty("sessionId", sessionId);
-                  LOG_ERROR(error);
-                  continue;
-               }
-
-               error = rpcActiveSession.writeProperties(props);
-               if (error)
-               {
-                  error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
-                  error.addProperty("sessionId", sessionId);
-                  LOG_ERROR(error);
-                  continue;
-               }
-            }
-
-            migratedFile.ensureFile();
-         }
-      }
-
-      rootMigratedFile.ensureFile();
-   }
 #endif
 }
 

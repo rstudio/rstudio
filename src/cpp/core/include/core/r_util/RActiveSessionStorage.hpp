@@ -48,7 +48,7 @@ protected:
 class FileActiveSessionStorage : public IActiveSessionStorage
 {
 public:
-   explicit FileActiveSessionStorage(const FilePath& location, const core::r_util::FilePathToProjectId& projectToIdFunction = {});
+   explicit FileActiveSessionStorage(const FilePath& location, const core::r_util::FilePathToProjectId& projectToIdFunction);
    ~FileActiveSessionStorage() override = default;
    Error readProperty(const std::string& name, std::string* pValue) override;   
    Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
