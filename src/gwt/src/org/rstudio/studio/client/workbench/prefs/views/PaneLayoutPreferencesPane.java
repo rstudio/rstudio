@@ -240,6 +240,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          constants_.addButtonText(),
          constants_.addButtonLabel(),
          res_.iconAddSourcePane());
+      ElementIds.assignElementId(addButton, ElementIds.PANE_LAYOUT_ADD_COLUMN_BUTTON);
       if (displayColumnCount_ > PaneManager.MAX_COLUMN_COUNT - 1 ||
          !userPrefs.allowSourceColumns().getGlobalValue())
          addButton.setEnabled(false);
@@ -905,6 +906,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          }
 
          boolean columnCountChanged = (displayColumnCount_ != additionalColumnCount_);
+         boolean sidebarVisibilityChanged = (prevConfig.getSidebarVisible() != sidebarVisible);
+         boolean sidebarLocationChanged = !prevConfig.getSidebarLocation().equals(sidebarLocation);
+
          if (columnCountChanged)
             additionalColumnCount_ =
                paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
@@ -915,16 +919,23 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_,
                sidebar, sidebarVisible, sidebarLocation);
 
-         // If column count changed, defer setting the global value until after layout completes.
+         // Defer setting global value when layout changes require browser rendering.
          // The panes ValueChangeHandler checks getOffsetWidth() which returns 0 before browser
          // renders the new layout, causing it to resize all columns to 0.
-         if (columnCountChanged)
+         if (columnCountChanged || sidebarVisibilityChanged || sidebarLocationChanged)
          {
+            // Only refresh sidebar if it was already visible. When showing a hidden sidebar,
+            // the ValueChangeHandler's showSidebar(true) call handles everything. Calling
+            // refreshSidebar() would cause a redundant destroy/recreate cycle that breaks layout.
+            boolean sidebarWasVisible = prevConfig.getSidebarVisible();
             Scheduler.get().scheduleDeferred(() ->
             {
                userPrefs_.panes().setGlobalValue(newConfig);
-               paneManager_.clearSidebarCache();
-               paneManager_.refreshSidebar();
+               if (sidebarWasVisible)
+               {
+                  paneManager_.clearSidebarCache();
+                  paneManager_.refreshSidebar();
+               }
             });
          }
          else
