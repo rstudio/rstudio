@@ -44,6 +44,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionRUtil.hpp>
 
 #include "SessionLSP.hpp"
 
@@ -275,6 +276,99 @@ std::string agentNotRunningReason()
 int assistantLogLevel()
 {
    return s_assistantLogLevel;
+}
+
+std::vector<std::string> extractVariablesInScope(const std::string& contents,
+                                                  const std::string& documentType)
+{
+   std::vector<std::string> result;
+
+   // Extract R code from the document (handles Rmd, Quarto, etc.)
+   std::string code;
+   Error error = r_utils::extractRCode(contents, documentType, &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   // Parse the R code to find variable references
+   r::sexp::Protect protect;
+   SEXP resultSEXP = R_NilValue;
+
+   error = r::exec::RFunction(".rs.assistant.extractVariablesInScope")
+         .addUtf8Param(code)
+         .addParam(R_GlobalEnv)
+         .call(&resultSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   error = r::sexp::extract(resultSEXP, &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   return result;
+}
+
+json::Array getVariablesContext(const std::vector<std::string>& variablesInScope)
+{
+   json::Array variablesContext;
+
+   // Build the variablesInScope parameter for R
+   // TRUE means examine all recursive objects, character vector limits to specific names
+   r::sexp::Protect protect;
+   SEXP variablesInScopeSEXP = R_NilValue;
+
+   if (variablesInScope.empty())
+   {
+      // No specific variables in scope - examine all recursive objects
+      variablesInScopeSEXP = Rf_ScalarLogical(TRUE);
+   }
+   else
+   {
+      // Specific variables in scope
+      variablesInScopeSEXP = r::sexp::create(variablesInScope, &protect);
+   }
+
+   // Call the R function to get variable descriptions
+   SEXP resultSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
+         .addParam(R_GlobalEnv)
+         .addParam(variablesInScopeSEXP)
+         .call(&resultSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return variablesContext;
+   }
+
+   // Convert the R list to JSON
+   json::Value variablesJson;
+   error = r::json::jsonValueFromList(resultSEXP, &variablesJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return variablesContext;
+   }
+
+   // Wrap in the expected format: [{ languageId: "r", variables: [...] }]
+   if (variablesJson.isArray() && !variablesJson.getArray().isEmpty())
+   {
+      json::Object rContext;
+      rContext["languageId"] = "r";
+      rContext["variables"] = variablesJson;
+      variablesContext.push_back(rContext);
+   }
+
+   return variablesContext;
 }
 
 bool isIndexableFile(const FilePath& documentPath)
@@ -1929,6 +2023,15 @@ Error assistantGenerateCompletions(const json::JsonRpcRequest& request,
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
 
+   // Add variable descriptions for R-related files
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
+   {
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents(), pDoc->type());
+      json::Array variablesContext = getVariablesContext(variablesInScope);
+      if (!variablesContext.isEmpty())
+         paramsJson["variables"] = variablesContext;
+   }
+
    // Send the request
    std::string requestId = core::system::generateUuid();
    sendRequest("textDocument/inlineCompletion", requestId, paramsJson, AssistantContinuation(continuation));
@@ -2009,6 +2112,15 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    paramsJson["textDocument"] = docJson;
    paramsJson["position"] = positionJson;
    paramsJson["context"] = contextJson;
+
+   // Add variable descriptions for R-related files
+   if (pDoc->isRFile() || pDoc->isRMarkdownDocument())
+   {
+      std::vector<std::string> variablesInScope = extractVariablesInScope(pDoc->contents(), pDoc->type());
+      json::Array variablesContext = getVariablesContext(variablesInScope);
+      if (!variablesContext.isEmpty())
+         paramsJson["variables"] = variablesContext;
+   }
 
    // Create the continuation
    auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
