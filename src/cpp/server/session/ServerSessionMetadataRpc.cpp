@@ -64,24 +64,13 @@ inline FilePath userDataDir(const system::User& user)
 
 inline std::shared_ptr<r_util::IActiveSessionsStorage> getActiveSessionsStorage(const FilePath& storageDir, const system::User& user)
 {
-   if (options().sessionUseFileStorage())
-      return std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir));
-   else
-      return std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user));
+   return std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user));
 }
 
 inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
 {
-   if (!options().sessionUseFileStorage())
-   {
-      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
-              std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user))));
-   }
-   else {
-      FilePath storageDir = userDataDir(user);
-      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
-         std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir)), storageDir));
-   }
+   return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
+           std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user))));
 }
 
 inline boost::shared_ptr<r_util::ActiveSession> getActiveSession(const system::User& user, const std::string& sessionId)

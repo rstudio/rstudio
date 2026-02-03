@@ -19,6 +19,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionServerRpc.hpp>
+#include <session/SessionScopes.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;
@@ -43,7 +44,7 @@ Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage)
    pStorage->reset(new FileActiveSessionsStorage(storagePath));
 #else
    if (options().sessionUseFileStorage())
-      pStorage->reset(new FileActiveSessionsStorage(storagePath));
+      pStorage->reset(new FileActiveSessionsStorage(storagePath, session::filePathToProjectId(options().userScratchPath(), FilePath(options().getOverlayOption(kSessionSharedStoragePath)))));
    else
    {
       system::User user;

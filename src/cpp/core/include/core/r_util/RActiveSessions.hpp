@@ -790,8 +790,8 @@ public:
    std::string userHomeDir() { return settings_.get("userHomeDir", ""); }
    void setUserHomeDir(const std::string& userHomeDir) { settings_.set("userHomeDir", userHomeDir); }
 
-   int sessionTimeoutKillHours() { return settings_.getInt("sessionTimeoutKillHours", 0); }
-   void setSessionTimeoutKillHours(int val) { settings_.set("sessionTimeoutKillHours", val); }
+   double sessionTimeoutKillHours() { return settings_.getDouble("sessionTimeoutKillHours", 0); }
+   void setSessionTimeoutKillHours(double val) { settings_.set("sessionTimeoutKillHours", val); }
 
    core::Error destroy() { return filePath_.removeIfExists(); }
 

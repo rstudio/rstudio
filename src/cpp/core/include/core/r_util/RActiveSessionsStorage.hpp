@@ -43,7 +43,7 @@ namespace r_util {
    class FileActiveSessionsStorage : public IActiveSessionsStorage
    {
    public:
-      explicit FileActiveSessionsStorage(const FilePath& rootStoragePath, const core::r_util::FilePathToProjectId& projectToIdFunction = {});
+      explicit FileActiveSessionsStorage(const FilePath& rootStoragePath, const core::r_util::FilePathToProjectId& projectToIdFunction);
       ~FileActiveSessionsStorage() = default;
       std::vector< std::string > listSessionIds() const override;
       size_t getSessionCount() const override;
@@ -68,8 +68,6 @@ namespace r_util {
       core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
 
    private:
-      void migrateSessions() const;
-
       const core::system::User user_;
       FilePath storagePath_;
       const InvokeRpc invokeRpcFunc_;
