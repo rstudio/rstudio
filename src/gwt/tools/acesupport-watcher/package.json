@@ -1,0 +1,13 @@
+{
+  "name": "acesupport-watcher",
+  "version": "1.0.0",
+  "private": true,
+  "description": "File watcher for acesupport JavaScript files",
+  "main": "watch.js",
+  "scripts": {
+    "watch": "node watch.js"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0"
+  }
+}
