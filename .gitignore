@@ -53,8 +53,6 @@ rstudio-automation-results.xml
 venv/
 .venv/
 
-CLAUDE.md
 AGENTS.md
 GEMINI.md
-.claude/
 spec/
