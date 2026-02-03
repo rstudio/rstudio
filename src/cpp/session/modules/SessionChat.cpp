@@ -3470,6 +3470,9 @@ Error allocatePort(int* pPort)
 // WebSocket URL Construction
 // ============================================================================
 
+// Returns either:
+// - Server mode: relative path (e.g., "/p/58fab3e4/ai-chat")
+// - Desktop mode: absolute URL (e.g., "ws://127.0.0.1:1234/ai-chat")
 std::string buildWebSocketUrl(int port)
 {
 #ifdef RSTUDIO_SERVER
