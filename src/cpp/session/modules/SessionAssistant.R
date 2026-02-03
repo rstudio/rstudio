@@ -13,6 +13,10 @@
 #
 #
 
+# Constants for variable description limits
+.rs.setVar("assistant.kMaxVariables", 100L)
+.rs.setVar("assistant.kMaxChildren", 50L)
+
 .rs.addFunction("assistant.setLogLevel", function(level = 0L)
 {
    .Call("rs_assistantSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
@@ -51,19 +55,54 @@
    }
 })
 
+#' Build child descriptions for a recursive object.
+#' @param value A recursive object (list, data.frame, etc.)
+#' @param maxChildren Maximum number of children to include
+#' @return A list of child descriptions with name and type
+.rs.addFunction("assistant.describeChildren", function(value, maxChildren = .rs.assistant.kMaxChildren)
+{
+   n <- min(length(value), maxChildren)
+   idxs <- seq_len(n)
+   nms <- names(value)
+   keys <- if (is.null(nms)) character(n) else nms[idxs]
+   vals <- value[idxs]
+
+   .mapply(function(idx, key, val) {
+      list(
+         name = .rs.scalar(if (nzchar(key)) key else paste0("[[", idx, "]]")),
+         type = .rs.scalar(.rs.assistant.variableType(val))
+      )
+   }, list(idxs, keys, vals), NULL)
+})
+
 #' Describe a single variable for assistant context.
-#' Returns a list with name, type, and optionally children.
+#' Returns a list with name, type, optionally action, and optionally children.
 #'
 #' @param name The variable name
-#' @param value The variable value
+#' @param value The variable value (can be NULL for delete action)
 #' @param children Controls child element inclusion:
 #'   - FALSE or 0: don't include children
 #'   - TRUE: include up to 50 children (default max)
 #'   - integer > 0: include up to that many children
-.rs.addFunction("assistant.describeVariable", function(name, value, children = FALSE)
+#' @param action Optional action field ("create", "modify", or "delete")
+.rs.addFunction("assistant.describeVariable", function(name, value, children = FALSE, action = NULL)
 {
+   # For delete actions, return minimal info
+   if (identical(action, "delete"))
+   {
+      return(list(
+         name = .rs.scalar(name),
+         type = .rs.scalar(""),
+         action = .rs.scalar(action)
+      ))
+   }
+
    type <- .rs.assistant.variableType(value)
    result <- list(name = .rs.scalar(name), type = .rs.scalar(type))
+
+   # Add action field if provided
+   if (!is.null(action))
+      result$action <- .rs.scalar(action)
 
    # Determine maxChildren from the children parameter
    # Handle both integer and numeric 0
@@ -71,29 +110,32 @@
       return(result)
 
    # Skip if this object is not recursive
-   if (!is.recursive(value))
+   if (is.null(value) || !is.recursive(value))
       return(result)
-   
+
    # Determine the maximum number of children to include
-   maxChildren <- if (isTRUE(children)) 50L else as.integer(children)
+   maxChildren <- if (isTRUE(children)) .rs.assistant.kMaxChildren else as.integer(children)
 
-   # Get indices, keys, and values (limited to maxChildren)
-   n <- min(length(value), maxChildren)
-   idxs <- seq_len(n)
-   nms <- names(value)
-   keys <- if (is.null(nms)) character(n) else nms[idxs]
-   vals <- value[idxs]
+   # Build child descriptions
+   result$children <- .rs.assistant.describeChildren(value, maxChildren)
 
-   # Iterate over these to build child descriptions
-   result$children <- .mapply(function(idx, key, val) {
-      list(
-         name = .rs.scalar(if (nzchar(key)) key else paste0("[[", idx, "]]")),
-         type = .rs.scalar(.rs.assistant.variableType(val))
-      )
-   }, list(idxs, keys, vals), NULL)
-   
-   # Return result
    result
+})
+
+# Describe a single variable from an environment.
+# Returns NULL if the variable doesn't exist or can't be accessed.
+.rs.addFunction("assistant.describeVariableFromEnv", function(varName,
+                                                              envir,
+                                                              examineChildren,
+                                                              maxChildren,
+                                                              action)
+{
+   if (!exists(varName, envir = envir, inherits = FALSE))
+      return(NULL)
+
+   value <- get(varName, envir = envir, inherits = FALSE)
+   children <- if (examineChildren) maxChildren else FALSE
+   .rs.assistant.describeVariable(varName, value, children, action)
 })
 
 # Generate variable descriptions for the current R session.
@@ -102,37 +144,47 @@
 #    list(name = "x", type = "numeric"),
 #    list(name = "df", type = "data.frame", children = list(...))
 # )
+#
+# @param envir The environment to examine
+# @param names Optional character vector of specific variable names to describe.
+#   If NULL (default), describes all variables in the environment.
+# @param variablesInScope Controls which variables get children examined (only used when names=NULL):
+#   - TRUE: examine children on all recursive objects
+#   - character vector: examine children only for named variables
+#   - FALSE: don't examine children
+# @param maxVariables Maximum number of variables to include (only used when names=NULL)
+# @param maxChildren Maximum number of children to include for recursive objects
+# @param action Optional action field ("create", "modify", or "delete")
 .rs.addFunction("assistant.variableDescriptions", function(envir = globalenv(),
+                                                           names = NULL,
                                                            variablesInScope = TRUE,
-                                                           maxVariables = 100,
-                                                           maxChildren = 50)
+                                                           maxVariables = .rs.assistant.kMaxVariables,
+                                                           maxChildren = .rs.assistant.kMaxChildren,
+                                                           action = NULL)
 {
-   # Get variable names from the environment
-   varNames <- ls(envir = envir)
-   length(varNames) <- min(length(varNames), maxVariables)
+   # Get variable names - either specified or all from environment
+   if (is.null(names))
+   {
+      varNames <- ls(envir = envir)
+      length(varNames) <- min(length(varNames), maxVariables)
+   }
+   else
+   {
+      varNames <- names
+   }
 
    # Build descriptions for all variables
    descriptions <- lapply(varNames, function(varName) {
-      tryCatch({
-         value <- get(varName, envir = envir, inherits = FALSE)
+      examineChildren <- !is.null(names) ||
+         isTRUE(variablesInScope) ||
+         (is.character(variablesInScope) && varName %in% variablesInScope)
 
-         # Determine if we should examine children:
-         # - TRUE: examine children on all recursive objects
-         # - character vector: examine children only for named variables
-         # - FALSE: don't examine children
-         shouldExamineChildren <- isTRUE(variablesInScope) ||
-            (is.character(variablesInScope) && varName %in% variablesInScope)
-
-         children <- if (shouldExamineChildren) maxChildren else FALSE
-         .rs.assistant.describeVariable(varName, value, children)
-      }, error = function(e) {
-         # Skip variables that can't be accessed
-         NULL
-      })
+      tryCatch(
+         .rs.assistant.describeVariableFromEnv(varName, envir, examineChildren, maxChildren, action),
+         error = function(e) NULL
+      )
    })
 
    # Remove NULL entries (failed accesses)
-   descriptions <- Filter(Negate(is.null), descriptions)
-
-   descriptions
+   Filter(Negate(is.null), descriptions)
 })

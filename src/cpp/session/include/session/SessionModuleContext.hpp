@@ -341,6 +341,15 @@ struct firstNonEmpty
   }
 };
 
+// Environment variable change event for AI assistant integration
+struct EnvironmentVariablesChangedEvent
+{
+   std::vector<std::string> created;
+   std::vector<std::string> modified;
+   std::vector<std::string> deleted;
+   bool reset;
+};
+
 // session events
 struct Events : boost::noncopyable
 {
@@ -372,6 +381,9 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onQuit;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onDestroyed;
+
+   // signal for environment variable changes (for AI assistant integration)
+   RSTUDIO_BOOST_SIGNAL<void(const EnvironmentVariablesChangedEvent&)> onEnvironmentVariablesChanged;
 
    // signal for detecting extended type of documents
    RSTUDIO_BOOST_SIGNAL<std::string(boost::shared_ptr<source_database::SourceDocument>),

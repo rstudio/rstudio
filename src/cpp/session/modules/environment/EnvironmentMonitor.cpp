@@ -15,6 +15,8 @@
 
 #include "EnvironmentMonitor.hpp"
 
+#include <set>
+
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -234,6 +236,45 @@ void EnvironmentMonitor::checkForChanges()
                        addedVars.end(),
                        boost::bind(&EnvironmentMonitor::enqueAssignedEvent,
                                     this, _1));
+      }
+   }
+
+   // Emit environment variables changed signal for AI assistant integration
+   // Only emit for global environment changes
+   if (getMonitoredEnvironment() == R_GlobalEnv)
+   {
+      if (refreshEnqueued && currentEnv.empty())
+      {
+         // Environment was cleared - emit reset signal
+         module_context::EnvironmentVariablesChangedEvent event;
+         event.reset = true;
+         module_context::events().onEnvironmentVariablesChanged(event);
+      }
+      else if (!addedVars.empty() || !removedVars.empty())
+      {
+         // Build a set of names from lastEnv_ for O(1) lookup to distinguish create vs modify
+         std::set<std::string> lastEnvNames;
+         for (const auto& var : lastEnv_)
+            lastEnvNames.insert(var.first);
+
+         module_context::EnvironmentVariablesChangedEvent event;
+         event.reset = false;
+
+         // Classify addedVars into created vs modified
+         for (const auto& var : addedVars)
+         {
+            if (lastEnvNames.count(var.first) > 0)
+               event.modified.push_back(var.first);
+            else
+               event.created.push_back(var.first);
+         }
+
+         // Extract names from removedVars
+         for (const auto& var : removedVars)
+            event.deleted.push_back(var.first);
+
+         // Emit the signal
+         module_context::events().onEnvironmentVariablesChanged(event);
       }
    }
 
