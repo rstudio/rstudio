@@ -28,15 +28,16 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
-import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
+import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -892,10 +893,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          else if (panes.get(3).equals(PaneManager.CONSOLE_PANE))
             consoleRightOnTop = false;
 
-         if (displayColumnCount_ != additionalColumnCount_)
-            additionalColumnCount_ =
-               paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
-
          // Get sidebar visibility from checkbox
          boolean sidebarVisible = sidebarVisibleCheckbox_.getValue();
 
@@ -907,14 +904,35 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             sidebarLocation = (selectedIndex == 0) ? "left" : "right";
          }
 
-         userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         boolean columnCountChanged = (displayColumnCount_ != additionalColumnCount_);
+         if (columnCountChanged)
+            additionalColumnCount_ =
+               paneManager_.syncAdditionalColumnCount(displayColumnCount_, true);
+
+         // Create the new pane config
+         PaneConfig newConfig = PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,
                consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_,
-               sidebar, sidebarVisible, sidebarLocation));
+               sidebar, sidebarVisible, sidebarLocation);
 
-         // Clear sidebar cache and refresh it to show new tabs immediately
-         paneManager_.clearSidebarCache();
-         paneManager_.refreshSidebar();
+         // If column count changed, defer setting the global value until after layout completes.
+         // The panes ValueChangeHandler checks getOffsetWidth() which returns 0 before browser
+         // renders the new layout, causing it to resize all columns to 0.
+         if (columnCountChanged)
+         {
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               userPrefs_.panes().setGlobalValue(newConfig);
+               paneManager_.clearSidebarCache();
+               paneManager_.refreshSidebar();
+            });
+         }
+         else
+         {
+            userPrefs_.panes().setGlobalValue(newConfig);
+            paneManager_.clearSidebarCache();
+            paneManager_.refreshSidebar();
+         }
 
          dirty_ = false;
       }
