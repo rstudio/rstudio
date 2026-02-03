@@ -3470,6 +3470,9 @@ Error allocatePort(int* pPort)
 // WebSocket URL Construction
 // ============================================================================
 
+// Returns either:
+// - Server mode: relative path (e.g., "/p/58fab3e4/ai-chat")
+// - Desktop mode: absolute URL (e.g., "ws://127.0.0.1:1234/ai-chat")
 std::string buildWebSocketUrl(int port)
 {
 #ifdef RSTUDIO_SERVER
@@ -3492,46 +3495,14 @@ std::string buildWebSocketUrl(int port)
       if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
          portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
 
-      DLOG("Normalized portmapped path: {}", portmappedPath);
-
-      // Get base URL from session
-      std::string baseUrl = persistentState().activeClientUrl();
-      DLOG("Base URL: {}", baseUrl);
-
-      // Determine WebSocket scheme and extract URL without scheme
-      // This preserves the full path including any session prefix (e.g., /s/abc123/)
-      std::string wsScheme;
-      std::string urlWithoutScheme;
-
-      if (baseUrl.find("https://") == 0)
-      {
-         wsScheme = "wss://";
-         urlWithoutScheme = baseUrl.substr(8); // Remove "https://"
-      }
-      else if (baseUrl.find("http://") == 0)
-      {
-         wsScheme = "ws://";
-         urlWithoutScheme = baseUrl.substr(7); // Remove "http://"
-      }
-      else
-      {
-         // Fallback - shouldn't happen
-         WLOG("Unexpected base URL format: {}", baseUrl);
-         wsScheme = "ws://";
-         urlWithoutScheme = baseUrl;
-      }
-
-      // Remove trailing slash from URL if present (portmappedPath will add one)
-      if (!urlWithoutScheme.empty() && urlWithoutScheme.back() == '/')
-         urlWithoutScheme = urlWithoutScheme.substr(0, urlWithoutScheme.length() - 1);
-
-      // Build complete WebSocket URL preserving any session path from baseUrl
-      // Example: wss://hostname:8787/s/abc123/p/58fab3e4/ai-chat
-      // The proxy will route this to http://127.0.0.1:{port}/ai-chat/ws
-      std::string wsUrl = wsScheme + urlWithoutScheme + portmappedPath + "/ai-chat";
-      DLOG("Final WebSocket URL: {}", wsUrl);
-
-      return wsUrl;
+      // Return RELATIVE path (client will construct absolute URL from window.location)
+      // This ensures the WebSocket connection uses the same hostname as the page,
+      // guaranteeing the port-token cookie is sent with the upgrade request.
+      // Without this fix, accessing RStudio via IP address would fail because the
+      // cookie domain wouldn't match the WebSocket URL's hostname.
+      std::string wsPath = portmappedPath + "/ai-chat";
+      DLOG("Server WebSocket path (relative): {}", wsPath);
+      return wsPath;
    }
 #endif
 
