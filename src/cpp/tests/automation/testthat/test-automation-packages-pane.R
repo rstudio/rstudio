@@ -159,22 +159,9 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    projectName <- "RenvTestProject"
    fullProjectPath <- file.path(projectPath, projectName)
 
-   # Create project directory and initialize renv
+   # Create project directory
    remote$console.executeExpr({
       dir.create(!!fullProjectPath, recursive = TRUE)
-
-      # Create a minimal DESCRIPTION file so renv can identify dependencies
-      writeLines(c(
-         "Type: Project",
-         "Description: Test project for packages pane"
-      ), file.path(!!fullProjectPath, "DESCRIPTION"))
-
-      # Create .Rproj file
-      writeLines(c(
-         "Version: 1.0",
-         "RestoreWorkspace: No",
-         "SaveWorkspace: No"
-      ), file.path(!!fullProjectPath, paste0(!!projectName, ".Rproj")))
    })
 
    # Open the project
@@ -188,6 +175,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    }, waitTimeSecs = 30)
 
    # Initialize renv with cache enabled (default)
+   # Use bare = TRUE to skip dependency discovery prompts
    remote$console.execute("renv::init(bare = TRUE)")
 
    # Wait for renv initialization to complete
