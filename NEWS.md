@@ -21,6 +21,7 @@
 - ([#16814](https://github.com/rstudio/rstudio/issues/16814)): Fixed an issue where apostrophes in file names were displayed as HTML entities in the Files pane
 - ([#16834](https://github.com/rstudio/rstudio/issues/16834)): Fixed an issue where an error message was shown on Windows when using "Write Diagnostics File"
 - ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
+- ([#16845](https://github.com/rstudio/rstudio/issues/16845)): Fixed issue where adding source columns or changing Sidebar visibility in Pane Layout optoins caused Console column to fill entire window
 
 ### Dependencies
 - Ace 1.43.5

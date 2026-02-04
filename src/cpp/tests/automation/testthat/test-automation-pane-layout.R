@@ -17,7 +17,9 @@ PANE_LAYOUT_SIDEBAR_SELECT <- "#rstudio_pane_layout_sidebar_select"
 # sidebar visible checkbox
 PANE_LAYOUT_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
 
+# other controls
 PANE_LAYOUT_RESET_LINK <- "#rstudio_pane_layout_reset_link"
+PANE_LAYOUT_ADD_COLUMN_BUTTON <- "rstudio_pane_layout_add_column_button"
 
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
@@ -552,4 +554,165 @@ withr::defer(.rs.automation.deleteRemote())
 
    # Close dialog
    remote$keyboard.insertText("<Escape>")
+})
+
+.rs.test("Adding source column via preferences preserves layout when sidebar visible on left", {
+   skip_on_ci()
+
+   # Reset to defaults first
+   .rs.resetUILayout(remote)
+   Sys.sleep(0.5)
+
+   # Show the sidebar (left is default)
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Open pane layout options
+   .rs.openPaneLayoutOptions(remote)
+
+   # Click Add Column button
+   remote$dom.clickElement(selector = paste0("#", PANE_LAYOUT_ADD_COLUMN_BUTTON))
+   Sys.sleep(0.3)
+
+   # Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.3)
+
+   # Wait for the new source column to appear
+   .rs.waitUntil("source column created", function() {
+      remote$dom.elementExists("#rstudio_Source1_pane")
+   })
+
+   # Verify all columns have reasonable widths (>= 100px)
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   sourceElement <- remote$js.querySelector("#rstudio_Source1_pane")
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSetElement <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   expect_true(sidebarElement$offsetWidth >= 100,
+               info = paste0("Sidebar width should be >= 100px, got: ", sidebarElement$offsetWidth))
+   expect_true(sourceElement$offsetWidth >= 100,
+               info = paste0("Source column width should be >= 100px, got: ", sourceElement$offsetWidth))
+   expect_true(consoleElement$offsetWidth >= 100,
+               info = paste0("Console width should be >= 100px, got: ", consoleElement$offsetWidth))
+   expect_true(tabSetElement$offsetWidth >= 100,
+               info = paste0("TabSet width should be >= 100px, got: ", tabSetElement$offsetWidth))
+
+   # Cleanup
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Adding source column via preferences preserves layout when sidebar visible on right", {
+   skip_on_ci()
+
+   # Reset to defaults first
+   .rs.resetUILayout(remote)
+   Sys.sleep(0.5)
+
+   # Open pane layout options
+   .rs.openPaneLayoutOptions(remote)
+
+   # Make sidebar visible
+   remote$dom.clickElement(PANE_LAYOUT_SIDEBAR_VISIBLE)
+
+   # Move sidebar to right
+   .rs.selectDropdownOption(remote, PANE_LAYOUT_SIDEBAR, "Sidebar on Right")
+   Sys.sleep(0.3)
+
+   # Click Add Column button
+   remote$dom.clickElement(selector = paste0("#", PANE_LAYOUT_ADD_COLUMN_BUTTON))
+   Sys.sleep(0.3)
+
+   # Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.3)
+
+   # Wait for the sidebar to appear on right
+   .rs.waitUntil("sidebar visible", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Wait for the new source column to appear
+   .rs.waitUntil("source column created", function() {
+      remote$dom.elementExists("#rstudio_Source1_pane")
+   })
+
+   # Verify all columns have reasonable widths (>= 100px)
+   sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
+   sourceElement <- remote$js.querySelector("#rstudio_Source1_pane")
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSetElement <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   expect_true(sidebarElement$offsetWidth >= 100,
+               info = paste0("Sidebar width should be >= 100px, got: ", sidebarElement$offsetWidth))
+   expect_true(sourceElement$offsetWidth >= 100,
+               info = paste0("Source column width should be >= 100px, got: ", sourceElement$offsetWidth))
+   expect_true(consoleElement$offsetWidth >= 100,
+               info = paste0("Console width should be >= 100px, got: ", consoleElement$offsetWidth))
+   expect_true(tabSetElement$offsetWidth >= 100,
+               info = paste0("TabSet width should be >= 100px, got: ", tabSetElement$offsetWidth))
+
+   # Cleanup
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Adding source column via preferences preserves layout when sidebar not visible", {
+   skip_on_ci()
+
+   # Reset to defaults first
+   .rs.resetUILayout(remote)
+   Sys.sleep(0.5)
+
+   # Ensure sidebar is not visible (default state)
+   if (remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+      remote$commands.execute("toggleSidebar")
+      .rs.waitUntil("sidebar hidden", function() {
+         !remote$dom.elementExists("#rstudio_Sidebar_pane")
+      })
+   }
+
+   # Open pane layout options
+   .rs.openPaneLayoutOptions(remote)
+
+   # Click Add Column button
+   remote$dom.clickElement(selector = paste0("#", PANE_LAYOUT_ADD_COLUMN_BUTTON))
+   Sys.sleep(0.3)
+
+   # Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.3)
+
+   # Wait for the new source column to appear
+   .rs.waitUntil("source column created", function() {
+      remote$dom.elementExists("#rstudio_Source1_pane")
+   })
+
+   # Verify source and console/tabset columns have reasonable widths (>= 100px)
+   # Note: sidebar should not exist
+   sourceElement <- remote$js.querySelector("#rstudio_Source1_pane")
+   consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
+   tabSetElement <- remote$js.querySelector("#rstudio_TabSet2_pane")
+
+   expect_false(remote$dom.elementExists("#rstudio_Sidebar_pane"),
+                info = "Sidebar should not be visible")
+   expect_true(sourceElement$offsetWidth >= 100,
+               info = paste0("Source column width should be >= 100px, got: ", sourceElement$offsetWidth))
+   expect_true(consoleElement$offsetWidth >= 100,
+               info = paste0("Console width should be >= 100px, got: ", consoleElement$offsetWidth))
+   expect_true(tabSetElement$offsetWidth >= 100,
+               info = paste0("TabSet width should be >= 100px, got: ", tabSetElement$offsetWidth))
+
+   # Cleanup
+   .rs.resetUILayout(remote)
 })
