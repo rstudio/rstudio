@@ -6915,6 +6915,7 @@ exports.handler = {
                 if (data.inputKey == key && data.inputHash == hashId && data.inputChar) {
                     key = data.inputChar;
                     hashId = -1;
+                    data.inputChar = null;
                 }
                 else {
                     data.inputChar = null;
