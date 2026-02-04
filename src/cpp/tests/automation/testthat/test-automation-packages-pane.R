@@ -194,7 +194,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    # Install a test package into the renv library
    # Using a small package that's likely available
    testPackage <- "mime"
-   remote$console.execute(sprintf("renv::install('%s')", testPackage))
+   remote$console.execute(sprintf("renv::install('%s', prompt = FALSE)", testPackage))
 
    # Wait for installation to complete
    .rs.waitUntil("package installed", function() {
