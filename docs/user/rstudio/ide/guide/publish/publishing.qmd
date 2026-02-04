@@ -63,6 +63,33 @@ One or more environment variables can be selected for inclusion on Posit Connect
 
 Reference the Posit Connect User Guide section on [Vars (Environment Variables)](https://docs.posit.co/connect/user/content-settings/index.html#content-vars) for more information. The `rsconnect` R package can also include environment variables when publishing programatically. For more information, reference the `[rsconnect` documentation for envVars](https://rstudio.github.io/rsconnect/reference/deployApp.html#arg-envvars)
 
+## Citing RStudio
+
+To cite RStudio in publications, retrieve the ciation information by running `RStudio.Version()`. For example:
+
+```{.r filename="console"}
+> RStudio.Version()
+$citation
+
+To cite RStudio in publications use:
+
+  Posit team (2026). RStudio: Integrated Development Environment for R. Posit Software,
+  PBC, Boston, MA. URL http://www.posit.co/.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {RStudio: Integrated Development Environment for R},
+    author = {{Posit team}},
+    organization = {Posit Software, PBC},
+    address = {Boston, MA},
+    year = {2026},
+    url = {http://www.posit.co/},
+  }
+
+```
+
+
 ## Additional content
 
 For additional details or other content types, refer to the product-specific documentation:
