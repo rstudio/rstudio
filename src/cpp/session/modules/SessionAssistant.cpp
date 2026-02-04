@@ -74,6 +74,12 @@
 #define kAssistantDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
 
+// Maximum number of variables to include in session notifications
+#define kAssistantMaxVariables (100)
+
+// Maximum number of children to include for recursive objects
+#define kAssistantMaxChildren (50)
+
 // completion was triggered explicitly by a user gesture
 #define kAssistantCompletionTriggerUserInvoked (1)
 
@@ -236,6 +242,9 @@ projects::RProjectAssistantOptions s_assistantProjectOptions;
 // A queue of pending files to be indexed.
 std::vector<FileInfo> s_indexQueue;
 std::size_t s_indexBatchSize = 200;
+
+// Session ID for the R session, used in session notifications.
+std::string s_sessionId;
 
 void setAgentRuntimeStatus(AgentRuntimeStatus status)
 {
@@ -805,6 +814,94 @@ void setPositAiConfiguration()
    // Stub for Posit AI configuration.
 }
 
+bool supportsSessionNotifications()
+{
+   return s_agentInitialized &&
+          s_runningAgentType == kAssistantPosit;
+}
+
+void sendSessionDidCreate()
+{
+   if (!supportsSessionNotifications())
+      return;
+
+   json::Object params;
+   params["sessionId"] = s_sessionId;
+   params["languageId"] = "r";
+   sendNotification("session/didCreate", params);
+}
+
+void sendSessionDidDestroy()
+{
+   if (!supportsSessionNotifications())
+      return;
+
+   json::Object params;
+   params["sessionId"] = s_sessionId;
+   sendNotification("session/didDestroy", params);
+}
+
+void sendSessionDidChangeVariables(const json::Array& variables, bool reset = false)
+{
+   if (!supportsSessionNotifications())
+      return;
+
+   json::Object params;
+   params["sessionId"] = s_sessionId;
+   params["variables"] = variables;
+   if (reset)
+      params["reset"] = true;
+   sendNotification("session/didChangeVariables", params);
+}
+
+json::Array getVariablesWithAction(const std::string& action)
+{
+   json::Array result;
+
+   // Get variable descriptions from R with action field
+   r::sexp::Protect protect;
+   SEXP resultSEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
+         .addParam(R_GlobalEnv)              // envir
+         .addParam(R_NilValue)               // names (NULL = all variables)
+         .addParam(Rf_ScalarLogical(TRUE))   // variablesInScope
+         .addParam(kAssistantMaxVariables)   // maxVariables
+         .addParam(kAssistantMaxChildren)    // maxChildren
+         .addUtf8Param(action)               // action
+         .call(&resultSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   // Convert the R list to JSON
+   json::Value variablesJson;
+   error = r::json::jsonValueFromList(resultSEXP, &variablesJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return result;
+   }
+
+   if (variablesJson.isArray())
+      result = variablesJson.getArray();
+
+   return result;
+}
+
+void syncEnvironmentVariables()
+{
+   if (!supportsSessionNotifications())
+      return;
+
+   // Get all current variables with action="create" for initial sync
+   json::Array variables = getVariablesWithAction("create");
+   if (!variables.isEmpty())
+      sendSessionDidChangeVariables(variables);
+}
+
 // Forward declarations for warmup request
 void docOpened(const std::string& uri,
                int64_t version,
@@ -1061,6 +1158,9 @@ void stopAgent()
       return;
    }
 
+   // Send session destroy notification before stopping the agent
+   sendSessionDidDestroy();
+
    Error error = core::system::terminateProcess(s_agentPid);
    if (error)
       LOG_ERROR(error);
@@ -1273,9 +1373,19 @@ Error startAgent(const std::string& assistantType = "")
       // Sync currently open documents with the agent
       syncOpenDocuments();
 
-      // For Posit AI, send a warmup request to reduce latency on first real request
+      // For Posit AI, set up session notifications and warmup
       if (assistant == kAssistantPosit)
+      {
+         // Generate session ID and send session creation notification
+         s_sessionId = core::system::generateUuid();
+         sendSessionDidCreate();
+
+         // Sync current environment state
+         syncEnvironmentVariables();
+
+         // Send warmup request to reduce latency on first real request
          sendWarmupRequest();
+      }
    };
    
    std::string requestId = core::system::generateUuid();
@@ -2422,6 +2532,99 @@ Error assistantNotifyInstalled(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void onEnvironmentVariablesChanged(const module_context::EnvironmentVariablesChangedEvent& event)
+{
+   if (!supportsSessionNotifications())
+      return;
+
+   // Handle reset (environment cleared)
+   if (event.reset)
+   {
+      sendSessionDidChangeVariables(json::Array(), true);
+      return;
+   }
+
+   // Skip if no changes
+   if (event.created.empty() && event.modified.empty() && event.deleted.empty())
+      return;
+
+   json::Array variables;
+
+   // Get descriptions for created variables
+   if (!event.created.empty())
+   {
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      SEXP namesSEXP = r::sexp::create(event.created, &protect);
+
+      Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
+            .addParam(R_GlobalEnv)              // envir
+            .addParam(namesSEXP)                // names
+            .addParam(R_NilValue)               // variablesInScope (ignored when names provided)
+            .addParam(R_NilValue)               // maxVariables (ignored when names provided)
+            .addParam(kAssistantMaxChildren)    // maxChildren
+            .addUtf8Param("create")             // action
+            .call(&resultSEXP, &protect);
+
+      if (!error)
+      {
+         json::Value variablesJson;
+         error = r::json::jsonValueFromList(resultSEXP, &variablesJson);
+         if (!error && variablesJson.isArray())
+         {
+            for (const auto& var : variablesJson.getArray())
+               variables.push_back(var);
+         }
+      }
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // Get descriptions for modified variables
+   if (!event.modified.empty())
+   {
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      SEXP namesSEXP = r::sexp::create(event.modified, &protect);
+
+      Error error = r::exec::RFunction(".rs.assistant.variableDescriptions")
+            .addParam(R_GlobalEnv)              // envir
+            .addParam(namesSEXP)                // names
+            .addParam(R_NilValue)               // variablesInScope (ignored when names provided)
+            .addParam(R_NilValue)               // maxVariables (ignored when names provided)
+            .addParam(kAssistantMaxChildren)    // maxChildren
+            .addUtf8Param("modify")             // action
+            .call(&resultSEXP, &protect);
+
+      if (!error)
+      {
+         json::Value variablesJson;
+         error = r::json::jsonValueFromList(resultSEXP, &variablesJson);
+         if (!error && variablesJson.isArray())
+         {
+            for (const auto& var : variablesJson.getArray())
+               variables.push_back(var);
+         }
+      }
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // Add deleted variables (no R call needed, just names)
+   for (const auto& name : event.deleted)
+   {
+      json::Object var;
+      var["name"] = name;
+      var["type"] = "";
+      var["action"] = "delete";
+      variables.push_back(var);
+   }
+
+   // Send the notification
+   if (!variables.isEmpty())
+      sendSessionDidChangeVariables(variables);
+}
+
 } // end anonymous namespace
 
 int assistantRuntimeStatus()
@@ -2471,6 +2674,7 @@ Error initialize()
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onShutdown.connect(onShutdown);
+   events().onEnvironmentVariablesChanged.connect(onEnvironmentVariablesChanged);
 
    // Connect to LSP events early to ensure we receive document events during
    // session resume (which fires before deferred init)
