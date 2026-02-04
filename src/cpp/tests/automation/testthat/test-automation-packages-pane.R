@@ -288,3 +288,8 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    expect_true(checkbox$checked, info = paste(testPackage, "should be shown as attached"))
 
 })
+
+.rs.test("we reset state when we're done", {
+   RSTUDIO_WORKBENCH_TAB_FILES <- "#rstudio_workbench_tab_files"
+   remote$dom.clickElement(RSTUDIO_WORKBENCH_TAB_FILES)
+})
