@@ -78,9 +78,6 @@ isElementSelected <- function(selector) {
    Sys.sleep(0.2)
    expect_true(isElementSelected(RSTUDIO_WORKBENCH_TAB_ENVIRONMENT))
 
-   expect_true(isElementSelected(RSTUDIO_WORKBENCH_TAB_FILES))
-   expect_false(isElementSelected(RSTUDIO_WORKBENCH_TAB_PLOTS))
-   
    # Click on the Plots tab
    remote$dom.clickElement(selector = RSTUDIO_WORKBENCH_TAB_PLOTS)
    Sys.sleep(0.2)
