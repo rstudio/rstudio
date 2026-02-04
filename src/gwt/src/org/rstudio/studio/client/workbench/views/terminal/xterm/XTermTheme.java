@@ -36,7 +36,7 @@ public class XTermTheme
    public String background;
    public String cursor;
    public String cursorAccent;
-   public String selection;
+   public String selectionBackground;
    public String black;
    public String red;
    public String green;
@@ -198,7 +198,7 @@ public class XTermTheme
       theme.green = green;
       theme.magenta = magenta;
       theme.red = red;
-      theme.selection = selection;
+      theme.selectionBackground = selection;
       theme.white = white;
       theme.yellow = yellow;
 
