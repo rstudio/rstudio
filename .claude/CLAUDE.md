@@ -3,6 +3,19 @@
 These instructions apply to the RStudio open-source IDE repository.
 
 
+## Code Style
+
+When documenting R code, use Roxygen style for formatting. For example:
+
+    #' Work
+    #'
+    #' Perform work until the timeout is reached.
+    #'
+    #' @param callback The R callback to execute.
+    #' @param timeout The maximum amount of time to wait, in seconds.
+    work <- function(callback, timeout) { ... }
+
+
 ## Building RStudio
 
 These sections describe how to build RStudio from the command line.
@@ -37,6 +50,21 @@ If the build directory does not yet exist, you can create and configure the proj
 To build the Electron application / desktop components, you can use:
 
     cd src/node/desktop && npm run package
+
+
+## Writing Automated Tests
+
+RStudio uses its own infrastructure for automated testing. Essentially, one is able to test and automate a separate instance of RStudio from RStudio, via the Chrome Debugging Protocol (CDP).
+
+Automated tests live in:
+
+    src/cpp/tests/automation/testthat
+
+The tools that help facilitate automation (that is, communication with the automated instance of RStudio) live in
+
+    src/cpp/session/modules/automation
+
+
 
 
 ## Testing
