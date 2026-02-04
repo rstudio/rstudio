@@ -985,6 +985,25 @@ public class TextEditingTargetAssistantHelper
          editSuggestion_.endAnchor.getColumn());
 
       Range changeRange = nativeEvent.getRange();
+
+      // For multiline edits, dismiss if any edited rows overlap with suggestion rows
+      boolean isMultilineEdit =
+         changeRange.getStart().getRow() != changeRange.getEnd().getRow() ||
+         nativeEvent.lines.length() > 1;
+
+      if (isMultilineEdit)
+      {
+         int editStartRow = changeRange.getStart().getRow();
+         int editEndRow = changeRange.getEnd().getRow();
+         int nesStartRow = nesRange.getStart().getRow();
+         int nesEndRow = nesRange.getEnd().getRow();
+
+         // Check if row ranges overlap
+         boolean rowsOverlap = editStartRow <= nesEndRow && editEndRow >= nesStartRow;
+         if (rowsOverlap)
+            return true;
+      }
+
       boolean nesContains = nesRange.contains(changeRange.getStart());
       boolean changeContains = changeRange.containsRightExclusive(nesRange.getStart());
       return nesContains || changeContains;
