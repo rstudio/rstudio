@@ -59,13 +59,13 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 }
 
 # Helper function to wait for package state to update
-.rs.packages.waitForState <- function(remote, packageName, expectedState, timeout = 5) {
+.rs.packages.waitForState <- function(remote, packageName, expectedState, waitTimeSecs = 5) {
    .rs.waitUntil(
       sprintf("package %s checkbox state is %s", packageName, expectedState),
       function() {
          .rs.packages.isChecked(remote, packageName) == expectedState
       },
-      timeout = timeout
+      waitTimeSecs = waitTimeSecs
    )
 }
 
@@ -185,7 +185,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    # Wait for project to open
    .rs.waitUntil("project opened", function() {
       grepl(projectName, remote$project.getLabel(), fixed = TRUE)
-   }, timeout = 30)
+   }, waitTimeSecs = 30)
 
    # Initialize renv with cache enabled (default)
    remote$console.execute("renv::init(bare = TRUE)")
@@ -197,7 +197,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
       })
       output <- remote$console.getOutput()
       grepl("TRUE", tail(output, 1L))
-   }, timeout = 60)
+   }, waitTimeSecs = 60)
 
    # Install a test package into the renv library
    # Using a small package that's likely available
@@ -211,7 +211,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
       })
       output <- remote$console.getOutput()
       grepl("TRUE", tail(output, 1L))
-   }, timeout = 120)
+   }, waitTimeSecs = 120)
 
    # Ensure the package is not attached
    remote$console.executeExpr({
@@ -240,7 +240,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 
    # Wait for the checkbox state to update
    # This is the key test - with renv cache, the checkbox should update correctly
-   .rs.packages.waitForState(remote, testPackage, TRUE, timeout = 10)
+   .rs.packages.waitForState(remote, testPackage, TRUE, waitTimeSecs = 10)
 
    # Verify the checkbox is now checked
    expect_true(
@@ -259,7 +259,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    .rs.packages.clickCheckbox(remote, testPackage)
 
    # Wait for the checkbox state to update
-   .rs.packages.waitForState(remote, testPackage, FALSE, timeout = 10)
+   .rs.packages.waitForState(remote, testPackage, FALSE, waitTimeSecs = 10)
 
    # Verify the checkbox is now unchecked
    expect_false(
