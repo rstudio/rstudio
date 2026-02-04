@@ -53,6 +53,8 @@ rstudio-automation-results.xml
 venv/
 .venv/
 
+.claude/settings.local.json
+.claude/skills/*.local/
 AGENTS.md
 GEMINI.md
 spec/
