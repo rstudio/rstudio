@@ -37,12 +37,23 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 }
 
 # Helper function to click a package checkbox
+# Scrolls the checkbox into view before clicking to handle packages not currently visible
 .rs.packages.clickCheckbox <- function(remote, packageName) {
    selector <- sprintf(
       "%s input[type='checkbox'][aria-label='%s']",
       RSTUDIO_WORKBENCH_PANEL_PACKAGES,
       packageName
    )
+
+   # Scroll the checkbox into view first
+   jsCode <- sprintf(
+      "document.querySelector(\"%s\").scrollIntoView({block: 'center', inline: 'nearest'})",
+      selector
+   )
+   remote$js.eval(jsCode)
+   Sys.sleep(0.1)  # Small delay for scroll to complete
+
+   # Now click the checkbox
    remote$dom.clickElement(selector)
 }
 
