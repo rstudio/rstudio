@@ -84,6 +84,9 @@
    <!-- Path where acesupport files should be generated -->
    <property name="ace.bin" value="${src.dir}/org/rstudio/studio/client/workbench/views/source/editors/text/ace"/>
 
+   <!-- For automatically re-generating acesupport on change -->
+   <property name="acesupport.watcher.dir" value="${tools.dir}/acesupport-watcher"/>
+
    <!-- Path to GWT libraries -->
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
@@ -148,6 +151,72 @@
          <fileset refid="acesupport.sources.fileset"/>
       </concat>
       <echo>Concatenated acesupport files to 'acesupport.js'</echo>
+   </target>
+
+   <!-- acesupport file watcher for development -->
+   <target name="acesupport-watch-install" description="Install acesupport watcher dependencies">
+      <exec executable="${yarn.bin}" dir="${acesupport.watcher.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="install"/>
+         <arg value="--network-timeout"/>
+         <arg value="240000"/>
+      </exec>
+   </target>
+
+   <target name="acesupport-watch-check">
+      <available file="${acesupport.watcher.dir}/node_modules" type="dir" property="acesupport.watcher.installed"/>
+   </target>
+
+   <target name="acesupport-watch-install-if-needed" depends="acesupport-watch-check" unless="acesupport.watcher.installed">
+      <antcall target="acesupport-watch-install"/>
+   </target>
+
+   <!-- Kill any existing acesupport watcher using PID file -->
+   <property name="acesupport.watcher.pidfile" value="${acesupport.watcher.dir}/watcher.pid"/>
+
+   <target name="acesupport-watch-kill-windows" if="is.windows">
+      <exec executable="cmd" failonerror="false">
+         <arg value="/c"/>
+         <arg value="if exist &quot;${acesupport.watcher.pidfile}&quot; (for /f %p in (${acesupport.watcher.pidfile}) do taskkill /PID %p /F) 2>nul"/>
+      </exec>
+      <delete file="${acesupport.watcher.pidfile}" failonerror="false"/>
+   </target>
+
+   <target name="acesupport-watch-kill-unix" unless="is.windows">
+      <exec executable="sh" failonerror="false">
+         <arg value="-c"/>
+         <arg value="test -f '${acesupport.watcher.pidfile}' &amp;&amp; kill $(cat '${acesupport.watcher.pidfile}') 2>/dev/null; rm -f '${acesupport.watcher.pidfile}'"/>
+      </exec>
+   </target>
+
+   <target name="acesupport-watch-kill" description="Stop any running acesupport watcher">
+      <condition property="is.windows">
+         <os family="windows"/>
+      </condition>
+      <antcall target="acesupport-watch-kill-windows"/>
+      <antcall target="acesupport-watch-kill-unix"/>
+   </target>
+
+   <target name="acesupport-watch-windows" if="is.windows">
+      <exec executable="cmd" dir="${acesupport.watcher.dir}" spawn="true">
+         <arg value="/c"/>
+         <arg value="node"/>
+         <arg value="watch.js"/>
+      </exec>
+   </target>
+
+   <target name="acesupport-watch-unix" unless="is.windows">
+      <exec executable="node" dir="${acesupport.watcher.dir}" spawn="true">
+         <arg value="watch.js"/>
+      </exec>
+   </target>
+
+   <target name="acesupport-watch" depends="acesupport-watch-install-if-needed,acesupport-watch-kill" description="Start acesupport file watcher">
+      <condition property="is.windows">
+         <os family="windows"/>
+      </condition>
+      <antcall target="acesupport-watch-windows"/>
+      <antcall target="acesupport-watch-unix"/>
+      <echo>Started acesupport file watcher (background process)</echo>
    </target>
 
    <!-- panmirror typescript library -->
@@ -289,7 +358,7 @@
       </antcall>
    </target>
 
-   <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
+   <target name="codeserver" depends="acesupport,acesupport-watch,javac" description="Run GWT devmode code server">
       <antcall target="panmirror">
          <param name="panmirror.target" value="${panmirror.target}"/>
       </antcall>
