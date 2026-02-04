@@ -41,7 +41,7 @@ Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage)
    FilePath storagePath = options().userScratchPath();
 
 #ifdef _WIN32
-   pStorage->reset(new FileActiveSessionsStorage(storagePath));
+   pStorage->reset(new FileActiveSessionsStorage(storagePath, session::filePathToProjectId(options().userScratchPath(), FilePath(options().getOverlayOption(kSessionSharedStoragePath)))));
 #else
    if (options().sessionUseFileStorage())
       pStorage->reset(new FileActiveSessionsStorage(storagePath, session::filePathToProjectId(options().userScratchPath(), FilePath(options().getOverlayOption(kSessionSharedStoragePath)))));
