@@ -6,6 +6,7 @@ library(testthat)
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
+
 RSTUDIO_WORKBENCH_TAB_PACKAGES <- "#rstudio_workbench_tab_packages"
 RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 
@@ -73,6 +74,10 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 
    # Use a common package that should be installed but likely not loaded
    testPackage <- "MASS"
+   remote$console.executeExpr({
+      if (!.rs.isPackageInstalled(!!testPackage))
+         install.packages(!!testPackage)
+   })
 
    # Ensure the package is not currently attached
    remote$console.executeExpr({
@@ -155,33 +160,27 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    fullProjectPath <- file.path(projectPath, projectName)
 
    # Create project directory and initialize renv
-   remote$console.executeExpr(
-      expr = {
-         dir.create(projectDir, recursive = TRUE)
+   remote$console.executeExpr({
+      dir.create(!!fullProjectPath, recursive = TRUE)
 
-         # Create a minimal DESCRIPTION file so renv can identify dependencies
-         writeLines(c(
-            "Type: Project",
-            "Description: Test project for packages pane"
-         ), file.path(projectDir, "DESCRIPTION"))
+      # Create a minimal DESCRIPTION file so renv can identify dependencies
+      writeLines(c(
+         "Type: Project",
+         "Description: Test project for packages pane"
+      ), file.path(!!fullProjectPath, "DESCRIPTION"))
 
-         # Create .Rproj file
-         writeLines(c(
-            "Version: 1.0",
-            "RestoreWorkspace: No",
-            "SaveWorkspace: No"
-         ), file.path(projectDir, paste0(projectName, ".Rproj")))
-      },
-      env = list(projectDir = fullProjectPath, projectName = projectName)
-   )
+      # Create .Rproj file
+      writeLines(c(
+         "Version: 1.0",
+         "RestoreWorkspace: No",
+         "SaveWorkspace: No"
+      ), file.path(!!fullProjectPath, paste0(!!projectName, ".Rproj")))
+   })
 
    # Open the project
-   remote$console.executeExpr(
-      expr = {
-         .rs.api.openProject(projectDir)
-      },
-      env = list(projectDir = fullProjectPath)
-   )
+   remote$console.executeExpr({
+      .rs.api.openProject(!!fullProjectPath)
+   })
 
    # Wait for project to open
    .rs.waitUntil("project opened", function() {
@@ -207,24 +206,20 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 
    # Wait for installation to complete
    .rs.waitUntil("package installed", function() {
-      remote$console.executeExpr(
-         expr = { .rs.isPackageInstalled(pkg) },
-         env = list(pkg = testPackage)
-      )
+      remote$console.executeExpr({
+         .rs.isPackageInstalled(!!testPackage)
+      })
       output <- remote$console.getOutput()
       grepl("TRUE", tail(output, 1L))
    }, timeout = 120)
 
    # Ensure the package is not attached
-   remote$console.executeExpr(
-      expr = {
-         pkgSearch <- paste0("package:", pkg)
-         if (pkgSearch %in% search()) {
-            detach(pkgSearch, character.only = TRUE, unload = TRUE)
-         }
-      },
-      env = list(pkg = testPackage)
-   )
+   remote$console.executeExpr({
+      pkgSearch <- paste0("package:", !!testPackage)
+      if (pkgSearch %in% search()) {
+         detach(pkgSearch, character.only = TRUE, unload = TRUE)
+      }
+   })
    Sys.sleep(0.5)
 
    # Refresh the packages pane
@@ -254,10 +249,9 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    )
 
    # Verify the package is actually loaded
-   remote$console.executeExpr(
-      expr = { paste0("package:", pkg) %in% search() },
-      env = list(pkg = testPackage)
-   )
+   remote$console.executeExpr({
+      paste0("package:", !!testPackage) %in% search()
+   })
    output <- remote$console.getOutput()
    expect_equal(tail(output, 1L), "[1] TRUE", info = paste(testPackage, "should be attached"))
 
@@ -274,10 +268,9 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    )
 
    # Verify the package is actually unloaded
-   remote$console.executeExpr(
-      expr = { paste0("package:", pkg) %in% search() },
-      env = list(pkg = testPackage)
-   )
+   remote$console.executeExpr({
+      paste0("package:", !!testPackage) %in% search()
+   })
    output <- remote$console.getOutput()
    expect_equal(tail(output, 1L), "[1] FALSE", info = paste(testPackage, "should be detached"))
 
