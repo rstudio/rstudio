@@ -1,16 +1,21 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH rockylinux:9
+FROM --platform=linux/$ARCH rockylinux/rockylinux:9.4
 ARG ARCH
 
 ENV OPERATING_SYSTEM=rockylinux_9
 
 ARG AWS_REGION=us-east-1
 
+# echo 9.4 into releasever so that yum update doesn't update us higher than 9.4
+# RHEL 9.4 is required to get openssl 3.0. Later versions have openssl 3.2+
 RUN set -x \
-      && yum install epel-release -y \
-      && yum install dnf-plugins-core -y \ 
-      && yum config-manager --set-enabled crb \
-      && yum update -y
+    && echo 9.4 > /etc/yum/vars/releasever \
+    && echo vault/rocky > /etc/yum/vars/contentdir \
+    && sed -i -e 's|^mirrorlist=|#mirrorlist=|g' -e 's|^#baseurl=|baseurl=|g' /etc/yum.repos.d/rocky*.repo \
+    && yum install epel-release -y \
+    && sed -i -e 's/$releasever/9/g' -e 's/${releasever}/9/g' /etc/yum.repos.d/epel*.repo \
+    && yum config-manager --set-enabled crb \
+    && yum update -y
 
 RUN dnf install -y \
     R \
