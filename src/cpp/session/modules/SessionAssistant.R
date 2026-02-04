@@ -138,6 +138,17 @@
    .rs.assistant.describeVariable(varName, value, children, action)
 })
 
+# Check if a variable should have its children examined.
+# @param varName The variable name to check
+# @param names The names parameter from variableDescriptions (NULL or character vector)
+# @param variablesInScope TRUE, FALSE, or character vector of variable names
+.rs.addFunction("assistant.shouldExamineChildren", function(varName, names, variablesInScope)
+{
+   !is.null(names) ||
+      isTRUE(variablesInScope) ||
+      (is.character(variablesInScope) && varName %in% variablesInScope)
+})
+
 # Generate variable descriptions for the current R session.
 # Returns a list suitable for JSON serialization in the format:
 # list(
@@ -175,9 +186,7 @@
 
    # Build descriptions for all variables
    descriptions <- lapply(varNames, function(varName) {
-      examineChildren <- !is.null(names) ||
-         isTRUE(variablesInScope) ||
-         (is.character(variablesInScope) && varName %in% variablesInScope)
+      examineChildren <- .rs.assistant.shouldExamineChildren(varName, names, variablesInScope)
 
       tryCatch(
          .rs.assistant.describeVariableFromEnv(varName, envir, examineChildren, maxChildren, action),
