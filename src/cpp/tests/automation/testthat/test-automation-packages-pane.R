@@ -59,13 +59,15 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 }
 
 # Helper function to wait for package state to update
-.rs.packages.waitForState <- function(remote, packageName, expectedState, waitTimeSecs = 5) {
+# retryCount controls effective timeout (retryCount * 0.5 seconds)
+.rs.packages.waitForState <- function(remote, packageName, expectedState, retryCount = 10) {
    .rs.waitUntil(
       sprintf("package %s checkbox state is %s", packageName, expectedState),
       function() {
          .rs.packages.isChecked(remote, packageName) == expectedState
       },
-      waitTimeSecs = waitTimeSecs
+      retryCount = retryCount,
+      waitTimeSecs = 0.5
    )
 }
 
@@ -172,20 +174,22 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    # Wait for project to open
    .rs.waitUntil("project opened", function() {
       grepl(projectName, remote$project.getLabel(), fixed = TRUE)
-   }, waitTimeSecs = 30)
+   }, retryCount = 30)
 
    # Initialize renv with cache enabled (default)
-   # Use bare = TRUE to skip dependency discovery prompts
-   remote$console.execute("renv::init(bare = TRUE)")
+   remote$console.executeExpr({
+      renv::init()
+   })
 
    # Wait for renv initialization to complete
+   Sys.sleep(1)
    .rs.waitUntil("renv initialized", function() {
       remote$console.executeExpr({
          file.exists("renv.lock")
       })
       output <- remote$console.getOutput()
       grepl("TRUE", tail(output, 1L))
-   }, waitTimeSecs = 60)
+   }, retryCount = 60)
 
    # Install a test package into the renv library
    # Using a small package that's likely available
@@ -199,7 +203,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
       })
       output <- remote$console.getOutput()
       grepl("TRUE", tail(output, 1L))
-   }, waitTimeSecs = 120)
+   }, retryCount = 120)
 
    # Ensure the package is not attached
    remote$console.executeExpr({
@@ -228,7 +232,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
 
    # Wait for the checkbox state to update
    # This is the key test - with renv cache, the checkbox should update correctly
-   .rs.packages.waitForState(remote, testPackage, TRUE, waitTimeSecs = 10)
+   .rs.packages.waitForState(remote, testPackage, TRUE, retryCount = 20)
 
    # Verify the checkbox is now checked
    expect_true(
@@ -247,7 +251,7 @@ RSTUDIO_WORKBENCH_PANEL_PACKAGES <- "#rstudio_workbench_panel_packages"
    .rs.packages.clickCheckbox(remote, testPackage)
 
    # Wait for the checkbox state to update
-   .rs.packages.waitForState(remote, testPackage, FALSE, waitTimeSecs = 10)
+   .rs.packages.waitForState(remote, testPackage, FALSE, retryCount = 20)
 
    # Verify the checkbox is now unchecked
    expect_false(
