@@ -1846,8 +1846,13 @@ public class TextEditingTargetAssistantHelper
                      // For ghost text suggestions, check if the user typed a prefix match.
                      // If so, update the suggestion text and suppress the document change handler.
                      // This only applies to ghost text (not NES edit suggestions).
+                     //
+                     // Skip this when modifier keys are held (Ctrl, Alt, Meta), as those
+                     // indicate a keyboard shortcut rather than regular typing.
+                     // https://github.com/rstudio/rstudio/issues/16973
                      boolean isGhostText = editSuggestion_.type == SuggestionType.GHOST_TEXT;
-                     if (isGhostText)
+                     boolean hasModifier = event.getCtrlKey() || event.getAltKey() || event.getMetaKey();
+                     if (isGhostText && !hasModifier)
                      {
                         String key = EventProperty.key(keyEvent.getNativeEvent());
                         if (editSuggestion_.displayText.startsWith(key))

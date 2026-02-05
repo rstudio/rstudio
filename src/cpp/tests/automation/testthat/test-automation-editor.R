@@ -89,3 +89,32 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
 })
+
+# https://github.com/rstudio/rstudio/issues/16973
+.rs.test("AceEditorCommandDispatcher shortcuts work", {
+
+   contents <- "x\ny\n"
+
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+
+      # Move cursor to end of first line and test insert pipe operator
+      editor$gotoLine(1)
+      editor$navigateLineEnd()
+      remote$keyboard.executeShortcut("Ctrl + Shift + M")
+      Sys.sleep(0.5)
+
+      contents <- editor$getValue()
+      expect_true(grepl("|>", contents, fixed = TRUE) || grepl("%>%", contents, fixed = TRUE))
+
+      # Move cursor to end of second line and test insert assignment operator
+      editor$gotoLine(2)
+      editor$navigateLineEnd()
+      remote$keyboard.executeShortcut("Alt + -")
+      Sys.sleep(0.5)
+
+      contents <- editor$getValue()
+      expect_true(grepl("<-", contents, fixed = TRUE))
+
+   })
+
+})
