@@ -188,3 +188,12 @@ When generating a pull request that fixes a known issue, please ensure the pull 
 
     Addresses <issue>.
 
+
+## Git Conventions
+
+For branch naming:
+
+- Use the 'bugfix/' prefix for code changes which fix an existing issue.
+- Use the 'feature/' prefix for code changes that add or extend existing functionality.
+- Use the 'developer/' prefix for code changes that are primarily for developer ergonomics.
+

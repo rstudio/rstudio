@@ -51,6 +51,7 @@ import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
@@ -58,6 +59,7 @@ import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+
 
 public class FilesList extends Composite
 {
@@ -134,6 +136,16 @@ public class FilesList extends Composite
             FilesList.this.onResize(event.getWidth(), event.getHeight(), false);
          }
       });
+
+      // Timer for debouncing redraws after file change events
+      redrawTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            filesDataGrid_.redraw();
+         }
+      };
    }
 
    private Column<FileSystemItem, LabeledBoolean> addSelectionColumn()
@@ -466,6 +478,7 @@ public class FilesList extends Composite
             {
                files.add(file);
                filesDataGrid_.setPageSize(files.size() + 1);
+               scheduleRedraw();
             }
             else
             {
@@ -564,6 +577,13 @@ public class FilesList extends Composite
             filesDataGrid_.redraw();
          }
       });
+   }
+
+   private void scheduleRedraw()
+   {
+      // Debounce redraws to avoid excessive rendering when multiple
+      // file change events arrive in quick succession (e.g., after git pull)
+      redrawTimer_.schedule(REDRAW_DELAY_MS);
    }
 
    public void onResize(boolean forceResize)
@@ -718,7 +738,9 @@ public class FilesList extends Composite
 
    private final Files.Display.Observer observer_;
    private final ResizeLayoutPanel layoutPanel_;
+   private final Timer redrawTimer_;
 
+   private static final int REDRAW_DELAY_MS = 100;
    private static final int CHECK_COLUMN_WIDTH_PIXELS = 30;
    private static final int ICON_COLUMN_WIDTH_PIXELS = 26;
    private static final int SIZE_COLUMN_WIDTH_PIXELS = 80;
