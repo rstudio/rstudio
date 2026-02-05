@@ -343,6 +343,7 @@ public class AceEditor implements DocDisplay
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
+      keyboardHandlers_ = new ArrayList<>();
       mixins_ = new AceEditorMixins(this);
       editLines_ = new AceEditorEditLinesHelper(this);
       behavior_ = EditorBehavior.AceBehaviorDefault;
@@ -455,6 +456,11 @@ public class AceEditor implements DocDisplay
             for (HandlerRegistration handler : editorEventListeners_)
                handler.removeHandler();
             editorEventListeners_.clear();
+
+            for (HandlerRegistration handler : keyboardHandlers_)
+               if (handler != null)
+                  handler.removeHandler();
+            keyboardHandlers_.clear();
 
             if (completionManager_ != null)
             {
@@ -1051,11 +1057,11 @@ public class AceEditor implements DocDisplay
 
    private void updateKeyboardHandlers()
    {
-      // clear out existing editor handlers (they will be refreshed if necessary)
-      for (HandlerRegistration handler : editorEventListeners_)
+      // clear out existing keyboard handlers (they will be refreshed below)
+      for (HandlerRegistration handler : keyboardHandlers_)
          if (handler != null)
             handler.removeHandler();
-      editorEventListeners_.clear();
+      keyboardHandlers_.clear();
 
       // save and restore Vim marks as they can be lost when refreshing
       // the keyboard handlers. this is necessary as keyboard handlers are
@@ -1080,13 +1086,13 @@ public class AceEditor implements DocDisplay
       widget_.getEditor().addKeyboardHandler(previewer.getKeyboardHandler());
 
       // Listen for command execution
-      editorEventListeners_.add(AceEditorNative.addEventListener(
+      keyboardHandlers_.add(AceEditorNative.addEventListener(
             widget_.getEditor().getCommandManager(),
             "afterExec",
             (CommandWithArg<JavaScriptObject>) event -> events_.fireEvent(new AceAfterCommandExecutedEvent(event))));
 
       // Listen for keyboard activity
-      editorEventListeners_.add(AceEditorNative.addEventListener(
+      keyboardHandlers_.add(AceEditorNative.addEventListener(
             widget_.getEditor(),
             "keyboardActivity",
             (CommandWithArg<JavaScriptObject>) event -> events_.fireEvent(new AceKeyboardActivityEvent(event))));
@@ -5039,5 +5045,6 @@ public class AceEditor implements DocDisplay
    private static AceEditor s_lastFocusedEditor = null;
 
    private final List<HandlerRegistration> editorEventListeners_;
+   private final List<HandlerRegistration> keyboardHandlers_;
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }
