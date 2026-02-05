@@ -454,7 +454,8 @@ public class AceEditor implements DocDisplay
          if (!event.isAttached())
          {
             for (HandlerRegistration handler : editorEventListeners_)
-               handler.removeHandler();
+               if (handler != null)
+                  handler.removeHandler();
             editorEventListeners_.clear();
 
             for (HandlerRegistration handler : keyboardHandlers_)
