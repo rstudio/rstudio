@@ -16,6 +16,9 @@
 
 #include <boost/regex.hpp>
 
+#include <fmt/format.h>
+
+#include <core/AnsiEscapes.hpp>
 #include <core/regex/RegexDebug.hpp>
 
 #include <r/RExec.hpp>
@@ -45,6 +48,7 @@ PendingOutputType s_pendingOutputType;
 
 std::atomic<bool> s_isErrorAnnotationEnabled;
 std::atomic<bool> s_isWarningAnnotationEnabled;
+std::atomic<bool> s_isMessageAnnotationEnabled;
 
 boost::regex s_reErrorPrefix(kNeverMatch);
 boost::regex s_reWarningPrefix(kNeverMatch);
@@ -83,6 +87,9 @@ void synchronize()
       s_isWarningAnnotationEnabled =
             highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages ||
             highlightConditionsPref == kConsoleHighlightConditionsErrorsWarnings;
+
+      s_isMessageAnnotationEnabled =
+            highlightConditionsPref == kConsoleHighlightConditionsErrorsWarningsMessages;
 
       s_reErrorPrefix      = boost::regex(reErrorPrefix, boost::regex::icase);
       s_reWarningPrefix    = boost::regex(reWarningPrefix, boost::regex::icase);
@@ -182,6 +189,76 @@ bool isErrorAnnotationEnabled()
 bool isWarningAnnotationEnabled()
 {
    return s_isWarningAnnotationEnabled;
+}
+
+bool isMessageAnnotationEnabled()
+{
+   return s_isMessageAnnotationEnabled;
+}
+
+namespace {
+
+void writeImpl(OutputStream stream,
+               const std::string& message,
+               OutputType type,
+               const char* suffix)
+{
+   // Check if annotation is enabled for this type
+   bool annotate = false;
+   const char* groupStart = nullptr;
+
+   switch (type)
+   {
+   case OutputTypeError:
+      annotate = isErrorAnnotationEnabled();
+      groupStart = kAnsiEscapeGroupStartError;
+      break;
+   case OutputTypeWarning:
+      annotate = isWarningAnnotationEnabled();
+      groupStart = kAnsiEscapeGroupStartWarning;
+      break;
+   case OutputTypeMessage:
+      annotate = isMessageAnnotationEnabled();
+      groupStart = kAnsiEscapeGroupStartMessage;
+      break;
+   }
+
+   // Build the output string and print to the appropriate stream
+   if (annotate)
+   {
+      std::string output = fmt::format("{}{}{}{}", groupStart, message, kAnsiEscapeGroupEnd, suffix);
+
+      if (stream == OutputStreamStdout)
+         Rprintf("%s", output.c_str());
+      else
+         REprintf("%s", output.c_str());
+   }
+   else
+   {
+      if (stream == OutputStreamStdout)
+         Rprintf("%s%s", message.c_str(), suffix);
+      else
+         REprintf("%s%s", message.c_str(), suffix);
+   }
+
+   // Reset pending output type so subsequent output isn't affected
+   setPendingOutputType(PendingOutputTypeUnknown);
+}
+
+} // anonymous namespace
+
+void write(OutputStream stream,
+           const std::string& message,
+           OutputType type)
+{
+   writeImpl(stream, message, type, "");
+}
+
+void writeLine(OutputStream stream,
+               const std::string& message,
+               OutputType type)
+{
+   writeImpl(stream, message, type, "\n");
 }
 
 
