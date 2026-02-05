@@ -1625,10 +1625,7 @@ void didOpen(lsp::DidOpenTextDocumentParams params)
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
    Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
-   {
-      LOG_ERROR(error);
       return;
-   }
 
    if (!isIndexableDocument(pDoc))
       return;
@@ -1653,10 +1650,7 @@ void didChange(lsp::DidChangeTextDocumentParams params)
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
    Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
-   {
-      LOG_ERROR(error);
       return;
-   }
 
    if (!isIndexableDocument(pDoc))
       return;
@@ -1684,10 +1678,7 @@ void didClose(lsp::DidCloseTextDocumentParams params)
    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument);
    Error error = lsp::sourceDocumentFromUri(params.textDocument.uri, pDoc);
    if (error)
-   {
-      LOG_ERROR(error);
       return;
-   }
 
    if (!isIndexableDocument(pDoc))
       return;
@@ -1732,10 +1723,7 @@ void onBackgroundProcessing(bool isIdle)
       json::Object responseJson;
       Error error = responseJson.parse(response);
       if (error)
-      {
-         LOG_ERROR(error);
          continue;
-      }
 
       // Handle various notifications
       json::Value methodJson = responseJson["method"];
