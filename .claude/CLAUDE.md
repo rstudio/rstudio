@@ -154,6 +154,10 @@ When a command is added here, a stub will also need to be added to the file at:
 
     src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.java
 
+When Commands.cmd.xml is modified in any way, a checksum stored in 
+src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml.MD5 MUST be
+updated to match, and that file included in the commit. The MD5 file is updated when the GWT
+code is built using `ant` or `ant draft`.
 
 ### Command Handlers
 
