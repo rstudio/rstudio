@@ -191,6 +191,11 @@ When generating a pull request that fixes a known issue, please ensure the pull 
 
 ## Git Conventions
 
+For commit messages:
+
+- Use "Addresses #<issue>" instead of "Fixes #<issue>".
+
+
 For branch naming:
 
 - Use the 'bugfix/' prefix for code changes which fix an existing issue.
