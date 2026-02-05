@@ -97,6 +97,7 @@
 #include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -902,7 +903,10 @@ void notifyIfRVersionChanged()
             % std::string(info.activeRVersion);
 
       std::string msg = formatter.str();
-      ::REprintf("%s\n", msg.c_str());
+      console_output::writeLine(
+         console_output::OutputStreamStderr,
+         msg,
+         console_output::OutputTypeWarning);
    }
 }
 

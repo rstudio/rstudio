@@ -33,6 +33,17 @@ enum PendingOutputType {
    PendingOutputTypeWarning,
 };
 
+enum OutputStream {
+   OutputStreamStdout,
+   OutputStreamStderr,
+};
+
+enum OutputType {
+   OutputTypeError,
+   OutputTypeWarning,
+   OutputTypeMessage,
+};
+
 PendingOutputType getPendingOutputType();
 void setPendingOutputType(PendingOutputType type);
 
@@ -42,6 +53,19 @@ boost::regex reInAdditionPrefix();
 
 bool isErrorAnnotationEnabled();
 bool isWarningAnnotationEnabled();
+bool isMessageAnnotationEnabled();
+
+// Write a message to the console with appropriate ANSI escape annotations.
+// This function is useful for printing error/warning messages that should be
+// styled appropriately, without affecting subsequent console output.
+void write(OutputStream stream,
+           const std::string& message,
+           OutputType type);
+
+// Write a message to the console with a trailing newline.
+void writeLine(OutputStream stream,
+               const std::string& message,
+               OutputType type);
 
 core::Error initialize();
 

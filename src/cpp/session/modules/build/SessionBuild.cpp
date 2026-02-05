@@ -51,6 +51,7 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
@@ -2135,7 +2136,12 @@ SEXP rs_addRToolsToPath()
     std::string warningMsg;
     bool result = module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
     if (!warningMsg.empty())
-       REprintf("%s\n", warningMsg.c_str());
+    {
+       console_output::writeLine(
+          console_output::OutputStreamStderr,
+          warningMsg,
+          console_output::OutputTypeWarning);
+    }
     core::system::setenv("PATH", newPath);
     r::sexp::Protect protect;
     return r::sexp::create(result, &protect);
