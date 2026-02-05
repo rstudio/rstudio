@@ -10,6 +10,7 @@
 - ([#16942](https://github.com/rstudio/rstudio/issues/16942)): Enforce a minimum width for the Sidebar pane
 
 ### Fixed
+- ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 - ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
 - ([#16733](https://github.com/rstudio/rstudio/issues/16733)): Fixed an issue where a Presentation tab would be added to TabSet2 when it was assigned to the Sidebar
@@ -23,6 +24,7 @@
 - ([#16839](https://github.com/rstudio/rstudio/issues/16839)): Fixed an issue where an inaccessible folder in the PATH on Windows would lead to unnecessary file access attempts and error logging
 - ([#16845](https://github.com/rstudio/rstudio/issues/16845)): Fixed issue where adding source columns or changing Sidebar visibility in Pane Layout optoins caused Console column to fill entire window
 - ([#16885](https://github.com/rstudio/rstudio/issues/16885)): Fixed an issue where console warning annotation boxes could include excess content
+- ([#16842](https://github.com/rstudio/rstudio/issues/16842)): Fixed issue where Packages pane checkboxes did not display the correct state for renv projects using a shared cache
 
 ### Dependencies
 - Ace 1.43.5

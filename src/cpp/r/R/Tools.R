@@ -1415,7 +1415,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    rendered
 })
 
-# Wait until some 'predicate()' expression returns TRUE
+#' Wait Until
+#'
+#' Wait until a predicate expression returns TRUE.
+#'
+#' The effective timeout is approximately `retryCount * waitTimeSecs` seconds.
+#' With the defaults (`retryCount = 30`, `waitTimeSecs = 1`), the timeout is
+#' approximately 30 seconds.
+#'
+#' @param reason A description of what we're waiting for (used in timeout error message).
+#' @param predicate A function returning TRUE when the wait condition is satisfied.
+#' @param swallowErrors If TRUE, errors thrown by predicate are treated as FALSE.
+#' @param retryCount Number of times to check the predicate before timing out.
+#' @param waitTimeSecs Seconds to wait between each predicate check.
 .rs.addFunction("waitUntil", function(reason,
                                       predicate,
                                       swallowErrors = FALSE,
