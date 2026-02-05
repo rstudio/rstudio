@@ -37,21 +37,21 @@
    # quick check first if the package is loaded
    if (!isNamespaceLoaded(packageName))
       return(.rs.scalar(FALSE))
-   
+
    # get the raw path to the package
    packagePath <- .rs.pathPackage(packageName, quiet = TRUE)
    if (length(packagePath) == 0L)
       return(.rs.scalar(FALSE))
-   
-   # get associated library path
-   packageLibraryPath <- dirname(packagePath)
-   
-   # compare with the library given by the client
+
+   # Check if the package at the given library path (possibly a symlink)
+   # resolves to the same location as the loaded package. This handles the
+   # renv cache case where packages in the project library are symlinks.
+   clientPackagePath <- file.path(libraryPath, packageName)
    samePath <- identical(
-      normalizePath(libraryPath, winslash = "/", mustWork = FALSE),
-      normalizePath(packageLibraryPath, winslash = "/", mustWork = FALSE)
+      normalizePath(clientPackagePath, winslash = "/", mustWork = FALSE),
+      normalizePath(packagePath, winslash = "/", mustWork = FALSE)
    )
-   
+
    .rs.scalar(samePath)
 })
 
@@ -1042,9 +1042,29 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       function(pkgname, ...)
       {
          packagePath <- .rs.pathPackage(pkgname, quiet = TRUE)
+         libraryPath <- dirname(packagePath)
+
+         # For renv with shared cache, the loaded package path might be in the cache,
+         # but we want to report the library path that contains a symlink to it.
+         # This ensures the status update matches the listed package.
+         normalizedPackagePath <- normalizePath(packagePath, winslash = "/", mustWork = FALSE)
+         for (libPath in .libPaths())
+         {
+            pkgInLib <- file.path(libPath, pkgname)
+            if (file.exists(pkgInLib))
+            {
+               normalizedPkgInLib <- normalizePath(pkgInLib, winslash = "/", mustWork = FALSE)
+               if (identical(normalizedPkgInLib, normalizedPackagePath))
+               {
+                  libraryPath <- libPath
+                  break
+               }
+            }
+         }
+
          packageStatus = list(
             name     = I(pkgname),
-            library  = I(dirname(packagePath)),
+            library  = I(.rs.createAliasedPath(libraryPath)),
             path     = I(.rs.createAliasedPath(packagePath)),
             attached = I(attached)
          )
@@ -1442,12 +1462,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       pkgInfo[["library_index"]] <- match(libraryPath, .libPaths(), nomatch = 0L)
       
       # Also note which packages appear to be loaded or attached.
+      # NOTE: We use normalizePath() to resolve symlinks, which is necessary
+      # for renv projects using a shared cache (where packages in the project
+      # library are symlinks to packages in the cache).
       isLoaded <- FALSE
       if (pkgName %in% loadedNamespaces())
       {
          isLoaded <-
             identical(pkgDesc[["Priority"]], "base") ||
-            identical(getNamespaceInfo(pkgName, "path"), pkgPath)
+            identical(
+               normalizePath(getNamespaceInfo(pkgName, "path"), winslash = "/", mustWork = FALSE),
+               normalizePath(pkgPath, winslash = "/", mustWork = FALSE)
+            )
       }
       
       isAttached <-
