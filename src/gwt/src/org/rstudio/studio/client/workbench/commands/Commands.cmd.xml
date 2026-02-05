@@ -783,7 +783,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateChat" value="Ctrl+Meta+i" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="activateChat" value="Ctrl+Alt+i" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activateChat" value="Ctrl+Shift+I" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Meta+F7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Ctrl+F7" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
 
