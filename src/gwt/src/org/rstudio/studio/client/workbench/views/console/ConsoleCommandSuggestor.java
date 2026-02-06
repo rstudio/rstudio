@@ -147,14 +147,12 @@ public class ConsoleCommandSuggestor implements
       suggestionInProgress_ = true;
       cooldownTimer_.schedule(COOLDOWN_MS);
 
-      String sourceContextType = "console";
       String documentUri = "";
       String documentContent = "";
 
       Debug.log("[NCS] sourceDocumentId='" + sourceDocumentId + "'");
       if (!StringUtil.isNullOrEmpty(sourceDocumentId))
       {
-         sourceContextType = "document";
          SourceColumnManager sourceColumnManager = pSourceColumnManager_.get();
          if (sourceColumnManager != null)
          {
@@ -171,7 +169,6 @@ public class ConsoleCommandSuggestor implements
          command,
          output,
          isError,
-         sourceContextType,
          documentUri,
          documentContent,
          new ServerRequestCallback<AssistantNextCommandSuggestionResponse>()

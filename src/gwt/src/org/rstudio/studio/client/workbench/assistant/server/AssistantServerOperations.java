@@ -81,7 +81,6 @@ public interface AssistantServerOperations
    public void assistantNextCommandSuggestion(String command,
                                               String output,
                                               boolean isError,
-                                              String sourceContextType,
                                               String documentUri,
                                               String documentContent,
                                               ServerRequestCallback<AssistantNextCommandSuggestionResponse> requestCallback);

@@ -6998,7 +6998,6 @@ public class RemoteServer implements Server
    public void assistantNextCommandSuggestion(String command,
                                               String output,
                                               boolean isError,
-                                              String sourceContextType,
                                               String documentUri,
                                               String documentContent,
                                               ServerRequestCallback<AssistantNextCommandSuggestionResponse> requestCallback)
@@ -7007,7 +7006,6 @@ public class RemoteServer implements Server
             .add(command)
             .add(output)
             .add(isError)
-            .add(sourceContextType)
             .add(documentUri)
             .add(documentContent)
             .get();

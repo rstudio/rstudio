@@ -2298,7 +2298,6 @@ Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
    std::string command;
    std::string output;
    bool isError;
-   std::string sourceContextType;
    std::string documentUri;
    std::string documentContent;
 
@@ -2307,7 +2306,6 @@ Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
             &command,
             &output,
             &isError,
-            &sourceContextType,
             &documentUri,
             &documentContent);
 
@@ -2322,14 +2320,10 @@ Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
    paramsJson["command"] = command;
    paramsJson["output"] = output;
    paramsJson["isError"] = isError;
-
-   json::Object sourceContextJson;
-   sourceContextJson["type"] = sourceContextType;
    if (!documentUri.empty())
-      sourceContextJson["documentUri"] = documentUri;
+      paramsJson["documentUri"] = documentUri;
    if (!documentContent.empty())
-      sourceContextJson["documentContent"] = documentContent;
-   paramsJson["sourceContext"] = sourceContextJson;
+      paramsJson["documentContent"] = documentContent;
 
    // Create the continuation
    auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
