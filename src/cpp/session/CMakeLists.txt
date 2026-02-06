@@ -207,13 +207,13 @@ set(SESSION_SOURCE_FILES
    modules/SessionFind.cpp
    modules/SessionFonts.cpp
    modules/SessionGit.cpp
-   modules/SessionGitIgnore.cpp
    modules/SessionGraphics.cpp
    modules/SessionHelp.cpp
    modules/SessionHelpHome.cpp
    modules/SessionHistory.cpp
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
+   modules/SessionLibGit2.cpp
    modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp

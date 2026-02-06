@@ -1,5 +1,5 @@
 /*
- * SessionGitIgnore.cpp
+ * SessionLibGit2.cpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionGitIgnore.hpp"
+#include "SessionLibGit2.hpp"
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -27,35 +27,38 @@ namespace session {
 namespace modules {
 namespace libgit2 {
 
-GitIgnore::GitIgnore()
-   : pRepo_(nullptr)
+Error initialize()
 {
    git_libgit2_init();
+   return Success();
 }
 
-GitIgnore::~GitIgnore()
+Git::Git()
+   : pRepo_(nullptr)
+{
+}
+
+Git::~Git()
 {
    if (pRepo_ != nullptr)
       git_repository_free(pRepo_);
-
-   git_libgit2_shutdown();
 }
 
-Error GitIgnore::open(const FilePath& repoPath)
+Error Git::open(const FilePath& repoPath)
 {
    int rc = git_repository_open(&pRepo_, repoPath.getAbsolutePath().c_str());
    if (rc != 0)
    {
       // not a git repo -- this is not an error condition
       pRepo_ = nullptr;
-      LOG_DEBUG_MESSAGE("GitIgnore: path is not a git repository: " +
+      LOG_DEBUG_MESSAGE("Git: path is not a git repository: " +
                         repoPath.getAbsolutePath());
    }
 
    return Success();
 }
 
-bool GitIgnore::isIgnored(const std::string& path) const
+bool Git::isIgnored(const std::string& path) const
 {
    if (pRepo_ == nullptr)
       return false;
@@ -68,7 +71,7 @@ bool GitIgnore::isIgnored(const std::string& path) const
    return ignored != 0;
 }
 
-bool GitIgnore::isOpen() const
+bool Git::isOpen() const
 {
    return pRepo_ != nullptr;
 }

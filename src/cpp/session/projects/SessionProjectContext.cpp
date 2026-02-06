@@ -41,7 +41,7 @@
 #include <session/prefs/UserState.hpp>
 
 #include "SessionProjectFirstRun.hpp"
-#include "../modules/SessionGitIgnore.hpp"
+#include "../modules/SessionLibGit2.hpp"
 
 #define kStorageFolder "projects"
 
@@ -727,12 +727,15 @@ void ProjectContext::onDeferredInit(bool newSession)
    context.ignoredComponents = fileMonitorIgnoredComponents();
 
    // initialize gitignore support
-   using modules::libgit2::GitIgnore;
-   boost::shared_ptr<GitIgnore> pGitIgnore = boost::make_shared<GitIgnore>();
-   Error error = pGitIgnore->open(directory());
-   if (error)
-      LOG_ERROR(error);
-   context.pGitIgnore = pGitIgnore;
+   if (prefs::userPrefs().fileMonitorUseGitignore())
+   {
+      using modules::libgit2::Git;
+      boost::shared_ptr<Git> pGit = boost::make_shared<Git>();
+      Error error = pGit->open(directory());
+      if (error)
+         LOG_ERROR(error);
+      context.pGit = pGit;
+   }
 
    core::system::file_monitor::registerMonitor(
          directory(),
@@ -826,13 +829,13 @@ bool ProjectContext::fileMonitorFilter(
          return false;
 
    // check gitignore rules
-   if (context.pGitIgnore && context.pGitIgnore->isOpen())
+   if (context.pGit && context.pGit->isOpen())
    {
       std::string dirPath = directory().getAbsolutePath();
       if (path.size() > dirPath.size() + 1)
       {
          std::string relativePath = path.substr(dirPath.size() + 1);
-         if (context.pGitIgnore->isIgnored(relativePath))
+         if (context.pGit->isIgnored(relativePath))
             return false;
       }
    }

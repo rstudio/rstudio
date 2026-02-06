@@ -154,6 +154,7 @@
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
 #include "modules/SessionGraphics.hpp"
+#include "modules/SessionLibGit2.hpp"
 #include "modules/SessionDependencies.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
@@ -607,6 +608,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // prefs (early init required -- many modules including projects below require
       // preference access)
       (modules::prefs::initialize)
+
+      // libgit2 (early init required -- projects below uses libgit2
+      // for gitignore-aware file monitoring)
+      (modules::libgit2::initialize)
 
       // projects (early project init required -- module inits below
       // can then depend on e.g. computed defaultEncoding)

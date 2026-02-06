@@ -1,5 +1,5 @@
 /*
- * SessionGitIgnore.hpp
+ * SessionLibGit2.hpp
  *
  * Copyright (C) 2025 by Posit Software, PBC
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_GIT_IGNORE_HPP
-#define SESSION_GIT_IGNORE_HPP
+#ifndef SESSION_LIB_GIT2_HPP
+#define SESSION_LIB_GIT2_HPP
 
 #include <string>
 
@@ -28,11 +28,13 @@ namespace session {
 namespace modules {
 namespace libgit2 {
 
-class GitIgnore
+core::Error initialize();
+
+class Git
 {
 public:
-   GitIgnore();
-   ~GitIgnore();
+   Git();
+   ~Git();
 
    // Open a git repository at the given path.
    // Returns success even if the path is not a git repo (isOpen() will be false).
@@ -53,4 +55,4 @@ private:
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_GIT_IGNORE_HPP
+#endif // SESSION_LIB_GIT2_HPP
