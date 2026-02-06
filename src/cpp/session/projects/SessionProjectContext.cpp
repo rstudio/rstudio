@@ -652,8 +652,11 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/node_modules/",
       
       // python virtual environments
-      "/virtualenv/"
+      "/virtualenv/",
       "/venv/",
+
+      // python bytecode cache
+      "/__pycache__/",
       
       // mostly for internal use
       "/RStudio.app/",
