@@ -652,7 +652,7 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/node_modules/",
       
       // python virtual environments
-      "/virtualenv/"
+      "/virtualenv/",
       "/venv/",
       
       // mostly for internal use
