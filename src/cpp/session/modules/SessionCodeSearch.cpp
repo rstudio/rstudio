@@ -21,6 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <unordered_map>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/shared_ptr.hpp>
@@ -73,6 +74,8 @@ namespace code_search {
 
 namespace {
 
+std::unordered_map<std::string, bool> s_ignoredDirCache;
+
 bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
 {
    using namespace projects;
@@ -105,31 +108,48 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
         !parentPath.isEmpty() && parentPath != projDir;
         parentPath = parentPath.getParent())
    {
+      std::string parentStr = parentPath.getAbsolutePath();
+
+      // check the cache first
+      auto cacheIt = s_ignoredDirCache.find(parentStr);
+      if (cacheIt != s_ignoredDirCache.end())
+      {
+         if (cacheIt->second)
+            return true;
+         continue;
+      }
+
       std::string parentName = parentPath.getFilename();
-      
+      bool ignored = false;
+
       // node_modules
       if (parentName == "node_modules")
-         return true;
-            
+         ignored = true;
+
       // packrat
-      if (parentName == "packrat" &&
+      else if (parentName == "packrat" &&
          parentPath.completeChildPath("packrat.lock").exists())
-         return true;
+         ignored = true;
 
       // renv
-      if (parentName == "renv" &&
+      else if (parentName == "renv" &&
          parentPath.completeChildPath("activate.R").exists())
-         return true;
+         ignored = true;
 
       // cmake build directory
-      if (parentPath.completeChildPath("CMakeCache.txt").exists())
-         return true;
+      else if (parentPath.completeChildPath("CMakeCache.txt").exists())
+         ignored = true;
 
       // revdep sub-directories
-      if (isPackageProject && parentName == "revdep")
+      else if (isPackageProject && parentName == "revdep")
+         ignored = true;
+
+      s_ignoredDirCache[parentStr] = ignored;
+
+      if (ignored)
          return true;
    }
-   
+
    return false;
 }
 
@@ -272,59 +292,53 @@ public:
       DEBUG("First parent: '" << (*parent).fileInfo.absolutePath() << "'");
 
       std::string::size_type matchIndex = absolutePath.find('/');
-      
+
+      // optimization: if the file's immediate parent directory is already
+      // in the lookup map, skip the directory walk entirely
+      std::string::size_type lastSlash = absolutePath.rfind('/');
+      if (lastSlash != std::string::npos && lastSlash > 0)
+      {
+         std::string parentDirPath = absolutePath.substr(0, lastSlash);
+         auto mapIt = pathLookup_.find(parentDirPath);
+         if (mapIt != pathLookup_.end())
+         {
+            DEBUG("- Fast path: parent directory '" << parentDirPath << "' found in lookup map");
+            parent = mapIt->second;
+            matchIndex = std::string::npos; // skip the directory walk
+         }
+      }
+
       DEBUG("Entering directory node insertion phase");
       while (matchIndex != std::string::npos)
       {
-         FileInfo path(
-                  absolutePath.substr(0, matchIndex), // note: don't include the trailing '/'
-                  true);
-         
-         Entry entry(path);
-         DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
+         std::string dirPath = absolutePath.substr(0, matchIndex);
 
-         if (isSamePath(*parent, entry))
+         // check the lookup map first -- O(1) vs O(siblings) scan
+         auto mapIt = pathLookup_.find(dirPath);
+         if (mapIt != pathLookup_.end())
+         {
+            DEBUG("- Fast path: '" << dirPath << "' found in lookup map");
+            parent = mapIt->second;
+            matchIndex = absolutePath.find('/', matchIndex + 1);
+            continue;
+         }
+
+         FileInfo path(dirPath, true);
+         Entry dirEntry(path);
+         DEBUG("Entry: '" << dirEntry.fileInfo.absolutePath() << "'");
+
+         if (isSamePath(*parent, dirEntry))
          {
             DEBUG("- Node already exists as parent; skipping...");
          }
-
-         else if (number_of_children(parent) == 0)
-         {
-            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
-
-            iterator newItr = append_child(parent, entry);
-            DEBUG("- Parent now has " << number_of_children(parent) << " children.");
-            DEBUG("- Parent now has " << number_of_siblings(parent) << " siblings.");
-            parent = newItr;
-         }
          else
          {
-            DEBUG("- Searching the children of this node");
-            sibling_iterator it = parent.begin();
-            sibling_iterator end = parent.end();
-
-            for (; it != end; ++it)
-            {
-               DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-               if (isSamePath(*it, entry))
-               {
-                  DEBUG("-- Found it!");
-                  break;
-               }
-            }
-
-            if (it == end)
-            {
-               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.absolutePath() << "'");
-               parent = append_child(parent, entry);
-            }
-            else
-            {
-               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.absolutePath() << ")");
-               parent = it;
-            }
+            DEBUG("- Adding child to parent '" << (*parent).fileInfo.absolutePath() << "'");
+            iterator newItr = append_child(parent, dirEntry);
+            pathLookup_[dirPath] = newItr;
+            parent = newItr;
          }
-         
+
          matchIndex = absolutePath.find('/', matchIndex + 1);
       }
       DEBUG("Exiting directory node insertion phase");
@@ -332,10 +346,22 @@ public:
       // Now, we have the filename. We append that to the parent.
       DEBUG("Parent: '" << (*parent).fileInfo.absolutePath() << "'");
       DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
-      if (parent.number_of_children() == 0)
+
+      // check if this entry already exists in the lookup map
+      auto existingIt = pathLookup_.find(absolutePath);
+      if (existingIt != pathLookup_.end())
+      {
+         // update the existing entry (its associated index may have changed)
+         DEBUG("- Entry exists in lookup map; updating");
+         *(existingIt->second) = entry;
+         parent = existingIt->second;
+      }
+      else if (parent.number_of_children() == 0)
       {
          DEBUG("- No children at parent node; adding child");
-         parent = append_child(parent, entry);
+         iterator newItr = append_child(parent, entry);
+         pathLookup_[absolutePath] = newItr;
+         parent = newItr;
       }
 
       // We check for a dummy node. If we are inserting a file
@@ -347,37 +373,18 @@ public:
          DEBUG("- Replacing dummy node");
          iterator firstChild = child(parent, 0);
          *firstChild = entry;
+         pathLookup_[absolutePath] = firstChild;
+         parent = firstChild;
       }
 
-      // Otherwise, loop through all the children and try to find
-      // the node. If we don't find it, append it, otherwise no-op.
+      // Entry is not in the map and parent has real children --
+      // we know it doesn't exist, so just append it.
       else
       {
-         sibling_iterator it = parent.begin();
-         sibling_iterator end = parent.end();
-         for (; it != end; ++it)
-         {
-            DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
-            
-            if (isSamePath(*it, entry))
-            {
-               DEBUG("- Found it!");
-               break;
-            }
-         }
-
-         if (it == end)
-         {
-            DEBUG("- Adding another child to parent");
-            parent = append_child(parent, entry);
-         }
-         else
-         {
-            // We update the entry (because its associated index may
-            // have changed)
-            *it = entry;
-         }
+         DEBUG("- Adding another child to parent");
+         iterator newItr = append_child(parent, entry);
+         pathLookup_[absolutePath] = newItr;
+         parent = newItr;
       }
 
       // If we just inserted a folder, we append an empty child
@@ -398,6 +405,12 @@ public:
 
    iterator find_leaf(const Entry& entry)
    {
+      // try O(1) lookup first
+      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
+      if (mapIt != pathLookup_.end())
+         return mapIt->second;
+
+      // fall back to linear scan
       leaf_iterator it = begin_leaf();
       for (; is_valid(it); ++it)
          if (isSamePath(*it, entry))
@@ -407,6 +420,12 @@ public:
 
    iterator find_branch(const Entry& entry)
    {
+      // try O(1) lookup first
+      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
+      if (mapIt != pathLookup_.end())
+         return mapIt->second;
+
+      // fall back to DFS
       iterator parent = begin();
       iterator result = end();
       do_find_branch(entry, parent, &result);
@@ -442,16 +461,46 @@ public:
 
    iterator find(const Entry& entry)
    {
+      // try O(1) lookup first
+      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
+      if (mapIt != pathLookup_.end())
+         return mapIt->second;
+
+      // fall back to type-specific search
       if (entry.fileInfo.isDirectory())
          return find_branch(entry);
       else
          return find_leaf(entry);
    }
 
+public:
+
+   void clearPathLookup()
+   {
+      pathLookup_.clear();
+   }
+
+   void eraseEntry(iterator it)
+   {
+      // remove all descendants from the lookup map
+      iterator descIt = it;
+      iterator descEnd = it;
+      descEnd.skip_children();
+      ++descEnd;
+      for (; descIt != descEnd; ++descIt)
+      {
+         const std::string& path = (*descIt).fileInfo.absolutePath();
+         if (!path.empty())
+            pathLookup_.erase(path);
+      }
+      erase(it);
+   }
+
 private:
 
    Entry dummyEntry_;
-   
+   std::unordered_map<std::string, iterator> pathLookup_;
+
 };
 
 class SourceFileIndex : boost::noncopyable
@@ -492,16 +541,16 @@ public:
          indexingQueue_.push(addEvent);
       }
 
-      // schedule indexing if necessary. perform up to 200ms of work
-      // immediately and then continue in periodic 20ms chunks until
+      // schedule indexing if necessary. perform up to 500ms of work
+      // immediately and then continue in periodic 50ms chunks until
       // we are completed.
       if (!indexingQueue_.empty() && !indexing_)
       {
          indexing_ = true;
 
          module_context::scheduleIncrementalWork(
-                           boost::posix_time::milliseconds(200),
-                           boost::posix_time::milliseconds(20),
+                           boost::posix_time::milliseconds(500),
+                           boost::posix_time::milliseconds(50),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
                            false /* allow indexing even when non-idle */);
       }
@@ -629,9 +678,8 @@ public:
       }
       else
       {
-         DEBUG("Failed to find node.");
-         LOG_ERROR_MESSAGE("Failed to find parent node when searching index");
-         return;
+         // index may still be building; search available entries from root
+         DEBUG("Parent node not yet indexed; searching from root.");
       }
       
       // iterate over the files
@@ -702,9 +750,11 @@ public:
       // Find the parent node in the tree
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+
+      // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
-         return;
-      
+         parentItr = pEntries_->begin();
+
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
       for (; it != end; ++it)
@@ -744,8 +794,10 @@ public:
       // Find the parent node in the tree
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+
+      // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
-         return;
+         parentItr = pEntries_->begin();
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -804,6 +856,7 @@ public:
       indexing_ = false;
       indexingQueue_ = std::queue<core::system::FileChangeEvent>();
       pEntries_->clear();
+      pEntries_->clearPathLookup();
    }
 
 private:
@@ -812,7 +865,10 @@ private:
    {
       using namespace rstudio::core::system;
 
-      if (!indexingQueue_.empty())
+      // process a batch of items per scheduler call to reduce
+      // per-item function dispatch and time-check overhead
+      static const int kBatchSize = 20;
+      for (int i = 0; i < kBatchSize && !indexingQueue_.empty(); ++i)
       {
          // remove the event from the queue
          FileChangeEvent event = indexingQueue_.front();
@@ -897,7 +953,7 @@ private:
 
       EntryTree::iterator it = pEntries_->find(entry);
       if (it != pEntries_->end())
-         pEntries_->erase(it);
+         pEntries_->eraseEntry(it);
       else
       {
          DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
@@ -2525,6 +2581,7 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
 
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
+   s_ignoredDirCache.clear();
    projectIndex().enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
@@ -2539,6 +2596,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 void onFileMonitorDisabled()
 {
    // clear the index so we don't ever get stale results
+   s_ignoredDirCache.clear();
    projectIndex().clear();
 }
 
