@@ -120,19 +120,26 @@ public:
       return Success();
    }
 
+   // Returns the project layer, or nullptr if no project is active.
+   // Caller must hold mutex_.
+   boost::shared_ptr<UserPrefsProjectLayer> projectLayer()
+   {
+      if (layers_.size() <= PREF_LAYER_PROJECT)
+         return nullptr;
+
+      return boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
+         layers_[PREF_LAYER_PROJECT]);
+   }
+
    Error writeProjectPrefValue(const std::string& name, const json::Value& value)
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         if (layers_.size() <= PREF_LAYER_PROJECT)
+         auto layer = projectLayer();
+         if (!layer)
             return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
-            layers_[PREF_LAYER_PROJECT]);
-         if (!projectLayer)
-            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-         Error error = projectLayer->writePrivatePref(name, value);
+         Error error = layer->writePrivatePref(name, value);
          if (error)
             return error;
       }
@@ -146,15 +153,11 @@ public:
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         if (layers_.size() <= PREF_LAYER_PROJECT)
+         auto layer = projectLayer();
+         if (!layer)
             return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
-            layers_[PREF_LAYER_PROJECT]);
-         if (!projectLayer)
-            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-         Error error = projectLayer->writePrefs(prefs);
+         Error error = layer->writePrefs(prefs);
          if (error)
             return error;
       }
@@ -170,15 +173,11 @@ public:
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         if (layers_.size() <= PREF_LAYER_PROJECT)
+         auto layer = projectLayer();
+         if (!layer)
             return json::Object();
 
-         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
-            layers_[PREF_LAYER_PROJECT]);
-         if (!projectLayer)
-            return json::Object();
-
-         return projectLayer->readPrivatePrefs();
+         return layer->readPrivatePrefs();
       }
       END_LOCK_MUTEX
 
@@ -224,7 +223,7 @@ Error initializeProjectPrefs()
 
 Error writeProjectPref(const std::string& name, const json::Value& value)
 {
-   // Only preferences marked "public": false in the schema may be written
+   // Only preferences marked "private": true in the schema may be written
    // as private project prefs; reject anything not in the generated allowlist.
    auto allowed = UserPrefValues::privateProjectPrefs();
    if (allowed.find(name) == allowed.end())

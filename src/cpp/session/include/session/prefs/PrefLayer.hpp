@@ -118,7 +118,9 @@ public:
 
 protected:
    // I/O methods
-   core::Error loadPrefsFromFile(const core::FilePath& prefsFile, const core::FilePath& schemaFile);
+   core::Error loadPrefsFromFile(const core::FilePath& prefsFile,
+                                const core::FilePath& schemaFile,
+                                core::json::Object* pOutPrefs);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
    core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
 

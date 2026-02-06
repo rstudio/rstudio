@@ -46,8 +46,18 @@ Error UserPrefsLayer::readPrefs()
    // Mark the last sync time 
    lastSync_ = prefsFile_.getLastWriteTime();
 
-   return loadPrefsFromFile(prefsFile_,
-       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
+   json::Object prefs;
+   Error error = loadPrefsFromFile(prefsFile_,
+       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile),
+       &prefs);
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cache_ = boost::make_shared<json::Object>(std::move(prefs));
+   }
+   END_LOCK_MUTEX
+
+   return error;
 }
 
 void UserPrefsLayer::onPrefsFileChanged()
@@ -63,13 +73,21 @@ void UserPrefsLayer::onPrefsFileChanged()
    const json::Object old = oldVal.getObject();
 
    // Reload the prefs from the file
+   json::Object prefs;
    Error error = loadPrefsFromFile(prefsFile_,
-       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
+       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile),
+       &prefs);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cache_ = boost::make_shared<json::Object>(std::move(prefs));
+   }
+   END_LOCK_MUTEX
 
    // Figure out what prefs changed in the file
    for (const auto& key: UserPrefValues::allKeys())

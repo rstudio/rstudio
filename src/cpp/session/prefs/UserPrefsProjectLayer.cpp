@@ -45,7 +45,7 @@ void UserPrefsProjectLayer::mergePrefs()
       {
          for (const auto& member : *publicPrefsCache_)
          {
-            (*cache_)[member.getName()] = member.getValue();
+            (*cache_)[member.getName()] = member.getValue().clone();
          }
       }
 
@@ -54,7 +54,7 @@ void UserPrefsProjectLayer::mergePrefs()
       {
          for (const auto& member : *privatePrefsCache_)
          {
-            (*cache_)[member.getName()] = member.getValue();
+            (*cache_)[member.getName()] = member.getValue().clone();
          }
       }
    }
@@ -93,22 +93,25 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    const json::Value oldVal = cache_->clone();
    const json::Object old = oldVal.getObject();
 
-   // Reload the private prefs from file.
-   // loadPrefsFromFile writes directly into cache_, so we steal it into privatePrefsCache_.
+   // Reload private prefs from file
    FilePath schemaFile = options().rResourcesPath()
       .completePath("schema")
       .completePath(kUserPrefsSchemaFile);
-   Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile);
+   json::Object prefs;
+   Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile, &prefs);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
 
-   // Steal cache_ (which loadPrefsFromFile just populated) into privatePrefsCache_
-   privatePrefsCache_ = cache_;
+   // Update the private prefs cache and rebuild the merged cache
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      privatePrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
+   }
+   END_LOCK_MUTEX
 
-   // Rebuild the merged cache
    mergePrefs();
 
    // Diff against old merged cache and emit change notifications
@@ -141,13 +144,12 @@ core::Error UserPrefsProjectLayer::readPrefs()
          .completePath("schema")
          .completePath(kUserPrefsSchemaFile);
 
-      // loadPrefsFromFile writes directly into cache_, so we use it then steal the result
-      Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile);
+      json::Object prefs;
+      Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile, &prefs);
       if (error)
          LOG_ERROR(error);
 
-      // Steal cache_ into privatePrefsCache_
-      privatePrefsCache_ = cache_;
+      privatePrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
 
       // Build the merged cache
       mergePrefs();
@@ -206,16 +208,18 @@ core::Error UserPrefsProjectLayer::writePrefs(const core::json::Object& prefs)
 core::Error UserPrefsProjectLayer::writePrivatePref(const std::string& name,
                                                     const json::Value& value)
 {
+   json::Object prefs;
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       if (!privatePrefsCache_)
          privatePrefsCache_ = boost::make_shared<json::Object>();
 
       (*privatePrefsCache_)[name] = value;
+      prefs = *privatePrefsCache_;
    }
    END_LOCK_MUTEX
 
-   return writePrefs(*privatePrefsCache_);
+   return writePrefs(prefs);
 }
 
 core::json::Object UserPrefsProjectLayer::readPrivatePrefs()
@@ -223,7 +227,9 @@ core::json::Object UserPrefsProjectLayer::readPrivatePrefs()
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       if (privatePrefsCache_)
+      {
          return *privatePrefsCache_;
+      }
    }
    END_LOCK_MUTEX
 

@@ -616,7 +616,8 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
-   optionsJson["private_prefs"] = prefs::readProjectPrivatePrefs();
+   json::Object privatePrefs = prefs::readProjectPrivatePrefs();
+   optionsJson["private_prefs"] = privatePrefs;
 
    pResponse->setResult(optionsJson);
    return Success();

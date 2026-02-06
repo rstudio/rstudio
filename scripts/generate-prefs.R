@@ -123,7 +123,7 @@ generate <- function(schemaPath, className) {
    cpplist <- paste0("std::vector<std::string> ", className, "::allKeys()\n{\n",
                      "   return std::vector<std::string>({\n")
 
-   # A list in C++ of private project preference keys (public: false)
+   # A list in C++ of private project preference keys (private: true)
    cppPrivateProjectPrefs <- paste0("std::set<std::string> ", className, "::privateProjectPrefs()\n{\n",
                                     "   return std::set<std::string>({\n")
 
@@ -222,8 +222,8 @@ generate <- function(schemaPath, className) {
       cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
       cpplist <- paste0(cpplist, "      k", capitalize(camel), ",\n")
 
-      # Track private project preferences (public: false)
-      if (identical(def[["public"]], FALSE)) {
+      # Track private project preferences (private: true)
+      if (identical(def[["private"]], TRUE)) {
          cppPrivateProjectPrefs <- paste0(cppPrivateProjectPrefs,
             "      k", capitalize(camel), ",\n")
       }

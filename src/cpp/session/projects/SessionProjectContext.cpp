@@ -731,9 +731,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    {
       using modules::libgit2::Git;
       boost::shared_ptr<Git> pGit = boost::make_shared<Git>();
-      Error error = pGit->open(directory());
-      if (error)
-         LOG_ERROR(error);
+      pGit->open(directory());
       context.pGit = pGit;
    }
 

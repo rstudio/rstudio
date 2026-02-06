@@ -27,9 +27,6 @@ public interface PrefsServerOperations
    void setUserState(JavaScriptObject userState,
                      ServerRequestCallback<Void> requestCallback);
 
-   void setProjectPrefs(JavaScriptObject projectPrefs,
-                        ServerRequestCallback<Void> requestCallback);
-
    void editPreferences(ServerRequestCallback<Void> requestCallback);
 
    void clearPreferences(ServerRequestCallback<String> requestCallback);

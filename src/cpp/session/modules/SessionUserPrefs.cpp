@@ -60,20 +60,6 @@ Error setPreferences(const json::JsonRpcRequest& request,
    return userPrefs().writeLayer(PREF_LAYER_USER, val.getObject());
 }
 
-Error setProjectPreferences(const json::JsonRpcRequest& request,
-                            json::JsonRpcResponse* pResponse)
-{
-   if (!projects::projectContext().hasProject())
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-
-   json::Value val;
-   Error error = json::readParams(request.params, &val);
-   if (error)
-      return error;
-
-   return userPrefs().writeLayer(PREF_LAYER_PROJECT, val.getObject());
-}
-
 Error setState(const json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
@@ -497,7 +483,6 @@ core::Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionUserPrefValues.R"))
       (bind(registerRpcMethod, "set_user_prefs", setPreferences))
-      (bind(registerRpcMethod, "set_project_prefs", setProjectPreferences))
       (bind(registerRpcMethod, "set_user_state", setState))
       (bind(registerRpcMethod, "edit_user_prefs", editPreferences))
       (bind(registerRpcMethod, "clear_user_prefs", clearPreferences))

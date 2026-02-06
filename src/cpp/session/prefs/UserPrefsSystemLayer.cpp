@@ -33,10 +33,19 @@ UserPrefsSystemLayer::UserPrefsSystemLayer():
 
 core::Error UserPrefsSystemLayer::readPrefs()
 {
-   return loadPrefsFromFile(
+   json::Object prefs;
+   Error error = loadPrefsFromFile(
       core::system::xdg::systemConfigFile(kUserPrefsFile),
-      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
-      
+      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile),
+      &prefs);
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cache_ = boost::make_shared<json::Object>(std::move(prefs));
+   }
+   END_LOCK_MUTEX
+
+   return error;
 }
 
 } // namespace prefs
