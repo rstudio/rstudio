@@ -82,6 +82,7 @@ generate <- function(schemaPath, className) {
    schema <- jsonlite::read_json(schemaPath)
    prefs <- schema$properties
 
+   javaKeys <- "" # Java string constants for preference names
    java <- ""   # The contents of the Java file we'll be creating
    javaConstants <- ""   # The contents of the Java constants (i18n) file we'll be creating
    javaProperties <- ""  # The contents of the Java properties (i18n) file we'll be creating
@@ -226,6 +227,13 @@ generate <- function(schemaPath, className) {
          cppPrivateProjectPrefs <- paste0(cppPrivateProjectPrefs,
             "      k", capitalize(camel), ",\n")
       }
+
+      # Add Java string constant for preference name
+      line <- paste0(
+         "   public static final String ", toupper(pref), " = \"", pref, "\";")
+      if (grepl("(api_key|secret|token|password)", pref, ignore.case = TRUE))
+         line <- paste0(line, " // pragma: allowlist secret")
+      javaKeys <- paste0(javaKeys, line, "\n")
 
       # Create a Java (and C++) comment header for the preference
       comment <- paste0(
@@ -434,7 +442,7 @@ generate <- function(schemaPath, className) {
                  hpp,
                  "};\n")
    javasync <- paste0(javasync, "   }\n")
-   java <- paste0(java, javasync)
+   java <- paste0(javaKeys, "\n", java, javasync)
    javalist <- paste0(javalist, "      return prefs;\n   }\n")
    java <- paste0(java, javalist)
    

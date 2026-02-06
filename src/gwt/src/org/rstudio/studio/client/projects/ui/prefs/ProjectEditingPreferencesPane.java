@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -23,13 +24,13 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -186,9 +187,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       // initialize gitignore checkbox from private project prefs, falling
       // back to the resolved user preference value
       JsObject privatePrefs = options.getPrivatePrefs();
-      if (privatePrefs.hasKey(PREF_FILE_MONITOR_USE_GITIGNORE))
+      if (privatePrefs.hasKey(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE))
       {
-         initialUseGitignore_ = privatePrefs.getBoolean(PREF_FILE_MONITOR_USE_GITIGNORE);
+         initialUseGitignore_ = privatePrefs.getBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE);
       }
       else
       {
@@ -220,7 +221,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       // write the gitignore pref into private project prefs
       boolean useGitignore = chkUseGitignore_.getValue();
-      options.getPrivatePrefs().setBoolean(PREF_FILE_MONITOR_USE_GITIGNORE, useGitignore);
+      options.getPrivatePrefs().setBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE, useGitignore);
       if (useGitignore != initialUseGitignore_)
       {
          restartRequirement.setSessionRestartRequired(true);
@@ -248,8 +249,6 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
          return initialConfig_.getNumSpacesForTab();
       }
    }
-
-   private static final String PREF_FILE_MONITOR_USE_GITIGNORE = "file_monitor_use_gitignore";
 
    private final UserPrefs userPrefs_;
    private CheckBox enableCodeIndexing_;

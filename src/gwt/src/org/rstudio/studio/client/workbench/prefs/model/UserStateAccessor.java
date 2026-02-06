@@ -43,6 +43,38 @@ public class UserStateAccessor extends Prefs
       super(stateLayers);
    }
    
+   public static final String GENERAL = "general";
+   public static final String FONT = "font";
+   public static final String VIEW = "view";
+   public static final String RENDERER = "renderer";
+   public static final String PLATFORM = "platform";
+   public static final String CONTEXT_ID = "context_id";
+   public static final String AUTO_CREATED_PROFILE = "auto_created_profile";
+   public static final String THEME = "theme";
+   public static final String DEFAULT_PROJECT_LOCATION = "default_project_location";
+   public static final String CLEAR_HIDDEN = "clear_hidden";
+   public static final String EXPORT_PLOT_OPTIONS = "export_plot_options";
+   public static final String EXPORT_VIEWER_OPTIONS = "export_viewer_options";
+   public static final String SAVE_PLOT_AS_PDF_OPTIONS = "save_plot_as_pdf_options";
+   public static final String COMPILE_R_NOTEBOOK_PREFS = "compile_r_notebook_prefs";
+   public static final String COMPILE_R_MARKDOWN_NOTEBOOK_PREFS = "compile_r_markdown_notebook_prefs";
+   public static final String SHOW_PUBLISH_UI = "show_publish_ui";
+   public static final String ENABLE_RSCONNECT_PUBLISH_UI = "enable_rsconnect_publish_ui";
+   public static final String PUBLISH_ACCOUNT = "publish_account";
+   public static final String DOCUMENT_OUTLINE_WIDTH = "document_outline_width";
+   public static final String CONNECT_VIA = "connect_via";
+   public static final String ERROR_HANDLER_TYPE = "error_handler_type";
+   public static final String USING_MINGW_GCC49 = "using_mingw_gcc49";
+   public static final String VISUAL_MODE_CONFIRMED = "visual_mode_confirmed";
+   public static final String BIBLIOGRAPHY_DEFAULT_TYPE = "bibliography_default_type";
+   public static final String CITATION_DEFAULT_IN_TEXT = "citation_default_in_text";
+   public static final String ZOTERO_CONNECTION_TYPE = "zotero_connection_type";
+   public static final String ZOTERO_USE_BETTER_BIBTEX = "zotero_use_better_bibtex";
+   public static final String ZOTERO_API_KEY = "zotero_api_key"; // pragma: allowlist secret
+   public static final String ZOTERO_DATA_DIR = "zotero_data_dir";
+   public static final String QUARTO_WEBSITE_SYNC_EDITOR = "quarto_website_sync_editor";
+   public static final String POSIT_ASSISTANT = "posit_assistant";
+
    /**
     * 
     */

@@ -845,8 +845,8 @@ Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson;
-   boost::optional<json::Object> privatePrefsJson;
+   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson,
+      privatePrefsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
                                        "vcs_options", &vcsOptionsJson,
@@ -895,15 +895,9 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
 
    // write private project prefs
-   if (privatePrefsJson)
-   {
-      for (const auto& member : *privatePrefsJson)
-      {
-         error = prefs::writeProjectPref(member.getName(), member.getValue());
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
+   error = prefs::writeProjectPrivatePrefs(privatePrefsJson);
+   if (error)
+      LOG_ERROR(error);
 
    // notify modules
    module_context::events().onProjectOptionsUpdated();

@@ -142,6 +142,30 @@ public:
       return Success();
    }
 
+   Error writeProjectPrivatePrefsValue(const json::Object& prefs)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         if (layers_.size() <= PREF_LAYER_PROJECT)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
+            layers_[PREF_LAYER_PROJECT]);
+         if (!projectLayer)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         Error error = projectLayer->writePrefs(prefs);
+         if (error)
+            return error;
+      }
+      END_LOCK_MUTEX
+
+      for (const auto& member : prefs)
+         onChanged(kUserPrefsProjectLayer, member.getName());
+
+      return Success();
+   }
+
    json::Object readProjectPrivatePrefsValue()
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
@@ -208,6 +232,20 @@ Error writeProjectPref(const std::string& name, const json::Value& value)
 
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.writeProjectPrefValue(name, value);
+}
+
+Error writeProjectPrivatePrefs(const json::Object& prefs)
+{
+   // Validate all keys against the allowlist before writing any of them.
+   auto allowed = UserPrefValues::privateProjectPrefs();
+   for (const auto& member : prefs)
+   {
+      if (allowed.find(member.getName()) == allowed.end())
+         return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.writeProjectPrivatePrefsValue(prefs);
 }
 
 json::Object readProjectPrivatePrefs()
