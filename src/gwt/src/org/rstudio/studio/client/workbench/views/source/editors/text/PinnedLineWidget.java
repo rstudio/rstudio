@@ -56,7 +56,8 @@ public class PinnedLineWidget
       folded_ = folded();
       
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
-      lineWidget_.setFixedWidth(true); 
+      lineWidget_.setFixedWidth(true);
+      lineWidget_.setColumn(0);
 
       renderLineWidget();
       
