@@ -21,6 +21,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserPrefValues.hpp>
 
 #include "UserPrefsDefaultLayer.hpp"
 #include "UserPrefsComputedLayer.hpp"
@@ -199,6 +200,12 @@ Error initializeProjectPrefs()
 
 Error writeProjectPref(const std::string& name, const json::Value& value)
 {
+   // Only preferences marked "public": false in the schema may be written
+   // as private project prefs; reject anything not in the generated allowlist.
+   auto allowed = UserPrefValues::privateProjectPrefs();
+   if (allowed.find(name) == allowed.end())
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.writeProjectPrefValue(name, value);
 }

@@ -122,6 +122,10 @@ generate <- function(schemaPath, className) {
    cpplist <- paste0("std::vector<std::string> ", className, "::allKeys()\n{\n",
                      "   return std::vector<std::string>({\n")
 
+   # A list in C++ of private project preference keys (public: false)
+   cppPrivateProjectPrefs <- paste0("std::set<std::string> ", className, "::privateProjectPrefs()\n{\n",
+                                    "   return std::set<std::string>({\n")
+
    # A Java function that syncs every pref
    javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
 
@@ -216,6 +220,12 @@ generate <- function(schemaPath, className) {
                            "#define k", capitalize(camel), " \"", pref, "\"\n")
       cppstrings <- paste0(cppstrings, cppenum(def, camel, type, ""))
       cpplist <- paste0(cpplist, "      k", capitalize(camel), ",\n")
+
+      # Track private project preferences (public: false)
+      if (identical(def[["public"]], FALSE)) {
+         cppPrivateProjectPrefs <- paste0(cppPrivateProjectPrefs,
+            "      k", capitalize(camel), ",\n")
+      }
 
       # Create a Java (and C++) comment header for the preference
       comment <- paste0(
@@ -413,12 +423,14 @@ generate <- function(schemaPath, className) {
    
    # Close off blocks and lists
    cpplist <- paste0(cpplist, "   });\n}\n")
-   cpp <- paste0(cpp, cpplist)
+   cppPrivateProjectPrefs <- paste0(cppPrivateProjectPrefs, "   });\n}\n")
+   cpp <- paste0(cpp, cpplist, "\n", cppPrivateProjectPrefs)
    hpp <- paste0(cppstrings, "\n",
-                 "class ", className, ": public Preferences\n", 
+                 "class ", className, ": public Preferences\n",
                  "{\n",
                  "public:\n",
                  "   static std::vector<std::string> allKeys();\n",
+                 "   static std::set<std::string> privateProjectPrefs();\n",
                  hpp,
                  "};\n")
    javasync <- paste0(javasync, "   }\n")

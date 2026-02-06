@@ -119,6 +119,7 @@ class UserStateValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   static std::set<std::string> privateProjectPrefs();
    /**
     * 
     */

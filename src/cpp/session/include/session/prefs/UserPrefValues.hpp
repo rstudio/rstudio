@@ -20,6 +20,8 @@
 #ifndef SESSION_USER_PREF_VALUES_HPP
 #define SESSION_USER_PREF_VALUES_HPP
 
+#include <set>
+
 #include <session/prefs/Preferences.hpp>
 
 namespace rstudio {
@@ -493,6 +495,7 @@ class UserPrefValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   static std::set<std::string> privateProjectPrefs();
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */

@@ -4018,6 +4018,13 @@ std::vector<std::string> UserPrefValues::allKeys()
       kConsoleHighlightConditions,
    });
 }
+
+std::set<std::string> UserPrefValues::privateProjectPrefs()
+{
+   return std::set<std::string>({
+      kFileMonitorUseGitignore,
+   });
+}
    
 
 }
