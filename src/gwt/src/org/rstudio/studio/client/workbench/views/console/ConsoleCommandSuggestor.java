@@ -115,24 +115,25 @@ public class ConsoleCommandSuggestor implements
          outputBuffer_.append(error);
       }
 
-      if (lastCommand_ != null)
+      if (lastCommand_ != null && error != null)
       {
-         String command = lastCommand_;
-         String output = outputBuffer_.toString();
-         boolean isError = true;
-         String sourceDocumentId = lastSourceDocumentId_;
+         String errorLower = error.toLowerCase();
+         boolean isError = errorLower.startsWith("error");
+         boolean isWarning = errorLower.startsWith("warning");
 
-         if (error != null && error.toLowerCase().contains("warning"))
+         if (isError || isWarning)
          {
-            isError = false;
-         }
+            String command = lastCommand_;
+            String output = outputBuffer_.toString();
+            String sourceDocumentId = lastSourceDocumentId_;
 
-         lastCommand_ = null;
-         lastSourceDocumentId_ = null;
+            lastCommand_ = null;
+            lastSourceDocumentId_ = null;
 
-         if (!suggestionInProgress_)
-         {
-            requestSuggestion(command, output, isError, sourceDocumentId);
+            if (!suggestionInProgress_)
+            {
+               requestSuggestion(command, output, isError, sourceDocumentId);
+            }
          }
       }
    }
