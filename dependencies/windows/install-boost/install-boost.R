@@ -93,18 +93,36 @@ section("Bootstrapping boost")
 run("bootstrap.bat", paste0("vc", MSVC_TOOLSET_VERSION))
 
 # construct common arguments for 32bit, 64bit boost builds
-b2_build_args <- function(bitness) {
+build <- function(bitness) {
 
-   prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
+   buildroot <- "C:/rstudio-tools/boost"
+   buildname <- tools::file_path_sans_ext(output_name)
+   builddir <- file.path(buildroot, buildname)
+   
+   unlink(builddir, recursive = TRUE)
+   dir.create(builddir, recursive = TRUE, showWarnings = FALSE)
+   builddir <- utils::shortPathName(builddir)
+   
+   prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "/")
    unlink(prefix, recursive = TRUE)
+   dir.create(prefix, recursive = TRUE, showWarnings = FALSE)
+   prefix <- utils::shortPathName(prefix)
 
-   paste(
+   args <- paste(
       "-q",
-      "--without-graph_parallel",
-      "--without-mpi",
-      "--without-python",
+      "--with-atomic",
+      "--with-chrono",
+      "--with-date_time",
+      "--with-filesystem",
+      "--with-iostreams",
+      "--with-program_options",
+      "--with-random",
+      "--with-regex",
+      "--with-thread",
+      "--with-url",
       "--abbreviate-paths",
-      sprintf("--prefix=\"%s\"", prefix),
+      sprintf("--build-dir=%s", builddir),
+      sprintf("--prefix=%s", prefix),
       sprintf("address-model=%s", bitness),
       sprintf("toolset=%s", BOOST_TOOLSET),
       sprintf("variant=%s", variant),
@@ -115,15 +133,18 @@ b2_build_args <- function(bitness) {
       "define=NOMINMAX",
       "install"
    )
+   
+   exec("b2", args, output = TRUE)
+   
+   
 }
 
 # build 32bit Boost
 section("Building Boost 32bit")
-exec("b2", b2_build_args("32"))
+build(bitness = "32")
 
 # build 64bit Boost
 section("Building Boost 64bit")
-exec("b2", b2_build_args("64"))
-
+build(bitness = "64")
 # rejoice
 progress("Boost built successfully!")
