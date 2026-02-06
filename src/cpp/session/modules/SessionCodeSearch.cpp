@@ -76,6 +76,35 @@ namespace {
 
 std::unordered_map<std::string, bool> s_ignoredDirCache;
 
+bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
+{
+   std::string dirName = dirPath.getFilename();
+
+   // node_modules
+   if (dirName == "node_modules")
+      return true;
+
+   // packrat
+   if (dirName == "packrat" &&
+       dirPath.completeChildPath("packrat.lock").exists())
+      return true;
+
+   // renv
+   if (dirName == "renv" &&
+       dirPath.completeChildPath("activate.R").exists())
+      return true;
+
+   // cmake build directory
+   if (dirPath.completeChildPath("CMakeCache.txt").exists())
+      return true;
+
+   // revdep sub-directories
+   if (isPackageProject && dirName == "revdep")
+      return true;
+
+   return false;
+}
+
 bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
 {
    using namespace projects;
@@ -119,31 +148,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
          continue;
       }
 
-      std::string parentName = parentPath.getFilename();
-      bool ignored = false;
-
-      // node_modules
-      if (parentName == "node_modules")
-         ignored = true;
-
-      // packrat
-      else if (parentName == "packrat" &&
-         parentPath.completeChildPath("packrat.lock").exists())
-         ignored = true;
-
-      // renv
-      else if (parentName == "renv" &&
-         parentPath.completeChildPath("activate.R").exists())
-         ignored = true;
-
-      // cmake build directory
-      else if (parentPath.completeChildPath("CMakeCache.txt").exists())
-         ignored = true;
-
-      // revdep sub-directories
-      else if (isPackageProject && parentName == "revdep")
-         ignored = true;
-
+      bool ignored = isIgnoredDirectory(parentPath, isPackageProject);
       s_ignoredDirCache[parentStr] = ignored;
 
       if (ignored)
