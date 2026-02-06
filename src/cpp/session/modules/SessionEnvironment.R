@@ -185,13 +185,24 @@
       # only return the first 150 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
+      #
+      # however, str.default() may incorrectly omit the description header
+      # for classed lists when a user-defined str method exists in the global
+      # environment (even if that method wasn't dispatched to). detect this
+      # by checking if the first line is indented (a data line) vs unindented
+      # (a header line). see https://github.com/rstudio/rstudio/issues/16985
+      hasHeader <- n > 0 && !.rs.startsWith(output[[1L]], " ")
+
       if (n > 150)
       {
          fmt <- "  [... %i lines omitted]"
          tail <- sprintf(fmt, n - 150)
-         output <- c(output[2:150], tail)
+         if (hasHeader)
+            output <- c(output[2:150], tail)
+         else
+            output <- c(output[1:150], tail)
       }
-      else if (n > 1)
+      else if (n > 1 && hasHeader)
       {
         output <- output[-1]
       }
