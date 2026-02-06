@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -33,10 +30,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
-import com.google.gwt.json.client.JSONArray;
-import com.google.gwt.json.client.JSONBoolean;
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -49,34 +42,6 @@ public class ConsoleCommandSuggestor implements
    ConsoleWriteOutputEvent.Handler,
    ConsoleWriteErrorEvent.Handler
 {
-   private static class ConsoleHistoryEntry
-   {
-      public String command;
-      public String output;
-      public boolean isError;
-      public boolean isWarning;
-      public String sourceDocumentId;
-
-      public ConsoleHistoryEntry(String command, String sourceDocumentId)
-      {
-         this.command = command;
-         this.output = "";
-         this.isError = false;
-         this.isWarning = false;
-         this.sourceDocumentId = sourceDocumentId;
-      }
-
-      public JSONObject toJson()
-      {
-         JSONObject obj = new JSONObject();
-         obj.put("command", new JSONString(command != null ? command : ""));
-         obj.put("output", new JSONString(output != null ? output : ""));
-         obj.put("isError", JSONBoolean.getInstance(isError));
-         obj.put("isWarning", JSONBoolean.getInstance(isWarning));
-         return obj;
-      }
-   }
-
    @Inject
    public ConsoleCommandSuggestor(EventBus eventBus,
                                   AssistantServerOperations server,
@@ -125,7 +90,8 @@ public class ConsoleCommandSuggestor implements
       if (input.isEmpty())
          return;
 
-      currentEntry_ = new ConsoleHistoryEntry(input, pendingSourceDocumentId_);
+      lastCommand_ = input;
+      lastSourceDocumentId_ = pendingSourceDocumentId_;
       pendingSourceDocumentId_ = null;
       outputBuffer_ = new StringBuilder();
    }
@@ -144,68 +110,53 @@ public class ConsoleCommandSuggestor implements
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
       String error = event.getError();
-      Debug.log("[NCS] onConsoleWriteError: " + error + " currentEntry_=" + (currentEntry_ != null));
+      Debug.log("[NCS] onConsoleWriteError: " + error + " lastCommand_=" + (lastCommand_ != null));
       if (error != null)
       {
          outputBuffer_.append(error);
       }
 
-      if (currentEntry_ != null)
+      if (lastCommand_ != null)
       {
-         currentEntry_.output = outputBuffer_.toString();
-         currentEntry_.isError = true;
+         String command = lastCommand_;
+         String output = outputBuffer_.toString();
+         boolean isError = true;
+         String sourceDocumentId = lastSourceDocumentId_;
 
          if (error != null && error.toLowerCase().contains("warning"))
          {
-            currentEntry_.isError = false;
-            currentEntry_.isWarning = true;
+            isError = false;
          }
 
-         addToHistory(currentEntry_);
-         currentEntry_ = null;
+         lastCommand_ = null;
+         lastSourceDocumentId_ = null;
 
          if (!suggestionInProgress_)
          {
-            requestSuggestion();
+            requestSuggestion(command, output, isError, sourceDocumentId);
          }
       }
    }
 
-   private void addToHistory(ConsoleHistoryEntry entry)
+   private void requestSuggestion(String command, String output, boolean isError, String sourceDocumentId)
    {
-      history_.add(entry);
-      while (history_.size() > MAX_HISTORY_SIZE)
-      {
-         history_.remove(0);
-      }
-   }
-
-   private void requestSuggestion()
-   {
-      Debug.log("[NCS] requestSuggestion called, history size=" + history_.size());
-      if (history_.isEmpty())
-         return;
+      Debug.log("[NCS] requestSuggestion called");
 
       suggestionInProgress_ = true;
       cooldownTimer_.schedule(COOLDOWN_MS);
-
-      String historyJson = buildHistoryJson();
 
       String sourceContextType = "console";
       String documentUri = "";
       String documentContent = "";
 
-      ConsoleHistoryEntry latestEntry = history_.get(history_.size() - 1);
-      Debug.log("[NCS] latestEntry.sourceDocumentId='" + latestEntry.sourceDocumentId + "'");
-      if (!StringUtil.isNullOrEmpty(latestEntry.sourceDocumentId))
+      Debug.log("[NCS] sourceDocumentId='" + sourceDocumentId + "'");
+      if (!StringUtil.isNullOrEmpty(sourceDocumentId))
       {
          sourceContextType = "document";
          SourceColumnManager sourceColumnManager = pSourceColumnManager_.get();
          if (sourceColumnManager != null)
          {
             documentUri = sourceColumnManager.getActiveDocPath();
-            // TODO: Eventually send only a smaller snippet around the error location
-            // rather than the full document content
             String content = sourceColumnManager.getActiveDocContents();
             if (content != null)
             {
@@ -215,7 +166,9 @@ public class ConsoleCommandSuggestor implements
       }
 
       server_.assistantNextCommandSuggestion(
-         historyJson,
+         command,
+         output,
+         isError,
          sourceContextType,
          documentUri,
          documentContent,
@@ -234,16 +187,6 @@ public class ConsoleCommandSuggestor implements
             }
          }
       );
-   }
-
-   private String buildHistoryJson()
-   {
-      JSONArray array = new JSONArray();
-      for (int i = 0; i < history_.size(); i++)
-      {
-         array.set(i, history_.get(i).toJson());
-      }
-      return array.toString();
    }
 
    private void handleSuggestionResponse(AssistantNextCommandSuggestionResponse response)
@@ -293,7 +236,6 @@ public class ConsoleCommandSuggestor implements
       }
    }
 
-   private static final int MAX_HISTORY_SIZE = 1;
    private static final int COOLDOWN_MS = 2500;
 
    private final AssistantServerOperations server_;
@@ -301,8 +243,8 @@ public class ConsoleCommandSuggestor implements
    private final Timer cooldownTimer_;
 
    private DocDisplay consoleDisplay_;
-   private List<ConsoleHistoryEntry> history_ = new ArrayList<>();
-   private ConsoleHistoryEntry currentEntry_;
+   private String lastCommand_;
+   private String lastSourceDocumentId_;
    private StringBuilder outputBuffer_ = new StringBuilder();
    private boolean suggestionInProgress_ = false;
    private String pendingSourceDocumentId_ = null;

@@ -6995,14 +6995,18 @@ public class RemoteServer implements Server
    };
 
    @Override
-   public void assistantNextCommandSuggestion(String consoleHistoryJson,
+   public void assistantNextCommandSuggestion(String command,
+                                              String output,
+                                              boolean isError,
                                               String sourceContextType,
                                               String documentUri,
                                               String documentContent,
                                               ServerRequestCallback<AssistantNextCommandSuggestionResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
-            .add(consoleHistoryJson)
+            .add(command)
+            .add(output)
+            .add(isError)
             .add(sourceContextType)
             .add(documentUri)
             .add(documentContent)

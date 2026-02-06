@@ -78,7 +78,9 @@ public interface AssistantServerOperations
 
    public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback);
 
-   public void assistantNextCommandSuggestion(String consoleHistoryJson,
+   public void assistantNextCommandSuggestion(String command,
+                                              String output,
+                                              boolean isError,
                                               String sourceContextType,
                                               String documentUri,
                                               String documentContent,

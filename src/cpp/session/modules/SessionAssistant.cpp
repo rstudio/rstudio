@@ -2295,14 +2295,18 @@ Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
    }
 
    // Read params
-   std::string consoleHistoryJson;
+   std::string command;
+   std::string output;
+   bool isError;
    std::string sourceContextType;
    std::string documentUri;
    std::string documentContent;
 
    Error error = core::json::readParams(
             request.params,
-            &consoleHistoryJson,
+            &command,
+            &output,
+            &isError,
             &sourceContextType,
             &documentUri,
             &documentContent);
@@ -2313,25 +2317,11 @@ Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
       return error;
    }
 
-   // Parse console history JSON
-   json::Value consoleHistoryValue;
-   if (!consoleHistoryJson.empty())
-   {
-      error = consoleHistoryValue.parse(consoleHistoryJson);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-   }
-
    // Build the request params
    json::Object paramsJson;
-
-   if (consoleHistoryValue.isArray())
-      paramsJson["consoleHistory"] = consoleHistoryValue.getArray();
-   else
-      paramsJson["consoleHistory"] = json::Array();
+   paramsJson["command"] = command;
+   paramsJson["output"] = output;
+   paramsJson["isError"] = isError;
 
    json::Object sourceContextJson;
    sourceContextJson["type"] = sourceContextType;
