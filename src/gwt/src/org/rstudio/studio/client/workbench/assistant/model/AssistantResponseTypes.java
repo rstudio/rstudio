@@ -203,6 +203,8 @@ public class AssistantResponseTypes
       public String oldString;
       public String newString;
       public String nextCommand;
+      public int contextStart;
+      public int contextEnd;
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

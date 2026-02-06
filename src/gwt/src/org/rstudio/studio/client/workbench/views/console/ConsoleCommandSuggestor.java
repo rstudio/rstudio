@@ -223,7 +223,8 @@ public class ConsoleCommandSuggestor implements
       if (sourceColumnManager != null)
       {
          boolean shown = sourceColumnManager.showEditSuggestionOnActiveDoc(
-            suggestion.oldString, suggestion.newString);
+            suggestion.oldString, suggestion.newString,
+            suggestion.contextStart, suggestion.contextEnd);
          if (!shown)
          {
             Debug.log("Failed to show edit suggestion - oldString not found in document");
