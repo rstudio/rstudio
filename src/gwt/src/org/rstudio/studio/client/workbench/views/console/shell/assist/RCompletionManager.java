@@ -435,6 +435,12 @@ public class RCompletionManager implements CompletionManager
             docDisplay_.setGhostText(newGhostText);
             return true;
          }
+
+         // Any other non-modifier key dismisses ghost text
+         if (!KeyboardHelper.isModifierKey(keycode))
+         {
+            docDisplay_.removeGhostText();
+         }
       }
       
       if (!popup_.isShowing())
