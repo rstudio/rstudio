@@ -2283,6 +2283,100 @@ Error assistantNextEditSuggestions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error assistantNextCommandSuggestion(const json::JsonRpcRequest& request,
+                                     const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Make sure assistant is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
+   // Read params
+   std::string consoleHistoryJson;
+   std::string sourceContextType;
+   std::string documentUri;
+   std::string documentContent;
+
+   Error error = core::json::readParams(
+            request.params,
+            &consoleHistoryJson,
+            &sourceContextType,
+            &documentUri,
+            &documentContent);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Parse console history JSON
+   json::Value consoleHistoryValue;
+   if (!consoleHistoryJson.empty())
+   {
+      error = consoleHistoryValue.parse(consoleHistoryJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+   }
+
+   // Build the request params
+   json::Object paramsJson;
+
+   if (consoleHistoryValue.isArray())
+      paramsJson["consoleHistory"] = consoleHistoryValue.getArray();
+   else
+      paramsJson["consoleHistory"] = json::Array();
+
+   json::Object sourceContextJson;
+   sourceContextJson["type"] = sourceContextType;
+   if (!documentUri.empty())
+      sourceContextJson["documentUri"] = documentUri;
+   if (!documentContent.empty())
+      sourceContextJson["documentContent"] = documentContent;
+   paramsJson["sourceContext"] = sourceContextJson;
+
+   // Create the continuation
+   auto wrappedContinuation = [continuation](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      if (error)
+      {
+         DLOG("Next command suggestion request failed: {}", error.getMessage());
+         json::JsonRpcResponse response;
+         continuation(Success(), &response);
+         return;
+      }
+
+      if (pResponse && pResponse->result().isObject())
+      {
+         json::Object resultJson = pResponse->result().getObject();
+         DLOG("Next command suggestion request succeeded.");
+         DLOG("{}", resultJson.writeFormatted());
+
+         json::JsonRpcResponse response;
+         response.setResult(resultJson);
+         continuation(Success(), &response);
+      }
+      else
+      {
+         DLOG("Next command suggestion request returned no result.");
+         json::JsonRpcResponse response;
+         continuation(Success(), &response);
+      }
+   };
+
+   // Send the request
+   std::string requestId = core::system::generateUuid();
+   sendRequest("textDocument/nextCommandSuggestion", requestId, paramsJson, AssistantContinuation(wrappedContinuation));
+
+   return Success();
+}
+
 
 Error assistantSignIn(const json::JsonRpcRequest& request,
                       const json::JsonRpcFunctionContinuation& continuation)
@@ -2694,6 +2788,7 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "assistant_diagnostics", assistantDiagnostics))
          (bind(registerAsyncRpcMethod, "assistant_generate_completions", assistantGenerateCompletions))
          (bind(registerAsyncRpcMethod, "assistant_next_edit_suggestions", assistantNextEditSuggestions))
+         (bind(registerAsyncRpcMethod, "assistant_next_command_suggestion", assistantNextCommandSuggestion))
          (bind(registerAsyncRpcMethod, "assistant_sign_in", assistantSignIn))
          (bind(registerAsyncRpcMethod, "assistant_sign_out", assistantSignOut))
          (bind(registerAsyncRpcMethod, "assistant_status", assistantStatus))

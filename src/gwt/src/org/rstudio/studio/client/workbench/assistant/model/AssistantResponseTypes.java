@@ -196,5 +196,30 @@ public class AssistantResponseTypes
       public AssistantNextEditSuggestionsResult result;
    }
 
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class AssistantNextCommandSuggestionSuggestion
+   {
+      public String type;
+      public String file;
+      public String oldString;
+      public String newString;
+      public String nextCommand;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class AssistantNextCommandSuggestionResult
+   {
+      public String reflection;
+      public AssistantNextCommandSuggestionSuggestion suggestion;
+   }
+
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class AssistantNextCommandSuggestionResponse
+   {
+      public String jsonrpc;
+      public String id;
+      public AssistantNextCommandSuggestionResult result;
+   }
+
    private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);
 }

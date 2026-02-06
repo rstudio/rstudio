@@ -331,7 +331,9 @@ public class EditingTargetCodeExecution
                                   true,
                                   true,
                                   prefs_.focusConsoleAfterExec().getValue(),
-                                  false));
+                                  false,
+                                  true,
+                                  docId_));
    }
    
    public void executeBehavior(String executionBehavior)
@@ -426,7 +428,8 @@ public class EditingTargetCodeExecution
 
             if (scope == null)
             {
-               events_.fireEvent(new SendToConsoleEvent(code, true));
+               events_.fireEvent(new SendToConsoleEvent(
+                     code, "R", true, true, false, false, true, docId_));
             }
             else
             {
