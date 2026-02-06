@@ -117,9 +117,11 @@ public class ConsoleCommandSuggestor implements
 
       if (lastCommand_ != null && error != null)
       {
+         // Noting that contains() can false-positive on message() output that
+         // mentions "error" or "warning"; this is fine
          String errorLower = error.toLowerCase();
-         boolean isError = errorLower.startsWith("error");
-         boolean isWarning = errorLower.startsWith("warning");
+         boolean isError = errorLower.contains("error");
+         boolean isWarning = !isError && errorLower.contains("warning");
 
          if (isError || isWarning)
          {
