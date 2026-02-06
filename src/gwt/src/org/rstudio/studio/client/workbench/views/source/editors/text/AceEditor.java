@@ -368,25 +368,6 @@ public class AceEditor implements DocDisplay
 
       widget_.addFoldChangeHandler(event -> AceEditor.this.fireEvent(new FoldChangeEvent()));
 
-      editorEventListeners_.add(events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
-      {
-         @Override
-         public void onEdit(EditEvent event)
-         {
-            if (event.isBeforeEdit())
-            {
-               activeEditEventType_ = event.getType();
-            }
-            else
-            {
-               Scheduler.get().scheduleDeferred(() ->
-               {
-                  activeEditEventType_ = EditEvent.TYPE_NONE;
-               });
-            }
-         }
-      }));
-
       addPasteHandler(event ->
       {
          if (completionManager_ != null)
@@ -443,6 +424,8 @@ public class AceEditor implements DocDisplay
          if (event.isAttached())
          {
             attachToWidget(widget_.getElement(), AceEditor.this);
+            registerEditorEventListeners();
+            setColorPreview(userPrefs_.colorPreview().getValue());
 
             // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
             if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
@@ -516,6 +499,29 @@ public class AceEditor implements DocDisplay
       
       // https://github.com/rstudio/rstudio/issues/13118
       setColorPreview(userPrefs_.colorPreview().getValue());
+   }
+
+   private void registerEditorEventListeners()
+   {
+      editorEventListeners_.add(events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
+      {
+         @Override
+         public void onEdit(EditEvent event)
+         {
+            if (event.isBeforeEdit())
+            {
+               activeEditEventType_ = event.getType();
+            }
+            else
+            {
+               Scheduler.get().scheduleDeferred(() ->
+               {
+                  activeEditEventType_ = EditEvent.TYPE_NONE;
+               });
+            }
+         }
+      }));
+
       editorEventListeners_.add(userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
