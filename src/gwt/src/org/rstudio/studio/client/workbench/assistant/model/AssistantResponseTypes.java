@@ -200,7 +200,6 @@ public class AssistantResponseTypes
    public static class AssistantNextCommandSuggestionSuggestion
    {
       public String type;
-      public String file;
       public String oldString;
       public String newString;
       public String nextCommand;
