@@ -206,18 +206,11 @@ public class AssistantResponseTypes
    }
 
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class AssistantNextCommandSuggestionResult
-   {
-      public String reflection;
-      public AssistantNextCommandSuggestionSuggestion suggestion;
-   }
-
-   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class AssistantNextCommandSuggestionResponse
    {
       public String jsonrpc;
       public String id;
-      public AssistantNextCommandSuggestionResult result;
+      public AssistantNextCommandSuggestionSuggestion result;
    }
 
    private static final AssistantUIConstants constants_ = GWT.create(AssistantUIConstants.class);

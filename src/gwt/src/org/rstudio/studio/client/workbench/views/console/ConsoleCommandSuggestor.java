@@ -20,7 +20,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextCommandSuggestionResponse;
-import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextCommandSuggestionResult;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextCommandSuggestionSuggestion;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
@@ -194,11 +193,7 @@ public class ConsoleCommandSuggestor implements
       if (response == null || response.result == null)
          return;
 
-      AssistantNextCommandSuggestionResult result = response.result;
-      AssistantNextCommandSuggestionSuggestion suggestion = result.suggestion;
-
-      if (suggestion == null)
-         return;
+      AssistantNextCommandSuggestionSuggestion suggestion = response.result;
 
       if ("suggest".equals(suggestion.type) && suggestion.nextCommand != null)
       {
