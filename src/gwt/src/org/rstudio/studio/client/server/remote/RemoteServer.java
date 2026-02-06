@@ -629,6 +629,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void setProjectPrefs(JavaScriptObject projectPrefs,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  SET_PROJECT_PREFS,
+                  projectPrefs,
+                  requestCallback);
+   }
+
+   @Override
    public void editPreferences(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
@@ -7117,6 +7127,7 @@ public class RemoteServer implements Server
    private static final String SET_PREFS = "set_prefs";
    private static final String SET_USER_PREFS = "set_user_prefs";
    private static final String SET_USER_STATE = "set_user_state";
+   private static final String SET_PROJECT_PREFS = "set_project_prefs";
    private static final String GET_R_PREFS = "get_r_prefs";
    private static final String SET_CLIENT_STATE = "set_client_state";
    private static final String USER_PROMPT_COMPLETED = "user_prompt_completed";

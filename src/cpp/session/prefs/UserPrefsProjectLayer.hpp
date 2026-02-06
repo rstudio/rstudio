@@ -27,8 +27,19 @@ class UserPrefsProjectLayer: public PrefLayer
 public:
    UserPrefsProjectLayer();
    core::Error readPrefs() override;
+   core::Error writePrefs(const core::json::Object& prefs) override;
+
+   core::Error writePrivatePref(const std::string& name, const core::json::Value& value);
+
 private:
    void onProjectConfigChanged();
+   void onPrefsFileChanged() override;
+   void mergePrefs();
+
+   core::FilePath privatePrefsFile_;
+   boost::shared_ptr<core::json::Object> publicPrefsCache_;
+   boost::shared_ptr<core::json::Object> privatePrefsCache_;
+   std::time_t lastSync_;
 };
 
 } // namespace prefs

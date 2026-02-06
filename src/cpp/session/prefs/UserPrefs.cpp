@@ -28,6 +28,8 @@
 #include "UserPrefsSystemLayer.hpp"
 #include "UserPrefsProjectLayer.hpp"
 
+#include <session/projects/SessionProjects.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -116,6 +118,28 @@ public:
 
       return Success();
    }
+
+   Error writeProjectPrefValue(const std::string& name, const json::Value& value)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         if (layers_.size() <= PREF_LAYER_PROJECT)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
+            layers_[PREF_LAYER_PROJECT]);
+         if (!projectLayer)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         Error error = projectLayer->writePrivatePref(name, value);
+         if (error)
+            return error;
+      }
+      END_LOCK_MUTEX
+
+      onChanged(kUserPrefsProjectLayer, name);
+      return Success();
+   }
 };
 
 } // anonymous namespace
@@ -152,6 +176,12 @@ Error initializeProjectPrefs()
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.createProjectLayer();
+}
+
+Error writeProjectPref(const std::string& name, const json::Value& value)
+{
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.writeProjectPrefValue(name, value);
 }
 
 } // namespace prefs

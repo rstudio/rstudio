@@ -360,6 +360,14 @@
    .rs.readPrefInternal("rs_readProjectPref", prefName)
 })
 
+.rs.addFunction("writeProjectPref", function(prefName, value) {
+   if (is.list(value))
+      value <- .rs.scalarListFromList(value)
+   .rs.writePrefInternal("rs_writeProjectPref", prefName, value)
+})
+
+.rs.addFunction("setProjectPref", .rs.writeProjectPref)
+
 .rs.addFunction("readUserState", function(stateName) {
   if (missing(stateName) || is.null(stateName))
     stop("No state name supplied")
