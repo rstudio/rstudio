@@ -36,6 +36,9 @@ public:
    Git();
    ~Git();
 
+   Git(const Git&) = delete;
+   Git& operator=(const Git&) = delete;
+
    // Open a git repository at the given path.
    // Returns success even if the path is not a git repo (isOpen() will be false).
    core::Error open(const core::FilePath& repoPath);
