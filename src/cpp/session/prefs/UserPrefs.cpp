@@ -140,6 +140,25 @@ public:
       onChanged(kUserPrefsProjectLayer, name);
       return Success();
    }
+
+   json::Object readProjectPrivatePrefsValue()
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         if (layers_.size() <= PREF_LAYER_PROJECT)
+            return json::Object();
+
+         auto projectLayer = boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
+            layers_[PREF_LAYER_PROJECT]);
+         if (!projectLayer)
+            return json::Object();
+
+         return projectLayer->readPrivatePrefs();
+      }
+      END_LOCK_MUTEX
+
+      return json::Object();
+   }
 };
 
 } // anonymous namespace
@@ -182,6 +201,12 @@ Error writeProjectPref(const std::string& name, const json::Value& value)
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.writeProjectPrefValue(name, value);
+}
+
+json::Object readProjectPrivatePrefs()
+{
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.readProjectPrivatePrefsValue();
 }
 
 } // namespace prefs

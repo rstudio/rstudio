@@ -64,6 +64,8 @@ core::Error initializeProjectPrefs();
 
 core::Error writeProjectPref(const std::string& name, const core::json::Value& value);
 
+core::json::Object readProjectPrivatePrefs();
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

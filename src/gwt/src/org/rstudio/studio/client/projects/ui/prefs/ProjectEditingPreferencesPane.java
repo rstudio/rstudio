@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -48,8 +49,10 @@ import com.google.inject.Inject;
 public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
-   public ProjectEditingPreferencesPane(final SourceServerOperations server)
+   public ProjectEditingPreferencesPane(final SourceServerOperations server,
+                                        UserPrefs userPrefs)
    {
+      userPrefs_ = userPrefs;
       add(headerLabel(constants_.editingTitle()));
 
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
@@ -81,7 +84,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       add(enableCodeIndexing_);
-      
+
+      chkUseGitignore_ = new CheckBox(constants_.chkUseGitignoreLabel(), false);
+      chkUseGitignore_.addStyleName(RESOURCES.styles().useGitignore());
+      add(chkUseGitignore_);
+
       add(spacedBefore(headerLabel(constants_.savingTitle())));
       
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
@@ -157,7 +164,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    protected void initialize(RProjectOptions options)
    {
       initialConfig_ = options.getConfig();
-      
+
       chkSpacesForTab_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
@@ -175,6 +182,19 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
       lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
       setEncoding(initialConfig_.getEncoding());
+
+      // initialize gitignore checkbox from private project prefs, falling
+      // back to the resolved user preference value
+      JsObject privatePrefs = options.getPrivatePrefs();
+      if (privatePrefs.hasKey(PREF_FILE_MONITOR_USE_GITIGNORE))
+      {
+         initialUseGitignore_ = privatePrefs.getBoolean(PREF_FILE_MONITOR_USE_GITIGNORE);
+      }
+      else
+      {
+         initialUseGitignore_ = userPrefs_.fileMonitorUseGitignore().getValue();
+      }
+      chkUseGitignore_.setValue(initialUseGitignore_);
    }
 
    @Override
@@ -195,7 +215,18 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
       config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));
       config.setEncoding(encodingValue_);
-      return new RestartRequirement();
+
+      RestartRequirement restartRequirement = new RestartRequirement();
+
+      // write the gitignore pref into private project prefs
+      boolean useGitignore = chkUseGitignore_.getValue();
+      options.getPrivatePrefs().setBoolean(PREF_FILE_MONITOR_USE_GITIGNORE, useGitignore);
+      if (useGitignore != initialUseGitignore_)
+      {
+         restartRequirement.setSessionRestartRequired(true);
+      }
+
+      return restartRequirement;
    }
 
    private void setEncoding(String encoding)
@@ -218,7 +249,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       }
    }
 
+   private static final String PREF_FILE_MONITOR_USE_GITIGNORE = "file_monitor_use_gitignore";
+
+   private final UserPrefs userPrefs_;
    private CheckBox enableCodeIndexing_;
+   private CheckBox chkUseGitignore_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
    private YesNoAskDefault useNativePipeOperator_;
@@ -227,6 +262,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private LineEndingsSelectWidget lineEndings_;
    private TextBoxWithButton encoding_;
    private String encodingValue_;
+   private boolean initialUseGitignore_;
    private RProjectConfig initialConfig_;
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

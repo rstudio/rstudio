@@ -30,6 +30,7 @@ public:
    core::Error writePrefs(const core::json::Object& prefs) override;
 
    core::Error writePrivatePref(const std::string& name, const core::json::Value& value);
+   core::json::Object readPrivatePrefs();
 
 private:
    void onProjectConfigChanged();

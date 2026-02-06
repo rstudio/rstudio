@@ -218,6 +218,18 @@ core::Error UserPrefsProjectLayer::writePrivatePref(const std::string& name,
    return writePrefs(*privatePrefsCache_);
 }
 
+core::json::Object UserPrefsProjectLayer::readPrivatePrefs()
+{
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      if (privatePrefsCache_)
+         return *privatePrefsCache_;
+   }
+   END_LOCK_MUTEX
+
+   return json::Object();
+}
+
 } // namespace prefs
 } // namespace session
 } // namespace rstudio

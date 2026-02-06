@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
 
@@ -52,6 +53,7 @@ public class RProjectOptions extends JavaScriptObject
       options.packrat_options = packratOptions;
       options.renv_options = renvOptions;
       options.assistant_options = assistantOptions;
+      options.private_prefs = {};
       return options;
    }-*/;
 
@@ -95,6 +97,7 @@ public class RProjectOptions extends JavaScriptObject
       return this.renv_context;
    }-*/;
 
-
-
+   public native final JsObject getPrivatePrefs() /*-{
+      return this.private_prefs || {};
+   }-*/;
 }
