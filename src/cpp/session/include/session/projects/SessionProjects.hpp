@@ -41,6 +41,16 @@
 
 namespace rstudio {
 namespace session {
+namespace modules {
+namespace libgit2 {
+class GitIgnore;
+} // namespace libgit2
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
 namespace projects {
 
 
@@ -58,6 +68,7 @@ struct FileMonitorFilterContext
 {
    std::vector<std::string> ignoredComponents;
    bool ignoreObjectFiles;
+   boost::shared_ptr<modules::libgit2::GitIgnore> pGitIgnore;
 };
 
 // vcs options

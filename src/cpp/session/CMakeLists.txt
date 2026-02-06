@@ -207,6 +207,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionFind.cpp
    modules/SessionFonts.cpp
    modules/SessionGit.cpp
+   modules/SessionGitIgnore.cpp
    modules/SessionGraphics.cpp
    modules/SessionHelp.cpp
    modules/SessionHelpHome.cpp
@@ -509,6 +510,7 @@ include_directories(
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
+   ${LIBGIT2_SOURCE_DIR}/include
 )
 
 # link directories
@@ -564,6 +566,7 @@ set(SESSION_LIBRARIES
    rstudio-monitor
    rstudio-r
    rstudio-session-workers
+   libgit2package
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS})
 

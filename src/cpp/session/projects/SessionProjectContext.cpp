@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include <boost/format.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -40,6 +41,7 @@
 #include <session/prefs/UserState.hpp>
 
 #include "SessionProjectFirstRun.hpp"
+#include "../modules/SessionGitIgnore.hpp"
 
 #define kStorageFolder "projects"
 
@@ -724,6 +726,14 @@ void ProjectContext::onDeferredInit(bool newSession)
    context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
    context.ignoredComponents = fileMonitorIgnoredComponents();
 
+   // initialize gitignore support
+   using modules::libgit2::GitIgnore;
+   boost::shared_ptr<GitIgnore> pGitIgnore = boost::make_shared<GitIgnore>();
+   Error error = pGitIgnore->open(directory());
+   if (error)
+      LOG_ERROR(error);
+   context.pGitIgnore = pGitIgnore;
+
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
@@ -814,6 +824,18 @@ bool ProjectContext::fileMonitorFilter(
    for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
+
+   // check gitignore rules
+   if (context.pGitIgnore && context.pGitIgnore->isOpen())
+   {
+      std::string dirPath = directory().getAbsolutePath();
+      if (path.size() > dirPath.size() + 1)
+      {
+         std::string relativePath = path.substr(dirPath.size() + 1);
+         if (context.pGitIgnore->isIgnored(relativePath))
+            return false;
+      }
+   }
 
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }

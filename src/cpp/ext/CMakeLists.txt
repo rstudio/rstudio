@@ -85,6 +85,46 @@ function(dependency)
 endfunction()
 
 
+#
+# Global settings protection for FetchContent dependencies.
+#
+# Some dependencies (e.g. libgit2) set global cache variables like
+# CMAKE_C_STANDARD, BUILD_SHARED_LIBS, etc. as part of their CMakeLists.txt.
+# These leak into the parent project and can break the build.
+#
+# save_global_settings() / restore_global_settings() snapshot and restore
+# the listed variables around the fetch() call to prevent this.
+#
+set(_PROTECTED_GLOBAL_SETTINGS
+   BUILD_SHARED_LIBS
+   CMAKE_C_STANDARD
+   CMAKE_C_EXTENSIONS
+   CMAKE_CXX_STANDARD
+   CMAKE_CXX_EXTENSIONS
+)
+
+macro(save_global_settings)
+   foreach(_VAR IN LISTS _PROTECTED_GLOBAL_SETTINGS)
+      if(DEFINED CACHE{${_VAR}})
+         set(_SAVED_${_VAR} "${${_VAR}}")
+         set(_SAVED_${_VAR}_DEFINED TRUE)
+      else()
+         set(_SAVED_${_VAR}_DEFINED FALSE)
+      endif()
+   endforeach()
+endmacro()
+
+macro(restore_global_settings)
+   foreach(_VAR IN LISTS _PROTECTED_GLOBAL_SETTINGS)
+      if(_SAVED_${_VAR}_DEFINED)
+         set(${_VAR} "${_SAVED_${_VAR}}" CACHE STRING "" FORCE)
+      else()
+         unset(${_VAR} CACHE)
+      endif()
+   endforeach()
+endmacro()
+
+
 function(fetch)
 
    set(_INDEX 0)
@@ -170,6 +210,26 @@ dependency(FMT
 )
 
 set(FMT_INSTALL OFF)
+
+
+# libgit2
+dependency(LIBGIT2
+   COMMENT    "libgit2 is a portable, pure C implementation of the Git core methods."
+   VERSION    "1.9.2"
+   REPOSITORY "https://github.com/libgit2/libgit2"
+   REVISION   "ca225744b992bf2bf24e9a2eb357ddef78179667" # pragma: allowlist secret
+)
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(USE_SSH OFF CACHE BOOL "" FORCE)
+set(USE_HTTPS OFF CACHE BOOL "" FORCE)
+set(USE_ICONV OFF CACHE BOOL "" FORCE)
+set(USE_NTLMCLIENT OFF CACHE BOOL "" FORCE)
+set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
+set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
 
 
 # gsl-lite
@@ -274,10 +334,13 @@ dependency(ZLIB
    PLATFORMS  WIN32
 )
 
+save_global_settings()
+
 fetch(
    dtl          DTL
    fmt          FMT
    gsl-lite     GSL_LITE
+   libgit2      LIBGIT2
    gtest        GTEST
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
@@ -286,6 +349,8 @@ fetch(
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP
    zlib         ZLIB)
+
+restore_global_settings()
 
 
 # Create dtl target.
