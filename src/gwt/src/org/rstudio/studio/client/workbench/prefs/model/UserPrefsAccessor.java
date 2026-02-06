@@ -3363,6 +3363,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.
+    */
+   public PrefValue<Boolean> fileMonitorUseGitignore()
+   {
+      return bool(
+         "file_monitor_use_gitignore",
+         _constants.fileMonitorUseGitignoreTitle(), 
+         _constants.fileMonitorUseGitignoreDescription(), 
+         true);
+   }
+
+   /**
     * Whether to install R package dependencies one at a time.
     */
    public PrefValue<Boolean> installPkgDepsIndividually()
@@ -4583,6 +4595,8 @@ public class UserPrefsAccessor extends Prefs
          screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
       if (source.hasKey("file_monitor_ignored_components"))
          fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
+      if (source.hasKey("file_monitor_use_gitignore"))
+         fileMonitorUseGitignore().setValue(layer, source.getBool("file_monitor_use_gitignore"));
       if (source.hasKey("install_pkg_deps_individually"))
          installPkgDepsIndividually().setValue(layer, source.getBool("install_pkg_deps_individually"));
       if (source.hasKey("graphics_backend"))
@@ -4921,6 +4935,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(disabledAriaLiveAnnouncements());
       prefs.add(screenreaderConsoleAnnounceLimit());
       prefs.add(fileMonitorIgnoredComponents());
+      prefs.add(fileMonitorUseGitignore());
       prefs.add(installPkgDepsIndividually());
       prefs.add(graphicsBackend());
       prefs.add(graphicsAntialiasing());

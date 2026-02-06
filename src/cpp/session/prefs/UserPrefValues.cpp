@@ -3066,6 +3066,19 @@ core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array va
 }
 
 /**
+ * When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.
+ */
+bool UserPrefValues::fileMonitorUseGitignore()
+{
+   return readPref<bool>("file_monitor_use_gitignore");
+}
+
+core::Error UserPrefValues::setFileMonitorUseGitignore(bool val)
+{
+   return writePref("file_monitor_use_gitignore", val);
+}
+
+/**
  * Whether to install R package dependencies one at a time.
  */
 bool UserPrefValues::installPkgDepsIndividually()
@@ -3952,6 +3965,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
+      kFileMonitorUseGitignore,
       kInstallPkgDepsIndividually,
       kGraphicsBackend,
       kGraphicsAntialiasing,
