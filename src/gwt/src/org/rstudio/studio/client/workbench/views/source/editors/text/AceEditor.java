@@ -425,6 +425,7 @@ public class AceEditor implements DocDisplay
          {
             attachToWidget(widget_.getElement(), AceEditor.this);
             registerEditorEventListeners();
+            setColorPreview(userPrefs_.colorPreview().getValue());
 
             // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
             if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
