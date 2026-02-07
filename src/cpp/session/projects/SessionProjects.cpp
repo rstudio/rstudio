@@ -616,6 +616,8 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
+   json::Object privatePrefs = prefs::readProjectPrivatePrefs();
+   optionsJson["private_prefs"] = privatePrefs;
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -844,12 +846,14 @@ Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson;
+   json::Object configJson, vcsOptionsJson, buildOptionsJson, assistantOptionsJson,
+      privatePrefsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
                                        "vcs_options", &vcsOptionsJson,
                                        "build_options", &buildOptionsJson,
-                                       "assistant_options", &assistantOptionsJson);
+                                       "assistant_options", &assistantOptionsJson,
+                                       "private_prefs", &privatePrefsJson);
    if (error)
       return error;
 
@@ -890,7 +894,12 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = s_projectContext.writeAssistantOptions(assistantOptions);
    if (error)
       LOG_ERROR(error);
-   
+
+   // write private project prefs
+   error = prefs::writeProjectPrivatePrefs(privatePrefsJson);
+   if (error)
+      LOG_ERROR(error);
+
    // notify modules
    module_context::events().onProjectOptionsUpdated();
 

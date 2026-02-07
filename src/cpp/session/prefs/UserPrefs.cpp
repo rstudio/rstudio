@@ -21,12 +21,15 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserPrefValues.hpp>
 
 #include "UserPrefsDefaultLayer.hpp"
 #include "UserPrefsComputedLayer.hpp"
 #include "UserPrefsLayer.hpp"
 #include "UserPrefsSystemLayer.hpp"
 #include "UserPrefsProjectLayer.hpp"
+
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
 
@@ -116,6 +119,70 @@ public:
 
       return Success();
    }
+
+   // Returns the project layer, or nullptr if no project is active.
+   // Caller must hold mutex_.
+   boost::shared_ptr<UserPrefsProjectLayer> projectLayer()
+   {
+      if (layers_.size() <= PREF_LAYER_PROJECT)
+         return nullptr;
+
+      return boost::dynamic_pointer_cast<UserPrefsProjectLayer>(
+         layers_[PREF_LAYER_PROJECT]);
+   }
+
+   Error writeProjectPrefValue(const std::string& name, const json::Value& value)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         auto layer = projectLayer();
+         if (!layer)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         Error error = layer->writePrivatePref(name, value);
+         if (error)
+            return error;
+      }
+      END_LOCK_MUTEX
+
+      onChanged(kUserPrefsProjectLayer, name);
+      return Success();
+   }
+
+   Error writeProjectPrivatePrefsValue(const json::Object& prefs)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         auto layer = projectLayer();
+         if (!layer)
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+         Error error = layer->writePrefs(prefs);
+         if (error)
+            return error;
+      }
+      END_LOCK_MUTEX
+
+      for (const auto& member : prefs)
+         onChanged(kUserPrefsProjectLayer, member.getName());
+
+      return Success();
+   }
+
+   json::Object readProjectPrivatePrefsValue()
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         auto layer = projectLayer();
+         if (!layer)
+            return json::Object();
+
+         return layer->readPrivatePrefs();
+      }
+      END_LOCK_MUTEX
+
+      return json::Object();
+   }
 };
 
 } // anonymous namespace
@@ -152,6 +219,38 @@ Error initializeProjectPrefs()
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.createProjectLayer();
+}
+
+Error writeProjectPref(const std::string& name, const json::Value& value)
+{
+   // Only preferences marked "private": true in the schema may be written
+   // as private project prefs; reject anything not in the generated allowlist.
+   auto allowed = UserPrefValues::privateProjectPrefs();
+   if (allowed.find(name) == allowed.end())
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.writeProjectPrefValue(name, value);
+}
+
+Error writeProjectPrivatePrefs(const json::Object& prefs)
+{
+   // Validate all keys against the allowlist before writing any of them.
+   auto allowed = UserPrefValues::privateProjectPrefs();
+   for (const auto& member : prefs)
+   {
+      if (allowed.find(member.getName()) == allowed.end())
+         return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.writeProjectPrivatePrefsValue(prefs);
+}
+
+json::Object readProjectPrivatePrefs()
+{
+   UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
+   return instance.readProjectPrivatePrefsValue();
 }
 
 } // namespace prefs

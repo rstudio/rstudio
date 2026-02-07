@@ -22,13 +22,36 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+// The project layer maintains two independent source caches and merges them
+// into the base class cache_ that the rest of the preference system reads from:
+//
+//   publicPrefsCache_   UI prefs embedded in the .Rproj file (shared across users).
+//   privatePrefsCache_  Per-user prefs stored in .Rproj.user/<ctx>/rstudio-prefs.json.
+//   cache_              (inherited) The merged view: public prefs overlaid with private prefs.
+//
+// mergePrefs() rebuilds cache_ from the two source caches. Private prefs take
+// precedence over public prefs when both define the same key. The source caches
+// must be deep-copied into cache_ (via json::Value::clone()) because json::Value
+// assignment is destructive (move semantics).
 class UserPrefsProjectLayer: public PrefLayer
 {
 public:
    UserPrefsProjectLayer();
    core::Error readPrefs() override;
+   core::Error writePrefs(const core::json::Object& prefs) override;
+
+   core::Error writePrivatePref(const std::string& name, const core::json::Value& value);
+   core::json::Object readPrivatePrefs();
+
 private:
    void onProjectConfigChanged();
+   void onPrefsFileChanged() override;
+   void mergePrefs();
+
+   core::FilePath privatePrefsFile_;
+   boost::shared_ptr<core::json::Object> publicPrefsCache_;
+   boost::shared_ptr<core::json::Object> privatePrefsCache_;
+   std::time_t lastSync_;
 };
 
 } // namespace prefs

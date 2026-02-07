@@ -20,6 +20,8 @@
 #ifndef SESSION_USER_PREF_VALUES_HPP
 #define SESSION_USER_PREF_VALUES_HPP
 
+#include <set>
+
 #include <session/prefs/Preferences.hpp>
 
 namespace rstudio {

@@ -55,7 +55,16 @@ core::Error UserStateLayer::readPrefs()
       }
    }
 
-   return loadPrefsFromFile(stateFile_, schemaFile);
+   json::Object prefs;
+   Error error = loadPrefsFromFile(stateFile_, schemaFile, &prefs);
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cache_ = boost::make_shared<json::Object>(std::move(prefs));
+   }
+   END_LOCK_MUTEX
+
+   return error;
 }
 
 core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)

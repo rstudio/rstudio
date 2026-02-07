@@ -20,6 +20,8 @@
 #ifndef SESSION_USER_PREF_VALUES_HPP
 #define SESSION_USER_PREF_VALUES_HPP
 
+#include <set>
+
 #include <session/prefs/Preferences.hpp>
 
 namespace rstudio {
@@ -401,6 +403,7 @@ namespace prefs {
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
+#define kFileMonitorUseGitignore "file_monitor_use_gitignore"
 #define kInstallPkgDepsIndividually "install_pkg_deps_individually"
 #define kGraphicsBackend "graphics_backend"
 #define kGraphicsBackendDefault "default"
@@ -492,6 +495,7 @@ class UserPrefValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   static std::set<std::string> privateProjectPrefs();
    /**
     * Whether to run .Rprofile again after resuming a suspended R session.
     */
@@ -1895,6 +1899,12 @@ public:
     */
    core::json::Array fileMonitorIgnoredComponents();
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
+
+   /**
+    * When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.
+    */
+   bool fileMonitorUseGitignore();
+   core::Error setFileMonitorUseGitignore(bool val);
 
    /**
     * Whether to install R package dependencies one at a time.
