@@ -101,19 +101,6 @@ public class MathJax
          }
       }));
 
-      handlers_.add(docDisplay_.addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            if (!event.isAttached())
-            {
-               detachHandlers();
-               return;
-            }
-         }
-      }));
-
       handlers_.add(docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
       {
          Timer bgRenderTimer_ = new Timer()
@@ -615,11 +602,21 @@ public class MathJax
       return text.matches("^\\$*\\s*\\$*$");
    }
 
-   private void detachHandlers()
+   public void detach()
    {
+      // end any ongoing render (cleans up anchor, cursor handler, popup)
+      endRender();
+
+      // remove registered event handlers
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
       handlers_.clear();
+
+      // detach line widgets
+      for (PinnedLineWidget plw : cowToPlwMap_.values())
+         plw.detach();
+      cowToPlwMap_.clear();
+      lwToPlwMap_.clear();
    }
 
    public interface Styles extends CssResource

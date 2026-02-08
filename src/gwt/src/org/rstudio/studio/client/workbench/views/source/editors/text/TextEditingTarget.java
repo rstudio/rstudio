@@ -3769,6 +3769,9 @@ public class TextEditingTarget implements
       if (inlinePreviewer_ != null)
          inlinePreviewer_.onDismiss();
 
+      if (mathjax_ != null)
+         mathjax_.detach();
+
       if (selectionChangedTimer_ != null)
          selectionChangedTimer_.cancel();
 
