@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridRes
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -878,6 +879,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          packagesDataProvider_.removeDataDisplay(display);
       
       packagesDataProvider_.addDataDisplay(packagesTable_);
+
+      // If the table is rendered before the LayoutPanel has completed its
+      // layout pass, the DataGrid's table body may end up with a height of 0
+      // and no rows will be visible. Schedule a deferred redraw as a safety
+      // net for this case.
+      // https://github.com/rstudio/rstudio/issues/17005
+      Scheduler.get().scheduleDeferred(() -> ensureRendered());
    }
 
    private void layoutPackagesTable()
@@ -891,6 +899,17 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
             packagesTable_, 0, Unit.PX, 0, Unit.PX);
       packagesTableContainer_.setWidgetTopBottom(
             packagesTable_, top, Unit.PX, 0, Unit.PX);
+   }
+
+   private void ensureRendered()
+   {
+      if (packagesTable_ == null)
+         return;
+
+      if (packagesTable_.getTableBody().getClientHeight() != 0)
+         return;
+
+      packagesTable_.redraw();
    }
 
    private void updateColumnWidths()
@@ -1071,7 +1090,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       SafeHtml checkboxUnchecked(String label);
    }
 
-   private DataGrid<PackageInfo> packagesTable_;
+   private RStudioDataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private ToolbarButton repositoryButton_;
    private SearchWidget searchWidget_;
