@@ -430,12 +430,37 @@ public class AceEditor implements DocDisplay
             // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
             if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
                ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
+
+            // re-attach subsystems
+            if (completionManager_ != null)
+               completionManager_.attach();
+
+            if (mixins_ != null)
+               mixins_.attach();
+
+            if (bgLinkHighlighter_ != null)
+               bgLinkHighlighter_.attach();
+
+            if (bgChunkHighlighter_ != null)
+               bgChunkHighlighter_.attach();
+
+            if (diagnosticsBgPopup_ != null)
+               diagnosticsBgPopup_.attach();
+
+            if (backgroundTokenizer_ != null)
+               backgroundTokenizer_.attach();
+
+            if (monitor_ != null)
+               monitor_.attach();
+
+            // restore keyboard handlers (only after file type has been set)
+            if (fileType_ != null)
+               updateKeyboardHandlers();
          }
          else
+         {
             detachFromWidget(widget_.getElement());
 
-         if (!event.isAttached())
-         {
             for (HandlerRegistration handler : editorEventListeners_)
                if (handler != null)
                   handler.removeHandler();
@@ -446,46 +471,30 @@ public class AceEditor implements DocDisplay
                   handler.removeHandler();
             keyboardHandlers_.clear();
 
+            // detach subsystems (keep references for re-attach)
             if (completionManager_ != null)
-            {
                completionManager_.detach();
-               completionManager_ = null;
-            }
 
             if (mixins_ != null)
-            {
                mixins_.detach();
-            }
 
             if (bgLinkHighlighter_ != null)
-            {
                bgLinkHighlighter_.detach();
-            }
 
             if (bgChunkHighlighter_ != null)
-            {
                bgChunkHighlighter_.detach();
-            }
 
             if (diagnosticsBgPopup_ != null)
-            {
                diagnosticsBgPopup_.detach();
-            }
 
             if (backgroundTokenizer_ != null)
-            {
                backgroundTokenizer_.detach();
-            }
 
             if (monitor_ != null)
-            {
                monitor_.detach();
-            }
 
             if (s_lastFocusedEditor == AceEditor.this)
-            {
                s_lastFocusedEditor = null;
-            }
          }
       });
 
