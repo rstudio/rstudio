@@ -30,7 +30,7 @@
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.409.0
+- Copilot Language Server 1.425.0
 - Electron 39.5.1
 - Node.js 22.22.0 (copilot completions)
 - Quarto 1.8.26
