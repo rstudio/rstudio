@@ -93,6 +93,11 @@ public class CppCompletionManager implements CompletionManager
    }
 
    @Override
+   public void attach()
+   {
+   }
+
+   @Override
    public void detach()
    {
       handlers_.removeHandler();

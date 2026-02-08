@@ -210,6 +210,10 @@ public class RCompletionManager implements CompletionManager
       automation_ = automation;
    }
    
+   public void attach()
+   {
+   }
+
    public void detach()
    {
       handlers_.removeHandler();
