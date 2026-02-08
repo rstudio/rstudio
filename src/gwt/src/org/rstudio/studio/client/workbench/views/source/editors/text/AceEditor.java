@@ -4898,6 +4898,21 @@ public class AceEditor implements DocDisplay
          return row < row_;
       }
 
+      public void attach()
+      {
+         if (documentChangedHandler_ != null)
+            documentChangedHandler_.removeHandler();
+
+         documentChangedHandler_ = editor_.addDocumentChangedHandler(event ->
+         {
+            if (editor_.hasCodeModelScopeTree())
+            {
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(DELAY_MS);
+            }
+         });
+      }
+
       public void detach()
       {
          timer_.cancel();
