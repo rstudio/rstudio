@@ -54,7 +54,7 @@ To build the Electron application / desktop components, you can use:
 
 ## Writing Automated Tests
 
-RStudio uses its own infrastructure for automated testing. Essentially, one is able to test and automate a separate instance of RStudio from RStudio, via the Chrome Debugging Protocol (CDP).
+RStudio uses its own infrastructure for automated testing, nicknamed "BRAT". Essentially, one is able to test and automate a separate instance of RStudio from RStudio, via the Chrome Debugging Protocol (CDP).
 
 Automated tests live in:
 
@@ -63,8 +63,6 @@ Automated tests live in:
 The tools that help facilitate automation (that is, communication with the automated instance of RStudio) live in
 
     src/cpp/session/modules/automation
-
-
 
 
 ## Testing
