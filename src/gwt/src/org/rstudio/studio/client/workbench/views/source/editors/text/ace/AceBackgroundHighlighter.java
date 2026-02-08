@@ -232,6 +232,50 @@ public class AceBackgroundHighlighter
       refreshHighlighters();
    }
 
+   public void attach()
+   {
+      // re-register mode changed handler
+      if (modeChangedReg_ != null)
+         modeChangedReg_.removeHandler();
+      modeChangedReg_ = editor_.addEditorModeChangedHandler(this);
+
+      // re-register prefs handler
+      if (prefsReg_ != null)
+         prefsReg_.removeHandler();
+      prefsReg_ = prefs_.highlightCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            boolean value = event.getValue();
+            if (value)
+            {
+               enabled_ = true;
+               synchronizeFrom(0);
+            }
+            else
+            {
+               enabled_ = false;
+               clearMarkers();
+            }
+         }
+      });
+
+      // re-register document changed handler if we have active highlight patterns
+      if (documentChangedHandler_ != null)
+         documentChangedHandler_.removeHandler();
+      documentChangedHandler_ = null;
+
+      if (!highlightPatterns_.isEmpty())
+      {
+         documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
+      }
+
+      // re-synchronize if enabled
+      if (enabled_)
+         synchronizeFrom(0);
+   }
+
    public void detach()
    {
       if (modeChangedReg_ != null)
