@@ -496,13 +496,25 @@ public class AceEditor implements DocDisplay
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
-      
+
       // https://github.com/rstudio/rstudio/issues/13118
       setColorPreview(userPrefs_.colorPreview().getValue());
+
+      // Register event listeners eagerly so that editors managed outside of
+      // the GWT widget hierarchy (e.g. Visual mode code chunks) can still
+      // receive events. See https://github.com/rstudio/rstudio/issues/17007
+      registerEditorEventListeners();
    }
 
    private void registerEditorEventListeners()
    {
+      // Clear any existing registrations so this method is safe to call
+      // multiple times (e.g. from both the constructor and on re-attach).
+      for (HandlerRegistration handler : editorEventListeners_)
+         if (handler != null)
+            handler.removeHandler();
+      editorEventListeners_.clear();
+
       editorEventListeners_.add(events_.addHandler(EditEvent.TYPE, new EditEvent.Handler()
       {
          @Override
