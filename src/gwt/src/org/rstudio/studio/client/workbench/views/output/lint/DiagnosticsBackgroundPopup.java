@@ -84,6 +84,46 @@ public class DiagnosticsBackgroundPopup
       start();
    }
 
+   public void attach()
+   {
+      // re-register focus handler
+      if (focusHandler_ != null)
+         focusHandler_.removeHandler();
+
+      focusHandler_ = docDisplay_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            if (editor_ != null && !isRunning_)
+               start();
+         }
+      });
+
+      // re-register blur handler
+      if (blurHandler_ != null)
+         blurHandler_.removeHandler();
+
+      blurHandler_ = docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            hidePopup();
+            stopMonitoring();
+            if (previewHandler_ != null)
+            {
+               previewHandler_.removeHandler();
+               previewHandler_ = null;
+            }
+         }
+      });
+
+      // restart monitoring if the editor is focused
+      if (docDisplay_.isFocused() && !isRunning_)
+         start();
+   }
+
    public void detach()
    {
       stopMonitoring();
