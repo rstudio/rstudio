@@ -296,6 +296,7 @@ public class PaneManager
 
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
+      previousPaneConfig_ = config;
 
       int splitterSize = 7;
 
@@ -406,13 +407,28 @@ public class PaneManager
       
       userPrefs.panes().addValueChangeHandler(evt ->
       {
-         ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue().cast()));
+         PaneConfig newConfig = validateConfig(evt.getValue().cast());
+
+         // Short-circuit: if only sidebar visibility changed, skip the full
+         // pane layout rebuild (replaceWindows, tab panel clear/repopulate).
+         if (previousPaneConfig_ != null &&
+             previousPaneConfig_.isOnlySidebarVisibilityChange(newConfig))
+         {
+            previousPaneConfig_ = newConfig;
+            showSidebar(newConfig.getSidebarVisible());
+            manageLayoutCommands();
+            return;
+         }
+
+         previousPaneConfig_ = newConfig;
+
+         ArrayList<LogicalWindow> newPanes = createPanes(newConfig);
          panes_ = newPanes;
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
-         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
-         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+         tabs1_ = tabNamesToTabs(newConfig.getTabSet1());
+         tabs2_ = tabNamesToTabs(newConfig.getTabSet2());
 
          WindowState oldTabSet1State = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1).getState();
          WindowState oldTabSet2State = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2).getState();
@@ -443,11 +459,11 @@ public class PaneManager
          hiddenTabSetTabPanel_.clear();
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-         hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
+         hiddenTabs_ = tabNamesToTabs(newConfig.getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
          // manage sidebar
-         showSidebar(evt.getValue().getSidebarVisible());
+         showSidebar(newConfig.getSidebarVisible());
 
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
@@ -2750,6 +2766,7 @@ public class PaneManager
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
    private Widget sidebar_;
+   private PaneConfig previousPaneConfig_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;

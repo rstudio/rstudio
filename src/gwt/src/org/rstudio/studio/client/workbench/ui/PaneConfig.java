@@ -363,6 +363,26 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return JsArrayUtil.copy(array);
    }
 
+   public final boolean isOnlySidebarVisibilityChange(PaneConfig other)
+   {
+      if (other == null)
+         return false;
+
+      // If sidebar_visible is the same, this is not a sidebar visibility change
+      if (getSidebarVisible() == other.getSidebarVisible())
+         return false;
+
+      return JsArrayUtil.jsArrayStringEqual(getQuadrants(), other.getQuadrants()) &&
+             JsArrayUtil.jsArrayStringEqual(getTabSet1(), other.getTabSet1()) &&
+             JsArrayUtil.jsArrayStringEqual(getTabSet2(), other.getTabSet2()) &&
+             JsArrayUtil.jsArrayStringEqual(getHiddenTabSet(), other.getHiddenTabSet()) &&
+             JsArrayUtil.jsArrayStringEqual(getSidebar(), other.getSidebar()) &&
+             getConsoleLeftOnTop() == other.getConsoleLeftOnTop() &&
+             getConsoleRightOnTop() == other.getConsoleRightOnTop() &&
+             getAdditionalSourceColumns() == other.getAdditionalSourceColumns() &&
+             StringUtil.equals(getSidebarLocation(), other.getSidebarLocation());
+   }
+
    public static boolean isValidConfig(ArrayList<String> tabs)
    {
       // This function was previously used to ensure tabsets didn't contain only "hideable" tabs or
