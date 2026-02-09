@@ -117,6 +117,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -301,7 +302,7 @@ public class AceEditorWidget extends Composite
          return;
       isAttached_ = true;
 
-      Timers.singleShot(() -> attachImpl());
+      attachTimer_.schedule(0);
    }
 
    private void attachImpl()
@@ -463,6 +464,7 @@ public class AceEditorWidget extends Composite
          return;
       isAttached_ = false;
 
+      attachTimer_.cancel();
       aceEventHandlers_.detach();
       globalEventHandlers_.detach();
    }
@@ -1622,6 +1624,14 @@ public class AceEditorWidget extends Composite
    private JsVector<LintItem> lint_ = JsVector.createVector();
    private boolean isAttached_ = false;
    private boolean tabMovesFocus_ = false;
+   private final Timer attachTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         attachImpl();
+      }
+   };
    private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
 
    // injected
