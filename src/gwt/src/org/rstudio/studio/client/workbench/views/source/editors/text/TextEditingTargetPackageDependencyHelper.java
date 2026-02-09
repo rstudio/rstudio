@@ -27,7 +27,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
@@ -66,25 +65,16 @@ public class TextEditingTargetPackageDependencyHelper
       }
       
       handlers_ = new HandlerRegistration[] {
-            
+
             docDisplay_.addSaveCompletedHandler((SaveFileEvent event) -> {
                if (!event.isAutosave())
                   discoverPackageDependencies();
             }),
-            
+
             events_.addHandler(AvailablePackagesReadyEvent.TYPE, (AvailablePackagesReadyEvent event) -> {
                discoverPackageDependencies();
-            }),
-            
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-               {
-                  for (HandlerRegistration handler : handlers_)
-                     handler.removeHandler();
-                  handlers_ = null;
-               }
             })
-            
+
       };
    }
    

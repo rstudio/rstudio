@@ -25,7 +25,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 
@@ -51,12 +50,7 @@ public abstract class ScopeTreeManager
       scopeManager_ = new ScopeManager();
       
       handlers_ = new HandlerRegistration[] {
-            
-            docDisplay.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-                  detach();
-            }),
-            
+
             docDisplay.addDocumentChangedHandler((DocumentChangedEvent event) -> {
                final Position position = event.getEvent().getRange().getStart();
                Scheduler.get().scheduleDeferred(() -> {

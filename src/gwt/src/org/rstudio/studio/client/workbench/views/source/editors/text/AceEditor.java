@@ -522,6 +522,9 @@ public class AceEditor implements DocDisplay
       if (monitor_ != null)
          monitor_.detach();
 
+      if (scopes_ != null)
+         scopes_.detach();
+
       if (s_lastFocusedEditor == AceEditor.this)
          s_lastFocusedEditor = null;
 
@@ -2850,11 +2853,6 @@ public class AceEditor implements DocDisplay
    public HandlerRegistration addSaveCompletedHandler(SaveFileEvent.Handler handler)
    {
       return handlers_.addHandler(SaveFileEvent.TYPE, handler);
-   }
-
-   public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
-   {
-      return widget_.addAttachHandler(handler);
    }
 
    public HandlerRegistration addLoadHandler(LoadHandler handler)
