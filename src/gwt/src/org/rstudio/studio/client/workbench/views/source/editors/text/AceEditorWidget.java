@@ -301,6 +301,11 @@ public class AceEditorWidget extends Composite
          return;
       isAttached_ = true;
 
+      Timers.singleShot(() -> attachImpl());
+   }
+
+   private void attachImpl()
+   {
       aceEventHandlers_.add(
 
          AceEditorNative.addEventListener(
