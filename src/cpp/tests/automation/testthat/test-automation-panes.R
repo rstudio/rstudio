@@ -787,7 +787,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.resetUILayout(remote)
 })
 
-.rs.test("Zoomed left column with sidebar on left works as expected", {
+.rs.test("Zoomed left column with sidebar on right works as expected", {
    # skipping to cut down run times on CI
    skip_on_ci()
 
@@ -799,20 +799,20 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Move sidebar to the left
+   # Move sidebar to the right
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved left", function() {
+   .rs.waitUntil("sidebar moved right", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated after recreation
    Sys.sleep(0.3)
 
-   # Verify the sidebar exists and is visible on the left
+   # Verify the sidebar exists and is visible on the right
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to left")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to right")
 
    sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible")
@@ -836,11 +836,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomLeftColumn")
 
    # Calculate expected width: console should expand to fill the space previously occupied
-   # by both TabSet1 and Sidebar (sidebar is on left now)
+   # by both TabSet1 and Sidebar (sidebar is on right now)
    expectedZoomedWidth <- initialConsoleWidth + initialTabSet1Width + initialSidebarWidth
 
    # Wait for layout to change - console should expand to fill the right column and sidebar space
-   .rs.waitUntil("left column zoomed with sidebar on left", function() {
+   .rs.waitUntil("left column zoomed with sidebar on right", function() {
       consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
       # Allow some tolerance for dividers/borders (within 30px)
       abs(consoleElement$offsetWidth - expectedZoomedWidth) < 30
@@ -888,7 +888,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomLeftColumn")
 
    # Wait for layout to be restored - console should return to original size and sidebar/TabSet1 should be visible
-   .rs.waitUntil("left column unzoomed with sidebar on left", function() {
+   .rs.waitUntil("left column unzoomed with sidebar on right", function() {
       consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
       sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
@@ -937,25 +937,25 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: move sidebar back to the right
+   # Clean up: move sidebar back to the left
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved right", function() {
+   .rs.waitUntil("sidebar moved left", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated
    Sys.sleep(0.3)
 
-   # Verify the sidebar is still visible after moving right
+   # Verify the sidebar is still visible after moving left
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
+   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving left")
 
    .rs.resetUILayout(remote)
 })
 
-.rs.test("Zoomed right column with sidebar on left works as expected", {
+.rs.test("Zoomed right column with sidebar on right works as expected", {
    # skipping to cut down run times on CI
    skip_on_ci()
 
@@ -967,20 +967,20 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Move sidebar to the left
+   # Move sidebar to the right
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved left", function() {
+   .rs.waitUntil("sidebar moved right", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated after recreation
    Sys.sleep(0.3)
 
-   # Verify the sidebar exists and is visible on the left
+   # Verify the sidebar exists and is visible on the right
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to left")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to right")
 
    sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible")
@@ -1004,11 +1004,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomRightColumn")
 
    # Calculate expected width: TabSet1 should expand to fill the space previously occupied
-   # by both Console and Sidebar (sidebar is on left)
+   # by both Console and Sidebar (sidebar is on right)
    expectedZoomedWidth <- initialTabSet1Width + initialConsoleWidth + initialSidebarWidth
 
    # Wait for layout to change - TabSet1 should expand to fill the left column and sidebar space
-   .rs.waitUntil("right column zoomed with sidebar on left", function() {
+   .rs.waitUntil("right column zoomed with sidebar on right", function() {
       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
       # Allow some tolerance for dividers/borders (within 30px)
       abs(tabSet1Element$offsetWidth - expectedZoomedWidth) < 30
@@ -1107,20 +1107,20 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: move sidebar back to the right
+   # Clean up: move sidebar back to the left
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved right", function() {
+   .rs.waitUntil("sidebar moved left", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated
    Sys.sleep(0.3)
 
-   # Verify the sidebar is still visible after moving right
+   # Verify the sidebar is still visible after moving left
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
+   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving left")
 
    .rs.resetUILayout(remote)
 })

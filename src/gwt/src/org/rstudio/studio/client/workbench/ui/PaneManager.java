@@ -296,6 +296,7 @@ public class PaneManager
 
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
+      previousPaneConfig_ = config;
 
       int splitterSize = 7;
 
@@ -406,13 +407,32 @@ public class PaneManager
       
       userPrefs.panes().addValueChangeHandler(evt ->
       {
-         ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue().cast()));
+         PaneConfig newConfig = validateConfig(evt.getValue().cast());
+
+         // Short-circuit: if the config hasn't actually changed, skip everything.
+         if (previousPaneConfig_ != null && previousPaneConfig_.isEqualTo(newConfig))
+            return;
+
+         // Short-circuit: if only sidebar visibility changed, skip the full
+         // pane layout rebuild (replaceWindows, tab panel clear/repopulate).
+         if (previousPaneConfig_ != null &&
+             previousPaneConfig_.isOnlySidebarVisibilityChange(newConfig))
+         {
+            previousPaneConfig_ = newConfig;
+            showSidebar(newConfig.getSidebarVisible());
+            manageLayoutCommands();
+            return;
+         }
+
+         previousPaneConfig_ = newConfig;
+
+         ArrayList<LogicalWindow> newPanes = createPanes(newConfig);
          panes_ = newPanes;
          center_.replaceWindows(newPanes.get(0), newPanes.get(1));
          right_.replaceWindows(newPanes.get(2), newPanes.get(3));
 
-         tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
-         tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
+         tabs1_ = tabNamesToTabs(newConfig.getTabSet1());
+         tabs2_ = tabNamesToTabs(newConfig.getTabSet2());
 
          WindowState oldTabSet1State = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET1).getState();
          WindowState oldTabSet2State = panesByName_.get(UserPrefsAccessor.Panes.QUADRANTS_TABSET2).getState();
@@ -438,16 +458,13 @@ public class PaneManager
                resizeHorizontally(panel_.getDefaultSplitterWidth(), panel_.getLeftWidgetSizes());
          }
 
-         tabSet1TabPanel_.clear();
-         tabSet2TabPanel_.clear();
-         hiddenTabSetTabPanel_.clear();
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
-         hiddenTabs_ = tabNamesToTabs(evt.getValue().getHiddenTabSet());
+         hiddenTabs_ = tabNamesToTabs(newConfig.getHiddenTabSet());
          populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
          // manage sidebar
-         showSidebar(evt.getValue().getSidebarVisible());
+         showSidebar(newConfig.getSidebarVisible());
 
          // manage source column commands
          boolean visible = userPrefs.allowSourceColumns().getValue() &&
@@ -1345,53 +1362,49 @@ public class PaneManager
                                                      final double sidebarTarget,
                                                      final Command afterComplete)
    {
-      // When sidebar is on right, right_ is added with add() so setWidgetSize() doesn't work.
-      // Control right_ size indirectly by setting center_ size.
-      // Layout: Left widgets + Center + Right + Sidebar = Panel width
-      // So: Center = Panel width - Left widgets - Right target - Sidebar target
+      // right_ is EAST and sidebar_ is EAST, so both can be sized directly.
+      // center_ is CENTER and fills remaining space automatically.
 
       // Splitter width constant (each splitter is 7px wide)
       final double SPLITTER_WIDTH = 7.0;
 
+      // Check if we're zooming the sidebar
       double leftTotal = 0.0;
-      for (int i = 0; i < leftList_.size(); i++)
-      {
-         panel_.setWidgetSize(leftList_.get(i), leftTargets.get(i));
-         leftTotal += leftTargets.get(i);
-      }
-
-      // When zooming sidebar to full width, we need special handling
-      // Check that sidebar target is close to panel width to distinguish zooming from restoring
+      for (Double target : leftTargets)
+         leftTotal += target;
       boolean isZoomingSidebar = sidebarTarget > 0 &&
                                  rightTarget == 0.0 &&
                                  leftTotal == 0.0 &&
                                  sidebarTarget > (panel_.getOffsetWidth() - 50);
 
       double sidebarWidth;
-      double centerTarget;
+      double actualRightTarget = rightTarget;
+      ArrayList<Double> actualLeftTargets = new ArrayList<>(leftTargets);
 
       if (isZoomingSidebar)
       {
-         // When zooming sidebar, collapse center and right to minimum
-         // Reserve space for two splitters (middle and sidebar)
-         sidebarWidth = panel_.getOffsetWidth() - (2 * SPLITTER_WIDTH);
-         // Center gets 0 width (console collapses)
-         centerTarget = 0;
+         // When zooming sidebar, collapse all other columns
+         int numSplitters = 1 + actualLeftTargets.size() + 1;
+         double splitterSpace = numSplitters * SPLITTER_WIDTH;
+         double minimalWidgetSpace = actualLeftTargets.size() * 1.0 + 1.0;
+         sidebarWidth = panel_.getOffsetWidth() - splitterSpace - minimalWidgetSpace;
+         for (int i = 0; i < actualLeftTargets.size(); i++)
+            actualLeftTargets.set(i, 1.0);
+         actualRightTarget = 1.0;
       }
       else
       {
          // Use sidebar target if provided, otherwise use current width
          sidebarWidth = sidebarTarget >= 0 ? sidebarTarget : sidebar_.getOffsetWidth();
-         // Calculate center size normally: total - left widgets - right - sidebar
-         centerTarget = panel_.getOffsetWidth() - leftTotal - rightTarget - sidebarWidth;
-         if (centerTarget < 0)
-            centerTarget = 0;
       }
 
       if (sidebar_ != null)
          panel_.setWidgetSize(sidebar_, sidebarWidth);
 
-      panel_.setWidgetSize(center_, centerTarget);
+      for (int i = 0; i < leftList_.size(); i++)
+         panel_.setWidgetSize(leftList_.get(i), actualLeftTargets.get(i));
+
+      panel_.setWidgetSize(right_, actualRightTarget);
 
       int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 300);
       panel_.animate(duration, new AnimationCallback()
@@ -2163,10 +2176,8 @@ public class PaneManager
       {
          if (widgetSizePriorToZoom_ < 0)
          {
-            if (sidebarOnRight)
-               widgetSizePriorToZoom_ = right_.getOffsetWidth();
-            else
-               widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
+            // right_ is always EAST, so getWidgetSize works in all cases
+            widgetSizePriorToZoom_ = panel_.getWidgetSize(right_);
          }
          if ((sidebarOnRight || sidebarOnLeft) && sidebarSizePriorToZoom_ < 0)
             sidebarSizePriorToZoom_ = sidebar_.getOffsetWidth();
@@ -2750,6 +2761,7 @@ public class PaneManager
    private WorkbenchTabPanel hiddenTabSetTabPanel_;
    private MinimizedModuleTabLayoutPanel hiddenTabSetMinPanel_;
    private Widget sidebar_;
+   private PaneConfig previousPaneConfig_;
 
    // Zoom-related members ----
    private Tab lastSelectedTab_ = null;
