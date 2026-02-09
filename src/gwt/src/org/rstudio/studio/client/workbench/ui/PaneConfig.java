@@ -325,14 +325,22 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     getSidebarLocation());
    }
 
-   public final native boolean isEqualTo(PaneConfig other)  /*-{
-      return other != null &&
-             this.panes.toString() == other.panes.toString() &&
-             this.tabSet1.toString() == other.tabSet1.toString() &&
-             this.tabSet2.toString() == other.tabSet2.toString() &&
-             this.hiddenTabSet.toString() == other.hiddenTabSet.toString() &&
-             this.sidebar.toString() == other.sidebar.toString();
-   }-*/;
+   public final boolean isEqualTo(PaneConfig other)
+   {
+      if (other == null)
+         return false;
+
+      return JsArrayUtil.jsArrayStringEqual(getQuadrants(), other.getQuadrants()) &&
+             JsArrayUtil.jsArrayStringEqual(getTabSet1(), other.getTabSet1()) &&
+             JsArrayUtil.jsArrayStringEqual(getTabSet2(), other.getTabSet2()) &&
+             JsArrayUtil.jsArrayStringEqual(getHiddenTabSet(), other.getHiddenTabSet()) &&
+             JsArrayUtil.jsArrayStringEqual(getSidebar(), other.getSidebar()) &&
+             getConsoleLeftOnTop() == other.getConsoleLeftOnTop() &&
+             getConsoleRightOnTop() == other.getConsoleRightOnTop() &&
+             getAdditionalSourceColumns() == other.getAdditionalSourceColumns() &&
+             getSidebarVisible() == other.getSidebarVisible() &&
+             StringUtil.equals(getSidebarLocation(), other.getSidebarLocation());
+   }
 
    private boolean sameElements(JsArrayString a, String[] b)
    {

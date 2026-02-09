@@ -409,6 +409,10 @@ public class PaneManager
       {
          PaneConfig newConfig = validateConfig(evt.getValue().cast());
 
+         // Short-circuit: if the config hasn't actually changed, skip everything.
+         if (previousPaneConfig_ != null && previousPaneConfig_.isEqualTo(newConfig))
+            return;
+
          // Short-circuit: if only sidebar visibility changed, skip the full
          // pane layout rebuild (replaceWindows, tab panel clear/repopulate).
          if (previousPaneConfig_ != null &&
@@ -454,9 +458,6 @@ public class PaneManager
                resizeHorizontally(panel_.getDefaultSplitterWidth(), panel_.getLeftWidgetSizes());
          }
 
-         tabSet1TabPanel_.clear();
-         tabSet2TabPanel_.clear();
-         hiddenTabSetTabPanel_.clear();
          populateTabPanel(tabs1_, tabSet1TabPanel_, tabSet1MinPanel_);
          populateTabPanel(tabs2_, tabSet2TabPanel_, tabSet2MinPanel_);
          hiddenTabs_ = tabNamesToTabs(newConfig.getHiddenTabSet());
