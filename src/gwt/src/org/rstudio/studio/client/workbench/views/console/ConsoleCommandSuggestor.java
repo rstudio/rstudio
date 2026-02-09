@@ -73,15 +73,9 @@ public class ConsoleCommandSuggestor implements
    @Override
    public void onConsoleInput(ConsoleInputEvent event)
    {
-      pendingSourceDocumentId_ = event.getConsole();
       Debug.log("[NCS] onConsoleInput: console='" + event.getConsole() + "' input='" + event.getInput() + "'");
-   }
 
-   @Override
-   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
-   {
       String input = event.getInput();
-      Debug.log("[NCS] onConsoleWriteInput: " + input);
       if (StringUtil.isNullOrEmpty(input))
          return;
 
@@ -90,9 +84,13 @@ public class ConsoleCommandSuggestor implements
          return;
 
       lastCommand_ = input;
-      lastSourceDocumentId_ = pendingSourceDocumentId_;
-      pendingSourceDocumentId_ = null;
+      lastSourceDocumentId_ = event.getConsole();
       outputBuffer_ = new StringBuilder();
+   }
+
+   @Override
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+   {
    }
 
    @Override
@@ -243,5 +241,4 @@ public class ConsoleCommandSuggestor implements
    private String lastSourceDocumentId_;
    private StringBuilder outputBuffer_ = new StringBuilder();
    private boolean suggestionInProgress_ = false;
-   private String pendingSourceDocumentId_ = null;
 }
