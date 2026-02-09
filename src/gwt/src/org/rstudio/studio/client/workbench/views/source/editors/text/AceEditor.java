@@ -1034,6 +1034,9 @@ public class AceEditor implements DocDisplay
       {
          if (completionManager_ != null)
             completionManager_.attach();
+
+         if (scopes_ != null)
+            scopes_.attach();
       }
 
       updateKeyboardHandlers();
