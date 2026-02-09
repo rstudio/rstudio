@@ -473,6 +473,9 @@ public class AceEditor implements DocDisplay
       if (backgroundTokenizer_ != null)
          backgroundTokenizer_.attach();
 
+      if (scopes_ != null)
+         scopes_.attach();
+
       if (monitor_ != null)
          monitor_.attach();
 
