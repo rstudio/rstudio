@@ -117,43 +117,54 @@ public class AceBackgroundHighlighter
          {
             // determine what state this row is in
             int state = computeState(row);
-            
+
             // if there's been no change, bail
             boolean isConsistentState =
                   rowStates_.isSet(row) &&
                   rowPatterns_.isSet(row) &&
                   (rowStates_.get(row) == state) &&
                   (rowPatterns_.get(row) == activeHighlightPattern_);
-            
+
             if (isConsistentState)
                break;
-            
+
             // update state for this row
             rowStates_.set(row, state);
             rowPatterns_.set(row, activeHighlightPattern_);
          }
-         
+
          // then, notify Ace and perform actual rendering of markers
          for (int row = startRow; row < endRow; row++)
          {
             int state = rowStates_.get(row);
-            int marker = markerIds_.get(row, 0);
-            
+            int marker = markerIds_.get(row, MARKER_UNKNOWN);
+
+            // rows with unknown state should not have markers
+            if (state == STATE_UNKNOWN)
+            {
+               if (marker != MARKER_UNKNOWN)
+               {
+                  session_.removeMarker(marker);
+                  markerIds_.set(row, MARKER_UNKNOWN);
+               }
+               continue;
+            }
+
             // bail early if no action is necessary
             boolean isConsistentState =
-                  (state == STATE_TEXT && marker == 0) ||
-                  (state != STATE_TEXT && marker != 0);
-            
+                  (state == STATE_TEXT && marker == MARKER_UNKNOWN) ||
+                  (state != STATE_TEXT && marker != MARKER_UNKNOWN);
+
             if (isConsistentState)
                continue;
-            
+
             // clear a pre-existing marker if necessary
-            if (marker != 0)
+            if (marker != MARKER_UNKNOWN)
             {
                session_.removeMarker(marker);
-               markerIds_.set(row, 0);
+               markerIds_.set(row, MARKER_UNKNOWN);
             }
-            
+
             // if this is a non-text state, then draw a marker
             if (state != STATE_TEXT)
             {
@@ -162,7 +173,7 @@ public class AceBackgroundHighlighter
                      MARKER_CLASS,
                      MARKER_TYPE,
                      false);
-               
+
                markerIds_.set(row, markerId);
             }
          }
@@ -271,8 +282,8 @@ public class AceBackgroundHighlighter
          documentChangedHandler_ = editor_.addDocumentChangedHandler(this);
       }
 
-      // re-synchronize if enabled
-      if (enabled_)
+      // re-synchronize if enabled and we have active highlight patterns
+      if (enabled_ && !highlightPatterns_.isEmpty())
          synchronizeFrom(0);
    }
 
@@ -479,7 +490,7 @@ public class AceBackgroundHighlighter
    
    private void clearRowState()
    {
-      rowStates_.fill(0);
+      rowStates_.fill(STATE_UNKNOWN);
       rowPatterns_.fill((HighlightPattern) null);
    }
    
@@ -488,11 +499,11 @@ public class AceBackgroundHighlighter
       for (int i = 0, n = markerIds_.length(); i < n; i++)
       {
          int markerId = markerIds_.get(i);
-         if (markerId != 0)
+         if (markerId != MARKER_UNKNOWN)
             session_.removeMarker(markerId);
       }
       
-      markerIds_.fill(0);
+      markerIds_.fill(MARKER_UNKNOWN);
    }
    
    private static List<HighlightPattern> cStyleHighlightPatterns()
@@ -573,7 +584,10 @@ public class AceBackgroundHighlighter
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/sweave", sweaveHighlightPatterns());
       HIGHLIGHT_PATTERN_REGISTRY.put("mode/rhtml", htmlStyleHighlightPatterns());
    }
+
+   private static final int MARKER_UNKNOWN     = 0;
    
+   private static final int STATE_UNKNOWN      = 0;
    private static final int STATE_TEXT         = 1;
    private static final int STATE_CHUNK_START  = 2;
    private static final int STATE_CHUNK_BODY   = 3;
