@@ -276,6 +276,13 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
+   public void attach()
+   {
+      super.attach();
+      sigTips_.attach();
+   }
+
+   @Override
    public void detach()
    {
       super.detach();

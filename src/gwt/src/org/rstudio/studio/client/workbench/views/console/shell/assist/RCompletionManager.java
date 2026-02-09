@@ -125,7 +125,13 @@ public class RCompletionManager implements CompletionManager
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
       requester_ = new CompletionRequester(rContext, rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
-      
+      addHandlers();
+   }
+
+   private void addHandlers()
+   {
+      handlers_.removeHandler();
+
       handlers_.add(input_.addClickHandler(event ->
       {
          invalidatePendingRequests();
@@ -137,7 +143,7 @@ public class RCompletionManager implements CompletionManager
          if (context_ != null)
             context_.onSelection(event.getSelectedItem());
       }));
-      
+
       handlers_.add(popup_.addSelectionHandler(event ->
       {
          lastSelectedItem_ = event.getSelectedItem();
@@ -146,23 +152,23 @@ public class RCompletionManager implements CompletionManager
          else
             showHelpDeferred(context_, lastSelectedItem_, 600);
       }));
-      
+
       handlers_.add(popup_.addSelectionHandler(event -> docDisplay_.setPopupVisible(true)));
-      
+
       handlers_.add(popup_.addCloseHandler(event ->
       {
          Scheduler.get().scheduleDeferred(() -> docDisplay_.setPopupVisible(false));
       }));
-      
+
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          private boolean wasSigtipShowing_ = false;
-         
+
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
             RCompletionToolTip toolTip = sigTipManager_.getToolTip();
-            
+
             if (event.isAttached())
             {
                if (toolTip != null && toolTip.isShowing())
@@ -182,7 +188,7 @@ public class RCompletionManager implements CompletionManager
             }
          }
       }));
-      
+
       // hide the autocompletion popup if the user executes
       // an Ace editor command (e.g. insert pipe operator)
       handlers_.add(eventBus_.addHandler(AceEditorCommandEvent.TYPE, event ->
@@ -212,6 +218,8 @@ public class RCompletionManager implements CompletionManager
    
    public void attach()
    {
+      addHandlers();
+      sigTipManager_.attach();
    }
 
    public void detach()
