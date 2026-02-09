@@ -428,6 +428,7 @@ public class AceBackgroundHighlighter
             
       switch (state)
       {
+      case STATE_UNKNOWN:
       case STATE_TEXT:
       case STATE_CHUNK_END:
       {
@@ -462,7 +463,7 @@ public class AceBackgroundHighlighter
    
    private void synchronizeFrom(int startRow)
    {
-      if (!enabled_)
+      if (!enabled_ || highlightPatterns_.isEmpty())
          return;
       
       // if this row has no state, then we need to look
