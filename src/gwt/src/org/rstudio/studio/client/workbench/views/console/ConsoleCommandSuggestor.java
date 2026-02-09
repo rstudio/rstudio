@@ -96,8 +96,11 @@ public class ConsoleCommandSuggestor implements
    @Override
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
+      if (lastCommand_ == null)
+         return;
+
       String output = event.getOutput();
-      if (output != null)
+      if (output != null && outputBuffer_.length() < MAX_OUTPUT_BUFFER_CHARS)
       {
          outputBuffer_.append(output);
       }
@@ -108,7 +111,10 @@ public class ConsoleCommandSuggestor implements
    {
       String error = event.getError();
       Debug.log("[NCS] onConsoleWriteError: " + error + " lastCommand_=" + (lastCommand_ != null));
-      if (error != null)
+      if (lastCommand_ == null)
+         return;
+
+      if (error != null && outputBuffer_.length() < MAX_OUTPUT_BUFFER_CHARS)
       {
          outputBuffer_.append(error);
       }
@@ -231,6 +237,7 @@ public class ConsoleCommandSuggestor implements
    }
 
    private static final int COOLDOWN_MS = 2500;
+   private static final int MAX_OUTPUT_BUFFER_CHARS = 8192;
 
    private final AssistantServerOperations server_;
    private final Provider<SourceColumnManager> pSourceColumnManager_;
