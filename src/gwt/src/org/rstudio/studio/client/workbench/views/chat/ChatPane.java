@@ -32,12 +32,12 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -55,8 +55,6 @@ public class ChatPane
    private enum NotificationType
    {
       NONE,
-      UPDATE_AVAILABLE,
-      INSTALL_AVAILABLE,
       UPDATING,
       UPDATE_COMPLETE,
       UPDATE_ERROR,
@@ -114,14 +112,14 @@ public class ChatPane
 
       updateMessageLabel_ = new HTML();
       updateMessageLabel_.setStyleName(RES.styles().chatUpdateMessage());
-      updateButtonPanel_ = new HorizontalPanel();
-      updateButtonPanel_.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      updateButtonPanel_ = new FlowPanel();
+      updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
-      HorizontalPanel notificationContent = new HorizontalPanel();
-      notificationContent.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-      notificationContent.add(updateMessageLabel_);
-      notificationContent.add(updateButtonPanel_);
-      updateNotificationPanel_.add(notificationContent);
+      notificationContent_ = new FlowPanel();
+      notificationContent_.setStyleName(RES.styles().chatNotificationContent());
+      notificationContent_.add(updateMessageLabel_);
+      notificationContent_.add(updateButtonPanel_);
+      updateNotificationPanel_.add(notificationContent_);
 
       frame_ = new RStudioThemedFrame(constants_.chatTitle());
       frame_.setSize("100%", "100%");
@@ -133,8 +131,8 @@ public class ChatPane
       mainPanel_.add(updateNotificationPanel_);
       mainPanel_.add(frame_);
 
-      // Position update notification at top
-      mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 40, Unit.PX);
+      // Position update notification at top (starts at 0 height since hidden)
+      mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
       mainPanel_.setWidgetLeftRight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
 
       // Position frame below notification (initially at 0 since notification is hidden)
@@ -147,15 +145,25 @@ public class ChatPane
    {
       if (updateNotificationPanel_.isVisible())
       {
-         // Notification is showing, frame starts below it
-         mainPanel_.setWidgetTopBottom(frame_, 40, Unit.PX, 0, Unit.PX);
+         // Set minimal temporary height so content overflows, then measure scrollHeight
+         mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 1, Unit.PX);
+         mainPanel_.forceLayout();
+
+         // Measure actual content height (including padding) after layout completes
+         Scheduler.get().scheduleDeferred(() -> {
+            int height = updateNotificationPanel_.getElement().getScrollHeight();
+            mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, height, Unit.PX);
+            mainPanel_.setWidgetTopBottom(frame_, height, Unit.PX, 0, Unit.PX);
+            mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
+         });
       }
       else
       {
          // Notification hidden, frame takes full height
+         mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
          mainPanel_.setWidgetTopBottom(frame_, 0, Unit.PX, 0, Unit.PX);
+         mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
       }
-      mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
    }
 
    /**
@@ -295,56 +303,6 @@ public class ChatPane
    public void setUpdateObserver(ChatPresenter.Display.UpdateObserver observer)
    {
       updateObserver_ = observer;
-   }
-
-   @Override
-   public void showUpdateNotification(String newVersion)
-   {
-      updateMessageLabel_.setHTML(constants_.chatUpdateAvailable(newVersion));
-
-      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
-         .clear()
-         .addButton(constants_.chatUpdate(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onUpdateNow();
-            }
-         })
-         .addButton(constants_.chatIgnore(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onRemindLater();
-            }
-         });
-
-      currentNotificationType_ = NotificationType.UPDATE_AVAILABLE;
-      updateNotificationPanel_.setVisible(true);
-      updateFrameLayout();
-   }
-
-   @Override
-   public void showInstallNotification(String newVersion)
-   {
-      updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
-
-      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
-         .clear()
-         .addButton(constants_.chatInstallNow(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onUpdateNow();
-            }
-         })
-         .addButton(constants_.chatIgnore(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onRemindLater();
-            }
-         });
-
-      currentNotificationType_ = NotificationType.INSTALL_AVAILABLE;
-      updateNotificationPanel_.setVisible(true);
-      updateFrameLayout();
    }
 
    @Override
@@ -1073,7 +1031,9 @@ public class ChatPane
    interface Styles extends CssResource
    {
       String chatUpdateNotification();
+      String chatNotificationContent();
       String chatNotificationButton();
+      String chatNotificationButtonPanel();
       String chatUpdateMessage();
    }
 
@@ -1098,8 +1058,9 @@ public class ChatPane
 
    // Update notification UI components
    private FlowPanel updateNotificationPanel_;
+   private FlowPanel notificationContent_;
    private HTML updateMessageLabel_;
-   private HorizontalPanel updateButtonPanel_;
+   private FlowPanel updateButtonPanel_;
 
    // Injected ----
    private final EventBus events_;
