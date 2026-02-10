@@ -16,13 +16,30 @@
    background-color: THEME_DEFAULT_BACKGROUND;
    padding: 10px;
    border-bottom: 1px solid THEME_DEFAULT_BORDER;
+   overflow: hidden;
 }
 
-/* Message label vertical alignment */
+/* Notification content - horizontal layout with message and buttons side by side */
+.chatNotificationContent {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 10px;
+}
+
+/* Message label */
 .chatUpdateMessage {
-   display: inline-block;
-   vertical-align: middle;
    line-height: normal;
+   flex: 1;
+}
+
+/* Button panel for vertical button layout */
+.chatNotificationButtonPanel {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   gap: 4px;
+   flex-shrink: 0;
 }
 
 /* Notification panel - dark theme override */
@@ -39,7 +56,6 @@
 
 /* Buttons in notification panel - base light theme */
 .chatNotificationButton {
-   margin-left: 5px;
    padding: 5px 12px;
    font-size: 12px;
    cursor: pointer;

@@ -15,14 +15,14 @@ package org.rstudio.studio.client.workbench.views.chat;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 
 /**
  * Builder class for creating notification buttons with consistent styling and behavior.
  */
 public class NotificationBuilder
 {
-   private final HorizontalPanel buttonPanel_;
+   private final FlowPanel buttonPanel_;
    private final String buttonStyleName_;
 
    /**
@@ -31,7 +31,7 @@ public class NotificationBuilder
     * @param buttonPanel The panel where buttons will be added
     * @param buttonStyleName The CSS style name to apply to buttons
     */
-   public NotificationBuilder(HorizontalPanel buttonPanel, String buttonStyleName)
+   public NotificationBuilder(FlowPanel buttonPanel, String buttonStyleName)
    {
       buttonPanel_ = buttonPanel;
       buttonStyleName_ = buttonStyleName;

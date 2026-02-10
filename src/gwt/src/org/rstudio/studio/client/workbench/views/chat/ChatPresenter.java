@@ -69,8 +69,6 @@ public class ChatPresenter extends BasePresenter
       void setStatus(Status status);
       void showError(String errorMessage);
       void loadUrl(String url);
-      void showUpdateNotification(String newVersion);
-      void showInstallNotification(String newVersion);
       void showNotInstalledWithInstall(String newVersion);
       void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
       void showUpdatingStatus();
