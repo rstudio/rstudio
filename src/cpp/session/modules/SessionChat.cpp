@@ -119,6 +119,10 @@ static bool s_chatBusy = false;
 // ============================================================================
 // Resume tracking for chat UI
 // ============================================================================
+// Tracks whether the chat UI should receive a "resume" hint when it loads.
+// Set to the resume-conversation flag on session resume, and unconditionally
+// set to true once the UI has loaded (via chatNotifyUILoaded RPC). Resets
+// naturally when the rsession process restarts (e.g., project switch).
 static bool s_resumeChat = false;
 
 // ============================================================================
@@ -3989,6 +3993,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
 Error chatNotifyUILoaded(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
+   DLOG("Chat UI loaded notification received, setting s_resumeChat = true");
    s_resumeChat = true;
    pResponse->setResult(json::Value());
    return Success();

@@ -540,15 +540,18 @@ public class ChatPresenter extends BasePresenter
 
       String loadUrl = baseUrl + params;
       if (resumeChat)
+      {
          loadUrl += "&resume";
+      }
 
       display_.loadUrl(loadUrl);
       display_.setStatus(Display.Status.READY);
 
-      // Notify C++ that UI has loaded (for future resume tracking)
+      // Mark the backend so subsequent status responses include resume_chat=true
       server_.chatNotifyUILoaded(new VoidServerRequestCallback());
 
-      // Update cached URL to include &resume for tab-switch reloads
+      // Always include &resume in the cached URL so that tab-switch reloads
+      // (via onSelected) signal resume, even if the initial load was fresh
       display_.updateCachedUrl(baseUrl + params + "&resume");
 
       // Reset initialization flag - we're done
