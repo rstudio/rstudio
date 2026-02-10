@@ -21,6 +21,7 @@ import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedE
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -80,6 +81,7 @@ public class ChatPresenter extends BasePresenter
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
       void showIncompatibleVersion();
+      void updateCachedUrl(String url);
    }
 
    public static class Chat
@@ -434,7 +436,8 @@ public class ChatPresenter extends BasePresenter
             if (status.equals("ready"))
             {
                String wsUrl = response.getString("url");
-               loadChatUI(wsUrl);
+               boolean resumeChat = response.hasKey("resume_chat") && response.getBoolean("resume_chat");
+               loadChatUI(wsUrl, resumeChat);
             }
             else
             {
@@ -517,7 +520,7 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   private void loadChatUI(String wsUrl)
+   private void loadChatUI(String wsUrl, boolean resumeChat)
    {
       // Re-check preference before loading (guards against preference change during polling)
       if (!paiUtil_.isChatProviderPosit())
@@ -533,10 +536,23 @@ public class ChatPresenter extends BasePresenter
 
       // Append WebSocket URL and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
-      String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
+      String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
 
-      display_.loadUrl(urlWithWsParam);
+      String loadUrl = baseUrl + params;
+      if (resumeChat)
+      {
+         loadUrl += "&resume";
+      }
+
+      display_.loadUrl(loadUrl);
       display_.setStatus(Display.Status.READY);
+
+      // Mark the backend so subsequent status responses include resume_chat=true
+      server_.chatNotifyUILoaded(new VoidServerRequestCallback());
+
+      // Always include &resume in the cached URL so that tab-switch reloads
+      // (via onSelected) signal resume, even if the initial load was fresh
+      display_.updateCachedUrl(baseUrl + params + "&resume");
 
       // Reset initialization flag - we're done
       initializing_ = false;

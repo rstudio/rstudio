@@ -7058,6 +7058,12 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void chatNotifyUILoaded(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "chat_notify_ui_loaded", requestCallback);
+   }
+
+   @Override
    public void chatGetVersion(ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_get_version", requestCallback);

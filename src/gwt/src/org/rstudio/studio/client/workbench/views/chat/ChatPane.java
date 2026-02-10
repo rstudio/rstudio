@@ -294,6 +294,15 @@ public class ChatPane
    }
 
    @Override
+   public void updateCachedUrl(String url)
+   {
+      if (contentType_ == ContentType.URL)
+      {
+         currentUrl_ = url;
+      }
+   }
+
+   @Override
    public void setObserver(ChatPresenter.Display.Observer observer)
    {
       observer_ = observer;

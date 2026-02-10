@@ -117,6 +117,15 @@ static bool s_sessionClosing = false;
 static bool s_chatBusy = false;
 
 // ============================================================================
+// Resume tracking for chat UI
+// ============================================================================
+// Tracks whether the chat UI should receive a "resume" hint when it loads.
+// Set to the resume-conversation flag on session resume, and unconditionally
+// set to true once the UI has loaded (via chatNotifyUILoaded RPC). Resets
+// naturally when the rsession process restarts (e.g., project switch).
+static bool s_resumeChat = false;
+
+// ============================================================================
 // Focused document tracking for insertAtCursor
 // ============================================================================
 static std::string s_focusedDocumentId;
@@ -3974,9 +3983,19 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
       std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
       result["url"] = url;
+      result["resume_chat"] = s_resumeChat;
    }
 
    pResponse->setResult(result);
+   return Success();
+}
+
+Error chatNotifyUILoaded(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   DLOG("Chat UI loaded notification received, setting s_resumeChat = true");
+   s_resumeChat = true;
+   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -4334,6 +4353,7 @@ void onResume(const Settings& settings)
 
    if (wasSuspended)
    {
+      s_resumeChat = resumeConversation;
       DLOG("Restarting chat backend (resume conversation: {})", resumeConversation);
 
       Error error = startChatBackend(resumeConversation);
@@ -4522,6 +4542,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
+      (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))
       (bind(sourceModuleRFile, "SessionChat.R"))
       ;
