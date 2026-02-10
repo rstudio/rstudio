@@ -45,4 +45,6 @@ public interface ChatServerOperations
    public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
    public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
                               ServerRequestCallback<Void> requestCallback);
+
+   public void chatNotifyUILoaded(ServerRequestCallback<Void> requestCallback);
 }
