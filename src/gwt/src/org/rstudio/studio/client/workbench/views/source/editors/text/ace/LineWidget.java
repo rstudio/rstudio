@@ -106,6 +106,14 @@ public class LineWidget extends JavaScriptObject
       this.row = row;
    }-*/;
 
+   public native final int getColumn() /*-{
+      return this.column;
+   }-*/;
+
+   public native final void setColumn(int column) /*-{
+      this.column = column;
+   }-*/;
+
    public native final boolean getFixedWidth()  /*-{
       return this.fixedWidth;
    }-*/;
