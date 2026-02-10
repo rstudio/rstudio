@@ -57,6 +57,11 @@ public class PinnedLineWidget
       
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true);
+      // Set column so that Ace's line widget manager does not automatically
+      // shift this widget when a newline is inserted on its row. Without this,
+      // the widget can be displaced in cases where PinnedLineWidget's anchor-based
+      // repositioning cannot detect the shift (e.g. at the end of the document,
+      // where anchors are clamped to the last row).
       lineWidget_.setColumn(0);
 
       renderLineWidget();
