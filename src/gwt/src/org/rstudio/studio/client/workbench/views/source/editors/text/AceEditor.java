@@ -4275,6 +4275,15 @@ public class AceEditor implements DocDisplay
 
       while (endRow <= endRowLimit)
       {
+         // skip comment and empty lines without counting their bracket tokens;
+         // this is necessary since roxygen comments can contain bracket tokens
+         // (e.g. #' [foo()]) that would otherwise interfere with bracket balancing
+         if (rowIsEmptyOrComment(endRow))
+         {
+            endRow++;
+            continue;
+         }
+
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -4292,7 +4301,7 @@ public class AceEditor implements DocDisplay
          }
 
          // continue search if line ends with binary operator
-         if (rowEndsInBinaryOperatorOrOpenParen(endRow) || rowIsEmptyOrComment(endRow))
+         if (rowEndsInBinaryOperatorOrOpenParen(endRow))
          {
             endRow++;
             continue;
