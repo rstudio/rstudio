@@ -4109,7 +4109,8 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
 
-      return error;
+      pResponse->setResult(json::Value());
+      return Success();
    }
 
    // Install package
@@ -4132,7 +4133,20 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    {
       boost::mutex::scoped_lock lock2(s_updateStateMutex);
       s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage = "Installation failed: " + error.getMessage();
+
+#ifdef _WIN32
+      if (error.getCode() == ERROR_ACCESS_DENIED ||
+          error.getCode() == ERROR_SHARING_VIOLATION)
+      {
+         s_updateState.installMessage =
+            "Unable to install update (access denied). "
+            "Please close all other instances of RStudio and try again.";
+      }
+      else
+#endif
+      {
+         s_updateState.installMessage = "Installation failed: " + error.getMessage();
+      }
 
       // Note: installPackage() already handles backup restoration internally,
       // so we don't need to call restoreFromBackup() here again.
@@ -4148,7 +4162,8 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
             WLOG("Failed to clean up backup directory after failed install: {}", prevCleanup.getMessage());
       }
 
-      return error;
+      pResponse->setResult(json::Value());
+      return Success();
    }
 
    // Success - ensure backup is cleaned up
