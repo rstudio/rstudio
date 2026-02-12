@@ -31,6 +31,7 @@ namespace console_input {
 
 void clearConsoleInputBuffer();
 bool executing();
+void setExecuting(bool executing);
 void updateSessionExecuting();
 core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
 void reissueLastConsolePrompt();
