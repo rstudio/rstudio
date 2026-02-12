@@ -701,7 +701,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       else if (type == EditorCommandEvent.TYPE_SAVE_DOCUMENT)
       {
-         ReplaceRangesEvent.Data data = event.getData();
+         // Reuse InsertAtCursorEvent.Data to extract the document ID;
+         // the save_document payload is {"id": "..."} with no other fields.
+         InsertAtCursorEvent.Data data = event.getData();
          Set<String> ids = Collections.singleton(data.getId());
          pSource_.get().saveUnsavedDocuments(ids, () -> {});
       }

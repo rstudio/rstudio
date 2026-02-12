@@ -1847,6 +1847,42 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
    return nullptr;
 }
 
+// Resolve a URI to an open document and/or file path.
+// For untitled: URIs, sets *pDoc and leaves *pPath empty.
+// For file: URIs, sets *pPath and sets *pDoc if the file is open in the editor.
+// Returns true on success; returns false and sends an error response on failure.
+bool resolveDocumentUri(
+   core::system::ProcessOperations& ops,
+   const json::Value& requestId,
+   const std::string& uri,
+   boost::shared_ptr<source_database::SourceDocument>* pDoc,
+   std::string* pPath)
+{
+   if (boost::starts_with(uri, "untitled:"))
+   {
+      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
+      *pDoc = findOpenDocumentById(docId);
+      if (!*pDoc)
+      {
+         DLOG("Untitled document not found: {}", uri);
+         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
+         return false;
+      }
+      DLOG("Found untitled document by ID: {}", docId);
+   }
+   else
+   {
+      *pPath = uriToPath(uri);
+      if (pPath->empty())
+      {
+         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+         return false;
+      }
+      *pDoc = findOpenDocument(*pPath);
+   }
+   return true;
+}
+
 // Save a dirty document's buffer contents to disk and update the source
 // database, then notify the frontend to clear its dirty indicator via a
 // "save_document" editor command. This mirrors the essential subset of
@@ -1873,6 +1909,12 @@ Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc
                                 &encoded);
       if (error)
          return error;
+
+      module_context::consoleWriteError(
+                       "Not all of the characters in " + path +
+                       " could be encoded using " + pDoc->encoding() +
+                       ". To save using a different encoding, choose \"File | "
+                       "Save with Encoding...\" from the main menu.\n");
    }
 
    // Note whether the file existed prior to writing
@@ -1943,69 +1985,41 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    }
 
    boost::shared_ptr<source_database::SourceDocument> doc;
+   std::string path;
 
-   // Check for untitled: URI scheme
-   DLOG("Checking if untitled document uri: {}", uri);
-   if (boost::starts_with(uri, "untitled:"))
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
+
+   if (!doc)
    {
-      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
-      doc = findOpenDocumentById(docId);
-      if (!doc)
+      // File not open in editor - read from disk
+      std::string content;
+      error = core::readStringFromFile(FilePath(path), &content);
+
+      if (error)
       {
-         DLOG("Untitled document not found: {}", uri);
-         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
-         return;
-      }
-
-      DLOG("Found untitled document by ID: {}", docId);
-   }
-   else
-   {
-      // Handle file:// URIs
-      std::string path = uriToPath(uri);
-
-      if (path.empty())
-      {
-         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
-         return;
-      }
-
-      // Check if file is open in editor
-      doc = findOpenDocument(path);
-
-      if (!doc)
-      {
-         // File not open - read from disk
-         std::string content;
-         error = core::readStringFromFile(FilePath(path), &content);
-
-         if (error)
+         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
-            // Check if it's a "not found" error
-            if (error.getCode() == boost::system::errc::no_such_file_or_directory)
-            {
-               sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
-            }
-            else if (error.getCode() == boost::system::errc::permission_denied)
-            {
-               sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
-            }
-            else
-            {
-               sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
-            }
-            return;
+            sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
          }
-
-         json::Object result;
-         result["content"] = content;
-         result["isModified"] = false;
-         // No languageId for files not open in editor
-
-         DLOG("Read file content from disk: {}", path);
-         sendJsonRpcResponse(ops, requestId, result);
+         else if (error.getCode() == boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
+         }
          return;
       }
+
+      json::Object result;
+      result["content"] = content;
+      result["isModified"] = false;
+
+      DLOG("Read file content from disk: {}", path);
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
    }
 
    // For dirty file-backed documents, save to disk so the on-disk file matches
@@ -2015,8 +2029,12 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
       Error saveError = saveDocumentToDisk(doc);
       if (saveError)
       {
-         WLOG("Failed to save dirty document before read: {}", saveError.getMessage());
-         // Non-fatal: fall through and return the buffer contents anyway
+         WLOG("Failed to save dirty document '{}' before read: {}",
+              doc->path(), saveError.getMessage());
+         sendJsonRpcError(ops, requestId, -32603,
+            "Cannot read file: the document has unsaved changes that "
+            "could not be saved first. Error: " + saveError.getMessage());
+         return;
       }
    }
 
@@ -2064,36 +2082,10 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    }
 
    boost::shared_ptr<source_database::SourceDocument> doc;
-   std::string path;  // Only needed for disk writes
+   std::string path;
 
-   // Check for untitled: URI scheme
-   DLOG("Checking if untitled document uri: {}", uri);
-   if (boost::starts_with(uri, "untitled:"))
-   {
-      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
-      doc = findOpenDocumentById(docId);
-      if (!doc)
-      {
-         DLOG("Untitled document not found: {}", uri);
-         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
-         return;
-      }
-
-      DLOG("Found untitled document by ID: {}", docId);
-      // path stays empty - untitled documents can't be written to disk
-   }
-   else
-   {
-      // Handle file:// URIs
-      path = uriToPath(uri);
-      if (path.empty())
-      {
-         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
-         return;
-      }
-
-      doc = findOpenDocument(path);
-   }
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
 
    json::Object result;
 
@@ -2166,8 +2158,12 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
          Error saveError = saveDocumentToDisk(doc);
          if (saveError)
          {
-            WLOG("Failed to save dirty document before write: {}", saveError.getMessage());
-            // Non-fatal: proceed with writing new content anyway
+            WLOG("Failed to save dirty document '{}' before write: {}",
+                 doc->path(), saveError.getMessage());
+            sendJsonRpcError(ops, requestId, -32603,
+               "Cannot write file: the document has unsaved changes that "
+               "could not be saved first. Error: " + saveError.getMessage());
+            return;
          }
       }
 
