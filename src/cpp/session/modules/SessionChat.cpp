@@ -1117,6 +1117,9 @@ void processPendingExecution()
          {
             lock.unlock();
             console_input::setExecuting(false);
+            console_input::updateSessionExecuting();
+            ClientEvent busyEvent(client_events::kBusy, false);
+            module_context::enqueClientEvent(busyEvent);
             console_input::reissueLastConsolePrompt();
          }
       }
@@ -1143,6 +1146,9 @@ void processPendingExecution()
       {
          lock.unlock();
          console_input::setExecuting(false);
+         console_input::updateSessionExecuting();
+         ClientEvent busyEvent(client_events::kBusy, false);
+         module_context::enqueClientEvent(busyEvent);
          console_input::reissueLastConsolePrompt();
       }
    }
