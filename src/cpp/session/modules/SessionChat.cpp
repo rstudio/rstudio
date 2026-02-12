@@ -1883,6 +1883,58 @@ bool resolveDocumentUri(
    return true;
 }
 
+// Send a replace_ranges editor command to replace the entire content of a
+// document in the frontend editor. Must be called before updating
+// doc->contents() so that old dimensions are computed from the current buffer.
+void sendReplaceDocumentContent(
+   boost::shared_ptr<source_database::SourceDocument> doc,
+   const std::string& content)
+{
+   // Capture existing document dimensions for the replacement range
+   std::vector<std::string> oldLines;
+   boost::split(oldLines, doc->contents(), boost::is_any_of("\n"));
+   int oldLastRow = static_cast<int>(oldLines.size()) - 1;
+   int oldLastCol = oldLines.empty() ? 0 : static_cast<int>(oldLines.back().length());
+
+   // Send editor command to replace entire document content
+   json::Object eventData;
+   eventData["type"] = "replace_ranges";
+
+   json::Object data;
+   data["id"] = doc->id();
+
+   json::Array ranges;
+   json::Array range;
+   range.push_back(0);              // startRow
+   range.push_back(0);              // startCol
+   range.push_back(oldLastRow);     // endRow
+   range.push_back(oldLastCol);     // endCol
+   ranges.push_back(range);
+   data["ranges"] = ranges;
+
+   json::Array text;
+   text.push_back(content);
+   data["text"] = text;
+
+   eventData["data"] = data;
+
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   module_context::enqueClientEvent(event);
+}
+
+// Send a save_document editor command to trigger a frontend save, which clears
+// the dirty indicator and persists the buffer to disk.
+void sendSaveDocumentCommand(const std::string& docId)
+{
+   json::Object eventData;
+   eventData["type"] = "save_document";
+   json::Object data;
+   data["id"] = docId;
+   eventData["data"] = data;
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   module_context::enqueClientEvent(event);
+}
+
 // Save a dirty document's buffer contents to disk and update the source
 // database, then notify the frontend to clear its dirty indicator via a
 // "save_document" editor command. This mirrors the essential subset of
@@ -1955,14 +2007,7 @@ Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc
    source_database::events().onDocUpdated(pDoc);
 
    // Tell the frontend to save the document so it clears its dirty indicator.
-   // We use the existing kEditorCommand mechanism with a "save_document" type.
-   json::Object eventData;
-   eventData["type"] = "save_document";
-   json::Object data;
-   data["id"] = pDoc->id();
-   eventData["data"] = data;
-   ClientEvent event(client_events::kEditorCommand, eventData);
-   module_context::enqueClientEvent(event);
+   sendSaveDocumentCommand(pDoc->id());
 
    return Success();
 }
@@ -2089,82 +2134,51 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    json::Object result;
 
-   if (doc && doc->isUntitled())
+   if (doc)
    {
-      // Untitled documents have no file on disk -- update via the editor buffer
+      // Document is open in the editor -- route writes through the editor
+      // buffer so the UI stays in sync without relying on file monitoring.
+      sendReplaceDocumentContent(doc, content);
 
-      // Capture existing document dimensions for the replacement range
-      std::vector<std::string> oldLines;
-      boost::split(oldLines, doc->contents(), boost::is_any_of("\n"));
-      int oldLastRow = static_cast<int>(oldLines.size()) - 1;
-      int oldLastCol = oldLines.empty() ? 0 : static_cast<int>(oldLines.back().length());
-
-      // Update document contents in source database
-      doc->setContents(content);
-      doc->setDirty(true);
-
-      error = source_database::put(doc);
-      if (error)
+      if (doc->isUntitled())
       {
-         sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to update source database");
-         return;
+         // PATH 1: Untitled -- update source database, no disk save
+         doc->setContents(content);
+         doc->setDirty(true);
+
+         error = source_database::put(doc);
+         if (error)
+         {
+            sendJsonRpcError(ops, requestId, -32603,
+                            "Failed to update source database");
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+
+         result["success"] = true;
+         result["tempName"] = doc->getProperty("tempName");
+
+         DLOG("Sent editor command to replace untitled document content");
       }
+      else
+      {
+         // PATH 2: File-backed, open in editor -- trigger frontend save
+         // so the buffer is persisted to disk and the dirty indicator clears.
+         sendSaveDocumentCommand(doc->id());
 
-      source_database::events().onDocUpdated(doc);
+         result["success"] = true;
 
-      // Send editor command to replace entire document content
-      json::Object eventData;
-      eventData["type"] = "replace_ranges";
-
-      json::Object data;
-      data["id"] = doc->id();
-
-      json::Array ranges;
-      json::Array range;
-      range.push_back(0);              // startRow
-      range.push_back(0);              // startCol
-      range.push_back(oldLastRow);     // endRow
-      range.push_back(oldLastCol);     // endCol
-      ranges.push_back(range);
-      data["ranges"] = ranges;
-
-      json::Array text;
-      text.push_back(content);
-      data["text"] = text;
-
-      eventData["data"] = data;
-
-      ClientEvent event(client_events::kEditorCommand, eventData);
-      module_context::enqueClientEvent(event);
-
-      result["success"] = true;
-      result["tempName"] = doc->getProperty("tempName");
-
-      DLOG("Sent editor command to replace untitled document content");
+         DLOG("Sent editor commands to replace and save document: {}", path);
+      }
    }
    else
    {
-      // File-backed document -- write to disk. If the file is open in the
-      // editor and has unsaved changes, save those first.
+      // PATH 3: Not open in editor -- write directly to disk
       if (path.empty())
       {
          sendJsonRpcError(ops, requestId, -32603, "Cannot write to disk: not a file URI");
          return;
-      }
-
-      if (doc && doc->dirty())
-      {
-         Error saveError = saveDocumentToDisk(doc);
-         if (saveError)
-         {
-            WLOG("Failed to save dirty document '{}' before write: {}",
-                 doc->path(), saveError.getMessage());
-            sendJsonRpcError(ops, requestId, -32603,
-               "Cannot write file: the document has unsaved changes that "
-               "could not be saved first. Error: " + saveError.getMessage());
-            return;
-         }
       }
 
       error = core::writeStringToFile(FilePath(path), content);
