@@ -1079,11 +1079,6 @@ void processPendingExecution()
       s_pendingExecutionQueue.pop();
    }
 
-   // Signal that R is executing chat code
-   console_input::setExecuting(true);
-   ClientEvent busyEvent(client_events::kBusy, true);
-   module_context::enqueClientEvent(busyEvent);
-
    // Check for timeout - if request waited too long in queue, return error
    auto now = std::chrono::steady_clock::now();
    auto waitTimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -1102,7 +1097,7 @@ void processPendingExecution()
             "Execution timed out. The R console was busy for too long.");
       }
 
-      // Schedule next request if queued, or clear busy state
+      // Schedule next request if queued
       {
          boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
          if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
@@ -1113,18 +1108,14 @@ void processPendingExecution()
                processPendingExecution,
                true);  // idleOnly=true - wait for R to be idle
          }
-         else if (s_pendingExecutionQueue.empty())
-         {
-            lock.unlock();
-            console_input::setExecuting(false);
-            console_input::updateSessionExecuting();
-            ClientEvent busyEvent(client_events::kBusy, false);
-            module_context::enqueClientEvent(busyEvent);
-            console_input::reissueLastConsolePrompt();
-         }
       }
       return;
    }
+
+   // Signal that R is executing chat code
+   console_input::setExecuting(true);
+   ClientEvent busyEvent(client_events::kBusy, true);
+   module_context::enqueClientEvent(busyEvent);
 
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
