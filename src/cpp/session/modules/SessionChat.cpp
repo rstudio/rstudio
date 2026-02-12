@@ -1847,6 +1847,84 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
    return nullptr;
 }
 
+// Save a dirty document's buffer contents to disk and update the source
+// database, then notify the frontend to clear its dirty indicator via a
+// "save_document" editor command. This mirrors the essential subset of
+// SessionSource.cpp's saveDocumentCore for same-path saves.
+Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   std::string path = pDoc->path();
+   FilePath fullDocPath = module_context::resolveAliasedPath(path);
+
+   // Convert from UTF-8 to the document's encoding
+   std::string encoded;
+   Error error = r::util::iconvstr(pDoc->contents(),
+                                   "UTF-8",
+                                   pDoc->encoding(),
+                                   false,
+                                   &encoded);
+   if (error)
+   {
+      // Retry with substitution on encoding failure
+      error = r::util::iconvstr(pDoc->contents(),
+                                "UTF-8",
+                                pDoc->encoding(),
+                                true,
+                                &encoded);
+      if (error)
+         return error;
+   }
+
+   // Note whether the file existed prior to writing
+   bool newFile = !fullDocPath.exists();
+
+   // Write the encoded contents to disk
+   error = core::writeStringToFile(fullDocPath, encoded,
+                                   module_context::lineEndings(fullDocPath));
+   if (error)
+      return error;
+
+   // Update the source database entry's hash/timestamps
+   error = pDoc->setPathAndContents(path);
+   if (error)
+      return error;
+
+   // Mark the document as clean in the source database
+   pDoc->setDirty(false);
+
+   // Enqueue file changed event if the directory isn't already monitored
+   if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
+   {
+      using core::system::FileChangeEvent;
+      FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
+                                            FileChangeEvent::FileModified,
+                                  FileInfo(fullDocPath));
+      module_context::enqueFileChangedEvent(changeEvent);
+   }
+
+   // Notify other server modules of the file save
+   module_context::events().onSourceEditorFileSaved(fullDocPath);
+
+   // Persist to the source database and notify listeners
+   error = source_database::put(pDoc);
+   if (error)
+      return error;
+
+   source_database::events().onDocUpdated(pDoc);
+
+   // Tell the frontend to save the document so it clears its dirty indicator.
+   // We use the existing kEditorCommand mechanism with a "save_document" type.
+   json::Object eventData;
+   eventData["type"] = "save_document";
+   json::Object data;
+   data["id"] = pDoc->id();
+   eventData["data"] = data;
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   module_context::enqueClientEvent(event);
+
+   return Success();
+}
+
 // Read file content from editor buffer if open, otherwise from disk
 // Handles aliased paths (~/file.R), symlinks, project-relative paths, and untitled documents
 void handleReadFileContent(core::system::ProcessOperations& ops,
@@ -1867,12 +1945,14 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    boost::shared_ptr<source_database::SourceDocument> doc;
 
    // Check for untitled: URI scheme
+   DLOG("Checking if untitled document uri: {}", uri);
    if (boost::starts_with(uri, "untitled:"))
    {
       std::string docId = uri.substr(9);  // Remove "untitled:" prefix
       doc = findOpenDocumentById(docId);
       if (!doc)
       {
+         DLOG("Untitled document not found: {}", uri);
          sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
          return;
       }
@@ -1928,6 +2008,18 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
       }
    }
 
+   // For dirty file-backed documents, save to disk so the on-disk file matches
+   // the editor buffer before we report the contents to the chat backend.
+   if (!doc->isUntitled() && doc->dirty())
+   {
+      Error saveError = saveDocumentToDisk(doc);
+      if (saveError)
+      {
+         WLOG("Failed to save dirty document before read: {}", saveError.getMessage());
+         // Non-fatal: fall through and return the buffer contents anyway
+      }
+   }
+
    // Common logic for open documents (both untitled and file-based)
    json::Object result;
    result["content"] = doc->contents();
@@ -1975,12 +2067,14 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    std::string path;  // Only needed for disk writes
 
    // Check for untitled: URI scheme
+   DLOG("Checking if untitled document uri: {}", uri);
    if (boost::starts_with(uri, "untitled:"))
    {
       std::string docId = uri.substr(9);  // Remove "untitled:" prefix
       doc = findOpenDocumentById(docId);
       if (!doc)
       {
+         DLOG("Untitled document not found: {}", uri);
          sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
          return;
       }
@@ -2003,15 +2097,20 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    json::Object result;
 
-   if (doc)
+   if (doc && doc->isUntitled())
    {
-      // File/untitled doc is open - update source database and notify client via editor event
+      // Untitled documents have no file on disk -- update via the editor buffer
 
-      // 1. Update document contents in source database
+      // Capture existing document dimensions for the replacement range
+      std::vector<std::string> oldLines;
+      boost::split(oldLines, doc->contents(), boost::is_any_of("\n"));
+      int oldLastRow = static_cast<int>(oldLines.size()) - 1;
+      int oldLastCol = oldLines.empty() ? 0 : static_cast<int>(oldLines.back().length());
+
+      // Update document contents in source database
       doc->setContents(content);
       doc->setDirty(true);
 
-      // 2. Write to source database with proper event firing
       error = source_database::put(doc);
       if (error)
       {
@@ -2020,66 +2119,59 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
          return;
       }
 
-      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
       source_database::events().onDocUpdated(doc);
 
-      // 3. Calculate document dimensions for replace range
-      // Split content into lines to get lastRow and lastCol
-      std::vector<std::string> lines;
-      boost::split(lines, content, boost::is_any_of("\n"));
-      int lastRow = static_cast<int>(lines.size()) - 1;
-      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
-
-      // 4. Send editor command to replace entire document content
-      // This updates the editor buffer with an undo point, without writing to disk
+      // Send editor command to replace entire document content
       json::Object eventData;
       eventData["type"] = "replace_ranges";
 
       json::Object data;
       data["id"] = doc->id();
 
-      // Create range covering entire document: [0, 0, lastRow, lastCol]
       json::Array ranges;
       json::Array range;
-      range.push_back(0);           // startRow
-      range.push_back(0);           // startCol
-      range.push_back(lastRow);     // endRow
-      range.push_back(lastCol);     // endCol
+      range.push_back(0);              // startRow
+      range.push_back(0);              // startCol
+      range.push_back(oldLastRow);     // endRow
+      range.push_back(oldLastCol);     // endCol
       ranges.push_back(range);
       data["ranges"] = ranges;
 
-      // Replacement text
       json::Array text;
       text.push_back(content);
       data["text"] = text;
 
       eventData["data"] = data;
 
-      // Emit the editor command event
       ClientEvent event(client_events::kEditorCommand, eventData);
       module_context::enqueClientEvent(event);
 
       result["success"] = true;
-      if (doc->isUntitled())
-      {
-         // For untitled documents, return the tempName for display purposes
-         result["tempName"] = doc->getProperty("tempName");
-      }
+      result["tempName"] = doc->getProperty("tempName");
 
-      DLOG("Sent editor command to replace document content");
+      DLOG("Sent editor command to replace untitled document content");
    }
    else
    {
-      // File not open - write to disk (only for file:// URIs)
+      // File-backed document -- write to disk. If the file is open in the
+      // editor and has unsaved changes, save those first.
       if (path.empty())
       {
-         // This shouldn't happen (untitled docs are always open or error earlier)
          sendJsonRpcError(ops, requestId, -32603, "Cannot write to disk: not a file URI");
          return;
       }
 
-      error = core::writeStringToFile(FilePath(path), content);
+      if (doc && doc->dirty())
+      {
+         Error saveError = saveDocumentToDisk(doc);
+         if (saveError)
+         {
+            WLOG("Failed to save dirty document before write: {}", saveError.getMessage());
+            // Non-fatal: proceed with writing new content anyway
+         }
+      }
 
+      error = core::writeStringToFile(FilePath(path), content);
       if (error)
       {
          if (error.getCode() == boost::system::errc::permission_denied)
@@ -2088,7 +2180,6 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
          }
          else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
-            // Parent directory doesn't exist
             FilePath filePath(path);
             std::string parentDir = filePath.getParent().getAbsolutePath();
             sendJsonRpcError(ops, requestId, -32603,

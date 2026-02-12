@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -697,6 +698,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          InsertAtCursorEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new InsertAtCursorEvent(data));
+      }
+      else if (type == EditorCommandEvent.TYPE_SAVE_DOCUMENT)
+      {
+         ReplaceRangesEvent.Data data = event.getData();
+         Set<String> ids = Collections.singleton(data.getId());
+         pSource_.get().saveUnsavedDocuments(ids, () -> {});
       }
       else
          assert false: "Unrecognized editor event type '" + type + "'";
