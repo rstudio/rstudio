@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
@@ -210,6 +211,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
       eventBus.addHandler(HistoryEntriesAddedEvent.TYPE, this);
+
+      eventBus.addHandler(BusyEvent.TYPE, event ->
+      {
+         if (event.isBusy())
+            view_.setBusy(true);
+      });
 
       final CompletionManager completionManager = new RCompletionManager(
             view_.getInputEditorDisplay(),

@@ -80,31 +80,6 @@ void setSessionExecuting(bool executing)
 }
 
 
-void setExecuting(bool executing)
-{
-   if (s_rProcessingInput == static_cast<int>(executing))
-      return;
-
-   // Executing also prevents suspension
-   suspend::checkBlockingOp(executing, suspend::kExecuting);
-
-   s_rProcessingInput = executing;
-
-   // When the session starts executing the first time, update its 'executing' on the file system
-   // to notify the homepage the session is busy.
-   //
-   // When the session stops executing, don't immediately update that state to avoid lots of repeated writes
-   // at a rate that's not useful and particularly harmful in nfs replicated file systems that seem to impose
-   // 250ms of latency for this type of op.
-
-   // Instead, updateSessionExecuting is called periodically to resync the file system state to the in memory
-   // state, it should always be clearing the state as we always update the 0 to 1 transitions immediately.
-   if (executing && s_sessionExecuting != static_cast<int>(executing))
-   {
-      setSessionExecuting(executing);
-   }
-}
-
 void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
 {
    json::Object data;
@@ -148,6 +123,31 @@ bool canSuspend(const std::string& prompt)
 }
 
 } // anonymous namespace
+
+void setExecuting(bool executing)
+{
+   if (s_rProcessingInput == static_cast<int>(executing))
+      return;
+
+   // Executing also prevents suspension
+   suspend::checkBlockingOp(executing, suspend::kExecuting);
+
+   s_rProcessingInput = executing;
+
+   // When the session starts executing the first time, update its 'executing' on the file system
+   // to notify the homepage the session is busy.
+   //
+   // When the session stops executing, don't immediately update that state to avoid lots of repeated writes
+   // at a rate that's not useful and particularly harmful in nfs replicated file systems that seem to impose
+   // 250ms of latency for this type of op.
+
+   // Instead, updateSessionExecuting is called periodically to resync the file system state to the in memory
+   // state, it should always be clearing the state as we always update the 0 to 1 transitions immediately.
+   if (executing && s_sessionExecuting != static_cast<int>(executing))
+   {
+      setSessionExecuting(executing);
+   }
+}
 
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
