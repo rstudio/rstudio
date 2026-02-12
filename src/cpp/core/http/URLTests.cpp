@@ -111,6 +111,87 @@ TEST(HttpTest, CanCleanUpPaths)
    EXPECT_EQ("/baz", URL::cleanupPath("/foo/bar/../../../baz"));
 }
 
+TEST(HttpTest, CanParseIPv6LoopbackDefaultPort)
+{
+   URL url("http://[::1]/path");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("::1", url.hostname());
+   EXPECT_EQ("80", url.portStr());
+   EXPECT_EQ(80, url.port());
+   EXPECT_EQ("/path", url.path());
+}
+
+TEST(HttpTest, CanParseIPv6LoopbackWithPort)
+{
+   URL url("https://[::1]:9443/path");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("https", url.protocol());
+   EXPECT_EQ("::1", url.hostname());
+   EXPECT_EQ("9443", url.portStr());
+   EXPECT_EQ(9443, url.port());
+   EXPECT_EQ("/path", url.path());
+}
+
+TEST(HttpTest, CanParseIPv6FullAddressWithPortAndQuery)
+{
+   URL url("http://[2001:db8::1]:8080/path?query=1");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("2001:db8::1", url.hostname());
+   EXPECT_EQ("8080", url.portStr());
+   EXPECT_EQ(8080, url.port());
+   EXPECT_EQ("/path?query=1", url.path());
+}
+
+TEST(HttpTest, CanParseIPv4MappedIPv6Address)
+{
+   URL url("http://[::ffff:192.168.1.1]:3000/");
+
+   EXPECT_TRUE(url.isValid());
+   EXPECT_EQ("http", url.protocol());
+   EXPECT_EQ("::ffff:192.168.1.1", url.hostname());
+   EXPECT_EQ("3000", url.portStr());
+   EXPECT_EQ(3000, url.port());
+   EXPECT_EQ("/", url.path());
+}
+
+TEST(HttpTest, FormatHostPortIPv4)
+{
+   EXPECT_EQ("192.168.1.1:8080", URL::formatHostPort("192.168.1.1", "8080"));
+   EXPECT_EQ("example.com:443", URL::formatHostPort("example.com", "443"));
+}
+
+TEST(HttpTest, FormatHostPortBareIPv6)
+{
+   EXPECT_EQ("[::1]:8080", URL::formatHostPort("::1", "8080"));
+   EXPECT_EQ("[2001:db8::1]:443", URL::formatHostPort("2001:db8::1", "443"));
+}
+
+TEST(HttpTest, FormatHostPortBracketedIPv6)
+{
+   EXPECT_EQ("[::1]:8080", URL::formatHostPort("[::1]", "8080"));
+   EXPECT_EQ("[2001:db8::1]:443", URL::formatHostPort("[2001:db8::1]", "443"));
+}
+
+TEST(HttpTest, FormatAddress)
+{
+   EXPECT_EQ("http://192.168.1.1:80", URL::formatAddress("http", "192.168.1.1", "80"));
+   EXPECT_EQ("https://[::1]:443", URL::formatAddress("https", "::1", "443"));
+   EXPECT_EQ("http://[2001:db8::1]:8080", URL::formatAddress("http", "2001:db8::1", "8080"));
+}
+
+TEST(HttpTest, CanCompleteIPv6Urls)
+{
+   EXPECT_EQ("http://[::1]/foo", URL::complete("http://[::1]", "foo"));
+   EXPECT_EQ("http://[::1]:8080/bar", URL::complete("http://[::1]:8080/foo", "bar"));
+   EXPECT_EQ("http://[::1]:8080/foo/bar", URL::complete("http://[::1]:8080/foo/", "bar"));
+   EXPECT_EQ("http://[::1]:8080/bar", URL::complete("http://[::1]:8080/foo/", "/bar"));
+}
+
 TEST(HttpTest, CanCompleteUrls)
 {
    EXPECT_EQ("http://www.example.com/foo", URL::complete("http://www.example.com", "foo"));

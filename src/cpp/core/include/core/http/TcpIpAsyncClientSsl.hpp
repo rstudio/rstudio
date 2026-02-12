@@ -27,6 +27,7 @@
 #include <core/http/TcpIpAsyncConnector.hpp>
 #include <core/http/ProxyUtils.hpp>
 #include <core/http/SslContextCache.hpp>
+#include <core/http/URL.hpp>
 
 using namespace boost::placeholders;
 
@@ -86,7 +87,7 @@ protected:
       {
          connectAddress = proxyUrl->hostname();
          connectPort = std::to_string(proxyUrl->port());
-         LOG_DEBUG_MESSAGE("Using proxy: " + connectAddress + ":" + connectPort);
+         LOG_DEBUG_MESSAGE("Using proxy: " + URL::formatHostPort(connectAddress, connectPort));
       }
 
       pAsyncConnector->connect(
@@ -103,7 +104,7 @@ protected:
 
    virtual std::string getDefaultHostHeader()
    {
-      return address_ + ":" + port_;
+      return URL::formatHostPort(address_, port_);
    }
 
 
@@ -121,9 +122,9 @@ private:
      {
         http::Request connectRequest;
         connectRequest.setMethod("CONNECT");
-        connectRequest.setUri(address_ + ":" + port_);
+        connectRequest.setUri(URL::formatHostPort(address_, port_));
         connectRequest.setHttpVersion(1, 1);
-        connectRequest.setHeader("Host", address_ + ":" + port_);
+        connectRequest.setHeader("Host", URL::formatHostPort(address_, port_));
         connectRequest.assign(connectRequest);
 
         boost::asio::async_write(
