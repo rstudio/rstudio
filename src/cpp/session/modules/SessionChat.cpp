@@ -1376,8 +1376,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // The result will be either:
          //   - A condition object (inherits "interrupt" or "error")
          //   - A list with $value and $visible (successful evaluation)
+         //
+         // IMPORTANT: Wrap the expression in quote() to prevent R from evaluating it
+         // during argument passing. Without this, R evaluates exprSEXP before passing
+         // it to the function, which breaks visibility detection (all results become visible).
+         // https://github.com/rstudio/rstudio/issues/17044
+         SEXP quotedExpr = Rf_lang2(Rf_install("quote"), exprSEXP);
+         protect.add(quotedExpr);
+
          Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addParam(exprSEXP)
+            .addParam(quotedExpr)
             .call(&evalResultSEXP, &protect);
 
          // This should only fail if there's a problem calling the wrapper itself
