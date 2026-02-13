@@ -15,13 +15,19 @@
 
 #include <core/Database.hpp>
 
+#include <set>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/thread.hpp>
 
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/Util.hpp>
+#include <core/Log.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/system/Environment.hpp>
+#include <core/system/System.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/SafeConvert.hpp>
@@ -69,6 +75,7 @@ namespace crypto {
    }
 } // namespace crypto
 } // namespace system
+
 
 namespace database {
    const boost::system::error_category& databaseErrorCategory();
@@ -145,6 +152,58 @@ Error getDatabaseError(const soci::soci_error& sociError, const ErrorLocation& i
    return Error(sociError.get_error_category(), sociError.get_error_message(), in_location);
 }
 
+static constexpr size_t kMaxTraceParamValueLength = 128;
+
+// Number of characters to show at start and end of truncated values
+static constexpr size_t kTruncatePreviewLength = 16;
+
+// Set of parameter names that should be treated as secrets (not logged in full)
+static std::set<std::string> s_secretParamNames = {"secret_param", "key"};
+
+void addSecretParamNames(const std::vector<std::string>& paramNames)
+{
+   for (const auto& name : paramNames)
+   {
+      s_secretParamNames.insert(name);
+   }
+}
+
+bool isSecretParamName(const std::string& paramName)
+{
+   return s_secretParamNames.find(paramName) != s_secretParamNames.end();
+}
+
+// Threshold in milliseconds for logging slow queries when debug logging is enabled
+static constexpr double kSlowQueryThresholdMs = 100.0;
+
+// Maximum number of retries for transient SQLite locking errors
+static constexpr int kMaxSqliteRetries = 3;
+
+// Delay between retries in milliseconds (will be multiplied by retry attempt)
+static constexpr int kSqliteRetryDelayMs = 100;
+
+/**
+ * @brief Checks if a SOCI error is a transient SQLite locking error that can be retried.
+ *
+ * SQLite can return "database is locked" or "database table is locked" errors when there
+ * is contention between readers and writers. These are often transient and can be resolved
+ * by waiting and retrying.
+ *
+ * @param error The SOCI error to check
+ * @return true if the error is a transient locking error that should be retried
+ */
+bool isSqliteTransientLockError(const soci::soci_error& error)
+{
+   std::string msg = error.get_error_message();
+   // Check for various SQLite locking error messages
+   // "database is locked" - general database lock
+   // "database table is locked" - table-level lock
+   // These typically indicate SQLITE_BUSY or SQLITE_LOCKED conditions
+   return (msg.find("is locked") != std::string::npos ||
+           msg.find("SQLITE_BUSY") != std::string::npos ||
+           msg.find("SQLITE_LOCKED") != std::string::npos);
+}
+
 // Database errors =================================================================================================
 
 class ConnectVisitor : public boost::static_visitor<Error>
@@ -184,12 +243,26 @@ public:
             return error;
 
          // enable WAL mode to improve read/write concurrency
+         // WAL allows readers and writers to proceed concurrently
          if (!options.readonly)
          {
             error = pConnection->executeStr("PRAGMA journal_mode = WAL;");
             if (error)
                return error;
+
+            // Set synchronous to NORMAL for better write performance while still being safe with WAL
+            // NORMAL is safe for WAL mode - data is still protected against corruption
+            error = pConnection->executeStr("PRAGMA synchronous = NORMAL;");
+            if (error)
+               return error;
          }
+
+         // Set busy timeout to handle transient locks - wait up to 30 seconds
+         // This is important for high-concurrency scenarios where multiple connections
+         // may be accessing the database simultaneously
+         error = pConnection->executeStr("PRAGMA busy_timeout = 30000;");
+         if (error)
+            return error;
 
          *pPtrConnection_ = pConnection;
          return Success();
@@ -203,30 +276,11 @@ public:
    Error operator()(const PostgresqlConnectionOptions& options) const
    {
 #ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      std::string connectionStr;
       try
       {
-         // prefer connection-uri
-         std::string password;
-         if (!options.connectionUri.empty())
-         {
-            Error error = parseConnectionUri(options.connectionUri, password, &connectionStr);
-            if (error)
-               return error;
-         }
-         else
-         {
-            boost::format fmt("host='%1%' port='%2%' dbname='%3%' user='%4%' connect_timeout='%5%'");
-            connectionStr =
-                  boost::str(fmt %
-                             options.host %
-                             options.port %
-                             options.database %
-                             options.username %
-                             safe_convert::numberToString(options.connectionTimeoutSeconds, "0"));
-         }
-
-         Error error = getPassword(options, password);
+         std::string connectionStr, password;
+         const auto error = parsePostgresqlConnectionOptions(
+             options, &connectionStr, &password);
          if (error)
             return error;
 
@@ -237,33 +291,10 @@ public:
             if (!pPassword_)
             {
                // unencrypted password
-               password = pgEncode(password, false);
                connectionStr += " password='" + password + "'";
             }
             else
                *pPassword_ = password;
-         }
-         else
-         {
-            // When a password isn't specified, we authenticate using SSL certificates.
-            // This requires that the connection string contain sslcert and sslkey parameters and that sslmode=verify-ca.
-            if (!boost::algorithm::contains(connectionStr, "sslcert") || 
-                !boost::algorithm::contains(connectionStr, "sslkey") ||
-                !boost::algorithm::contains(connectionStr, "sslrootcert"))
-            {
-               // Return invalid configuration error
-               return systemError(boost::system::errc::invalid_argument,
-                                  "Because a password has not been specified in database.conf,"
-                                  " the Postgres connection must be configured to use SSL authentication."
-                                  " This requires including the path to sslcert, sslkey, and sslrootcert in the connection URI."
-                                  " Update database.conf to add these values to the connection URI or add a password."
-                                  " For more information about PostgreSQL SSL Authentication see https://www.postgresql.org/docs/current/auth-cert.html",
-                                  ERROR_LOCATION);
-            }
-            else if (!boost::algorithm::contains(connectionStr, "sslmode=verify-ca")) 
-            {
-               connectionStr += " sslmode=verify-ca";
-            }
          }
 
          if (pConnectionStr_)
@@ -272,7 +303,8 @@ public:
          if (validateOnly_)
             return Success();
 
-         boost::shared_ptr<IConnection> pConnection(new Connection(soci::postgresql, connectionStr));
+         boost::shared_ptr<IConnection> pConnection(
+             new Connection(soci::postgresql, connectionStr));
          *pPtrConnection_ = pConnection;
          return Success();
       }
@@ -281,7 +313,7 @@ public:
          return DatabaseError(error);
       }
 #else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+   return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
 #endif
    }
 
@@ -297,216 +329,10 @@ public:
                             std::string& password,
                             std::string* pConnectionStr) const
    {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
-      boost::cmatch matches;
-
-      std::string host, path;
-      if (regex_utils::match(uri.c_str(), matches, re))
-      {
-         host = matches[2];
-         path = matches[3];
-      }
-      else
-      {
-         return systemError(boost::system::errc::invalid_argument,
-                            "connection-uri specified is not a valid PostgreSQL connection URI",
-                            ERROR_LOCATION);
-      }
-
-      // extract user and password information
-      std::string user;
-      std::vector<std::string> hostParts;
-      boost::split(hostParts, host, boost::is_any_of("@"));
-
-      if (hostParts.size() == 2)
-      {
-         // user information included
-         std::vector<std::string> userParts;
-         boost::split(userParts, hostParts.at(0), boost::is_any_of(":"));
-
-         if (userParts.size() == 2)
-         {
-            user = userParts.at(0);
-            password = userParts.at(1);
-         }
-         else if (userParts.size() == 1)
-         {
-            user = userParts.at(0);
-         }
-         else
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "too many user : password specifications",
-                               ERROR_LOCATION);
-         }
-
-         host = hostParts.at(1);
-      }
-      else if (hostParts.size() > 2)
-      {
-         return systemError(boost::system::errc::invalid_argument,
-                            "connection-uri specified is not a valid PostgreSQL connection URI - "
-                               "too many user @ host specifications",
-                            ERROR_LOCATION);
-      }
-
-      // extract host and port information
-      std::string port;
-      hostParts.clear();
-
-      size_t squareBegin = host.find('[');
-      if (squareBegin != std::string::npos)
-      {
-         size_t squareEnd = host.find(']');
-         if (squareEnd == std::string::npos)
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "specified IPv6 address has no matching end bracket ']'",
-                               ERROR_LOCATION);
-         }
-
-         std::string ip6Host = host.substr(0, squareEnd + 1);
-         size_t colonPos = host.find(':', squareEnd + 1);
-         if (colonPos != std::string::npos)
-         {
-            port = host.substr(colonPos + 1);
-         }
-         host = ip6Host;
-      }
-      else
-      {
-         boost::split(hostParts, host, boost::is_any_of(":"));
-
-         if (hostParts.size() == 2)
-         {
-            host = hostParts.at(0);
-            port = hostParts.at(1);
-         }
-         else if (hostParts.size() > 2)
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "too many host : port specifications",
-                               ERROR_LOCATION);
-         }
-      }
-
-      // extract database name and params
-      std::string database;
-      std::vector<std::string> parameters;
-      size_t paramStart = path.find("?");
-      if (paramStart != std::string::npos)
-      {
-         std::string params = path.substr(paramStart + 1);
-         std::vector<std::string> paramParts;
-         boost::split(paramParts, params, boost::is_any_of("&"));
-
-         for (const std::string& param : paramParts)
-         {
-            parameters.push_back(param);
-         }
-
-         // skip over / in the path
-         database = path.substr(1, paramStart - 1);
-      }
-      else
-      {
-         // skip over / in the path
-         database = path.empty() ? path : path.substr(1);
-      }
-
-      // write out connection string
-      *pConnectionStr += "host='" + pgEncode(host) + "'";
-      if (!port.empty())
-         *pConnectionStr += " port='" + pgEncode(port) + "'";
-      if (!user.empty())
-         *pConnectionStr += " user='" + pgEncode(user) + "'";
-      if (!database.empty())
-         *pConnectionStr += " dbname='" + pgEncode(database) + "'";
-
-      for (const std::string& param : parameters)
-      {
-         size_t equalPos = param.find('=');
-         if (equalPos != std::string::npos)
-         {
-            std::string paramName = param.substr(0, equalPos);
-            std::string paramValue = param.substr(equalPos + 1);
-            *pConnectionStr += " " +  paramName + "='" + pgEncode(paramValue) + "'";
-         }
-         else
-         {
-            return systemError(boost::system::errc::invalid_argument,
-                               "connection-uri specified is not a valid PostgreSQL connection URI - "
-                                  "no parameter value specified for parameter " + param,
-                               ERROR_LOCATION);
-         }
-      }
-
-      return Success();
-#else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
-   }
-
-   Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
-   {
-#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
-      // override password from the input with the one from options if any
-      if (!options.password.empty())
-         password = options.password;
-
-      // Somewhat convoluted due to need to handle several cases (Pro-only):
-      //
-      // (1) password without embedded encryption key; this could be a plain-text
-      //     password or an encrypted password generated before we added such embedding, but
-      //     we can't be sure without trying to decrypt and treating as plain text if that fails
-      // (2) an encrypted password with embedded key hash; if it won't decrypt, this is an error
-      //     and we don't want to treat as plain text
-      //
-      // In a future release we could simplify by assuming a password without embedded key must
-      // be plain text. Tracked in https://github.com/rstudio/rstudio-pro/issues/2446
-      // 
-      bool assumeEncrypted = core::system::crypto::passwordContainsKeyHash(password);
-
-      Error error = core::system::crypto::decryptPassword(options.secureKey, options.secureKeyHash, password);
-      if (error)
-      {
-         static bool warnOnce = false;
-
-         if (assumeEncrypted)
-         {
-            error.addProperty("key-files", "/var/lib/rstudio-server/secure-cookie-key (managed), /etc/rstudio/secure-cookie-key (manual using XDG_CONFIG_DIRS)");
-            return error;
-         }
-
-         // decrypt failed, we'll just use the password as-is
-         if (!warnOnce)
-         {
-            warnOnce = true;
-            LOG_DEBUG_MESSAGE(error.asString());
-            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password, or an encrypted password could not be decrypted. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
-         }
-      }
-      return Success();
-#else
-      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
-#endif
-   }
-
-   std::string pgEncode(const std::string& str,
-                        bool isUrl = true) const
-   {
-      // ensure we first decode from URL string format
-      std::string val = isUrl ? http::util::urlDecode(str) : str;
-
-      // escape postgres special characters
-      boost::replace_all(val, "\\", "\\\\");
-      boost::replace_all(val, "'", "\\'");
-
-      return val;
+      // No provider specified, so we cannot connect
+      return systemError(boost::system::errc::invalid_argument,
+                         "No database connection options specified",
+                         ERROR_LOCATION);
    }
 
 private:
@@ -518,7 +344,8 @@ private:
 
 Query::Query(const std::string& sqlStatement,
              soci::session& session) :
-   statement_(session)
+   statement_(session),
+   sqlStatement_(sqlStatement)
 {
    // it's possible that prepare can throw a database exception, but we
    // do not want to surface errors until execute() is called
@@ -531,6 +358,197 @@ Query::Query(const std::string& sqlStatement,
    {
       prepareError_ = error;
    }
+}
+
+std::string Query::queryId() const
+{
+   // Extract operation type from SQL
+   std::string sql = sqlStatement_;
+   boost::to_lower(sql);
+   boost::trim(sql);
+
+   std::string op;
+   if (boost::starts_with(sql, "select")) op = "q";
+   else if (boost::starts_with(sql, "insert")) op = "i";
+   else if (boost::starts_with(sql, "update")) op = "u";
+   else if (boost::starts_with(sql, "delete")) op = "d";
+   else if (boost::starts_with(sql, "create")) op = "c";
+   else if (boost::starts_with(sql, "alter")) op = "alt";
+   else if (boost::starts_with(sql, "drop")) op = "drp";
+   else op = "sql";
+
+   // Get thread ID - use lower bits for brevity
+   std::ostringstream tidStream;
+   tidStream << boost::this_thread::get_id();
+   std::string tidStr = tidStream.str();
+   // Take last 4 hex chars for brevity
+   if (tidStr.length() > 4)
+      tidStr = tidStr.substr(tidStr.length() - 4);
+
+   return op + "-" + tidStr;
+}
+
+std::string Query::debugString() const
+{
+   std::string prefix = "[" + queryId() + "] ";
+
+   if (debugParams_.empty())
+      return prefix + sqlStatement_;
+
+   std::string result = sqlStatement_;
+   for (const auto& param : debugParams_)
+   {
+      // Replace :paramName with the value
+      // We search for :name followed by a non-identifier character or end of string
+      // SQL identifiers can contain alphanumeric characters and underscores
+      std::string placeholder = ":" + param.first;
+      size_t pos = 0;
+      while ((pos = result.find(placeholder, pos)) != std::string::npos)
+      {
+         // Check that this is a complete parameter name (not a prefix of another)
+         size_t endPos = pos + placeholder.length();
+         bool isCompleteMatch = (endPos >= result.length()) ||
+            (!std::isalnum(static_cast<unsigned char>(result[endPos])) && result[endPos] != '_');
+
+         if (isCompleteMatch)
+         {
+            std::string value = param.second;
+
+            // Check if this is a secret parameter - mask it
+            if (isSecretParamName(param.first) && value.length() > 4)
+            {
+               value = value.substr(0, 3) + "...(size=" + std::to_string(value.length()) + ")";
+            }
+            // Truncate long values (over 128 chars) to avoid log bloat
+            else if (value.length() > kMaxTraceParamValueLength)
+            {
+               value = value.substr(0, kTruncatePreviewLength) + "...(size=" +
+                       std::to_string(value.length()) + ")..." +
+                       value.substr(value.length() - kTruncatePreviewLength);
+            }
+
+            // Format the value - quote strings, leave numbers as-is
+            if (value != "NULL" && !boost::starts_with(value, "xxx...secret"))
+            {
+               // Simple heuristic: if it's not a number, quote it
+               bool isNumeric = !value.empty() &&
+                  std::all_of(value.begin(), value.end(), [](char c) {
+                     return std::isdigit(static_cast<unsigned char>(c)) || c == '.' || c == '-';
+                  });
+               if (!isNumeric)
+                  value = "'" + value + "'";
+            }
+            result.replace(pos, placeholder.length(), value);
+            pos += value.length();
+         }
+         else
+         {
+            pos += placeholder.length();
+         }
+      }
+   }
+   return prefix + result;
+}
+
+long long Query::getAffectedRows()
+{
+   long long affectedRows = statement_.get_affected_rows();
+   if (log::isDbTraceEnabled())
+   {
+      std::string qid = "[" + queryId() + "]";
+      if (affectedRows == 0)
+         LOG_TRACE_MESSAGE("db" + qid + " => 0 rows affected");
+      else if (affectedRows == 1)
+         LOG_TRACE_MESSAGE("db" + qid + " => 1 row affected");
+      else
+         LOG_TRACE_MESSAGE("db" + qid + " => " + std::to_string(affectedRows) + " rows affected");
+   }
+   return affectedRows;
+}
+
+void Query::logOutputValues() const
+{
+   if (!log::isDbTraceEnabled() || debugOutputFormatters_.empty())
+      return;
+
+   std::string qid = "[" + queryId() + "]";
+   std::ostringstream oss;
+   oss << "db" << qid << " => {";
+   bool first = true;
+   for (const auto& fmt : debugOutputFormatters_)
+   {
+      if (!first) oss << ", ";
+      first = false;
+      if (!fmt.name.empty())
+         oss << fmt.name << ": ";
+      oss << fmt.formatter();
+   }
+   oss << "}";
+   LOG_TRACE_MESSAGE(oss.str());
+}
+
+std::string debugRowString(const Row& row)
+{
+   std::ostringstream oss;
+   oss << "{";
+   for (size_t i = 0; i < row.size(); ++i)
+   {
+      if (i > 0) oss << ", ";
+
+      const soci::column_properties& props = row.get_properties(i);
+      oss << props.get_name() << ": ";
+
+      if (row.get_indicator(i) == soci::i_null)
+      {
+         oss << "NULL";
+      }
+      else
+      {
+         try
+         {
+            // Try to get as string first (most common case)
+            switch (props.get_data_type())
+            {
+               case soci::dt_string:
+                  oss << "\"" << row.get<std::string>(i) << "\"";
+                  break;
+               case soci::dt_integer:
+                  oss << row.get<int>(i);
+                  break;
+               case soci::dt_long_long:
+                  oss << row.get<long long>(i);
+                  break;
+               case soci::dt_double:
+                  oss << row.get<double>(i);
+                  break;
+               default:
+                  // For other types, try string representation
+                  oss << "\"" << row.get<std::string>(i) << "\"";
+                  break;
+            }
+         }
+         catch (...)
+         {
+            oss << "<error>";
+         }
+      }
+   }
+   oss << "}";
+   return oss.str();
+}
+
+Rowset::~Rowset()
+{
+   if (log::isDbTraceEnabled() && query_.has_value())
+   {
+      LOG_TRACE_MESSAGE("db[" + queryId_ + "] => " + std::to_string(rowCount_) + " rows read");
+   }
+}
+
+RowsetIterator& Rowset::next(RowsetIterator& it)
+{
+   ++rowCount_;
+   return it;
 }
 
 RowsetIterator Rowset::begin()
@@ -676,7 +694,7 @@ core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator &row, const 
 
    // Could not convert the DB value to a valid timestamp
    return core::Error(boost::system::errc::invalid_argument, 
-      "Could not convert field " + columnName + " from milliseconds since epoc string to ptime", ERROR_LOCATION);
+      "Could not convert field " + columnName + " from milliseconds since epoc string to ptime - value is: " + timestampAsOptionalString.value(), ERROR_LOCATION);
 }
 
 core::Error Rowset::getMillisecondSinceEpochStrValue(RowsetIterator & row, const std::string& columnName, boost::posix_time::ptime * result)
@@ -713,20 +731,24 @@ core::Error Rowset::getISO8601StrValue(RowsetIterator & row, const std::string& 
       return core::Success();
    }
 
+   std::string timestampStr = timestampAsOptionalString.value();
+   if (timestampStr.empty())
+      return core::Success();
+
    try
    {
-      *result = boost::posix_time::from_iso_string(timestampAsOptionalString.value());
+      *result = boost::posix_time::from_iso_string(timestampStr);
    }
-   catch(const std::bad_cast & e)
+   catch(const std::exception & e)
    {
       return core::Error(boost::system::errc::invalid_argument,
-         "Could not convert field " + columnName + " from ISO 8601 string to ptime", ERROR_LOCATION);
+         "Could not convert field " + columnName + " from ISO 8601 string to ptime - value: " + timestampStr, ERROR_LOCATION);
    }
 
    if( result->value().is_not_a_date_time() )
    {
       return core::Error(boost::system::errc::invalid_argument,
-         "Could not convert field " + columnName + " from ISO 8601 string to ptime", ERROR_LOCATION);
+         "Could not convert field " + columnName + " from ISO 8601 string to ptime - invalid result", ERROR_LOCATION);
    }
 
    return core::Success();
@@ -743,7 +765,8 @@ core::Error Rowset::getISO8601StrValue(RowsetIterator & row, const std::string& 
 
    if( !optionalPtime.has_value() )
    {
-      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+      *result = boost::posix_time::not_a_date_time;
+      return core::Success();
    }
 
    *result = optionalPtime.value();
@@ -766,9 +789,9 @@ core::Error Rowset::getFilepathStrValue(RowsetIterator & row, const std::string&
       return core::Success();
    }
 
-   // TODO - There is currently no validation that the string is a valid filepath.
-   //        It is only checked when the exists method is called, and we don't necessarily want to check whether it exists on this node.
+   // There is currently no validation that the string is a valid filepath cause it may only exist on the session node
    core::FilePath filepath(filepathAsOptionalString.value());
+   *result = filepath;
    return core::Success();
 }
 
@@ -836,6 +859,52 @@ core::Error Rowset::getJSONStrValue(RowsetIterator & row, const std::string& col
    return core::Success();
 }
 
+core::Error Rowset::getJSONStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::json::Array> * result)
+{
+   *result = boost::none;
+
+   boost::optional<std::string> jsonAsOptionalString;
+   core::Error error = getOptionalValue<std::string>(row, columnName, &jsonAsOptionalString);
+   if (error)
+   {
+      return error;
+   }
+
+   if (!jsonAsOptionalString.has_value())
+   {
+      return core::Success();
+   }
+
+   core::json::Array jsonArray;
+   error = jsonArray.parse(jsonAsOptionalString.value());
+   if( error )
+   {
+      return core::Error(boost::system::errc::invalid_argument,
+         "Could not convert field " + columnName + " from JSON string to JSON Array: " + error.asString(), ERROR_LOCATION);
+   }
+   *result = jsonArray;
+
+   return core::Success();
+}
+
+core::Error Rowset::getJSONStrValue(RowsetIterator & row, const std::string& columnName, core::json::Array * result)
+{
+   boost::optional<core::json::Array> optionalJson;
+   core::Error error = getJSONStrValue(row, columnName, &optionalJson);
+   if (error)
+   {
+      return error;
+   }
+
+   if( !optionalJson.has_value() )
+   {
+      return core::Error(boost::system::errc::invalid_argument, "Column " + columnName + " is NULL", ERROR_LOCATION);
+   }
+
+   *result = optionalJson.value();
+   return core::Success();
+}
+
 Connection::Connection(const soci::backend_factory& factory,
                        const std::string& connectionStr) :
    session_(factory, connectionStr)
@@ -853,22 +922,65 @@ Error Connection::execute(Query& query,
    if (query.prepareError_)
       return DatabaseError(query.prepareError_.get());
 
-   try
+   // Retry loop for transient SQLite locking errors
+   for (int attempt = 0; attempt <= kMaxSqliteRetries; ++attempt)
    {
-      query.statement_.define_and_bind();
-      bool result = query.statement_.execute(true);
+      try
+      {
+         // Track timing for slow query detection when debug logging is enabled
+         bool trackTiming = log::isLogLevel(log::LogLevel::DEBUG_LEVEL);
+         double startTime = trackTiming ? date_time::millisecondsSinceEpoch() : 0;
 
-      if (pDataReturned)
-         *pDataReturned = result;
+         if (log::isDbTraceEnabled())
+            LOG_TRACE_MESSAGE("db" + query.debugString());
 
-      query.statement_.bind_clean_up();
+         query.statement_.define_and_bind();
+         bool result = query.statement_.execute(true);
 
-      return Success();
+         if (pDataReturned)
+            *pDataReturned = result;
+
+         query.statement_.bind_clean_up();
+
+         // Log output values if trace-db is enabled
+         if (log::isDbTraceEnabled())
+            query.logOutputValues();
+
+         // Log slow queries (only the SQL statement, not parameter values, unless trace-db is enabled)
+         if (trackTiming)
+         {
+            double elapsedMs = date_time::millisecondsSinceEpoch() - startTime;
+            if (elapsedMs >= kSlowQueryThresholdMs)
+            {
+               std::string logMsg = log::isDbTraceEnabled() ? query.debugString() : query.sqlStatement();
+               LOG_DEBUG_MESSAGE("Slow DB statement: " + std::to_string(static_cast<int>(elapsedMs)) + "ms: " + logMsg);
+            }
+         }
+
+         return Success();
+      }
+      catch (soci::soci_error& error)
+      {
+         // Check if this is a transient SQLite locking error that we should retry
+         if (attempt < kMaxSqliteRetries && isSqliteTransientLockError(error))
+         {
+            int delayMs = kSqliteRetryDelayMs * (attempt + 1);
+            LOG_DEBUG_MESSAGE("SQLite lock contention detected, retrying in " +
+                              std::to_string(delayMs) + "ms (attempt " +
+                              std::to_string(attempt + 1) + " of " +
+                              std::to_string(kMaxSqliteRetries) + "): " +
+                              query.sqlStatement());
+            boost::this_thread::sleep(boost::posix_time::milliseconds(delayMs));
+            continue;
+         }
+         return DatabaseError(error);
+      }
    }
-   catch (soci::soci_error& error)
-   {
-      return DatabaseError(error);
-   }
+
+   // Should not reach here, but just in case
+   return Error(boost::system::errc::resource_unavailable_try_again,
+                "Failed to execute query after retries",
+                ERROR_LOCATION);
 }
 
 Error Connection::execute(Query& query,
@@ -877,48 +989,129 @@ Error Connection::execute(Query& query,
    if (query.prepareError_)
       return DatabaseError(query.prepareError_.get());
 
-   try
+   // Retry loop for transient SQLite locking errors
+   for (int attempt = 0; attempt <= kMaxSqliteRetries; ++attempt)
    {
-      query.statement_.define_and_bind();
-      query.statement_.exchange_for_rowset(soci::into(rowset.row_));
-      query.statement_.execute(false);
+      try
+      {
+         // Track timing for slow query detection when debug logging is enabled
+         bool trackTiming = log::isLogLevel(log::LogLevel::DEBUG_LEVEL);
+         double startTime = trackTiming ? date_time::millisecondsSinceEpoch() : 0;
 
-      rowset.query_ = query;
+         if (log::isDbTraceEnabled())
+            LOG_TRACE_MESSAGE("db" + query.debugString());
 
-      return Success();
+         query.statement_.define_and_bind();
+         query.statement_.exchange_for_rowset(soci::into(rowset.row_));
+         query.statement_.execute(false);
+
+         rowset.query_ = query;
+
+         // Store query ID for compact trace logging in Rowset destructor
+         if (log::isDbTraceEnabled())
+            rowset.queryId_ = query.queryId();
+
+         // Log slow queries (only the SQL statement, not parameter values, unless trace-db is enabled)
+         if (trackTiming)
+         {
+            double elapsedMs = date_time::millisecondsSinceEpoch() - startTime;
+            if (elapsedMs >= kSlowQueryThresholdMs)
+            {
+               std::string logMsg = log::isDbTraceEnabled() ? query.debugString() : query.sqlStatement();
+               LOG_DEBUG_MESSAGE("Slow DB query: " + std::to_string(static_cast<int>(elapsedMs)) + "ms: " + logMsg);
+            }
+         }
+
+         return Success();
+      }
+      catch (soci::soci_error& error)
+      {
+         // Check if this is a transient SQLite locking error that we should retry
+         if (attempt < kMaxSqliteRetries && isSqliteTransientLockError(error))
+         {
+            int delayMs = kSqliteRetryDelayMs * (attempt + 1);
+            LOG_DEBUG_MESSAGE("SQLite lock contention detected, retrying in " +
+                              std::to_string(delayMs) + "ms (attempt " +
+                              std::to_string(attempt + 1) + " of " +
+                              std::to_string(kMaxSqliteRetries) + "): " +
+                              query.sqlStatement());
+            boost::this_thread::sleep(boost::posix_time::milliseconds(delayMs));
+            continue;
+         }
+         return DatabaseError(error);
+      }
    }
-   catch (soci::soci_error& error)
-   {
-      return DatabaseError(error);
-   }
+
+   // Should not reach here, but just in case
+   return Error(boost::system::errc::resource_unavailable_try_again,
+                "Failed to execute query after retries",
+                ERROR_LOCATION);
 }
 
 Error Connection::executeStr(const std::string& queryStr)
 {
-   try
+   // Retry loop for transient SQLite locking errors
+   for (int attempt = 0; attempt <= kMaxSqliteRetries; ++attempt)
    {
-      // SOCI backends do not necessarily support running multiple statements
-      // in one invocation - to work around this, we split any passed in SQL
-      // into one invocation per SQL statement (delimited by ;)
-      std::vector<std::string> queries;
-      boost::regex regex(";[ \\t\\r\\f\\v]*\\n");
-      std::string queryStrCopy = queryStr;
-      boost::regex_split(std::back_inserter(queries), queryStrCopy, regex);
-      for (std::string& query : queries)
+      try
       {
-         query = string_utils::trimWhitespace(query);
-         if (!query.empty())
-            session_ << query;
-      }
+         // Track timing for slow query detection when debug logging is enabled
+         bool trackTiming = log::isLogLevel(log::LogLevel::DEBUG_LEVEL);
+         double startTime = trackTiming ? date_time::millisecondsSinceEpoch() : 0;
 
-      return Success();
+         if (log::isDbTraceEnabled())
+            LOG_TRACE_MESSAGE("db: " + queryStr);
+
+         // SOCI backends do not necessarily support running multiple statements
+         // in one invocation - to work around this, we split any passed in SQL
+         // into one invocation per SQL statement (delimited by ;)
+         std::vector<std::string> queries;
+         boost::regex regex(";[ \\t\\r\\f\\v]*\\n");
+         std::string queryStrCopy = queryStr;
+         boost::regex_split(std::back_inserter(queries), queryStrCopy, regex);
+         for (std::string& query : queries)
+         {
+            query = string_utils::trimWhitespace(query);
+            if (!query.empty())
+               session_ << query;
+         }
+
+         // Log slow queries
+         if (trackTiming)
+         {
+            double elapsedMs = date_time::millisecondsSinceEpoch() - startTime;
+            if (elapsedMs >= kSlowQueryThresholdMs)
+            {
+               LOG_DEBUG_MESSAGE("Slow DB statement: " + std::to_string(static_cast<int>(elapsedMs)) + "ms: " + queryStr);
+            }
+         }
+
+         return Success();
+      }
+      catch (soci::soci_error& error)
+      {
+         // Check if this is a transient SQLite locking error that we should retry
+         if (attempt < kMaxSqliteRetries && isSqliteTransientLockError(error))
+         {
+            int delayMs = kSqliteRetryDelayMs * (attempt + 1);
+            LOG_DEBUG_MESSAGE("SQLite lock contention detected, retrying in " +
+                              std::to_string(delayMs) + "ms (attempt " +
+                              std::to_string(attempt + 1) + " of " +
+                              std::to_string(kMaxSqliteRetries) + "): " +
+                              queryStr);
+            boost::this_thread::sleep(boost::posix_time::milliseconds(delayMs));
+            continue;
+         }
+         Error res = DatabaseError(error);
+         res.addProperty("query", queryStr);
+         return res;
+      }
    }
-   catch (soci::soci_error& error)
-   {
-      Error res = DatabaseError(error);
-      res.addProperty("query", queryStr);
-      return res;
-   }
+
+   // Should not reach here, but just in case
+   return Error(boost::system::errc::resource_unavailable_try_again,
+                "Failed to execute query after retries",
+                ERROR_LOCATION);
 }
 
 std::string Connection::driverName() const
@@ -1168,12 +1361,23 @@ bool SchemaVersion::operator>(const SchemaVersion& other) const
 
 bool SchemaVersion::operator>=(const SchemaVersion& other) const
 {
-   return !(*this < other);
+   return (*this == other) || (!(*this < other));
 }
 
 bool SchemaVersion::operator==(const SchemaVersion& other) const
 {
-   return (this == &other) || ((Date == other.Date) && (Flower == other.Flower));
+   if (this == &other || (Date == other.Date && Flower == other.Flower))
+      return true;
+   if (Date == other.Date)
+   {
+      // check version map to see if the flowers different but equivalent strings
+      // this allows us to properly handle typos :) 
+      const auto& versions = versionMap();
+      int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : versions.size();
+      int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : versions.size();
+      return thisFlowerIndex == otherFlowerIndex;
+   }
+   return false;
 }
 
 const std::map<std::string, int>& SchemaVersion::versionMap()
@@ -1194,6 +1398,19 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
             versions["Ghost Orchid"] = 1;
             versions["Prairie Trillium"] = 2;
             versions["Spotted Wakerobin"] = 3;
+            versions["Elsbeth Geranium"] = 4;
+            versions["Cherry Blossom"] = 5;
+            versions["Mountain Hydrangea"] = 6;
+            versions["Desert Sunflower"] = 7;
+            versions["Ocean Storm"] = 8;
+            versions["Chocolate Cosmos"] = 9;
+            versions["Cranberry Hisbiscus"] = 10;
+            versions["Cranberry Hibiscus"] = 10;
+            versions["Kousa Dogwood"] = 11;
+            versions["Mariposa Orchid"] = 12;
+            versions["Cucumberleaf Sunflower"] = 13;
+            versions["Apple Blossom"] = 14;
+            versions["Globemaster Allium"] = 15;
          }
       }
       END_LOCK_MUTEX
@@ -1453,7 +1670,7 @@ Error SchemaUpdater::createSchema()
    if (error || !createTablesFile.exists())
    {
       if (connection_->driverName() == POSTGRESQL_DRIVER)
-      {
+      { 
          error = migrationsPath_.completeChildPath(std::string(CREATE_TABLES_STEM) + std::string(POSTGRESQL_EXTENSION), createTablesFile);
          if (error)
             return error;
@@ -1518,7 +1735,6 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
 
    for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
-
       // Is the migration file from an update that predates the current version?
       // If so, skip it
       if(migrationFile.first <= currentVersion)
@@ -1559,8 +1775,37 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
          return error;
 
    }
-
    transaction.commit();
+
+   // Issue-6766 - 20250306145452441755838_Mariposa-Orchid We have made licensed_user.guid without a NOT NULL constraint due to the 
+   // scenario where a customer downgrades. When a customer downgrades, the schema stays the same, but the code would no longer insert
+   // the guid value. Therefore, we default to NULL and must update guids programatically for existing users rather than via SQL. 
+   // We could have done this via a trigger, but that would require extending SQLite to generate guids.
+   if( currentVersion < SchemaVersion("20250306145452441755838", "Mariposa Orchid") )
+   {
+      std::vector<int> userIds(12); // Soci doesn't allow 0 size vectors, but resizes them to the output size
+      Query query = connection_->query("SELECT id FROM licensed_users WHERE guid IS NULL").withOutput(userIds);
+      Error error = connection_->execute(query);
+      if (error)
+         return error;
+
+      std::vector<std::string> guids(userIds.size());
+      std::generate(guids.begin(), guids.end(), [](){return core::system::generateUuid();});
+
+      for(size_t index = 0; index < userIds.size(); ++ index)
+      {
+         // We add the 'AND guid IS NULL' here to protect against other nodes and threads.
+         // If they updated the guid, we don't want to override them, as they might be storing the value
+         // We, ourselves, don't care, because we aren't storing the value
+         query = connection_->query("UPDATE licensed_users SET guid = :guid WHERE id = :id AND guid IS NULL")
+            .withInput(guids[index], "guid")
+            .withInput(userIds[index], "id");
+         error = connection_->execute(query);
+         if (error)
+            return error;
+      }
+   }
+
    return Success();
 }
 
@@ -1614,17 +1859,13 @@ Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
    if (error)
       return error;
 
-   LOG_DEBUG_MESSAGE("SQL Executed: " + sql);
    if (!rowHandler.empty())
    {
-      std::size_t rowCount = 0;
       for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
       {
          const Row& row = *it;
          rowHandler(row);
-         rowCount++;
       }
-      LOG_DEBUG_MESSAGE("SQL Processed: " + std::to_string(rowCount) + " rows");
    }
 
    return Success();

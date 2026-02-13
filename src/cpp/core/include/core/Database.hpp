@@ -16,6 +16,7 @@
 #ifndef CORE_DATABASE_HPP
 #define CORE_DATABASE_HPP
 
+#include <core/LogOptions.hpp>
 #include <core/Thread.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
@@ -24,6 +25,11 @@
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
+
+#include <functional>
+#include <map>
+#include <sstream>
+#include <vector>
 
 #define SOCI_USE_BOOST 1
 #include <soci/soci.h>
@@ -86,6 +92,20 @@ class Connection;
 class ConnectionPool;
 class Transaction;
 
+/**
+ * Add parameter names that should be treated as secrets and not logged in full.
+ * Secret values are logged as "xxx...secret-len=N" instead of the actual value.
+ * By default, "secret_param" is already registered as a secret param name.
+ * 
+ * @param paramNames List of parameter names (without the : prefix) to treat as secrets
+ */
+void addSecretParamNames(const std::vector<std::string>& paramNames);
+
+/**
+ * Check if a parameter name should be treated as a secret.
+ */
+bool isSecretParamName(const std::string& paramName);
+
 class Query
 {
 public:
@@ -102,7 +122,36 @@ public:
    template <typename T>
    Query& withInput(const T& val, const std::string& varName)
    {
+      if (log::isDbTraceEnabled())
+         recordDebugParam(varName, val);
       statement_.exchange(soci::use(val, varName));
+      return *this;
+   }
+
+   /*
+   * @brief Use when you want to conditionally pass a value or NULL based on a boolean flag
+   * @param val The value to pass (will be ignored if isNull is true, but needed for type deduction)
+   * @param isNull If true, NULL will be passed to the database; if false, val will be used
+   * @param varName The named parameter in the SQL statement
+   */
+   template <typename T>
+   Query& withInputOrNull(const T& val, bool isNull, const std::string& varName)
+   {
+      if (isNull)
+      {
+         if (log::isDbTraceEnabled())
+            debugParams_[varName] = "NULL";
+         static T dummyValueWithLifetime = T();
+         static soci::indicator nullWithLifetime = soci::i_null;
+
+         statement_.exchange(soci::use(dummyValueWithLifetime, nullWithLifetime, varName));
+      }
+      else
+      {
+         if (log::isDbTraceEnabled())
+            recordDebugParam(varName, val);
+         statement_.exchange(soci::use(val, varName));
+      }
       return *this;
    }
 
@@ -117,10 +166,14 @@ public:
 
       if (optionalValue.has_value())
       {
+         if (log::isDbTraceEnabled())
+            recordDebugParam(varName, optionalValue.value());
          statement_.exchange(soci::use(optionalValue.value(), varName));
       }
       else
       {
+         if (log::isDbTraceEnabled())
+            debugParams_[varName] = "NULL";
          statement_.exchange(soci::use(dummyValueWithLifetime, nullWithLifetime, varName));
       }
       return *this;
@@ -129,6 +182,8 @@ public:
    template <typename T>
    Query& withOutput(T& out)
    {
+      if (log::isDbTraceEnabled())
+         recordOutputFormatter("", &out);
       statement_.exchange(soci::into(out));
       return *this;
    }
@@ -136,29 +191,122 @@ public:
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {
+      if (log::isDbTraceEnabled())
+         recordOutputFormatter(varName, &out);
       statement_.exchange(soci::into(out, varName));
       return *this;
    }
 
-   long long getAffectedRows()
-   {
-      return statement_.get_affected_rows();
-   }
+   /**
+    * Gets the number of rows affected by UPDATE, DELETE, or INSERT statements.
+    * Does not work for SELECT statements.
+    */
+   long long getAffectedRows();
+
+   /**
+    * Logs the output values that were bound via withOutput() after execute() has been called.
+    * Only logs if trace-db-enabled is set in logging.conf. Call this after execute() to see the output values.
+    */
+   void logOutputValues() const;
+
+   // Returns the SQL statement used in this query
+   std::string sqlStatement() const { return sqlStatement_; }
+
+   /**
+    * Returns a compact query identifier like "select:jobs:1234" based on operation type,
+    * table name, and thread ID. Useful for correlating log entries.
+    */
+   std::string queryId() const;
+
+   // Returns a debug string with named parameters substituted with their values,
+   // prefixed by the query ID for easy correlation
+   std::string debugString() const;
 
 private:
    friend class Connection;
    friend class Rowset;
 
+   // Helper to record a debug parameter value as a string
+   template <typename T>
+   void recordDebugParam(const std::string& name, const T& val)
+   {
+      std::ostringstream oss;
+      oss << val;
+      debugParams_[name] = oss.str();
+   }
+
+   // Type-erased output formatter - stores name and a function to format the value
+   struct OutputFormatter
+   {
+      std::string name;
+      std::function<std::string()> formatter;
+   };
+
+   // Helper to record an output formatter that can be invoked after execute()
+   template <typename T>
+   void recordOutputFormatter(const std::string& name, T* ptr)
+   {
+      OutputFormatter fmt;
+      fmt.name = name;
+      fmt.formatter = [ptr]() -> std::string {
+         std::ostringstream oss;
+         oss << *ptr;
+         return oss.str();
+      };
+      debugOutputFormatters_.push_back(std::move(fmt));
+   }
+
+   // Specialization for vector types to format as array
+   template <typename T>
+   void recordOutputFormatter(const std::string& name, std::vector<T>* ptr)
+   {
+      OutputFormatter fmt;
+      fmt.name = name;
+      fmt.formatter = [ptr]() -> std::string {
+         std::ostringstream oss;
+         oss << "[";
+         for (size_t i = 0; i < ptr->size(); ++i)
+         {
+            if (i > 0) oss << ", ";
+            if (i >= 10 && ptr->size() > 12)
+            {
+               oss << "... (" << (ptr->size() - 10) << " more)";
+               break;
+            }
+            oss << (*ptr)[i];
+         }
+         oss << "]";
+         return oss.str();
+      };
+      debugOutputFormatters_.push_back(std::move(fmt));
+   }
+
    soci::statement statement_;
    boost::optional<soci::soci_error> prepareError_;
+   std::string sqlStatement_;
+   std::map<std::string, std::string> debugParams_;  // Only populated when debug enabled
+   std::vector<OutputFormatter> debugOutputFormatters_;  // Only populated when debug enabled
 };
 
 using Row = soci::row;
 using RowsetIterator = soci::rowset_iterator<Row>;
 
+// Helper function to format a soci::row for debug logging
+// Returns a string like: {col1: "value1", col2: 123, col3: NULL}
+std::string debugRowString(const Row& row);
+
 class Rowset
 {
 public:
+   Rowset() = default;
+   ~Rowset();
+
+   // Disable copy and move - Row (soci::row) is non-copyable and non-movable
+   Rowset(const Rowset&) = delete;
+   Rowset& operator=(const Rowset&) = delete;
+   Rowset(Rowset&&) = delete;
+   Rowset& operator=(Rowset&&) = delete;
+
    /*
    * Warning - SOCI rowset iterators, which these are typing, are single-pass input iterators.
    *    You cannot safely copy and advance multiple iterators independently.
@@ -167,6 +315,21 @@ public:
    */
    RowsetIterator begin();
    RowsetIterator end();
+
+   /**
+    * Increments the internal row counter and returns the provided iterator.
+    * Use this when iterating to enable row counting for debug logging.
+    * Example: for (auto it = rows.begin(); it != rows.end(); rows.next(++it)) { ... }
+    * Or simply iterate normally - the destructor will log row count if debug is enabled.
+    */
+   RowsetIterator& next(RowsetIterator& it);
+
+   /**
+    * Gets the number of rows that have been iterated over so far.
+    * This is only accurate if next() was called during iteration,
+    * or after iteration is complete.
+    */
+   size_t rowCount() const { return rowCount_; }
 
    size_t columnCount() const;
 
@@ -298,12 +461,16 @@ public:
    static core::Error getFilepathStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::FilePath> * result);
    static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, core::json::Object * result);
    static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::json::Object> * result);
+   static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, core::json::Array * result);
+   static core::Error getJSONStrValue(RowsetIterator & row, const std::string& columnName, boost::optional<core::json::Array> * result);
 
 private:
    friend class Connection;
 
    Row row_;
    boost::optional<Query&> query_;
+   size_t rowCount_ = 0;           // Count of rows iterated (for trace logging)
+   std::string queryId_;           // Stored for trace logging in destructor (compact query ID)
 };
 
 class IConnection
@@ -518,6 +685,12 @@ private:
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
 };
+
+// Gets the password and postgresql connection string from the specified
+// connection options
+Error parsePostgresqlConnectionOptions(const PostgresqlConnectionOptions& options,
+                                       std::string* pConnectionString,
+                                       std::string* pPassword);
 
 // validates connection options - used for test purposes only
 Error validateOptions(const ConnectionOptions& options,
