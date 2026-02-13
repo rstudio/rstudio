@@ -166,6 +166,24 @@ TEST(HttpTestNoProxyRule, CreateNoProxyBuilderCreatesCorrectRule)
    // junk will always return an address rule
    rule = createNoProxyRule("junk");
     EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+
+   // IPv6 bracketed address without port
+   rule = createNoProxyRule("[::1]");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("::1", "80"));
+    EXPECT_TRUE(rule->match("::1", "443"));
+
+   // IPv6 bracketed address with port
+   rule = createNoProxyRule("[::1]:8080");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("::1", "8080"));
+    EXPECT_FALSE(rule->match("::1", "443"));
+
+   // IPv6 full address with port
+   rule = createNoProxyRule("[2001:db8::1]:443");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("2001:db8::1", "443"));
+    EXPECT_FALSE(rule->match("2001:db8::1", "80"));
 }
 
 } // namespace tests
