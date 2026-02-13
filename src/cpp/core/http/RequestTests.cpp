@@ -1,7 +1,7 @@
 /*
  * RequestTests.cpp
  *
- * Copyright (C) 2026 by Posit Software, PBC
+ * Copyright (C) 2024 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -23,29 +23,28 @@ namespace core {
 namespace http {
 namespace tests {
 
-// Helper: build a minimal Request with the given headers and URI
-Request makeForwardedRequest(
+void initForwardedRequest(
+    Request* pReq,
     const std::string& host,
     const std::string& uri,
     const std::string& xForwardedHost = "",
     const std::string& xForwardedPort = "",
     const std::string& xForwardedProto = "")
 {
-   Request req;
-   req.setHost(host);
-   req.setUri(uri);
+   pReq->setHost(host);
+   pReq->setUri(uri);
    if (!xForwardedHost.empty())
-      req.setHeader("X-Forwarded-Host", xForwardedHost);
+      pReq->setHeader("X-Forwarded-Host", xForwardedHost);
    if (!xForwardedPort.empty())
-      req.setHeader("X-Forwarded-Port", xForwardedPort);
+      pReq->setHeader("X-Forwarded-Port", xForwardedPort);
    if (!xForwardedProto.empty())
-      req.setHeader("X-Forwarded-Proto", xForwardedProto);
-   return req;
+      pReq->setHeader("X-Forwarded-Proto", xForwardedProto);
 }
 
 TEST(RequestTest, ProxiedUriIPv4ForwardedHost)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path",
        "example.com", "443", "https");
    EXPECT_EQ("https://example.com:443/path", req.proxiedUri());
@@ -53,7 +52,8 @@ TEST(RequestTest, ProxiedUriIPv4ForwardedHost)
 
 TEST(RequestTest, ProxiedUriIPv4ForwardedHostReplacesPort)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path",
        "example.com:8080", "443", "https");
    EXPECT_EQ("https://example.com:443/path", req.proxiedUri());
@@ -61,7 +61,8 @@ TEST(RequestTest, ProxiedUriIPv4ForwardedHostReplacesPort)
 
 TEST(RequestTest, ProxiedUriIPv6BracketedForwardedHost)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path",
        "[::1]", "8787", "http");
    EXPECT_EQ("http://[::1]:8787/path", req.proxiedUri());
@@ -69,7 +70,8 @@ TEST(RequestTest, ProxiedUriIPv6BracketedForwardedHost)
 
 TEST(RequestTest, ProxiedUriIPv6BracketedForwardedHostReplacesPort)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path",
        "[::1]:9090", "8787", "http");
    EXPECT_EQ("http://[::1]:8787/path", req.proxiedUri());
@@ -77,7 +79,8 @@ TEST(RequestTest, ProxiedUriIPv6BracketedForwardedHostReplacesPort)
 
 TEST(RequestTest, ProxiedUriIPv6BracketedFullAddress)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/page",
        "[2001:db8::1]", "443", "https");
    EXPECT_EQ("https://[2001:db8::1]:443/page", req.proxiedUri());
@@ -85,7 +88,8 @@ TEST(RequestTest, ProxiedUriIPv6BracketedFullAddress)
 
 TEST(RequestTest, ProxiedUriForwardedHostNoPort)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path",
        "example.com", "", "https");
    EXPECT_EQ("https://example.com/path", req.proxiedUri());
@@ -93,7 +97,8 @@ TEST(RequestTest, ProxiedUriForwardedHostNoPort)
 
 TEST(RequestTest, ProxiedUriFallsBackToHost)
 {
-   Request req = makeForwardedRequest(
+   Request req;
+   initForwardedRequest(&req,
        "localhost:8787", "/path");
    EXPECT_EQ("http://localhost:8787/path", req.proxiedUri());
 }
