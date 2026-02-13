@@ -1955,6 +1955,11 @@ Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc
    if (error)
       return error;
 
+   // Save the original UTF-8 contents before setPathAndContents replaces
+   // them with what was read back from disk (which may differ after encoding
+   // round-trip, e.g. substitution characters in non-UTF-8 files).
+   std::string contents = pDoc->contents();
+
    // Update the source database entry's hash/timestamps
    error = pDoc->setPathAndContents(path);
    if (error)
@@ -1962,6 +1967,10 @@ Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc
 
    // Mark the document as clean in the source database
    pDoc->setDirty(false);
+
+   // Restore the original UTF-8 editor buffer so the source database stays
+   // in sync with what the user sees in the editor (mirrors saveDocumentCore).
+   pDoc->setContents(contents);
 
    // Enqueue file changed event if the directory isn't already monitored
    if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
