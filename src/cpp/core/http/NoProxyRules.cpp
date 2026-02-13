@@ -16,6 +16,7 @@
 #include <core/http/NoProxyRules.hpp>
 
 #include <boost/algorithm/string.hpp>
+#include <core/http/URL.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -64,7 +65,7 @@ bool NoProxyRuleAddress::match(const std::string& address,
 
 std::string NoProxyRuleAddress::toString() const
 {
-   return address_ + (port_.empty() ? "" : ":" + port_);
+   return port_.empty() ? address_ : URL::formatHostPort(address_, port_);
 }
 
 NoProxyRuleCidrBlock::NoProxyRuleCidrBlock(uint32_t range, uint32_t mask)

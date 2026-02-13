@@ -91,7 +91,7 @@ bool s_handleCustom = false;
 
 std::string localURL(const std::string& address, const std::string& port)
 {
-   return "http://" + address + ":" + port + "/";
+   return http::URL::formatAddress("http", address, port) + "/";
 }
 
 std::string replaceRPort(const std::string& url,

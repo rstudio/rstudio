@@ -281,7 +281,7 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
 
    // get the address and the proxied address
    std::string address = pResponse->headerValue(headerName);
-   std::string proxiedAddress = "http://" + baseAddress + ":" + portId;
+   std::string proxiedAddress = http::URL::formatAddress("http", baseAddress, portId);
    std::string portPath = ipv6 ? ("/p6/" + portId) : ("/p/" + portId);
 
    // relative address, just prepend port
@@ -1209,13 +1209,12 @@ void proxyLocalhostRequest(
    if (!ipv6)
    {
       address = "localhost";
-      request.setHost(address + ":" + port);
    }
    else
    {
       address = "::1";
-      request.setHost("[" + address + "]" + ":" + port);
    }
+   request.setHost(http::URL::formatHostPort(address, port));
 
    // create async tcp/ip client and assign request
    boost::shared_ptr<http::IAsyncClient> pClient(
