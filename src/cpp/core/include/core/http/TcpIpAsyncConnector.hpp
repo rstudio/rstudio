@@ -25,6 +25,7 @@
 #include <boost/asio/placeholders.hpp>
 
 #include <core/http/TcpIpSocketUtils.hpp>
+#include <core/http/URL.hpp>
 #include <core/Thread.hpp>
 
 // special version of unexpected exception handler which makes
@@ -113,7 +114,7 @@ private:
             if (isConnected_ || hasFailed_)
                return;
 
-            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection to: " + address_ + ":" + port_);
+            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection to: " + URL::formatHostPort(address_, port_));
 
             // timer has elapsed and the socket is still not connected
             // cancel any outstanding async operations
@@ -122,7 +123,7 @@ private:
             if (pSocket_->is_open())
                pSocket_->cancel();
             else
-               LOG_DEBUG_MESSAGE("Socket to: " + address_ + ":" + port_ + " is already closed in onConnectionTimeout");
+               LOG_DEBUG_MESSAGE("Socket to: " + URL::formatHostPort(address_, port_) + " is already closed in onConnectionTimeout");
 
             // invoke error handler since the connection has failed
             handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));
