@@ -63,7 +63,16 @@ public:
    std::string protocol() const { return std::string(protocol_.c_str()); }
    std::string host() const { return std::string(host_.c_str()); }
    std::string path() const { return std::string(path_.c_str()); }
-   std::string hostname() const { return host_.substr(0, host_.find(':')); }
+   std::string hostname() const
+   {
+      if (!host_.empty() && host_[0] == '[')
+      {
+         size_t close = host_.find(']');
+         if (close != std::string::npos)
+            return host_.substr(1, close - 1);
+      }
+      return host_.substr(0, host_.find(':'));
+   }
 
    int port() const
    {
@@ -72,6 +81,16 @@ public:
 
    std::string portStr() const
    {
+      if (!host_.empty() && host_[0] == '[')
+      {
+         size_t close = host_.find(']');
+         if (close != std::string::npos && close + 2 < host_.size()
+             && host_[close + 1] == ':')
+         {
+            return host_.substr(close + 2);
+         }
+         return (protocol_ == "http") ? "80" : "443";
+      }
       size_t idx = host_.find(':');
       if (idx != std::string::npos)
       {
@@ -79,6 +98,28 @@ public:
          return port;
       }
       return (protocol_ == "http") ? "80" : "443";
+   }
+
+   std::string hostWithPort() const
+   {
+      return formatHostPort(hostname(), portStr());
+   }
+
+   static std::string formatHostPort(const std::string& host,
+                                     const std::string& port)
+   {
+      if (host.find(':') != std::string::npos && host[0] != '[')
+         return "[" + host + "]:" + port;
+      if (!host.empty() && host[0] == '[')
+         return host + ":" + port;
+      return host + ":" + port;
+   }
+
+   static std::string formatAddress(const std::string& protocol,
+                                    const std::string& host,
+                                    const std::string& port)
+   {
+      return protocol + "://" + formatHostPort(host, port);
    }
    
    void split(std::string* pBaseURL, std::string* pQueryParams) const;

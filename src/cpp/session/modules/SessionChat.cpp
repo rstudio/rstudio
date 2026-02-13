@@ -1112,12 +1112,17 @@ void processPendingExecution()
       return;
    }
 
+   // Signal that R is executing chat code
+   console_input::setExecuting(true);
+   ClientEvent busyEvent(client_events::kBusy, true);
+   module_context::enqueClientEvent(busyEvent);
+
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
                    request.timeout);
 
-   // Schedule next request if queued
+   // Schedule next request if queued, or clear busy state
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
       if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
@@ -1127,6 +1132,15 @@ void processPendingExecution()
             boost::posix_time::milliseconds(1),
             processPendingExecution,
             true);  // idleOnly=true - wait for R to be idle
+      }
+      else if (s_pendingExecutionQueue.empty())
+      {
+         lock.unlock();
+         console_input::setExecuting(false);
+         console_input::updateSessionExecuting();
+         ClientEvent busyEvent(client_events::kBusy, false);
+         module_context::enqueClientEvent(busyEvent);
+         console_input::reissueLastConsolePrompt();
       }
    }
 }
