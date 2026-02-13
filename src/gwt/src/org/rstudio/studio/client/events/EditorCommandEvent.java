@@ -14,11 +14,11 @@
  */
 package org.rstudio.studio.client.events;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.EventHandler;
-
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
 public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Handler>
@@ -61,6 +61,7 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    public static final String TYPE_SET_SELECTION_RANGES = "set_selection_ranges";
    public static final String TYPE_EDITOR_CONTEXT = "editor_context";
    public static final String TYPE_INSERT_AT_CURSOR = "insert_at_cursor";
+   public static final String TYPE_SAVE_DOCUMENT = "save_document";
 
    // Boilerplate ----
 
