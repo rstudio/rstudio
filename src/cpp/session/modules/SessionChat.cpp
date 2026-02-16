@@ -2130,66 +2130,98 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    if (doc)
    {
-      // File/untitled doc is open - update source database and notify client via editor event
+      // Compute replace range from OLD content (before mutation)
+      std::string oldContent = doc->contents();
+      std::vector<std::string> oldLines;
+      boost::split(oldLines, oldContent, boost::is_any_of("\n"));
+      int lastRow = static_cast<int>(oldLines.size()) - 1;
+      int lastCol = oldLines.empty()
+         ? 0
+         : static_cast<int>(oldLines.back().length());
 
-      // 1. Update document contents in source database
-      doc->setContents(content);
-      doc->setDirty(true);
+      // Build replace_ranges event (shared by both paths)
+      json::Object replaceData;
+      replaceData["id"] = doc->id();
 
-      // 2. Write to source database with proper event firing
-      error = source_database::put(doc);
-      if (error)
-      {
-         sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to update source database");
-         return;
-      }
-
-      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
-      source_database::events().onDocUpdated(doc);
-
-      // 3. Calculate document dimensions for replace range
-      // Split content into lines to get lastRow and lastCol
-      std::vector<std::string> lines;
-      boost::split(lines, content, boost::is_any_of("\n"));
-      int lastRow = static_cast<int>(lines.size()) - 1;
-      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
-
-      // 4. Send editor command to replace entire document content
-      // This updates the editor buffer with an undo point, without writing to disk
-      json::Object eventData;
-      eventData["type"] = "replace_ranges";
-
-      json::Object data;
-      data["id"] = doc->id();
-
-      // Create range covering entire document: [0, 0, lastRow, lastCol]
       json::Array ranges;
       json::Array range;
-      range.push_back(0);           // startRow
-      range.push_back(0);           // startCol
-      range.push_back(lastRow);     // endRow
-      range.push_back(lastCol);     // endCol
+      range.push_back(0);
+      range.push_back(0);
+      range.push_back(lastRow);
+      range.push_back(lastCol);
       ranges.push_back(range);
-      data["ranges"] = ranges;
+      replaceData["ranges"] = ranges;
 
-      // Replacement text
       json::Array text;
       text.push_back(content);
-      data["text"] = text;
+      replaceData["text"] = text;
 
-      eventData["data"] = data;
+      json::Object replaceEventData;
+      replaceEventData["type"] = "replace_ranges";
+      replaceEventData["data"] = replaceData;
 
-      // Emit the editor command event
-      ClientEvent event(client_events::kEditorCommand, eventData);
-      module_context::enqueClientEvent(event);
+      ClientEvent replaceEvent(
+         client_events::kEditorCommand, replaceEventData);
+
+      if (!doc->isUntitled())
+      {
+         // File-backed document: update buffer, sync to disk,
+         // and clear dirty flag via saveDocumentToDisk.
+         doc->setContents(content);
+
+         // Enqueue replace_ranges first so the editor buffer
+         // updates before the save_document command arrives.
+         module_context::enqueClientEvent(replaceEvent);
+
+         Error saveErr = saveDocumentToDisk(doc);
+         if (saveErr)
+         {
+            // Editor already has new content; persist as dirty
+            // so the source database matches what the user sees.
+            doc->setDirty(true);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, -32603,
+                  "Failed to save to disk: " + saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
+            source_database::events().onDocUpdated(doc);
+            sendJsonRpcError(
+               ops, requestId, -32603,
+               "Failed to save to disk: " +
+                  saveErr.getMessage());
+            return;
+         }
+      }
+      else
+      {
+         // Untitled document: no backing file to write.
+         doc->setContents(content);
+         doc->setDirty(true);
+
+         Error putErr = source_database::put(doc);
+         if (putErr)
+         {
+            LOG_ERROR(putErr);
+            sendJsonRpcError(
+               ops, requestId, -32603,
+               "Failed to update source database: " +
+                  putErr.getMessage());
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+         module_context::enqueClientEvent(replaceEvent);
+      }
 
       result["success"] = true;
       if (doc->isUntitled())
-      {
-         // For untitled documents, return the tempName for display purposes
          result["tempName"] = doc->getProperty("tempName");
-      }
 
       DLOG("Sent editor command to replace document content");
    }
