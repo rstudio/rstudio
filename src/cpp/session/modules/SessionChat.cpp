@@ -2179,7 +2179,17 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
             // Editor already has new content; persist as dirty
             // so the source database matches what the user sees.
             doc->setDirty(true);
-            source_database::put(doc);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, -32603,
+                  "Failed to save to disk: " + saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
             source_database::events().onDocUpdated(doc);
             sendJsonRpcError(
                ops, requestId, -32603,
@@ -2194,12 +2204,14 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
          doc->setContents(content);
          doc->setDirty(true);
 
-         error = source_database::put(doc);
-         if (error)
+         Error putErr = source_database::put(doc);
+         if (putErr)
          {
+            LOG_ERROR(putErr);
             sendJsonRpcError(
                ops, requestId, -32603,
-               "Failed to update source database");
+               "Failed to update source database: " +
+                  putErr.getMessage());
             return;
          }
 
