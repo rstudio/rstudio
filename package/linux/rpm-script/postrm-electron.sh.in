@@ -14,12 +14,18 @@ then
    rm -f ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
 fi
 
+# note: Yaru icon theme symlink workaround is DEB-only (Ubuntu-specific)
+
 # refresh mime database and icon cache
 if command -v update-mime-database > /dev/null; then
-   update-mime-database /usr/share/mime
+   if ! update-mime-database /usr/share/mime > /dev/null; then
+      echo "rstudio postrm: warning: update-mime-database failed" >&2
+   fi
 fi
 if command -v gtk-update-icon-cache > /dev/null; then
-   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+   if ! gtk-update-icon-cache -f -t /usr/share/icons/hicolor > /dev/null; then
+      echo "rstudio postrm: warning: gtk-update-icon-cache failed for hicolor" >&2
+   fi
 fi
 
 # clear error termination state

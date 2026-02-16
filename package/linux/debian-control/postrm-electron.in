@@ -24,13 +24,19 @@ done
 
 # refresh mime database and icon cache
 if command -v update-mime-database > /dev/null; then
-   update-mime-database /usr/share/mime
+   if ! update-mime-database /usr/share/mime > /dev/null; then
+      echo "rstudio postrm: warning: update-mime-database failed" >&2
+   fi
 fi
 if command -v gtk-update-icon-cache > /dev/null; then
-   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+   if ! gtk-update-icon-cache -f -t /usr/share/icons/hicolor > /dev/null; then
+      echo "rstudio postrm: warning: gtk-update-icon-cache failed for hicolor" >&2
+   fi
    for theme_dir in /usr/share/icons/Yaru*; do
       if [ -f "$theme_dir/index.theme" ]; then
-         gtk-update-icon-cache -f -t "$theme_dir"
+         if ! gtk-update-icon-cache -f -t "$theme_dir" > /dev/null; then
+            echo "rstudio postrm: warning: gtk-update-icon-cache failed for $theme_dir" >&2
+         fi
       fi
    done
 fi
