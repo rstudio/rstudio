@@ -709,6 +709,19 @@ void onMonitoringError(const Error& error)
 
 void initializeMonitoredUserScratchDir()
 {
+#ifdef _WIN32
+   // Use periodic scanning instead of native file monitoring for the
+   // monitored scratch directory. This directory is tiny (a handful of
+   // files, a few KB) so scanning is cheap, and it avoids
+   // ReadDirectoryChangesW / IRP_MJ_DIRECTORY_CONTROL operations that
+   // enterprise endpoint security software can intercept synchronously,
+   // adding seconds to startup time on Windows.
+   s_monitorByScanning = true;
+   module_context::schedulePeriodicWork(
+      boost::posix_time::seconds(3),
+      boost::bind(scanForMonitoredPathChanges, monitoredPathTree()),
+      true);
+#else
    // setup callbacks and register
    core::system::file_monitor::Callbacks cb;
    cb.onRegistrationError = onMonitoringError;
@@ -719,6 +732,7 @@ void initializeMonitoredUserScratchDir()
                                     true,
                                     monitoredScratchFilter,
                                     cb);
+#endif
 }
 
 
