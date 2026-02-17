@@ -3920,6 +3920,12 @@ Error startChatBackend(bool resumeConversation)
    core::system::Options environment;
    core::system::environment(&environment);
 
+   // Enable Node.js proxy support for fetch().
+   // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
+   // this tells Node.js 22.21+ to route fetch() through the proxy.
+   // See: https://github.com/nodejs/node/pull/57165
+   core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+
    // Set up callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = [](core::system::ProcessOperations& ops) {
