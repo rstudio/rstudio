@@ -496,6 +496,11 @@ public class ChatPane
       html.append(constants_.chatNotInstalledDescription());
       html.append("</p>");
       html.append("<p class='detail'>");
+      html.append("<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>");
+      html.append(constants_.chatLearnMore());
+      html.append("</a>");
+      html.append("</p>");
+      html.append("<p class='detail'>");
       html.append(constants_.chatNotInstalledBetaNotice());
       html.append("</p>");
       html.append("<hr>");
