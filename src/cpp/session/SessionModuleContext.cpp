@@ -655,7 +655,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
-boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
+boost::shared_ptr<tree<FileInfo> > monitoredPathTree(
+   Error* pScanError = nullptr)
 {
    boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
    core::system::FileScannerOptions options;
@@ -667,14 +668,26 @@ boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
    if (scanError)
       LOG_ERROR(scanError);
 
+   if (pScanError)
+      *pScanError = scanError;
+
    return pMonitoredTree;
 }
 
 bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
 {
+   // scan the current state of the monitored directory
+   Error scanError;
+   boost::shared_ptr<tree<FileInfo> > pCurrentTree =
+      monitoredPathTree(&scanError);
+
+   // if the scan failed, skip this cycle and retry next interval;
+   // keep the previous (good) tree so we don't generate spurious events
+   if (scanError)
+      return true;
+
    // check for changes
    std::vector<core::system::FileChangeEvent> changes;
-   boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
    core::system::collectFileChangeEvents(pPrevTree->begin(),
                                          pPrevTree->end(),
                                          pCurrentTree->begin(),
@@ -709,6 +722,19 @@ void onMonitoringError(const Error& error)
 
 void initializeMonitoredUserScratchDir()
 {
+#ifdef _WIN32
+   // Use periodic scanning instead of native file monitoring for the
+   // monitored scratch directory. This directory is tiny (a handful of
+   // files, a few KB) so scanning is cheap, and it avoids
+   // ReadDirectoryChangesW / IRP_MJ_DIRECTORY_CONTROL operations that
+   // enterprise endpoint security software can intercept synchronously,
+   // adding seconds to startup time on Windows.
+   s_monitorByScanning = true;
+   module_context::schedulePeriodicWork(
+      boost::posix_time::seconds(3),
+      boost::bind(scanForMonitoredPathChanges, monitoredPathTree()),
+      true);
+#else
    // setup callbacks and register
    core::system::file_monitor::Callbacks cb;
    cb.onRegistrationError = onMonitoringError;
@@ -719,6 +745,7 @@ void initializeMonitoredUserScratchDir()
                                     true,
                                     monitoredScratchFilter,
                                     cb);
+#endif
 }
 
 
