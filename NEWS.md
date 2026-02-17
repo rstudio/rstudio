@@ -11,7 +11,7 @@
 - ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
 
 ### Fixed
-- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane could appear empty when the search box was empty
+- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
 - ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 - ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
@@ -30,11 +30,12 @@
 - ([#16985](https://github.com/rstudio/rstudio/issues/16985)): Fixed an issue where the Environment pane would drop the first list element when a user-defined `str` method existed in the global environment
 - ([#16995](https://github.com/rstudio/rstudio/issues/16995)): Fixed an issue where the chunk toolbar could be duplicated when pressing Enter after a chunk header at the end of a document
 - ([#17026](https://github.com/rstudio/rstudio/pull/17026)): Fixed an issue where roxygen parentheses interfered with Ctrl+Enter execution
+- ([#14626](https://github.com/rstudio/rstudio/issues/14626)): Fixed an issue where RStudio-specific file type icons (e.g. .Rmd, .qmd, .Rpres) were not shown in file managers on Linux
 
 ### Dependencies
 - Ace 1.43.5
 - Copilot Language Server 1.425.0
-- Electron 39.5.1
+- Electron 39.6.0
 - Node.js 22.22.0 (copilot completions)
 - Quarto 1.8.26
 - xterm.js 6.0.0
