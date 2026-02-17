@@ -655,7 +655,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
-boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
+boost::shared_ptr<tree<FileInfo> > monitoredPathTree(
+   Error* pScanError = nullptr)
 {
    boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
    core::system::FileScannerOptions options;
@@ -667,14 +668,26 @@ boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
    if (scanError)
       LOG_ERROR(scanError);
 
+   if (pScanError)
+      *pScanError = scanError;
+
    return pMonitoredTree;
 }
 
 bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
 {
+   // scan the current state of the monitored directory
+   Error scanError;
+   boost::shared_ptr<tree<FileInfo> > pCurrentTree =
+      monitoredPathTree(&scanError);
+
+   // if the scan failed, skip this cycle and retry next interval;
+   // keep the previous (good) tree so we don't generate spurious events
+   if (scanError)
+      return true;
+
    // check for changes
    std::vector<core::system::FileChangeEvent> changes;
-   boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
    core::system::collectFileChangeEvents(pPrevTree->begin(),
                                          pPrevTree->end(),
                                          pCurrentTree->begin(),
