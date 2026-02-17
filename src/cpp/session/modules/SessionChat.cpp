@@ -555,6 +555,13 @@ void sendJsonRpcResponse(core::system::ProcessOperations& ops,
    }
 }
 
+// JSON-RPC 2.0 standard error codes
+// https://www.jsonrpc.org/specification#error_object
+constexpr int kJsonRpcServerError    = -32000;
+constexpr int kJsonRpcMethodNotFound = -32601;
+constexpr int kJsonRpcInvalidParams  = -32602;
+constexpr int kJsonRpcInternalError  = -32603;
+
 void sendJsonRpcError(core::system::ProcessOperations& ops,
                       const json::Value& id,
                       int code,
@@ -1093,7 +1100,7 @@ void processPendingExecution()
       boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
       if (pOps)
       {
-         sendJsonRpcError(*pOps, request.requestId, -32000,
+         sendJsonRpcError(*pOps, request.requestId, kJsonRpcServerError,
             "Execution timed out. The R console was busy for too long.");
       }
 
@@ -1158,13 +1165,13 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: " + error.getMessage());
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: " + error.getMessage());
       return;
    }
 
    if (language != "r")
    {
-      sendJsonRpcError(ops, requestId, -32602,
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
          "Unsupported language: " + language + ". Only 'r' is currently supported.");
       return;
    }
@@ -1197,7 +1204,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
          // Release mutex before I/O operation
          lock.unlock();
-         sendJsonRpcError(ops, requestId, -32000,
+         sendJsonRpcError(ops, requestId, kJsonRpcServerError,
             "R console is busy. Execution queue is full. Please wait for current operations to complete.");
          return;
       }
@@ -1887,7 +1894,7 @@ bool resolveDocumentUri(
       if (!*pDoc)
       {
          DLOG("Untitled document not found: {}", uri);
-         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Untitled document not found: " + uri);
          return false;
       }
       DLOG("Found untitled document by ID: {}", docId);
@@ -1897,7 +1904,7 @@ bool resolveDocumentUri(
       *pPath = uriToPath(uri);
       if (pPath->empty())
       {
-         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid URI format: " + uri);
          return false;
       }
       *pDoc = findOpenDocument(*pPath);
@@ -2019,7 +2026,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "uri", uri);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: uri required");
       return;
    }
 
@@ -2039,15 +2046,15 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
       {
          if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
-            sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
          else if (error.getCode() == boost::system::errc::permission_denied)
          {
-            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
          else
          {
-            sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Failed to read file: " + path);
          }
          return;
       }
@@ -2070,7 +2077,7 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
       {
          WLOG("Failed to save dirty document '{}' before read: {}",
               doc->path(), saveError.getMessage());
-         sendJsonRpcError(ops, requestId, -32603,
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
             "Cannot read file: the document has unsaved changes that "
             "could not be saved first. Error: " + saveError.getMessage());
          return;
@@ -2109,14 +2116,14 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "uri", uri);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: uri required");
       return;
    }
 
    error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
@@ -2130,66 +2137,98 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
 
    if (doc)
    {
-      // File/untitled doc is open - update source database and notify client via editor event
+      // Compute replace range from OLD content (before mutation)
+      std::string oldContent = doc->contents();
+      std::vector<std::string> oldLines;
+      boost::split(oldLines, oldContent, boost::is_any_of("\n"));
+      int lastRow = static_cast<int>(oldLines.size()) - 1;
+      int lastCol = oldLines.empty()
+         ? 0
+         : static_cast<int>(oldLines.back().length());
 
-      // 1. Update document contents in source database
-      doc->setContents(content);
-      doc->setDirty(true);
+      // Build replace_ranges event (shared by both paths)
+      json::Object replaceData;
+      replaceData["id"] = doc->id();
 
-      // 2. Write to source database with proper event firing
-      error = source_database::put(doc);
-      if (error)
-      {
-         sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to update source database");
-         return;
-      }
-
-      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
-      source_database::events().onDocUpdated(doc);
-
-      // 3. Calculate document dimensions for replace range
-      // Split content into lines to get lastRow and lastCol
-      std::vector<std::string> lines;
-      boost::split(lines, content, boost::is_any_of("\n"));
-      int lastRow = static_cast<int>(lines.size()) - 1;
-      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
-
-      // 4. Send editor command to replace entire document content
-      // This updates the editor buffer with an undo point, without writing to disk
-      json::Object eventData;
-      eventData["type"] = "replace_ranges";
-
-      json::Object data;
-      data["id"] = doc->id();
-
-      // Create range covering entire document: [0, 0, lastRow, lastCol]
       json::Array ranges;
       json::Array range;
-      range.push_back(0);           // startRow
-      range.push_back(0);           // startCol
-      range.push_back(lastRow);     // endRow
-      range.push_back(lastCol);     // endCol
+      range.push_back(0);
+      range.push_back(0);
+      range.push_back(lastRow);
+      range.push_back(lastCol);
       ranges.push_back(range);
-      data["ranges"] = ranges;
+      replaceData["ranges"] = ranges;
 
-      // Replacement text
       json::Array text;
       text.push_back(content);
-      data["text"] = text;
+      replaceData["text"] = text;
 
-      eventData["data"] = data;
+      json::Object replaceEventData;
+      replaceEventData["type"] = "replace_ranges";
+      replaceEventData["data"] = replaceData;
 
-      // Emit the editor command event
-      ClientEvent event(client_events::kEditorCommand, eventData);
-      module_context::enqueClientEvent(event);
+      ClientEvent replaceEvent(
+         client_events::kEditorCommand, replaceEventData);
+
+      if (!doc->isUntitled())
+      {
+         // File-backed document: update buffer, sync to disk,
+         // and clear dirty flag via saveDocumentToDisk.
+         doc->setContents(content);
+
+         // Enqueue replace_ranges first so the editor buffer
+         // updates before the save_document command arrives.
+         module_context::enqueClientEvent(replaceEvent);
+
+         Error saveErr = saveDocumentToDisk(doc);
+         if (saveErr)
+         {
+            // Editor already has new content; persist as dirty
+            // so the source database matches what the user sees.
+            doc->setDirty(true);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, kJsonRpcInternalError,
+                  "Failed to save to disk: " + saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
+            source_database::events().onDocUpdated(doc);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to save to disk: " +
+                  saveErr.getMessage());
+            return;
+         }
+      }
+      else
+      {
+         // Untitled document: no backing file to write.
+         doc->setContents(content);
+         doc->setDirty(true);
+
+         Error putErr = source_database::put(doc);
+         if (putErr)
+         {
+            LOG_ERROR(putErr);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to update source database: " +
+                  putErr.getMessage());
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+         module_context::enqueClientEvent(replaceEvent);
+      }
 
       result["success"] = true;
       if (doc->isUntitled())
-      {
-         // For untitled documents, return the tempName for display purposes
          result["tempName"] = doc->getProperty("tempName");
-      }
 
       DLOG("Sent editor command to replace document content");
    }
@@ -2199,7 +2238,7 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       if (path.empty())
       {
          // This shouldn't happen (untitled docs are always open or error earlier)
-         sendJsonRpcError(ops, requestId, -32603, "Cannot write to disk: not a file URI");
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Cannot write to disk: not a file URI");
          return;
       }
 
@@ -2209,19 +2248,19 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       {
          if (error.getCode() == boost::system::errc::permission_denied)
          {
-            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
          else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
             // Parent directory doesn't exist
             FilePath filePath(path);
             std::string parentDir = filePath.getParent().getAbsolutePath();
-            sendJsonRpcError(ops, requestId, -32603,
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                            "Directory does not exist: " + parentDir);
          }
          else
          {
-            sendJsonRpcError(ops, requestId, -32603, "Failed to write file: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Failed to write file: " + path);
          }
          return;
       }
@@ -2247,14 +2286,14 @@ void handleInsertIntoNewFile(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "languageId", languageId);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: languageId required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: languageId required");
       return;
    }
 
    error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
@@ -2292,7 +2331,7 @@ void handleInsertAtCursor(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
@@ -2373,7 +2412,7 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "path", path);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: path required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
       return;
    }
 
@@ -2382,7 +2421,7 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
 
    if (filePath.empty())
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid path: " + path);
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
       return;
    }
 
@@ -2511,7 +2550,7 @@ void handleRequest(core::system::ProcessOperations& ops,
    {
       // Unknown method - send JSON-RPC error response
       WLOG("Unknown JSON-RPC request method: {}", method);
-      sendJsonRpcError(ops, requestId, -32601, "Method not found");
+      sendJsonRpcError(ops, requestId, kJsonRpcMethodNotFound, "Method not found");
    }
 }
 
