@@ -31,6 +31,7 @@
 - ([#16995](https://github.com/rstudio/rstudio/issues/16995)): Fixed an issue where the chunk toolbar could be duplicated when pressing Enter after a chunk header at the end of a document
 - ([#17026](https://github.com/rstudio/rstudio/pull/17026)): Fixed an issue where roxygen parentheses interfered with Ctrl+Enter execution
 - ([#14626](https://github.com/rstudio/rstudio/issues/14626)): Fixed an issue where RStudio-specific file type icons (e.g. .Rmd, .qmd, .Rpres) were not shown in file managers on Linux
+- ([#15609](https://github.com/rstudio/rstudio/issues/15609)): Fixed an issue where RStudio startup on Windows was delayed by several seconds on systems with endpoint security software
 
 ### Dependencies
 - Ace 1.43.5
