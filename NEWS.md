@@ -11,7 +11,7 @@
 - ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
 
 ### Fixed
-- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane could appear empty when the search box was empty
+- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane be empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
 - ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 - ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
