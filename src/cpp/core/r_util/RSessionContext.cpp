@@ -336,7 +336,10 @@ SessionScopeState validateSessionScope(
                scope,
                projectIdToFilePath);
       if (project.empty())
+      {
+         *pErrorMsg = "Project with id: " + scope.id() + " - not found in project-id-mappings";
          return ScopeMissingProject;
+      }
 
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
