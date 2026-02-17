@@ -209,8 +209,7 @@ Error authorizeRequest(
    const std::string& requester,
    boost::optional<system::UidType> sessionOwner,
    system::User* pRequesterUser,
-   boost::optional<system::User>* pSessionUser,
-   bool* pRequesterIsAdmin)
+   boost::optional<system::User>* pSessionUser)
 {
    using namespace rstudio::core::system;
 
@@ -228,27 +227,33 @@ Error authorizeRequest(
       *pSessionUser = sessionUser;
    }
 
-   *pRequesterIsAdmin = auth::handler::overlay::isUserAdmin(pRequesterUser->getUsername());
+   bool isAdmin = false;
+   
    // The session-reaper runs as 'root' and uses the metadata rpc
-   if (!*pRequesterIsAdmin && pRequesterUser->getUserId() == 0 && pRequesterUser->getUsername() == "root")
-      *pRequesterIsAdmin = true;
+   if (pRequesterUser->getUserId() == 0 && pRequesterUser->getUsername() == "root")
+      isAdmin = true;
 
-   // If the user is not an admin and there is no user-id specified in the request (which means read for all users),
-   // or the user in the request is not the same as the request initiator, disallow access
-   if (!*pRequesterIsAdmin && (!sessionOwner || (*pRequesterUser != pSessionUser->get())))
+   if (!isAdmin && (!sessionOwner || (*pRequesterUser != pSessionUser->get())))
    {
-      std::string desc = "User " + pRequesterUser->getUsername() + " has made a request for ";
-      if (sessionOwner)
-         desc += "a session owned by " + pSessionUser->get().getUsername() + " and is not an admin.";
-      else
-         desc += "sessions owned by any user and is not an admin.";
-         
-      error = baseErrorFun(json::errc::Unauthorized, Success(), ERROR_LOCATION);
-      error.addProperty("description", desc);
-      error.addProperty("user", requester);
-      if (sessionOwner)
-         error.addProperty("sessionOwner", pSessionUser->get().getUsername());
-      LOG_ERROR(error);
+      // Delay checking the database until we know it's not a valid request from the session user since this is not cached
+      isAdmin = auth::handler::overlay::isUserAdmin(pRequesterUser->getUsername());
+      if (!isAdmin)
+      {
+         // If the user is not an admin and there is no user-id specified in the request (which means read for all users),
+         // or the user in the request is not the same as the request initiator, disallow access
+         std::string desc = "User " + pRequesterUser->getUsername() + " has made a request for ";
+         if (sessionOwner)
+            desc += "a session owned by " + pSessionUser->get().getUsername() + " and is not an admin.";
+         else
+            desc += "sessions owned by any user and is not an admin.";
+            
+         error = baseErrorFun(json::errc::Unauthorized, Success(), ERROR_LOCATION);
+         error.addProperty("description", desc);
+         error.addProperty("user", requester);
+         if (sessionOwner)
+            error.addProperty("sessionOwner", pSessionUser->get().getUsername());
+         LOG_ERROR(error);
+      }
    }
 
    return error;
@@ -273,7 +278,6 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    system::User requester;
    boost::optional<system::UidType> sessionOwnerUid;
    boost::optional<system::User> sessionOwner;
-   bool isAdmin;
    
    std::string operation;
    error = json::readObject(rpcRequest.kwparams, std::string(kSessionStorageOperationField), operation);
@@ -320,7 +324,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       }
    }
 
-   error = authorizeRequest(baseError, username, sessionOwnerUid, &requester, &sessionOwner, &isAdmin);
+   error = authorizeRequest(baseError, username, sessionOwnerUid, &requester, &sessionOwner);
    if (error)
       return json::setJsonRpcError(error, &pConnection->response(), true);
 

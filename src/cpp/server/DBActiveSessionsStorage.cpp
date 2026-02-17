@@ -48,8 +48,8 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
    const std::string& uname = user_.getUsername();
 
    database::Query query = connection->query("SELECT session_id FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
-      .withInput(uid)
-      .withInput(uname);
+      .withInput(uid, "id")
+      .withInput(uname, "name");
    
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
@@ -87,8 +87,8 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
       int count;
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
-         .withInput(uid)
-         .withInput(uname)
+         .withInput(uid, "id")
+         .withInput(uname, "name")
          .withOutput(count);
 
       error = connection->execute(query);
@@ -116,7 +116,7 @@ Error DBActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* 
    {
       int count;
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE session_id=:id")
-         .withInput(sessionId)
+         .withInput(sessionId, "id")
          .withOutput(count);
 
       error = connection->execute(query);
