@@ -496,7 +496,8 @@ std::string debugRowString(const Row& row)
       if (i > 0) oss << ", ";
 
       const soci::column_properties& props = row.get_properties(i);
-      oss << props.get_name() << ": ";
+      const std::string& name = props.get_name();
+      oss << name << ": ";
 
       if (row.get_indicator(i) == soci::i_null)
       {
@@ -510,7 +511,21 @@ std::string debugRowString(const Row& row)
             switch (props.get_data_type())
             {
                case soci::dt_string:
-                  oss << "\"" << row.get<std::string>(i) << "\"";
+                  {
+                     std::string value = row.get<std::string>(i);
+
+                     if (isSecretParamName(name) && value.length() > 4)
+                     {
+                        value = value.substr(0, 3) + "...(size=" + std::to_string(value.length()) + ")";
+                     }
+                     else if (value.length() > kMaxTraceParamValueLength)
+                     {
+                        value = value.substr(0, kTruncatePreviewLength) + "...(size=" +
+                                std::to_string(value.length()) + ")..." +
+                                value.substr(value.length() - kTruncatePreviewLength);
+                     }
+                     oss << "\"" << value << "\"";
+                  }
                   break;
                case soci::dt_integer:
                   oss << row.get<int>(i);
@@ -547,14 +562,38 @@ Rowset::~Rowset()
 
 RowsetIterator& Rowset::next(RowsetIterator& it)
 {
-   ++rowCount_;
+   if (it != end())
+   {
+      ++rowCount_;
+
+      if (log::isDbTraceEnabled() && query_.has_value() &&
+          query_.get().debugOutputFormatters_.empty())
+      {
+         LOG_TRACE_MESSAGE("db[" + queryId_ + "] row " + std::to_string(rowCount_) + ": " +
+                           debugRowString(row_));
+      }
+   }
    return it;
 }
 
 RowsetIterator Rowset::begin()
 {
    if (query_)
-      return RowsetIterator(query_.get().statement_, row_);
+   {
+      RowsetIterator it(query_.get().statement_, row_);
+
+      if (it != end())
+      {
+         rowCount_ = 1;
+         if (log::isDbTraceEnabled() &&
+             query_.get().debugOutputFormatters_.empty())
+         {
+            LOG_TRACE_MESSAGE("db[" + queryId_ + "] row 1: " + debugRowString(row_));
+         }
+      }
+
+      return it;
+   }
 
    return end();
 }
