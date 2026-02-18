@@ -625,6 +625,95 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return null;
    }
 
+   public String getActiveDocContents()
+   {
+      if (!hasActiveEditor())
+         return null;
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (target instanceof TextEditingTarget)
+         return ((TextEditingTarget) target).getDocDisplay().getCode();
+      return null;
+   }
+
+   public boolean showEditSuggestionOnActiveDoc(String oldString, String newString,
+                                                int contextStart, int contextEnd)
+   {
+      if (!hasActiveEditor())
+         return false;
+
+      EditingTarget target = activeColumn_.getActiveEditor();
+      if (!(target instanceof TextEditingTarget))
+         return false;
+
+      TextEditingTarget textTarget = (TextEditingTarget) target;
+      String content = textTarget.getDocDisplay().getCode();
+      if (content == null)
+         return false;
+
+      int searchFrom = 0;
+      int searchTo = content.length();
+
+      if (contextStart > 0 || contextEnd > 0)
+      {
+         String[] lines = content.split("\n", -1);
+         if (contextStart < lines.length)
+         {
+            for (int i = 0; i < contextStart; i++)
+               searchFrom += lines[i].length() + 1;
+         }
+         if (contextEnd > 0 && contextEnd <= lines.length)
+         {
+            searchTo = 0;
+            for (int i = 0; i < contextEnd; i++)
+               searchTo += lines[i].length() + 1;
+         }
+      }
+
+      String searchRegion = content.substring(searchFrom, Math.min(searchTo, content.length()));
+      int firstMatch = searchRegion.indexOf(oldString);
+      if (firstMatch < 0)
+         return false;
+
+      if (searchRegion.indexOf(oldString, firstMatch + 1) >= 0)
+         return false;
+
+      int index = searchFrom + firstMatch;
+
+      int startLine = 0;
+      int startChar = 0;
+      for (int i = 0; i < index; i++)
+      {
+         if (content.charAt(i) == '\n')
+         {
+            startLine++;
+            startChar = 0;
+         }
+         else
+         {
+            startChar++;
+         }
+      }
+
+      int endLine = startLine;
+      int endChar = startChar;
+      for (int i = 0; i < oldString.length(); i++)
+      {
+         if (oldString.charAt(i) == '\n')
+         {
+            endLine++;
+            endChar = 0;
+         }
+         else
+         {
+            endChar++;
+         }
+      }
+
+      int[] range = new int[] { startLine, startChar, endLine, endChar };
+      textTarget.showEditSuggestion(range, newString, null);
+      return true;
+   }
+
    /**
     * Get selections from the active editor as a JSON array.
     * Format: [{ "startLine": n, "startCharacter": n, "endLine": n, "endCharacter": n, "text": "..." }, ...]

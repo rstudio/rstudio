@@ -113,11 +113,23 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
 
    public SendToConsoleEvent(String code,
                              String language,
-                             boolean execute, 
+                             boolean execute,
                              boolean raise,
                              boolean focus,
-                             boolean animate, 
+                             boolean animate,
                              boolean echo)
+   {
+      this(code, language, execute, raise, focus, animate, echo, null);
+   }
+
+   public SendToConsoleEvent(String code,
+                             String language,
+                             boolean execute,
+                             boolean raise,
+                             boolean focus,
+                             boolean animate,
+                             boolean echo,
+                             String sourceDocumentId)
    {
       code_ = code;
       language_ = language;
@@ -126,6 +138,7 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
       focus_ = focus;
       animate_ = animate;
       echo_ = echo;
+      sourceDocumentId_ = sourceDocumentId;
    }
    
 
@@ -168,7 +181,12 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
    {
       return echo_;
    }
-   
+
+   public String getSourceDocumentId()
+   {
+      return sourceDocumentId_;
+   }
+
    @Override
    public int focusMode()
    {
@@ -195,4 +213,5 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
    private boolean raise_;
    private boolean animate_;
    private boolean echo_;
+   private String sourceDocumentId_;
 }

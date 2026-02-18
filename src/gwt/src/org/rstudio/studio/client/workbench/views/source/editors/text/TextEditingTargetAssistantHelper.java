@@ -448,32 +448,37 @@ public class TextEditingTargetAssistantHelper
     */
    public void showEditSuggestion(AssistantCompletion completion)
    {
-      showEditSuggestionImpl(completion, true, false);
+      showEditSuggestionImpl(completion, true, false, true);
    }
    
    /**
     * Internal implementation for showing edit suggestions.
-    * 
+    *
     * @param completion The completion containing the range and replacement text
     * @param autoshow If true, render the suggestion immediately; if false, show gutter icon only
     * @param notifyServer Whether to notify the server that the completion was shown
     *                     (true for Assistant/Copilot flow, false for API callers)
+    * @param forceAutoshow If true, always render inline even if suggestion starts before cursor
     */
-   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
+   private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer, boolean forceAutoshow)
    {
       resetSuggestion();
-      
+
       // The completion data gets modified when doing partial (word-by-word)
       // completions, so we need to use a copy and preserve the original
       // (which we need to send back to the server as-is in some language-server methods).
       AssistantCompletion normalized = normalizeSuggestion(completion);
 
       // If the suggestion starts before the cursor, collapse it by default (show gutter-only)
-      Position cursorPosition = display_.getCursorPosition();
-      Position suggestionStart = Position.create(normalized.range.start.line, normalized.range.start.character);
-      if (suggestionStart.isBefore(cursorPosition))
+      // unless forceAutoshow is set (e.g. next command suggestions triggered by console errors)
+      if (!forceAutoshow)
       {
-         autoshow = false;
+         Position cursorPosition = display_.getCursorPosition();
+         Position suggestionStart = Position.create(normalized.range.start.line, normalized.range.start.character);
+         if (suggestionStart.isBefore(cursorPosition))
+         {
+            autoshow = false;
+         }
       }
 
       // Check if this is a zero-width range (insertion at cursor)
@@ -1957,7 +1962,7 @@ public class TextEditingTargetAssistantHelper
                boolean autoshow = prefs_.assistantNesAutoshow().getValue();
                
                // Display the suggestion using the common helper
-               showEditSuggestionImpl(completion, autoshow, true);
+               showEditSuggestionImpl(completion, autoshow, true, false);
             }
 
             @Override

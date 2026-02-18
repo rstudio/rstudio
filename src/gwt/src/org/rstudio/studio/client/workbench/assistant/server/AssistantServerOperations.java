@@ -20,6 +20,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextCommandSuggestionResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignOutResponse;
@@ -76,4 +77,11 @@ public interface AssistantServerOperations
                                           ServerRequestCallback<Void> requestCallback);
 
    public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback);
+
+   public void assistantNextCommandSuggestion(String command,
+                                              String output,
+                                              boolean isError,
+                                              String documentUri,
+                                              String documentContent,
+                                              ServerRequestCallback<AssistantNextCommandSuggestionResponse> requestCallback);
 }

@@ -156,6 +156,7 @@ import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantDiagnosticsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextCommandSuggestionResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantNextEditSuggestionsResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignInResponse;
 import org.rstudio.studio.client.workbench.assistant.model.AssistantResponseTypes.AssistantSignOutResponse;
@@ -6991,6 +6992,25 @@ public class RemoteServer implements Server
    public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "assistant_notify_installed", requestCallback);
+   };
+
+   @Override
+   public void assistantNextCommandSuggestion(String command,
+                                              String output,
+                                              boolean isError,
+                                              String documentUri,
+                                              String documentContent,
+                                              ServerRequestCallback<AssistantNextCommandSuggestionResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(command)
+            .add(output)
+            .add(isError)
+            .add(documentUri)
+            .add(documentContent)
+            .get();
+
+      sendRequest(RPC_SCOPE, "assistant_next_command_suggestion", params, requestCallback);
    };
 
    @Override
