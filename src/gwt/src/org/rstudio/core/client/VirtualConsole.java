@@ -299,6 +299,74 @@ public class VirtualConsole
    }
 
    /**
+    * Erase in Line (EL) -- CSI K
+    *
+    * @param mode 0 = erase from cursor to end of line (default),
+    *             1 = erase from beginning of line to cursor (inclusive),
+    *             2 = erase entire line
+    */
+   private void eraseInLine(int mode)
+   {
+      clearPartialAnsiCode();
+
+      int lineStart = output_.lastIndexOf("\n", cursor_) + 1;
+      int lineEnd = output_.indexOf("\n", cursor_);
+      if (lineEnd == -1)
+         lineEnd = output_.length();
+
+      int eraseStart, eraseEnd;
+      switch (mode)
+      {
+         case 0:  eraseStart = cursor_;    eraseEnd = lineEnd;                        break;
+         case 1:  eraseStart = lineStart;  eraseEnd = Math.min(cursor_ + 1, lineEnd); break;
+         case 2:  eraseStart = lineStart;  eraseEnd = lineEnd;                        break;
+         default: return;
+      }
+
+      if (eraseStart >= eraseEnd)
+         return;
+
+      // Optimization: mode 0 at end of buffer -- truncate instead of writing spaces
+      if (mode == 0 && lineEnd == output_.length())
+      {
+         // Trim any ClassRange that straddles the cursor position
+         Entry<Integer, ClassRange> floor = class_.floorEntry(cursor_);
+         if (floor != null && floor.getKey() < cursor_)
+         {
+            ClassRange range = floor.getValue();
+            int rangeEnd = floor.getKey() + range.length;
+            if (rangeEnd > cursor_)
+               range.trimRight(rangeEnd - cursor_);
+         }
+
+         // Remove all ClassRanges starting at or after cursor
+         List<Integer> keysToRemove = new ArrayList<>(class_.tailMap(cursor_, true).keySet());
+         for (Integer key : keysToRemove)
+         {
+            ClassRange cr = class_.get(key);
+            if (parent_ != null && cr.element.getParentElement() != null)
+               cr.element.removeFromParent();
+            class_.remove(key);
+         }
+
+         output_.setLength(cursor_);
+         return;
+      }
+
+      // General case: overwrite with spaces
+      int savedCursor = cursor_;
+      cursor_ = eraseStart;
+
+      int eraseLength = eraseEnd - eraseStart;
+      StringBuilder spaces = new StringBuilder(eraseLength);
+      for (int i = 0; i < eraseLength; i++)
+         spaces.append(' ');
+
+      text(spaces.toString(), null, false/*forceNewRange*/);
+      cursor_ = savedCursor;
+   }
+
+   /**
     * Debugging aid
     * @param entry
     * @return diagnostic string summarizing the Entry
@@ -931,7 +999,12 @@ public class VirtualConsole
                      int n = StringUtil.parseInt(csiMatch.getGroup(1), 0);
                      cursor_ = Math.max(0, cursor_ - n);
                   }
-                  
+                  else if (command == "K")
+                  {
+                     int mode = StringUtil.parseInt(csiMatch.getGroup(1), 0);
+                     eraseInLine(mode);
+                  }
+
                   tail = head + csiMatch.getValue().length();
                   break;
                }

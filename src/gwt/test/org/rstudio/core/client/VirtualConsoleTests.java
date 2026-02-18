@@ -1251,6 +1251,78 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(ele.getInnerText(), "HeLLo woRLd!");
    }
    
+   public void testEraseInLineMode0Default()
+   {
+      // \033[K with no param defaults to mode 0 (erase cursor to end of line)
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[5D\033[K");
+      Assert.assertEquals("Hello ", vc.toString());
+      Assert.assertEquals("<span>Hello </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode0Explicit()
+   {
+      // \033[0K is the same as \033[K
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[5D\033[0K");
+      Assert.assertEquals("Hello ", vc.toString());
+      Assert.assertEquals("<span>Hello </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode0WithColors()
+   {
+      // Erase colored text from cursor to end of line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String red = AnsiCode.CSI + AnsiCode.ForeColorNum.RED + AnsiCode.SGR;
+      String reset = AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR;
+      vc.submit("Hello " + red + "World" + reset + "\033[5D\033[K");
+      Assert.assertEquals("Hello ", vc.toString());
+      Assert.assertEquals("<span>Hello </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode1()
+   {
+      // \033[1K erases from beginning of line to cursor (inclusive)
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[5D\033[1K");
+      Assert.assertEquals("       orld", vc.toString());
+      Assert.assertEquals("<span>       orld</span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode2()
+   {
+      // \033[2K erases the entire line
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[5D\033[2K");
+      Assert.assertEquals("           ", vc.toString());
+      Assert.assertEquals("<span>           </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMultiLine()
+   {
+      // EL should not cross newline boundaries
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Line1\nHello World\033[5D\033[K");
+      Assert.assertEquals("Line1\nHello ", vc.toString());
+   }
+
+   public void testEraseInLineProgressBar()
+   {
+      // Realistic progress bar pattern: \r + text + \033[K
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Progress: 50% done!!!");
+      vc.submit("\rProgress: 100%\033[K");
+      Assert.assertEquals("Progress: 100%", vc.toString());
+      Assert.assertEquals("<span>Progress: 100%</span>", ele.getInnerHTML());
+   }
+
    public void testIncompleteAnsiCodes()
    {
       PreElement ele = Document.get().createPreElement();
