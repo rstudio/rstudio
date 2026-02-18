@@ -339,20 +339,9 @@ public class ChatPane
                   newFrame.getElement().getStyle().setVisibility(
                      com.google.gwt.dom.client.Style.Visibility.VISIBLE);
                   mainPanel_.remove(frame_);
-
-                  suspendedOverlay_.getElement().getStyle()
-                     .setProperty("transition", "opacity 500ms ease");
-                  suspendedOverlay_.getElement().getStyle().setOpacity(0);
-
-                  Timers.singleShot(500, () -> {
-                     if (suspendedOverlay_.getParent() == mainPanel_)
-                     {
-                        mainPanel_.remove(suspendedOverlay_);
-                     }
-                     suspendedOverlay_.getElement().getStyle().clearProperty("transition");
-                     frame_ = newFrame;
-                     pendingFrame_ = null;
-                  });
+                  mainPanel_.remove(suspendedOverlay_);
+                  frame_ = newFrame;
+                  pendingFrame_ = null;
                }
             });
          });
@@ -838,7 +827,6 @@ public class ChatPane
          pendingFrame_ = null;
       }
 
-      suspendedOverlay_.getElement().getStyle().clearProperty("transition");
       suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
 
       if (suspendedOverlay_.getParent() != mainPanel_)
