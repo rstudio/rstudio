@@ -334,7 +334,8 @@ public class ChatPane
 
          newFrame.setOnLoadAction(() -> {
             Timers.singleShot(350, () -> {
-               if (suspendedOverlay_.getParent() == mainPanel_)
+               if (newFrame.getParent() == mainPanel_ &&
+                   suspendedOverlay_.getParent() == mainPanel_)
                {
                   newFrame.getElement().getStyle().setVisibility(
                      com.google.gwt.dom.client.Style.Visibility.VISIBLE);
