@@ -3926,6 +3926,13 @@ Error startChatBackend(bool resumeConversation)
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
 
+#ifdef _WIN32
+   // On Windows, R sets HOME to the user's Documents directory rather than
+   // %USERPROFILE%. Correct it so child processes (e.g. git) find their
+   // expected config files.
+   core::system::setHomeToUserProfile(&environment);
+#endif
+
    // Set up callbacks
    core::system::ProcessCallbacks callbacks;
    callbacks.onStarted = [](core::system::ProcessOperations& ops) {
