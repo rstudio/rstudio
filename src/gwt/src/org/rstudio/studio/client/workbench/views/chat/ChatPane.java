@@ -95,6 +95,12 @@ public class ChatPane
             {
                frame_.injectThemeVariables();
             }
+
+            // Update suspended overlay color for new theme
+            if (suspendedOverlay_ != null)
+            {
+               updateSuspendedOverlayStyle();
+            }
          }
       });
    }
@@ -127,6 +133,11 @@ public class ChatPane
       // Store initial message to show after frame loads
       pendingMessage_ = generateMessageHTML(constants_.checkingInstallationMessage());
 
+      // Create suspended overlay (added/removed from panel on suspend/resume)
+      suspendedOverlay_ = new HTML();
+      suspendedOverlay_.setSize("100%", "100%");
+      updateSuspendedOverlayStyle();
+
       // Add update notification and frame to layout
       mainPanel_.add(updateNotificationPanel_);
       mainPanel_.add(frame_);
@@ -139,6 +150,13 @@ public class ChatPane
       updateFrameLayout();
 
       return mainPanel_;
+   }
+
+   private void updateSuspendedOverlayStyle()
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
    }
 
    private void updateFrameLayout()
@@ -283,14 +301,68 @@ public class ChatPane
    @Override
    public void loadUrl(String url)
    {
-      // Clear any pending load action from updateFrameContent() to prevent
-      // it from overwriting the URL content when it fires
-      frame_.setOnLoadAction(null);
-
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
-      frame_.setUrl(url);
+
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+         {
+            mainPanel_.remove(pendingFrame_);
+         }
+
+         RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
+         newFrame.setSize("100%", "100%");
+         pendingFrame_ = newFrame;
+
+         newFrame.getElement().getStyle().setVisibility(
+            com.google.gwt.dom.client.Style.Visibility.HIDDEN);
+
+         mainPanel_.add(newFrame);
+
+         if (updateNotificationPanel_.isVisible())
+         {
+            int height = updateNotificationPanel_.getElement().getScrollHeight();
+            mainPanel_.setWidgetTopBottom(newFrame, height, Unit.PX, 0, Unit.PX);
+         }
+         else
+         {
+            mainPanel_.setWidgetTopBottom(newFrame, 0, Unit.PX, 0, Unit.PX);
+         }
+         mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
+
+         newFrame.setOnLoadAction(() -> {
+            Timers.singleShot(250, () -> {
+               if (suspendedOverlay_.getParent() == mainPanel_)
+               {
+                  newFrame.getElement().getStyle().setVisibility(
+                     com.google.gwt.dom.client.Style.Visibility.VISIBLE);
+                  mainPanel_.remove(frame_);
+
+                  suspendedOverlay_.getElement().getStyle()
+                     .setProperty("transition", "opacity 500ms ease");
+                  suspendedOverlay_.getElement().getStyle().setOpacity(0);
+
+                  Timers.singleShot(500, () -> {
+                     if (suspendedOverlay_.getParent() == mainPanel_)
+                     {
+                        mainPanel_.remove(suspendedOverlay_);
+                     }
+                     suspendedOverlay_.getElement().getStyle().clearProperty("transition");
+                     frame_ = newFrame;
+                     pendingFrame_ = null;
+                  });
+               }
+            });
+         });
+         newFrame.setUrl(url);
+      }
+      else
+      {
+         frame_.setOnLoadAction(null);
+         frame_.setUrl(url);
+      }
    }
 
    @Override
@@ -756,73 +828,25 @@ public class ChatPane
    @Override
    public void showSuspendedMessage()
    {
-      String html = generateSuspendedMessageHTML();
-      updateFrameContent(html);
-   }
+      // Add overlay on top of the iframe to gray out the chat UI.
+      // We intentionally do NOT navigate the iframe to about:blank here;
+      // the overlay blocks interaction, and the iframe content will be
+      // replaced when loadUrl() is called on session resume.
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+         pendingFrame_ = null;
+      }
 
-   private String generateSuspendedMessageHTML()
-   {
-      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
-      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
-      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
-      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
-      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      suspendedOverlay_.getElement().getStyle().clearProperty("transition");
+      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
 
-      StringBuilder html = new StringBuilder();
-      html.append("<!DOCTYPE html>");
-      html.append("<html lang='");
-      html.append(LocaleCookie.getUiLanguage());
-      html.append("'>");
-      html.append("<head>");
-      html.append("<meta charset='UTF-8'>");
-      html.append("<style>");
-      html.append("html, body {");
-      html.append("  margin: 0;");
-      html.append("  padding: 0;");
-      html.append("  width: 100%;");
-      html.append("  height: 100%;");
-      html.append("  overflow: hidden;");
-      html.append("}");
-      html.append("body {");
-      html.append("  display: flex;");
-      html.append("  align-items: center;");
-      html.append("  justify-content: center;");
-      html.append("  font-family: ");
-      html.append(ThemeFonts.getProportionalFont());
-      html.append(";");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
-      html.append("}");
-      html.append(".message {");
-      html.append("  text-align: center;");
-      html.append("  padding: 40px;");
-      html.append("}");
-      html.append("h2 {");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  margin-bottom: 16px;");
-      html.append("}");
-      html.append("p {");
-      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
-      html.append("  margin: 8px 0;");
-      html.append("}");
-      html.append("</style>");
-      html.append("</head>");
-      html.append("<body>");
-      html.append("<div class='message'>");
-      html.append("<h2>");
-      html.append(constants_.chatSessionSuspendedTitle());
-      html.append("</h2>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage1());
-      html.append("</p>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage2());
-      html.append("</p>");
-      html.append("</div>");
-      html.append("</body>");
-      html.append("</html>");
-
-      return html.toString();
+      if (suspendedOverlay_.getParent() != mainPanel_)
+      {
+         mainPanel_.add(suspendedOverlay_);
+         mainPanel_.setWidgetLeftRight(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+         mainPanel_.setWidgetTopBottom(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+      }
    }
 
    private String generateCrashedMessageHTML(int exitCode)
@@ -1075,6 +1099,8 @@ public class ChatPane
 
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
+   private RStudioThemedFrame pendingFrame_;
+   private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
