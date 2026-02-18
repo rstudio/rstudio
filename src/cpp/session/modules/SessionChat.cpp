@@ -2273,6 +2273,352 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    sendJsonRpcResponse(ops, requestId, result);
 }
 
+// Find all non-overlapping byte offsets of 'needle' in 'haystack'.
+// Returns offsets in ascending order.
+std::vector<std::size_t> findAllOccurrences(
+   const std::string& haystack,
+   const std::string& needle)
+{
+   std::vector<std::size_t> offsets;
+   std::size_t pos = 0;
+   while (pos < haystack.size())
+   {
+      pos = haystack.find(needle, pos);
+      if (pos == std::string::npos)
+         break;
+      offsets.push_back(pos);
+      pos += needle.size();
+   }
+   return offsets;
+}
+
+// Convert a byte offset within LF-normalized UTF-8 content to a 0-based
+// (row, col) pair. Column is measured in Unicode code points (matching
+// Ace editor's character-based positioning) rather than bytes.
+std::pair<int, int> offsetToRowCol(
+   const std::string& content,
+   std::size_t offset)
+{
+   int row = 0;
+   std::size_t lineStart = 0;
+   for (std::size_t i = 0; i < offset && i < content.size(); ++i)
+   {
+      if (content[i] == '\n')
+      {
+         ++row;
+         lineStart = i + 1;
+      }
+   }
+   std::string linePrefix = content.substr(lineStart, offset - lineStart);
+   size_t col = 0;
+   Error error = string_utils::utf8Distance(
+      linePrefix.begin(), linePrefix.end(), &col);
+   if (error)
+   {
+      // Fall back to byte length for invalid UTF-8
+      col = linePrefix.size();
+   }
+   return std::make_pair(row, static_cast<int>(col));
+}
+
+// Edit content in editor buffer if open, otherwise on disk.
+// Performs targeted search-and-replace with undo support.
+void handleEditFileContent(core::system::ProcessOperations& ops,
+                           const json::Value& requestId,
+                           const json::Object& params)
+{
+   DLOG("Handling workspace/editFileContent request");
+
+   // Extract required parameters
+   std::string uri;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: uri required");
+      return;
+   }
+
+   std::string oldString;
+   error = json::readObject(params, "oldString", oldString);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: oldString required");
+      return;
+   }
+
+   std::string newString;
+   error = json::readObject(params, "newString", newString);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: newString required");
+      return;
+   }
+
+   if (oldString.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: oldString must not be empty");
+      return;
+   }
+
+   // Optional replaceAll (default false)
+   bool replaceAll = false;
+   json::readObject(params, "replaceAll", replaceAll);
+
+   // Resolve the URI to an open document and/or a file path
+   boost::shared_ptr<source_database::SourceDocument> doc;
+   std::string path;
+
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
+
+   // Label used in error messages
+   std::string label = path.empty() ? uri : path;
+
+   json::Object result;
+
+   if (doc)
+   {
+      // Document is open in the editor
+      std::string content = doc->contents();
+
+      std::vector<std::size_t> offsets =
+         findAllOccurrences(content, oldString);
+
+      if (offsets.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "oldString not found in file: " + label);
+         return;
+      }
+
+      if (offsets.size() > 1 && !replaceAll)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+            "oldString is ambiguous: found " +
+            std::to_string(offsets.size()) +
+            " occurrences. Set replaceAll to true or provide "
+            "a more specific string.");
+         return;
+      }
+
+      int occurrences = static_cast<int>(offsets.size());
+
+      // Build replacement ranges (for the editor event)
+      json::Array ranges;
+      for (std::size_t i = 0; i < offsets.size(); ++i)
+      {
+         auto start = offsetToRowCol(content, offsets[i]);
+         auto end = offsetToRowCol(
+            content, offsets[i] + oldString.size());
+
+         json::Array range;
+         range.push_back(start.first);
+         range.push_back(start.second);
+         range.push_back(end.first);
+         range.push_back(end.second);
+         ranges.push_back(range);
+      }
+
+      // Build new content by replacing in reverse offset order
+      // so earlier offsets stay valid
+      std::string newContent = content;
+      for (int i = static_cast<int>(offsets.size()) - 1; i >= 0; --i)
+      {
+         newContent.replace(
+            offsets[i], oldString.size(), newString);
+      }
+
+      // Build the replace_ranges editor event
+      json::Object replaceData;
+      replaceData["id"] = doc->id();
+      replaceData["ranges"] = ranges;
+
+      json::Array text;
+      text.push_back(newString);
+      replaceData["text"] = text;
+
+      json::Object replaceEventData;
+      replaceEventData["type"] = "replace_ranges";
+      replaceEventData["data"] = replaceData;
+
+      ClientEvent replaceEvent(
+         client_events::kEditorCommand, replaceEventData);
+
+      if (!doc->isUntitled())
+      {
+         // File-backed document: update buffer, sync to disk,
+         // and clear dirty flag via saveDocumentToDisk.
+         doc->setContents(newContent);
+
+         // Enqueue replace_ranges first so the editor buffer
+         // updates before the save_document command arrives.
+         module_context::enqueClientEvent(replaceEvent);
+
+         Error saveErr = saveDocumentToDisk(doc);
+         if (saveErr)
+         {
+            // Editor already has new content; persist as dirty
+            // so the source database matches what the user sees.
+            doc->setDirty(true);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, kJsonRpcInternalError,
+                  "Failed to save to disk: " +
+                     saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
+            source_database::events().onDocUpdated(doc);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to save to disk: " +
+                  saveErr.getMessage());
+            return;
+         }
+      }
+      else
+      {
+         // Untitled document: no backing file to write.
+         doc->setContents(newContent);
+         doc->setDirty(true);
+
+         Error putErr = source_database::put(doc);
+         if (putErr)
+         {
+            LOG_ERROR(putErr);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to update source database: " +
+                  putErr.getMessage());
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+         module_context::enqueClientEvent(replaceEvent);
+      }
+
+      result["success"] = true;
+      result["occurrences"] = occurrences;
+      if (doc->isUntitled())
+         result["tempName"] = doc->getProperty("tempName");
+
+      DLOG("Edited document content ({} occurrences replaced)", occurrences);
+   }
+   else
+   {
+      // File not open in editor - edit on disk
+      if (path.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                          "Cannot edit: not a file URI");
+         return;
+      }
+
+      std::string content;
+      error = core::readStringFromFile(
+         FilePath(path), &content,
+         string_utils::LineEndingPosix);
+
+      if (error)
+      {
+         if (error.getCode() ==
+             boost::system::errc::no_such_file_or_directory)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                             "File not found: " + path);
+         }
+         else if (error.getCode() ==
+                  boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Permission denied: " + path);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Failed to read file: " + path);
+         }
+         return;
+      }
+
+      std::vector<std::size_t> offsets =
+         findAllOccurrences(content, oldString);
+
+      if (offsets.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "oldString not found in file: " + path);
+         return;
+      }
+
+      if (offsets.size() > 1 && !replaceAll)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+            "oldString is ambiguous: found " +
+            std::to_string(offsets.size()) +
+            " occurrences. Set replaceAll to true or provide "
+            "a more specific string.");
+         return;
+      }
+
+      int occurrences = static_cast<int>(offsets.size());
+
+      // Build new content by replacing in reverse offset order
+      std::string newContent = content;
+      for (int i = static_cast<int>(offsets.size()) - 1; i >= 0; --i)
+      {
+         newContent.replace(
+            offsets[i], oldString.size(), newString);
+      }
+
+      // Write back with original line ending style
+      error = core::writeStringToFile(
+         FilePath(path), newContent,
+         module_context::lineEndings(FilePath(path)));
+
+      if (error)
+      {
+         if (error.getCode() ==
+             boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Permission denied: " + path);
+         }
+         else if (error.getCode() ==
+                  boost::system::errc::no_such_file_or_directory)
+         {
+            FilePath filePath(path);
+            std::string parentDir =
+               filePath.getParent().getAbsolutePath();
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Directory does not exist: " + parentDir);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Failed to write file: " + path);
+         }
+         return;
+      }
+
+      result["success"] = true;
+      result["occurrences"] = occurrences;
+
+      DLOG("Edited file on disk ({} occurrences replaced): {}",
+           occurrences, path);
+   }
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
 void handleInsertIntoNewFile(core::system::ProcessOperations& ops,
                              const json::Value& requestId,
                              const json::Object& params)
@@ -2533,6 +2879,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    else if (method == "workspace/writeFileContent")
    {
       handleWriteFileContent(ops, requestId, params);
+   }
+   else if (method == "workspace/editFileContent")
+   {
+      handleEditFileContent(ops, requestId, params);
    }
    else if (method == "workspace/insertIntoNewFile")
    {
