@@ -333,7 +333,7 @@ public class ChatPane
          mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
 
          newFrame.setOnLoadAction(() -> {
-            Timers.singleShot(250, () -> {
+            Timers.singleShot(350, () -> {
                if (suspendedOverlay_.getParent() == mainPanel_)
                {
                   newFrame.getElement().getStyle().setVisibility(
