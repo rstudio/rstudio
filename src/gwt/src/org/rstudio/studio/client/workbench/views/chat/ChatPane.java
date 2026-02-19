@@ -921,6 +921,8 @@ public class ChatPane
       // We intentionally do NOT navigate the iframe to about:blank here;
       // the overlay blocks interaction, and the iframe content will be
       // replaced when loadUrl() is called on session resume.
+      frame_.setOnLoadAction(null);
+
       if (loadTimeoutTimer_ != null)
       {
          loadTimeoutTimer_.cancel();
