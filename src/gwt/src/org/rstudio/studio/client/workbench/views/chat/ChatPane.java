@@ -917,7 +917,7 @@ public class ChatPane
    @Override
    public void showSuspendedMessage()
    {
-      // Add overlay on top of the iframe to gray out the chat UI.
+      // Add a semi-transparent overlay to dim the chat UI and block interaction.
       // We intentionally do NOT navigate the iframe to about:blank here;
       // the overlay blocks interaction, and the iframe content will be
       // replaced when loadUrl() is called on session resume.
