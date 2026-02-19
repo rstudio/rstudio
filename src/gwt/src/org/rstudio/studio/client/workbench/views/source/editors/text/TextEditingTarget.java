@@ -8600,7 +8600,7 @@ public class TextEditingTarget implements
       // Only enabled for R documents.
       if (fileType_ == null || !fileType_.isR())
          return false;
-      
+
       // Check document-specific preference first.
       if (docUpdateSentinel_.hasProperty(TextEditingTarget.REFORMAT_ON_SAVE))
          return docUpdateSentinel_.getBoolProperty(TextEditingTarget.REFORMAT_ON_SAVE, false);

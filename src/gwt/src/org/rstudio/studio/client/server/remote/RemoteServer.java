@@ -2548,7 +2548,7 @@ public class RemoteServer implements Server
             .add(path)
             .add(code)
             .get();
-      
+
       sendRequest(RPC_SCOPE, FORMAT_CODE, params, requestCallback);
    }
 

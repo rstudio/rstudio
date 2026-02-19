@@ -992,12 +992,12 @@ Error formatCode(
    };
    
    Error error;
-   
+
    std::string id, path, code;
    error = json::readParams(request.params, &id, &path, &code);
    if (error)
       return onError(error, ERROR_LOCATION);
-   
+
    // Resolve the document path if available
    FilePath documentPath;
    if (!path.empty())
@@ -1014,29 +1014,30 @@ Error formatCode(
    FilePath codeDir = data.codeDir;
    return formatDocumentImpl(codePath, continuation, [=]()
    {
+      // read from the tempfile we wrote
       std::string code;
       Error error = readStringFromFile(codePath, &code);
       if (error)
          LOG_ERROR(error);
-      
+
       // trim a final newline in the formatted selection
       if (boost::algorithm::ends_with(code, "\r\n"))
          code = code.substr(0, code.length() - 2);
       else if (boost::algorithm::ends_with(code, "\n"))
          code = code.substr(0, code.length() - 1);
-      
+
       // add back in the indent we computed (only if air formatter was used)
       if (!indent.empty())
       {
          code = indent + code;
          boost::algorithm::replace_all(code, "\n", "\n" + indent);
       }
-      
+
       // Clean up the temporary directory
       Error removeError = codeDir.removeIfExists();
       if (removeError)
          LOG_ERROR(removeError);
-      
+
       json::JsonRpcResponse response;
       response.setResult(code);
       return response;
