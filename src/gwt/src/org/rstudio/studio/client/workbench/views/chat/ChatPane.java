@@ -34,6 +34,8 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -293,11 +295,6 @@ public class ChatPane
       });
    }
 
-   /**
-    * Loads a URL in the iframe and stores it for later refresh.
-    *
-    * @param url The URL to load
-    */
    @Override
    public void loadUrl(String url)
    {
@@ -307,72 +304,75 @@ public class ChatPane
 
       if (suspendedOverlay_.getParent() == mainPanel_)
       {
-         if (pendingSwapTimer_ != null)
-         {
-            pendingSwapTimer_.cancel();
-            pendingSwapTimer_ = null;
-         }
-
-         if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
-         {
-            mainPanel_.remove(pendingFrame_);
-         }
-
-         RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
-         newFrame.setSize("100%", "100%");
-         pendingFrame_ = newFrame;
-
-         newFrame.getElement().getStyle().setVisibility(
-            com.google.gwt.dom.client.Style.Visibility.HIDDEN);
-
-         mainPanel_.add(newFrame);
-
-         if (updateNotificationPanel_.isVisible())
-         {
-            int height = updateNotificationPanel_.getElement().getScrollHeight();
-            mainPanel_.setWidgetTopBottom(newFrame, height, Unit.PX, 0, Unit.PX);
-         }
-         else
-         {
-            mainPanel_.setWidgetTopBottom(newFrame, 0, Unit.PX, 0, Unit.PX);
-         }
-         mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
-
-         newFrame.setOnLoadAction(() -> {
-            pendingSwapTimer_ = Timers.singleShot(350, () -> {
-               pendingSwapTimer_ = null;
-               if (mainPanel_.isAttached() &&
-                   newFrame.getParent() == mainPanel_ &&
-                   suspendedOverlay_.getParent() == mainPanel_)
-               {
-                  newFrame.getElement().getStyle().setVisibility(
-                     com.google.gwt.dom.client.Style.Visibility.VISIBLE);
-                  frame_.setUrl("about:blank");
-                  mainPanel_.remove(frame_);
-                  mainPanel_.remove(suspendedOverlay_);
-                  frame_ = newFrame;
-                  pendingFrame_ = null;
-               }
-               else
-               {
-                  if (newFrame.getParent() == mainPanel_)
-                  {
-                     mainPanel_.remove(newFrame);
-                  }
-                  if (pendingFrame_ == newFrame)
-                  {
-                     pendingFrame_ = null;
-                  }
-               }
-            });
-         });
-         newFrame.setUrl(url);
+         loadUrlFromSuspended(url);
       }
       else
       {
          frame_.setOnLoadAction(null);
          frame_.setUrl(url);
       }
+   }
+
+   private void loadUrlFromSuspended(String url)
+   {
+      if (pendingSwapTimer_ != null)
+      {
+         pendingSwapTimer_.cancel();
+         pendingSwapTimer_ = null;
+      }
+
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+      }
+
+      RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
+      newFrame.setSize("100%", "100%");
+      pendingFrame_ = newFrame;
+
+      newFrame.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+
+      mainPanel_.add(newFrame);
+
+      if (updateNotificationPanel_.isVisible())
+      {
+         int height = updateNotificationPanel_.getElement().getScrollHeight();
+         mainPanel_.setWidgetTopBottom(newFrame, height, Unit.PX, 0, Unit.PX);
+      }
+      else
+      {
+         mainPanel_.setWidgetTopBottom(newFrame, 0, Unit.PX, 0, Unit.PX);
+      }
+      mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
+
+      newFrame.setOnLoadAction(() -> {
+         pendingSwapTimer_ = Timers.singleShot(FRAME_SWAP_DELAY_MS, () -> {
+            pendingSwapTimer_ = null;
+            if (mainPanel_.isAttached() &&
+                newFrame.getParent() == mainPanel_ &&
+                suspendedOverlay_.getParent() == mainPanel_)
+            {
+               newFrame.getElement().getStyle().setVisibility(Visibility.VISIBLE);
+               frame_.setUrl("about:blank");
+               mainPanel_.remove(frame_);
+               mainPanel_.remove(suspendedOverlay_);
+               frame_ = newFrame;
+               pendingFrame_ = null;
+            }
+            else
+            {
+               if (newFrame.getParent() == mainPanel_)
+               {
+                  mainPanel_.remove(newFrame);
+               }
+               if (pendingFrame_ == newFrame)
+               {
+                  pendingFrame_ = null;
+               }
+            }
+         });
+      });
+      newFrame.setUrl(url);
    }
 
    @Override
@@ -1115,7 +1115,7 @@ public class ChatPane
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
    private RStudioThemedFrame pendingFrame_;
-   private com.google.gwt.user.client.Timer pendingSwapTimer_;
+   private Timer pendingSwapTimer_;
    private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
@@ -1141,5 +1141,6 @@ public class ChatPane
    private final Session session_;
    private final ChatServerOperations server_;
 
+   private static final int FRAME_SWAP_DELAY_MS = 350;
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
