@@ -307,6 +307,12 @@ public class ChatPane
 
       if (suspendedOverlay_.getParent() == mainPanel_)
       {
+         if (pendingSwapTimer_ != null)
+         {
+            pendingSwapTimer_.cancel();
+            pendingSwapTimer_ = null;
+         }
+
          if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
          {
             mainPanel_.remove(pendingFrame_);
@@ -333,12 +339,14 @@ public class ChatPane
          mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
 
          newFrame.setOnLoadAction(() -> {
-            Timers.singleShot(350, () -> {
+            pendingSwapTimer_ = Timers.singleShot(350, () -> {
+               pendingSwapTimer_ = null;
                if (newFrame.getParent() == mainPanel_ &&
                    suspendedOverlay_.getParent() == mainPanel_)
                {
                   newFrame.getElement().getStyle().setVisibility(
                      com.google.gwt.dom.client.Style.Visibility.VISIBLE);
+                  frame_.setUrl("about:blank");
                   mainPanel_.remove(frame_);
                   mainPanel_.remove(suspendedOverlay_);
                   frame_ = newFrame;
@@ -1089,6 +1097,7 @@ public class ChatPane
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
    private RStudioThemedFrame pendingFrame_;
+   private com.google.gwt.user.client.Timer pendingSwapTimer_;
    private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
