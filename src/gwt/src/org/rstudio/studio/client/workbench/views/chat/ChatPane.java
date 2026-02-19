@@ -315,6 +315,12 @@ public class ChatPane
 
    private void loadUrlFromSuspended(String url)
    {
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
+
       if (pendingSwapTimer_ != null)
       {
          pendingSwapTimer_.cancel();
@@ -347,7 +353,35 @@ public class ChatPane
       }
       mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
 
+      loadTimeoutTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            loadTimeoutTimer_ = null;
+            if (newFrame.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(newFrame);
+            }
+            if (pendingFrame_ == newFrame)
+            {
+               pendingFrame_ = null;
+            }
+            if (suspendedOverlay_.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(suspendedOverlay_);
+            }
+            frame_.setUrl(url);
+         }
+      };
+      loadTimeoutTimer_.schedule(FRAME_LOAD_TIMEOUT_MS);
+
       newFrame.setOnLoadAction(() -> {
+         if (loadTimeoutTimer_ != null)
+         {
+            loadTimeoutTimer_.cancel();
+            loadTimeoutTimer_ = null;
+         }
          pendingSwapTimer_ = Timers.singleShot(FRAME_SWAP_DELAY_MS, () -> {
             pendingSwapTimer_ = null;
             if (mainPanel_.isAttached() &&
@@ -880,6 +914,12 @@ public class ChatPane
       // We intentionally do NOT navigate the iframe to about:blank here;
       // the overlay blocks interaction, and the iframe content will be
       // replaced when loadUrl() is called on session resume.
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
+
       if (pendingSwapTimer_ != null)
       {
          pendingSwapTimer_.cancel();
@@ -1154,6 +1194,7 @@ public class ChatPane
    private RStudioThemedFrame frame_;
    private RStudioThemedFrame pendingFrame_;
    private Timer pendingSwapTimer_;
+   private Timer loadTimeoutTimer_;
    private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
@@ -1180,5 +1221,6 @@ public class ChatPane
    private final ChatServerOperations server_;
 
    private static final int FRAME_SWAP_DELAY_MS = 350;
+   private static final int FRAME_LOAD_TIMEOUT_MS = 15000;
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
