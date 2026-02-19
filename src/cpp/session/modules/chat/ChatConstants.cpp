@@ -30,6 +30,24 @@ const char* const kIndexFileName = "index.html";
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 const char* const kProtocolVersion = "8.0";
 
+// Capabilities: JSON-RPC methods that RStudio handles
+const std::vector<std::string>& rstudioCapabilities()
+{
+   static const std::vector<std::string> s_capabilities = {
+      "runtime/getActiveSession",
+      "runtime/getDetailedContext",
+      "runtime/executeCode",
+      "runtime/getConsoleContent",
+      "workspace/readFileContent",
+      "workspace/writeFileContent",
+      "workspace/editFileContent",
+      "workspace/insertIntoNewFile",
+      "workspace/insertAtCursor",
+      "ui/openDocument",
+   };
+   return s_capabilities;
+}
+
 } // namespace constants
 } // namespace chat
 } // namespace modules

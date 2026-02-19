@@ -17,6 +17,8 @@
 #define SESSION_CHAT_CONSTANTS_HPP
 
 #include <chrono>
+#include <string>
+#include <vector>
 
 namespace rstudio {
 namespace session {
@@ -52,6 +54,14 @@ constexpr size_t kMaxBufferSize = 1024;
 // 100ms perceived as "instant" by users (< perceptual threshold)
 // Reduces notification rate by ~10x for high-frequency output
 constexpr std::chrono::milliseconds kMaxDelay{100};
+
+// ============================================================================
+// Capability negotiation
+// ============================================================================
+
+// Returns the set of JSON-RPC methods that RStudio can handle
+// (i.e., requests/notifications that the peer may send to RStudio).
+const std::vector<std::string>& rstudioCapabilities();
 
 // ============================================================================
 // Restart limits

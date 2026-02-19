@@ -137,6 +137,16 @@ static json::Array s_focusedDocumentSelections;
 static std::string s_positAssistantVersion;
 
 // ============================================================================
+// Peer capability negotiation
+// ============================================================================
+// Whether the peer sent a capabilities field during the handshake.
+// If false, we assume full compatibility (return true for all methods).
+static bool s_peerSentCapabilities = false;
+
+// The set of JSON-RPC methods the peer advertised it can handle.
+static std::set<std::string> s_peerCapabilities;
+
+// ============================================================================
 // Project-specific assistant options (for chat provider)
 // ============================================================================
 static projects::RProjectAssistantOptions s_chatProjectOptions;
@@ -156,6 +166,18 @@ static const size_t kMaxQueuedExecutions = 10;
 
 // Maximum time (milliseconds) an execution can wait in queue before timing out
 static const int kMaxQueueWaitMs = 60000;  // 60 seconds
+
+// ============================================================================
+// Peer capability query
+// ============================================================================
+// Returns true if the peer can handle the given JSON-RPC method.
+// If the peer did not send capabilities, assumes full compatibility.
+bool peerHasCapability(const std::string& method)
+{
+   if (!s_peerSentCapabilities)
+      return true;
+   return s_peerCapabilities.count(method) > 0;
+}
 
 // ============================================================================
 // Feature availability helper
@@ -600,6 +622,12 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
                          const std::string& type,
                          const std::string& content)
 {
+   if (!peerHasCapability("runtime/executionOutput"))
+   {
+      DLOG("Peer does not support runtime/executionOutput, skipping");
+      return;
+   }
+
    json::Object notification;
    notification["jsonrpc"] = "2.0";
    notification["method"] = "runtime/executionOutput";
@@ -638,6 +666,12 @@ void requestBackendShutdown(core::system::ProcessOperations& ops,
                             const std::string& reason,
                             int gracePeriodMs = 5000)
 {
+   if (!peerHasCapability("lifecycle/requestShutdown"))
+   {
+      DLOG("Peer does not support lifecycle/requestShutdown, skipping");
+      return;
+   }
+
    json::Object notification;
    notification["jsonrpc"] = "2.0";
    notification["method"] = "lifecycle/requestShutdown";
@@ -2805,10 +2839,40 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    // Store the client version for later retrieval via chat_get_version RPC
    s_positAssistantVersion = clientVersion.empty() ? "unknown" : clientVersion;
 
-   // Build response
+   // Read optional capabilities from the peer
+   json::Array peerCaps;
+   Error error = json::readObject(params, "capabilities", peerCaps);
+   if (!error && peerCaps.getSize() > 0)
+   {
+      s_peerSentCapabilities = true;
+      s_peerCapabilities.clear();
+      for (const json::Value& cap : peerCaps)
+      {
+         if (cap.isString())
+            s_peerCapabilities.insert(cap.getString());
+      }
+      DLOG("Peer sent {} capabilities", s_peerCapabilities.size());
+   }
+   else
+   {
+      // Peer did not send capabilities -- assume full compatibility
+      s_peerSentCapabilities = false;
+      s_peerCapabilities.clear();
+      DLOG("Peer did not send capabilities, assuming full compatibility");
+   }
+
+   // Build response with RStudio's own capabilities
    json::Object result;
    result["protocolVersion"] = kProtocolVersion;
    result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
+
+   const auto& caps = chat_constants::rstudioCapabilities();
+   json::Array capsArray;
+   for (const std::string& cap : caps)
+   {
+      capsArray.push_back(cap);
+   }
+   result["capabilities"] = capsArray;
 
    sendJsonRpcResponse(ops, requestId, result);
 }
@@ -4165,6 +4229,8 @@ void onBackendExit(int exitCode)
    s_chatBackendPort = -1;
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
+   s_peerSentCapabilities = false;
+   s_peerCapabilities.clear();
    s_chatBackendRestartCount = kMaxRestartAttempts;
 
    // Notify client of backend exit (with correct crashed flag)
