@@ -48,22 +48,6 @@ const std::vector<std::string>& rstudioCapabilities()
    return s_capabilities;
 }
 
-// Baseline peer capabilities assumed for protocol 8.0 when the peer
-// does not include a capabilities field in the handshake.
-const std::set<std::string>& baselinePeerCapabilities()
-{
-   static const std::set<std::string> s_baseline = {
-      "logger/log",
-      "ui/showMessage",
-      "chat/setBusyStatus",
-      "runtime/cancelExecution",
-      "lifecycle/requestShutdown",
-      "runtime/sessionChanged",
-      "runtime/executionOutput",
-   };
-   return s_baseline;
-}
-
 } // namespace constants
 } // namespace chat
 } // namespace modules

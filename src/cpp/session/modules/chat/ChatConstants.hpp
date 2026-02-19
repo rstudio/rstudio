@@ -17,7 +17,6 @@
 #define SESSION_CHAT_CONSTANTS_HPP
 
 #include <chrono>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -63,10 +62,6 @@ constexpr std::chrono::milliseconds kMaxDelay{100};
 // Returns the set of JSON-RPC methods that RStudio can handle
 // (i.e., requests/notifications that the peer may send to RStudio).
 const std::vector<std::string>& rstudioCapabilities();
-
-// Returns the baseline capabilities assumed for a peer that does not
-// send a capabilities field during the handshake (protocol 8.0).
-const std::set<std::string>& baselinePeerCapabilities();
 
 // ============================================================================
 // Restart limits

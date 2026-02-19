@@ -140,7 +140,7 @@ static std::string s_positAssistantVersion;
 // Peer capability negotiation
 // ============================================================================
 // Whether the peer sent a capabilities field during the handshake.
-// If false, we assume the baseline set for the negotiated protocol version.
+// If false, we assume full compatibility (return true for all methods).
 static bool s_peerSentCapabilities = false;
 
 // The set of JSON-RPC methods the peer advertised it can handle.
@@ -171,7 +171,7 @@ static const int kMaxQueueWaitMs = 60000;  // 60 seconds
 // Peer capability query
 // ============================================================================
 // Returns true if the peer can handle the given JSON-RPC method.
-// If the peer did not send capabilities, assumes the baseline set.
+// If the peer did not send capabilities, assumes full compatibility.
 bool peerHasCapability(const std::string& method)
 {
    if (!s_peerSentCapabilities)
@@ -623,7 +623,10 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
                          const std::string& content)
 {
    if (!peerHasCapability("runtime/executionOutput"))
+   {
+      DLOG("Peer does not support runtime/executionOutput, skipping");
       return;
+   }
 
    json::Object notification;
    notification["jsonrpc"] = "2.0";
@@ -2852,10 +2855,10 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    }
    else
    {
-      // Peer did not send capabilities -- assume baseline for protocol version
+      // Peer did not send capabilities -- assume full compatibility
       s_peerSentCapabilities = false;
       s_peerCapabilities.clear();
-      DLOG("Peer did not send capabilities, assuming baseline");
+      DLOG("Peer did not send capabilities, assuming full compatibility");
    }
 
    // Build response with RStudio's own capabilities
@@ -4226,6 +4229,8 @@ void onBackendExit(int exitCode)
    s_chatBackendPort = -1;
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
+   s_peerSentCapabilities = false;
+   s_peerCapabilities.clear();
    s_chatBackendRestartCount = kMaxRestartAttempts;
 
    // Notify client of backend exit (with correct crashed flag)
