@@ -326,6 +326,8 @@ public class ChatPane
          mainPanel_.remove(pendingFrame_);
       }
 
+      final int savedScrollTop = getFrameScrollTop(frame_);
+
       RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
       newFrame.setSize("100%", "100%");
       pendingFrame_ = newFrame;
@@ -358,6 +360,7 @@ public class ChatPane
                mainPanel_.remove(suspendedOverlay_);
                frame_ = newFrame;
                pendingFrame_ = null;
+               setFrameScrollTop(newFrame, savedScrollTop);
             }
             else
             {
@@ -374,6 +377,41 @@ public class ChatPane
       });
       newFrame.setUrl(url);
    }
+
+   private native int getFrameScrollTop(RStudioThemedFrame frame) /*-{
+      try {
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return 0;
+         var els = win.document.querySelectorAll('*');
+         var max = 0;
+         for (var i = 0; i < els.length; i++) {
+            if (els[i].scrollTop > max) max = els[i].scrollTop;
+         }
+         return max;
+      } catch (e) {
+         return 0;
+      }
+   }-*/;
+
+   private native void setFrameScrollTop(RStudioThemedFrame frame, int scrollTop) /*-{
+      try {
+         if (scrollTop <= 0) return;
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return;
+         var els = win.document.querySelectorAll('*');
+         var target = null;
+         var maxScrollable = 0;
+         for (var i = 0; i < els.length; i++) {
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
+         }
+         if (target) target.scrollTop = scrollTop;
+      } catch (e) {
+      }
+   }-*/;
 
    @Override
    public void updateCachedUrl(String url)
