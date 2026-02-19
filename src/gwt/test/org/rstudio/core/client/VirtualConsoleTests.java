@@ -1253,7 +1253,7 @@ public class VirtualConsoleTests extends GWTTestCase
    
    public void testEraseInLineMode0Default()
    {
-      // \033[K with no param defaults to mode 0 (erase cursor to end of line)
+      // \033[K with no param defaults to mode 0 (erase from cursor to end of line)
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("Hello World\033[5D\033[K");
@@ -1310,6 +1310,46 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("Line1\nHello World\033[5D\033[K");
       Assert.assertEquals("Line1\nHello ", vc.toString());
+      Assert.assertEquals("<span>Line1\nHello </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode0MiddleLine()
+   {
+      // Mode 0 on a non-trailing line exercises the general-case space-overwrite path
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Line1\nHello World\nLine3\033[12D\033[K");
+      Assert.assertEquals("Line1\nHello      \nLine3", vc.toString());
+   }
+
+   public void testEraseInLineMode1AtEnd()
+   {
+      // Mode 1 with cursor at end of line exercises the Math.min clamp
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[1K");
+      Assert.assertEquals("           ", vc.toString());
+      Assert.assertEquals("<span>           </span>", ele.getInnerHTML());
+   }
+
+   public void testEraseInLineMode2MultiLine()
+   {
+      // Mode 2 on a middle line of a multi-line buffer
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Line1\nHello World\nLine3\033[16D\033[2K");
+      Assert.assertEquals("Line1\n           \nLine3", vc.toString());
+   }
+
+   public void testEraseInLineThenWrite()
+   {
+      // Verify cursor is not corrupted after erase -- writing resumes at correct position
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("Hello World\033[5D\033[K");
+      vc.submit("Earth");
+      Assert.assertEquals("Hello Earth", vc.toString());
+      Assert.assertEquals("<span>Hello Earth</span>", ele.getInnerHTML());
    }
 
    public void testEraseInLineProgressBar()

@@ -301,6 +301,8 @@ public class VirtualConsole
    /**
     * Erase in Line (EL) -- CSI K
     *
+    * The cursor position is not changed by this operation.
+    *
     * @param mode 0 = erase from cursor to end of line (default),
     *             1 = erase from beginning of line to cursor (inclusive),
     *             2 = erase entire line
@@ -355,7 +357,9 @@ public class VirtualConsole
 
       // General case: overwrite with spaces
       int savedCursor = cursor_;
+      HyperlinkInfo savedHyperlink = hyperlink_;
       cursor_ = eraseStart;
+      hyperlink_ = null;
 
       int eraseLength = eraseEnd - eraseStart;
       StringBuilder spaces = new StringBuilder(eraseLength);
@@ -364,6 +368,7 @@ public class VirtualConsole
 
       text(spaces.toString(), null, false/*forceNewRange*/);
       cursor_ = savedCursor;
+      hyperlink_ = savedHyperlink;
    }
 
    /**
