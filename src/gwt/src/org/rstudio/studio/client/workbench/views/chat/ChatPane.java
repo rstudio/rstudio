@@ -423,6 +423,7 @@ public class ChatPane
          }
          return max;
       } catch (e) {
+         console.error("Error reading frame scroll position:", e);
          return 0;
       }
    }-*/;
@@ -444,6 +445,7 @@ public class ChatPane
          }
          if (target) target.scrollTop = scrollTop;
       } catch (e) {
+         console.error("Error restoring frame scroll position:", e);
       }
    }-*/;
 
