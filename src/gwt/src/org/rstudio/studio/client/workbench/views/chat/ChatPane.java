@@ -417,11 +417,16 @@ public class ChatPane
          var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
          if (!win || !win.document) return 0;
          var els = win.document.querySelectorAll('*');
-         var max = 0;
+         var target = null;
+         var maxScrollable = 0;
          for (var i = 0; i < els.length; i++) {
-            if (els[i].scrollTop > max) max = els[i].scrollTop;
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
          }
-         return max;
+         return target ? target.scrollTop : 0;
       } catch (e) {
          console.error("Error reading frame scroll position:", e);
          return 0;
