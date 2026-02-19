@@ -34,8 +34,10 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -95,6 +97,12 @@ public class ChatPane
             {
                frame_.injectThemeVariables();
             }
+
+            // Update suspended overlay color for new theme
+            if (suspendedOverlay_ != null)
+            {
+               updateSuspendedOverlayStyle();
+            }
          }
       });
    }
@@ -127,6 +135,11 @@ public class ChatPane
       // Store initial message to show after frame loads
       pendingMessage_ = generateMessageHTML(constants_.checkingInstallationMessage());
 
+      // Create suspended overlay (added/removed from panel on suspend/resume)
+      suspendedOverlay_ = new HTML();
+      suspendedOverlay_.setSize("100%", "100%");
+      updateSuspendedOverlayStyle();
+
       // Add update notification and frame to layout
       mainPanel_.add(updateNotificationPanel_);
       mainPanel_.add(frame_);
@@ -139,6 +152,13 @@ public class ChatPane
       updateFrameLayout();
 
       return mainPanel_;
+   }
+
+   private void updateSuspendedOverlayStyle()
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
    }
 
    private void updateFrameLayout()
@@ -275,23 +295,164 @@ public class ChatPane
       });
    }
 
-   /**
-    * Loads a URL in the iframe and stores it for later refresh.
-    *
-    * @param url The URL to load
-    */
    @Override
    public void loadUrl(String url)
    {
-      // Clear any pending load action from updateFrameContent() to prevent
-      // it from overwriting the URL content when it fires
-      frame_.setOnLoadAction(null);
-
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
-      frame_.setUrl(url);
+
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         loadUrlFromSuspended(url);
+      }
+      else
+      {
+         frame_.setOnLoadAction(null);
+         frame_.setUrl(url);
+      }
    }
+
+   private void loadUrlFromSuspended(String url)
+   {
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
+
+      if (pendingSwapTimer_ != null)
+      {
+         pendingSwapTimer_.cancel();
+         pendingSwapTimer_ = null;
+      }
+
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+      }
+
+      final int savedScrollTop = getFrameScrollTop(frame_);
+
+      RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
+      newFrame.setSize("100%", "100%");
+      pendingFrame_ = newFrame;
+
+      newFrame.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+
+      mainPanel_.add(newFrame);
+
+      if (updateNotificationPanel_.isVisible())
+      {
+         int height = updateNotificationPanel_.getElement().getScrollHeight();
+         mainPanel_.setWidgetTopBottom(newFrame, height, Unit.PX, 0, Unit.PX);
+      }
+      else
+      {
+         mainPanel_.setWidgetTopBottom(newFrame, 0, Unit.PX, 0, Unit.PX);
+      }
+      mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
+
+      loadTimeoutTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            loadTimeoutTimer_ = null;
+            if (newFrame.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(newFrame);
+            }
+            if (pendingFrame_ == newFrame)
+            {
+               pendingFrame_ = null;
+            }
+            if (suspendedOverlay_.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(suspendedOverlay_);
+            }
+            frame_.setUrl(url);
+         }
+      };
+      loadTimeoutTimer_.schedule(FRAME_LOAD_TIMEOUT_MS);
+
+      newFrame.setOnLoadAction(() -> {
+         if (loadTimeoutTimer_ != null)
+         {
+            loadTimeoutTimer_.cancel();
+            loadTimeoutTimer_ = null;
+         }
+         pendingSwapTimer_ = Timers.singleShot(FRAME_SWAP_DELAY_MS, () -> {
+            pendingSwapTimer_ = null;
+            if (mainPanel_.isAttached() &&
+                newFrame.getParent() == mainPanel_ &&
+                suspendedOverlay_.getParent() == mainPanel_)
+            {
+               newFrame.getElement().getStyle().setVisibility(Visibility.VISIBLE);
+               frame_.setUrl("about:blank");
+               mainPanel_.remove(frame_);
+               mainPanel_.remove(suspendedOverlay_);
+               frame_ = newFrame;
+               pendingFrame_ = null;
+               setFrameScrollTop(newFrame, savedScrollTop);
+            }
+            else
+            {
+               if (newFrame.getParent() == mainPanel_)
+               {
+                  mainPanel_.remove(newFrame);
+               }
+               if (pendingFrame_ == newFrame)
+               {
+                  pendingFrame_ = null;
+               }
+            }
+         });
+      });
+      newFrame.setUrl(url);
+   }
+
+   private native int getFrameScrollTop(RStudioThemedFrame frame) /*-{
+      try {
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return 0;
+         var els = win.document.querySelectorAll('*');
+         var target = null;
+         var maxScrollable = 0;
+         for (var i = 0; i < els.length; i++) {
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
+         }
+         return target ? target.scrollTop : 0;
+      } catch (e) {
+         console.error("Error reading frame scroll position:", e);
+         return 0;
+      }
+   }-*/;
+
+   private native void setFrameScrollTop(RStudioThemedFrame frame, int scrollTop) /*-{
+      try {
+         if (scrollTop <= 0) return;
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return;
+         var els = win.document.querySelectorAll('*');
+         var target = null;
+         var maxScrollable = 0;
+         for (var i = 0; i < els.length; i++) {
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
+         }
+         if (target) target.scrollTop = scrollTop;
+      } catch (e) {
+         console.error("Error restoring frame scroll position:", e);
+      }
+   }-*/;
 
    @Override
    public void updateCachedUrl(String url)
@@ -756,73 +917,38 @@ public class ChatPane
    @Override
    public void showSuspendedMessage()
    {
-      String html = generateSuspendedMessageHTML();
-      updateFrameContent(html);
-   }
+      // Add a semi-transparent overlay to dim the chat UI and block interaction.
+      // We intentionally do NOT navigate the iframe to about:blank here;
+      // the overlay blocks interaction, and the iframe content will be
+      // replaced when loadUrl() is called on session resume.
+      frame_.setOnLoadAction(null);
 
-   private String generateSuspendedMessageHTML()
-   {
-      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
-      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
-      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
-      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
-      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
 
-      StringBuilder html = new StringBuilder();
-      html.append("<!DOCTYPE html>");
-      html.append("<html lang='");
-      html.append(LocaleCookie.getUiLanguage());
-      html.append("'>");
-      html.append("<head>");
-      html.append("<meta charset='UTF-8'>");
-      html.append("<style>");
-      html.append("html, body {");
-      html.append("  margin: 0;");
-      html.append("  padding: 0;");
-      html.append("  width: 100%;");
-      html.append("  height: 100%;");
-      html.append("  overflow: hidden;");
-      html.append("}");
-      html.append("body {");
-      html.append("  display: flex;");
-      html.append("  align-items: center;");
-      html.append("  justify-content: center;");
-      html.append("  font-family: ");
-      html.append(ThemeFonts.getProportionalFont());
-      html.append(";");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
-      html.append("}");
-      html.append(".message {");
-      html.append("  text-align: center;");
-      html.append("  padding: 40px;");
-      html.append("}");
-      html.append("h2 {");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  margin-bottom: 16px;");
-      html.append("}");
-      html.append("p {");
-      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
-      html.append("  margin: 8px 0;");
-      html.append("}");
-      html.append("</style>");
-      html.append("</head>");
-      html.append("<body>");
-      html.append("<div class='message'>");
-      html.append("<h2>");
-      html.append(constants_.chatSessionSuspendedTitle());
-      html.append("</h2>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage1());
-      html.append("</p>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage2());
-      html.append("</p>");
-      html.append("</div>");
-      html.append("</body>");
-      html.append("</html>");
+      if (pendingSwapTimer_ != null)
+      {
+         pendingSwapTimer_.cancel();
+         pendingSwapTimer_ = null;
+      }
 
-      return html.toString();
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+         pendingFrame_ = null;
+      }
+
+      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
+
+      if (suspendedOverlay_.getParent() != mainPanel_)
+      {
+         mainPanel_.add(suspendedOverlay_);
+         mainPanel_.setWidgetLeftRight(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+         mainPanel_.setWidgetTopBottom(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+      }
    }
 
    private String generateCrashedMessageHTML(int exitCode)
@@ -1045,7 +1171,8 @@ public class ChatPane
       // Refreshing HTML content can cause timing issues with pending load handlers
       if (currentStatus_ == ChatPresenter.Display.Status.READY &&
           contentType_ == ContentType.URL &&
-          currentUrl_ != null)
+          currentUrl_ != null &&
+          pendingFrame_ == null)
       {
          frame_.setUrl(currentUrl_);
       }
@@ -1075,6 +1202,10 @@ public class ChatPane
 
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
+   private RStudioThemedFrame pendingFrame_;
+   private Timer pendingSwapTimer_;
+   private Timer loadTimeoutTimer_;
+   private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
@@ -1099,5 +1230,7 @@ public class ChatPane
    private final Session session_;
    private final ChatServerOperations server_;
 
+   private static final int FRAME_SWAP_DELAY_MS = 350;
+   private static final int FRAME_LOAD_TIMEOUT_MS = 15000;
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }
