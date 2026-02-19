@@ -1169,7 +1169,8 @@ public class ChatPane
       // Refreshing HTML content can cause timing issues with pending load handlers
       if (currentStatus_ == ChatPresenter.Display.Status.READY &&
           contentType_ == ContentType.URL &&
-          currentUrl_ != null)
+          currentUrl_ != null &&
+          pendingFrame_ == null)
       {
          frame_.setUrl(currentUrl_);
       }
