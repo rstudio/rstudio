@@ -30,6 +30,40 @@ const char* const kIndexFileName = "index.html";
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 const char* const kProtocolVersion = "8.0";
 
+// Capabilities: JSON-RPC methods that RStudio handles
+const std::vector<std::string>& rstudioCapabilities()
+{
+   static const std::vector<std::string> s_capabilities = {
+      "runtime/getActiveSession",
+      "runtime/getDetailedContext",
+      "runtime/executeCode",
+      "runtime/getConsoleContent",
+      "workspace/readFileContent",
+      "workspace/writeFileContent",
+      "workspace/editFileContent",
+      "workspace/insertIntoNewFile",
+      "workspace/insertAtCursor",
+      "ui/openDocument",
+   };
+   return s_capabilities;
+}
+
+// Baseline peer capabilities assumed for protocol 8.0 when the peer
+// does not include a capabilities field in the handshake.
+const std::set<std::string>& baselinePeerCapabilities()
+{
+   static const std::set<std::string> s_baseline = {
+      "logger/log",
+      "ui/showMessage",
+      "chat/setBusyStatus",
+      "runtime/cancelExecution",
+      "lifecycle/requestShutdown",
+      "runtime/sessionChanged",
+      "runtime/executionOutput",
+   };
+   return s_baseline;
+}
+
 } // namespace constants
 } // namespace chat
 } // namespace modules
