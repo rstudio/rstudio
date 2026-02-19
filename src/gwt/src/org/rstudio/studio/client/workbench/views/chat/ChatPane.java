@@ -341,7 +341,8 @@ public class ChatPane
          newFrame.setOnLoadAction(() -> {
             pendingSwapTimer_ = Timers.singleShot(350, () -> {
                pendingSwapTimer_ = null;
-               if (newFrame.getParent() == mainPanel_ &&
+               if (mainPanel_.isAttached() &&
+                   newFrame.getParent() == mainPanel_ &&
                    suspendedOverlay_.getParent() == mainPanel_)
                {
                   newFrame.getElement().getStyle().setVisibility(
