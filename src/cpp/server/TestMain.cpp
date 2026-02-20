@@ -103,6 +103,16 @@ rstudio::core::log::LogLevel parseLogLevel(const std::string& level)
       return rstudio::core::log::LogLevel::INFO;
    else if (level == "ERR" || level == "ERROR")
       return rstudio::core::log::LogLevel::ERR;
+   else if (level == "TRACE")
+      return rstudio::core::log::LogLevel::TRACE;
+   else if (level == "OFF")
+      return rstudio::core::log::LogLevel::OFF;
+
+   std::cerr << "WARNING: Unrecognized log level '" << level
+             << "', defaulting to WARN. "
+             << "Valid: OFF, ERR, WARN, INFO, DEBUG, TRACE"
+             << std::endl;
+
    return rstudio::core::log::LogLevel::WARN;
 }
 
@@ -143,6 +153,7 @@ int main(int argc, char* argv[])
          ++i;
       }
    }
+   argv[argc] = nullptr;
 
    // Fall back to env var if --log was not specified
    if (!enableLog)
@@ -159,7 +170,10 @@ int main(int argc, char* argv[])
    {
       std::string programId = "rserver-tests";
       log::setProgramId(programId);
-      system::initializeStderrLog(programId, logLevel, true);
+      Error error = system::initializeStderrLog(programId, logLevel, true);
+      if (error)
+         std::cerr << "WARNING: Failed to initialize logging: "
+                   << error.getMessage() << std::endl;
    }
 
    testing::InitGoogleTest(&argc, argv);

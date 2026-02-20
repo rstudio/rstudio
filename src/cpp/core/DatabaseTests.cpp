@@ -586,7 +586,7 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
 
    std::string connectionStr;
 
-   // There urls on invalid because they don't include passwords and we don't have ssl support.
+   // There urls are invalid because they don't include passwords and we don't have ssl support.
    options.connectionUri = "postgres://localhost";
    EXPECT_TRUE(validateOptions(options, &connectionStr));
 
