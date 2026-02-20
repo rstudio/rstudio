@@ -78,10 +78,11 @@ core::database::PostgresqlConnectionOptions postgresConnectionOptions()
 {
    PostgresqlConnectionOptions options;
    options.connectionTimeoutSeconds = 10;
-   options.database = "rstudio-test";
+   options.database = "rstudio_test";
    options.host = "localhost";
    options.username = "postgres";
-   options.password = "postgres";
+   const char* dbPass = std::getenv("RSTUDIO_TEST_DB_PASS");
+   options.password = (dbPass) ? dbPass : "postgres";
 
    return options;
 }
@@ -584,11 +585,11 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_TRUE(validateOptions(options, nullptr));
 
    std::string connectionStr;
-   
+
    // There urls on invalid because they don't include passwords and we don't have ssl support.
    options.connectionUri = "postgres://localhost";
    EXPECT_TRUE(validateOptions(options, &connectionStr));
-   
+
    options.connectionUri = "postgres://joe@myhost/";
    EXPECT_TRUE(validateOptions(options, &connectionStr));
 
@@ -698,7 +699,7 @@ TEST_F(DatabaseTestsFixture, WithoutputReturnsErrorWhenValueIsNull)
 
    bool dataReturned = false;
    error = sqliteConnection->execute(query, &dataReturned);
-   
+
    // The query fails with error for selecting a null value without a null indicator
    ASSERT_TRUE(error) << "Expected error when retrieving NULL value without indicator, but got success. Error message: " << error.getMessage();
 }
@@ -764,7 +765,7 @@ TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
 
    boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
    ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-   
+
    Query select25 = connection2->query("select id, text from Test where id = 25")
          .withOutput(rowId)
          .withOutput(rowText);
@@ -774,7 +775,6 @@ TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
    ASSERT_FALSE(error) << "Failed to execute second query: " << error.getMessage();
    ASSERT_TRUE(dataReturned) << "Expected data for id=25";
 }
-
 } // namespace tests
 } // namespace core
 } // namespace rstudio

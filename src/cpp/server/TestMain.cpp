@@ -18,6 +18,9 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 
+#include <core/Log.hpp>
+#include <core/system/System.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace rstudio::core;
@@ -88,8 +91,77 @@ boost::shared_ptr<http::AsyncServer> server()
 } // namespace server
 } // namespace rstudio
 
+namespace {
+
+// Parse a log level string (DEBUG, INFO, WARN, ERR/ERROR) into a LogLevel.
+// Returns WARN as default if the string is empty or unrecognized.
+rstudio::core::log::LogLevel parseLogLevel(const std::string& level)
+{
+   if (level == "DEBUG")
+      return rstudio::core::log::LogLevel::DEBUG;
+   else if (level == "INFO")
+      return rstudio::core::log::LogLevel::INFO;
+   else if (level == "ERR" || level == "ERROR")
+      return rstudio::core::log::LogLevel::ERR;
+   return rstudio::core::log::LogLevel::WARN;
+}
+
+} // anonymous namespace
+
 int main(int argc, char* argv[])
 {
+   // Enable stderr logging with --log[=LEVEL] (e.g. --log, --log=DEBUG, --log=INFO).
+   // Without --log, no logging is initialized so automation output stays clean.
+   // The RSTUDIO_TEST_LOG_LEVEL env var also works (--log flag takes priority).
+   // Recognized levels: DEBUG, INFO, WARN (default), ERR/ERROR.
+   using namespace rstudio::core;
+   bool enableLog = false;
+   log::LogLevel logLevel = log::LogLevel::WARN;
+
+   // Scan argv for --log or --log=LEVEL, removing it so gtest doesn't see it.
+   for (int i = 1; i < argc; )
+   {
+      std::string arg(argv[i]);
+      if (arg == "--log")
+      {
+         enableLog = true;
+         // Shift remaining args down
+         for (int j = i; j < argc - 1; ++j)
+            argv[j] = argv[j + 1];
+         --argc;
+      }
+      else if (arg.substr(0, 6) == "--log=")
+      {
+         enableLog = true;
+         logLevel = parseLogLevel(arg.substr(6));
+         for (int j = i; j < argc - 1; ++j)
+            argv[j] = argv[j + 1];
+         --argc;
+      }
+      else
+      {
+         ++i;
+      }
+   }
+
+   // Fall back to env var if --log was not specified
+   if (!enableLog)
+   {
+      const char* logLevelEnv = std::getenv("RSTUDIO_TEST_LOG_LEVEL");
+      if (logLevelEnv)
+      {
+         enableLog = true;
+         logLevel = parseLogLevel(std::string(logLevelEnv));
+      }
+   }
+
+   if (enableLog)
+   {
+      std::string programId = "rserver-tests";
+      log::setProgramId(programId);
+      system::initializeStderrLog(programId, logLevel, true);
+   }
+
    testing::InitGoogleTest(&argc, argv);
    return RUN_ALL_TESTS();
 }
