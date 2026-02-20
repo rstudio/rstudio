@@ -661,9 +661,6 @@ public class ChatPane
       html.append(constants_.chatLearnMore());
       html.append("</a>");
       html.append("</p>");
-      html.append("<p class='detail'>");
-      html.append(constants_.chatNotInstalledBetaNotice());
-      html.append("</p>");
       html.append("<hr>");
       html.append("<button id='install-btn' class='chatIframeButton'>");
       html.append(constants_.chatInstallButton());
