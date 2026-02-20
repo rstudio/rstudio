@@ -654,6 +654,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // python virtual environments
       "/virtualenv/",
       "/venv/",
+
+      // python bytecode cache
+      "/__pycache__/",
       
       // mostly for internal use
       "/RStudio.app/",
