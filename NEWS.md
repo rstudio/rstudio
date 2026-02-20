@@ -1,6 +1,7 @@
 ## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
+- ([#17070](https://github.com/rstudio/rstudio/issues/17070)): Added support for the ANSI Erase in Line (EL / CSI K) escape sequence in the console, improving rendering of progress bars and status updates from CLI tools
 - ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors
 - ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
 - (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
