@@ -119,24 +119,20 @@ public class AceEditorBackgroundLinkHighlighter
          }
       };
 
-
       highlighters_ = new ArrayList<>();
-      
+      toggleableHandlers_ = new HandlerRegistrations();
+
+      // persistent handler: pref binding kept for object lifetime
       handlers_ = new HandlerRegistrations(
-         editor_.addAttachHandler(this),
-         editor_.addDocumentChangedHandler(this),
-         editor_.addEditorModeChangedHandler(this),
-         editor_.addMouseMoveHandler(this),
-         editor_.addCommandClickHandler(this)
+         userPrefs_.highlightWebLink().bind((Boolean enabled) ->
+         {
+            if (editor_ != null)
+               refreshHighlighters(editor_.getModeId());
+         })
       );
 
-      handlers_.add(userPrefs_.highlightWebLink().bind((Boolean enabled) ->
-      {
-         if (editor_ != null)
-            refreshHighlighters(editor_.getModeId());
-      }));
-
-      refreshHighlighters(editor_.getModeId());
+      // register toggleable handlers and kick off initial highlighting
+      attach();
    }
 
    private void refreshHighlighters(String mode)
@@ -570,36 +566,52 @@ public class AceEditorBackgroundLinkHighlighter
    @Override
    public void onAttachOrDetach(AttachEvent event)
    {
-      if (event.isAttached())
+      // no-op: attach/detach lifecycle is now driven by AceEditor
+   }
+
+   public void attach()
+   {
+      // remove any previously registered toggleable handlers
+      toggleableHandlers_.detach();
+
+      // register toggleable handlers (document, mouse, mode, click)
+      toggleableHandlers_ = new HandlerRegistrations(
+         editor_.addDocumentChangedHandler(this),
+         editor_.addEditorModeChangedHandler(this),
+         editor_.addMouseMoveHandler(this),
+         editor_.addCommandClickHandler(this)
+      );
+
+      // register native preview handler for modifier-key detection
+      if (previewHandler_ != null)
+         previewHandler_.removeHandler();
+
+      previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
-         previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
          {
-            @Override
-            public void onPreviewNativeEvent(NativePreviewEvent preview)
+            int type = preview.getTypeInt();
+            if (type == Event.ONKEYDOWN)
             {
-               int type = preview.getTypeInt();
-               if (type == Event.ONKEYDOWN)
-               {
-                  int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
-                  beginDetectClickTarget(modifier);
-               }
-               else if (type == Event.ONKEYUP)
-               {
-                  endDetectClickTarget();
-               }
+               int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
+               beginDetectClickTarget(modifier);
             }
-         });
-      }
-      else
-      {
-         detach();
-      }
+            else if (type == Event.ONKEYUP)
+            {
+               endDetectClickTarget();
+            }
+         }
+      });
+
+      // refresh link highlighters
+      refreshHighlighters(editor_.getModeId());
    }
 
    public void detach()
    {
       timer_.cancel();
-      handlers_.detach();
+      toggleableHandlers_.detach();
 
       if (previewHandler_ != null)
       {
@@ -761,6 +773,7 @@ public class AceEditorBackgroundLinkHighlighter
    private final List<Highlighter> highlighters_;
    private final Timer timer_;
    private final HandlerRegistrations handlers_;
+   private HandlerRegistrations toggleableHandlers_;
 
    private SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private int nextHighlightStart_;

@@ -145,6 +145,19 @@ public abstract class DelegatingCompletionManager
    }
 
    @Override
+   public void attach()
+   {
+      MapUtil.forEach(completionManagerMap_, new MapUtil.ForEachCommand<Mode, CompletionManager>()
+      {
+         @Override
+         public void execute(Mode mode, CompletionManager manager)
+         {
+            manager.attach();
+         }
+      });
+   }
+
+   @Override
    public void detach()
    {
       MapUtil.forEach(completionManagerMap_, new MapUtil.ForEachCommand<Mode, CompletionManager>()
@@ -155,7 +168,7 @@ public abstract class DelegatingCompletionManager
             manager.detach();
          }
       });
-      
+
       if (snippets_ != null)
          snippets_.detach();
    }

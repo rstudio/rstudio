@@ -51,7 +51,6 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -498,6 +497,11 @@ public abstract class CompletionManagerBase
       invalidatePendingRequests();
    }
    
+   public void attach()
+   {
+      addHandlers();
+   }
+
    public void detach()
    {
       removeHandlers();
@@ -1000,11 +1004,7 @@ public abstract class CompletionManagerBase
    private HandlerRegistration[] defaultHandlers()
    {
       return new HandlerRegistration[] {
-            
-            docDisplay_.addAttachHandler((AttachEvent event) -> {
-               toggleHandlers(event.isAttached());
-            }),
-            
+
             docDisplay_.addBlurHandler((BlurEvent event) -> {
                onBlur();
             }),

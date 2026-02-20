@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.JsVectorString;
 import org.rstudio.core.client.StringUtil;
@@ -116,6 +117,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -273,8 +275,8 @@ public class AceEditorWidget extends Composite
          }
       });
 
-      aceEventHandlers_ = new ArrayList<>();
-      globalEventHandlers_ = new ArrayList<>();
+      aceEventHandlers_ = new HandlerRegistrations();
+      globalEventHandlers_ = new HandlerRegistrations();
 
       addAttachHandler(new AttachEvent.Handler()
       {
@@ -282,131 +284,191 @@ public class AceEditorWidget extends Composite
          public void onAttachOrDetach(AttachEvent event)
          {
             if (event.isAttached())
-            {
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "undo",
-                     new CommandWithArg<Void>()
-                     {
-                        public void execute(Void arg)
-                        {
-                           fireEvent(new UndoRedoEvent(false));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "redo",
-                     new CommandWithArg<Void>()
-                     {
-                        public void execute(Void arg)
-                        {
-                           fireEvent(new UndoRedoEvent(true));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "paste",
-                     new CommandWithArg<String>()
-                     {
-                        public void execute(String text)
-                        {
-                           fireEvent(new PasteEvent(text));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "mousemove",
-                     new CommandWithArg<AceMouseEventNative>()
-                     {
-                        @Override
-                        public void execute(AceMouseEventNative event)
-                        {
-                           fireEvent(new AceMouseMoveEvent(event));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "mousedown",
-                     new CommandWithArg<AceMouseEventNative>()
-                     {
-                        @Override
-                        public void execute(AceMouseEventNative event)
-                        {
-                           fireEvent(new AceClickEvent(event));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_.getRenderer(),
-                     "afterRender",
-                     new CommandWithArg<JavaScriptObject>()
-                     {
-                        @Override
-                        public void execute(JavaScriptObject event)
-                        {
-                           fireEvent(new RenderFinishedEvent());
-                           isRendered_ = true;
-                           events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
-                        }
-                     }));
-
-               aceEventHandlers_.add(AceEditorNative.addEventListener(
-                     editor_,
-                     "changeSelection",
-                     new CommandWithArg<Void>()
-                     {
-                        @Override
-                        public void execute(Void event)
-                        {
-                           fireEvent(new AceSelectionChangedEvent());
-                        }
-                     }));
-            }
+               attach();
             else
-            {
-               for (HandlerRegistration registration : aceEventHandlers_)
-                  registration.removeHandler();
-               aceEventHandlers_.clear();
-
-               for (HandlerRegistration registration : globalEventHandlers_)
-                  registration.removeHandler();
-               globalEventHandlers_.clear();
-            }
+               detach();
          }
       });
 
-      globalEventHandlers_.add(events_.addHandler(EditEvent.TYPE, this));
-
-      globalEventHandlers_.add(events_.addHandler(
-            RStudioCommandExecutedFromShortcutEvent.TYPE,
-            new RStudioCommandExecutedFromShortcutEvent.Handler()
-            {
-               @Override
-               public void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event)
-               {
-                  clearKeyBuffers(editor_);
-               }
-            }));
-
-      globalEventHandlers_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
-      {
-         @Override
-         public void onEditorThemeChanged(EditorThemeChangedEvent event)
-         {
-            editor_.setTheme(event.getTheme());
-         }
-      }));
-      
       if (BrowseCap.isElectron())
       {
          addDesktopNativePasteHandler(getElement());
       }
    }
-   
+
+   public void attach()
+   {
+      if (isAttached_)
+         return;
+      isAttached_ = true;
+
+      attachTimer_.schedule(0);
+   }
+
+   private void attachImpl()
+   {
+      aceEventHandlers_.add(
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "undo",
+               new CommandWithArg<Void>()
+               {
+                  public void execute(Void arg)
+                  {
+                     fireEvent(new UndoRedoEvent(false));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "redo",
+               new CommandWithArg<Void>()
+               {
+                  public void execute(Void arg)
+                  {
+                     fireEvent(new UndoRedoEvent(true));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "paste",
+               new CommandWithArg<String>()
+               {
+                  public void execute(String text)
+                  {
+                     fireEvent(new PasteEvent(text));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "mousemove",
+               new CommandWithArg<AceMouseEventNative>()
+               {
+                  @Override
+                  public void execute(AceMouseEventNative event)
+                  {
+                     fireEvent(new AceMouseMoveEvent(event));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "mousedown",
+               new CommandWithArg<AceMouseEventNative>()
+               {
+                  @Override
+                  public void execute(AceMouseEventNative event)
+                  {
+                     fireEvent(new AceClickEvent(event));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_.getRenderer(),
+               "afterRender",
+               new CommandWithArg<JavaScriptObject>()
+               {
+                  @Override
+                  public void execute(JavaScriptObject event)
+                  {
+                     fireEvent(new RenderFinishedEvent());
+                     isRendered_ = true;
+                     events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
+                  }
+               }),
+
+         AceEditorNative.addEventListener(
+               editor_,
+               "changeSelection",
+               new CommandWithArg<Void>()
+               {
+                  @Override
+                  public void execute(Void event)
+                  {
+                     fireEvent(new AceSelectionChangedEvent());
+                  }
+               }),
+
+         // This command binding has to be an anonymous inner class (not a lambda)
+         // due to an issue with using lambda bindings with Ace, which sometimes
+         // results in a blocking exception on startup in devmode.
+         uiPrefs_.tabKeyMoveFocus().bind(new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean movesFocus)
+            {
+               if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
+               {
+                  editor_.setTabMovesFocus(movesFocus);
+                  tabMovesFocus_ = movesFocus;
+               }
+            }
+         }),
+
+         uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
+         {
+            @Override
+            public void execute(Integer scrollPercentage)
+            {
+               double scrollRatio = ((double) scrollPercentage) / 100.0;
+               syncScrollSpeed(scrollRatio);
+            }
+         })
+      );
+
+      globalEventHandlers_.add(
+
+         events_.addHandler(EditEvent.TYPE, this),
+
+         events_.addHandler(
+               RStudioCommandExecutedFromShortcutEvent.TYPE,
+               new RStudioCommandExecutedFromShortcutEvent.Handler()
+               {
+                  @Override
+                  public void onRStudioCommandExecutedFromShortcut(RStudioCommandExecutedFromShortcutEvent event)
+                  {
+                     clearKeyBuffers(editor_);
+                  }
+               }),
+
+         events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+         {
+            @Override
+            public void onEditorThemeChanged(EditorThemeChangedEvent event)
+            {
+               editor_.setTheme(event.getTheme());
+            }
+         })
+      );
+
+      // sync initial tab key behavior
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         if (uiPrefs_.tabKeyMoveFocus().getValue())
+         {
+            editor_.setTabMovesFocus(true);
+            tabMovesFocus_ = true;
+         }
+      }
+
+      // sync initial scroll speed
+      syncScrollSpeed();
+   }
+
+   public void detach()
+   {
+      if (!isAttached_)
+         return;
+      isAttached_ = false;
+
+      attachTimer_.cancel();
+      aceEventHandlers_.detach();
+      globalEventHandlers_.detach();
+   }
+
    private final native void addDesktopNativePasteHandler(Element el)
    /*-{
       var self = this;
@@ -629,46 +691,6 @@ public class AceEditorWidget extends Composite
    protected void onLoad()
    {
       super.onLoad();
-
-      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
-      {
-         // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
-         if (uiPrefs_.tabKeyMoveFocus().getValue())
-         {
-            editor_.setTabMovesFocus(true);
-            tabMovesFocus_ = true;
-         }
-      }
-
-      // This command binding has to be an anonymous inner class (not a lambda)
-      // due to an issue with using lambda bindings with Ace, which sometimes
-      // results in a blocking exception on startup in devmode.
-      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(
-            new CommandWithArg<Boolean>()
-      {
-         @Override
-         public void execute(Boolean movesFocus)
-         {
-            if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
-            {
-               editor_.setTabMovesFocus(movesFocus);
-               tabMovesFocus_ = movesFocus;
-            }
-         }
-      }));
-      
-      syncScrollSpeed();
-      aceEventHandlers_.add(
-            uiPrefs_.editorScrollMultiplier().bind(new CommandWithArg<Integer>()
-            {
-               @Override
-               public void execute(Integer scrollPercentage)
-               {
-                  double scrollRatio = ((double) scrollPercentage) / 100.0;
-                  syncScrollSpeed(scrollRatio);
-               }
-            })
-      );
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -1588,8 +1610,8 @@ public class AceEditorWidget extends Composite
 
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
-   private final List<HandlerRegistration> aceEventHandlers_;
-   private final List<HandlerRegistration> globalEventHandlers_;
+   private HandlerRegistrations aceEventHandlers_;
+   private HandlerRegistrations globalEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
@@ -1600,7 +1622,16 @@ public class AceEditorWidget extends Composite
    private final ArrayList<ChunkRowAceExecState> lineExecState_ = new ArrayList<>();
    private final LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    private JsVector<LintItem> lint_ = JsVector.createVector();
+   private boolean isAttached_ = false;
    private boolean tabMovesFocus_ = false;
+   private final Timer attachTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         attachImpl();
+      }
+   };
    private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
 
    // injected
