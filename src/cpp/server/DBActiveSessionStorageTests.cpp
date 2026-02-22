@@ -4,6 +4,7 @@
 #include <core/FileSerializer.hpp>
 #include <boost/filesystem.hpp>
 #include <core/Result.hpp>
+#include <iostream>
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
@@ -102,12 +103,12 @@ std::string sessionId = "testId";
 std::map<std::string, std::string> initialProps
 {
    {"user_id", "7"},
-   {"editor", "rstudio"},
+   {"editor", "RStudio"},
    {"created", "2020-04-30T00:00:00.000Z"},
    {"last_used", "2020-04-30T00:00:00.000Z"},
-   {"activity_state", "idle"},
+   {"activity_state", "launching"},
    {"label", "initial session"},
-   {"launch_parameters", "test"}
+   {"launch_parameters", "{}"}
 };
 
 std::set<std::string> propList{
@@ -148,7 +149,7 @@ protected:
    {
       SqliteConnectionOptions options = sqliteConnectionOptions();
       auto connectionResult = initializeSQLiteDatabase(options, currentUser);
-      ASSERT_TRUE(connectionResult);
+      ASSERT_TRUE(connectionResult) << "SQLite initialization failed: " << connectionResult.error().asString();
       connection = connectionResult.value();
       InitializeStorage();
    }
@@ -165,15 +166,15 @@ class PostgresDBActiveSessionStorageTest : public DBActiveSessionStorageTestFixt
 protected:
    void InitializeDatabase() override
    {
-      // Skip if ENABLE_POSTGRES is not set
-      if (!std::getenv("ENABLE_POSTGRES"))
+      // Skip if POSTGRES_ENABLED is not set
+      if (!std::getenv("POSTGRES_ENABLED") || std::string(std::getenv("POSTGRES_ENABLED")) != "1")
       {
-         GTEST_SKIP() << "PostgreSQL tests skipped because ENABLE_POSTGRES is not set.";
+         GTEST_SKIP() << "PostgreSQL tests skipped because POSTGRES_ENABLED is not set to '1'.";
       }
       
       PostgresqlConnectionOptions options = postgresConnectionOptions();
       auto connectionResult = initializePostgresqlDatabase(options, currentUser);
-      ASSERT_TRUE(connectionResult);
+      ASSERT_TRUE(connectionResult) << "PostgreSQL initialization failed: " << connectionResult.error().asString();
       connection = connectionResult.value();
       InitializeStorage();
    }
@@ -213,18 +214,20 @@ TEST_F(SqliteDBActiveSessionStorageTest, InitialMinimalSessionDataInserted)
 
    // WHEN: Initial minimal session data is inserted
    // Initial props is the smallest set of data that can be used to insert a new session row
-   ASSERT_FALSE(storage->writeProperties(initialProps));
+   Error writeError = storage->writeProperties(initialProps);
+   ASSERT_FALSE(writeError) << "writeProperties failed: " << writeError.asString();
 
    // THEN: Initial data readable from db
    std::map<std::string, std::string> readProps{};
 
    // Read All
-   ASSERT_FALSE(storage->readProperties(&readProps));
+   Error readError = storage->readProperties(&readProps);
+   ASSERT_FALSE(readError) << "readProperties (all) failed: " << readError.asString();
    ASSERT_TRUE(readProps.size() > 0);
    ASSERT_EQ(readProps.find("user_id")->second, "7");
-   ASSERT_EQ(readProps.find("editor")->second, "rstudio");
+   ASSERT_EQ(readProps.find("editor")->second, "RStudio");
    ASSERT_EQ(readProps.find("r_version")->second, "");
-   ASSERT_EQ(readProps.find("activity_state")->second, "idle");
+   ASSERT_EQ(readProps.find("activity_state")->second, "launching");
 
    // Read mixed property set
    std::map<std::string, std::string> initialPropsSubset{};
@@ -244,7 +247,7 @@ TEST_F(SqliteDBActiveSessionStorageTest, InitialMinimalSessionDataInserted)
    // extant property
    std::string initialEditor{};
    ASSERT_FALSE(storage->readProperty("editor", &initialEditor));
-   ASSERT_EQ(initialEditor, "rstudio");
+   ASSERT_EQ(initialEditor, "RStudio");
 
    // missing property
    std::string initialRVer{};
@@ -277,7 +280,7 @@ TEST_F(SqliteDBActiveSessionStorageTest, DataUpdatedIndividually)
    ASSERT_FALSE(storage->readProperties(&updatedProps));
    ASSERT_TRUE(updatedProps.size() > 0);
    ASSERT_EQ(updatedProps.find("user_id")->second, "8");
-   ASSERT_EQ(updatedProps.find("editor")->second, "rstudio");
+   ASSERT_EQ(updatedProps.find("editor")->second, "RStudio");
    ASSERT_EQ(updatedProps.find("r_version")->second, "4.0.0");
    ASSERT_EQ(updatedProps.find("activity_state")->second, "running");
    ASSERT_EQ(updatedProps.find("r_version_label")->second, "");
@@ -301,7 +304,7 @@ TEST_F(SqliteDBActiveSessionStorageTest, DataUpdatedIndividually)
    // existing property
    std::string updatedEditor{};
    ASSERT_FALSE(storage->readProperty("editor", &updatedEditor));
-   ASSERT_EQ(updatedEditor, "rstudio");
+   ASSERT_EQ(updatedEditor, "RStudio");
    std::string rVersion{};
    ASSERT_FALSE(storage->readProperty("r_version", &rVersion));
    ASSERT_EQ(rVersion, "4.0.0");
@@ -380,9 +383,9 @@ TEST_F(PostgresDBActiveSessionStorageTest, InitialMinimalSessionDataInserted)
    ASSERT_FALSE(storage->readProperties(&readProps));
    ASSERT_TRUE(readProps.size() > 0);
    ASSERT_EQ(readProps.find("user_id")->second, "7");
-   ASSERT_EQ(readProps.find("editor")->second, "rstudio");
+   ASSERT_EQ(readProps.find("editor")->second, "RStudio");
    ASSERT_EQ(readProps.find("r_version")->second, "");
-   ASSERT_EQ(readProps.find("activity_state")->second, "idle");
+   ASSERT_EQ(readProps.find("activity_state")->second, "launching");
 
    // Read mixed property set
    std::map<std::string, std::string> pgInitialPropsSubset{};
@@ -402,7 +405,7 @@ TEST_F(PostgresDBActiveSessionStorageTest, InitialMinimalSessionDataInserted)
    // extant property
    std::string pgInitialEditor{};
    ASSERT_FALSE(storage->readProperty("editor", &pgInitialEditor));
-   ASSERT_EQ(pgInitialEditor, "rstudio");
+   ASSERT_EQ(pgInitialEditor, "RStudio");
 
    // missing property
    std::string pgInitialRVer{};
@@ -435,7 +438,7 @@ TEST_F(PostgresDBActiveSessionStorageTest, DataUpdatedIndividually)
    ASSERT_FALSE(storage->readProperties(&updatedProps));
    ASSERT_TRUE(updatedProps.size() > 0);
    ASSERT_EQ(updatedProps.find("user_id")->second, "8");
-   ASSERT_EQ(updatedProps.find("editor")->second, "rstudio");
+   ASSERT_EQ(updatedProps.find("editor")->second, "RStudio");
    ASSERT_EQ(updatedProps.find("r_version")->second, "4.0.0");
    ASSERT_EQ(updatedProps.find("activity_state")->second, "running");
    ASSERT_EQ(updatedProps.find("r_version_label")->second, "");
@@ -459,7 +462,7 @@ TEST_F(PostgresDBActiveSessionStorageTest, DataUpdatedIndividually)
    // existing property
    std::string pgUpdatedEditor{};
    ASSERT_FALSE(storage->readProperty("editor", &pgUpdatedEditor));
-   ASSERT_EQ(pgUpdatedEditor, "rstudio");
+   ASSERT_EQ(pgUpdatedEditor, "RStudio");
    std::string pgRVersion{};
    ASSERT_FALSE(storage->readProperty("r_version", &pgRVersion));
    ASSERT_EQ(pgRVersion, "4.0.0");
@@ -499,4 +502,183 @@ TEST_F(PostgresDBActiveSessionStorageTest, OwnershipCannotBeTransferredToNonExis
    // THEN: Error is returned
    ASSERT_TRUE(error);
    ASSERT_EQ(error.getCode(), errc::DBError);
+}
+
+// ===== isEmpty / isValid tests =====
+
+// Test isEmpty returns true for non-existent session
+TEST_F(SqliteDBActiveSessionStorageTest, IsEmptyReturnsTrueForNonexistentSession)
+{
+   // GIVEN: An initialized database with no session rows
+   
+   // WHEN: Checking if the session is empty
+   bool isEmpty = false;
+   Error error = storage->isEmpty(&isEmpty);
+   
+   // THEN: No error and isEmpty is true
+   ASSERT_FALSE(error) << "isEmpty failed: " << error.asString();
+   ASSERT_TRUE(isEmpty);
+}
+
+// Test isEmpty returns false for existing session
+TEST_F(SqliteDBActiveSessionStorageTest, IsEmptyReturnsFalseForExistingSession)
+{
+   // GIVEN: A session has been inserted
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   
+   // WHEN: Checking if the session is empty
+   bool isEmpty = true;
+   Error error = storage->isEmpty(&isEmpty);
+   
+   // THEN: No error and isEmpty is false
+   ASSERT_FALSE(error) << "isEmpty failed: " << error.asString();
+   ASSERT_FALSE(isEmpty);
+}
+
+// Test isValid returns false for non-existent session
+TEST_F(SqliteDBActiveSessionStorageTest, IsValidReturnsFalseForNonexistentSession)
+{
+   // GIVEN: An initialized database with no session rows
+   
+   // WHEN: Checking if the session is valid
+   bool isValid = true;
+   Error error = storage->isValid(&isValid);
+   
+   // THEN: No error and isValid is false
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_FALSE(isValid);
+}
+
+// Test isValid returns false for R session without project set
+TEST_F(SqliteDBActiveSessionStorageTest, IsValidReturnsFalseForRSessionWithoutProject)
+{
+   // GIVEN: An R session with no project property set (editor = "RStudio")
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   
+   // WHEN: Checking if the session is valid
+   bool isValid = true;
+   Error error = storage->isValid(&isValid);
+   
+   // THEN: No error and isValid is false (R sessions require a project)
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_FALSE(isValid);
+}
+
+// Test isValid returns true for R session with project set
+TEST_F(SqliteDBActiveSessionStorageTest, IsValidReturnsTrueForRSessionWithProject)
+{
+   // GIVEN: An R session with project property set
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   ASSERT_FALSE(storage->writeProperty("project", "none"));
+   
+   // WHEN: Checking if the session is valid
+   bool isValid = false;
+   Error error = storage->isValid(&isValid);
+   
+   // THEN: No error and isValid is true
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_TRUE(isValid);
+}
+
+// Test isValid returns true for VS Code session (non-R) without project
+TEST_F(SqliteDBActiveSessionStorageTest, IsValidReturnsTrueForVSCodeSession)
+{
+   // GIVEN: A VS Code session (no project required)
+   std::map<std::string, std::string> vscodeProps = initialProps;
+   vscodeProps["editor"] = "VSCode";
+   ASSERT_FALSE(storage->writeProperties(vscodeProps));
+   
+   // WHEN: Checking if the session is valid
+   bool isValid = false;
+   Error error = storage->isValid(&isValid);
+   
+   // THEN: No error and isValid is true (VS Code doesn't need project)
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_TRUE(isValid);
+}
+
+// Test clearScratchPath succeeds for DB storage (no-op)
+TEST_F(SqliteDBActiveSessionStorageTest, ClearScratchPathSucceeds)
+{
+   // GIVEN: A session has been inserted
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   
+   // WHEN: Clearing the scratch path
+   Error error = storage->clearScratchPath();
+   
+   // THEN: No error (DB storage has no scratch path to clear)
+   ASSERT_FALSE(error) << "clearScratchPath failed: " << error.asString();
+   
+   // AND: Session is still present in the DB
+   bool isEmpty = true;
+   error = storage->isEmpty(&isEmpty);
+   ASSERT_FALSE(error);
+   ASSERT_FALSE(isEmpty);
+}
+
+// Test destroy removes the session from the DB
+TEST_F(SqliteDBActiveSessionStorageTest, DestroyRemovesSession)
+{
+   // GIVEN: A session has been inserted
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   bool isEmpty = true;
+   ASSERT_FALSE(storage->isEmpty(&isEmpty));
+   ASSERT_FALSE(isEmpty);
+   
+   // WHEN: Destroying the session
+   Error error = storage->destroy();
+   ASSERT_FALSE(error) << "destroy failed: " << error.asString();
+   
+   // THEN: Session is no longer in the DB
+   isEmpty = false;
+   ASSERT_FALSE(storage->isEmpty(&isEmpty));
+   ASSERT_TRUE(isEmpty);
+}
+
+// PostgreSQL equivalents
+
+TEST_F(PostgresDBActiveSessionStorageTest, IsEmptyReturnsTrueForNonexistentSession)
+{
+   bool isEmpty = false;
+   Error error = storage->isEmpty(&isEmpty);
+   ASSERT_FALSE(error) << "isEmpty failed: " << error.asString();
+   ASSERT_TRUE(isEmpty);
+}
+
+TEST_F(PostgresDBActiveSessionStorageTest, IsEmptyReturnsFalseForExistingSession)
+{
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   bool isEmpty = true;
+   Error error = storage->isEmpty(&isEmpty);
+   ASSERT_FALSE(error) << "isEmpty failed: " << error.asString();
+   ASSERT_FALSE(isEmpty);
+}
+
+TEST_F(PostgresDBActiveSessionStorageTest, IsValidReturnsFalseForNonexistentSession)
+{
+   bool isValid = true;
+   Error error = storage->isValid(&isValid);
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_FALSE(isValid);
+}
+
+TEST_F(PostgresDBActiveSessionStorageTest, IsValidReturnsTrueForRSessionWithProject)
+{
+   ASSERT_FALSE(storage->writeProperties(initialProps));
+   ASSERT_FALSE(storage->writeProperty("project", "none"));
+   bool isValid = false;
+   Error error = storage->isValid(&isValid);
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_TRUE(isValid);
+}
+
+TEST_F(PostgresDBActiveSessionStorageTest, IsValidReturnsTrueForVSCodeSession)
+{
+   std::map<std::string, std::string> vscodeProps = initialProps;
+   vscodeProps["editor"] = "VSCode";
+   ASSERT_FALSE(storage->writeProperties(vscodeProps));
+   bool isValid = false;
+   Error error = storage->isValid(&isValid);
+   ASSERT_FALSE(error) << "isValid failed: " << error.asString();
+   ASSERT_TRUE(isValid);
 }

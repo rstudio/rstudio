@@ -17,6 +17,9 @@
 #ifndef CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 #define CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 
+#include <map>
+#include <set>
+
 #include <boost/noncopyable.hpp>
 #include <boost/thread/thread.hpp>
 
@@ -100,20 +103,20 @@ private:
    friend class ActiveSessions;
    friend class RpcActiveSessionsStorage;
 
-   explicit ActiveSession(const std::string& id) : id_(id) 
+   explicit ActiveSession(const std::string& id) : id_(id), cachePopulated_(false)
    {
    }
 
    explicit ActiveSession(
       const std::string& id,
-      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), storage_(storage)
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), storage_(storage), cachePopulated_(false)
    {
    }
 
    explicit ActiveSession(
       const std::string& id,
       const FilePath& scratchPath,
-      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage), cachePopulated_(false)
    {
    }
 
@@ -124,6 +127,7 @@ public:
    static const std::string kLastUsed;
    static const std::string kLabel;
    static const std::string kProject;
+   static const std::string kProjectId;
    static const std::string kSavePromptRequired;
    static const std::string kRunning;
    static const std::string kRVersion;
@@ -137,6 +141,10 @@ public:
    static const std::string kSuspendTimestamp;
    static const std::string kBlockingSuspend;
    static const std::string kLaunchParameters;
+   static const std::string kSuspendSize;
+   static const std::string kWorkbench;
+   static const std::string kId;
+   static const std::string kDisplayName;
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -166,9 +174,9 @@ public:
    {
       if (empty())
          return true;
-      bool validStorage = false;
-      Error error = storage_->isValid(&validStorage);
-      return error || !validStorage;
+      bool isEmpty = true;
+      Error error = storage_->isEmpty(&isEmpty);
+      return error || isEmpty;
    }
 
    std::string id() const
@@ -183,9 +191,18 @@ public:
       std::string value;
       if (!empty())
       {
+         // Check cache first
+         {
+            auto it = propertyCache_.find(propertyName);
+            if (it != propertyCache_.end())
+               return it->second;
+         }
+
          Error error = storage_->readProperty(propertyName, &value);
          if (error)
             LOG_ERROR(error);
+         else
+            propertyCache_[propertyName] = value;
       }
 
       return value;
@@ -198,6 +215,8 @@ public:
          Error error = storage_->writeProperty(propertyName, value);
          if (error)
             LOG_ERROR(error);
+         else
+            propertyCache_[propertyName] = value;
       }
    }
 
@@ -206,17 +225,19 @@ public:
       std::map<std::string, std::string> values;
       if (!empty())
       {
+         std::set<std::string> propsToFetch;
          if (!propertyNames.empty())
-            return storage_->readProperties(propertyNames, pValues);
+            propsToFetch = propertyNames;
          else
          {
             // If no properties are specified, read them all
-            std::set<std::string> allProperties {
+            propsToFetch = {
                kExecuting,
                kInitial,
                kLabel,
                kLastUsed,
                kProject,
+               kProjectId,
                kSavePromptRequired,
                kRunning,
                kRVersion,
@@ -231,10 +252,16 @@ public:
                kBlockingSuspend,
                kCreated,
                kLaunchParameters
-             };
-
-            return storage_->readProperties(allProperties, pValues);
+            };
          }
+
+         Error error = storage_->readProperties(propsToFetch, pValues);
+         if (!error)
+         {
+            for (const auto& kv : *pValues)
+               propertyCache_[kv.first] = kv.second;
+         }
+         return error;
       }
 
       return Success();
@@ -243,7 +270,15 @@ public:
    Error writeProperties(const std::map<std::string, std::string>& properties) const
    {
       if (!empty())
-         return storage_->writeProperties(properties);
+      {
+         Error error = storage_->writeProperties(properties);
+         if (!error)
+         {
+            for (const auto& kv : properties)
+               propertyCache_[kv.first] = kv.second;
+         }
+         return error;
+      }
 
       return Success();
    }
@@ -252,6 +287,10 @@ public:
    {
       if (empty())
          return false;
+
+      // Check cache first
+      if (propertyCache_.find(propertyName) != propertyCache_.end())
+         return true;
 
       std::string value;
       Error error = storage_->readProperty(propertyName, &value);
@@ -265,30 +304,9 @@ public:
       return readProperty(kProject);
    }
 
-   std::string projectWithRetry() const
+   std::string projectId() const
    {
-      std::string res = project();
-      if (!res.empty())
-         return res;
-      if (hasProperty(kProject))
-      {
-         int retryCount = 5;
-         do {
-            LOG_DEBUG_MESSAGE("Found empty project ... sleeping for 200 millis to validate session: " + id());
-            boost::this_thread::sleep(boost::posix_time::milliseconds(200));
-            res = project();
-            if (!res.empty())
-               break;
-         } while (--retryCount > 0);
-
-         if (res.empty())
-            LOG_DEBUG_MESSAGE("Returning empty project after retries for: " + id());
-         else
-            LOG_DEBUG_MESSAGE("Found project after: " + std::to_string(5 - retryCount) + " retries for: " + id());
-      }
-      else
-         LOG_DEBUG_MESSAGE("Returning empty project - no project property for session: " + id());
-      return res;
+      return readProperty(kProjectId);
    }
 
    void setProject(const std::string& newProject)
@@ -298,6 +316,11 @@ public:
       if (newProject == project())
          return;
       writeProperty(kProject, newProject);
+   }
+
+   void setProjectId(const std::string& projectId)
+   {
+      writeProperty(kProjectId, projectId);
    }
 
    std::string workingDir() const
@@ -495,9 +518,11 @@ public:
                     const std::string& rVersionHome,
                     const std::string& rVersionLabel = "")
    {
-         writeProperty(kRVersion, rVersion);
-         writeProperty(kRVersionHome, rVersionHome);
-         writeProperty(kRVersionLabel, rVersionLabel);
+         writeProperties({
+            {kRVersion, rVersion},
+            {kRVersionHome, rVersionHome},
+            {kRVersionLabel, rVersionLabel}
+         });
    }
 
    // historical note: this will be displayed as the session name
@@ -512,38 +537,75 @@ public:
       writeProperty(kLabel, label);
    }
 
+   json::Value launchParameters() const
+   {
+      if (!empty())
+         return readJsonProperty(kLaunchParameters);
+      else
+         return json::Value();
+   }
+
+   void setLaunchParameters(const json::Value& params)
+   {
+      if (!empty())
+         writeJsonProperty(kLaunchParameters, params);
+   }
+
    void beginSession(const std::string& rVersion,
                      const std::string& rVersionHome,
                      const std::string& rVersionLabel = "")
    {
-      setLastUsed();
-      setRunning(true);
-      setRVersion(rVersion, rVersionHome, rVersionLabel);
-      setActivityState(kActivityStateRunning, true);
+      writeProperties({
+         {kLastUsed, getNowAsTimestamp()},
+         {kRunning, "1"},
+         {kRVersion, rVersion},
+         {kRVersionHome, rVersionHome},
+         {kRVersionLabel, rVersionLabel},
+         {kActivityState, kActivityStateRunning},
+         {kLastStateUpdated, getNowAsTimestamp()}
+      });
    }
 
    void endSession()
    {
-      setLastUsed();
-      setRunning(false);
-      setExecuting(false);
       std::string curState = activityState();
+      std::map<std::string, std::string> props = {
+         {kLastUsed, getNowAsTimestamp()},
+         {kRunning, "0"},
+         {kExecuting, "0"}
+      };
       if (!isSessionEndedState(curState))
       {
          LOG_DEBUG_MESSAGE("Ending session: " + id() + " changing activityState to ended from: " + curState);
-         setActivityState(kActivityStateEnded, true);
+         props[kActivityState] = kActivityStateEnded;
+         props[kLastStateUpdated] = getNowAsTimestamp();
       }
       else
          LOG_DEBUG_MESSAGE("Ending session: " + id() + " with previous activityState: " + curState);
+      writeProperties(props);
    }
 
    uintmax_t suspendSize() const
    {
-      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
-      if (!suspendPath.exists())
-         return 0;
+      std::string sizeStr = readProperty(kSuspendSize);
 
-      return suspendPath.getSizeRecursive();
+      if (!sizeStr.empty())
+         return safe_convert::stringTo<uintmax_t>(sizeStr, 0);
+      else
+         return 0;
+   }
+
+   // Used for rpc and db storage to send and save the size that's computed on-demand with file
+   void setSuspendSize(uintmax_t suspendSize) const
+   {
+      writeProperty(kSuspendSize, std::to_string(suspendSize));
+   }
+
+   uintmax_t computeSuspendSize() const
+   {
+      if (!empty())
+         return storage_->computeSuspendSize();
+      return 0;
    }
 
    core::Error destroy()
@@ -557,35 +619,32 @@ public:
          return Success();
    }
 
+   core::Error clearScratchPath()
+   {
+      if (!empty())
+         return storage_->clearScratchPath();
+      else
+         return Success();
+   }
+
+   // This method is called before the logging system is available when starting a session so
+   // errors are logged to the system log
    bool validate() const
    {
       if (empty())
       {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed on empty session");
+         core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "ActiveSession validation failed on empty session");
          return false;
       }
 
-      bool validStorage = false;
-      Error storageError = storage_->isValid(&validStorage);
-      if (storageError || !validStorage)
+      bool valid = false;
+      Error storageError = storage_->isValid(&valid);
+      if (storageError || !valid)
       {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed - no session metadata for: " + id());
-         if(storageError)
-            LOG_ERROR(storageError);
-         return false;
-      }
-
-      bool isRSession = editor() == kWorkbenchRStudio || editor().empty();
-      if (!isRSession)
-         return true;
-
-      // ensure the properties are there but don't check properties like
-      // lastUsed() or workingDir() that will appear as briefly empty as they
-      // are being updated
-      std::string projectVal = projectWithRetry();
-      if (projectVal.empty())
-      {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed - project is empty");
+         if (storageError)
+            core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "ActiveSession no session metadata - session id: " + id() + " storage error: " + storageError.asString());
+         else
+            core::system::safeLogToSyslog("rsession", log::LogLevel::ERR, "ActiveSession no session metadata - invalid storage for id: " + id());
          return false;
       }
 
@@ -713,8 +772,34 @@ public:
 
    void setRunning(bool running)
    {
-         std::string value = running ?  "1" : "0";
-         writeProperty(kRunning, value);
+      std::string value = running ?  "1" : "0";
+      writeProperty(kRunning, value);
+   }
+
+   void writeJsonProperty(const std::string& name, const core::json::Value& value) const;
+   core::json::Value readJsonProperty(const std::string& name) const;
+
+   // Pre-populate the property cache with the given map of property name -> value.
+   // Called by ActiveSessions::list() when batch-loading properties.
+   void populateCache(const std::map<std::string, std::string>& properties) const
+   {
+      for (const auto& kv : properties)
+         propertyCache_[kv.first] = kv.second;
+      cachePopulated_ = true;
+   }
+
+   // Load all properties into cache in a single batch call.
+   // Returns Success if the cache was populated, or an error.
+   Error loadAllProperties() const
+   {
+      if (cachePopulated_ || empty())
+         return Success();
+
+      std::map<std::string, std::string> allProps;
+      Error error = readProperties({}, &allProps);  // empty set = read all
+      if (!error)
+         cachePopulated_ = true;
+      return error;
    }
 
 private:
@@ -722,6 +807,8 @@ private:
    FilePath scratchPath_;                    // Use isEmpty() for for processes not owned by the session user (i.e. not file storage)
    std::shared_ptr<IActiveSessionStorage> storage_;
    SortConditions sortConditions_;
+   mutable std::map<std::string, std::string> propertyCache_;
+   mutable bool cachePopulated_;
 };
 
 class IActiveSessionsStorage;
@@ -742,11 +829,20 @@ public:
                       const std::string& working,
                       std::string* pId) const
    {
-      return create(project, working, true, kWorkbenchRStudio, pId);
+      return create(project, working, core::json::Value(), true, kWorkbenchRStudio, pId);
    }
 
    core::Error create(const std::string& project,
                       const std::string& working,
+                      bool initial,
+                      std::string* pId) const
+   {
+      return create(project, working, core::json::Value(), initial, kWorkbenchRStudio, pId);
+   }
+
+   core::Error create(const std::string& project,
+                      const std::string& working,
+                      const core::json::Value& launchParams,
                       bool initial,
                       const std::string& editor,
                       std::string* pId) const;
@@ -754,9 +850,21 @@ public:
    std::vector<boost::shared_ptr<ActiveSession> > list(bool validate,
                                                        std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
 
+   // List sessions, pre-populating caches with the specified properties (empty set = all properties).
+   // This uses batch loading via listSessionProperties when available (e.g. RPC storage)
+   // to avoid per-session round trips.
+   std::vector<boost::shared_ptr<ActiveSession> > list(bool validate,
+                                                       const std::set<std::string>& propertiesToCache,
+                                                       std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
+
    size_t count() const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
+
+   // Get a session and pre-load the specified properties into its cache.
+   // If propertiesToCache is empty, all properties are loaded.
+   boost::shared_ptr<ActiveSession> get(const std::string& id,
+                                        const std::set<std::string>& propertiesToCache) const;
 
    FilePath storagePath() const { return storagePath_; }
 

@@ -16,6 +16,9 @@
 #ifndef CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 #define CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 
+#include <map>
+#include <set>
+
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RActiveSessionStorage.hpp>
 #include <core/r_util/RActiveSessions.hpp>
@@ -35,6 +38,17 @@ namespace r_util {
       virtual std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const = 0;
       virtual Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const = 0;
 
+      // Returns session IDs along with their properties in a single batch call.
+      // Default implementation returns empty - callers should fall back to per-session reads.
+      // The outer map is keyed by session ID, the inner map is property name -> value.
+      virtual Error listSessionProperties(
+         const std::set<std::string>& properties,
+         std::map<std::string, std::map<std::string, std::string>>* pSessionProperties) const
+      {
+         // Default: not implemented, callers should fall back to per-session loading
+         return Success();
+      }
+
    protected:
       virtual ~IActiveSessionsStorage() = default;
       IActiveSessionsStorage() = default;
@@ -52,7 +66,7 @@ namespace r_util {
       
    private:
       FilePath storagePath_;
-      const core::r_util::FilePathToProjectId& projectToIdFunction_;
+      const core::r_util::FilePathToProjectId projectToIdFunction_;
    };
 
    class RpcActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
@@ -66,6 +80,11 @@ namespace r_util {
       size_t getSessionCount() const  override;
       std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;
       core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
+
+      // Batch fetch: returns all session IDs with their properties in one read_all RPC call
+      core::Error listSessionProperties(
+         const std::set<std::string>& properties,
+         std::map<std::string, std::map<std::string, std::string>>* pSessionProperties) const override;
 
    private:
       const core::system::User user_;
