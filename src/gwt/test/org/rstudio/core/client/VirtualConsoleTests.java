@@ -1283,6 +1283,22 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("<span>Hello </span>", ele.getInnerHTML());
    }
 
+   public void testEraseInLineMode0StraddlingColorRange()
+   {
+      // Erase from the middle of a colored range (optimization path)
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String red = AnsiCode.CSI + AnsiCode.ForeColorNum.RED + AnsiCode.SGR;
+      String reset = AnsiCode.CSI + AnsiCode.RESET_FOREGROUND + AnsiCode.SGR;
+      // "He" plain, "llo World" red -- cursor back 5 lands inside the red range
+      vc.submit("He" + red + "llo World" + reset + "\033[5D\033[K");
+      Assert.assertEquals("He" + "llo ", vc.toString());
+      Assert.assertEquals(
+         "<span>He</span>" +
+         "<span class=\"xtermColor1\">llo </span>",
+         ele.getInnerHTML());
+   }
+
    public void testEraseInLineMode1()
    {
       // \033[1K erases from beginning of line to cursor (inclusive)
@@ -1315,16 +1331,17 @@ public class VirtualConsoleTests extends GWTTestCase
 
    public void testEraseInLineMode0MiddleLine()
    {
-      // Mode 0 on a non-trailing line exercises the general-case space-overwrite path
+      // Mode 0 on a non-trailing line erases via the space-overwrite path
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("Line1\nHello World\nLine3\033[12D\033[K");
       Assert.assertEquals("Line1\nHello      \nLine3", vc.toString());
+      Assert.assertEquals("<span>Line1\nHello      \nLine3</span>", ele.getInnerHTML());
    }
 
    public void testEraseInLineMode1AtEnd()
    {
-      // Mode 1 with cursor at end of line exercises the Math.min clamp
+      // Mode 1 with cursor at end of line erases the entire line
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = getVC(ele);
       vc.submit("Hello World\033[1K");
@@ -1339,6 +1356,7 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = getVC(ele);
       vc.submit("Line1\nHello World\nLine3\033[16D\033[2K");
       Assert.assertEquals("Line1\n           \nLine3", vc.toString());
+      Assert.assertEquals("<span>Line1\n           \nLine3</span>", ele.getInnerHTML());
    }
 
    public void testEraseInLineThenWrite()

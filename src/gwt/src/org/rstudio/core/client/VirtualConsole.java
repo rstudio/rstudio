@@ -358,17 +358,23 @@ public class VirtualConsole
       // General case: overwrite with spaces
       int savedCursor = cursor_;
       HyperlinkInfo savedHyperlink = hyperlink_;
-      cursor_ = eraseStart;
-      hyperlink_ = null;
+      try
+      {
+         cursor_ = eraseStart;
+         hyperlink_ = null;
 
-      int eraseLength = eraseEnd - eraseStart;
-      StringBuilder spaces = new StringBuilder(eraseLength);
-      for (int i = 0; i < eraseLength; i++)
-         spaces.append(' ');
+         int eraseLength = eraseEnd - eraseStart;
+         StringBuilder spaces = new StringBuilder(eraseLength);
+         for (int i = 0; i < eraseLength; i++)
+            spaces.append(' ');
 
-      text(spaces.toString(), null, false/*forceNewRange*/);
-      cursor_ = savedCursor;
-      hyperlink_ = savedHyperlink;
+         text(spaces.toString(), null, false/*forceNewRange*/);
+      }
+      finally
+      {
+         cursor_ = savedCursor;
+         hyperlink_ = savedHyperlink;
+      }
    }
 
    /**
