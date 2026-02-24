@@ -4194,7 +4194,7 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendExit(int exitCode)
 {
-   WLOG("Chat backend exited with code: {}", exitCode);
+   ILOG("Chat backend exited with code: {}", exitCode);
 
    // Clear chat backend busy state to prevent stuck suspension blocking
    if (s_chatBusy)

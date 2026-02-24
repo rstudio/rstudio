@@ -210,7 +210,6 @@ function findBuildRootImpl(rootDir: string): string {
   // that get eagerly modified after a build.
   for (const buildDirParent of buildDirParents) {
     if (fs.existsSync(buildDirParent)) {
-
       // First, check if this is itself a build directory.
       for (const buildFile of ['.ninja_log', 'CMakeFiles']) {
         const buildPath = `${buildDirParent}/${buildFile}`;
@@ -234,7 +233,6 @@ function findBuildRootImpl(rootDir: string): string {
           }
         }
       }
-
     }
   }
 
@@ -265,15 +263,14 @@ function rsessionNotFoundError(): Error {
  */
 export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
-  let confPath: FilePath = new FilePath();
-  let sessionPath: FilePath = new FilePath();
-
   const binRoot = new FilePath(getAppPath());
   if (app.isPackaged) {
-    // confPath is intentionally left empty for a package build
-    sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-    return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
+    // config-file path is intentionally empty for a package build
+    const sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
+    return [binRoot, new FilePath(), sessionPath, new FilePath(getAppPath())];
   }
+
+  let confPath!: FilePath;
 
   // developer builds -- first, check for environment variable
   // providing path to built C++ sources; if not set, then do
