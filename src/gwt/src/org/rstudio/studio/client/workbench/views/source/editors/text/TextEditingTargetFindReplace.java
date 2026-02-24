@@ -126,6 +126,7 @@ public class TextEditingTargetFindReplace
          findReplace_.notifyClosing();
          findReplace_ = null;
          findReplaceBar_ = null;
+         findFromSelectionCursorPos_ = null;
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindIcon());
       }
       container_.getEditor().focus();
@@ -164,6 +165,7 @@ public class TextEditingTargetFindReplace
 
          if (isContinuation)
          {
+            findReplace_.activate(selection, true, false);
             findReplace_.findNext();
          }
          else
