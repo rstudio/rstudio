@@ -35,7 +35,7 @@
 - ([#15609](https://github.com/rstudio/rstudio/issues/15609)): Fixed an issue where RStudio startup on Windows was delayed by several seconds on systems with endpoint security software
 - ([#15863](https://github.com/rstudio/rstudio/issues/15863)): Fixed an issue where "Use Selection for Find" (Cmd+E) incorrectly jumped to the next match instead of only populating the find bar
 - ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
-- ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would permanently disable saving for that file
+- ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
 
 ### Dependencies
 - Ace 1.43.5
