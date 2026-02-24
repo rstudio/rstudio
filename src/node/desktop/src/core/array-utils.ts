@@ -40,8 +40,8 @@ export function nextLowest(val: number, choices: number[]): number {
   if (choices.length === 0) {
     return val;
   }
-  let index = choices.findIndex((x) => x >= val);
-  index = index <= 0 ? 0 : --index;
+  const found = choices.findIndex((x) => x >= val);
+  const index = found <= 0 ? 0 : found - 1;
   return choices[index];
 }
 

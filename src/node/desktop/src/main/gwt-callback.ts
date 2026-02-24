@@ -124,12 +124,9 @@ export class GwtCallback extends EventEmitter {
   }
 
   getFontsLinux(monospace: boolean): string[] {
-    let command: string = '';
-    if (monospace) {
-      command = 'fc-list :spacing=mono family | sort';
-    } else {
-      command = 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
-    }
+    const command = monospace
+      ? 'fc-list :spacing=mono family | sort'
+      : 'fc-list :lang=en family | grep -i sans | grep -iv mono | sort';
 
     const result = execSync(command, { encoding: 'utf-8' });
     return result.trim().split('\n');

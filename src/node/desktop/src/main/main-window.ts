@@ -249,19 +249,17 @@ export class MainWindow extends GwtWindow {
   }
 
   invokeCommand(cmdId: string): void {
-    let cmd = '';
-    if (process.platform === 'darwin') {
-      cmd = `
+    const cmd =
+      process.platform === 'darwin'
+        ? `
         var wnd;
         try {
           wnd = window.$RStudio.last_focused_window;
         } catch (e) {
           wnd = window;
         }
-        (wnd || window).desktopHooks.invokeCommand('${cmdId}');`;
-    } else {
-      cmd = `window.desktopHooks.invokeCommand("${cmdId}")`;
-    }
+        (wnd || window).desktopHooks.invokeCommand('${cmdId}');`
+        : `window.desktopHooks.invokeCommand("${cmdId}")`;
     this.executeJavaScript(cmd).catch((error) => {
       logger().logError(error);
     });

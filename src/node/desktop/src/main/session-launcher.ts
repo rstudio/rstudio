@@ -285,14 +285,11 @@ export class SessionLauncher {
       return b.getLastWriteTimeSync() - a.getLastWriteTimeSync();
     });
 
-    let logFile = '';
-
     // Loop over all the log files and stop when we find a session log
     // (desktop logs are also in this folder)
     for (const log of logs) {
       if (log.getFilename().includes('rsession')) {
-        // Record the path where we found the log file
-        logFile = log.getAbsolutePath();
+        const logFile = log.getAbsolutePath();
 
         // Read all the lines from a file into a string vector
         const [lines, error] = await readStringArrayFromFile(log);
