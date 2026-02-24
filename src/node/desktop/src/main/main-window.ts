@@ -243,7 +243,9 @@ export class MainWindow extends GwtWindow {
   quit(): void {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
-    this.window.close();
+    if (!this.window.isDestroyed()) {
+      this.window.close();
+    }
   }
 
   invokeCommand(cmdId: string): void {
