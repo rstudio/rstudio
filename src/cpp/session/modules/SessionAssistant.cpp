@@ -1462,8 +1462,8 @@ bool ensureAgentRunning(const std::string& assistantType = "",
          {
             std::string reason = agentNotRunningReason();
             DLOG("Assistant is not enabled; not starting agent. Reason: {}", reason);
-            return false;
          }
+         return false;
       }
    }
    else
