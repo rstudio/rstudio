@@ -3468,12 +3468,21 @@ public class TextEditingTarget implements
                               MessageDialog.WARNING,
                               constants_.saveNewFileWithEncodingWarningCaption(),
                               constants_.saveNewFileWithEncodingWarningMessage(),
+                              false,
                               new Operation() {
 
                                  @Override
                                  public void execute()
                                  {
                                     saveCommand.execute();
+                                 }
+                              },
+                              new Operation() {
+
+                                 @Override
+                                 public void execute()
+                                 {
+                                    isSaving_ = false;
                                  }
                               },
                               false);
