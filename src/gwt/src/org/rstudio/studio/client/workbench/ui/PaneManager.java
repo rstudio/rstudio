@@ -1899,6 +1899,8 @@ public class PaneManager
       // Re-fetch panel: showSidebar() recreates the sidebar's WorkbenchTabPanel,
       // which invalidates the reference captured above.
       panel = getOwnerTabPanel(tab);
+      if (panel == null)
+         return;
 
       if (tabToIndex_.containsKey(tab))
       {

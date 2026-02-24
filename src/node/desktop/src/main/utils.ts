@@ -265,7 +265,7 @@ export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
   const binRoot = new FilePath(getAppPath());
   if (app.isPackaged) {
-    // confPath is intentionally left empty for a package build
+    // config-file path is intentionally empty for a package build
     const sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
     return [binRoot, new FilePath(), sessionPath, new FilePath(getAppPath())];
   }

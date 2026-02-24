@@ -245,6 +245,8 @@ export class MainWindow extends GwtWindow {
     this.quitConfirmed = true;
     if (!this.window.isDestroyed()) {
       this.window.close();
+    } else {
+      logger().logDebug('quit() called but BrowserWindow already destroyed');
     }
   }
 
