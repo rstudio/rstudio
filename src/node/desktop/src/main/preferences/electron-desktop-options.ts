@@ -234,7 +234,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public renderingEngine(): string {
-    return this.config.get(kRendererEngine, 'desktop');
+    return this.config.get(kRendererEngine, 'auto');
   }
 
   public setUseGpuExclusionList(value: boolean) {
@@ -281,15 +281,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
     const rExecutablePath = this.rExecutablePath();
 
-    let rBinDir = '';
-
     if (!rExecutablePath || rExecutablePath === '') {
-      rBinDir = this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
-    } else {
-      rBinDir = dirname(rExecutablePath);
+      return this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
     }
 
-    return rBinDir;
+    return dirname(rExecutablePath);
   }
 
   // Windows-only options
