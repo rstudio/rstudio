@@ -353,6 +353,11 @@ SessionScopeState validateSessionScope(
             *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
             return ScopeInvalidProject;
          }
+         if (pSession->project().empty())
+         {
+            *pErrorMsg = "Session has no project recorded for session: " + scope.id();
+            return ScopeInvalidProject;
+         }
       }
 
       if (!projectDir.exists())
