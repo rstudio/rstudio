@@ -118,3 +118,44 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
 })
+
+# https://github.com/rstudio/rstudio/issues/15863
+.rs.test("findFromSelection does not jump to next instance on first invocation", {
+
+   contents <- .rs.heredoc('
+      hello world
+      hello world
+      hello world
+   ')
+
+   remote$editor.executeWithContents(".R", contents, function(editor) {
+
+      # Select "hello" on the first line
+      editor$gotoLine(1)
+      editor$find("hello")
+
+      # Record cursor position before findFromSelection
+      posBefore <- editor$getCursorPosition()
+
+      # Execute "Use Selection for Find" (Cmd+E / Ctrl+F3)
+      remote$commands.execute("findFromSelection")
+      Sys.sleep(0.5)
+
+      # The cursor should not have moved to the next instance
+      posAfter <- editor$getCursorPosition()
+      expect_equal(posAfter$row, posBefore$row)
+
+      # Execute findFromSelection again without moving the cursor;
+      # this time it should advance to the next match
+      remote$commands.execute("findFromSelection")
+      Sys.sleep(0.5)
+
+      posNext <- editor$getCursorPosition()
+      expect_true(posNext$row > posBefore$row)
+
+      # Close the find bar
+      remote$keyboard.executeShortcut("Escape")
+
+   })
+
+})
