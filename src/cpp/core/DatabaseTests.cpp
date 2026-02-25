@@ -233,13 +233,13 @@ TEST_F(DatabaseTestsFixture, CanBulkInsert)
    Rowset rowset;
    error = sqliteConnection->execute(selectQuery, rowset);
    ASSERT_FALSE(error) << "Failed to select bulk inserted data: " << error.getMessage();
-   
+
    int i = 1;
    for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
    {
       Row& row = *it;
-   ASSERT_EQ(i * 1000, row.get<int>(0));
-   ASSERT_EQ(safe_convert::numberToString(i * 1000), row.get<std::string>(1)); 
+      ASSERT_EQ(i * 1000, row.get<int>(0));
+      ASSERT_EQ(safe_convert::numberToString(i * 1000), row.get<std::string>(1));
       ++i;
    }
 }
@@ -248,7 +248,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
 {
    FilePath dbPath = FilePath("/tmp/rstudio-test-db-pool");
    dbPath.removeIfExists();
-   
+
    SqliteConnectionOptions options;
    options.file = dbPath.getAbsolutePath();
 
@@ -277,7 +277,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
       ASSERT_FALSE(error) << "Failed to insert row " << id << ": " << error.getMessage();
    }
 
-   int rowId; 
+   int rowId;
    std::string rowText;
    query = connection->query("select id, text from Test where id = 50")
       .withOutput(rowId)
@@ -290,7 +290,7 @@ TEST(DatabaseTest, CanUseConnectionPool)
 
    boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
    ASSERT_TRUE(connection2) << "Failed to get second connection from pool";
-   
+
    Query query2 = connection2->query("select id, text from Test where id = 25")
       .withOutput(rowId)
       .withOutput(rowText);
@@ -394,16 +394,16 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
    error = writeStringToFile(outFile1, schema1);
    ASSERT_FALSE(error) << "Failed to write initial schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile2Sqlite, schema2Sqlite);
    ASSERT_FALSE(error) << "Failed to write SQLite constraints schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile2Postgresql, schema2Postgresql);
    ASSERT_FALSE(error) << "Failed to write PostgreSQL constraints schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile3Sqlite, schema3Sqlite);
    ASSERT_FALSE(error) << "Failed to write SQLite account creation schema file: " << error.getMessage();
-   
+
    error = writeStringToFile(outFile3Postgresql, schema3Postgresql);
    ASSERT_FALSE(error) << "Failed to write PostgreSQL account creation schema file: " << error.getMessage();
 
@@ -416,7 +416,7 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
    error = sqliteUpdater.update();
    ASSERT_FALSE(error) << "Failed to update SQLite schema: " << error.getMessage();
-   
+
    error = postgresUpdater.update();
    ASSERT_FALSE(error) << "Failed to update PostgreSQL schema: " << error.getMessage();
 
@@ -424,7 +424,7 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    error = sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get SQLite schema version: " << error.getMessage();
    ASSERT_EQ(currentSchemaVersion, SchemaVersion("3", RSTUDIO_RELEASE_NAME));
-   
+
    currentSchemaVersion = SchemaVersion();
    error = postgresUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get PostgreSQL schema version: " << error.getMessage();
@@ -433,7 +433,7 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    // ensure repeated calls to update work without error
    error = sqliteUpdater.update();
    ASSERT_FALSE(error) << "Failed to update SQLite schema (repeated call): " << error.getMessage();
-   
+
    error = postgresUpdater.update();
    ASSERT_FALSE(error) << "Failed to update PostgreSQL schema (repeated call): " << error.getMessage();
 
@@ -557,7 +557,7 @@ TEST_F(DatabaseTestsFixture, CanExecuteStrWithMultipleQueries)
    Rowset rowset;
    error = sqliteConnection->execute(selectQuery, rowset);
    ASSERT_FALSE(error) << "Failed to select from TestTable_3: " << error.getMessage();
-   
+
    int i = 0;
    std::string vals[2][2];
    vals[0][0] = "Hello";
@@ -567,7 +567,7 @@ TEST_F(DatabaseTestsFixture, CanExecuteStrWithMultipleQueries)
    for (RowsetIterator it = rowset.begin(); it != rowset.end(); ++it)
    {
       Row& row = *it;
-   ASSERT_EQ(std::string(vals[i][0]), row.get<std::string>(0)); 
+   ASSERT_EQ(std::string(vals[i][0]), row.get<std::string>(0));
    ASSERT_EQ(std::string(vals[i][1]), row.get<std::string>(1));
       ++i;
    }
@@ -702,6 +702,93 @@ TEST_F(DatabaseTestsFixture, WithoutputReturnsErrorWhenValueIsNull)
 
    // The query fails with error for selecting a null value without a null indicator
    ASSERT_TRUE(error) << "Expected error when retrieving NULL value without indicator, but got success. Error message: " << error.getMessage();
+}
+
+TEST_F(DatabaseTestsFixture, GetOptionalValueCastsNumericTypes)
+{
+   Query query = sqliteConnection->query("create table CastTest(i_val integer, f_val real, b_val bigint, t_val text)");
+   Error error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to create CastTest table: " << error.getMessage();
+
+   query = sqliteConnection->query("insert into CastTest (i_val, f_val, b_val, t_val) values (1, 2.2, 3, 'test')");
+   error = sqliteConnection->execute(query);
+   ASSERT_FALSE(error) << "Failed to insert values into CastTest: " << error.getMessage();
+
+   Rowset rows;
+   query = sqliteConnection->query("select i_val, f_val, b_val, t_val from CastTest");
+   error = sqliteConnection->execute(query, rows);
+
+   for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+   {
+      boost::optional<int> i_val;
+      boost::optional<double> f_val;
+      boost::optional<long long> b_val;
+      boost::optional<std::string> t_val;
+
+      // Test without conversions first
+      error = rows.getOptionalValue(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 1);
+      error = rows.getOptionalValue(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 2.2);
+      error = rows.getOptionalValue(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 3);
+      error = rows.getOptionalValue(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val.value(), "test");
+
+      // Test int conversions
+      error = rows.getOptionalValue<int>(it, "i_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 1);
+      error = rows.getOptionalValue<int>(it, "f_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 2);
+      error = rows.getOptionalValue<int>(it, "b_val", &i_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(i_val.value(), 3);
+      error = rows.getOptionalValue<int>(it, "t_val", &i_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to int";
+
+      // Test float conversions
+      error = rows.getOptionalValue<double>(it, "i_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 1.0);
+      error = rows.getOptionalValue<double>(it, "f_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 2.2);
+      error = rows.getOptionalValue<double>(it, "b_val", &f_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(f_val.value(), 3.0);
+      error = rows.getOptionalValue<double>(it, "t_val", &f_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to double";
+
+      // Test long long conversions
+      error = rows.getOptionalValue<long long>(it, "i_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 1);
+      error = rows.getOptionalValue<long long>(it, "f_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 2);
+      error = rows.getOptionalValue<long long>(it, "b_val", &b_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(b_val.value(), 3);
+      error = rows.getOptionalValue<long long>(it, "t_val", &b_val);
+      EXPECT_TRUE(error) << "no error despite casting t_val to long long";
+
+      // Make sure strings don't mingle
+      error = rows.getOptionalValue<std::string>(it, "i_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting i_val to string";
+      error = rows.getOptionalValue<std::string>(it, "f_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting f_val to string";
+      error = rows.getOptionalValue<std::string>(it, "b_val", &t_val);
+      EXPECT_TRUE(error) << "no error despite casting b_val to string";
+      error = rows.getOptionalValue<std::string>(it, "t_val", &t_val);
+      EXPECT_FALSE(error);
+      EXPECT_EQ(t_val.value(), "test");
+   }
 }
 
 class ConnectionPoolTestsFixture : public ::testing::Test
