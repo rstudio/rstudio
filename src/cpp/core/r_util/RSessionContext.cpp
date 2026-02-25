@@ -341,15 +341,20 @@ SessionScopeState validateSessionScope(
          return ScopeMissingProject;
       }
 
+      // get the path to the project directory
+      FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
+
       // if session points to another project then the scope is invalid
       if (project != pSession->project())
       {
-         *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
-         return ScopeInvalidProject;
+         FilePath sessionProjectDir = FilePath::resolveAliasedPath(pSession->project(), userHomePath);
+         if (projectDir.getAbsolutePath() != sessionProjectDir.getAbsolutePath())
+         {
+            *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
+            return ScopeInvalidProject;
+         }
       }
 
-      // get the path to the project directory
-      FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
       if (!projectDir.exists())
       {
          *pErrorMsg = "Project directory does not exist:" + projectDir.getAbsolutePath();
