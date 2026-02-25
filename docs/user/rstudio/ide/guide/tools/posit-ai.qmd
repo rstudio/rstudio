@@ -1,0 +1,45 @@
+---
+title: "Posit AI"
+date-meta: 2026-02-25
+---
+
+[Posit AI](https://posit.ai) is a set of artificial intelligence (AI) features available as a downloadable extension for RStudio. To provide feedback or report bugs, please open a [GitHub Issue on the RStudio repository](https://github.com/rstudio/rstudio/issues).
+
+## Prerequisites
+
+-   To use Posit AI in RStudio, you must have a compatible version of RStudio installed. Posit AI is available for RStudio Desktop or Server 2025.04.0 and later. Posit Workbench disables Posit AI by default, but an administrator can enable it.
+-   To use Posit AI, you must have access to the internet in order to send requests to the Posit AI APIs and receive suggestions.
+
+## Setup
+
+::: {.callout-note title="Using Posit AI with Workbench"}
+With Workbench, a system administrator must first enable Posit AI. To enable it, add the following line:
+
+```         
+allow-posit-assistant=1
+```
+
+to `/etc/rstudio/rsession.conf`.
+:::
+
+To enable Posit AI in RStudio:
+
+1.  Navigate to **Tools** \> **Global Options** \> **Assistant**.
+2.  Select **Posit Assistant** from the **Chat provider** dropdown.
+3.  Select **Posit Assistant** from the **Use code assistant** dropdown to use Posit AI for Next-Edit Suggestions (optional).
+4.  Click **OK** to close the **Global Options** dialog.
+5.  Select **View** \> **Show Posit Assistant** and follow the prompts to install and sign up for Posit AI.
+
+::: {layout-ncol=2}
+![](images/install-posit-ai.png){fig-alt="Install Posit AI"}
+
+![](images/posit-ai-sign-in.png){fig-alt="Sign in to Posit AI"}
+:::
+
+Once signed up and authenticated, the Posit Assistant chat feature is ready to use.
+
+![](images/posit-ai-chat.png){fig-alt="Posit Assistant Chat"}
+
+## Using Posit AI
+
+Feature details coming soon.
