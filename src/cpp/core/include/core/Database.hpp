@@ -81,6 +81,20 @@ enum class Driver
    Unknown
 };
 
+namespace detail {
+template <typename T, typename U>
+typename std::enable_if<!std::is_convertible<T, U>::value, T>::type maybe_cast(U)
+{
+   throw std::bad_cast();
+}
+
+template <typename T, typename U>
+typename std::enable_if<std::is_convertible<T, U>::value, T>::type maybe_cast(U val)
+{
+   return val;
+}
+} // namespace detail
+
 static constexpr const char* SQLITE_DRIVER = "sqlite3";
 static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
 
@@ -96,7 +110,7 @@ class Transaction;
  * Add parameter names that should be treated as secrets and not logged in full.
  * Secret values are logged as "xxx...secret-len=N" instead of the actual value.
  * By default, "secret_param" is already registered as a secret param name.
- * 
+ *
  * @param paramNames List of parameter names (without the : prefix) to treat as secrets
  */
 void addSecretParamNames(const std::vector<std::string>& paramNames);
@@ -187,7 +201,7 @@ public:
       statement_.exchange(soci::into(out));
       return *this;
    }
-   
+
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {
@@ -351,7 +365,7 @@ public:
    * Not reliably supported, may cause SOCI to throw or cause undefined behavior
    *    Unsigned types (unsigned int, unsigned short, etc.)
    * Also, be aware that the DB column type must match up with the requested type T.
-   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast 
+   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast
    * exception in the underlying library. See Utility functions for conversions.
    *
    * @param row - iterator to the row from which to extract the value.
@@ -367,10 +381,11 @@ public:
    {
       *result = boost::none;
 
+      soci::data_type dt;
       try
       {
          // SOCI library has find_column private, so we'll check if it exists by whether or not the following call throws
-         row->get_properties(columnName);
+         dt = row->get_properties(columnName).get_data_type();
       }
       catch(soci::soci_error & e)
       {
@@ -382,7 +397,16 @@ public:
       {
          try
          {
-            *result = row->get<T>(columnName);
+            if (dt == soci::dt_double)
+               *result = detail::maybe_cast<T>(row->get<double>(columnName));
+            else if (dt == soci::dt_integer)
+               *result = detail::maybe_cast<T>(row->get<int>(columnName));
+            else if (dt == soci::dt_long_long)
+               *result = detail::maybe_cast<T>(row->get<long long>(columnName));
+            else if (dt == soci::dt_unsigned_long_long)
+               *result = detail::maybe_cast<T>(row->get<unsigned long long>(columnName));
+            else
+               *result = row->get<T>(columnName);
          }
          catch (soci::soci_error & e)
          {
@@ -392,7 +416,7 @@ public:
          catch(std::exception & e)
          {
             // This is likely from an unsupported type T
-            return core::Error(boost::system::errc::invalid_argument, 
+            return core::Error(boost::system::errc::invalid_argument,
                "std::exception from the underlying library when getting value for column: " + columnName + " . " + e.what(), ERROR_LOCATION);
          }
       }
@@ -417,7 +441,7 @@ public:
    *  Not reliably supported, may cause SOCI to throw or cause undefined behavior
    *    Unsigned types (unsigned int, unsigned short, etc.)
    * Also, be aware that the DB column type must match up with the requested type T.
-   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast 
+   * If the column is an integer type in the DB, but T is a long long, this can cause a bad_cast
    * exception in the underlying library. See Utility functions for conversions.
    *
    * @param row - iterator to the row from which to extract the value.
@@ -616,7 +640,7 @@ struct SchemaVersion {
       SchemaVersion(SchemaVersion&& other);
 
       std::string Date;
-      std::string Flower;   
+      std::string Flower;
 
       std::string toString() const;
 
