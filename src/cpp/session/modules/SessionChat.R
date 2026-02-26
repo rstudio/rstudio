@@ -13,14 +13,283 @@
 #
 #
 
+.rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
+
+
+.rs.addFunction("chat.addPreflightHook", function(binding, hook)
+{
+   # grab the original binding from the base namespace
+   envir <- .BaseNamespaceEnv
+   original <- envir[[binding]]
+   
+   # keep around a reference to the old binding
+   .rs.chat.hookedBindings[[binding]] <- original
+   
+   # force our hook to use the same environment, formals as original
+   environment(hook) <- environment(original)
+   formals(hook) <- formals(original)
+   
+   # inject the body of our hook as a prefix to the original code
+   body(hook) <- call("{", body(hook), body(original))
+   
+   # inject our hook into the associated environment
+   .rs.replaceBindingImpl(envir, binding, hook)
+   
+   # return old binding in case caller needs it
+   invisible(original)
+})
+
+.rs.addFunction("chat.addPreflightHooks", function(hooks)
+{
+   .rs.enumerate(hooks, function(binding, hook)
+   {
+      .rs.chat.addPreflightHook(binding, hook)
+   })
+})
+
+.rs.addFunction("chat.restoreBindings", function()
+{
+   envir <- .BaseNamespaceEnv
+   bindings <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+   
+   for (binding in bindings)
+   {
+      value <- .rs.chat.hookedBindings[[binding]]
+      .rs.replaceBindingImpl(envir, binding, value)
+   }
+})
+
+.rs.addFunction("chat.normalizePath", function(path)
+{
+   exists <- file.exists(path)
+   
+   path[exists] <- normalizePath(path[exists], winslash = "/", mustWork = TRUE)
+   
+   path[!exists] <- file.path(
+      normalizePath(dirname(path[!exists]), winslash = "/", mustWork = FALSE),
+      basename(path[!exists])
+   )
+   
+   path
+})
+
+.rs.addFunction("chat.isFileReadAllowed", function(path)
+{
+   # normalize path for comparison
+   path <- .rs.chat.normalizePath(path)
+   
+   # assume file reads are permitted by default
+   ok <- rep.int(TRUE, length(path))
+   
+   # deny reads on files that lack read permission for 'others'
+   info <- suppressWarnings(file.info(path))
+   deny <- bitwAnd(info$mode, 4L) == 0L
+   ok[which(deny)] <- FALSE
+   
+   ok
+})
+
+.rs.addFunction("chat.isFileEditAllowed", function(path)
+{
+   # normalize path for comparison
+   path <- .rs.chat.normalizePath(path)
+   
+   # assume file edits are disallowed by default
+   ok <- rep.int(FALSE, length(path))
+   
+   # allow edits within the R temporary directory
+   tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
+   ok[.rs.startsWith(path, tempDir)] <- TRUE
+   
+   # allow edits within the project directory
+   projectDir <- normalizePath(.rs.getProjectDirectory(), winslash = "/", mustWork = TRUE)
+   ok[.rs.startsWith(path, projectDir)] <- TRUE
+   
+   ok
+})
+
+.rs.addFunction("chat.validateFileEdit", function(action, path)
+{
+   ok <- .rs.chat.isFileEditAllowed(path)
+   if (all(ok))
+      return(TRUE)
+
+   fmt <- "denied %s() on file %s"
+   msg <- sprintf(fmt, action, paste(shQuote(path[!ok]), collapse = ", "))
+   stop(msg, call. = FALSE)
+})
+
+.rs.addFunction("chat.validateFileRead", function(action, path)
+{
+   ok <- .rs.chat.isFileReadAllowed(path)
+   if (all(ok))
+      return(TRUE)
+
+   fmt <- "denied %s() on file %s"
+   msg <- sprintf(fmt, action, paste(shQuote(path[!ok]), collapse = ", "))
+   stop(msg, call. = FALSE)
+})
+
+# inject preflight validation hooks into potentially destructive base R
+# functions. Each hook is prepended to the original function body via
+# .rs.chat.addPreflightHook so that calls are validated before the real
+# implementation executes. hooks are removed by .rs.chat.restoreBindings.
+.rs.addFunction("chat.injectBindings", function()
+{
+   hooks <- list(
+
+      unlink = function()
+      {
+         # The 'expand' formal was added in R 4.0.0; on older versions,
+         # unlink always performed glob expansion.
+         doExpand <- getRversion() < "4.0.0" || expand
+         paths <- if (doExpand) Sys.glob(x) else x
+         .rs.chat.validateFileEdit("unlink", paths)
+      },
+
+      file.create = function()
+      {
+         .rs.chat.validateFileEdit("file.create", c(...))
+      },
+
+      file.remove = function()
+      {
+         .rs.chat.validateFileEdit("file.remove", c(...))
+      },
+
+      file.rename = function()
+      {
+         .rs.chat.validateFileEdit("file.rename", c(from, to))
+      },
+
+      file.append = function()
+      {
+         .rs.chat.validateFileEdit("file.append", file1)
+         .rs.chat.validateFileRead("file.append", file2)
+      },
+
+      file.copy = function()
+      {
+         .rs.chat.validateFileRead("file.copy", from)
+         .rs.chat.validateFileEdit("file.copy", to)
+      },
+
+      file.symlink = function()
+      {
+         .rs.chat.validateFileRead("file.symlink", from)
+         .rs.chat.validateFileEdit("file.symlink", to)
+      },
+
+      file.link = function()
+      {
+         .rs.chat.validateFileRead("file.link", from)
+         .rs.chat.validateFileEdit("file.link", to)
+      },
+
+      file = function()
+      {
+         if (nzchar(description))
+         {
+            if (grepl("[wWaA+]", open))
+               .rs.chat.validateFileEdit("file", description)
+            else
+               .rs.chat.validateFileRead("file", description)
+         }
+      },
+
+      writeLines = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeLines", con)
+      },
+
+      cat = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("cat", file)
+      },
+
+      readChar = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readChar", con)
+      },
+
+      writeChar = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeChar", con)
+      },
+
+      readBin = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readBin", con)
+      },
+
+      writeBin = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeBin", con)
+      },
+
+      save = function()
+      {
+         .rs.chat.validateFileEdit("save", file)
+      },
+
+      saveRDS = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("saveRDS", file)
+      },
+
+      dput = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("dput", file)
+      },
+
+      dump = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("dump", file)
+      },
+
+      dir.create = function()
+      {
+         .rs.chat.validateFileEdit("dir.create", path)
+      },
+
+      Sys.chmod = function()
+      {
+         .rs.chat.validateFileEdit("Sys.chmod", paths)
+      },
+
+      Sys.setFileTime = function()
+      {
+         .rs.chat.validateFileEdit("Sys.setFileTime", path)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks(hooks)
+   
+})
+
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
-   tryCatch(
-      withVisible(eval(expr, envir = envir)),
-      error = identity,
-      interrupt = identity
-   )
+   tryCatch(error = identity, interrupt = identity, {
+
+      # Inject our safe bindings into the session
+      .rs.chat.injectBindings()
+      on.exit(.rs.chat.restoreBindings(), add = TRUE)
+      
+      # Evaluate the provided code
+      withVisible(eval(expr, envir = envir))
+
+   })
 })
 
 # Helper function to capture a recorded plot as base64-encoded PNG
