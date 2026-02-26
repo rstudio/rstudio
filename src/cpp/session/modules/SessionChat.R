@@ -336,7 +336,7 @@
 
    )
 
-   .rs.chat.addPreflightHooks(hooks)
+   invisible(.rs.chat.addPreflightHooks(hooks))
    
 })
 
