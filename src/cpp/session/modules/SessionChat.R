@@ -13,6 +13,9 @@
 #
 #
 
+# Each hooked namespace gets its own environment within this container,
+# keyed by the namespace name. The per-namespace environment maps
+# binding names to their original values.
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 
 # Well-known files that commonly contain secrets but are often
@@ -32,47 +35,58 @@
 ))
 
 
-.rs.addFunction("chat.addPreflightHook", function(binding, hook)
+.rs.addFunction("chat.addPreflightHook", function(package, binding, hook)
 {
-   # grab the original binding from the base namespace
-   envir <- .BaseNamespaceEnv
+   # resolve the namespace environment
+   envir <- asNamespace(package)
+
+   # grab the original binding
    original <- envir[[binding]]
-   
-   # keep around a reference to the old binding
-   .rs.chat.hookedBindings[[binding]] <- original
-   
+
+   # get or create the per-namespace storage for original bindings
+   if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE))
+      .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
+   .rs.chat.hookedBindings[[package]][[binding]] <- original
+
    # force our hook to use the same environment, formals as original
    environment(hook) <- environment(original)
    formals(hook) <- formals(original)
-   
+
    # inject the body of our hook as a prefix to the original code
    body(hook) <- call("{", body(hook), body(original))
-   
+
    # inject our hook into the associated environment
    .rs.replaceBindingImpl(envir, binding, hook)
-   
+
    # return old binding in case caller needs it
    invisible(original)
 })
 
-.rs.addFunction("chat.addPreflightHooks", function(hooks)
+.rs.addFunction("chat.addPreflightHooks", function(package, hooks)
 {
    .rs.enumerate(hooks, function(binding, hook)
    {
-      .rs.chat.addPreflightHook(binding, hook)
+      .rs.chat.addPreflightHook(package, binding, hook)
    })
 })
 
 .rs.addFunction("chat.restoreBindings", function()
 {
-   envir <- .BaseNamespaceEnv
-   bindings <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
-   
-   for (binding in bindings)
+   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+
+   for (package in packages)
    {
-      value <- .rs.chat.hookedBindings[[binding]]
-      .rs.replaceBindingImpl(envir, binding, value)
-      rm(list = binding, envir = .rs.chat.hookedBindings)
+      originals <- .rs.chat.hookedBindings[[package]]
+      bindings <- ls(envir = originals, all.names = TRUE)
+      envir <- asNamespace(package)
+
+      for (binding in bindings)
+      {
+         value <- originals[[binding]]
+         .rs.replaceBindingImpl(envir, binding, value)
+      }
+
+      rm(list = package, envir = .rs.chat.hookedBindings)
    }
 })
 
@@ -176,13 +190,13 @@
    stop(msg, call. = FALSE)
 })
 
-# inject preflight validation hooks into potentially destructive base R
+# inject preflight validation hooks into potentially destructive R
 # functions. Each hook is prepended to the original function body via
 # .rs.chat.addPreflightHook so that calls are validated before the real
 # implementation executes. hooks are removed by .rs.chat.restoreBindings.
 .rs.addFunction("chat.injectBindings", function()
 {
-   hooks <- list(
+   baseHooks <- list(
 
       unlink = function()
       {
@@ -336,8 +350,20 @@
 
    )
 
-   invisible(.rs.chat.addPreflightHooks(hooks))
-   
+   .rs.chat.addPreflightHooks("base", baseHooks)
+
+   utilsHooks <- list(
+
+      write.table = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("write.table", file)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks("utils", utilsHooks)
+
 })
 
 # Helper function for evaluating code for the 'runCode' tool.
