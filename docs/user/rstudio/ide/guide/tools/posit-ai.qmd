@@ -26,7 +26,7 @@ To enable Posit AI in RStudio:
 
 1.  Navigate to **Tools** \> **Global Options** \> **Assistant**.
 2.  Select **Posit Assistant** from the **Chat provider** dropdown.
-3.  Select **Posit Assistant** from the **Use code assistant** dropdown to use Posit AI for Next-Edit Suggestions (optional).
+3.  Select **Posit AI Next Edit Suggestions** from the **Use code assistant** dropdown to use Posit AI for Next Edit Suggestions (optional).
 4.  Click **OK** to close the **Global Options** dialog.
 5.  Select **View** \> **Show Posit Assistant** and follow the prompts to install and sign up for Posit AI.
 
@@ -34,7 +34,7 @@ To enable Posit AI in RStudio:
 For more information on signing up and managing your Posit AI account visit <https://docs.posit.co/posit-ai>.
 :::
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ![](images/install-posit-ai.png){fig-alt="Install Posit AI"}
 
 ![](images/posit-ai-sign-in.png){fig-alt="Sign in to Posit AI"}

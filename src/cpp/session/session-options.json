@@ -983,7 +983,7 @@
             "type": "bool",
             "memberName": "positAssistantEnabled_",
             "defaultValue": true,
-            "description": "Indicates whether or not Posit Assistant integration can be enabled."
+            "description": "Indicates whether or not Posit AI integration can be enabled."
          },
          {
             "name": "posit-assistant-ssl-certificates-file",
@@ -996,7 +996,7 @@
             "name": "posit-assistant-helper",
             "type": "core::FilePath",
             "memberName": "positAssistantHelper_",
-            "description": "The path to an optional shell script, which when invoked, should start the Posit Assistant Language Server."
+            "description": "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server."
          }
       ],
       "misc": [
