@@ -56,7 +56,20 @@
    {
       value <- .rs.chat.hookedBindings[[binding]]
       .rs.replaceBindingImpl(envir, binding, value)
+      rm(list = binding, envir = .rs.chat.hookedBindings)
    }
+})
+
+#' Check whether a path lies within a directory.
+#'
+#' Both `path` and `directory` should be normalized before calling
+#' this function.
+#'
+#' @param path A character vector of file paths.
+#' @param directory A single directory path.
+.rs.addFunction("chat.isPathWithin", function(path, directory)
+{
+   .rs.startsWith(path, paste0(directory, "/"))
 })
 
 .rs.addFunction("chat.normalizePath", function(path)
@@ -99,11 +112,15 @@
    
    # allow edits within the R temporary directory
    tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
-   ok[.rs.startsWith(path, tempDir)] <- TRUE
-   
+   ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
+
    # allow edits within the project directory
-   projectDir <- normalizePath(.rs.getProjectDirectory(), winslash = "/", mustWork = TRUE)
-   ok[.rs.startsWith(path, projectDir)] <- TRUE
+   projectDir <- .rs.getProjectDirectory()
+   if (!is.null(projectDir))
+   {
+      projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
+      ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
+   }
    
    ok
 })
@@ -299,9 +316,10 @@
 {
    tryCatch(error = identity, interrupt = identity, {
 
-      # Inject our safe bindings into the session
-      .rs.chat.injectBindings()
+      # Register cleanup first so bindings are restored even if
+      # injectBindings() itself errors partway through
       on.exit(.rs.chat.restoreBindings(), add = TRUE)
+      .rs.chat.injectBindings()
       
       # Evaluate the provided code
       withVisible(eval(expr, envir = envir))
