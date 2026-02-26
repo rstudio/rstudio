@@ -197,6 +197,12 @@
          }
       },
 
+      readLines = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readLines", con)
+      },
+      
       writeLines = function()
       {
          if (is.character(con) && nzchar(con))
@@ -269,6 +275,17 @@
       Sys.setFileTime = function()
       {
          .rs.chat.validateFileEdit("Sys.setFileTime", path)
+      },
+
+      download.file = function()
+      {
+         .rs.chat.validateFileEdit("download.file", destfile)
+      },
+
+      sink = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("sink", file)
       }
 
    )
