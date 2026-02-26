@@ -15,6 +15,22 @@
 
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 
+# Well-known files that commonly contain secrets but are often
+# world-readable. Checked by full path (resolved against the user's
+# home directory) or by basename pattern.
+.rs.setVar("chat.denyPaths", c(
+   "~/.aws/credentials",
+   "~/.aws/config",
+   "~/.netrc",
+   "~/.npmrc",
+   "~/.ssh/config"
+))
+
+.rs.setVar("chat.denyBasenames", c(
+   ".env",
+   ".Renviron"
+))
+
 
 .rs.addFunction("chat.addPreflightHook", function(binding, hook)
 {
@@ -90,15 +106,28 @@
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
-   
+
    # assume file reads are permitted by default
    ok <- rep.int(TRUE, length(path))
-   
+
    # deny reads on files that lack read permission for 'others'
    info <- suppressWarnings(file.info(path))
    deny <- bitwAnd(info$mode, 4L) == 0L
    ok[which(deny)] <- FALSE
-   
+
+   # deny reads on well-known sensitive paths
+   denyPaths <- normalizePath(
+      path.expand(.rs.chat.denyPaths),
+      winslash = "/",
+      mustWork = FALSE
+   )
+   ok[path %in% denyPaths] <- FALSE
+
+   # deny reads on files matching sensitive basename patterns
+   bn <- basename(path)
+   for (pattern in .rs.chat.denyBasenames)
+      ok[.rs.startsWith(bn, pattern)] <- FALSE
+
    ok
 })
 
