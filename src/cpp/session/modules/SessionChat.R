@@ -48,8 +48,8 @@
 # Note that file edits are disallowed by default, except for files within
 #
 # - The R temporary directory
-# - The project directory
-# - The R working directory
+# - The project directory (when a project is open)
+# - The current working directory
 #
 # This list serves to deny edits for certain files even if they're within
 # one of the above 'allowed' directories.
@@ -91,7 +91,9 @@
       .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
    .rs.chat.hookedBindings[[package]][[binding]] <- original
 
-   # force our hook to use the same environment, formals as original
+   # set hook environment and formals to match original (replaceBinding
+   # will also set the environment, but we need it here so the merged
+   # body can resolve symbols from the original namespace)
    environment(hook) <- environment(original)
    formals(hook) <- formals(original)
 
@@ -116,6 +118,7 @@
 .rs.addFunction("chat.restoreBindings", function()
 {
    packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+   allRestored <- TRUE
 
    for (package in packages)
    {
@@ -126,16 +129,39 @@
       {
          status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
          if (inherits(status, "error"))
+         {
             warning(sprintf(
                "failed to restore binding '%s' in '%s': %s",
                binding, package, conditionMessage(status)
             ))
+            allRestored <- FALSE
+         }
+         else
+         {
+            rm(list = binding, envir = originals)
+         }
       }
 
-      rm(list = package, envir = .rs.chat.hookedBindings)
+      # only remove the package entry if all bindings were restored
+      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+         rm(list = package, envir = .rs.chat.hookedBindings)
    }
 
-   .rs.setVar("chat.bindingsInjected", FALSE)
+   if (allRestored)
+      .rs.setVar("chat.bindingsInjected", FALSE)
+})
+
+#' Match paths against a pattern.
+#'
+#' Wrapper around grepl that uses case-insensitive matching on
+#' platforms with case-insensitive filesystems (macOS, Windows).
+#'
+#' @param pattern A PCRE regular expression.
+#' @param x A character vector of file paths.
+#' @param ... Additional arguments passed to `grepl()`.
+.rs.addFunction("chat.pathMatches", function(pattern, x, ...)
+{
+   grepl(pattern, x, ignore.case = !.rs.platform.isLinux, perl = TRUE, ...)
 })
 
 #' Check whether a path lies within a directory.
@@ -145,13 +171,6 @@
 #'
 #' @param path A character vector of file paths.
 #' @param directory A single directory path.
-#' Wrapper around grepl that uses case-insensitive matching on
-#' platforms with case-insensitive filesystems (macOS, Windows).
-.rs.addFunction("chat.pathMatches", function(pattern, x, ...)
-{
-   grepl(pattern, x, ignore.case = !.rs.platform.isLinux, perl = TRUE, ...)
-})
-
 .rs.addFunction("chat.isPathWithin", function(path, directory)
 {
    pattern <- paste0("^\\Q", directory, "\\E(/|$)")
@@ -192,9 +211,8 @@
 #' Check whether reading the given paths is allowed.
 #'
 #' Reads are allowed by default, but denied for files that lack
-#' world-readable permissions, match well-known sensitive paths
-#' (e.g. `~/.aws/credentials`), or match sensitive basename patterns
-#' (e.g. `.env`, `.Renviron`).
+#' world-readable permissions, match well-known sensitive path
+#' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
 #'
 #' @param path A character vector of file paths.
 #' @return A logical vector the same length as `path`.
@@ -222,8 +240,8 @@
 #' Check whether editing the given paths is allowed.
 #'
 #' Edits are denied by default, but allowed within the R temporary
-#' directory and the active project directory (or `getwd()` when no
-#' project is open). Edits within sensitive directories (e.g. `~/.ssh`)
+#' directory, the active project directory, and the current working
+#' directory. Edits within sensitive directories (e.g. `~/.ssh`)
 #' are always denied.
 #'
 #' @param path A character vector of file paths.
@@ -232,21 +250,25 @@
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
-   
+
    # assume file edits are disallowed by default
    ok <- rep.int(FALSE, length(path))
-   
+
    # allow edits within the R temporary directory
    tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
 
-   # allow edits within the project directory; when no project is
-   # active, fall back to getwd()
+   # allow edits within the project directory
    projectDir <- .rs.getProjectDirectory()
-   if (is.null(projectDir))
-      projectDir <- getwd()
-   projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
-   ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
+   if (!is.null(projectDir))
+   {
+      projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
+      ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
+   }
+
+   # allow edits within the current working directory
+   workingDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+   ok[.rs.chat.isPathWithin(path, workingDir)] <- TRUE
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -312,7 +334,6 @@
    # skip injection to avoid overwriting saved originals
    if (.rs.chat.bindingsInjected)
       return(invisible())
-   .rs.setVar("chat.bindingsInjected", TRUE)
 
    baseHooks <- list(
 
@@ -515,7 +536,8 @@
    )
 
    .rs.chat.addPreflightHooks("utils", utilsHooks)
-   
+
+   .rs.setVar("chat.bindingsInjected", TRUE)
    invisible(TRUE)
 })
 
@@ -526,7 +548,14 @@
 
       # Register cleanup first so bindings are restored even if
       # injectBindings() itself errors partway through
-      on.exit(.rs.chat.restoreBindings(), add = TRUE)
+      on.exit({
+         tryCatch(
+            .rs.chat.restoreBindings(),
+            error = function(e) {
+               warning("failed to restore bindings: ", conditionMessage(e))
+            }
+         )
+      }, add = TRUE)
       .rs.chat.injectBindings()
       
       # Evaluate the provided code

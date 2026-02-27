@@ -71,6 +71,36 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.guardrails.expectError(readLines("~/.ssh/id_rsa"))
 })
 
+.rs.test("reading .Rprofile is denied",
+{
+   rprofile <- file.path(tempdir(), ".Rprofile")
+   remote$console.executeExpr({
+      writeLines("# profile", !!rprofile)
+   })
+   withr::defer(remote$console.executeExpr({ unlink(!!rprofile) }))
+   .rs.guardrails.expectError(readLines(!!rprofile))
+})
+
+.rs.test("reading .env.local variant is denied",
+{
+   envFile <- file.path(tempdir(), ".env.local")
+   remote$console.executeExpr({
+      writeLines("SECRET=abc", !!envFile)
+   })
+   withr::defer(remote$console.executeExpr({ unlink(!!envFile) }))
+   .rs.guardrails.expectError(readLines(!!envFile))
+})
+
+.rs.test("reading SSH public key is allowed",
+{
+   pubKey <- file.path(tempdir(), "id_rsa.pub")
+   remote$console.executeExpr({
+      writeLines("ssh-rsa AAAA...", !!pubKey)
+   })
+   withr::defer(remote$console.executeExpr({ unlink(!!pubKey) }))
+   .rs.guardrails.expectSuccess(readLines(!!pubKey))
+})
+
 .rs.test("reading normal files is allowed",
 {
    remote$console.executeExpr({
@@ -112,6 +142,34 @@ withr::defer(.rs.automation.deleteRemote())
 {
    path <- file.path(dirname(tempdir()), "not-in-project.txt")
    .rs.guardrails.expectError(file.remove(!!path))
+})
+
+.rs.test("unlink outside project directory is denied",
+{
+   path <- file.path(dirname(tempdir()), "not-in-project.txt")
+   .rs.guardrails.expectError(unlink(!!path))
+})
+
+.rs.test("file.copy to denied path is denied",
+{
+   src <- file.path(tempdir(), "guardrail-copy-src.txt")
+   remote$console.executeExpr({
+      writeLines("hello", !!src)
+   })
+   withr::defer(remote$console.executeExpr({ unlink(!!src) }))
+   dest <- file.path(dirname(tempdir()), "guardrail-copy-dest.txt")
+   .rs.guardrails.expectError(file.copy(!!src, !!dest))
+})
+
+.rs.test("file.rename to denied path is denied",
+{
+   src <- file.path(tempdir(), "guardrail-rename-src.txt")
+   remote$console.executeExpr({
+      writeLines("hello", !!src)
+   })
+   withr::defer(remote$console.executeExpr({ unlink(!!src) }))
+   dest <- file.path(dirname(tempdir()), "guardrail-rename-dest.txt")
+   .rs.guardrails.expectError(file.rename(!!src, !!dest))
 })
 
 
@@ -183,3 +241,51 @@ withr::defer(.rs.automation.deleteRemote())
    output <- paste(remote$console.getOutput(), collapse = "\n")
    expect_match(output, "FALSE")
 })
+
+.rs.test("double injection is safe (reentrancy guard)",
+{
+   remote$console.clear()
+
+   # Call injectBindings twice; the second call should be a no-op.
+   # Then restore once -- bindings should be cleanly restored.
+   remote$console.executeExpr({
+      .rs.chat.injectBindings()
+      .rs.chat.injectBindings()
+      .rs.chat.restoreBindings()
+   })
+
+   # After restore, writeLines should work normally outside tempdir
+   remote$console.clear()
+   remote$console.executeExpr({
+      path <- file.path(tempdir(), "guardrail-reentrant.txt")
+      writeLines("test", path)
+      unlink(path)
+   })
+
+   output <- paste(remote$console.getOutput(), collapse = "\n")
+   expect_no_match(output, "denied")
+   expect_no_match(output, "not allowed")
+})
+
+.rs.test("safeEval restores bindings when user code errors",
+{
+   remote$console.clear()
+
+   # safeEval should restore bindings even when the evaluated code errors
+   remote$console.executeExpr({
+      .rs.chat.safeEval(quote(stop("user error")))
+   })
+
+   # After safeEval, bindings should be restored
+   remote$console.clear()
+   remote$console.executeExpr({
+      path <- file.path(tempdir(), "guardrail-error-restore.txt")
+      writeLines("test", path)
+      unlink(path)
+   })
+
+   output <- paste(remote$console.getOutput(), collapse = "\n")
+   expect_no_match(output, "denied")
+   expect_no_match(output, "not allowed")
+})
+
