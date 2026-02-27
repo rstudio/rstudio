@@ -532,7 +532,11 @@ export class DesktopBrowserWindow extends EventEmitter {
   keyPressEvent(event: Electron.Event, input: Electron.Input): void {
     if (process.platform === 'darwin') {
       if (input.meta && input.key.toLowerCase() === 'w') {
-        // on macOS, intercept Cmd+W and emit the window close signal
+        // On macOS, intercept Cmd+W and emit the window close signal.
+        // preventDefault() stops the global application menu accelerator
+        // from also firing, which would route 'closeSourceDoc' to the
+        // main window and close a source tab there (rstudio#17115).
+        event.preventDefault();
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
       }
     } else if (process.platform === 'win32') {

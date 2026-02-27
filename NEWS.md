@@ -36,6 +36,7 @@
 - ([#15863](https://github.com/rstudio/rstudio/issues/15863)): Fixed an issue where "Use Selection for Find" (Cmd+E) incorrectly jumped to the next match instead of only populating the find bar
 - ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
 - ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
+- ([#17115](https://github.com/rstudio/rstudio/issues/17115)): Fixed an issue on macOS Desktop where the "Close" keyboard shortcut in secondary windows (e.g. Shiny app, Help pop-out) were also processed by the main window
 
 ### Dependencies
 - Ace 1.43.5

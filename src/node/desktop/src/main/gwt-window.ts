@@ -75,7 +75,22 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
          else false`,
     )
       .then((closeSourceDocEnabled) => {
-        if (!(closeSourceDocEnabled as boolean)) {
+        if (closeSourceDocEnabled as boolean) {
+          // Explicitly invoke closeSourceDoc rather than relying on the
+          // menu accelerator, since we now preventDefault() on Cmd+W in
+          // before-input-event to avoid double-dispatch (rstudio#17115).
+          // On macOS, route through $RStudio.last_focused_window so that
+          // Cmd+W in the main window targets a satellite source window
+          // when one was last focused.
+          const cmd =
+            process.platform === 'darwin'
+              ? `var wnd;
+                 try { wnd = window.$RStudio.last_focused_window; }
+                 catch (e) { wnd = window; }
+                 (wnd || window).desktopHooks.invokeCommand('closeSourceDoc');`
+              : "window.desktopHooks.invokeCommand('closeSourceDoc')";
+          this.executeJavaScript(cmd).catch((error) => logger().logError(error));
+        } else {
           this.window.close();
         }
       })
