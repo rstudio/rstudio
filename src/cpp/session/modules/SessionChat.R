@@ -17,6 +17,7 @@
 # keyed by the namespace name. The per-namespace environment maps
 # binding names to their original values.
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
+.rs.setVar("chat.bindingsInjected", FALSE)
 
 # Well-known files that commonly contain secrets but are often
 # world-readable. Checked by full path (resolved against the user's
@@ -55,8 +56,8 @@
    # inject the body of our hook as a prefix to the original code
    body(hook) <- call("{", body(hook), body(original))
 
-   # inject our hook into the associated environment
-   .rs.replaceBindingImpl(envir, binding, hook)
+   # replace in both namespace and search path
+   .rs.replaceBinding(binding, package, hook)
 
    # return old binding in case caller needs it
    invisible(original)
@@ -78,16 +79,17 @@
    {
       originals <- .rs.chat.hookedBindings[[package]]
       bindings <- ls(envir = originals, all.names = TRUE)
-      envir <- asNamespace(package)
 
       for (binding in bindings)
       {
          value <- originals[[binding]]
-         .rs.replaceBindingImpl(envir, binding, value)
+         .rs.replaceBinding(binding, package, value)
       }
 
       rm(list = package, envir = .rs.chat.hookedBindings)
    }
+
+   .rs.setVar("chat.bindingsInjected", FALSE)
 })
 
 #' Check whether a path lies within a directory.
@@ -196,6 +198,12 @@
 # implementation executes. hooks are removed by .rs.chat.restoreBindings.
 .rs.addFunction("chat.injectBindings", function()
 {
+   # guard against reentrant calls -- if hooks are already injected,
+   # skip injection to avoid overwriting saved originals
+   if (.rs.chat.bindingsInjected)
+      return(invisible())
+   .rs.setVar("chat.bindingsInjected", TRUE)
+
    baseHooks <- list(
 
       unlink = function()
@@ -250,10 +258,45 @@
       {
          if (nzchar(description))
          {
-            if (grepl("[wWaA+]", open))
+            # when open is "" the mode is deferred, so the connection
+            # could later be used for writing; treat as edit
+            if (!nzchar(open) || grepl("[wWaA+]", open))
                .rs.chat.validateFileEdit("file", description)
             else
                .rs.chat.validateFileRead("file", description)
+         }
+      },
+
+      gzfile = function()
+      {
+         if (nzchar(description))
+         {
+            if (!nzchar(open) || grepl("[wWaA+]", open))
+               .rs.chat.validateFileEdit("gzfile", description)
+            else
+               .rs.chat.validateFileRead("gzfile", description)
+         }
+      },
+
+      bzfile = function()
+      {
+         if (nzchar(description))
+         {
+            if (!nzchar(open) || grepl("[wWaA+]", open))
+               .rs.chat.validateFileEdit("bzfile", description)
+            else
+               .rs.chat.validateFileRead("bzfile", description)
+         }
+      },
+
+      xzfile = function()
+      {
+         if (nzchar(description))
+         {
+            if (!nzchar(open) || grepl("[wWaA+]", open))
+               .rs.chat.validateFileEdit("xzfile", description)
+            else
+               .rs.chat.validateFileRead("xzfile", description)
          }
       },
 
@@ -302,6 +345,30 @@
       save = function()
       {
          .rs.chat.validateFileEdit("save", file)
+      },
+
+      load = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("load", file)
+      },
+
+      source = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("source", file)
+      },
+
+      sys.source = function()
+      {
+         if (nzchar(file))
+            .rs.chat.validateFileRead("sys.source", file)
+      },
+
+      readRDS = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("readRDS", file)
       },
 
       saveRDS = function()
