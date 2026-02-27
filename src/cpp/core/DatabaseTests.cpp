@@ -36,13 +36,8 @@ using namespace core::database;
 namespace {
 Error initializeCommonTestSchema(IConnection& connection)
 {
-   // Disable WAL mode to prevent WAL/SHM files
-   Error error = connection.executeStr("PRAGMA journal_mode = DELETE;");
-   if (error)
-      return error;
-
    Query query = connection.query("create table Test(id int, text varchar(255))");
-   error = connection.execute(query);
+   Error error = connection.execute(query);
    return error;
 }
 } // anonymous namespace
@@ -257,10 +252,6 @@ TEST(DatabaseTest, CanUseConnectionPool)
    ASSERT_FALSE(error) << "Failed to create connection pool: " << error.getMessage();
    boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
    ASSERT_TRUE(connection) << "Failed to get connection from pool";
-
-   // Disable WAL mode to prevent WAL/SHM files
-   error = connection->executeStr("PRAGMA journal_mode = DELETE;");
-   ASSERT_FALSE(error) << "Failed to set journal mode: " << error.getMessage();
 
    Query query = connection->query("create table Test(id int, text varchar(255))");
    error = connection->execute(query);
