@@ -25,6 +25,7 @@
 #include <fmt/format.h>
 
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -57,28 +58,6 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 // Atomic because it is written from the main thread and read from HTTP
 // handler threads.
 std::atomic<int> s_chatBackendPort{-1};
-
-/**
- * Escape a string for safe inclusion in an HTML attribute value.
- * Handles the characters that could break out of a double-quoted attribute.
- */
-std::string htmlEscapeAttr(const std::string& input)
-{
-   std::string result;
-   result.reserve(input.size());
-   for (char c : input)
-   {
-      switch (c)
-      {
-         case '"':  result += "&quot;"; break;
-         case '&':  result += "&amp;";  break;
-         case '<':  result += "&lt;";   break;
-         case '>':  result += "&gt;";   break;
-         default:   result += c;        break;
-      }
-   }
-   return result;
-}
 
 /**
  * Inject theme information into HTML content without inline scripts.
@@ -126,8 +105,8 @@ void injectThemeInfo(std::string* pContent)
    }
 
    // Escape color values for safe HTML attribute injection
-   std::string bg = htmlEscapeAttr(colors.background);
-   std::string fg = htmlEscapeAttr(colors.foreground);
+   std::string bg = string_utils::htmlEscape(colors.background, true);
+   std::string fg = string_utils::htmlEscape(colors.foreground, true);
 
    // Inject <meta> tag with theme colors in <head>
    std::string meta = fmt::format(
