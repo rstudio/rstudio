@@ -31,12 +31,12 @@
 #include <vector>
 #include <functional>
 
-#include <boost/thread/mutex.hpp>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
@@ -56,6 +56,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RBusy.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
@@ -70,12 +71,9 @@
 #include <session/prefs/UserState.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <r/session/RBusy.hpp>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
+#include "SessionConsole.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
@@ -498,8 +496,30 @@ void echoSourceCode(const std::string& code)
       if (i == lines.size() - 1 && lines[i].empty())
          continue;
 
+      // Use the same event types as the regular console REPL so that
+      // prompts and input are colored / themed consistently.
+      // The 'agent' flag allows the frontend to further distinguish
+      // agent-generated code execution from user input.
       std::string prompt = (i == 0) ? "> " : "+ ";
-      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+
+      // Record in console actions so the history survives session reload
+      r::session::consoleActions().add(kConsoleActionPrompt, prompt);
+      r::session::consoleActions().add(kConsoleActionInput, lines[i]);
+
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = std::string();
+      promptData[kConsoleAgent] = true;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
+      module_context::enqueClientEvent(promptEvent);
+
+      json::Object inputData;
+      inputData[kConsoleText]  = lines[i] + "\n";
+      inputData[kConsoleId]    = std::string();
+      inputData[kConsoleFlags] = 0;
+      inputData[kConsoleAgent] = true;
+      ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
+      module_context::enqueClientEvent(inputEvent);
    }
 }
 
@@ -1338,6 +1358,10 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       }
    }
 
+   // Flag that we're executing agent code so console output/error events
+   // emitted by R during evaluation get the agent metadata.
+   module_context::setAgentExecuting(true);
+
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
@@ -1595,9 +1619,20 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI
-      module_context::consoleWriteError(errorOutput);
+      // Also write to console UI, flagged as agent-generated.
+      // NOTE: We construct the event directly with a JSON payload rather than
+      // using consoleWriteError() (which sends a plain string) so that the
+      // agent flag survives the event queue's output buffering.
+      json::Object errorData;
+      errorData[kConsoleText]  = errorOutput;
+      errorData[kConsoleId]    = std::string();
+      errorData[kConsoleAgent] = true;
+      ClientEvent errorEvent(client_events::kConsoleWriteError, errorData);
+      module_context::enqueClientEvent(errorEvent);
    }
+
+   // Done executing agent code; clear the flag.
+   module_context::setAgentExecuting(false);
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics

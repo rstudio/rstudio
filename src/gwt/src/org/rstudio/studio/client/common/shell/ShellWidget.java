@@ -452,10 +452,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return stripped.replaceFirst("[^:]*:\\s*", "").trim();
    }
 
-   public void consoleWriteError(final String error)
+   public void consoleWriteError(final String error, boolean agent)
    {
       clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
+      String clz = getErrorClass() + (agent ? AGENT_CLASS_ERROR : "");
+      output(error, clz, true /*isError*/, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
 
       // Pick up the elements emitted to the console by this call. If we get
@@ -553,15 +554,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
-   public void consoleWriteOutput(final String output)
+   public void consoleWriteOutput(final String output, boolean agent)
    {
       clearPendingInput();
-      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
+      String clz = styles_.output() + (agent ? AGENT_CLASS_OUTPUT : "");
+      output(output, clz, false /*isError*/, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }
 
    @Override
-   public void consoleWriteInput(final String input, String console)
+   public void consoleWriteInput(final String input, String console, boolean agent)
    {
       // if coming from another console id (i.e. notebook chunk), clear the
       // prompt since this input hasn't been processed yet (we'll redraw when
@@ -570,7 +572,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt_.setHTML("");
 
       clearPendingInput();
-      output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/,
+      String clz = styles_.command() + KEYWORD_CLASS_NAME + (agent ? AGENT_CLASS_INPUT : "");
+      output(input, clz, false /*isError*/,
             false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
 
@@ -581,9 +584,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
-   public void consoleWritePrompt(final String prompt)
+   public void consoleWritePrompt(final String prompt, boolean agent)
    {
-      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
+      String clz = styles_.prompt() + KEYWORD_CLASS_NAME + (agent ? AGENT_CLASS_INPUT : "");
+      output(prompt, clz, false /*isError*/,
             false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
       clearErrors_ = true;
    }
@@ -1312,5 +1316,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private UserState userState_;
    
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
+   private static final String AGENT_CLASS_INPUT = " rstudio-agent-input";
+   private static final String AGENT_CLASS_OUTPUT = " rstudio-agent-output";
+   private static final String AGENT_CLASS_ERROR = " rstudio-agent-error";
    private static final String RSTUDIO_CONSOLE_BUSY = "rstudio-console-busy";
 }
