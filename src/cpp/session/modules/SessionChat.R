@@ -101,7 +101,7 @@
 #' @param directory A single directory path.
 .rs.addFunction("chat.isPathWithin", function(path, directory)
 {
-   .rs.startsWith(path, paste0(directory, "/"))
+   path == directory | .rs.startsWith(path, paste0(directory, "/"))
 })
 
 .rs.addFunction("chat.normalizePath", function(path)
@@ -140,9 +140,12 @@
    ok[path %in% denyPaths] <- FALSE
 
    # deny reads on files matching sensitive basename patterns
-   bn <- basename(path)
-   for (pattern in .rs.chat.denyBasenames)
-      ok[.rs.startsWith(bn, pattern)] <- FALSE
+   # (exact match or dot-separated suffix, e.g. .env, .env.local, .Renviron)
+   for (denyBasename in .rs.chat.denyBasenames)
+   {
+      pattern <- paste0("^\\Q", denyBasename, "\\E(\\.|$)")
+      ok[grepl(pattern, basename(path), perl = TRUE)] <- FALSE
+   }
 
    ok
 })
@@ -159,13 +162,22 @@
    tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
 
-   # allow edits within the project directory
+   # allow edits within the project directory; when no project is
+   # active, use getwd() if it lies under the home directory, otherwise
+   # fall back to the home directory itself
    projectDir <- .rs.getProjectDirectory()
-   if (!is.null(projectDir))
+   if (is.null(projectDir))
    {
-      projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
-      ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
+      homeDir <- normalizePath(path.expand("~"), winslash = "/", mustWork = TRUE)
+      workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+      projectDir <- .rs.ifElse(
+         .rs.chat.isPathWithin(workDir, homeDir),
+         workDir,
+         homeDir
+      )
    }
+   projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
+   ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
    
    ok
 })
@@ -344,7 +356,8 @@
 
       save = function()
       {
-         .rs.chat.validateFileEdit("save", file)
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("save", file)
       },
 
       load = function()
@@ -361,7 +374,7 @@
 
       sys.source = function()
       {
-         if (nzchar(file))
+         if (is.character(file) && nzchar(file))
             .rs.chat.validateFileRead("sys.source", file)
       },
 
