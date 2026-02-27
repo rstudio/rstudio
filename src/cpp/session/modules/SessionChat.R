@@ -26,20 +26,38 @@
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
 .rs.setVar("chat.denyReadPatterns", c(
+   
+   # Deny files that are likely to contain credentials
    "/\\.aws/credentials$",
    "/\\.aws/config$",
    "/\\.netrc$",
    "/\\.npmrc$",
    "/\\.ssh/config$",
+   
+   # Deny files like .env, .env.local, and so on.
    "/\\.env(\\.|$)",
    "/\\.Renviron(\\.|$)",
    "/\\.Rprofile(\\.|$)",
+   
+   # Deny access to non-public files within the .ssh directory.
    "/\\.ssh/id.*(?<!\\.pub)$"
+   
 ))
 
 # PCRE patterns matched against normalized paths to deny edits.
+# Note that file edits are disallowed by default, except for files within
+#
+# - The R temporary directory
+# - The project directory
+# - The R working directory
+#
+# This list serves to deny edits for certain files even if they're within
+# one of the above 'allowed' directories.
 .rs.setVar("chat.denyEditPatterns", c(
+   
+   # Deny edits on or within the .ssh directory.
    "/\\.ssh(/|$)"
+   
 ))
 
 
@@ -230,8 +248,9 @@
    projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
 
-   # deny edits matching sensitive path patterns
-   for (pattern in .rs.chat.denyEditPatterns)
+   # deny edits matching sensitive path patterns (both read and edit
+   # deny lists apply, since edits should be at least as restrictive)
+   for (pattern in c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns))
       ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
 
    ok
@@ -262,7 +281,8 @@
 #' Validate a connection open based on the open mode.
 #'
 #' When `open` is "" (deferred), the connection could later be used for
-#' reading or writing, so both checks are applied.
+#' reading or writing, so it is validated as an edit (which applies both
+#' the read and edit deny lists).
 #'
 #' @param name The name of the connection function (e.g. "file", "gzfile").
 #' @param description The file path passed to the connection constructor.
@@ -272,12 +292,7 @@
    if (!nzchar(description))
       return()
 
-   if (!nzchar(open))
-   {
-      .rs.chat.validateFileEdit(name, description)
-      .rs.chat.validateFileRead(name, description)
-   }
-   else if (grepl("[wWaA+]", open))
+   if (!nzchar(open) || grepl("[wWaA+]", open))
    {
       .rs.chat.validateFileEdit(name, description)
    }
