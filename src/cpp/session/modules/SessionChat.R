@@ -345,7 +345,10 @@
             workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
             homeDir <- normalizePath("~", winslash = "/", mustWork = TRUE)
             if (identical(workDir, homeDir))
-               stop("denied unlink(\"*\") on user home directory")
+            {
+               msg <- "denied unlink(\"*\") on user home directory"
+               stop(msg, call. = FALSE)
+            }
          }
          
          # The 'expand' formal was added in R 4.0.0; on older versions,
