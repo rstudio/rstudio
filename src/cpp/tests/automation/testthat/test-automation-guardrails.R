@@ -6,7 +6,8 @@ withr::defer(.rs.automation.deleteRemote())
 
 # Helper: inject guardrail bindings, execute code in the console,
 # and verify that the output contains the expected error text.
-.rs.guardrails.expectError <- function(code, pattern = "denied") {
+.rs.guardrails.expectError <- function(expr, pattern = "denied") {
+   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
    remote$console.executeExpr({ .rs.chat.injectBindings() })
    withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
    remote$console.clear()
@@ -17,7 +18,8 @@ withr::defer(.rs.automation.deleteRemote())
 
 # Helper: inject guardrail bindings, execute code in the console,
 # and verify that the output does NOT contain an error.
-.rs.guardrails.expectSuccess <- function(code) {
+.rs.guardrails.expectSuccess <- function(expr) {
+   code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
    remote$console.executeExpr({ .rs.chat.injectBindings() })
    withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
    remote$console.clear()
@@ -31,88 +33,84 @@ withr::defer(.rs.automation.deleteRemote())
 # -- Read guardrails ----------------------------------------------------------
 
 .rs.test("reading ~/.aws/credentials is denied", {
-   .rs.guardrails.expectError('readLines("~/.aws/credentials")')
+   .rs.guardrails.expectError(readLines("~/.aws/credentials"))
 })
 
 .rs.test("reading ~/.ssh/config is denied", {
-   .rs.guardrails.expectError('readLines("~/.ssh/config")')
+   .rs.guardrails.expectError(readLines("~/.ssh/config"))
 })
 
 .rs.test("reading ~/.netrc is denied", {
-   .rs.guardrails.expectError('readLines("~/.netrc")')
+   .rs.guardrails.expectError(readLines("~/.netrc"))
 })
 
 .rs.test("reading .env files is denied", {
-   dir <- tempdir()
-   envFile <- file.path(dir, ".env")
+   envFile <- file.path(tempdir(), ".env")
    writeLines("SECRET=abc", envFile)
    withr::defer(unlink(envFile))
-   .rs.guardrails.expectError(sprintf('readLines("%s")', envFile))
+   .rs.guardrails.expectError(readLines(!!envFile))
 })
 
 .rs.test("reading .Renviron files is denied", {
-   dir <- tempdir()
-   envFile <- file.path(dir, ".Renviron")
+   envFile <- file.path(tempdir(), ".Renviron")
    writeLines("SECRET=abc", envFile)
    withr::defer(unlink(envFile))
-   .rs.guardrails.expectError(sprintf('readLines("%s")', envFile))
+   .rs.guardrails.expectError(readLines(!!envFile))
 })
 
 .rs.test("reading SSH private keys is denied", {
-   .rs.guardrails.expectError('readLines("~/.ssh/id_rsa")')
+   .rs.guardrails.expectError(readLines("~/.ssh/id_rsa"))
 })
 
 .rs.test("reading SSH public keys is allowed", {
-   .rs.guardrails.expectSuccess('readLines("~/.ssh/id_rsa.pub")')
+   .rs.guardrails.expectSuccess(readLines("~/.ssh/id_rsa.pub"))
 })
 
 .rs.test("reading normal files is allowed", {
-   remote$console.executeExpr({
-      writeLines("hello", file.path(tempdir(), "readable.txt"))
-   })
-   .rs.guardrails.expectSuccess(
-      sprintf('readLines("%s")', file.path(tempdir(), "readable.txt"))
-   )
+   path <- file.path(tempdir(), "readable.txt")
+   writeLines("hello", path)
+   withr::defer(unlink(path))
+   .rs.guardrails.expectSuccess(readLines(!!path))
 })
 
 
 # -- Write guardrails ---------------------------------------------------------
 
 .rs.test("writing outside project directory is denied", {
-   .rs.guardrails.expectError('writeLines("x", "/tmp/not-in-project.txt")')
+   .rs.guardrails.expectError(writeLines("x", "/tmp/not-in-project.txt"))
 })
 
 .rs.test("writing to ~/.ssh is denied", {
-   .rs.guardrails.expectError('writeLines("x", "~/.ssh/test")')
+   .rs.guardrails.expectError(writeLines("x", "~/.ssh/test"))
 })
 
 .rs.test("writing to tempdir is allowed", {
    path <- file.path(tempdir(), "guardrail-test.txt")
-   .rs.guardrails.expectSuccess(sprintf('writeLines("hello", "%s")', path))
-   withr::defer(remote$console.executeExpr(unlink(!!path)))
+   .rs.guardrails.expectSuccess(writeLines("hello", !!path))
+   withr::defer(unlink(path))
 })
 
 .rs.test("file.create outside project directory is denied", {
-   .rs.guardrails.expectError('file.create("/tmp/not-in-project.txt")')
+   .rs.guardrails.expectError(file.create("/tmp/not-in-project.txt"))
 })
 
 .rs.test("file.remove outside project directory is denied", {
-   .rs.guardrails.expectError('file.remove("/tmp/not-in-project.txt")')
+   .rs.guardrails.expectError(file.remove("/tmp/not-in-project.txt"))
 })
 
 .rs.test("unlink outside project directory is denied", {
-   .rs.guardrails.expectError('unlink("/tmp/not-in-project.txt")')
+   .rs.guardrails.expectError(unlink("/tmp/not-in-project.txt"))
 })
 
 
 # -- Connection guardrails ----------------------------------------------------
 
 .rs.test("file() connection to sensitive path is denied", {
-   .rs.guardrails.expectError('file("~/.aws/credentials", open = "r")')
+   .rs.guardrails.expectError(file("~/.aws/credentials", open = "r"))
 })
 
 .rs.test("file() with deferred open to sensitive path is denied", {
-   .rs.guardrails.expectError('file("~/.ssh/test")')
+   .rs.guardrails.expectError(file("~/.ssh/test"))
 })
 
 
@@ -120,7 +118,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("path traversal with '..' is rejected", {
    .rs.guardrails.expectError(
-      'writeLines("x", file.path(tempdir(), "sub/../../etc/passwd"))',
+      writeLines("x", file.path(tempdir(), "sub/../../etc/passwd")),
       pattern = "unresolved"
    )
 })
@@ -160,7 +158,6 @@ withr::defer(.rs.automation.deleteRemote())
       ))
    })
 
-   output <- paste(remote$console.getOutput(), collapse = "\n")
    # safeEval returns errors as conditions, not console errors,
    # so check that no file was created
    remote$console.clear()
