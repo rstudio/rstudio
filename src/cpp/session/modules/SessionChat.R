@@ -143,7 +143,7 @@
    .rs.chat.pathMatches(pattern, path)
 })
 
-#' Normalize file paths for use in sandbox path comparisons.
+#' Normalize file paths for use in guardrail path comparisons.
 #'
 #' For existing paths, delegates to `normalizePath()`. For non-existing
 #' paths, normalizes the dirname and appends the basename. Rejects paths
