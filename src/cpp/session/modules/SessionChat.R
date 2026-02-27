@@ -213,8 +213,8 @@
    ok[which(deny)] <- FALSE
 
    # deny reads matching sensitive path patterns
-   for (pattern in .rs.chat.denyReadPatterns)
-      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
+   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
 
    ok
 })
@@ -250,8 +250,8 @@
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
-   for (pattern in c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns))
-      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   pattern <- paste(c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns), collapse = "|")
+   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
 
    ok
 })
