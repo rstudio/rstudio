@@ -162,4 +162,45 @@ public class YamlTreeTests extends GWTTestCase
       assertTrue(tree.containsKey("title"));
       assertTrue(tree.containsKey("author"));
    }
+
+   public void testBlankLineBetweenSiblings()
+   {
+      String yaml =
+            "title: Test\n" +
+            "\n" +
+            "author: Author\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      assertEquals("Test", tree.getKeyValue("title"));
+      assertEquals("Author", tree.getKeyValue("author"));
+
+      int titlePos = output.indexOf("title:");
+      int blankPos = output.indexOf("\n\n");
+      int authorPos = output.indexOf("author:");
+      assertTrue("Blank line should be between title and author",
+            titlePos < blankPos && blankPos < authorPos);
+   }
+
+   public void testBlankLineAndCommentPreserved()
+   {
+      String yaml =
+            "title: Test\n" +
+            "\n" +
+            "# Comment after blank line\n" +
+            "author: Author\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      assertTrue("Blank line should be preserved",
+            output.contains("\n\n"));
+      assertTrue("Comment should be preserved",
+            output.contains("# Comment after blank line"));
+
+      int titlePos = output.indexOf("title:");
+      int commentPos = output.indexOf("# Comment after blank line");
+      int authorPos = output.indexOf("author:");
+      assertTrue("Ordering should be preserved",
+            titlePos < commentPos && commentPos < authorPos);
+   }
 }

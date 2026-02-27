@@ -41,10 +41,11 @@ public class YamlTree
          }
          yamlLine = line;
 
-         // detect comment lines before extracting key, so that comments
-         // with colons (e.g. "# Note: important") don't produce bogus keys
+         // detect comment and blank lines before extracting key, so that
+         // comments with colons (e.g. "# Note: important") don't produce
+         // bogus keys, and blank lines are preserved in position
          String trimmed = line.trim();
-         isComment = trimmed.length() > 0 && trimmed.startsWith("#");
+         isComment = trimmed.isEmpty() || trimmed.startsWith("#");
 
          key = isComment ? "" : getKey(line);
          indentLevel = getIndentLevel();
