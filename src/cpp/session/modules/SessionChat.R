@@ -23,26 +23,23 @@
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
 
-# Well-known files that commonly contain secrets but are often
-# world-readable. Checked by full path (resolved against the user's
-# home directory) or by basename pattern.
-.rs.setVar("chat.denyPaths", c(
-   "~/.aws/credentials",
-   "~/.aws/config",
-   "~/.netrc",
-   "~/.npmrc",
-   "~/.ssh/config"
+# PCRE patterns matched against normalized paths to deny reads.
+# Paths are always absolute and normalized before matching.
+.rs.setVar("chat.denyReadPatterns", c(
+   "/\\.aws/credentials$",
+   "/\\.aws/config$",
+   "/\\.netrc$",
+   "/\\.npmrc$",
+   "/\\.ssh/config$",
+   "/\\.env(\\.|$)",
+   "/\\.Renviron(\\.|$)",
+   "/\\.Rprofile(\\.|$)",
+   "/\\.ssh/id.*(?<!\\.pub)$"
 ))
 
-.rs.setVar("chat.denyBasenames", c(
-   ".env",
-   ".Renviron"
-))
-
-# directories where edits are always denied, even if they fall
-# within the project or working directory
-.rs.setVar("chat.denyEditDirs", c(
-   "~/.ssh"
+# PCRE patterns matched against normalized paths to deny edits.
+.rs.setVar("chat.denyEditPatterns", c(
+   "/\\.ssh(/|$)"
 ))
 
 
@@ -197,32 +194,9 @@
    deny <- bitwAnd(info$mode, 4L) == 0L
    ok[which(deny)] <- FALSE
 
-   # deny reads on well-known sensitive paths
-   denyPaths <- normalizePath(
-      path.expand(.rs.chat.denyPaths),
-      winslash = "/",
-      mustWork = FALSE
-   )
-   for (denyPath in denyPaths)
-   {
-      pattern <- paste0("^\\Q", denyPath, "\\E$")
+   # deny reads matching sensitive path patterns
+   for (pattern in .rs.chat.denyReadPatterns)
       ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
-   }
-
-   # deny reads on files matching sensitive basename patterns
-   # (exact match or dot-separated suffix, e.g. .env, .env.local, .Renviron)
-   for (denyBasename in .rs.chat.denyBasenames)
-   {
-      pattern <- paste0("^\\Q", denyBasename, "\\E(\\.|$)")
-      ok[.rs.chat.pathMatches(pattern, basename(path))] <- FALSE
-   }
-
-   # deny reads on SSH private keys (basenames starting with 'id',
-   # within ~/.ssh, excluding .pub files)
-   sshDir <- normalizePath(path.expand("~/.ssh"), winslash = "/", mustWork = FALSE)
-   inSshDir <- .rs.chat.isPathWithin(path, sshDir)
-   isKeyFile <- .rs.chat.pathMatches("^id.*(?<!\\.pub)$", basename(path))
-   ok[inSshDir & isKeyFile] <- FALSE
 
    ok
 })
@@ -256,14 +230,9 @@
    projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
 
-   # deny edits within sensitive directories
-   denyDirs <- normalizePath(
-      path.expand(.rs.chat.denyEditDirs),
-      winslash = "/",
-      mustWork = FALSE
-   )
-   for (denyDir in denyDirs)
-      ok[.rs.chat.isPathWithin(path, denyDir)] <- FALSE
+   # deny edits matching sensitive path patterns
+   for (pattern in .rs.chat.denyEditPatterns)
+      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
 
    ok
 })
