@@ -146,7 +146,10 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("unlink outside project directory is denied",
 {
-   path <- file.path(dirname(tempdir()), "not-in-project.txt")
+   path <- tempfile("test-file-", tmpdir = dirname(tempdir()))
+   file.create(path)
+   on.exit(unlink(path))
+   
    .rs.guardrails.expectError(unlink(!!path))
 })
 
@@ -177,12 +180,16 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("file() connection to sensitive path is denied",
 {
-   .rs.guardrails.expectError(file("~/.aws/credentials", open = "r"))
+   .rs.guardrails.expectError({
+      file("~/.aws/credentials", open = "r")
+   })
 })
 
 .rs.test("file() with deferred open to sensitive path is denied",
 {
-   .rs.guardrails.expectError(file("~/.ssh/test"))
+   .rs.guardrails.expectError({
+      file("~/.ssh/test")
+   })
 })
 
 
