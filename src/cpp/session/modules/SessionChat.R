@@ -217,6 +217,13 @@
       ok[.rs.chat.pathMatches(pattern, basename(path))] <- FALSE
    }
 
+   # deny reads on SSH private keys (basenames starting with 'id',
+   # within ~/.ssh, excluding .pub files)
+   sshDir <- normalizePath(path.expand("~/.ssh"), winslash = "/", mustWork = FALSE)
+   inSshDir <- .rs.chat.isPathWithin(path, sshDir)
+   isKeyFile <- .rs.chat.pathMatches("^id.*(?<!\\.pub)$", basename(path))
+   ok[inSshDir & isKeyFile] <- FALSE
+
    ok
 })
 
