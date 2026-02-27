@@ -339,6 +339,15 @@
 
       unlink = function()
       {
+         # Block recursive deletes in the user's home directory
+         if ("*" %in% x)
+         {
+            workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+            homeDir <- normalizePath("~", winslash = "/", mustWork = TRUE)
+            if (identical(workDir, homeDir))
+               stop("denied unlink(\"*\") on user home directory")
+         }
+         
          # The 'expand' formal was added in R 4.0.0; on older versions,
          # unlink always performed glob expansion.
          doExpand <- getRversion() < "4.0.0" || expand
