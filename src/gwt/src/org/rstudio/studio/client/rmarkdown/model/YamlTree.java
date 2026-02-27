@@ -33,14 +33,20 @@ public class YamlTree
    {
       public YamlTreeNode(String line)
       {
-         // the YAML package outputs tildes to represent null values; these 
-         // are valid YAML but "null" is easier to read for R users 
+         // the YAML package outputs tildes to represent null values; these
+         // are valid YAML but "null" is easier to read for R users
          if (line.endsWith(": ~"))
          {
             line = StringUtil.substring(line, 0, line.length() - 1) + "null";
          }
          yamlLine = line;
-         key = getKey(line);
+
+         // detect comment lines before extracting key, so that comments
+         // with colons (e.g. "# Note: important") don't produce bogus keys
+         String trimmed = line.trim();
+         isComment = trimmed.length() > 0 && trimmed.startsWith("#");
+
+         key = isComment ? "" : getKey(line);
          indentLevel = getIndentLevel();
       }
       
@@ -48,9 +54,10 @@ public class YamlTree
       // to treat the child as a continuation)
       public boolean addChild(YamlTreeNode child)
       {
-         // if this node has a key, add it as a tree node; otherwise, add its
-         // line data to this node (as a multi-line continuation)
-         if (child.key.length() > 0)
+         // if this node has a key or is a comment, add it as a tree node;
+         // otherwise, add its line data to this node (as a multi-line
+         // continuation)
+         if (child.key.length() > 0 || child.isComment)
          {
             children.add(child);
             child.parent = this;
@@ -123,6 +130,7 @@ public class YamlTree
       public String yamlLine;
       public String key;
       public int indentLevel = 0;
+      public boolean isComment = false;
       public YamlTreeNode parent = null;
       public List<YamlTreeNode> children = new ArrayList<>();
       
@@ -403,15 +411,16 @@ public class YamlTree
       return yaml;
    }
    
-   private static void createKeyMap(YamlTreeNode root, 
+   private static void createKeyMap(YamlTreeNode root,
                                     Map<String, YamlTreeNode> output)
    {
       for (YamlTreeNode child: root.children)
       {
          String key = child.key;
          // add this key if it doesn't already exist, or if it does exist and
-         // this key is closer to the root than the existing key
-         if (key.length() > 0 &&
+         // this key is closer to the root than the existing key;
+         // skip comment nodes as they don't have real keys
+         if (key.length() > 0 && !child.isComment &&
              (!output.containsKey(key) ||
               child.indentLevel < output.get(key).indentLevel))
          {
