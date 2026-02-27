@@ -515,7 +515,8 @@
    )
 
    .rs.chat.addPreflightHooks("utils", utilsHooks)
-
+   
+   invisible(TRUE)
 })
 
 # Helper function for evaluating code for the 'runCode' tool.
