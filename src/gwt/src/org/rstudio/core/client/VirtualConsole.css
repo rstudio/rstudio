@@ -13,6 +13,7 @@
 @def LIGHT_ERROR_COLOR      #991717;
 @def LIGHT_WARNING_COLOR    #64480D;
 @def LIGHT_MESSAGE_COLOR    #1D6EC0;
+@def LIGHT_AGENT_COLOR      #9B59B6;
 
 .rstudio-themes-default .ace_console_error .group {
 	all: unset;
@@ -40,6 +41,10 @@
 	border-left: 2px solid LIGHT_MESSAGE_COLOR;
 }
 
+.rstudio-themes-default .groupAgent {
+	border-left: 2px solid LIGHT_AGENT_COLOR;
+}
+
 .rstudio-themes-default .error {
 	color: LIGHT_ERROR_COLOR;
 }
@@ -60,6 +65,7 @@
 @def DARK_ERROR_COLOR      #FF8000;
 @def DARK_WARNING_COLOR    #E5C515;
 @def DARK_MESSAGE_COLOR    #7AA8D7;
+@def DARK_AGENT_COLOR      #BB86FC;
 
 .rstudio-themes-dark .ace_console_error .group {
 	all: unset;
@@ -85,6 +91,10 @@
 
 .rstudio-themes-dark .groupMessage {
 	border-left: 2px solid DARK_MESSAGE_COLOR;
+}
+
+.rstudio-themes-dark .groupAgent {
+	border-left: 2px solid DARK_AGENT_COLOR;
 }
 
 .rstudio-themes-dark .error {

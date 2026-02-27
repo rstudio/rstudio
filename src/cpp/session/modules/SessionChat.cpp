@@ -38,6 +38,7 @@
 #include <boost/regex.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
@@ -500,7 +501,13 @@ void echoSourceCode(const std::string& code)
       // prompts and input are colored / themed consistently.
       // The 'agent' flag allows the frontend to further distinguish
       // agent-generated code execution from user input.
-      std::string prompt = (i == 0) ? "> " : "+ ";
+      //
+      // The first prompt is prefixed with a group-start ANSI escape so that
+      // VirtualConsole wraps all agent output (prompt, input, R output,
+      // errors) in a styled group container (purple left border).
+      std::string prompt = (i == 0)
+         ? std::string(kAnsiEscapeGroupStartAgent) + "> "
+         : "+ ";
 
       // Record in console actions so the history survives session reload
       r::session::consoleActions().add(kConsoleActionPrompt, prompt);
@@ -1630,6 +1637,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       ClientEvent errorEvent(client_events::kConsoleWriteError, errorData);
       module_context::enqueClientEvent(errorEvent);
    }
+
+   // Close the agent output group started in echoSourceCode().
+   // This ANSI escape tells VirtualConsole to close the group container,
+   // so the purple left border wraps everything from the prompt through
+   // the last line of output or error.
+   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // Done executing agent code; clear the flag.
    module_context::setAgentExecuting(false);
