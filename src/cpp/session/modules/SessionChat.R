@@ -13,6 +13,10 @@
 #
 #
 
+# NOTE: The guardrails implemented here are intended to prevent accidental
+# misuse and unintentionally destructive AI-generated code. They should
+# not be relied upon to defend against deliberately malicious code.
+
 # Each hooked namespace gets its own environment within this container,
 # keyed by the namespace name. The per-namespace environment maps
 # binding names to their original values.
@@ -35,11 +39,34 @@
    ".Renviron"
 ))
 
+# directories where edits are always denied, even if they fall
+# within the project or working directory
+.rs.setVar("chat.denyEditDirs", c(
+   "~/.ssh"
+))
 
+
+#' Add a preflight validation hook to an existing function.
+#'
+#' Prepends the body of `hook` to the body of the target function,
+#' so that the hook runs before the original implementation. The
+#' original binding is saved for later restoration by
+#' `.rs.chat.restoreBindings`.
+#'
+#' @param package The name of the package containing the binding.
+#' @param binding The name of the function to hook.
+#' @param hook A function whose body will be prepended to the original.
 .rs.addFunction("chat.addPreflightHook", function(package, binding, hook)
 {
    # resolve the namespace environment
    envir <- asNamespace(package)
+
+   # skip bindings that don't exist (e.g. removed in a future R version)
+   if (!exists(binding, envir = envir, inherits = FALSE))
+   {
+      warning(sprintf("binding '%s' not found in '%s'; skipping hook", binding, package))
+      return(invisible(NULL))
+   }
 
    # grab the original binding
    original <- envir[[binding]]
@@ -82,8 +109,12 @@
 
       for (binding in bindings)
       {
-         value <- originals[[binding]]
-         .rs.replaceBinding(binding, package, value)
+         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+         if (inherits(status, "error"))
+            warning(sprintf(
+               "failed to restore binding '%s' in '%s': %s",
+               binding, package, conditionMessage(status)
+            ))
       }
 
       rm(list = package, envir = .rs.chat.hookedBindings)
@@ -99,25 +130,59 @@
 #'
 #' @param path A character vector of file paths.
 #' @param directory A single directory path.
-.rs.addFunction("chat.isPathWithin", function(path, directory)
+#' Wrapper around grepl that uses case-insensitive matching on
+#' platforms with case-insensitive filesystems (macOS, Windows).
+.rs.addFunction("chat.pathMatches", function(pattern, x, ...)
 {
-   path == directory | .rs.startsWith(path, paste0(directory, "/"))
+   grepl(pattern, x, ignore.case = !.rs.platform.isLinux, perl = TRUE, ...)
 })
 
+.rs.addFunction("chat.isPathWithin", function(path, directory)
+{
+   pattern <- paste0("^\\Q", directory, "\\E(/|$)")
+   .rs.chat.pathMatches(pattern, path)
+})
+
+#' Normalize file paths for use in sandbox path comparisons.
+#'
+#' For existing paths, delegates to `normalizePath()`. For non-existing
+#' paths, normalizes the dirname and appends the basename. Rejects paths
+#' containing unresolved '..' components to prevent path traversal.
+#'
+#' @param path A character vector of file paths.
 .rs.addFunction("chat.normalizePath", function(path)
 {
    exists <- file.exists(path)
-   
+
    path[exists] <- normalizePath(path[exists], winslash = "/", mustWork = TRUE)
-   
+
    path[!exists] <- file.path(
       normalizePath(dirname(path[!exists]), winslash = "/", mustWork = FALSE),
       basename(path[!exists])
    )
-   
+
+   # Reject paths that still contain '..' after normalization, since
+   # normalizePath(mustWork = FALSE) won't resolve '..' when the parent
+   # directory doesn't exist, which could allow path traversal.
+   unresolved <- grepl("(?:^|/)\\.\\.(?:/|$)", path)
+   if (any(unresolved))
+      stop(sprintf(
+         "path contains unresolved '..' components: %s",
+         paste(path[unresolved], collapse = ", ")
+      ))
+
    path
 })
 
+#' Check whether reading the given paths is allowed.
+#'
+#' Reads are allowed by default, but denied for files that lack
+#' world-readable permissions, match well-known sensitive paths
+#' (e.g. `~/.aws/credentials`), or match sensitive basename patterns
+#' (e.g. `.env`, `.Renviron`).
+#'
+#' @param path A character vector of file paths.
+#' @return A logical vector the same length as `path`.
 .rs.addFunction("chat.isFileReadAllowed", function(path)
 {
    # normalize path for comparison
@@ -127,6 +192,7 @@
    ok <- rep.int(TRUE, length(path))
 
    # deny reads on files that lack read permission for 'others'
+   # (use which() to drop NA modes from non-existent files)
    info <- suppressWarnings(file.info(path))
    deny <- bitwAnd(info$mode, 4L) == 0L
    ok[which(deny)] <- FALSE
@@ -137,19 +203,32 @@
       winslash = "/",
       mustWork = FALSE
    )
-   ok[path %in% denyPaths] <- FALSE
+   for (denyPath in denyPaths)
+   {
+      pattern <- paste0("^\\Q", denyPath, "\\E$")
+      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   }
 
    # deny reads on files matching sensitive basename patterns
    # (exact match or dot-separated suffix, e.g. .env, .env.local, .Renviron)
    for (denyBasename in .rs.chat.denyBasenames)
    {
       pattern <- paste0("^\\Q", denyBasename, "\\E(\\.|$)")
-      ok[grepl(pattern, basename(path), perl = TRUE)] <- FALSE
+      ok[.rs.chat.pathMatches(pattern, basename(path))] <- FALSE
    }
 
    ok
 })
 
+#' Check whether editing the given paths is allowed.
+#'
+#' Edits are denied by default, but allowed within the R temporary
+#' directory and the active project directory (or `getwd()` when no
+#' project is open). Edits within sensitive directories (e.g. `~/.ssh`)
+#' are always denied.
+#'
+#' @param path A character vector of file paths.
+#' @return A logical vector the same length as `path`.
 .rs.addFunction("chat.isFileEditAllowed", function(path)
 {
    # normalize path for comparison
@@ -163,22 +242,22 @@
    ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
 
    # allow edits within the project directory; when no project is
-   # active, use getwd() if it lies under the home directory, otherwise
-   # fall back to the home directory itself
+   # active, fall back to getwd()
    projectDir <- .rs.getProjectDirectory()
    if (is.null(projectDir))
-   {
-      homeDir <- normalizePath(path.expand("~"), winslash = "/", mustWork = TRUE)
-      workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-      projectDir <- .rs.ifElse(
-         .rs.chat.isPathWithin(workDir, homeDir),
-         workDir,
-         homeDir
-      )
-   }
+      projectDir <- getwd()
    projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
-   
+
+   # deny edits within sensitive directories
+   denyDirs <- normalizePath(
+      path.expand(.rs.chat.denyEditDirs),
+      winslash = "/",
+      mustWork = FALSE
+   )
+   for (denyDir in denyDirs)
+      ok[.rs.chat.isPathWithin(path, denyDir)] <- FALSE
+
    ok
 })
 
@@ -204,7 +283,35 @@
    stop(msg, call. = FALSE)
 })
 
-# inject preflight validation hooks into potentially destructive R
+#' Validate a connection open based on the open mode.
+#'
+#' When `open` is "" (deferred), the connection could later be used for
+#' reading or writing, so both checks are applied.
+#'
+#' @param name The name of the connection function (e.g. "file", "gzfile").
+#' @param description The file path passed to the connection constructor.
+#' @param open The open mode string.
+.rs.addFunction("chat.validateConnection", function(name, description, open)
+{
+   if (!nzchar(description))
+      return()
+
+   if (!nzchar(open))
+   {
+      .rs.chat.validateFileEdit(name, description)
+      .rs.chat.validateFileRead(name, description)
+   }
+   else if (grepl("[wWaA+]", open))
+   {
+      .rs.chat.validateFileEdit(name, description)
+   }
+   else
+   {
+      .rs.chat.validateFileRead(name, description)
+   }
+})
+
+# inject preflight validation hooks into security-sensitive R
 # functions. Each hook is prepended to the original function body via
 # .rs.chat.addPreflightHook so that calls are validated before the real
 # implementation executes. hooks are removed by .rs.chat.restoreBindings.
@@ -268,48 +375,22 @@
 
       file = function()
       {
-         if (nzchar(description))
-         {
-            # when open is "" the mode is deferred, so the connection
-            # could later be used for writing; treat as edit
-            if (!nzchar(open) || grepl("[wWaA+]", open))
-               .rs.chat.validateFileEdit("file", description)
-            else
-               .rs.chat.validateFileRead("file", description)
-         }
+         .rs.chat.validateConnection("file", description, open)
       },
 
       gzfile = function()
       {
-         if (nzchar(description))
-         {
-            if (!nzchar(open) || grepl("[wWaA+]", open))
-               .rs.chat.validateFileEdit("gzfile", description)
-            else
-               .rs.chat.validateFileRead("gzfile", description)
-         }
+         .rs.chat.validateConnection("gzfile", description, open)
       },
 
       bzfile = function()
       {
-         if (nzchar(description))
-         {
-            if (!nzchar(open) || grepl("[wWaA+]", open))
-               .rs.chat.validateFileEdit("bzfile", description)
-            else
-               .rs.chat.validateFileRead("bzfile", description)
-         }
+         .rs.chat.validateConnection("bzfile", description, open)
       },
 
       xzfile = function()
       {
-         if (nzchar(description))
-         {
-            if (!nzchar(open) || grepl("[wWaA+]", open))
-               .rs.chat.validateFileEdit("xzfile", description)
-            else
-               .rs.chat.validateFileRead("xzfile", description)
-         }
+         .rs.chat.validateConnection("xzfile", description, open)
       },
 
       readLines = function()
