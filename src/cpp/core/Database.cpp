@@ -224,8 +224,14 @@ public:
 
    Error operator()(const SqliteConnectionOptions& options) const
    {
-      std::string readonly = options.readonly ? " readonly=true" : "";
-      std::string connectionStr = "shared_cache=true timeout=5" + readonly + " dbname=\"" + options.file + "\"";
+      std::string readonly = options.readonly ? "readonly=true " : "";
+      // Note: shared_cache is intentionally NOT used here. SQLite's shared-cache mode introduces
+      // table-level locks that undermine WAL mode's concurrency benefits (readers blocking writers
+      // and vice versa within the same process). With WAL mode, each connection having its own cache
+      // provides better read/write concurrency.
+      // Note: busy_timeout is set via PRAGMA below rather than the SOCI timeout parameter to keep
+      // all SQLite configuration in one place and avoid conflicting timeout values.
+      std::string connectionStr = readonly + "dbname=\"" + options.file + "\"";
       if (pConnectionStr_)
          *pConnectionStr_ = connectionStr;
 
@@ -1387,7 +1393,6 @@ Error Connection::executeStr(const std::string& queryStr)
             continue;
          }
          Error res = DatabaseError(error);
-         res.addProperty("query", queryStr);
          return res;
       }
    }

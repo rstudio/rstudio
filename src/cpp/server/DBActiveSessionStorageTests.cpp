@@ -102,7 +102,6 @@ std::string sessionId = "testId";
 
 std::map<std::string, std::string> initialProps
 {
-   {"user_id", "7"},
    {"editor", "RStudio"},
    {"created", "2020-04-30T00:00:00.000Z"},
    {"last_used", "2020-04-30T00:00:00.000Z"},

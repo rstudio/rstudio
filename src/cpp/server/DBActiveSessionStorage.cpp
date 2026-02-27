@@ -428,24 +428,40 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    {
       std::vector<std::string> propNames, propValues;
 
-      std::string updateSql = getUpdateStringAndValues(properties, user_, &propNames, &propValues, connection);
+      // Populate propNames and propValues from the input properties, applying conversions
+      for (const auto& prop : properties)
+      {
+         std::string name = prop.first;
+         std::string value = prop.second;
+         convertProperty(&name, &value, user_, connection);
+         propNames.push_back(name);
+         propValues.push_back(value);
+      }
+
       std::string queryStr = "INSERT INTO " +
             kTableName +
             " (" +
             kSessionIdColumnName +
             ", " +
+            kUserId +
+            ", " +
             getPropNamesSql(propNames) +
             ") VALUES (:id, " +
+            "(SELECT id FROM licensed_users WHERE user_name=:user_name AND user_id=:user_id), " +
             getVarNamesSql(propNames) +
             ")";
 
-      LOG_DEBUG_MESSAGE("Insert Session query: " + queryStr);
+      std::string username = user_.getUsername();
+      int userId = user_.getUserId();
       database::Query insertQuery = connection->query(queryStr)
-         .withInput(sessionId_, "id");
+         .withInput(sessionId_, "id")
+         .withInput(username, "user_name")
+         .withInput(userId, "user_id");
+
       for (unsigned int i = 0; i < propValues.size(); i++)
       {
          insertQuery.withInput(propValues[i], columnName(propNames[i]));
-     }
+      }
 
       error = connection->execute(insertQuery);
 
