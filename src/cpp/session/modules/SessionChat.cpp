@@ -108,6 +108,13 @@ boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
 
+// Clear the backend port in both SessionChat and ChatStaticFiles
+void clearChatBackendPort()
+{
+   s_chatBackendPort = -1;
+   staticfiles::setChatBackendPort(-1);
+}
+
 // Track whether session is closing (vs suspending/restarting)
 static bool s_sessionClosing = false;
 
@@ -4226,7 +4233,7 @@ void onBackendExit(int exitCode)
 
    // Clear state
    s_chatBackendPid = -1;
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
    s_peerSentCapabilities = false;
@@ -4280,6 +4287,9 @@ Error startChatBackend(bool resumeConversation)
    error = allocatePort(&s_chatBackendPort);
    if (error)
       return error;
+
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
 
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
@@ -4392,7 +4402,7 @@ Error startChatBackend(bool resumeConversation)
    if (error)
    {
       LOG_ERROR(error);
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
       return error;
    }
 
@@ -4519,7 +4529,7 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
    s_chatBackendPid = -1;
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear busy state
    s_chatBusy = false;
@@ -4696,7 +4706,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
          WLOG("Failed to stop backend: {}", error.getMessage());
       }
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Stop assistant agent (language server) if running - it also uses pai/bin/
@@ -4928,7 +4938,7 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
 
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Clear busy state and JSON-RPC buffer
@@ -5018,7 +5028,7 @@ void onShutdown(bool terminatedNormally)
    }
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear notification queue
    {

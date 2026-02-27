@@ -85,6 +85,7 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  * Security:
  * - Uses validateAndResolvePath to prevent directory traversal
  * - Only serves files from verified installation directory
+ * - Sets Content-Security-Policy header on HTML responses
  *
  * Caching:
  * - HTML/JS/CSS: no-cache (for development)
@@ -96,6 +97,24 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  */
 core::Error handleAIChatRequest(const core::http::Request& request,
                                 core::http::Response* pResponse);
+
+// ============================================================================
+// Chat Backend Port
+// ============================================================================
+
+/**
+ * Set the chat backend (databot) port.
+ *
+ * Called by SessionChat when the backend process starts. Used to build the
+ * connect-src CSP directive in desktop mode, where the WebSocket connects
+ * to a different origin than the page.
+ */
+void setChatBackendPort(int port);
+
+/**
+ * Get the current chat backend port, or -1 if not set.
+ */
+int getChatBackendPort();
 
 } // namespace staticfiles
 } // namespace chat

@@ -33,6 +33,7 @@ extern const char* const kPositAiDirName;
 extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
+extern const char* const kCspConfigPath;
 
 // ============================================================================
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
