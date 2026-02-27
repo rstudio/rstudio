@@ -109,6 +109,9 @@
 
 .rs.addFunction("chat.addPreflightHooks", function(package, hooks)
 {
+   if (!isNamespaceLoaded(package))
+      return(invisible())
+
    .rs.enumerate(hooks, function(binding, hook)
    {
       .rs.chat.addPreflightHook(package, binding, hook)
@@ -548,6 +551,53 @@
    )
 
    .rs.chat.addPreflightHooks("utils", utilsHooks)
+
+   fsHooks <- list(
+
+      file_create = function()
+      {
+         .rs.chat.validateFileEdit("file_create", path)
+      },
+
+      file_delete = function()
+      {
+         .rs.chat.validateFileEdit("file_delete", path)
+      },
+
+      file_copy = function()
+      {
+         .rs.chat.validateFileRead("file_copy", path)
+         .rs.chat.validateFileEdit("file_copy", new_path)
+      },
+
+      file_move = function()
+      {
+         .rs.chat.validateFileEdit("file_move", c(path, new_path))
+      },
+
+      file_chmod = function()
+      {
+         .rs.chat.validateFileEdit("file_chmod", path)
+      },
+
+      file_chown = function()
+      {
+         .rs.chat.validateFileEdit("file_chown", path)
+      },
+
+      file_touch = function()
+      {
+         .rs.chat.validateFileEdit("file_touch", path)
+      },
+
+      file_show = function()
+      {
+         .rs.chat.validateFileRead("file_show", path)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks("fs", fsHooks)
 
    .rs.setVar("chat.bindingsInjected", TRUE)
    invisible(TRUE)
