@@ -337,11 +337,6 @@
          .rs.chat.validateFileEdit("Sys.setFileTime", path)
       },
 
-      download.file = function()
-      {
-         .rs.chat.validateFileEdit("download.file", destfile)
-      },
-
       sink = function()
       {
          if (is.character(file) && nzchar(file))
@@ -353,6 +348,11 @@
    .rs.chat.addPreflightHooks("base", baseHooks)
 
    utilsHooks <- list(
+
+      download.file = function()
+      {
+         .rs.chat.validateFileEdit("download.file", destfile)
+      },
 
       write.table = function()
       {
