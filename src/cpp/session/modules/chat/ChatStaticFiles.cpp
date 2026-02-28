@@ -16,6 +16,7 @@
 #include "ChatStaticFiles.hpp"
 #include "ChatConstants.hpp"
 #include "ChatInstallation.hpp"
+#include "ChatLogging.hpp"
 #include "session-config.h"
 
 #include <atomic>
@@ -76,7 +77,6 @@ void injectThemeInfo(std::string* pContent)
 {
    themes::ThemeColors colors = themes::getThemeColors();
 
-   // Add dark class to <html> tag if using a dark theme
    if (colors.isDark)
    {
       size_t htmlPos = pContent->find("<html");
@@ -87,28 +87,30 @@ void injectThemeInfo(std::string* pContent)
          {
             std::string htmlTag =
                pContent->substr(htmlPos, gtPos - htmlPos);
-            size_t classPos = htmlTag.find("class=\"");
+            constexpr const char* kClassAttr = "class=\"";
+            size_t classPos = htmlTag.find(kClassAttr);
             if (classPos != std::string::npos)
             {
-               // Append to existing class value
                size_t insertAt =
-                  htmlPos + classPos + 7; // after class="
+                  htmlPos + classPos + strlen(kClassAttr);
                pContent->insert(insertAt, "dark ");
             }
             else
             {
-               // Add class attribute before the closing >
                pContent->insert(gtPos, " class=\"dark\"");
             }
          }
       }
+      else
+      {
+         DLOG("injectThemeInfo: <html tag not found, "
+              "skipping dark class");
+      }
    }
 
-   // Escape color values for safe HTML attribute injection
    std::string bg = string_utils::htmlEscape(colors.background, true);
    std::string fg = string_utils::htmlEscape(colors.foreground, true);
 
-   // Inject <meta> tag with theme colors in <head>
    std::string meta = fmt::format(
       R"(<meta name="rstudio-theme" )"
       R"(data-background="{background}" )"
@@ -122,6 +124,11 @@ void injectThemeInfo(std::string* pContent)
    {
       pContent->insert(headPos, meta + "\n");
    }
+   else
+   {
+      DLOG("injectThemeInfo: </head> not found, "
+           "skipping meta tag injection");
+   }
 }
 
 /**
@@ -131,46 +138,67 @@ void injectThemeInfo(std::string* pContent)
  * databot build and contains the same defaults that DatabotServer uses
  * in its Express middleware.
  *
+ * Once loaded (or once a failure is encountered), the result is cached
+ * for the lifetime of the session. A missing or broken file will not be
+ * retried.
+ *
  * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
  *         map if the file is missing or unparseable.
  */
 std::map<std::string, std::string> loadCspDirectives()
 {
-   // Cache: the file doesn't change at runtime
-   static std::map<std::string, std::string> s_cached;
-   static bool s_loaded = false;
-   if (s_loaded)
-      return s_cached;
-
-   s_loaded = true;
-
-   FilePath positAiPath = locatePositAiInstallation();
-   if (positAiPath.isEmpty())
-      return s_cached;
-
-   FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
-   if (!cspFile.exists())
-      return s_cached;
-
-   std::string content;
-   Error error = readStringFromFile(cspFile, &content);
-   if (error)
-      return s_cached;
-
-   json::Value jsonValue;
-   if (jsonValue.parse(content))
-      return s_cached;
-
-   if (!jsonValue.isObject())
-      return s_cached;
-
-   json::Object obj = jsonValue.getObject();
-   for (auto it = obj.begin(); it != obj.end(); ++it)
+   static const auto s_cached = []()
    {
-      json::Value val = (*it).getValue();
-      if (val.isString())
-         s_cached[(*it).getName()] = val.getString();
-   }
+      std::map<std::string, std::string> result;
+
+      FilePath positAiPath = locatePositAiInstallation();
+      if (positAiPath.isEmpty())
+         return result;
+
+      FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
+      if (!cspFile.exists())
+         return result;
+
+      std::string content;
+      Error error = readStringFromFile(cspFile, &content);
+      if (error)
+      {
+         WLOG("Failed to read CSP config: {}", error.getMessage());
+         return result;
+      }
+
+      json::Value jsonValue;
+      if (jsonValue.parse(content))
+      {
+         WLOG("Failed to parse CSP config: {}",
+              cspFile.getAbsolutePath());
+         return result;
+      }
+
+      if (!jsonValue.isObject())
+      {
+         WLOG("CSP config must be a JSON object: {}",
+              cspFile.getAbsolutePath());
+         return result;
+      }
+
+      json::Object obj = jsonValue.getObject();
+      for (auto it = obj.begin(); it != obj.end(); ++it)
+      {
+         json::Value val = (*it).getValue();
+         if (val.isString())
+         {
+            result[(*it).getName()] = val.getString();
+         }
+         else
+         {
+            WLOG("Ignoring non-string CSP directive: {}",
+                 (*it).getName());
+         }
+      }
+
+      return result;
+   }();
 
    return s_cached;
 }
@@ -208,13 +236,14 @@ std::string buildCspHeader()
    isServerMode = (options().programMode() == kSessionProgramModeServer);
 #endif
 
-   if (!isServerMode && s_chatBackendPort > 0)
+   int port = s_chatBackendPort.load();
+   if (!isServerMode && port > 0)
    {
       std::string& connectSrc = directives["connect-src"];
       if (connectSrc.empty())
          connectSrc = "'self'";
       connectSrc += " ws://127.0.0.1:" +
-                    boost::lexical_cast<std::string>(s_chatBackendPort);
+                    boost::lexical_cast<std::string>(port);
    }
 
    // Serialize directives into the header string

@@ -93,7 +93,8 @@ core::Error validateAndResolvePath(const core::FilePath& clientRoot,
  *
  * @param request HTTP request object
  * @param pResponse HTTP response object to populate
- * @return Success() always (errors are communicated via HTTP status codes)
+ * @return Success() on normal handling (including 4xx responses), or an
+ *         Error if file I/O fails
  */
 core::Error handleAIChatRequest(const core::http::Request& request,
                                 core::http::Response* pResponse);
@@ -105,9 +106,10 @@ core::Error handleAIChatRequest(const core::http::Request& request,
 /**
  * Set the chat backend (databot) port.
  *
- * Called by SessionChat when the backend process starts. Used to build the
- * connect-src CSP directive in desktop mode, where the WebSocket connects
- * to a different origin than the page.
+ * Called by SessionChat when the backend process starts or stops. Used to
+ * build the connect-src CSP directive in desktop mode, where the WebSocket
+ * connects to a different origin than the page. Pass -1 to indicate the
+ * backend is not running.
  */
 void setChatBackendPort(int port);
 
