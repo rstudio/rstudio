@@ -45,6 +45,21 @@
 	border-left: 2px solid LIGHT_AGENT_COLOR;
 }
 
+.rstudio-themes-default .groupAgent.groupTop {
+	position: relative;
+}
+
+.rstudio-themes-default .groupAgent.groupTop::after {
+	content: "AI";
+	position: absolute;
+	top: 0;
+	right: 8px;
+	font-size: 9px;
+	font-weight: 200;
+	color: LIGHT_AGENT_COLOR;
+	opacity: 0.7;
+}
+
 .rstudio-themes-default .error {
 	color: LIGHT_ERROR_COLOR;
 }
@@ -95,6 +110,21 @@
 
 .rstudio-themes-dark .groupAgent {
 	border-left: 2px solid DARK_AGENT_COLOR;
+}
+
+.rstudio-themes-dark .groupAgent.groupTop {
+	position: relative;
+}
+
+.rstudio-themes-dark .groupAgent.groupTop::after {
+	content: "AI";
+	position: absolute;
+	top: 0;
+	right: 8px;
+	font-size: 9px;
+	font-weight: 200;
+	color: DARK_AGENT_COLOR;
+	opacity: 0.7;
 }
 
 .rstudio-themes-dark .error {

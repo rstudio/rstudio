@@ -1652,7 +1652,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    // Close the agent output group started in echoSourceCode().
    // Clear the agent flag first so the group-end escape goes through
    // the plain string path for consistent event queue buffering.
+   // Record in console actions so the group close survives session reload.
    module_context::setAgentExecuting(false);
+   r::session::consoleActions().add(kConsoleActionOutput, kAnsiEscapeGroupEnd);
    module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible
