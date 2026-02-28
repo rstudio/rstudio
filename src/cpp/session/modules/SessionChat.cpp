@@ -485,6 +485,20 @@ private:
    RSTUDIO_BOOST_CONNECTION connection_;
 };
 
+// RAII guard that sets the agent-executing flag on construction and clears it
+// on destruction. Ensures the flag is always cleared even if an exception
+// occurs during agent code execution.
+class ScopedAgentExecution
+{
+public:
+   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
+   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+
+   // non-copyable
+   ScopedAgentExecution(const ScopedAgentExecution&) = delete;
+   ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+};
+
 // Echo source code with prompts (like evaluate does)
 void echoSourceCode(const std::string& code)
 {
@@ -506,10 +520,13 @@ void echoSourceCode(const std::string& code)
       // VirtualConsole wraps all agent output (prompt, input, R output,
       // errors) in a styled group container (purple left border).
       std::string prompt = (i == 0)
-         ? std::string(kAnsiEscapeGroupStartAgent) + "> "
-         : "+ ";
+         ? kAnsiEscapeGroupStartAgent + r::options::getOption<std::string>("prompt")
+         : r::options::getOption<std::string>("continue");
 
-      // Record in console actions so the history survives session reload
+      // Record in console actions so the history survives session reload.
+      // Note: the first prompt includes a raw ANSI group-start escape, which
+      // VirtualConsole will re-process on session restore to recreate the
+      // styled group container.
       r::session::consoleActions().add(kConsoleActionPrompt, prompt);
       r::session::consoleActions().add(kConsoleActionInput, lines[i]);
 
@@ -1366,8 +1383,9 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
    }
 
    // Flag that we're executing agent code so console output/error events
-   // emitted by R during evaluation get the agent metadata.
-   module_context::setAgentExecuting(true);
+   // emitted by R during evaluation get the agent metadata. Uses RAII to
+   // guarantee the flag is cleared even if an exception occurs.
+   ScopedAgentExecution agentScope;
 
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
@@ -1626,26 +1644,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI, flagged as agent-generated.
-      // NOTE: We construct the event directly with a JSON payload rather than
-      // using consoleWriteError() (which sends a plain string) so that the
-      // agent flag survives the event queue's output buffering.
-      json::Object errorData;
-      errorData[kConsoleText]  = errorOutput;
-      errorData[kConsoleId]    = std::string();
-      errorData[kConsoleAgent] = true;
-      ClientEvent errorEvent(client_events::kConsoleWriteError, errorData);
-      module_context::enqueClientEvent(errorEvent);
+      // Also write to console UI (agent flag is set via ScopedAgentExecution,
+      // so consoleWriteError sends the JSON payload with agent metadata)
+      module_context::consoleWriteError(errorOutput);
    }
 
    // Close the agent output group started in echoSourceCode().
-   // This ANSI escape tells VirtualConsole to close the group container,
-   // so the purple left border wraps everything from the prompt through
-   // the last line of output or error.
-   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
-
-   // Done executing agent code; clear the flag.
+   // Clear the agent flag first so the group-end escape goes through
+   // the plain string path for consistent event queue buffering.
    module_context::setAgentExecuting(false);
+   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics

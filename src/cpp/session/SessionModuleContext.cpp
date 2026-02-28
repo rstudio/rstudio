@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <atomic>
 #include <vector>
 
 #include <boost/assert.hpp>
@@ -2246,17 +2247,17 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 // thread safety constraint
 
 namespace {
-bool s_agentExecuting = false;
+std::atomic<bool> s_agentExecuting{false};
 } // anonymous namespace
 
 void setAgentExecuting(bool executing)
 {
-   s_agentExecuting = executing;
+   s_agentExecuting.store(executing, std::memory_order_release);
 }
 
 bool isAgentExecuting()
 {
-   return s_agentExecuting;
+   return s_agentExecuting.load(std::memory_order_acquire);
 }
 
 void consoleWriteOutput(const std::string& output)
