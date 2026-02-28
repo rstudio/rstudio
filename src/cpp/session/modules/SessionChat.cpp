@@ -62,6 +62,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -1443,6 +1444,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
+         // Reset pending output type before each expression so that a warning
+         // from expression N doesn't cause all output from expression N+1 to
+         // be grouped as warning text. In the normal REPL this reset happens
+         // via the onBusy signal between top-level evaluations.
+         console_output::setPendingOutputType(console_output::PendingOutputTypeUnknown);
+
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
@@ -1644,17 +1651,21 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI (agent flag is set via ScopedAgentExecution,
-      // so consoleWriteError sends the JSON payload with agent metadata)
-      module_context::consoleWriteError(errorOutput);
+      // Send as kConsoleWritePendingError so the event queue's
+      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+      // "Error" prefix). Clear the agent flag so the event goes through the
+      // plain string buffering path where annotation happens.
+      module_context::setAgentExecuting(false);
+      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+      module_context::enqueClientEvent(errorEvent);
    }
 
    // Close the agent output group started in echoSourceCode().
-   // Clear the agent flag first so the group-end escape goes through
-   // the plain string path for consistent event queue buffering.
-   // Record in console actions so the group close survives session reload.
+   // Clear the agent flag first so the group-end escape goes through the
+   // plain string buffering path in the event queue, where it will also be
+   // recorded in console actions (so the group close survives session reload).
    module_context::setAgentExecuting(false);
-   r::session::consoleActions().add(kConsoleActionOutput, kAnsiEscapeGroupEnd);
    module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible

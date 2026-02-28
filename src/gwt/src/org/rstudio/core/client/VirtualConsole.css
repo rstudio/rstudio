@@ -56,6 +56,7 @@
 	right: 8px;
 	font-size: 9px;
 	font-weight: 200;
+	font-family: monospace;
 	color: LIGHT_AGENT_COLOR;
 	opacity: 0.7;
 }
@@ -123,6 +124,7 @@
 	right: 8px;
 	font-size: 9px;
 	font-weight: 200;
+	font-family: monospace;
 	color: DARK_AGENT_COLOR;
 	opacity: 0.7;
 }
