@@ -1573,6 +1573,7 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
       fd.open(hFile, boost::iostreams::close_handle);
       pResult = new boost::iostreams::stream<file_descriptor_source>(fd);
 #else
+      errno = 0;
       pResult = new std::ifstream(getAbsolutePath().c_str(), std::ios_base::in | std::ios_base::binary);
 #endif
 
@@ -1582,7 +1583,16 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
          delete pResult;
          pResult = nullptr;
 
+#ifndef _WIN32
+         // Use errno to report the actual failure reason (e.g. EACCES
+         // for permission denied) instead of always assuming not-found.
+         int errorCode = errno;
+         Error error = errorCode != 0
+            ? systemError(errorCode, ERROR_LOCATION)
+            : systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+#else
          Error error = systemError(boost::system::errc::no_such_file_or_directory, ERROR_LOCATION);
+#endif
          error.addProperty("path", getAbsolutePath());
          return error;
       }
