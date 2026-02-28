@@ -101,7 +101,7 @@ namespace {
 // Process management
 // ============================================================================
 PidType s_chatBackendPid = -1;
-int s_chatBackendPort = -1;
+int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
@@ -111,8 +111,8 @@ bool s_expectedShutdown = false;
 // Clear the backend port in both SessionChat and ChatStaticFiles
 void clearChatBackendPort()
 {
-   s_chatBackendPort = -1;
-   staticfiles::setChatBackendPort(-1);
+   s_chatBackendPort = constants::kChatBackendPortNone;
+   staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
 }
 
 // Track whether session is closing (vs suspending/restarting)

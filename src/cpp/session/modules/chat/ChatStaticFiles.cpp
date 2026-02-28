@@ -21,6 +21,7 @@
 
 #include <atomic>
 #include <map>
+#include <mutex>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
@@ -58,15 +59,16 @@ constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 // Used to build connect-src in the CSP header for desktop mode.
 // Atomic because it is written from the main thread and read from HTTP
 // handler threads.
-std::atomic<int> s_chatBackendPort{-1};
+std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
 
 /**
  * Inject theme information into HTML content without inline scripts.
  *
  * Two modifications:
  * 1. Adds class="dark" to the <html> tag when the IDE uses a dark theme.
- *    Assumes the tag uses double-quoted attributes (matches the Vite build
- *    output which produces <html lang="en">).
+ *    This parser is intentionally simple and only handles the known Vite
+ *    build output format (<html lang="en">). It assumes no `>` characters
+ *    appear inside attribute values.
  * 2. Injects a <meta name="rstudio-theme"> tag in <head> carrying the
  *    background and foreground colors as data attributes. The databot
  *    frontend reads these on startup and applies them as CSS variables.
@@ -112,9 +114,7 @@ void injectThemeInfo(std::string* pContent)
    std::string fg = string_utils::htmlEscape(colors.foreground, true);
 
    std::string meta = fmt::format(
-      R"(<meta name="rstudio-theme" )"
-      R"(data-background="{background}" )"
-      R"(data-foreground="{foreground}">)",
+      R"(<meta name="rstudio-theme" data-background="{background}" data-foreground="{foreground}">)",
       fmt::arg("background", bg),
       fmt::arg("foreground", fg));
 
@@ -203,24 +203,29 @@ std::map<std::string, std::string> loadCspDirectives()
    return s_cached;
 }
 
+// Cached CSP header string, rebuilt when the backend port changes.
+std::mutex s_cspMutex;
+std::string s_cachedCspHeader;
+bool s_cspHeaderBuilt = false;
+
 /**
- * Build the Content-Security-Policy header value from dist/csp.json.
+ * Rebuild the cached CSP header string from dist/csp.json directives.
  *
- * Reads CSP directives from the databot-emitted file and augments them
- * with RStudio-specific additions:
- * - connect-src gets the WebSocket origin in desktop mode
- *
- * Falls back to a restrictive "default-src 'self'" if csp.json is missing.
- *
- * @return CSP header string
+ * Called once lazily on the first HTML request and again whenever the
+ * backend port changes via setChatBackendPort().
  */
-std::string buildCspHeader()
+void rebuildCspHeaderCache()
 {
    std::map<std::string, std::string> directives = loadCspDirectives();
 
    // If csp.json was missing, use a restrictive fallback
    if (directives.empty())
       directives["default-src"] = "'self'";
+
+   // Prevent clickjacking: the chat pane should never be framed by
+   // external origins.
+   if (directives.find("frame-ancestors") == directives.end())
+      directives["frame-ancestors"] = "'self'";
 
    // In desktop mode, the WebSocket connects to a different port (different
    // origin), so connect-src must include it explicitly. In server mode the
@@ -237,7 +242,7 @@ std::string buildCspHeader()
 #endif
 
    int port = s_chatBackendPort.load();
-   if (!isServerMode && port > 0)
+   if (!isServerMode && port >= 0)
    {
       std::string& connectSrc = directives["connect-src"];
       if (connectSrc.empty())
@@ -255,7 +260,30 @@ std::string buildCspHeader()
       header += pair.first + " " + pair.second;
    }
 
-   return header;
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+   s_cachedCspHeader = header;
+   s_cspHeaderBuilt = true;
+}
+
+/**
+ * Get the Content-Security-Policy header value.
+ *
+ * Returns a cached string built from dist/csp.json directives, augmented
+ * with RStudio-specific additions. The cache is rebuilt lazily on first
+ * call and whenever the backend port changes.
+ *
+ * @return CSP header string
+ */
+std::string buildCspHeader()
+{
+   {
+      std::lock_guard<std::mutex> lock(s_cspMutex);
+      if (s_cspHeaderBuilt)
+         return s_cachedCspHeader;
+   }
+   rebuildCspHeaderCache();
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+   return s_cachedCspHeader;
 }
 
 } // anonymous namespace
@@ -413,10 +441,11 @@ Error handleAIChatRequest(const http::Request& request,
    // Set content type
    std::string extension = resolvedPath.getExtension();
 
-   // For HTML files: inject theme info and set CSP header
+   // For HTML files: set CSP header; inject theme info only into index.html
    if (extension == ".html" || extension == ".htm")
    {
-      injectThemeInfo(&content);
+      if (resolvedPath.getFilename() == kIndexFileName)
+         injectThemeInfo(&content);
       pResponse->setHeader("Content-Security-Policy", buildCspHeader());
    }
    pResponse->setContentType(getContentType(extension));
@@ -447,11 +476,7 @@ Error handleAIChatRequest(const http::Request& request,
 void setChatBackendPort(int port)
 {
    s_chatBackendPort = port;
-}
-
-int getChatBackendPort()
-{
-   return s_chatBackendPort;
+   rebuildCspHeaderCache();
 }
 
 } // namespace staticfiles

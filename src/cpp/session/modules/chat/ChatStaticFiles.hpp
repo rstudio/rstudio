@@ -113,11 +113,6 @@ core::Error handleAIChatRequest(const core::http::Request& request,
  */
 void setChatBackendPort(int port);
 
-/**
- * Get the current chat backend port, or -1 if not set.
- */
-int getChatBackendPort();
-
 } // namespace staticfiles
 } // namespace chat
 } // namespace modules
