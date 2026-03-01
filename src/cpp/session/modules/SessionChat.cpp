@@ -4335,10 +4335,22 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
-   // notify when hosted in RStudio Server
+   // In server mode, disable embedded origin lockdown since rserver's
+   // proxy authentication and port-token cookies prevent CSWSH.
+   // Desktop mode (the default) locks down CORS and WebSocket origins
+   // to localhost to prevent cross-site WebSocket hijacking.
    if (options().programMode() == kSessionProgramModeServer)
    {
       args.push_back("--server-mode");
+   }
+
+   // Allow the chat UI (served by rsession on a different port) to
+   // connect to the databot WebSocket in embedded mode.
+   std::string wwwPort = options().wwwPort();
+   if (!wwwPort.empty())
+   {
+      args.push_back("--allowed-origin");
+      args.push_back("http://127.0.0.1:" + wwwPort);
    }
 
    // Add resume-conversation flag if resuming after suspend/restart
