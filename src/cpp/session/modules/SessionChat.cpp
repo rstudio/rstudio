@@ -4344,13 +4344,17 @@ Error startChatBackend(bool resumeConversation)
       args.push_back("--server-mode");
    }
 
-   // Allow the chat UI (served by rsession on a different port) to
-   // connect to the databot WebSocket in embedded mode.
-   std::string wwwPort = options().wwwPort();
-   if (!wwwPort.empty())
+   // In desktop mode, allow the chat UI (served by rsession on a different
+   // port) to connect to the databot WebSocket through the origin check.
+   // Not needed in server mode where embedded origin lockdown is disabled.
+   if (options().programMode() == kSessionProgramModeDesktop)
    {
-      args.push_back("--allowed-origin");
-      args.push_back("http://127.0.0.1:" + wwwPort);
+      std::string wwwPort = options().wwwPort();
+      if (!wwwPort.empty())
+      {
+         args.push_back("--allowed-origin");
+         args.push_back("http://127.0.0.1:" + wwwPort);
+      }
    }
 
    // Add resume-conversation flag if resuming after suspend/restart
