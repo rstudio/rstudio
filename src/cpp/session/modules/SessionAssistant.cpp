@@ -184,6 +184,7 @@ enum class AgentNotRunningReason
    DisabledViaProjectPreferences,
    DisabledViaGlobalPreferences,
    LaunchError,
+   Unsupported,
 };
 
 // keep in sync with constants in AssistantStatusChangedEvent.java
@@ -278,6 +279,8 @@ std::string agentNotRunningReason()
          return "AI assistant has been disabled via global preferences.";
       case AgentNotRunningReason::LaunchError:
          return "The AI assistant agent failed to launch: " + s_agentStartupError;
+      case AgentNotRunningReason::Unsupported:
+         return "The installed AI assistant version is no longer supported.";
    }
 
    return "Unknown";
@@ -597,7 +600,7 @@ bool isAssistantEnabled(const std::string& assistantType = "")
    // For Posit AI, check if the installed version or protocol is unsupported
    if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
    {
-      s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
+      s_agentNotRunningReason = AgentNotRunningReason::Unsupported;
       return false;
    }
 

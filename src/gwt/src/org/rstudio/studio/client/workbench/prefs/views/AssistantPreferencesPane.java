@@ -934,8 +934,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(
-               constants_.positAiIncompatibleTitle(),
-               constants_.positAiIncompatibleMessage(),
+               constants_.positAiManifestUnavailableTitle(),
+               constants_.positAiManifestUnavailableMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });

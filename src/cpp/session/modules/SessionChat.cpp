@@ -3670,32 +3670,49 @@ Error getUnsupportedInfo(
 
    // minimumPackageVersion (optional string)
    json::Object::Iterator minIt = obj.find("minimumPackageVersion");
-   if (minIt != obj.end() && (*minIt).getValue().isString())
+   if (minIt != obj.end())
    {
-      pInfo->minimumPackageVersion = (*minIt).getValue().getString();
+      if ((*minIt).getValue().isString())
+         pInfo->minimumPackageVersion = (*minIt).getValue().getString();
+      else
+         WLOG("Manifest 'unsupported.minimumPackageVersion' is not a string, ignoring");
    }
 
    // packageVersions (optional array of strings)
    json::Object::Iterator pvIt = obj.find("packageVersions");
-   if (pvIt != obj.end() && (*pvIt).getValue().isArray())
+   if (pvIt != obj.end())
    {
-      json::Array arr = (*pvIt).getValue().getArray();
-      for (const json::Value& val : arr)
+      if ((*pvIt).getValue().isArray())
       {
-         if (val.isString())
-            pInfo->packageVersions.push_back(val.getString());
+         json::Array arr = (*pvIt).getValue().getArray();
+         for (const json::Value& val : arr)
+         {
+            if (val.isString())
+               pInfo->packageVersions.push_back(val.getString());
+         }
+      }
+      else
+      {
+         WLOG("Manifest 'unsupported.packageVersions' is not an array, ignoring");
       }
    }
 
    // protocols (optional array of strings)
    json::Object::Iterator prIt = obj.find("protocols");
-   if (prIt != obj.end() && (*prIt).getValue().isArray())
+   if (prIt != obj.end())
    {
-      json::Array arr = (*prIt).getValue().getArray();
-      for (const json::Value& val : arr)
+      if ((*prIt).getValue().isArray())
       {
-         if (val.isString())
-            pInfo->protocols.push_back(val.getString());
+         json::Array arr = (*prIt).getValue().getArray();
+         for (const json::Value& val : arr)
+         {
+            if (val.isString())
+               pInfo->protocols.push_back(val.getString());
+         }
+      }
+      else
+      {
+         WLOG("Manifest 'unsupported.protocols' is not an array, ignoring");
       }
    }
 
@@ -3722,10 +3739,18 @@ bool isVersionUnsupported(
    if (!info.minimumPackageVersion.empty())
    {
       SemanticVersion installed, minimum;
-      if (installed.parse(version) && minimum.parse(info.minimumPackageVersion))
+      if (!installed.parse(version))
       {
-         if (installed < minimum)
-            return true;
+         WLOG("Failed to parse installed version for unsupported check: {}", version);
+      }
+      else if (!minimum.parse(info.minimumPackageVersion))
+      {
+         WLOG("Failed to parse minimumPackageVersion from manifest: {}",
+              info.minimumPackageVersion);
+      }
+      else if (installed < minimum)
+      {
+         return true;
       }
    }
 
@@ -4013,10 +4038,22 @@ void doUpdateCheck()
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
+      {
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+      else
+      {
+         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         s_updateState.updateAvailable = true;
+         s_updateState.newVersion = packageVersion;
+         s_updateState.downloadUrl = downloadUrl;
+      }
    }
    else
    {
@@ -4044,7 +4081,10 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
-   s_updateState.currentVersion = installedVersion;
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.currentVersion = installedVersion;
+   }
 
    // Check if we should skip due to throttling
    // Skip check if:
@@ -4118,6 +4158,7 @@ Error checkForUpdatesOnStartup()
       // Check if this is specifically a "protocol not found" error
       if (error.getCode() == boost::system::errc::protocol_not_supported)
       {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
          // Protocol version not in manifest - only block if there's no installed
          // version to fall back on
          if (installedVersion == "0.0.0")
@@ -4134,34 +4175,55 @@ Error checkForUpdatesOnStartup()
    // Compare versions - offer install if versions differ (upgrade or downgrade)
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      // Determine if this is an upgrade or downgrade
-      SemanticVersion installed, available;
-      bool isDowngrade = false;
-
-      // These parses should always succeed since shouldInstallVersion validated them
-      if (installed.parse(installedVersion) && available.parse(packageVersion))
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
       {
-         isDowngrade = (available < installed);
-         DLOG("{} available: {} -> {}",
-              isDowngrade ? "Downgrade" : "Update",
-              installedVersion, packageVersion);
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.noCompatibleVersion = true;
+            s_updateState.updateAvailable = false;
+         }
       }
       else
       {
-         // Defensive: this shouldn't happen, but handle gracefully
-         WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-              installedVersion, packageVersion);
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      }
+         // Determine if this is an upgrade or downgrade
+         SemanticVersion installed, available;
+         bool isDowngrade = false;
 
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+         // These parses should always succeed since shouldInstallVersion validated them
+         if (installed.parse(installedVersion) && available.parse(packageVersion))
+         {
+            isDowngrade = (available < installed);
+            DLOG("{} available: {} -> {}",
+                 isDowngrade ? "Downgrade" : "Update",
+                 installedVersion, packageVersion);
+         }
+         else
+         {
+            // Defensive: this shouldn't happen, but handle gracefully
+            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
+                 installedVersion, packageVersion);
+            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         }
+
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.updateAvailable = true;
+            s_updateState.newVersion = packageVersion;
+            s_updateState.downloadUrl = downloadUrl;
+         }
+      }
    }
    else
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
-      s_updateState.updateAvailable = false;
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.updateAvailable = false;
+      }
    }
 
    // Check for recommended RStudio version
