@@ -345,27 +345,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          String value = selChatProvider_.getValue();
          if (value.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          {
-            // First check if Posit AI is installed
-            chatServer_.chatVerifyInstalled(new ServerRequestCallback<ChatVerifyInstalledResponse>()
-            {
-               @Override
-               public void onResponseReceived(ChatVerifyInstalledResponse result)
-               {
-                  if (!result.installed)
-                  {
-                     // Offer to install Posit AI
-                     checkPositAiInstallation(/* forAssistant= */ false);
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  // On error, still try to check for updates which will handle the install prompt
-                  checkPositAiInstallation(/* forAssistant= */ false);
-               }
-            });
+            // Check for install/update/unsupported status
+            checkPositAiInstallation(/* forAssistant= */ false);
          }
       });
 
@@ -453,13 +434,15 @@ public class AssistantPreferencesPane extends PreferencesPane
                         @Override
                         public void onResponseReceived(Boolean isInstalled)
                         {
-                           if (isInstalled || event == null)
+                           if (event == null)
                            {
+                              // Panel just loaded, not a user action — just refresh
                               refresh(UserPrefsAccessor.ASSISTANT_POSIT);
                            }
                            else
                            {
-                              // Offer to install Posit AI (only if user changed the selection)
+                              // User changed the selection — check for
+                              // install, update, or unsupported status
                               checkPositAiInstallation(/* forAssistant= */ true);
                            }
                         }
@@ -905,6 +888,51 @@ public class AssistantPreferencesPane extends PreferencesPane
          public void onIncompatibleVersion()
          {
             // No compatible version available - show error and revert
+            globalDisplay_.showErrorMessage(
+               constants_.positAiIncompatibleTitle(),
+               constants_.positAiIncompatibleMessage(),
+               (Operation) () -> {
+                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+               });
+         }
+
+         @Override
+         public void onUnsupportedVersionUpgradeRequired(
+             String currentVersion, String newVersion)
+         {
+            // Unsupported version with update available - treat as mandatory update
+            showInstallUpdatePrompt(newVersion, false, forAssistant,
+               previousAssistantValue, previousChatProviderValue);
+         }
+
+         @Override
+         public void onUnsupportedVersionNoUpdate(String currentVersion)
+         {
+            // Unsupported version with no update - show error and revert
+            globalDisplay_.showErrorMessage(
+               constants_.positAiIncompatibleTitle(),
+               constants_.positAiIncompatibleMessage(),
+               (Operation) () -> {
+                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+               });
+         }
+
+         @Override
+         public void onUnsupportedProtocol()
+         {
+            // Protocol unsupported - RStudio itself needs updating
+            globalDisplay_.showErrorMessage(
+               constants_.positAiIncompatibleTitle(),
+               constants_.positAiIncompatibleMessage(),
+               (Operation) () -> {
+                  revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
+               });
+         }
+
+         @Override
+         public void onManifestUnavailable()
+         {
+            // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(
                constants_.positAiIncompatibleTitle(),
                constants_.positAiIncompatibleMessage(),

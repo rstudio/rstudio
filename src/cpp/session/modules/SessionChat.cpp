@@ -3192,6 +3192,9 @@ struct UpdateState
 {
    bool updateAvailable;
    bool noCompatibleVersion;
+   bool unsupportedInstalledVersion;
+   bool unsupportedProtocol;
+   bool manifestUnavailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -3212,6 +3215,9 @@ struct UpdateState
    UpdateState()
       : updateAvailable(false),
         noCompatibleVersion(false),
+        unsupportedInstalledVersion(false),
+        unsupportedProtocol(false),
+        manifestUnavailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -3389,7 +3395,10 @@ Error downloadManifest(json::Object* pManifest)
          }
          else
          {
-            WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST file does not exist, ignoring: {}", debugManifestPath);
+            return systemError(
+               boost::system::errc::no_such_file_or_directory,
+               "Debug manifest file not found: " + debugManifestPath,
+               ERROR_LOCATION);
          }
       }
    }
@@ -3634,6 +3643,107 @@ void showRStudioVersionWarning(
    module_context::enqueClientEvent(event);
 }
 
+// Parsed unsupported version info from manifest
+struct UnsupportedInfo
+{
+   std::string minimumPackageVersion;
+   std::vector<std::string> packageVersions;
+   std::vector<std::string> protocols;
+};
+
+// Parse the optional "unsupported" object from the manifest.
+// Returns Success() if the key is absent (backwards compat) or parsed OK.
+Error getUnsupportedInfo(
+    const json::Object& manifest,
+    UnsupportedInfo* pInfo)
+{
+   json::Object::Iterator it = manifest.find("unsupported");
+   if (it == manifest.end())
+      return Success();
+
+   if (!(*it).getValue().isObject())
+   {
+      WLOG("Manifest 'unsupported' field is not an object, ignoring");
+      return Success();
+   }
+
+   json::Object obj = (*it).getValue().getObject();
+
+   // minimumPackageVersion (optional string)
+   json::Object::Iterator minIt = obj.find("minimumPackageVersion");
+   if (minIt != obj.end() && (*minIt).getValue().isString())
+   {
+      pInfo->minimumPackageVersion = (*minIt).getValue().getString();
+   }
+
+   // packageVersions (optional array of strings)
+   json::Object::Iterator pvIt = obj.find("packageVersions");
+   if (pvIt != obj.end() && (*pvIt).getValue().isArray())
+   {
+      json::Array arr = (*pvIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->packageVersions.push_back(val.getString());
+      }
+   }
+
+   // protocols (optional array of strings)
+   json::Object::Iterator prIt = obj.find("protocols");
+   if (prIt != obj.end() && (*prIt).getValue().isArray())
+   {
+      json::Array arr = (*prIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->protocols.push_back(val.getString());
+      }
+   }
+
+   return Success();
+}
+
+// Check if the installed version is unsupported per the manifest.
+// Returns false for empty/"0.0.0" (not installed yet).
+bool isVersionUnsupported(
+    const std::string& version,
+    const UnsupportedInfo& info)
+{
+   if (version.empty() || version == "0.0.0")
+      return false;
+
+   // Check explicit blocklist (string equality handles pre-release suffixes)
+   for (const std::string& blocked : info.packageVersions)
+   {
+      if (version == blocked)
+         return true;
+   }
+
+   // Check minimum version
+   if (!info.minimumPackageVersion.empty())
+   {
+      SemanticVersion installed, minimum;
+      if (installed.parse(version) && minimum.parse(info.minimumPackageVersion))
+      {
+         if (installed < minimum)
+            return true;
+      }
+   }
+
+   return false;
+}
+
+// Check if the current protocol version is unsupported
+bool isProtocolUnsupported(const UnsupportedInfo& info)
+{
+   for (const std::string& protocol : info.protocols)
+   {
+      if (protocol == kProtocolVersion)
+         return true;
+   }
+   return false;
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -3833,13 +3943,49 @@ void doUpdateCheck()
       s_updateState.currentVersion = installedVersion;
    }
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return;
+   }
+
+   // Manifest succeeded — clear the failure flag
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.manifestUnavailable = false;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      WLOG("Failed to parse unsupported info: {}", error.getMessage());
+   }
+   else
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop NES agent if version/protocol is unsupported
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -3915,14 +4061,49 @@ Error checkForUpdatesOnStartup()
    // Record that we attempted an update check (prevents hammering server on failures)
    saveUpdateCheckState();
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
-      // Silent failure - don't block feature usage
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return Success();
+   }
+
+   // Manifest succeeded — clear the failure flag
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.manifestUnavailable = false;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      WLOG("Failed to parse unsupported info: {}", error.getMessage());
+   }
+   else
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop NES agent if version/protocol is unsupported
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -4657,13 +4838,19 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
+   result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
+   result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
+   result["manifestUnavailable"] = s_updateState.manifestUnavailable;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
    result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
 
-   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}",
-        s_updateState.updateAvailable, s_updateState.noCompatibleVersion);
+   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}, "
+        "unsupportedVersion={}, unsupportedProtocol={}, manifestUnavailable={}",
+        s_updateState.updateAvailable, s_updateState.noCompatibleVersion,
+        s_updateState.unsupportedInstalledVersion, s_updateState.unsupportedProtocol,
+        s_updateState.manifestUnavailable);
 
    pResponse->setResult(result);
    return Success();
@@ -4827,7 +5014,8 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       s_updateState.installStatus = UpdateState::Status::Complete;
       s_updateState.installMessage = "Update complete";
-      s_updateState.updateAvailable = false;  // Clear update flag
+      s_updateState.updateAvailable = false;
+      s_updateState.unsupportedInstalledVersion = false;
       s_updateState.currentVersion = s_updateState.newVersion;
    }
 
@@ -5071,6 +5259,14 @@ bool isSuspendable()
 {
    // Session can suspend if chat backend is NOT busy
    return !s_chatBusy;
+}
+
+bool isPositAiUnsupported()
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   return s_updateState.unsupportedInstalledVersion ||
+          s_updateState.unsupportedProtocol ||
+          s_updateState.manifestUnavailable;
 }
 
 // ============================================================================

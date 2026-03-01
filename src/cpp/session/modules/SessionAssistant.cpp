@@ -14,6 +14,7 @@
  */
 
 #include "SessionAssistant.hpp"
+#include "SessionChat.hpp"
 #include "SessionNodeTools.hpp"
 
 #include <boost/current_function.hpp>
@@ -588,6 +589,13 @@ bool isAssistantEnabled(const std::string& assistantType = "")
 
    // Finally, check whether the selected assistant type is installed.
    if (!isAgentInstalled(assistant))
+   {
+      s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
+      return false;
+   }
+
+   // For Posit AI, check if the installed version or protocol is unsupported
+   if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
    {
       s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
       return false;
