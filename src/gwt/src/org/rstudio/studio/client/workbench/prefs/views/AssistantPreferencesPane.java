@@ -910,8 +910,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Unsupported version with no update - show error and revert
             globalDisplay_.showErrorMessage(
-               constants_.positAiIncompatibleTitle(),
-               constants_.positAiIncompatibleMessage(),
+               constants_.positAiUnsupportedVersionTitle(),
+               constants_.positAiUnsupportedVersionMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });
@@ -922,8 +922,8 @@ public class AssistantPreferencesPane extends PreferencesPane
          {
             // Protocol unsupported - RStudio itself needs updating
             globalDisplay_.showErrorMessage(
-               constants_.positAiIncompatibleTitle(),
-               constants_.positAiIncompatibleMessage(),
+               constants_.positAiUnsupportedProtocolTitle(),
+               constants_.positAiUnsupportedProtocolMessage(),
                (Operation) () -> {
                   revertPositAiPreference(forAssistant, previousAssistantValue, previousChatProviderValue);
                });

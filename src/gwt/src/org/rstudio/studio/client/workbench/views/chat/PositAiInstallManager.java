@@ -49,7 +49,7 @@ public class PositAiInstallManager
       /**
        * Called when an update or initial install is available.
        *
-       * @param currentVersion The currently installed version (empty string if not installed)
+       * @param currentVersion The currently installed version ("0.0.0" if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        */

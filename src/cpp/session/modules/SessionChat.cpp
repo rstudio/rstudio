@@ -3703,18 +3703,21 @@ Error getUnsupportedInfo(
    json::Object::Iterator pvIt = obj.find("packageVersions");
    if (pvIt != obj.end())
    {
-      if ((*pvIt).getValue().isArray())
+      if (!(*pvIt).getValue().isArray())
       {
-         json::Array arr = (*pvIt).getValue().getArray();
-         for (const json::Value& val : arr)
-         {
-            if (val.isString())
-               pInfo->packageVersions.push_back(val.getString());
-         }
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.packageVersions' is not an array",
+            ERROR_LOCATION);
       }
-      else
+
+      json::Array arr = (*pvIt).getValue().getArray();
+      for (const json::Value& val : arr)
       {
-         WLOG("Manifest 'unsupported.packageVersions' is not an array, ignoring");
+         if (val.isString())
+            pInfo->packageVersions.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.packageVersions");
       }
    }
 
@@ -3722,18 +3725,21 @@ Error getUnsupportedInfo(
    json::Object::Iterator prIt = obj.find("protocols");
    if (prIt != obj.end())
    {
-      if ((*prIt).getValue().isArray())
+      if (!(*prIt).getValue().isArray())
       {
-         json::Array arr = (*prIt).getValue().getArray();
-         for (const json::Value& val : arr)
-         {
-            if (val.isString())
-               pInfo->protocols.push_back(val.getString());
-         }
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.protocols' is not an array",
+            ERROR_LOCATION);
       }
-      else
+
+      json::Array arr = (*prIt).getValue().getArray();
+      for (const json::Value& val : arr)
       {
-         WLOG("Manifest 'unsupported.protocols' is not an array, ignoring");
+         if (val.isString())
+            pInfo->protocols.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.protocols");
       }
    }
 
@@ -5010,6 +5016,11 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    s_updateState.installStatus = UpdateState::Status::Downloading;
    s_updateState.installMessage = "Downloading update...";
 
+   // Capture values before unlocking — a concurrent doUpdateCheck() could
+   // reset s_updateState while we're downloading
+   std::string downloadUrl = s_updateState.downloadUrl;
+   std::string newVersion = s_updateState.newVersion;
+
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
 
@@ -5035,7 +5046,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
    // Download package
    FilePath tempPackage = module_context::tempFile("pai-update", "zip");
-   Error error = downloadPackage(s_updateState.downloadUrl, tempPackage);
+   Error error = downloadPackage(downloadUrl, tempPackage);
 
    if (error)
    {
@@ -5124,7 +5135,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       s_updateState.installMessage = "Update complete";
       s_updateState.updateAvailable = false;
       s_updateState.unsupportedInstalledVersion = false;
-      s_updateState.currentVersion = s_updateState.newVersion;
+      s_updateState.currentVersion = newVersion;
    }
 
    pResponse->setResult(json::Value());
