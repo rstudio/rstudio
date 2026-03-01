@@ -4335,6 +4335,28 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // In server mode, disable embedded origin lockdown since rserver's
+   // proxy authentication and port-token cookies prevent CSWSH.
+   // Desktop mode (the default) locks down CORS and WebSocket origins
+   // to localhost to prevent cross-site WebSocket hijacking.
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      args.push_back("--server-mode");
+   }
+
+   // In desktop mode, allow the chat UI (served by rsession on a different
+   // port) to connect to the databot WebSocket through the origin check.
+   // Not needed in server mode where embedded origin lockdown is disabled.
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string wwwPort = options().wwwPort();
+      if (!wwwPort.empty())
+      {
+         args.push_back("--allowed-origin");
+         args.push_back("http://127.0.0.1:" + wwwPort);
+      }
+   }
+
    // Add resume-conversation flag if resuming after suspend/restart
    if (resumeConversation)
    {
