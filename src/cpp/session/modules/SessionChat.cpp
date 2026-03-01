@@ -3353,54 +3353,53 @@ Error downloadManifest(json::Object* pManifest)
       // Validate path ends with manifest.json
       if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
       {
-         WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json', ignoring: {}",
-              debugManifestPath);
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json': " +
+               debugManifestPath,
+            ERROR_LOCATION);
       }
-      else
+
+      FilePath debugManifestFile(debugManifestPath);
+      if (!debugManifestFile.exists())
       {
-         FilePath debugManifestFile(debugManifestPath);
-         if (debugManifestFile.exists())
-         {
-            DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
-
-            // Read and parse JSON from local file
-            std::string manifestContent;
-            Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
-            if (error)
-            {
-               WLOG("Failed to read debug manifest file: {}", error.getMessage());
-               return error;
-            }
-
-            // Parse JSON
-            json::Value manifestValue;
-            if (manifestValue.parse(manifestContent))
-            {
-               WLOG("Failed to parse debug manifest JSON");
-               return systemError(boost::system::errc::protocol_error,
-                                 "Invalid JSON in debug manifest",
-                                 ERROR_LOCATION);
-            }
-
-            if (!manifestValue.isObject())
-            {
-               return systemError(boost::system::errc::protocol_error,
-                                 "Debug manifest must be a JSON object",
-                                 ERROR_LOCATION);
-            }
-
-            *pManifest = manifestValue.getObject();
-            DLOG("Successfully loaded and parsed debug manifest");
-            return Success();
-         }
-         else
-         {
-            return systemError(
-               boost::system::errc::no_such_file_or_directory,
-               "Debug manifest file not found: " + debugManifestPath,
-               ERROR_LOCATION);
-         }
+         return systemError(
+            boost::system::errc::no_such_file_or_directory,
+            "Debug manifest file not found: " + debugManifestPath,
+            ERROR_LOCATION);
       }
+
+      DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
+      // Read and parse JSON from local file
+      std::string manifestContent;
+      Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
+      if (error)
+      {
+         WLOG("Failed to read debug manifest file: {}", error.getMessage());
+         return error;
+      }
+
+      // Parse JSON
+      json::Value manifestValue;
+      if (manifestValue.parse(manifestContent))
+      {
+         WLOG("Failed to parse debug manifest JSON");
+         return systemError(boost::system::errc::protocol_error,
+                           "Invalid JSON in debug manifest",
+                           ERROR_LOCATION);
+      }
+
+      if (!manifestValue.isObject())
+      {
+         return systemError(boost::system::errc::protocol_error,
+                           "Debug manifest must be a JSON object",
+                           ERROR_LOCATION);
+      }
+
+      *pManifest = manifestValue.getObject();
+      DLOG("Successfully loaded and parsed debug manifest");
+      return Success();
    }
 #endif
 
