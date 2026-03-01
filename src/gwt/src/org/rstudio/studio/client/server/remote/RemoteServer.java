@@ -430,6 +430,7 @@ public class RemoteServer implements Server
    public void disconnect()
    {
       disconnected_ = true;
+      restartInProgress_ = false;
       serverEventListener_.stop();
       eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_DISCONNECT));
    }
@@ -4059,7 +4060,11 @@ public class RemoteServer implements Server
          // disconnect so the ping loop in waitForSessionRestart continues
          // operating normally.
          if (restartInProgress_)
+         {
+            Debug.log("Suppressed INVALID_CLIENT_ID for '" + request.getMethod() + "' during restart");
+            serverEventListener_.stop();
             return true;
+         }
 
          // disconnect
          disconnect();
