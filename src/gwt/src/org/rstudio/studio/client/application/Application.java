@@ -943,7 +943,15 @@ public class Application implements ApplicationEventHandlers
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
       cleanupWorkbench();
-      view_.showApplicationDisconnected();
+
+      // only show the disconnected state in server mode (desktop mode has its
+      // own handling triggered by process exit), and not when we are
+      // deliberately restarting (in-flight RPCs may return INVALID_CLIENT_ID
+      // during the restart window, which triggers this event spuriously)
+      if (!Desktop.isDesktop() && !pApplicationQuit_.get().isSuspendingAndRestarting())
+      {
+         view_.showApplicationDisconnected();
+      }
    }
 
    @Override
