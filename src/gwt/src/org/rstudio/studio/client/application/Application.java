@@ -943,7 +943,13 @@ public class Application implements ApplicationEventHandlers
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
       cleanupWorkbench();
-      view_.showApplicationDisconnected();
+
+      // only show the disconnected state in server mode (desktop mode has its
+      // own handling triggered by process exit)
+      if (!Desktop.isDesktop())
+      {
+         view_.showApplicationDisconnected();
+      }
    }
 
    @Override
