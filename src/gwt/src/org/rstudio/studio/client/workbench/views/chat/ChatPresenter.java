@@ -81,7 +81,7 @@ public class ChatPresenter extends BasePresenter
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
       void showIncompatibleVersion();
-      void showUnsupportedVersionUpgradeRequired( String currentVersion, String newVersion);
+      void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable();

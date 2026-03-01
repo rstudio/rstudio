@@ -3642,7 +3642,9 @@ void showRStudioVersionWarning(
    module_context::enqueClientEvent(event);
 }
 
-// Parsed unsupported version info from manifest
+// Constraints from the manifest's "unsupported" object. Versions below
+// minimumPackageVersion or listed in packageVersions are blocked, as are
+// listed protocol versions.
 struct UnsupportedInfo
 {
    std::string minimumPackageVersion;
@@ -3652,6 +3654,8 @@ struct UnsupportedInfo
 
 // Parse the optional "unsupported" object from the manifest.
 // Returns Success() if the key is absent (backwards compat) or parsed OK.
+// Returns an error if the field is present but malformed in a way that
+// would prevent reliable unsupported-version checks.
 Error getUnsupportedInfo(
     const json::Object& manifest,
     UnsupportedInfo* pInfo)
@@ -3662,20 +3666,37 @@ Error getUnsupportedInfo(
 
    if (!(*it).getValue().isObject())
    {
-      WLOG("Manifest 'unsupported' field is not an object, ignoring");
-      return Success();
+      return systemError(
+         boost::system::errc::invalid_argument,
+         "Manifest 'unsupported' field is not an object",
+         ERROR_LOCATION);
    }
 
    json::Object obj = (*it).getValue().getObject();
 
-   // minimumPackageVersion (optional string)
+   // minimumPackageVersion (optional string, must be valid semver if present)
    json::Object::Iterator minIt = obj.find("minimumPackageVersion");
    if (minIt != obj.end())
    {
-      if ((*minIt).getValue().isString())
-         pInfo->minimumPackageVersion = (*minIt).getValue().getString();
-      else
-         WLOG("Manifest 'unsupported.minimumPackageVersion' is not a string, ignoring");
+      if (!(*minIt).getValue().isString())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not a string",
+            ERROR_LOCATION);
+      }
+
+      std::string minVersion = (*minIt).getValue().getString();
+      SemanticVersion parsed;
+      if (!parsed.parse(minVersion))
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not valid semver: " +
+               minVersion,
+            ERROR_LOCATION);
+      }
+      pInfo->minimumPackageVersion = minVersion;
    }
 
    // packageVersions (optional array of strings)
@@ -3728,27 +3749,36 @@ bool isVersionUnsupported(
    if (version.empty() || version == "0.0.0")
       return false;
 
-   // Check explicit blocklist (string equality handles pre-release suffixes)
+   // Check explicit blocklist (exact string match, so pre-release suffixes
+   // like "1.2.3-beta1" must be listed individually)
    for (const std::string& blocked : info.packageVersions)
    {
       if (version == blocked)
          return true;
    }
 
-   // Check minimum version
+   // Check minimum version (minimumPackageVersion is validated as parseable
+   // semver by getUnsupportedInfo, so parse failure here means the installed
+   // version has an unusual format — fail closed to be safe)
    if (!info.minimumPackageVersion.empty())
    {
       SemanticVersion installed, minimum;
       if (!installed.parse(version))
       {
-         WLOG("Failed to parse installed version for unsupported check: {}", version);
+         WLOG("Failed to parse installed version '{}' for unsupported check, "
+              "treating as unsupported", version);
+         return true;
       }
-      else if (!minimum.parse(info.minimumPackageVersion))
+
+      if (!minimum.parse(info.minimumPackageVersion))
       {
-         WLOG("Failed to parse minimumPackageVersion from manifest: {}",
-              info.minimumPackageVersion);
+         // Should not happen since getUnsupportedInfo validates this
+         WLOG("Failed to parse minimumPackageVersion '{}', "
+              "treating as unsupported", info.minimumPackageVersion);
+         return true;
       }
-      else if (installed < minimum)
+
+      if (installed < minimum)
       {
          return true;
       }
@@ -3962,9 +3992,15 @@ void doUpdateCheck()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
    }
 
    // Download manifest
@@ -3981,20 +4017,22 @@ void doUpdateCheck()
       return;
    }
 
-   // Manifest succeeded — clear the failure flag
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      s_updateState.manifestUnavailable = false;
-   }
-
    // Check for unsupported versions/protocols
    UnsupportedInfo unsupportedInfo;
    error = getUnsupportedInfo(manifest, &unsupportedInfo);
    if (error)
    {
-      WLOG("Failed to parse unsupported info: {}", error.getMessage());
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return;
    }
-   else
+
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
@@ -4006,7 +4044,7 @@ void doUpdateCheck()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop NES agent if version/protocol is unsupported
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
    if (isPositAiUnsupported())
    {
       assistant::stopAgentForUpdate();
@@ -4125,9 +4163,17 @@ Error checkForUpdatesOnStartup()
    error = getUnsupportedInfo(manifest, &unsupportedInfo);
    if (error)
    {
-      WLOG("Failed to parse unsupported info: {}", error.getMessage());
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return Success();
    }
-   else
+
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
@@ -4139,7 +4185,7 @@ Error checkForUpdatesOnStartup()
            s_updateState.unsupportedInstalledVersion);
    }
 
-   // Stop NES agent if version/protocol is unsupported
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
    if (isPositAiUnsupported())
    {
       assistant::stopAgentForUpdate();
@@ -4168,7 +4214,8 @@ Error checkForUpdatesOnStartup()
          s_updateState.updateAvailable = false;
       }
 
-      // For other errors (network, parsing, etc), do silent failure as before
+      // For non-protocol errors (e.g. missing fields), allow the installed
+      // version to continue running if one exists
       return Success();
    }
 

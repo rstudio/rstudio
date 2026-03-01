@@ -176,6 +176,7 @@ private:
    boost::posix_time::ptime time_;
 };
 
+// keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
 enum class AgentNotRunningReason
 {
    Unknown,
@@ -187,7 +188,7 @@ enum class AgentNotRunningReason
    Unsupported,
 };
 
-// keep in sync with constants in AssistantStatusChangedEvent.java
+// keep in sync with AssistantRuntimeStatusChangedEvent.java
 enum class AgentRuntimeStatus
 {
    Unknown,
@@ -597,7 +598,7 @@ bool isAssistantEnabled(const std::string& assistantType = "")
       return false;
    }
 
-   // For Posit AI, check if the installed version or protocol is unsupported
+   // For Posit AI, block if version/protocol is unsupported or manifest unavailable
    if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
    {
       s_agentNotRunningReason = AgentNotRunningReason::Unsupported;

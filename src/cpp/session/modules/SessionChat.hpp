@@ -32,7 +32,8 @@ core::Error initialize();
 // Returns true if session can suspend (i.e., chat backend is NOT busy)
 bool isSuspendable();
 
-// Returns true if the installed Posit AI version or protocol is unsupported
+// Returns true if Posit AI should be blocked (unsupported version,
+// unsupported protocol, or manifest unavailable)
 bool isPositAiUnsupported();
 
 } // end namespace chat
