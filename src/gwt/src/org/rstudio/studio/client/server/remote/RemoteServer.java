@@ -46,6 +46,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
 import org.rstudio.studio.client.application.events.InvalidSessionEvent;
 import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
 import org.rstudio.studio.client.application.events.UnauthorizedEvent;
 import org.rstudio.studio.client.application.model.ActiveSession;
@@ -319,6 +320,16 @@ public class RemoteServer implements Server
       eventBus_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
          userHomePath_ = getUserHomePath(session_.getSessionInfo());
+      });
+
+      // track restart state so we can suppress spurious INVALID_CLIENT_ID
+      // errors from in-flight RPCs during the restart window
+      eventBus_.addHandler(RestartStatusEvent.TYPE, (RestartStatusEvent event) ->
+      {
+         if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+            restartInProgress_ = true;
+         else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+            restartInProgress_ = false;
       });
 
       // create server event listener
@@ -4043,6 +4054,13 @@ public class RemoteServer implements Server
       }
       else if (error.getCode() == RpcError.INVALID_CLIENT_ID)
       {
+         // During a deliberate restart, INVALID_CLIENT_ID is expected because
+         // the old session's client ID is no longer valid. Suppress the
+         // disconnect so the ping loop in waitForSessionRestart continues
+         // operating normally.
+         if (restartInProgress_)
+            return true;
+
          // disconnect
          disconnect();
 
@@ -7083,6 +7101,7 @@ public class RemoteServer implements Server
    private boolean listeningForEvents_;
    private boolean authorized_;
    private boolean disconnected_;
+   private boolean restartInProgress_;
    private boolean sessionRelaunchPending_;
 
    private RemoteServerAuthWatcher authWatcher_;
