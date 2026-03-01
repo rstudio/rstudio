@@ -4335,6 +4335,12 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // notify when hosted in RStudio Server
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      args.push_back("--server-mode");
+   }
+
    // Add resume-conversation flag if resuming after suspend/restart
    if (resumeConversation)
    {
