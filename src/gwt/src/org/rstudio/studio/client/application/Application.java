@@ -942,13 +942,19 @@ public class Application implements ApplicationEventHandlers
    @Override
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
+      // During a deliberate restart, in-flight RPCs may return
+      // INVALID_CLIENT_ID which triggers this event spuriously.
+      // Early-return to avoid cleanupWorkbench() calling disconnect(),
+      // which would poison the RPC layer and break the ping loop in
+      // waitForSessionRestart.
+      if (pApplicationQuit_.get().isSuspendingAndRestarting())
+         return;
+
       cleanupWorkbench();
 
       // only show the disconnected state in server mode (desktop mode has its
-      // own handling triggered by process exit), and not when we are
-      // deliberately restarting (in-flight RPCs may return INVALID_CLIENT_ID
-      // during the restart window, which triggers this event spuriously)
-      if (!Desktop.isDesktop() && !pApplicationQuit_.get().isSuspendingAndRestarting())
+      // own handling triggered by process exit)
+      if (!Desktop.isDesktop())
       {
          view_.showApplicationDisconnected();
       }
