@@ -3055,6 +3055,7 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
       filesToIgnore.push_back(".Rhistory");
       filesToIgnore.push_back(".RData");
       filesToIgnore.push_back(".Ruserdata");
+      filesToIgnore.push_back(".positai");
 
       // if this is a package dir with a src directory then
       // also ignore native code build artifacts
@@ -3097,6 +3098,9 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
       if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.Rproj\.user/?$)")))
          filesToIgnore.push_back(".Rproj.user");
+
+      if (!regex_utils::search(strIgnore, boost::regex(R"(^/?\.positai/?$)")))
+         filesToIgnore.push_back(".positai");
 
       if (session::options().packageOutputInPackageFolder())
       {
