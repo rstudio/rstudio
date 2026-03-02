@@ -22,6 +22,8 @@
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <core/http/URL.hpp>
+
 #include "http/SessionTcpIpHttpConnectionListener.hpp"
 
 #include "websocketpp/transport/asio/base.hpp"
@@ -40,6 +42,16 @@ namespace {
 // rapid reseeding via srand(time) causes same "random" sequence to be
 // returned by rand; only an issue for unit tests, really
 bool s_didSeedRand = false;
+
+bool isLoopbackHost(const std::string& host)
+{
+   if (host == "localhost")
+      return true;
+
+   boost::system::error_code ec;
+   auto addr = boost::asio::ip::make_address(host, ec);
+   return !ec && addr.is_loopback();
+}
 
 } // anonymous namespace
 
@@ -126,6 +138,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
                boost::bind(&ConsoleProcessSocket::onClose, this, &*pwsServer_, _1));
       pwsServer_->set_open_handler(
                boost::bind(&ConsoleProcessSocket::onOpen, this, &*pwsServer_, _1));
+      pwsServer_->set_validate_handler(
+               boost::bind(&ConsoleProcessSocket::onValidate, this, &*pwsServer_, _1));
       pwsServer_->set_fail_handler(
             boost::bind(&ConsoleProcessSocket::onFail, this, &*pwsServer_, _1));
 
@@ -370,6 +384,40 @@ void ConsoleProcessSocket::onOpen(terminalServer* s, websocketpp::connection_hdl
    // notify the specific connection, if available
    if (details.connectionCallbacks_.onConnectionOpened)
       details.connectionCallbacks_.onConnectionOpened();
+}
+
+bool ConsoleProcessSocket::onValidate(terminalServer* s,
+                                      websocketpp::connection_hdl hdl)
+{
+   // reject connections with malformed URLs
+   std::string handle = getHandle(s, hdl);
+   if (handle.empty())
+      return false;
+
+   // reject connections for terminal handles not registered via listen()
+   ConsoleProcessSocketConnectionDetails details = connections_.get(handle);
+   if (details.handle_.empty())
+      return false;
+
+   // in desktop mode, check the Origin header to prevent cross-site
+   // websocket hijacking (CSWSH); reject if the origin is not loopback
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      terminalServer::connection_ptr con = s->get_con_from_hdl(hdl);
+      std::string origin = con->get_request_header("Origin");
+      if (!origin.empty())
+      {
+         std::string host = http::URL(origin).hostname();
+         if (!isLoopbackHost(host))
+         {
+            LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                                "with non-loopback origin: " + origin);
+            return false;
+         }
+      }
+   }
+
+   return true;
 }
 
 void ConsoleProcessSocket::onHttp(terminalServer* s, websocketpp::connection_hdl hdl)
