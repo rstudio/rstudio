@@ -146,20 +146,20 @@ Error ConsoleProcessSocket::ensureServerRunning()
             }
             else
             {
-               // TODO (gary) can we just try ipv6 without sniffing, then do
-               // ipv4 if ipv6 fails?
+               // bind to loopback only -- the terminal websocket should not
+               // be reachable from the network; in server mode the rserver
+               // proxy handles external connections
 #if !defined(_WIN32) && !defined(__APPLE__)
                if (core::FilePath("/proc/net/if_inet6").exists())
                {
-                  // listen will fail without ipv6 support on the machine so we
-                  // only use it for machines with a ipv6 stack
-                  pwsServer_->listen(boost::asio::ip::tcp::v6(), port);
+                  pwsServer_->listen(boost::asio::ip::address_v6::loopback(),
+                                     static_cast<uint16_t>(port));
                }
                else
 #endif
                {
-                  // no ipv6 support, fall back to ipv4
-                  pwsServer_->listen(boost::asio::ip::tcp::v4(), static_cast<uint16_t>(port));
+                  pwsServer_->listen(boost::asio::ip::address_v4::loopback(),
+                                     static_cast<uint16_t>(port));
                }
             }
 
