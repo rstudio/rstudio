@@ -85,6 +85,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
 
    // build section overrides
    std::vector<LevelValues> levels;
+   std::vector<LevelCompoundValues> compoundLevels;
    for (const ptree::value_type& child : profileTree)
    {
       boost::optional<Level> matchingLevel;
@@ -109,10 +110,24 @@ Error ConfigProfile::parseString(const std::string& profileStr)
       }
 
       std::map<std::string, std::string> values;
+      CompoundMap compoundValues;
       for (const ptree::value_type& val : child.second)
       {
          // check to see if the parameter within the section has been registered
-         const std::string& paramName = val.first;
+         std::string paramName = val.first;
+         std::string compoundKey;
+         std::size_t slashPos = paramName.find('/');
+         if (slashPos != std::string::npos)
+         {
+            compoundKey = paramName.substr(slashPos + 1);
+            if (compoundKey.empty())
+            {
+               return systemError(boost::system::errc::protocol_error,
+                     "Invalid key " + paramName + " specified",
+                     ERROR_LOCATION);
+            }
+            paramName = paramName.substr(0, slashPos);
+         }
 
          DefaultParamValuesMap::const_iterator defaultIter = defaultValues_.find(paramName);
          if (defaultIter == defaultValues_.end())
@@ -129,11 +144,23 @@ Error ConfigProfile::parseString(const std::string& profileStr)
          if (error)
             return error;
 
-         values[paramName] = paramValue;
+         if (compoundKey.empty())
+         {
+            values[paramName] = paramValue;
+         }
+         else
+         {
+            auto iter = compoundValues.find(paramName);
+            if (iter == compoundValues.end())
+               compoundValues[paramName] = ValuesMap{{ compoundKey, paramValue }};
+            else
+               iter->second[compoundKey] = paramValue;
+         }
       }
 
       std::string levelValue = child.first.substr(matchingLevel.get().second.size());
       levels.push_back({{matchingLevel.get().first, levelValue}, values});
+      compoundLevels.push_back({{matchingLevel.get().first, levelValue}, compoundValues});
    }
 
    // stable sort the levels in ascending level number
@@ -147,6 +174,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
    // this assures that we can safely call this method multiple times, preserving the last
    // good configuration in case we error out above due to invalid configuration
    levels_ = levels;
+   compoundLevels_ = compoundLevels;
 
    return Success();
 }
