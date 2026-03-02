@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
+import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -109,6 +111,12 @@ public class AceThemes
       {
          document.getBody().appendChild(currentStyleEl);
       }
+
+      // Register a load handler so that theme colors are recomputed
+      // once the CSS has actually been loaded and applied. This avoids
+      // a race condition where theme colors are sampled (via animation
+      // frames) before the stylesheet has finished loading.
+      addCssLoadHandler(currentStyleEl);
       
       if (theme.isDark())
       {
@@ -341,6 +349,35 @@ public class AceThemes
       TextResource fontsCss();
    }
    
+   private native void addCssLoadHandler(LinkElement link) /*-{
+      var self = this;
+      link.onload = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onThemeCssLoaded()();
+      });
+      link.onerror = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onThemeCssError()();
+      });
+   }-*/;
+
+   private void onThemeCssLoaded()
+   {
+      // Fire immediately -- getComputedStyle() forces synchronous style
+      // recalculation, so this should pick up the new stylesheet.
+      events_.fireEvent(new ComputeThemeColorsEvent());
+
+      // Fire again after one animation frame as a safety net, in case
+      // the browser hasn't fully applied styles at onload time.
+      AnimationScheduler.get().requestAnimationFrame(ts ->
+      {
+         events_.fireEvent(new ComputeThemeColorsEvent());
+      });
+   }
+
+   private void onThemeCssError()
+   {
+      Debug.logWarning("Failed to load Ace theme CSS");
+   }
+
    private AceTheme currentTheme_;
 
    private ThemeServerOperations themeServerOperations_;

@@ -30,7 +30,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
-import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -152,21 +151,6 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    public void onThemeChanged(ThemeChangedEvent event)
    {
       RStudioThemes.initializeThemes(userPrefs_.get(), userState_.get(), Document.get(), root_);
-
-      // Compute theme colors over multiple animation frames to ensure that
-      // all styles have been properly applied.
-      AnimationScheduler.get().requestAnimationFrame(t1 ->
-      {
-         onComputeThemeColors();
-         AnimationScheduler.get().requestAnimationFrame(t2 ->
-         {
-            onComputeThemeColors();
-            AnimationScheduler.get().requestAnimationFrame(t3 ->
-            {
-               onComputeThemeColors();
-            });
-         });
-      });
    }
    
    private final Provider<UserPrefs> userPrefs_;
