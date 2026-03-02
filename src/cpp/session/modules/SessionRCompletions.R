@@ -1079,8 +1079,231 @@ assign(x = ".rs.acCompletionTypes",
    
    result <- .rs.appendCompletions(result, ggplotCompletions)
    
+   # If the function has `...` in its formals and the package author used
+   # @inheritDotParams, expand those documented dot-arguments into named
+   # completions, as if they were native arguments of the wrapper.
+   result <- .rs.appendCompletions(
+      result,
+      .rs.getCompletionsInheritDotParams(token, string, object, matchedCall)
+   )
+   
    result
    
+})
+
+# Retrieve completions arising from @inheritDotParams documentation.
+#
+# When a function passes `...` to another function and has been documented
+# with roxygen2's @inheritDotParams tag, the compiled help database contains
+# a structured \arguments entry listing each forwarded argument name inside a
+# \describe block. This function parses that Rd structure and returns
+# completions for those argument names.
+#
+# Local (explicitly declared) formals always take precedence: any name already
+# present in the wrapper's own formals is excluded from the returned set,
+# matching the behaviour of @inheritParams. Only the first `\item{...}{...}`
+# whose name is `...` or `\dots` is considered (expansion is shallow).
+.rs.addFunction("getCompletionsInheritDotParams", function(token,
+                                                            string,
+                                                            object,
+                                                            matchedCall)
+{
+   # Only relevant when `...` is in the wrapper's own formals
+   ownFormals <- tryCatch(names(formals(object)), error = function(e) character())
+   if (!"..." %in% ownFormals)
+      return(.rs.emptyCompletions())
+   
+   # Derive the plain function name and (optionally) package from `string`,
+   # e.g. "pkg::foo" -> pkg = "pkg", fn = "foo"; "foo" -> pkg = NULL, fn = "foo"
+   splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
+   fnName  <- splat[[length(splat)]]
+   pkgName <- if (length(splat) == 2) splat[[1]] else NULL
+   
+   # Parse the \arguments section of the compiled help file to extract
+   # argument names documented via @inheritDotParams.
+   parsed <- tryCatch(
+      .rs.parseInheritDotParamsFromHelp(fnName, pkgName),
+      error = function(e) NULL
+   )
+
+   if (is.null(parsed) || !length(parsed$argNames))
+      return(.rs.emptyCompletions())
+
+   inheritedArgNames <- parsed$argNames
+
+   # Use the target function name as the provenance hint shown in the
+   # completion popup. Prefix with "pkg::" only when the user typed "pkg::fn("
+   # (i.e. pkgName is non-NULL), mirroring how the direct-arg hints are shown.
+   hint <- if (nzchar(parsed$targetName))
+      if (!is.null(pkgName)) paste0(pkgName, "::", parsed$targetName) else parsed$targetName
+   else
+      .rs.nullCoalesce(pkgName, string)
+
+   # Exclude any args already declared in the wrapper's own formals (local
+   # args take precedence), and exclude `...` itself.
+   inheritedArgNames <- setdiff(inheritedArgNames, c("...", ownFormals))
+
+   # Exclude args already explicitly provided in the current call
+   usedNames <- names(as.list(matchedCall)[-1])
+   inheritedArgNames <- setdiff(inheritedArgNames, usedNames)
+
+   # Filter to those matching the current token
+   inheritedArgNames <- .rs.selectFuzzyMatches(inheritedArgNames, token)
+
+   if (!length(inheritedArgNames))
+      return(.rs.emptyCompletions())
+
+   .rs.makeCompletions(
+      token    = token,
+      results  = paste(inheritedArgNames, "= "),
+      packages = rep(hint, length(inheritedArgNames)),
+      type     = .rs.acCompletionTypes$ARGUMENT,
+      excludeOtherCompletions = FALSE,
+      excludeOtherArgumentCompletions = TRUE,
+      fguess   = string,
+      orderStartsWithAlnumFirst = FALSE
+   )
+})
+
+# Walk a parsed Rd object and extract argument names documented via
+# @inheritDotParams. This is the pure Rd-logic layer, separated from help
+# database lookup so it can be called directly in tests with a fixture Rd.
+#
+# Returns a character vector of argument names, or NULL if the pattern is
+# not found.
+.rs.addFunction("parseInheritDotParamsFromRd", function(rd)
+{
+   rdTag <- function(x) attr(x, "Rd_tag")
+
+   argumentsNode <- NULL
+   for (node in rd)
+   {
+      if (identical(rdTag(node), "\\arguments"))
+      {
+         argumentsNode <- node
+         break
+      }
+   }
+
+   if (is.null(argumentsNode))
+      return(NULL)
+
+   inheritDotParamsText <- "Arguments passed on to"
+   for (itemNode in argumentsNode)
+   {
+      if (!identical(rdTag(itemNode), "\\item"))
+         next
+
+      if (length(itemNode) < 2L)
+         next
+
+      nameNode <- itemNode[[1L]]
+      nameTxt <- trimws(paste(unlist(nameNode), collapse = ""))
+
+      if (!(nameTxt %in% c("...", "\\dots", "\\ldots")))
+         next
+
+      descNode <- itemNode[[2L]]
+      nCheck <- min(length(descNode), 6L)
+      for (i in seq_len(nCheck))
+      {
+         child <- descNode[[i]]
+         if (identical(rdTag(child), "TEXT") &&
+             startsWith(trimws(paste(unlist(child), collapse = ""), which = "left"), inheritDotParamsText))
+         {
+            # The \code node immediately following the sentinel TEXT contains
+            # the target function name, e.g. \code{\link[=discrete_scale]{discrete_scale}}
+            targetName <- ""
+            if (i < length(descNode))
+            {
+               nextChild <- descNode[[i + 1L]]
+               if (identical(rdTag(nextChild), "\\code"))
+                  targetName <- trimws(paste(unlist(nextChild), collapse = ""))
+            }
+            argNames <- .rs.extractDescribeItemNames(descNode)
+            return(list(argNames = argNames, targetName = targetName))
+         }
+      }
+   }
+
+   NULL
+})
+
+# Fetch the help database entry for `fnName` (optionally in `pkgName`),
+# parse it into an Rd object, and delegate to parseInheritDotParamsFromRd.
+.rs.addFunction("parseInheritDotParamsFromHelp", function(fnName, pkgName)
+{
+   helpResult <- tryCatch(
+      eval(.rs.makeHelpCall(fnName, pkgName)),
+      error = function(e) NULL
+   )
+
+   if (is.null(helpResult) || length(helpResult) == 0L)
+      return(NULL)
+
+   rd <- tryCatch(
+      get(".getHelpFile", envir = asNamespace("utils"), mode = "function")(helpResult),
+      error = function(e) NULL
+   )
+   if (is.null(rd))
+      return(NULL)
+
+   .rs.parseInheritDotParamsFromRd(rd)
+})
+
+# Recursively search an Rd subtree for a \describe node and extract the
+# plain-text names of its \item children.
+#
+# @inheritDotParams produces items like:
+#   \item{\code{argname}}{description}
+#
+# We look for a \code Rd_tag child within each item's name subtree rather than
+# pattern-matching flattened text, since Rd_tag lookup is a direct attribute
+# check and is robust to leading whitespace TEXT nodes.
+.rs.addFunction("extractDescribeItemNames", function(node)
+{
+   rdTag <- function(x) attr(x, "Rd_tag")
+   
+   # If this node IS a \describe, extract item names directly
+   if (identical(rdTag(node), "\\describe"))
+   {
+      names <- character()
+      for (item in node)
+      {
+         if (!identical(rdTag(item), "\\item"))
+            next
+         if (length(item) < 1L)
+            next
+         
+         # The name subtree is a BLOCK. @inheritDotParams always generates
+         # \item{\code{argname}}{...} with \code as the sole direct child, so
+         # we assert [[1L]] is a \code node. If for any reason it isn't, we get
+         # an empty nameTxt and silently skip the entry — no spurious completions.
+         nameSubtree <- item[[1L]]
+         codeNode <- nameSubtree[[1L]]
+         nameTxt <- if (identical(rdTag(codeNode), "\\code"))
+            trimws(paste(unlist(codeNode), collapse = ""))
+         else
+            ""
+         
+         if (nzchar(nameTxt))
+            names <- c(names, nameTxt)
+      }
+      return(names)
+   }
+   
+   # Otherwise recurse into any list children
+   if (is.list(node))
+   {
+      for (child in node)
+      {
+         found <- .rs.extractDescribeItemNames(child)
+         if (length(found) > 0L)
+            return(found)
+      }
+   }
+   
+   character()
 })
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
