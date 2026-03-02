@@ -3403,8 +3403,10 @@ Error downloadManifest(json::Object* pManifest)
    }
 #endif
 
-   // Get download URI via redirector
-   std::string downloadUri = "https://www.rstudio.org/links/posit-assistant-manifest";
+   // Get download URI via redirector; use test manifest when opted in
+   std::string downloadUri = options().positAssistantTestManifest()
+      ? "https://www.rstudio.org/links/posit-assistant-manifest-test"
+      : "https://www.rstudio.org/links/posit-assistant-manifest";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
