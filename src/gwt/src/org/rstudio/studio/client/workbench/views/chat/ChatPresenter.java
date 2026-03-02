@@ -17,8 +17,8 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
-import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -81,6 +81,10 @@ public class ChatPresenter extends BasePresenter
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
       void showIncompatibleVersion();
+      void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
+      void showUnsupportedVersionNoUpdate(String currentVersion);
+      void showUnsupportedProtocol();
+      void showManifestUnavailable();
       void updateCachedUrl(String url);
    }
 
@@ -350,6 +354,36 @@ public class ChatPresenter extends BasePresenter
          {
             initializing_ = false;
             display_.showIncompatibleVersion();
+         }
+
+         @Override
+         public void onUnsupportedVersionUpgradeRequired(
+             String currentVersion, String newVersion)
+         {
+            initializing_ = false;
+            display_.showUnsupportedVersionUpgradeRequired(
+                currentVersion, newVersion);
+         }
+
+         @Override
+         public void onUnsupportedVersionNoUpdate(String currentVersion)
+         {
+            initializing_ = false;
+            display_.showUnsupportedVersionNoUpdate(currentVersion);
+         }
+
+         @Override
+         public void onUnsupportedProtocol()
+         {
+            initializing_ = false;
+            display_.showUnsupportedProtocol();
+         }
+
+         @Override
+         public void onManifestUnavailable()
+         {
+            initializing_ = false;
+            display_.showManifestUnavailable();
          }
 
          @Override
