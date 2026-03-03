@@ -100,34 +100,37 @@ public class AceThemes
       // In server mode, augment the theme with a font if we have one
       augmentThemeWithFont(document);
 
+      // Clear any load handler on the previous element before registering
+      // a new one, so there is never more than one active handler.
+      Element oldStyleEl = document.getElementById(linkId);
+      if (null != oldStyleEl)
+      {
+         clearCssLoadHandler(LinkElement.as(oldStyleEl));
+      }
+
       // Register a load handler so that theme colors are recomputed
-      // once the CSS has actually been loaded and applied. This avoids
-      // a race condition where theme colors were computed before the
-      // stylesheet had finished loading (the prior approach scheduled
-      // computation on animation frames, which could fire too early).
-      //
-      // Only attach the handler for the main document; iframes and
-      // satellite windows also call applyTheme(), but we only need
-      // one recomputation per theme change.
+      // once the CSS has been loaded and applied. Only for the main
+      // document; iframes and satellite windows also call applyTheme(),
+      // but we only need one recomputation per theme change.
       //
       // The handler is registered before DOM insertion so that we
       // don't miss a synchronous onload for cached stylesheets.
       if (Document.get() == document)
       {
-         addCssLoadHandler(currentStyleEl);
+         setCssLoadHandlers(currentStyleEl,
+            () -> onThemeCssLoaded(),
+            () -> onThemeCssError());
       }
 
-      Element oldStyleEl = document.getElementById(linkId);
       if (null != oldStyleEl)
       {
-         clearCssLoadHandler(LinkElement.as(oldStyleEl));
          document.getBody().replaceChild(currentStyleEl, oldStyleEl);
       }
       else
       {
          document.getBody().appendChild(currentStyleEl);
       }
-      
+
       if (theme.isDark())
       {
          document.getBody().removeClassName("editor_light");
@@ -138,10 +141,10 @@ public class AceThemes
          document.getBody().removeClassName("editor_dark");
          document.getBody().addClassName("editor_light");
       }
-      
+
       // NOTE: EditorThemeChangedEvent and desktop color synchronization
-      // are fired from onThemeCssLoaded() once the stylesheet has
-      // actually been loaded, rather than on a fixed timer delay.
+      // are fired from onThemeCssLoaded() once the stylesheet has been
+      // loaded and applied.
    }
 
    private void applyTheme(final AceTheme theme)
@@ -322,7 +325,9 @@ public class AceThemes
       // Only for the main document, matching the theme CSS pattern.
       if (Document.get() == document)
       {
-         addFontCssLoadHandler(fontEl);
+         setCssLoadHandlers(fontEl,
+            () -> onFontCssLoaded(),
+            () -> onFontCssError());
       }
 
       document.getBody().appendChild(fontEl);
@@ -339,13 +344,12 @@ public class AceThemes
       TextResource fontsCss();
    }
    
-   private native void addCssLoadHandler(LinkElement link) /*-{
-      var self = this;
+   private native void setCssLoadHandlers(LinkElement link, Runnable onLoad, Runnable onError) /*-{
       link.onload = $entry(function() {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onThemeCssLoaded()();
+         onLoad.@java.lang.Runnable::run()();
       });
       link.onerror = $entry(function() {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onThemeCssError()();
+         onError.@java.lang.Runnable::run()();
       });
    }-*/;
 
@@ -356,19 +360,17 @@ public class AceThemes
 
    private void onThemeCssLoaded()
    {
-      // Notify listeners that the editor theme CSS has been applied.
-      if (currentTheme_ != null)
+      // Synchronize the effective background color with the desktop frame.
+      try
       {
-         events_.fireEvent(new EditorThemeChangedEvent(currentTheme_));
+         syncDesktopThemeColors();
+      }
+      catch (Exception e)
+      {
+         Debug.logWarning("Failed to sync desktop theme colors: " + e.getMessage());
       }
 
-      // Synchronize the effective background color with the desktop frame.
-      syncDesktopThemeColors();
-
-      // Recompute theme colors now that the stylesheet is loaded.
-      // getComputedStyle() forces synchronous style recalculation,
-      // so this should pick up the new stylesheet.
-      events_.fireEvent(new ComputeThemeColorsEvent());
+      fireThemeEvents();
    }
 
    private void syncDesktopThemeColors()
@@ -416,6 +418,11 @@ public class AceThemes
       // Fire events even on error so that downstream consumers
       // (iframe theme variables, client state, desktop frame, etc.)
       // get default/fallback values rather than remaining permanently stale.
+      fireThemeEvents();
+   }
+
+   private void fireThemeEvents()
+   {
       if (currentTheme_ != null)
       {
          events_.fireEvent(new EditorThemeChangedEvent(currentTheme_));
@@ -423,20 +430,14 @@ public class AceThemes
       events_.fireEvent(new ComputeThemeColorsEvent());
    }
 
-   private native void addFontCssLoadHandler(LinkElement link) /*-{
-      var self = this;
-      link.onload = $entry(function() {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onFontCssLoaded()();
-      });
-      link.onerror = $entry(function() {
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onFontCssError()();
-      });
-   }-*/;
-
    private void onFontCssLoaded()
    {
-      // Nothing to do here -- font CSS doesn't affect theme colors,
-      // and the theme CSS load handler already recomputes colors.
+      // Nothing to do -- font CSS doesn't affect theme colors, and the
+      // theme CSS load handler already fires the necessary events.
+      //
+      // The error handler below fires ComputeThemeColorsEvent because a
+      // font load failure may affect sampled style values, warranting a
+      // recomputation as a precaution.
    }
 
    private void onFontCssError()
