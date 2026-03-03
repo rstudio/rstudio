@@ -665,6 +665,7 @@ public class ChatPane
       html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
       html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
       html.append("  border-radius: 4px;");
+      html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append(".chatIframeButton:hover {");
       html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
@@ -692,6 +693,9 @@ public class ChatPane
       html.append("<button id='install-btn' class='chatIframeButton'>");
       html.append(constants_.chatInstallButton());
       html.append("</button>");
+      html.append("<p class='detail'>");
+      html.append(constants_.chatInstallTermsOfUse());
+      html.append("</p>");
       html.append("</div>");
       html.append("<script>");
       html.append("document.getElementById('install-btn').addEventListener('click', function() {");
