@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
-import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -48,7 +47,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -141,43 +139,9 @@ public class AceThemes
          document.getBody().addClassName("editor_light");
       }
       
-      // Deferred so that the browser can render the styles.
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            events_.fireEvent(new EditorThemeChangedEvent(theme));
-            
-            // synchronize the effective background color with the desktop
-            if (Desktop.hasDesktopFrame())
-            {
-               // find 'rstudio_container' element (note that this may not exist
-               // in some satellite windows; e.g. the Git window)
-               Element el = Document.get().getElementById("rstudio_container");
-               if (el == null)
-                  return;
-               
-               Style style = DomUtils.getComputedStyles(el);
-               String color = style.getBackgroundColor();
-               RGBColor parsed = RGBColor.fromCss(color);
-               
-               JsArrayInteger colors = JsArrayInteger.createArray(3).cast();
-               colors.set(0, parsed.red());
-               colors.set(1, parsed.green());
-               colors.set(2, parsed.blue());
-               Desktop.getFrame().setBackgroundColor(colors);
-               Desktop.getFrame().syncToEditorTheme(theme.isDark());
-
-               el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
-               style = DomUtils.getComputedStyles(el);
-               color = style.getBackgroundColor();
-               parsed = RGBColor.fromCss(color);
-
-               Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
-            }
-         }
-      }.schedule(100);
+      // NOTE: EditorThemeChangedEvent and desktop color synchronization
+      // are fired from onThemeCssLoaded() once the stylesheet has
+      // actually been loaded, rather than on a fixed timer delay.
    }
 
    private void applyTheme(final AceTheme theme)
@@ -392,18 +356,52 @@ public class AceThemes
 
    private void onThemeCssLoaded()
    {
-      // Fire immediately -- getComputedStyle() forces synchronous style
-      // recalculation, so this should pick up the new stylesheet.
-      events_.fireEvent(new ComputeThemeColorsEvent());
-
-      // Fire again after one animation frame as a safety net: onload
-      // guarantees the stylesheet is parsed, but layout-dependent
-      // computed styles may not be fully resolved until a rendering
-      // cycle completes.
-      AnimationScheduler.get().requestAnimationFrame(ts ->
+      // Notify listeners that the editor theme CSS has been applied.
+      if (currentTheme_ != null)
       {
-         events_.fireEvent(new ComputeThemeColorsEvent());
-      });
+         events_.fireEvent(new EditorThemeChangedEvent(currentTheme_));
+      }
+
+      // Synchronize the effective background color with the desktop frame.
+      syncDesktopThemeColors();
+
+      // Recompute theme colors now that the stylesheet is loaded.
+      // getComputedStyle() forces synchronous style recalculation,
+      // so this should pick up the new stylesheet.
+      events_.fireEvent(new ComputeThemeColorsEvent());
+   }
+
+   private void syncDesktopThemeColors()
+   {
+      if (!Desktop.hasDesktopFrame())
+         return;
+
+      if (currentTheme_ == null)
+         return;
+
+      // find 'rstudio_container' element (note that this may not exist
+      // in some satellite windows; e.g. the Git window)
+      Element el = Document.get().getElementById("rstudio_container");
+      if (el == null)
+         return;
+
+      Style style = DomUtils.getComputedStyles(el);
+      String color = style.getBackgroundColor();
+      RGBColor parsed = RGBColor.fromCss(color);
+
+      JsArrayInteger colors = JsArrayInteger.createArray(3).cast();
+      colors.set(0, parsed.red());
+      colors.set(1, parsed.green());
+      colors.set(2, parsed.blue());
+      Desktop.getFrame().setBackgroundColor(colors);
+      Desktop.getFrame().syncToEditorTheme(currentTheme_.isDark());
+
+      el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
+      style = DomUtils.getComputedStyles(el);
+      color = style.getBackgroundColor();
+      parsed = RGBColor.fromCss(color);
+
+      Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
    }
 
    private void onThemeCssError()
@@ -411,9 +409,13 @@ public class AceThemes
       Debug.logWarning("Failed to load Ace theme CSS: " +
          (currentTheme_ != null ? currentTheme_.getUrl() : "<unknown>"));
 
-      // Fire the event even on error so that downstream consumers
-      // (iframe theme variables, client state, etc.) get default/fallback
-      // colors rather than remaining permanently stale.
+      // Fire events even on error so that downstream consumers
+      // (iframe theme variables, client state, desktop frame, etc.)
+      // get default/fallback values rather than remaining permanently stale.
+      if (currentTheme_ != null)
+      {
+         events_.fireEvent(new EditorThemeChangedEvent(currentTheme_));
+      }
       events_.fireEvent(new ComputeThemeColorsEvent());
    }
 
