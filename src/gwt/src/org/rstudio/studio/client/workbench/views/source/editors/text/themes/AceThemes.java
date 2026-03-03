@@ -101,22 +101,34 @@ public class AceThemes
       
       // In server mode, augment the theme with a font if we have one
       augmentThemeWithFont(document);
-   
+
+      // Register a load handler so that theme colors are recomputed
+      // once the CSS has actually been loaded and applied. This avoids
+      // a race condition where theme colors were computed before the
+      // stylesheet had finished loading (the prior approach scheduled
+      // computation on animation frames, which could fire too early).
+      //
+      // Only attach the handler for the main document; iframes and
+      // satellite windows also call applyTheme(), but we only need
+      // one recomputation per theme change.
+      //
+      // The handler is registered before DOM insertion so that we
+      // don't miss a synchronous onload for cached stylesheets.
+      if (Document.get() == document)
+      {
+         addCssLoadHandler(currentStyleEl);
+      }
+
       Element oldStyleEl = document.getElementById(linkId);
       if (null != oldStyleEl)
       {
-        document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+         clearCssLoadHandler(LinkElement.as(oldStyleEl));
+         document.getBody().replaceChild(currentStyleEl, oldStyleEl);
       }
       else
       {
          document.getBody().appendChild(currentStyleEl);
       }
-
-      // Register a load handler so that theme colors are recomputed
-      // once the CSS has actually been loaded and applied. This avoids
-      // a race condition where theme colors are sampled (via animation
-      // frames) before the stylesheet has finished loading.
-      addCssLoadHandler(currentStyleEl);
       
       if (theme.isDark())
       {
@@ -359,14 +371,21 @@ public class AceThemes
       });
    }-*/;
 
+   private native void clearCssLoadHandler(LinkElement link) /*-{
+      link.onload = null;
+      link.onerror = null;
+   }-*/;
+
    private void onThemeCssLoaded()
    {
       // Fire immediately -- getComputedStyle() forces synchronous style
       // recalculation, so this should pick up the new stylesheet.
       events_.fireEvent(new ComputeThemeColorsEvent());
 
-      // Fire again after one animation frame as a safety net, in case
-      // the browser hasn't fully applied styles at onload time.
+      // Fire again after one animation frame as a safety net: onload
+      // guarantees the stylesheet is parsed, but layout-dependent
+      // computed styles may not be fully resolved until a rendering
+      // cycle completes.
       AnimationScheduler.get().requestAnimationFrame(ts ->
       {
          events_.fireEvent(new ComputeThemeColorsEvent());
@@ -375,7 +394,13 @@ public class AceThemes
 
    private void onThemeCssError()
    {
-      Debug.logWarning("Failed to load Ace theme CSS");
+      Debug.logWarning("Failed to load Ace theme CSS: " +
+         (currentTheme_ != null ? currentTheme_.getUrl() : "<unknown>"));
+
+      // Fire the event even on error so that downstream consumers
+      // (iframe theme variables, client state, etc.) get default/fallback
+      // colors rather than remaining permanently stale.
+      events_.fireEvent(new ComputeThemeColorsEvent());
    }
 
    private AceTheme currentTheme_;
