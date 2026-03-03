@@ -164,7 +164,9 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       // failure, Electron protocol interception), recompute theme
       // colors after a timeout to avoid permanently stale values.
       if (themeColorsFallback_ != null)
+      {
          themeColorsFallback_.cancel();
+      }
 
       themeColorsFallback_ = new Timer()
       {
