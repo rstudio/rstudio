@@ -461,8 +461,11 @@ public class TextEditingTargetAssistantHelper
     */
    private void showEditSuggestionImpl(AssistantCompletion completion, boolean autoshow, boolean notifyServer)
    {
+      if (dismissed_)
+         return;
+
       resetSuggestion();
-      
+
       // The completion data gets modified when doing partial (word-by-word)
       // completions, so we need to use a copy and preserve the original
       // (which we need to send back to the server as-is in some language-server methods).
@@ -1267,6 +1270,9 @@ public class TextEditingTargetAssistantHelper
          @Override
          public void run()
          {
+            if (dismissed_)
+               return;
+
             if (!isAssistantAvailable())
                return;
 
@@ -1887,6 +1893,9 @@ public class TextEditingTargetAssistantHelper
 
    private void requestNextEditSuggestions()
    {
+      if (dismissed_)
+         return;
+
       if (!isAssistantAvailable())
          return;
 
@@ -2504,6 +2513,8 @@ public class TextEditingTargetAssistantHelper
 
    public void onDismiss()
    {
+      dismissed_ = true;
+
       // Cancel all timers and reset suggestion state
       suspendTimer_.cancel();
       nesTimer_.cancel();
@@ -2511,6 +2522,13 @@ public class TextEditingTargetAssistantHelper
 
       // Clear diff view state
       clearDiffState();
+
+      // Invalidate any in-flight async RPC requests so their callbacks
+      // are rejected when they arrive. Without this, a stale completion
+      // response can reschedule nesTimer_ and render a gutter icon on a
+      // dismissed editor. (https://github.com/rstudio/rstudio/issues/17108)
+      requestId_ += 1;
+      nesId_ += 1;
 
       // Remove handler registrations
       registrations_.removeHandler();
@@ -2526,6 +2544,7 @@ public class TextEditingTargetAssistantHelper
    private final Timer nesTimer_;
    private final Timer pendingHideTimer_;
    private int nesId_ = 0;
+   private boolean dismissed_ = false;
    private boolean completionTriggeredByCommand_ = false;
    private final HandlerRegistrations registrations_;
    private final HandlerRegistration commandsRegistration_;
