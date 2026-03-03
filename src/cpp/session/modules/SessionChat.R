@@ -619,7 +619,12 @@
          )
       }, add = TRUE)
       .rs.chat.injectBindings()
-      
+
+      # Suppress interactive prompts (e.g. "Hit <Return> to see next plot:")
+      # while AI-generated code is running
+      old <- options(rstudio.chatEvaluating = TRUE)
+      on.exit(options(old), add = TRUE)
+
       # Evaluate the provided code
       withVisible(eval(expr, envir = envir))
 

@@ -28,6 +28,7 @@
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
@@ -106,11 +107,18 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 }
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
-{   
+{
    TRACE_GD_CALL;
 
+   // suppress the new frame prompt when the AI assistant is running code,
+   // so that execution isn't blocked waiting for user input
+   bool chatEvaluating = r::options::getOption<bool>(
+            "rstudio.chatEvaluating", false, false);
+   if (chatEvaluating)
+      return TRUE;
+
    // returning false causes the default implementation (printing a prompt
-   // of "Hit <Return> to see next plot:" to the console) to be used. this 
+   // of "Hit <Return> to see next plot:" to the console) to be used. this
    // seems ideal compared to any custom UI we could produce so we leave it be
    return FALSE;
 }
