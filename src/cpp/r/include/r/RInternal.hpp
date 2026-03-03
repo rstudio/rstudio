@@ -207,7 +207,6 @@
 #define Rf_inherits INTERNAL_R_FUNCTION
 #define Rf_isArray INTERNAL_R_FUNCTION
 #define Rf_isFactor INTERNAL_R_FUNCTION
-#define Rf_isFrame INTERNAL_R_FUNCTION
 #define Rf_isFunction INTERNAL_R_FUNCTION
 #define Rf_isInteger INTERNAL_R_FUNCTION
 #define Rf_isLanguage INTERNAL_R_FUNCTION

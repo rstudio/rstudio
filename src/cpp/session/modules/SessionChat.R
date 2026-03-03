@@ -619,7 +619,7 @@
          )
       }, add = TRUE)
       .rs.chat.injectBindings()
-      
+
       # Evaluate the provided code
       withVisible(eval(expr, envir = envir))
 
