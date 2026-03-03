@@ -396,7 +396,11 @@ public class AceThemes
       Desktop.getFrame().setBackgroundColor(colors);
       Desktop.getFrame().syncToEditorTheme(currentTheme_.isDark());
 
-      el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
+      Element[] toolbarEls = DomUtils.getElementsByClassName("rstheme_toolbarWrapper");
+      if (toolbarEls.length == 0)
+         return;
+
+      el = toolbarEls[0];
       style = DomUtils.getComputedStyles(el);
       color = style.getBackgroundColor();
       parsed = RGBColor.fromCss(color);
@@ -431,11 +435,8 @@ public class AceThemes
 
    private void onFontCssLoaded()
    {
-      // Recompute theme colors now that the font stylesheet has loaded.
-      // Font CSS doesn't typically affect colors, but the recomputation
-      // is cheap and ensures downstream consumers have up-to-date state
-      // after all editor stylesheets are fully loaded.
-      events_.fireEvent(new ComputeThemeColorsEvent());
+      // Nothing to do here -- font CSS doesn't affect theme colors,
+      // and the theme CSS load handler already recomputes colors.
    }
 
    private void onFontCssError()
