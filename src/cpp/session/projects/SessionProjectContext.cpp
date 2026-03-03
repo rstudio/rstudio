@@ -418,8 +418,13 @@ void ProjectContext::augmentRbuildignore()
       const char * const kIgnorePkgTgz = R"(.*\.tgz$)";
       const std::string newLine = "\n";
 
+      const char * const kIgnorePositai = R"(^\.positai$)";
+      const char * const kIgnoreClaude = R"(^\.claude$)";
+
       std::string ignoreLines = kIgnoreRproj + newLine +
-                                kIgnoreRprojUser + newLine;
+                                kIgnoreRprojUser + newLine +
+                                kIgnorePositai + newLine +
+                                kIgnoreClaude + newLine;
 
       if (session::options().packageOutputInPackageFolder())
       {
@@ -465,6 +470,8 @@ void ProjectContext::augmentRbuildignore()
          // for previous less precisely specified .Rproj entries
          bool hasRProj = strIgnore.find(R"(\.Rproj$)") != std::string::npos;
          bool hasRProjUser = strIgnore.find(kIgnoreRprojUser) != std::string::npos;
+         bool hasPositai = strIgnore.find(kIgnorePositai) != std::string::npos;
+         bool hasClaude = strIgnore.find(kIgnoreClaude) != std::string::npos;
          bool hasAllPackageExclusions = true;
 
          bool addExtraNewline = strIgnore.size() > 0
@@ -476,6 +483,10 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + newLine;
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + newLine;
+         if (!hasPositai)
+            strIgnore += kIgnorePositai + newLine;
+         if (!hasClaude)
+            strIgnore += kIgnoreClaude + newLine;
 
          if (session::options().packageOutputInPackageFolder())
          {
@@ -504,7 +515,7 @@ void ProjectContext::augmentRbuildignore()
             }
          }
 
-         if (hasRProj && hasRProjUser && hasAllPackageExclusions)
+         if (hasRProj && hasRProjUser && hasPositai && hasClaude && hasAllPackageExclusions)
             return;
 
          error = core::writeStringToFile(rbuildIgnorePath,
