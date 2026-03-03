@@ -314,10 +314,15 @@ public class AceThemes
       if (StringUtil.isNullOrEmpty(fontName))
          return;
 
-      // Remove a pre-existing font element, if any.
+      // Remove a pre-existing font element, if any. Clear any pending
+      // load handlers first so stale callbacks don't fire after removal.
       Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + RSTUDIO_FONTELEMENT_ID);
       if (fontStylesEl != null)
+      {
+         if (LinkElement.is(fontStylesEl))
+            clearCssLoadHandler(LinkElement.as(fontStylesEl));
          fontStylesEl.removeFromParent();
+      }
 
       // Apply the font CSS. Use alternate code paths depending on whether this
       // appears to be a client-side font, versus a server font.
@@ -347,6 +352,15 @@ public class AceThemes
       fontEl.setRel("stylesheet");
       fontEl.setId(RSTUDIO_FONTELEMENT_ID);
       fontEl.setHref(GWT.getHostPageBaseURL() + "fonts/css/" + fontName + ".css");
+
+      // Register the load handler before DOM insertion so that we
+      // don't miss a synchronous onload for cached stylesheets.
+      // Only for the main document, matching the theme CSS pattern.
+      if (Document.get() == document)
+      {
+         addFontCssLoadHandler(fontEl);
+      }
+
       document.getBody().appendChild(fontEl);
    }
 
@@ -400,6 +414,34 @@ public class AceThemes
       // Fire the event even on error so that downstream consumers
       // (iframe theme variables, client state, etc.) get default/fallback
       // colors rather than remaining permanently stale.
+      events_.fireEvent(new ComputeThemeColorsEvent());
+   }
+
+   private native void addFontCssLoadHandler(LinkElement link) /*-{
+      var self = this;
+      link.onload = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onFontCssLoaded()();
+      });
+      link.onerror = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes::onFontCssError()();
+      });
+   }-*/;
+
+   private void onFontCssLoaded()
+   {
+      // Recompute theme colors now that the font stylesheet has loaded.
+      // Font CSS doesn't typically affect colors, but the recomputation
+      // is cheap and ensures downstream consumers have up-to-date state
+      // after all editor stylesheets are fully loaded.
+      events_.fireEvent(new ComputeThemeColorsEvent());
+   }
+
+   private void onFontCssError()
+   {
+      String fontName = prefs_.get().serverEditorFont().getValue();
+      Debug.logWarning("Failed to load editor font CSS: " +
+         (!StringUtil.isNullOrEmpty(fontName) ? fontName : "<unknown>"));
+
       events_.fireEvent(new ComputeThemeColorsEvent());
    }
 
