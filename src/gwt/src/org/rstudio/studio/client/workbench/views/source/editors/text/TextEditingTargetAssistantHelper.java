@@ -2030,6 +2030,9 @@ public class TextEditingTargetAssistantHelper
 
       Timers.singleShot(() ->
       {
+         if (dismissed_ || editSuggestion_ == null)
+            return;
+
          ignoreNextDocumentChangeEvents();
 
          // Use anchored position to insert at the ghost text location,
@@ -2515,6 +2518,13 @@ public class TextEditingTargetAssistantHelper
    {
       dismissed_ = true;
 
+      // Invalidate any in-flight async RPC requests so their callbacks
+      // are rejected when they arrive. Without this, a stale completion
+      // response can reschedule nesTimer_ and render a gutter icon on a
+      // dismissed editor. (https://github.com/rstudio/rstudio/issues/17108)
+      requestId_ += 1;
+      nesId_ += 1;
+
       // Cancel all timers and reset suggestion state
       suspendTimer_.cancel();
       nesTimer_.cancel();
@@ -2522,13 +2532,6 @@ public class TextEditingTargetAssistantHelper
 
       // Clear diff view state
       clearDiffState();
-
-      // Invalidate any in-flight async RPC requests so their callbacks
-      // are rejected when they arrive. Without this, a stale completion
-      // response can reschedule nesTimer_ and render a gutter icon on a
-      // dismissed editor. (https://github.com/rstudio/rstudio/issues/17108)
-      requestId_ += 1;
-      nesId_ += 1;
 
       // Remove handler registrations
       registrations_.removeHandler();
