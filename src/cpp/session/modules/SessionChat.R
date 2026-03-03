@@ -242,38 +242,14 @@
 
 #' Compute the RStudio user scratch path.
 #'
-#' Follows the same XDG resolution logic as the C++ `xdg::userDataDir()`:
+#' Delegates to the C++ `xdg::userDataDir()` so the resolution logic
+#' (environment variable overrides, platform defaults, directory
+#' creation) stays in one place.
 #'
-#' 1. `RSTUDIO_DATA_HOME` (used as-is, expected to include "rstudio")
-#' 2. `XDG_DATA_HOME`/rstudio (or RStudio on Windows)
-#' 3. `~/.local/share/rstudio` (or `LOCALAPPDATA/RStudio` on Windows)
-#'
-#' @return A single normalized directory path, or `NULL` if the
-#'   resolved directory does not exist.
+#' @return A single normalized directory path.
 .rs.addFunction("chat.userScratchPath", function()
 {
-   # Check for the RStudio-specific override first.
-   rstudioDataHome <- Sys.getenv("RSTUDIO_DATA_HOME", unset = "")
-   if (nzchar(rstudioDataHome))
-      return(normalizePath(rstudioDataHome, winslash = "/", mustWork = FALSE))
-
-   # Determine the platform-specific folder name.
-   folderName <- if (.Platform$OS.type == "windows") "RStudio" else "rstudio"
-
-   # Check the XDG standard variable.
-   xdgDataHome <- Sys.getenv("XDG_DATA_HOME", unset = "")
-   if (nzchar(xdgDataHome))
-      return(normalizePath(file.path(xdgDataHome, folderName), winslash = "/", mustWork = FALSE))
-
-   # Fall back to the platform default.
-   if (.Platform$OS.type == "windows")
-   {
-      localAppData <- Sys.getenv("LOCALAPPDATA", unset = "")
-      if (nzchar(localAppData))
-         return(normalizePath(file.path(localAppData, folderName), winslash = "/", mustWork = FALSE))
-   }
-
-   normalizePath(file.path("~", ".local", "share", folderName), winslash = "/", mustWork = FALSE)
+   .Call("rs_userDataDir", PACKAGE = "(embedding)")
 })
 
 #' Check whether editing the given paths is allowed.
@@ -312,8 +288,7 @@
    # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
    # since tool-invoked code may update files there
    scratchDir <- .rs.chat.userScratchPath()
-   if (!is.null(scratchDir))
-      ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
+   ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
