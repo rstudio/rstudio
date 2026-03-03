@@ -28,11 +28,11 @@
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
-#include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 
+#include <r/session/RGraphics.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "RGraphicsDevDesc.hpp"
@@ -62,6 +62,8 @@ namespace device {
 // intentionally not in anonymous namespace so that it can
 // be referenced and changed without explicit header export
 bool s_gdTracingEnabled = false;
+
+int SuppressNewFrameConfirmScope::s_count = 0;
 
 void GD_Trace(const std::string& func)
 {
@@ -112,9 +114,7 @@ Rboolean GD_NewFrameConfirm(pDevDesc dd)
 
    // suppress the new frame prompt when the AI assistant is running code,
    // so that execution isn't blocked waiting for user input
-   bool chatEvaluating = r::options::getOption<bool>(
-            "rstudio.chatEvaluating", false, false);
-   if (chatEvaluating)
+   if (SuppressNewFrameConfirmScope::isActive())
       return TRUE;
 
    // returning false causes the default implementation (printing a prompt
@@ -970,16 +970,14 @@ double devicePixelRatio()
 }
 
 void close()
-{     
+{
    if (s_pGEDevDesc != nullptr)
    {
       int deviceNumber = Rf_ndevNumber(s_pGEDevDesc->dev);
       Rf_killDevice(deviceNumber);
    }
 }
-   
 
- 
 } // namespace device
 
 // if we don't have pango cairo then provide a null definition
