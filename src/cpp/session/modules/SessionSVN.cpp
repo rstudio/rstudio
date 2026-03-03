@@ -1787,19 +1787,26 @@ Error augmentSvnIgnore()
       svnIgnore += ".Rhistory\n";
       svnIgnore += ".RData\n";
       svnIgnore += ".Ruserdata\n";
+      svnIgnore += ".positai\n";
    }
    else
    {
-      // If svn:ignore exists, add .Rproj.user unless it's already there
-      if (regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
-         return Success();
-
       bool addExtraNewline = svnIgnore.size() > 0
                              && svnIgnore[svnIgnore.size() - 1] != '\n';
       if (addExtraNewline)
          svnIgnore += "\n";
 
-      svnIgnore += ".Rproj.user\n";
+      // Add .Rproj.user and .positai unless they're already there
+      std::string additions;
+      if (!regex_utils::search(svnIgnore, boost::regex("^\\.Rproj\\.user$")))
+         additions += ".Rproj.user\n";
+      if (!regex_utils::search(svnIgnore, boost::regex("^\\.positai$")))
+         additions += ".positai\n";
+
+      if (additions.empty())
+         return Success();
+
+      svnIgnore += additions;
    }
 
    // write back svn:ignore
