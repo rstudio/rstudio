@@ -25,8 +25,13 @@
 
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
+#
+# NOTE: The primary defense against credential file reads is the file
+# permission check in isFileReadAllowed (denying files without world-
+# readable permissions). These patterns are defense-in-depth for common
+# credential paths, in case file permissions are misconfigured.
 .rs.setVar("chat.denyReadPatterns", c(
-   
+
    # Deny files that are likely to contain credentials
    "/\\.aws/credentials$",
    "/\\.aws/config$",
@@ -37,6 +42,13 @@
    # Deny container/cloud credential files
    "/\\.docker/config\\.json$",
    "/\\.kube/config$",
+
+   # Deny cloud provider credential directories
+   "/\\.config/gcloud(/|$)",
+   "/\\.azure(/|$)",
+
+   # Deny GPG private keys
+   "/\\.gnupg(/|$)",
 
    # Deny package registry credential files
    "/\\.pypirc$",

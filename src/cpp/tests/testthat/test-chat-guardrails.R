@@ -43,6 +43,16 @@ test_that("deny-read patterns block credential files", {
    expect_false(matches("/home/user/.docker/cli-plugins/docker-compose"))
    expect_false(matches("/home/user/.kube/cache/discovery"))
 
+   # Cloud provider credentials
+   expect_true(matches("/home/user/.config/gcloud/credentials.db"))
+   expect_true(matches("/home/user/.config/gcloud"))
+   expect_true(matches("/home/user/.azure/accessTokens.json"))
+   expect_true(matches("/home/user/.azure"))
+
+   # GPG private keys
+   expect_true(matches("/home/user/.gnupg/private-keys-v1.d/key.key"))
+   expect_true(matches("/home/user/.gnupg"))
+
    # Package registry credentials
    expect_true(matches("/home/user/.pypirc"))
    expect_true(matches("/home/user/.gem/credentials"))
