@@ -168,6 +168,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onChatBackendExit(ChatBackendExitEvent event)
          {
+            display_.hideReadlineNotification();
             if (event.getCrashed())
             {
                display_.showCrashedMessage(event.getExitCode());
@@ -184,6 +185,7 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               display_.hideReadlineNotification();
                display_.showSuspendedMessage();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
