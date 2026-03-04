@@ -235,7 +235,7 @@
 # Base and recommended package names, excluded from "trusted caller"
 # detection because the agent could call them directly to launder
 # file access.
-.rs.setVar("chat.basePkgs", rownames(
+.rs.setVar("chat.basePackages", rownames(
    installed.packages(priority = c("base", "recommended"), lib.loc = .Library)
 ))
 
@@ -254,7 +254,7 @@
 #' @return `TRUE` if a non-base package namespace is on the call stack.
 .rs.addFunction("chat.isCalledFromPackage", function()
 {
-   basePkgs <- .rs.chat.basePkgs
+   basePkgs <- .rs.chat.basePackages
 
    for (i in seq_len(sys.nframe()))
    {
