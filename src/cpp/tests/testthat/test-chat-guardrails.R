@@ -75,10 +75,10 @@ test_that("deny-read patterns block credential files", {
    expect_true(matches("/project/.env.local"))
    expect_true(matches("/project/.env.production"))
 
-   # .Renviron / .Rprofile are allowed (users may update these via agents)
-   expect_false(matches("/home/user/.Renviron"))
-   expect_false(matches("/project/.Renviron.local"))
-   expect_false(matches("/home/user/.Rprofile"))
+   # .Renviron / .Rprofile
+   expect_true(matches("/home/user/.Renviron"))
+   expect_true(matches("/project/.Renviron.local"))
+   expect_true(matches("/home/user/.Rprofile"))
 
    # .netrc / .npmrc
    expect_true(matches("/home/user/.netrc"))
@@ -211,5 +211,47 @@ test_that("isFileReadAllowed permits reads on SSH public keys", {
    home <- path.expand("~")
    expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa.pub")))
    expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_ed25519.pub")))
+
+})
+
+test_that("isFileReadAllowed allows credential files when trusted", {
+
+   home <- path.expand("~")
+
+   # denied by default (untrusted)
+   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials")))
+   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron")))
+   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile")))
+
+   # allowed when trusted
+   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"), trusted = TRUE))
+   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron"), trusted = TRUE))
+   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile"), trusted = TRUE))
+
+})
+
+# -- isCalledFromPackage -------------------------------------------------------
+
+test_that("isCalledFromPackage returns FALSE for direct calls", {
+
+   expect_false(.rs.chat.isCalledFromPackage())
+
+})
+
+test_that("isCalledFromPackage returns FALSE when called via base package", {
+
+   # base::do.call is a base package function; should not count as trusted
+   result <- do.call(.rs.chat.isCalledFromPackage, list())
+   expect_false(result)
+
+})
+
+test_that("isCalledFromPackage returns TRUE when called via non-base package", {
+
+   # testthat is a non-base, non-recommended package
+   # withr::with_envvar calls our function from the withr namespace
+   skip_if_not_installed("withr")
+   result <- withr::with_envvar(c(), .rs.chat.isCalledFromPackage())
+   expect_true(result)
 
 })

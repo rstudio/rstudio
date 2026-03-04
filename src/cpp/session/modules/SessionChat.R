@@ -65,10 +65,10 @@
    "/\\.config/gh/hosts\\.ya?ml$",
    "/\\.huggingface/token$",
 
-   # Deny files like .env, .env.local, and so on.
-   # NOTE: .Renviron and .Rprofile are intentionally not denied here,
-   # since users may call R functions that update these through agents.
+   # Deny files like .env, .env.local, .Renviron, .Rprofile, and so on.
    "/\\.env(\\.|$)",
+   "/\\.Renviron(\\.|$)",
+   "/\\.Rprofile(\\.|$)",
 
    # Deny access to non-public files within the .ssh directory.
    "/\\.ssh/id.*(?<!\\.pub)$"
@@ -232,15 +232,61 @@
    .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
+# Base and recommended package names, excluded from "trusted caller"
+# detection because the agent could call them directly to launder
+# file access.
+.rs.setVar("chat.basePkgs", rownames(
+   installed.packages(priority = c("base", "recommended"), lib.loc = .Library)
+))
+
+#' Check whether the current call originates from a non-base package.
+#'
+#' Walks the call stack via `sys.function()` looking for any function
+#' whose environment is a non-base, non-recommended package namespace.
+#' When such a function is found, the call is considered "trusted" --
+#' package code legitimately accessing files should not be blocked by
+#' the credential-path deny list.
+#'
+#' Base and recommended packages are excluded because they are
+#' general-purpose utilities that the agent could call directly to
+#' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
+#'
+#' @return `TRUE` if a non-base package namespace is on the call stack.
+.rs.addFunction("chat.isCalledFromPackage", function()
+{
+   basePkgs <- .rs.chat.basePkgs
+
+   for (i in seq_len(sys.nframe()))
+   {
+      fn <- sys.function(i)
+      env <- environment(fn)
+      if (is.null(env))
+         next
+      if (!isNamespace(env))
+         next
+      pkg <- getNamespaceName(env)
+      if (pkg %in% basePkgs)
+         next
+      return(TRUE)
+   }
+
+   FALSE
+})
+
 #' Check whether reading the given paths is allowed.
 #'
 #' Reads are allowed by default, but denied for files that lack
 #' world-readable permissions, match well-known sensitive path
-#' patterns (e.g. `~/.aws/credentials`, `.env`).
+#' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
+#'
+#' When `trusted` is `TRUE` (i.e. the call originates from a
+#' non-base package), the deny-pattern check is skipped so that
+#' package code can legitimately access credential files.
 #'
 #' @param path A character vector of file paths.
+#' @param trusted Whether to skip the deny-pattern check.
 #' @return A logical vector the same length as `path`.
-.rs.addFunction("chat.isFileReadAllowed", function(path)
+.rs.addFunction("chat.isFileReadAllowed", function(path, trusted = FALSE)
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
@@ -255,8 +301,12 @@
    ok[which(deny)] <- FALSE
 
    # deny reads matching sensitive path patterns
-   pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
-   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   # (skip for trusted callers, i.e. non-base package code)
+   if (!trusted)
+   {
+      pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
+      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   }
 
    ok
 })
@@ -353,7 +403,8 @@
 
 .rs.addFunction("chat.validateFileRead", function(action, path)
 {
-   ok <- .rs.chat.isFileReadAllowed(path)
+   trusted <- .rs.chat.isCalledFromPackage()
+   ok <- .rs.chat.isFileReadAllowed(path, trusted = trusted)
    if (all(ok))
       return(TRUE)
 
