@@ -17,11 +17,20 @@
 # misuse and unintentionally destructive AI-generated code. They should
 # not be relied upon to defend against deliberately malicious code.
 
+# Base and recommended package names, excluded from "trusted caller"
+# detection because the agent could call them directly to launder
+# file access.
+.rs.setVar("chat.basePackages", rownames(
+   installed.packages(priority = "base", lib.loc = .Library)
+))
+
+
 # Each hooked namespace gets its own environment within this container,
 # keyed by the namespace name. The per-namespace environment maps
 # binding names to their original values.
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
+
 
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
@@ -74,6 +83,7 @@
    "/\\.ssh/id.*(?<!\\.pub)$"
    
 ))
+
 
 # PCRE patterns matched against normalized paths to deny edits.
 # Note that file edits are disallowed by default, except for files within
@@ -152,41 +162,6 @@
    })
 })
 
-.rs.addFunction("chat.restoreBindings", function()
-{
-   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
-   allRestored <- TRUE
-
-   for (package in packages)
-   {
-      originals <- .rs.chat.hookedBindings[[package]]
-      bindings <- ls(envir = originals, all.names = TRUE)
-
-      for (binding in bindings)
-      {
-         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
-         if (inherits(status, "error"))
-         {
-            warning(sprintf(
-               "failed to restore binding '%s' in '%s': %s",
-               binding, package, conditionMessage(status)
-            ))
-            allRestored <- FALSE
-         }
-         else
-         {
-            rm(list = binding, envir = originals)
-         }
-      }
-
-      # only remove the package entry if all bindings were restored
-      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
-         rm(list = package, envir = .rs.chat.hookedBindings)
-   }
-
-   if (allRestored)
-      .rs.setVar("chat.bindingsInjected", FALSE)
-})
 
 #' Match paths against a pattern.
 #'
@@ -232,13 +207,6 @@
    .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
-# Base and recommended package names, excluded from "trusted caller"
-# detection because the agent could call them directly to launder
-# file access.
-.rs.setVar("chat.basePackages", rownames(
-   installed.packages(priority = c("base", "recommended"), lib.loc = .Library)
-))
-
 #' Check whether the current call originates from a non-base package.
 #'
 #' Walks the call stack via `sys.function()` looking for any function
@@ -247,7 +215,7 @@
 #' package code legitimately accessing files should not be blocked by
 #' the credential-path deny list.
 #'
-#' Base and recommended packages are excluded because they are
+#' Base packages are excluded because they are
 #' general-purpose utilities that the agent could call directly to
 #' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
 #'
@@ -258,15 +226,21 @@
 
    for (i in seq_len(sys.nframe()))
    {
-      fn <- sys.function(i)
-      env <- environment(fn)
-      if (is.null(env))
+      fn <- .rs.tryCatch(sys.function(i))
+      if (inherits(fn, "error"))
+         return(FALSE)
+      
+      envir <- environment(fn)
+      if (is.null(envir))
          next
-      if (!isNamespace(env))
+      
+      if (!isNamespace(envir))
          next
-      pkg <- getNamespaceName(env)
+      
+      pkg <- getNamespaceName(envir)
       if (pkg %in% basePkgs)
          next
+      
       return(TRUE)
    }
 
@@ -713,6 +687,43 @@
    invisible(TRUE)
 })
 
+.rs.addFunction("chat.restoreBindings", function()
+{
+   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+   allRestored <- TRUE
+   
+   for (package in packages)
+   {
+      originals <- .rs.chat.hookedBindings[[package]]
+      bindings <- ls(envir = originals, all.names = TRUE)
+      
+      for (binding in bindings)
+      {
+         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+         if (inherits(status, "error"))
+         {
+            warning(sprintf(
+               "failed to restore binding '%s' in '%s': %s",
+               binding, package, conditionMessage(status)
+            ))
+            allRestored <- FALSE
+         }
+         else
+         {
+            rm(list = binding, envir = originals)
+         }
+      }
+      
+      # only remove the package entry if all bindings were restored
+      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+         rm(list = package, envir = .rs.chat.hookedBindings)
+   }
+   
+   if (allRestored)
+      .rs.setVar("chat.bindingsInjected", FALSE)
+})
+
+
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
@@ -782,11 +793,7 @@
    if (dev.cur() <= 1)
       return(NULL)
 
-   tryCatch({
-      recordPlot()
-   }, error = function(e) {
-      NULL
-   })
+   tryCatch(recordPlot(), error = function(e) NULL)
 })
 
 # Capture the current plot, but only if plotting occurred since the given
