@@ -17,8 +17,8 @@ import java.util.Map;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -128,7 +128,8 @@ public class ChatPane
       updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
       notificationIcon_ = new DecorativeImage(
-         new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
+         new ImageResource2x(MessageDialogImages.INSTANCE.dialog_info2x()));
+      notificationIcon_.setPixelSize(24, 24);
       notificationIcon_.getElement().getStyle().setProperty("flexShrink", "0");
       notificationIcon_.setVisible(false);
 
