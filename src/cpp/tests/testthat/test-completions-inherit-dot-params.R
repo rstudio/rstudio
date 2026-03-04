@@ -48,48 +48,13 @@ new_functions_loaded <- exists(".rs.parseInheritDotParamsFromRd", mode = "functi
 
 
 # ---------------------------------------------------------------------------
-# .rs.extractDescribeItemNames
-# ---------------------------------------------------------------------------
-
-test_that("extractDescribeItemNames returns forwarded arg names from fixture Rd", {
-   args_node <- Filter(
-      function(x) identical(attr(x, "Rd_tag"), "\\arguments"),
-      fixture_rd
-   )[[1L]]
-
-   dots_item <- Filter(function(x) {
-      identical(attr(x, "Rd_tag"), "\\item") &&
-         trimws(paste(unlist(x[[1L]]), collapse = "")) == "..."
-   }, args_node)[[1L]]
-
-   expect_equal(
-      .rs.extractDescribeItemNames(dots_item[[2L]]),
-      c("alpha", "beta", "gamma")
-   )
-})
-
-test_that("extractDescribeItemNames returns character() for node with no \\describe", {
-   node <- list()
-   attr(node, "Rd_tag") <- "BLOCK"
-   expect_equal(.rs.extractDescribeItemNames(node), character())
-})
-
-test_that("extractDescribeItemNames returns character() for empty \\describe", {
-   node <- list()
-   attr(node, "Rd_tag") <- "\\describe"
-   expect_equal(.rs.extractDescribeItemNames(node), character())
-})
-
-
-# ---------------------------------------------------------------------------
 # .rs.parseInheritDotParamsFromRd  (pure Rd logic, no help-db lookup)
 # ---------------------------------------------------------------------------
 
-test_that("parseInheritDotParamsFromRd extracts args and targetName from fixture Rd", {
+test_that("parseInheritDotParamsFromRd extracts targetName from fixture Rd", {
    skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
-   expect_equal(result$argNames, c("alpha", "beta", "gamma"))
-   expect_equal(result$targetName, "target")
+   expect_equal(result, "target")
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotParams", {
@@ -125,9 +90,10 @@ test_that("getCompletionsInheritDotParams returns empty when fn has no ...", {
       token       = "",
       string      = "wrapper",
       object      = function(x, y) NULL,
-      matchedCall = make_matched_call()
+      matchedCall = make_matched_call(),
+      ownFormals  = c("x", "y")
    )
-   expect_equal(length(result$results), 0L)
+   expect_length(result$results, 0L)
 })
 
 test_that("getCompletionsInheritDotParams returns empty for unknown function", {
@@ -135,20 +101,26 @@ test_that("getCompletionsInheritDotParams returns empty for unknown function", {
       token       = "",
       string      = "____no_such_fn____",
       object      = make_wrapper_fn(),
-      matchedCall = make_matched_call()
+      matchedCall = make_matched_call(),
+      ownFormals  = c("x", "...")
    )
-   expect_equal(length(result$results), 0L)
+   expect_length(result$results, 0L)
 })
 
 # For the orchestrator tests we need parseInheritDotParamsFromHelp to return
 # fixture data. Since mocking utils internals is not available outside pkgload,
 # we temporarily replace parseInheritDotParamsFromHelp with a stub that calls
 # parseInheritDotParamsFromRd on the fixture directly.
+# Target function used by the fixture: pkg::target(alpha, beta, gamma, ...)
+fixture_target_fn <- function(alpha, beta, gamma, ...) NULL
+
 with_fixture_completions <- function(expr) {
    rsEnv <- as.environment("tools:rstudio")
-   original <- get(".rs.parseInheritDotParamsFromHelp", envir = rsEnv)
+
+   # Stub parseInheritDotParamsFromHelp to return fixture Rd data.
+   original_help <- get(".rs.parseInheritDotParamsFromHelp", envir = rsEnv)
    on.exit(
-      assign(".rs.parseInheritDotParamsFromHelp", original, envir = rsEnv),
+      assign(".rs.parseInheritDotParamsFromHelp", original_help, envir = rsEnv),
       add = TRUE
    )
    assign(
@@ -156,6 +128,21 @@ with_fixture_completions <- function(expr) {
       function(fnName, pkgName) .rs.parseInheritDotParamsFromRd(fixture_rd),
       envir = rsEnv
    )
+
+   # Stub getInheritDotParamsTargetFn so that lookups for the fixture target
+   # function (pkg::target) return fixture_target_fn rather than failing on a
+   # real package namespace lookup.
+   original_target <- get(".rs.getInheritDotParamsTargetFn", envir = rsEnv)
+   on.exit(
+      assign(".rs.getInheritDotParamsTargetFn", original_target, envir = rsEnv),
+      add = TRUE
+   )
+   assign(
+      ".rs.getInheritDotParamsTargetFn",
+      function(targetName, pkgName) fixture_target_fn,
+      envir = rsEnv
+   )
+
    force(expr)
 }
 
@@ -164,12 +151,13 @@ test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixt
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
-         string      = "wrapper",
+         string      = "pkg::wrapper",
          object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
-      expect_true(length(result$results) > 0L)
-      expect_true(all(result$type == .rs.acCompletionTypes$ARGUMENT))
+      expect_gt(length(result$results), 0L)
+      expect_all_equal(result$type, .rs.acCompletionTypes$ARGUMENT)
    })
 })
 
@@ -178,15 +166,16 @@ test_that("getCompletionsInheritDotParams excludes wrapper's own formals", {
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
-         string      = "wrapper",
+         string      = "pkg::wrapper",
          object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
       returned_names <- sub(" = $", "", result$results)
-      expect_false("x"    %in% returned_names)
-      expect_true("alpha" %in% returned_names)
-      expect_true("beta"  %in% returned_names)
-      expect_true("gamma" %in% returned_names)
+      expect_disjoint("x",     returned_names)
+      expect_in("alpha", returned_names)
+      expect_in("beta",  returned_names)
+      expect_in("gamma", returned_names)
    })
 })
 
@@ -195,14 +184,15 @@ test_that("getCompletionsInheritDotParams excludes already-used args", {
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
-         string      = "wrapper",
+         string      = "pkg::wrapper",
          object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call(named_args = "alpha")
       )
       returned_names <- sub(" = $", "", result$results)
-      expect_false("alpha" %in% returned_names)
-      expect_true("beta"   %in% returned_names)
-      expect_true("gamma"  %in% returned_names)
+      expect_disjoint("alpha", returned_names)
+      expect_in("beta",   returned_names)
+      expect_in("gamma",  returned_names)
    })
 })
 
@@ -211,13 +201,47 @@ test_that("getCompletionsInheritDotParams filters by token prefix", {
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "al",
-         string      = "wrapper",
+         string      = "pkg::wrapper",
          object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
       returned_names <- sub(" = $", "", result$results)
-      expect_true("alpha"  %in% returned_names)
-      expect_false("beta"  %in% returned_names)
-      expect_false("gamma" %in% returned_names)
+      expect_in("alpha",  returned_names)
+      expect_disjoint("beta",  returned_names)
+      expect_disjoint("gamma", returned_names)
    })
+})
+
+# ---------------------------------------------------------------------------
+# .rs.getCompletionsFunction  (end-to-end, requires ggplot2)
+# ---------------------------------------------------------------------------
+
+test_that("getCompletionsFunction returns inherited dot args with empty token", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   skip_if_not_installed("ggplot2")
+   result <- .rs.getCompletionsFunction(
+      token        = "",
+      string       = "ggplot2::scale_color_grey",
+      functionCall = quote(ggplot2::scale_color_grey()),
+      numCommas    = 0L,
+      envir        = globalenv()
+   )
+   returned_names <- sub(" = $", "", result$results)
+   expect_in("breaks", returned_names)
+})
+
+test_that("getCompletionsFunction returns inherited dot args with partial token", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   skip_if_not_installed("ggplot2")
+   result <- .rs.getCompletionsFunction(
+      token        = "br",
+      string       = "ggplot2::scale_color_grey",
+      functionCall = quote(ggplot2::scale_color_grey(br)),
+      numCommas    = 0L,
+      envir        = globalenv()
+   )
+   returned_names <- sub(" = $", "", result$results)
+   expect_in("breaks",  returned_names)
+   expect_disjoint("labels", returned_names)
 })
