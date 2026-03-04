@@ -37,6 +37,10 @@ fixture_rd <- tools::parse_Rd(
    testthat::test_path("fixtures/wrapper-inheritDotParams.Rd")
 )
 
+fixture_rd_partial <- tools::parse_Rd(
+   testthat::test_path("fixtures/wrapper-inheritDotParams-partial.Rd")
+)
+
 # These tests require the updated SessionRCompletions.R to be sourced in the
 # current session. If running inside a development RStudio build (not yet
 # restarted with the new code), source it manually first:
@@ -54,7 +58,23 @@ new_functions_loaded <- exists(".rs.parseInheritDotParamsFromRd", mode = "functi
 test_that("parseInheritDotParamsFromRd extracts targetName from fixture Rd", {
    skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
-   expect_equal(result, "target")
+   expect_equal(result$targetName, "target")
+})
+
+test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
+   expect_in("alpha", result$argNames)
+   expect_in("beta",  result$argNames)
+   expect_in("gamma", result$argNames)
+})
+
+test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   result <- .rs.parseInheritDotParamsFromRd(fixture_rd_partial)
+   expect_in("alpha",       result$argNames)
+   expect_in("beta",        result$argNames)
+   expect_disjoint("gamma", result$argNames)
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotParams", {
@@ -111,9 +131,6 @@ test_that("getCompletionsInheritDotParams returns empty for unknown function", {
 # fixture data. Since mocking utils internals is not available outside pkgload,
 # we temporarily replace parseInheritDotParamsFromHelp with a stub that calls
 # parseInheritDotParamsFromRd on the fixture directly.
-# Target function used by the fixture: pkg::target(alpha, beta, gamma, ...)
-fixture_target_fn <- function(alpha, beta, gamma, ...) NULL
-
 with_fixture_completions <- function(expr) {
    rsEnv <- as.environment("tools:rstudio")
 
@@ -126,20 +143,6 @@ with_fixture_completions <- function(expr) {
    assign(
       ".rs.parseInheritDotParamsFromHelp",
       function(fnName, pkgName) .rs.parseInheritDotParamsFromRd(fixture_rd),
-      envir = rsEnv
-   )
-
-   # Stub getInheritDotParamsTargetFn so that lookups for the fixture target
-   # function (pkg::target) return fixture_target_fn rather than failing on a
-   # real package namespace lookup.
-   original_target <- get(".rs.getInheritDotParamsTargetFn", envir = rsEnv)
-   on.exit(
-      assign(".rs.getInheritDotParamsTargetFn", original_target, envir = rsEnv),
-      add = TRUE
-   )
-   assign(
-      ".rs.getInheritDotParamsTargetFn",
-      function(targetName, pkgName) fixture_target_fn,
       envir = rsEnv
    )
 
