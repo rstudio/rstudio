@@ -152,8 +152,13 @@ void setExecuting(bool executing)
 
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
-   // save the last prompt (for re-issuing)
-   s_lastPrompt = prompt;
+   // save the last prompt for re-issuing, but only when R is at the
+   // top-level REPL. mid-execution prompts (e.g. readline, browser)
+   // should not overwrite the saved prompt, since reissueLastConsolePrompt
+   // is called after code execution completes and should restore the
+   // top-level prompt, not a transient one.
+   if (!r::session::isBusy())
+      s_lastPrompt = prompt;
 
    // enque the event
    json::Object data;
