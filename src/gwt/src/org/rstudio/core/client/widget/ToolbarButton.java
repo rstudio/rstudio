@@ -27,6 +27,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.TableCellElement;
@@ -185,8 +186,17 @@ public class ToolbarButton extends FocusWidget
          event.preventDefault();
          event.stopPropagation();
 
-         removeStyleName(styles_.toolbarButtonPushed());
-         down_ = false;
+         // Only cancel the press if the mouse actually left the button.
+         // mouseout fires when the cursor moves between child elements
+         // (table cells, image, label) within the button; ignore those.
+         EventTarget relatedTarget = event.getRelatedTarget();
+         if (relatedTarget == null ||
+             !Element.is(relatedTarget) ||
+             !getElement().isOrHasChild(Element.as(relatedTarget)))
+         {
+            removeStyleName(styles_.toolbarButtonPushed());
+            down_ = false;
+         }
       });
 
       final HandlerRegistration mouseUp = addMouseUpHandler(event ->
