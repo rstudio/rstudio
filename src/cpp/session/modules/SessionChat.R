@@ -34,9 +34,9 @@
    "/\\.npmrc$",
    "/\\.ssh/config$",
 
-   # Deny container/cloud credential directories
-   "/\\.docker(/|$)",
-   "/\\.kube(/|$)",
+   # Deny container/cloud credential files
+   "/\\.docker/config\\.json$",
+   "/\\.kube/config$",
 
    # Deny package registry credential files
    "/\\.pypirc$",
@@ -44,13 +44,13 @@
 
    # Deny database credential files
    "/\\.pgpass$",
-   "/\\.my\\.cnf$",
+   "/\\.my(login)?\\.cnf$",
 
    # Deny git credential store
    "/\\.git-credentials$",
 
    # Deny CLI/API token files
-   "/\\.config/gh/hosts\\.yml$",
+   "/\\.config/gh/hosts\\.ya?ml$",
    "/\\.huggingface/token$",
 
    # Deny files like .env, .env.local, and so on.
@@ -215,6 +215,7 @@
 #' @param path A character vector of file paths.
 .rs.addFunction("chat.normalizePath", function(path)
 {
+   path[is.na(path)] <- ""
    .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
@@ -306,13 +307,14 @@
    }
 
    # allow edits within R user directories (data, config, cache),
-   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux
-   rDirs <- vapply(c("data", "config", "cache"), function(which) {
-      .rs.chat.normalizePath(tools::R_user_dir("", which = which))
-   }, FUN.VALUE = character(1))
-
-   for (rDir in rDirs)
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
+   # Use "." as a dummy package name to obtain the parent directory;
+   # .rs.chat.normalizePath strips the trailing "/." component.
+   for (which in c("data", "config", "cache"))
+   {
+      rDir <- .rs.chat.normalizePath(tools::R_user_dir(".", which = which))
       ok[.rs.chat.isPathWithin(path, rDir)] <- TRUE
+   }
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
