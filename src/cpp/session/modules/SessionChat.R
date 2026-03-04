@@ -240,12 +240,24 @@
    ok
 })
 
+#' Compute the RStudio user scratch path.
+#'
+#' Delegates to the C++ `xdg::userDataDir()` so the resolution logic
+#' (environment variable overrides, platform defaults, directory
+#' creation) stays in one place.
+#'
+#' @return A single normalized directory path.
+.rs.addFunction("chat.userScratchPath", function()
+{
+   .Call("rs_userDataDir", PACKAGE = "(embedding)")
+})
+
 #' Check whether editing the given paths is allowed.
 #'
 #' Edits are denied by default, but allowed within the R temporary
-#' directory, the active project directory, and the current working
-#' directory. Edits within sensitive directories (e.g. `~/.ssh`)
-#' are always denied.
+#' directory, the active project directory, the current working
+#' directory, and the RStudio user scratch path. Edits within
+#' sensitive directories (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
 #' @return A logical vector the same length as `path`.
@@ -272,6 +284,11 @@
    # allow edits within the current working directory
    workingDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
    ok[.rs.chat.isPathWithin(path, workingDir)] <- TRUE
+
+   # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
+   # since tool-invoked code may update files there
+   scratchDir <- .rs.chat.userScratchPath()
+   ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -619,7 +636,7 @@
          )
       }, add = TRUE)
       .rs.chat.injectBindings()
-
+      
       # Evaluate the provided code
       withVisible(eval(expr, envir = envir))
 

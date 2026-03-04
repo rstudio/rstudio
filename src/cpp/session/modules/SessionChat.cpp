@@ -59,7 +59,6 @@
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
-#include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
@@ -1402,10 +1401,6 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleInput(code);
 
       numExpressions = Rf_length(parsedSEXP);
-
-      // Suppress "Hit <Return> to see next plot:" prompts while
-      // AI-generated code is running
-      r::session::graphics::device::SuppressNewFrameConfirmScope suppressScope;
 
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
