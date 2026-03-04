@@ -546,6 +546,27 @@
       {
          if (is.character(file) && nzchar(file))
             .rs.chat.validateFileEdit("sink", file)
+      },
+
+      readline = function()
+      {
+         on.exit({
+            request <- .rs.api.createRequest(
+               type    = .rs.api.eventTypes$TYPE_READLINE_PENDING,
+               sync    = FALSE,
+               target  = .rs.api.eventTargets$TYPE_ALL_WINDOWS,
+               payload = list(pending = .rs.scalar(FALSE))
+            )
+            .rs.api.sendRequest(request)
+         }, add = TRUE)
+
+         request <- .rs.api.createRequest(
+            type    = .rs.api.eventTypes$TYPE_READLINE_PENDING,
+            sync    = FALSE,
+            target  = .rs.api.eventTargets$TYPE_ALL_WINDOWS,
+            payload = list(pending = .rs.scalar(TRUE))
+         )
+         .rs.api.sendRequest(request)
       }
 
    )

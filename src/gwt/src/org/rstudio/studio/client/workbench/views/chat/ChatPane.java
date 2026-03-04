@@ -14,8 +14,11 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import java.util.Map;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -60,7 +63,8 @@ public class ChatPane
       UPDATING,
       UPDATE_COMPLETE,
       UPDATE_ERROR,
-      UPDATE_CHECK_FAILURE
+      UPDATE_CHECK_FAILURE,
+      READLINE
    }
 
    @Inject
@@ -535,6 +539,38 @@ public class ChatPane
       if (currentNotificationType_ == NotificationType.UPDATE_ERROR ||
           currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
       {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
+   public void showReadlineNotification()
+   {
+      readlineIcon_ = new DecorativeImage(
+         new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
+      readlineIcon_.getElement().getStyle().setProperty("flexShrink", "0");
+      notificationContent_.insert(readlineIcon_, 0);
+
+      updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
+
+      currentNotificationType_ = NotificationType.READLINE;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideReadlineNotification()
+   {
+      if (currentNotificationType_ == NotificationType.READLINE)
+      {
+         if (readlineIcon_ != null)
+         {
+            readlineIcon_.removeFromParent();
+            readlineIcon_ = null;
+         }
          hideUpdateNotification();
       }
    }
@@ -1336,6 +1372,7 @@ public class ChatPane
    private FlowPanel notificationContent_;
    private HTML updateMessageLabel_;
    private FlowPanel updateButtonPanel_;
+   private DecorativeImage readlineIcon_;
 
    // Injected ----
    private final EventBus events_;
