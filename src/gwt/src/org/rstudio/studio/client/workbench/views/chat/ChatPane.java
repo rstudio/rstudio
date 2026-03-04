@@ -127,8 +127,14 @@ public class ChatPane
       updateButtonPanel_ = new FlowPanel();
       updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
+      readlineIcon_ = new DecorativeImage(
+         new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
+      readlineIcon_.getElement().getStyle().setProperty("flexShrink", "0");
+      readlineIcon_.setVisible(false);
+
       notificationContent_ = new FlowPanel();
       notificationContent_.setStyleName(RES.styles().chatNotificationContent());
+      notificationContent_.add(readlineIcon_);
       notificationContent_.add(updateMessageLabel_);
       notificationContent_.add(updateButtonPanel_);
       updateNotificationPanel_.add(notificationContent_);
@@ -546,11 +552,7 @@ public class ChatPane
    @Override
    public void showReadlineNotification()
    {
-      readlineIcon_ = new DecorativeImage(
-         new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x()));
-      readlineIcon_.getElement().getStyle().setProperty("flexShrink", "0");
-      notificationContent_.insert(readlineIcon_, 0);
-
+      readlineIcon_.setVisible(true);
       updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -566,11 +568,7 @@ public class ChatPane
    {
       if (currentNotificationType_ == NotificationType.READLINE)
       {
-         if (readlineIcon_ != null)
-         {
-            readlineIcon_.removeFromParent();
-            readlineIcon_ = null;
-         }
+         readlineIcon_.setVisible(false);
          hideUpdateNotification();
       }
    }
