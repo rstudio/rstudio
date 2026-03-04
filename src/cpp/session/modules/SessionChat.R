@@ -33,12 +33,31 @@
    "/\\.netrc$",
    "/\\.npmrc$",
    "/\\.ssh/config$",
-   
+
+   # Deny container/cloud credential files
+   "/\\.docker/config\\.json$",
+   "/\\.kube/config$",
+
+   # Deny package registry credential files
+   "/\\.pypirc$",
+   "/\\.gem/credentials$",
+
+   # Deny database credential files
+   "/\\.pgpass$",
+   "/\\.my\\.cnf$",
+
+   # Deny git credential store
+   "/\\.git-credentials$",
+
+   # Deny CLI/API token files
+   "/\\.config/gh/hosts\\.yml$",
+   "/\\.huggingface/token$",
+
    # Deny files like .env, .env.local, and so on.
    "/\\.env(\\.|$)",
    "/\\.Renviron(\\.|$)",
    "/\\.Rprofile(\\.|$)",
-   
+
    # Deny access to non-public files within the .ssh directory.
    "/\\.ssh/id.*(?<!\\.pub)$"
    
@@ -256,8 +275,9 @@
 #'
 #' Edits are denied by default, but allowed within the R temporary
 #' directory, the active project directory, the current working
-#' directory, and the RStudio user scratch path. Edits within
-#' sensitive directories (e.g. `~/.ssh`) are always denied.
+#' directory, the RStudio user scratch path, R library paths, and
+#' R user directories (data, config, cache). Edits within sensitive
+#' directories (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
 #' @return A logical vector the same length as `path`.
@@ -289,6 +309,22 @@
    # since tool-invoked code may update files there
    scratchDir <- .rs.chat.userScratchPath()
    ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
+
+   # allow edits within R library paths (e.g. for package installation)
+   for (libPath in .libPaths())
+   {
+      libPath <- normalizePath(libPath, winslash = "/", mustWork = FALSE)
+      ok[.rs.chat.isPathWithin(path, libPath)] <- TRUE
+   }
+
+   # allow edits within R user directories (data, config, cache),
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux
+   rDirs <- vapply(c("data", "config", "cache"), function(which) {
+      normalizePath(tools::R_user_dir("", which = which), winslash = "/", mustWork = FALSE)
+   }, FUN.VALUE = character(1))
+
+   for (rDir in rDirs)
+      ok[.rs.chat.isPathWithin(path, rDir)] <- TRUE
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
