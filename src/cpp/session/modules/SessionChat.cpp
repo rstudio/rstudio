@@ -270,6 +270,30 @@ using chat_staticfiles::handleAIChatRequest;
 // Logging functions are now in chat/ChatLogging.hpp/.cpp
 
 // ============================================================================
+// R interface
+// ============================================================================
+
+SEXP rs_chatNormalizePath(SEXP pathSEXP)
+{
+   std::vector<std::string> paths;
+   Error error = r::sexp::extract(pathSEXP, &paths, true);
+   if (error)
+   {
+      r::exec::error("expected a character vector");
+      return R_NilValue;
+   }
+
+   for (auto& path : paths)
+   {
+      FilePath filePath(path);
+      path = filePath.getWeaklyCanonicalPath();
+   }
+
+   r::sexp::Protect protect;
+   return r::sexp::createUtf8(paths, &protect);
+}
+
+// ============================================================================
 // Execution Tracking (for cancellation support)
 // ============================================================================
 // R is single-threaded, so only one execution can be active at a time,
@@ -5447,6 +5471,7 @@ Error initialize()
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);

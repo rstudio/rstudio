@@ -208,33 +208,14 @@
 
 #' Normalize file paths for use in guardrail path comparisons.
 #'
-#' For existing paths, delegates to `normalizePath()`. For non-existing
-#' paths, normalizes the dirname and appends the basename. Rejects paths
-#' containing unresolved '..' components to prevent path traversal.
+#' Expands leading '~' via `path.expand()`, then uses Boost filesystem to
+#' resolve symlinks, normalize separators to '/', and remove '.' and '..'
+#' components.
 #'
 #' @param path A character vector of file paths.
 .rs.addFunction("chat.normalizePath", function(path)
 {
-   exists <- file.exists(path)
-
-   path[exists] <- normalizePath(path[exists], winslash = "/", mustWork = TRUE)
-
-   path[!exists] <- file.path(
-      normalizePath(dirname(path[!exists]), winslash = "/", mustWork = FALSE),
-      basename(path[!exists])
-   )
-
-   # Reject paths that still contain '..' after normalization, since
-   # normalizePath(mustWork = FALSE) won't resolve '..' when the parent
-   # directory doesn't exist, which could allow path traversal.
-   unresolved <- grepl("(?:^|/)\\.\\.(?:/|$)", path)
-   if (any(unresolved))
-      stop(sprintf(
-         "path contains unresolved '..' components: %s",
-         paste(path[unresolved], collapse = ", ")
-      ))
-
-   path
+   .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
 #' Check whether reading the given paths is allowed.
@@ -297,19 +278,19 @@
    ok <- rep.int(FALSE, length(path))
 
    # allow edits within the R temporary directory
-   tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
+   tempDir <- .rs.chat.normalizePath(tempdir())
    ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
 
    # allow edits within the project directory
    projectDir <- .rs.getProjectDirectory()
    if (!is.null(projectDir))
    {
-      projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
+      projectDir <- .rs.chat.normalizePath(projectDir)
       ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
    }
 
    # allow edits within the current working directory
-   workingDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+   workingDir <- .rs.chat.normalizePath(getwd())
    ok[.rs.chat.isPathWithin(path, workingDir)] <- TRUE
 
    # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
@@ -320,14 +301,14 @@
    # allow edits within R library paths (e.g. for package installation)
    for (libPath in .libPaths())
    {
-      libPath <- normalizePath(libPath, winslash = "/", mustWork = FALSE)
+      libPath <- .rs.chat.normalizePath(libPath)
       ok[.rs.chat.isPathWithin(path, libPath)] <- TRUE
    }
 
    # allow edits within R user directories (data, config, cache),
    # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux
    rDirs <- vapply(c("data", "config", "cache"), function(which) {
-      normalizePath(tools::R_user_dir("", which = which), winslash = "/", mustWork = FALSE)
+      .rs.chat.normalizePath(tools::R_user_dir("", which = which))
    }, FUN.VALUE = character(1))
 
    for (rDir in rDirs)
@@ -405,8 +386,8 @@
          # Block recursive deletes in the user's home directory
          if ("*" %in% x)
          {
-            workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-            homeDir <- normalizePath("~", winslash = "/", mustWork = TRUE)
+            workDir <- .rs.chat.normalizePath(getwd())
+            homeDir <- .rs.chat.normalizePath("~")
             if (identical(workDir, homeDir))
             {
                msg <- "denied agent from executing unlink(\"*\") on user home directory"
