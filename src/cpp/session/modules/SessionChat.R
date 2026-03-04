@@ -66,9 +66,9 @@
    "/\\.huggingface/token$",
 
    # Deny files like .env, .env.local, and so on.
+   # NOTE: .Renviron and .Rprofile are intentionally not denied here,
+   # since users may call R functions that update these through agents.
    "/\\.env(\\.|$)",
-   "/\\.Renviron(\\.|$)",
-   "/\\.Rprofile(\\.|$)",
 
    # Deny access to non-public files within the .ssh directory.
    "/\\.ssh/id.*(?<!\\.pub)$"
@@ -236,7 +236,7 @@
 #'
 #' Reads are allowed by default, but denied for files that lack
 #' world-readable permissions, match well-known sensitive path
-#' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
+#' patterns (e.g. `~/.aws/credentials`, `.env`).
 #'
 #' @param path A character vector of file paths.
 #' @return A logical vector the same length as `path`.

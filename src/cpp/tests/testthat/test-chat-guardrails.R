@@ -75,10 +75,10 @@ test_that("deny-read patterns block credential files", {
    expect_true(matches("/project/.env.local"))
    expect_true(matches("/project/.env.production"))
 
-   # .Renviron / .Rprofile
-   expect_true(matches("/home/user/.Renviron"))
-   expect_true(matches("/project/.Renviron.local"))
-   expect_true(matches("/home/user/.Rprofile"))
+   # .Renviron / .Rprofile are allowed (users may update these via agents)
+   expect_false(matches("/home/user/.Renviron"))
+   expect_false(matches("/project/.Renviron.local"))
+   expect_false(matches("/home/user/.Rprofile"))
 
    # .netrc / .npmrc
    expect_true(matches("/home/user/.netrc"))
