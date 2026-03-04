@@ -34,9 +34,9 @@
    "/\\.npmrc$",
    "/\\.ssh/config$",
 
-   # Deny container/cloud credential files
-   "/\\.docker/config\\.json$",
-   "/\\.kube/config$",
+   # Deny container/cloud credential directories
+   "/\\.docker(/|$)",
+   "/\\.kube(/|$)",
 
    # Deny package registry credential files
    "/\\.pypirc$",
@@ -69,6 +69,9 @@
 # - The R temporary directory
 # - The project directory (when a project is open)
 # - The current working directory
+# - The RStudio scratch path
+# - R library paths (.libPaths())
+# - R user directories (data, config, cache)
 #
 # This list serves to deny edits for certain files even if they're within
 # one of the above 'allowed' directories.
@@ -195,6 +198,10 @@
 #' @param directory A single directory path.
 .rs.addFunction("chat.isPathWithin", function(path, directory)
 {
+   # guard against empty or root directory, which would match all paths
+   if (!nzchar(directory) || directory == "/")
+      return(rep.int(FALSE, length(path)))
+
    pattern <- paste0("^\\Q", directory, "\\E(/|$)")
    .rs.chat.pathMatches(pattern, path)
 })
