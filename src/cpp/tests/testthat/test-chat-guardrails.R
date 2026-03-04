@@ -35,13 +35,13 @@ test_that("deny-read patterns block credential files", {
    expect_false(matches("/home/user/.ssh/id_rsa.pub"))
    expect_false(matches("/home/user/.ssh/id_ed25519.pub"))
 
-   # Docker / Kubernetes
+   # Docker / Kubernetes (entire directories denied)
    expect_true(matches("/home/user/.docker/config.json"))
+   expect_true(matches("/home/user/.docker/cli-plugins/docker-compose"))
+   expect_true(matches("/home/user/.docker"))
    expect_true(matches("/home/user/.kube/config"))
-
-   # Non-credential files in .docker/.kube should be allowed
-   expect_false(matches("/home/user/.docker/cli-plugins/docker-compose"))
-   expect_false(matches("/home/user/.kube/cache/discovery"))
+   expect_true(matches("/home/user/.kube/cache/discovery"))
+   expect_true(matches("/home/user/.kube"))
 
    # Cloud provider credentials
    expect_true(matches("/home/user/.config/gcloud/credentials.db"))
@@ -117,10 +117,12 @@ test_that("isPathWithin correctly checks containment", {
 
 })
 
-test_that("isPathWithin guards against empty and root directory", {
+test_that("isPathWithin guards against empty, root, and drive root directories", {
 
    expect_equal(.rs.chat.isPathWithin("/any/path", ""), FALSE)
    expect_equal(.rs.chat.isPathWithin("/any/path", "/"), FALSE)
+   expect_equal(.rs.chat.isPathWithin("C:/Users/file.R", "C:"), FALSE)
+   expect_equal(.rs.chat.isPathWithin("C:/Users/file.R", "C:/"), FALSE)
 
 })
 
@@ -177,6 +179,8 @@ test_that("isFileEditAllowed permits edits in R library paths", {
 
 test_that("isFileEditAllowed permits edits in R user directories", {
 
+   skip_if(getRversion() < "4.0.0", "tools::R_user_dir requires R >= 4.0.0")
+
    for (which in c("data", "config", "cache"))
    {
       path <- file.path(tools::R_user_dir("testpkg", which = which), "config.yml")
@@ -195,7 +199,9 @@ test_that("isFileReadAllowed denies reads on credential files", {
    expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa")))
    expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".env")))
    expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".docker/config.json")))
+   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".docker/trust/private/root.key")))
    expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".kube/config")))
+   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".kube/cache/oidc-login/token")))
    expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".git-credentials")))
 
 })

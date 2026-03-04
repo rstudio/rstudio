@@ -39,9 +39,9 @@
    "/\\.npmrc$",
    "/\\.ssh/config$",
 
-   # Deny container/cloud credential files
-   "/\\.docker/config\\.json$",
-   "/\\.kube/config$",
+   # Deny container/cloud credential directories
+   "/\\.docker(/|$)",
+   "/\\.kube(/|$)",
 
    # Deny cloud provider credential directories
    "/\\.config/gcloud(/|$)",
@@ -210,8 +210,9 @@
 #' @param directory A single directory path.
 .rs.addFunction("chat.isPathWithin", function(path, directory)
 {
-   # guard against empty or root directory, which would match all paths
-   if (!nzchar(directory) || directory == "/")
+   # guard against empty, root, or bare Windows drive root directory,
+   # any of which would match all (or nearly all) paths
+   if (!nzchar(directory) || directory == "/" || grepl("^[A-Za-z]:/?$", directory))
       return(rep.int(FALSE, length(path)))
 
    pattern <- paste0("^\\Q", directory, "\\E(/|$)")
@@ -320,12 +321,15 @@
 
    # allow edits within R user directories (data, config, cache),
    # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
-   # Use "." as a dummy package name to obtain the parent directory;
-   # .rs.chat.normalizePath strips the trailing "/." component.
-   for (which in c("data", "config", "cache"))
+   # Use dirname() to obtain the parent directory from a dummy package name.
+   # tools::R_user_dir was introduced in R 4.0.0.
+   if (getRversion() >= "4.0.0")
    {
-      rDir <- .rs.chat.normalizePath(tools::R_user_dir(".", which = which))
-      ok[.rs.chat.isPathWithin(path, rDir)] <- TRUE
+      for (which in c("data", "config", "cache"))
+      {
+         rDir <- .rs.chat.normalizePath(dirname(tools::R_user_dir("_", which = which)))
+         ok[.rs.chat.isPathWithin(path, rDir)] <- TRUE
+      }
    }
 
    # deny edits matching sensitive path patterns (both read and edit
