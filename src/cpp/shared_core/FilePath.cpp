@@ -1577,7 +1577,6 @@ Error FilePath::openForRead(std::shared_ptr<std::istream>& out_stream) const
       pResult = new boost::iostreams::stream<file_descriptor_source>(fd);
 #else
       errno = 0;
-      // deepcode ignore MissingClose: stream is transferred to out_stream via reset()
       pResult = new std::ifstream(getAbsolutePath().c_str(), std::ios_base::in | std::ios_base::binary);
 #endif
 
@@ -1648,7 +1647,6 @@ Error FilePath::openForWrite(std::shared_ptr<std::ostream>& out_stream, bool in_
          flags |= ios_base::trunc;
       else
          flags |= ios_base::app;
-      // deepcode ignore MissingClose: stream is transferred to out_stream via reset()
       pResult = new std::ofstream(getAbsolutePath().c_str(), flags);
 #endif
 
