@@ -280,19 +280,22 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
    if (error)
    {
       LOG_ERROR(error);
-      SEXP resultSEXP = R_NilValue;
+      int n = r::sexp::length(pathSEXP);
       r::sexp::Protect protect;
-      r::exec::RFunction("base:::strrep")
-         .addParam("")
-         .addParam(r::sexp::length(pathSEXP))
-         .call(&resultSEXP, &protect);
+      SEXP resultSEXP = Rf_allocVector(STRSXP, n);
+      protect.add(resultSEXP);
+      for (int i = 0; i < n; i++)
+         SET_STRING_ELT(resultSEXP, i, R_BlankString);
       return resultSEXP;
    }
 
    for (auto& path : paths)
    {
-      FilePath filePath(path);
-      path = filePath.getWeaklyCanonicalPath();
+      if (!path.empty())
+      {
+         FilePath filePath(path);
+         path = filePath.getWeaklyCanonicalPath();
+      }
    }
 
    r::sexp::Protect protect;

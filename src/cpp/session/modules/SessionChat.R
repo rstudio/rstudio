@@ -17,9 +17,8 @@
 # misuse and unintentionally destructive AI-generated code. They should
 # not be relied upon to defend against deliberately malicious code.
 
-# Base and recommended package names, excluded from "trusted caller"
-# detection because the agent could call them directly to launder
-# file access.
+# Base package names, excluded from "trusted caller" detection
+# because the agent could call them directly to access files.
 .rs.setVar("chat.basePackages", rownames(
    installed.packages(priority = "base", lib.loc = .Library)
 ))
