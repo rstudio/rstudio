@@ -92,25 +92,7 @@ enum DeviceType
 
 DeviceType activeDeviceType();
 double devicePixelRatio();
-
-// RAII scope to suppress new frame confirmation prompts
-// (e.g. during AI code evaluation)
-class SuppressNewFrameConfirmScope
-{
-public:
-   SuppressNewFrameConfirmScope() { s_count++; }
-   ~SuppressNewFrameConfirmScope() { s_count--; }
-
-   static bool isActive() { return s_count > 0; }
-
-   SuppressNewFrameConfirmScope(const SuppressNewFrameConfirmScope&) = delete;
-   SuppressNewFrameConfirmScope& operator=(const SuppressNewFrameConfirmScope&) = delete;
-
-private:
-   static int s_count;
-};
-
-} // namespace device
+}
    
 struct DisplayState
 {

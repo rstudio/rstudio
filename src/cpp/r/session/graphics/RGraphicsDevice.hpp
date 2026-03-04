@@ -63,5 +63,5 @@ void close();
 } // namespace rstudio
 
 
-#endif // R_SESSION_GRAPHICS_DEVICE_HPP
+#endif // R_SESSION_GRAPHICS_DEVICE_HPP 
 
