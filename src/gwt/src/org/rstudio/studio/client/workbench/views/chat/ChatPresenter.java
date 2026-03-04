@@ -222,6 +222,15 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
+   // When R is busy (has function frames on the stack) and a console prompt
+   // fires, it means something mid-execution is requesting user input (e.g.
+   // readline, browser, scan). Show a notification so the user knows to
+   // respond in the Console.
+   //
+   // TODO: When Posit Assistant gains support for handling input requests
+   // directly, we should signal the assistant here instead of (or in
+   // addition to) showing a passive notification.
+   // https://github.com/posit-dev/databot/issues/770
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
