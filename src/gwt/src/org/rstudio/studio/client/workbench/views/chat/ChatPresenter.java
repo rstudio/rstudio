@@ -16,7 +16,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.events.RStudioApiRequestEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
@@ -29,15 +28,15 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
-   implements RStudioApiRequestEvent.Handler
+   implements ConsolePromptEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ChatPresenter>
    {
@@ -160,8 +159,8 @@ public class ChatPresenter extends BasePresenter
          }
       });
 
-      // Listen for API request events (e.g. readline notification)
-      events_.addHandler(RStudioApiRequestEvent.TYPE, this);
+      // Listen for console prompt events (to detect when R is waiting for input)
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
 
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
@@ -224,23 +223,13 @@ public class ChatPresenter extends BasePresenter
    }
 
    @Override
-   public void onRStudioApiRequest(RStudioApiRequestEvent event)
+   public void onConsolePrompt(ConsolePromptEvent event)
    {
-      RStudioApiRequestEvent.Data data = event.getData();
-      if (data.getType() == RStudioApiRequestEvent.TYPE_READLINE_PENDING)
-      {
-         JavaScriptObject payload = data.getPayload();
-         boolean pending = getBoolean(payload, "pending");
-         if (pending)
-            display_.showReadlineNotification();
-         else
-            display_.hideReadlineNotification();
-      }
+      if (event.getPrompt().getBusy())
+         display_.showReadlineNotification();
+      else
+         display_.hideReadlineNotification();
    }
-
-   private static native boolean getBoolean(JavaScriptObject obj, String key) /*-{
-      return !!obj[key];
-   }-*/;
 
    /**
     * Called when either global chat provider preference or project options change.

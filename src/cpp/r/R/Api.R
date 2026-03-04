@@ -30,8 +30,7 @@
    TYPE_FILES_PANE_NAVIGATE  = 6L,
    TYPE_SET_GHOST_TEXT       = 7L,
    TYPE_ASK_FOR_RESTART      = 8L,
-   TYPE_SHOW_EDIT_SUGGESTION = 9L,
-   TYPE_READLINE_PENDING     = 10L
+   TYPE_SHOW_EDIT_SUGGESTION = 9L
 ))
 
 # list of potential event targets

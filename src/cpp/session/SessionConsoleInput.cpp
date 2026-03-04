@@ -36,6 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
+#include <r/session/RBusy.hpp>
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
 
@@ -162,7 +163,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
       prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
-   
+   data["busy"] = r::session::isBusy();
+
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
    
