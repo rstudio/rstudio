@@ -279,8 +279,14 @@ SEXP rs_chatNormalizePath(SEXP pathSEXP)
    Error error = r::sexp::extract(pathSEXP, &paths, true);
    if (error)
    {
-      r::exec::error("expected a character vector");
-      return R_NilValue;
+      LOG_ERROR(error);
+      SEXP resultSEXP = R_NilValue;
+      r::sexp::Protect protect;
+      r::exec::RFunction("base:::strrep")
+         .addParam("")
+         .addParam(r::sexp::length(pathSEXP))
+         .call(&resultSEXP, &protect);
+      return resultSEXP;
    }
 
    for (auto& path : paths)
