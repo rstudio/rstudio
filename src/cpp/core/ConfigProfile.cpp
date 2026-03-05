@@ -120,7 +120,7 @@ Error ConfigProfile::parseString(const std::string& profileStr)
          if (slashPos != std::string::npos)
          {
             compoundKey = paramName.substr(slashPos + 1);
-            if (compoundKey.empty())
+            if (compoundKey.empty() || slashPos == 0)
             {
                return systemError(boost::system::errc::protocol_error,
                      "Invalid key " + paramName + " specified",
@@ -195,6 +195,15 @@ std::vector<std::string> ConfigProfile::getLevelNames(uint32_t level) const
 bool ConfigProfile::isParamDefined(const std::string& paramName) const
 {
    for (const auto& levelValue: levels_)
+   {
+      for (const auto& value: levelValue.second)
+      {
+         if (value.first == paramName)
+            return true;
+      }
+   }
+
+   for (const auto& levelValue: compoundLevels_)
    {
       for (const auto& value: levelValue.second)
       {
