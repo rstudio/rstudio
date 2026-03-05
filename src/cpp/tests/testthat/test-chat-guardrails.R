@@ -230,28 +230,34 @@ test_that("isFileReadAllowed allows credential files when trusted", {
 
 })
 
-# -- isCalledFromPackage -------------------------------------------------------
+# -- isCalledFromPackageImpl ---------------------------------------------------
 
-test_that("isCalledFromPackage returns FALSE for direct calls", {
+test_that("isCalledFromPackageImpl returns FALSE for empty stack", {
 
-   expect_false(.rs.chat.isCalledFromPackage())
-
-})
-
-test_that("isCalledFromPackage returns FALSE when called via base package", {
-
-   # base::do.call is a base package function; should not count as trusted
-   result <- do.call(.rs.chat.isCalledFromPackage, list())
-   expect_false(result)
+   expect_false(.rs.chat.isCalledFromPackageImpl(list()))
 
 })
 
-test_that("isCalledFromPackage returns TRUE when called via non-base package", {
+test_that("isCalledFromPackageImpl returns FALSE when agent calls base functions directly", {
 
-   # testthat is a non-base, non-recommended package
-   # withr::with_envvar calls our function from the withr namespace
-   skip_if_not_installed("withr")
-   result <- withr::with_envvar(c(), .rs.chat.isCalledFromPackage())
-   expect_true(result)
+   # Simulates: agent calls readLines("~/.aws/credentials")
+   fns <- list(base::readLines)
+   expect_false(.rs.chat.isCalledFromPackageImpl(fns))
+
+})
+
+test_that("isCalledFromPackageImpl returns FALSE for primitive / NULL-env functions", {
+
+   fns <- list(base::`+`, base::`[`)
+   expect_false(.rs.chat.isCalledFromPackageImpl(fns))
+
+})
+
+test_that("isCalledFromPackageImpl returns TRUE when package code reads a file", {
+
+   # Simulates: devtools::document() -> ... -> base::readLines()
+   skip_if_not_installed("devtools")
+   fns <- list(devtools::document, base::readLines)
+   expect_true(.rs.chat.isCalledFromPackageImpl(fns))
 
 })

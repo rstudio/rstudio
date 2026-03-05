@@ -206,44 +206,53 @@
    .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
-#' Check whether the current call originates from a non-base package.
+#' Check whether a list of functions contains one from a non-base package.
 #'
-#' Walks the call stack via `sys.function()` looking for any function
-#' whose environment is a non-base, non-recommended package namespace.
-#' When such a function is found, the call is considered "trusted" --
-#' package code legitimately accessing files should not be blocked by
-#' the credential-path deny list.
+#' Given a list of functions (typically extracted from the call stack),
+#' returns `TRUE` if any function's environment is a non-base, non-recommended
+#' package namespace. When such a function is found, the call is considered
+#' "trusted" -- package code legitimately accessing files should not be
+#' blocked by the credential-path deny list.
 #'
 #' Base packages are excluded because they are
 #' general-purpose utilities that the agent could call directly to
 #' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
 #'
-#' @return `TRUE` if a non-base package namespace is on the call stack.
-.rs.addFunction("chat.isCalledFromPackage", function()
+#' @param fns A list of functions to check.
+#' @return `TRUE` if a non-base package namespace is found.
+.rs.addFunction("chat.isCalledFromPackageImpl", function(fns)
 {
    basePkgs <- .rs.chat.basePackages
 
-   for (i in seq_len(sys.nframe()))
+   for (fn in fns)
    {
-      fn <- .rs.tryCatch(sys.function(i))
-      if (inherits(fn, "error"))
-         return(FALSE)
-      
       envir <- environment(fn)
       if (is.null(envir))
          next
-      
+
       if (!isNamespace(envir))
          next
-      
+
       pkg <- getNamespaceName(envir)
       if (pkg %in% basePkgs)
          next
-      
+
       return(TRUE)
    }
 
    FALSE
+})
+
+#' Check whether the current call originates from a non-base package.
+#'
+#' Collects the functions on the call stack and delegates to
+#' `.rs.chat.isCalledFromPackageImpl()`.
+#'
+#' @return `TRUE` if a non-base package namespace is on the call stack.
+.rs.addFunction("chat.isCalledFromPackage", function()
+{
+   fns <- .Call("rs_chatCallStackFunctions", PACKAGE = "(embedding)")
+   .rs.chat.isCalledFromPackageImpl(fns)
 })
 
 #' Check whether reading the given paths is allowed.
