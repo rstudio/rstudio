@@ -3413,12 +3413,15 @@ Error downloadManifest(json::Object* pManifest)
    // Create temp file for download
    FilePath tempFile = module_context::tempFile("manifest", "json");
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- let R use whatever method the
+   // user/admin has configured via options(download.file.method).  Corporate
+   // proxy environments typically set method = "curl" with a --cacert option
+   // in download.file.extra to trust the proxy's CA certificate.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", downloadUri);
    downloadFunc.addParam("destfile", tempFile.getAbsolutePath());
    downloadFunc.addParam("quiet", true);
-   downloadFunc.addParam("method", "libcurl");  // Use libcurl for HTTPS support
    downloadFunc.addParam("timeout", 30);  // 30 second timeout
 
    Error error = downloadFunc.call();
@@ -3844,12 +3847,12 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- see downloadManifest() comment.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", url);
    downloadFunc.addParam("destfile", destPath.getAbsolutePath());
    downloadFunc.addParam("quiet", false);  // Show progress for user feedback
-   downloadFunc.addParam("method", "libcurl");
    downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
    downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
 
@@ -4664,6 +4667,12 @@ Error startChatBackend(bool resumeConversation)
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
+
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile =
+      session::options().positAssistantSslCertificatesFile();
+   if (!certificatesFile.empty())
+      core::system::setenv(&environment, "NODE_EXTRA_CA_CERTS", certificatesFile);
 
    // Enable Node.js proxy support for fetch().
    // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
