@@ -54,10 +54,17 @@
 # This list serves to deny edits for certain files even if they're within
 # one of the above 'allowed' directories.
 .rs.setVar("chat.denyEditPatterns", c(
-   
+
    # Deny edits on or within the .ssh directory.
    "/\\.ssh(/|$)"
-   
+
+))
+
+# PCRE patterns matched against normalized paths to deny access to
+# sensitive system files.
+.rs.setVar("chat.denySystemPatterns", c(
+   "^/etc/passwd$",
+   "^/etc/shadow$"
 ))
 
 
@@ -218,26 +225,32 @@
 #' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
 #'
 #' @param path A character vector of file paths.
-#' @return A logical vector the same length as `path`.
+#' @return A character vector the same length as `path`, where
+#'   empty strings indicate allowed reads and non-empty strings
+#'   give the reason the read was denied.
 .rs.addFunction("chat.isFileReadAllowed", function(path)
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
 
    # assume file reads are permitted by default
-   ok <- rep.int(TRUE, length(path))
+   reasons <- rep.int("", length(path))
 
    # deny reads on files that lack read permission for 'others'
    # (use which() to drop NA modes from non-existent files)
    info <- suppressWarnings(file.info(path))
    deny <- bitwAnd(info$mode, 4L) == 0L
-   ok[which(deny)] <- FALSE
+   reasons[which(deny)] <- "File is not world-readable."
 
    # deny reads matching sensitive path patterns
    pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
-   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
 
-   ok
+   # deny reads on sensitive system files
+   pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
+
+   reasons
 })
 
 #' Compute the RStudio user scratch path.
@@ -260,63 +273,76 @@
 #' sensitive directories (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
-#' @return A logical vector the same length as `path`.
+#' @return A character vector the same length as `path`, where
+#'   empty strings indicate allowed edits and non-empty strings
+#'   give the reason the edit was denied.
 .rs.addFunction("chat.isFileEditAllowed", function(path)
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
 
    # assume file edits are disallowed by default
-   ok <- rep.int(FALSE, length(path))
+   reasons <- rep.int(
+      "Path is not within the project, working directory, or other allowed locations.",
+      length(path)
+   )
 
    # allow edits within the R temporary directory
    tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
-   ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
+   reasons[.rs.chat.isPathWithin(path, tempDir)] <- ""
 
    # allow edits within the project directory
    projectDir <- .rs.getProjectDirectory()
    if (!is.null(projectDir))
    {
       projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
-      ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
+      reasons[.rs.chat.isPathWithin(path, projectDir)] <- ""
    }
 
    # allow edits within the current working directory
    workingDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-   ok[.rs.chat.isPathWithin(path, workingDir)] <- TRUE
+   reasons[.rs.chat.isPathWithin(path, workingDir)] <- ""
 
    # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
    # since tool-invoked code may update files there
    scratchDir <- .rs.chat.userScratchPath()
-   ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
+   reasons[.rs.chat.isPathWithin(path, scratchDir)] <- ""
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
    pattern <- paste(c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns), collapse = "|")
-   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
 
-   ok
+   # deny edits on sensitive system files
+   pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
+
+   reasons
 })
 
 .rs.addFunction("chat.validateFileEdit", function(action, path)
 {
-   ok <- .rs.chat.isFileEditAllowed(path)
-   if (all(ok))
+   reasons <- .rs.chat.isFileEditAllowed(path)
+   denied <- nzchar(reasons)
+   if (!any(denied))
       return(TRUE)
 
-   fmt <- "denied agent from executing %s() on file %s"
-   msg <- sprintf(fmt, action, paste(shQuote(path[!ok]), collapse = ", "))
+   details <- sprintf("- Action: %s()\n- Path:   %s\n- Reason: %s",
+      action, path[denied], reasons[denied])
+   msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
    stop(msg, call. = FALSE)
 })
 
 .rs.addFunction("chat.validateFileRead", function(action, path)
 {
-   ok <- .rs.chat.isFileReadAllowed(path)
-   if (all(ok))
+   reasons <- .rs.chat.isFileReadAllowed(path)
+   denied <- nzchar(reasons)
+   if (!any(denied))
       return(TRUE)
 
-   fmt <- "denied agent from executing %s() on file %s"
-   msg <- sprintf(fmt, action, paste(shQuote(path[!ok]), collapse = ", "))
+   details <- sprintf("- Action: %s()\n- Path:   %s\n- Reason: %s",
+      action, path[denied], reasons[denied])
+   msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
    stop(msg, call. = FALSE)
 })
 
