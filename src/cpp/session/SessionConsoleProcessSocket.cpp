@@ -162,7 +162,13 @@ Error ConsoleProcessSocket::ensureServerRunning()
             {
                // bind to loopback only -- the terminal websocket should not
                // be reachable from the network; in server mode the rserver
-               // proxy handles external connections
+               // proxy handles external connections, and in desktop mode
+               // only the local Electron client needs access
+               //
+               // note: on Linux, binding to ::1 may not accept IPv4
+               // connections depending on the IPV6_V6ONLY sysctl setting,
+               // so we prefer IPv4 loopback and only use IPv6 on systems
+               // that lack IPv4 (detected via /proc/net/if_inet6)
 #if !defined(_WIN32) && !defined(__APPLE__)
                if (core::FilePath("/proc/net/if_inet6").exists())
                {
@@ -389,31 +395,57 @@ void ConsoleProcessSocket::onOpen(terminalServer* s, websocketpp::connection_hdl
 bool ConsoleProcessSocket::onValidate(terminalServer* s,
                                       websocketpp::connection_hdl hdl)
 {
-   // reject connections with malformed URLs
+   // reject connections whose URL path does not contain a terminal handle
    std::string handle = getHandle(s, hdl);
    if (handle.empty())
+   {
+      LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                          "with missing or invalid terminal handle in URL path");
       return false;
+   }
 
    // reject connections for terminal handles not registered via listen()
    ConsoleProcessSocketConnectionDetails details = connections_.get(handle);
    if (details.handle_.empty())
+   {
+      LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                          "for unregistered terminal handle: " + handle);
       return false;
+   }
 
    // in desktop mode, check the Origin header to prevent cross-site
-   // websocket hijacking (CSWSH); reject if the origin is not loopback
+   // websocket hijacking (CSWSH); reject if the origin is not loopback.
+   // in server mode, the rserver proxy authenticates external connections
+   // so the Origin check is not needed there.
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       terminalServer::connection_ptr con = s->get_con_from_hdl(hdl);
       std::string origin = con->get_request_header("Origin");
-      if (!origin.empty())
+
+      // reject empty Origin -- browser clients (including Electron) always
+      // send an Origin header on websocket upgrades per RFC 6455; a missing
+      // Origin is unexpected and should not bypass validation
+      if (origin.empty())
       {
-         std::string host = http::URL(origin).hostname();
-         if (!isLoopbackHost(host))
-         {
-            LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
-                                "with non-loopback origin: " + origin);
-            return false;
-         }
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with missing Origin header in desktop mode");
+         return false;
+      }
+
+      http::URL originUrl(origin);
+      if (!originUrl.isValid())
+      {
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with malformed Origin header: " + origin);
+         return false;
+      }
+
+      std::string host = originUrl.hostname();
+      if (!isLoopbackHost(host))
+      {
+         LOG_WARNING_MESSAGE("Rejected terminal websocket connection "
+                             "with non-loopback origin: " + origin);
+         return false;
       }
    }
 

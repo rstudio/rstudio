@@ -232,14 +232,18 @@ public:
 
    bool connectToServer()
    {
+      std::string uri = "http://localhost:" +
+            boost::lexical_cast<std::string>(port_) +
+            "/terminal/" + handle_ + "/";
+      return connectToServerWithUri(uri);
+   }
+
+   bool connectToServerWithUri(const std::string& uri)
+   {
       using websocketpp::lib::bind;
 
-      try 
+      try
       {
-         std::string uri = "http://localhost:" +
-               boost::lexical_cast<std::string>(port_) +
-               "/terminal/" + handle_ + "/";
-
          // don't clutter up unit test runs with warnings
          client_.set_access_channels(websocketpp::log::alevel::none);
          client_.set_error_channels(websocketpp::log::alevel::none);
@@ -314,6 +318,17 @@ public:
       blockingwait(10);
       EXPECT_TRUE(gotOpened());
       EXPECT_FALSE(gotFailed());
+   }
+
+   void waitForFailure()
+   {
+      while (!gotOpened() && !gotFailed())
+      {
+         blockingwait(50);
+      }
+      blockingwait(10);
+      EXPECT_FALSE(gotOpened());
+      EXPECT_TRUE(gotFailed());
    }
 
    std::string getInput() { blockingwait(50); return input_; }
@@ -455,6 +470,63 @@ TEST(ConsoleProcessSocketTest, ClientCanMakeMultipleConnectionsToServer) {
 
    EXPECT_TRUE(pClient1->disconnectFromServer());
    EXPECT_TRUE(pClient2->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsUnregisteredHandle) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // connect with a handle that was never registered via listen()
+   const std::string unregisteredHandle = "not-registered";
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>(unregisteredHandle, pSocket->port());
+   EXPECT_TRUE(pClient->connectToServer());
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsMalformedUrl) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // connect with a URL that has no terminal handle (just a bare slash)
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>("", pSocket->port());
+   std::string uri = "http://localhost:" +
+         boost::lexical_cast<std::string>(pSocket->port()) + "/";
+   EXPECT_TRUE(pClient->connectToServerWithUri(uri));
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pSocket->stopServer());
+}
+
+TEST(ConsoleProcessSocketTest, ValidateRejectsUrlWithoutTrailingSlash) {
+   boost::shared_ptr<SocketHarness> pSocket = boost::make_shared<SocketHarness>();
+   EXPECT_TRUE(pSocket->ensureServerRunning());
+
+   // register the handle so we isolate the URL validation
+   boost::shared_ptr<SocketConnection> pConnection =
+         boost::make_shared<SocketConnection>(handle1, pSocket);
+   EXPECT_TRUE(pConnection->listen());
+
+   // connect with a URL missing the required trailing slash
+   boost::shared_ptr<SocketClient> pClient =
+         boost::make_shared<SocketClient>(handle1, pSocket->port());
+   std::string uri = "http://localhost:" +
+         boost::lexical_cast<std::string>(pSocket->port()) +
+         "/terminal/" + handle1;  // no trailing slash
+   EXPECT_TRUE(pClient->connectToServerWithUri(uri));
+
+   pClient->waitForFailure();
+
+   EXPECT_TRUE(pClient->disconnectFromServer());
+   EXPECT_TRUE(pConnection->stopListening());
    EXPECT_TRUE(pSocket->stopServer());
 }
 

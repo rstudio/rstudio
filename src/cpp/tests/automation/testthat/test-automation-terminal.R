@@ -38,9 +38,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(xterm$offsetHeight > 0)
    
    # return focus to console
-   remote$commands.execute({
-      .rs.appCommands$activateConsole
-   })
+   remote$commands.execute("activateConsole")
    
    # clean up
    remote$console.executeExpr({
@@ -79,10 +77,11 @@ withr::defer(.rs.automation.deleteRemote())
    # try executing a basic command
    remote$keyboard.insertText("expr 1 + 1")
    remote$keyboard.executeShortcut("Enter")
-   
-   remote$console.executeExpr({
-      .rs.api.executeCommand(.rs.appCommands$sendTerminalToEditor)
-   })
+
+   # wait for terminal output before capturing
+   Sys.sleep(1)
+
+   remote$commands.execute("sendTerminalToEditor")
    
    editor <- remote$editor.getInstance()
    contents <- editor$session$doc$getValue()
@@ -90,9 +89,7 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(grepl("expr 1 + 1\n2\n", contents, fixed = TRUE))
    
    # return focus to console
-   remote$commands.executeExpr({
-      .rs.api.executeCommand(.rs.appCommands$activateConsole)
-   })
+   remote$commands.execute("activateConsole")
    
    # clean up
    remote$console.executeExpr({
