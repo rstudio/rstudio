@@ -29,7 +29,7 @@ const char* const kIndexFileName = "index.html";
 const char* const kCspConfigPath = "dist/csp.json";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-const char* const kProtocolVersion = "10.0";
+const char* const kProtocolVersion = "9.0";
 
 // Capabilities: JSON-RPC methods that RStudio handles
 const std::vector<std::string>& rstudioCapabilities()
