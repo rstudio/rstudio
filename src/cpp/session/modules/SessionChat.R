@@ -63,9 +63,9 @@
 # PCRE patterns matched against normalized paths to deny access to
 # sensitive system files.
 .rs.setVar("chat.denySystemPatterns", c(
+   "^/etc/master\\.passwd$",
    "^/etc/passwd$",
    "^/etc/shadow$",
-   "^/etc/master\\.passwd$",
    "^/etc/sudoers$",
    "^/proc/self/environ$"
 ))
