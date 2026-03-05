@@ -997,6 +997,15 @@
             "type": "core::FilePath",
             "memberName": "positAssistantHelper_",
             "description": "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server."
+         },
+         {
+            "name": "posit-assistant-test-manifest",
+            "type": "bool",
+            "memberName": "positAssistantTestManifest_",
+            "defaultValue": false,
+            "implicitValue": true,
+            "isHidden": true,
+            "description": "Use the test manifest URL for Posit AI package updates."
          }
       ],
       "misc": [

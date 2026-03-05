@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
@@ -46,7 +47,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleElement;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.TextResource;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -99,17 +99,38 @@ public class AceThemes
       
       // In server mode, augment the theme with a font if we have one
       augmentThemeWithFont(document);
-   
+
+      // Clear any load handler on the previous element before registering
+      // a new one, so there is never more than one active handler.
       Element oldStyleEl = document.getElementById(linkId);
       if (null != oldStyleEl)
       {
-        document.getBody().replaceChild(currentStyleEl, oldStyleEl);
+         clearCssLoadHandler(LinkElement.as(oldStyleEl));
+      }
+
+      // Register a load handler so that theme colors are recomputed
+      // once the CSS has been loaded and applied. Only for the main
+      // document; iframes and satellite windows also call applyTheme(),
+      // but we only need one recomputation per theme change.
+      //
+      // The handler is registered before DOM insertion so that we
+      // don't miss a synchronous onload for cached stylesheets.
+      if (Document.get() == document)
+      {
+         setCssLoadHandlers(currentStyleEl,
+            () -> onThemeCssLoaded(),
+            () -> onThemeCssError());
+      }
+
+      if (null != oldStyleEl)
+      {
+         document.getBody().replaceChild(currentStyleEl, oldStyleEl);
       }
       else
       {
          document.getBody().appendChild(currentStyleEl);
       }
-      
+
       if (theme.isDark())
       {
          document.getBody().removeClassName("editor_light");
@@ -120,44 +141,10 @@ public class AceThemes
          document.getBody().removeClassName("editor_dark");
          document.getBody().addClassName("editor_light");
       }
-      
-      // Deferred so that the browser can render the styles.
-      new Timer()
-      {
-         @Override
-         public void run()
-         {
-            events_.fireEvent(new EditorThemeChangedEvent(theme));
-            
-            // synchronize the effective background color with the desktop
-            if (Desktop.hasDesktopFrame())
-            {
-               // find 'rstudio_container' element (note that this may not exist
-               // in some satellite windows; e.g. the Git window)
-               Element el = Document.get().getElementById("rstudio_container");
-               if (el == null)
-                  return;
-               
-               Style style = DomUtils.getComputedStyles(el);
-               String color = style.getBackgroundColor();
-               RGBColor parsed = RGBColor.fromCss(color);
-               
-               JsArrayInteger colors = JsArrayInteger.createArray(3).cast();
-               colors.set(0, parsed.red());
-               colors.set(1, parsed.green());
-               colors.set(2, parsed.blue());
-               Desktop.getFrame().setBackgroundColor(colors);
-               Desktop.getFrame().syncToEditorTheme(theme.isDark());
 
-               el = DomUtils.getElementsByClassName("rstheme_toolbarWrapper")[0];
-               style = DomUtils.getComputedStyles(el);
-               color = style.getBackgroundColor();
-               parsed = RGBColor.fromCss(color);
-
-               Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
-            }
-         }
-      }.schedule(100);
+      // NOTE: EditorThemeChangedEvent and desktop color synchronization
+      // are fired from onThemeCssLoaded() once the stylesheet has been
+      // loaded and applied.
    }
 
    private void applyTheme(final AceTheme theme)
@@ -294,10 +281,15 @@ public class AceThemes
       if (StringUtil.isNullOrEmpty(fontName))
          return;
 
-      // Remove a pre-existing font element, if any.
+      // Remove a pre-existing font element, if any. Clear any pending
+      // load handlers first so stale callbacks don't fire after removal.
       Element fontStylesEl = DomUtils.querySelector(document.getBody(), "#" + RSTUDIO_FONTELEMENT_ID);
       if (fontStylesEl != null)
+      {
+         if (LinkElement.is(fontStylesEl))
+            clearCssLoadHandler(LinkElement.as(fontStylesEl));
          fontStylesEl.removeFromParent();
+      }
 
       // Apply the font CSS. Use alternate code paths depending on whether this
       // appears to be a client-side font, versus a server font.
@@ -327,6 +319,17 @@ public class AceThemes
       fontEl.setRel("stylesheet");
       fontEl.setId(RSTUDIO_FONTELEMENT_ID);
       fontEl.setHref(GWT.getHostPageBaseURL() + "fonts/css/" + fontName + ".css");
+
+      // Register the load handler before DOM insertion so that we
+      // don't miss a synchronous onload for cached stylesheets.
+      // Only for the main document, matching the theme CSS pattern.
+      if (Document.get() == document)
+      {
+         setCssLoadHandlers(fontEl,
+            () -> onFontCssLoaded(),
+            () -> onFontCssError());
+      }
+
       document.getBody().appendChild(fontEl);
    }
 
@@ -341,6 +344,111 @@ public class AceThemes
       TextResource fontsCss();
    }
    
+   private native void setCssLoadHandlers(LinkElement link, Runnable onLoad, Runnable onError) /*-{
+      link.onload = $entry(function() {
+         onLoad.@java.lang.Runnable::run()();
+      });
+      link.onerror = $entry(function() {
+         onError.@java.lang.Runnable::run()();
+      });
+   }-*/;
+
+   private native void clearCssLoadHandler(LinkElement link) /*-{
+      link.onload = null;
+      link.onerror = null;
+   }-*/;
+
+   private void onThemeCssLoaded()
+   {
+      // Synchronize the effective background color with the desktop frame.
+      try
+      {
+         syncDesktopThemeColors();
+      }
+      catch (Exception e)
+      {
+         Debug.logWarning("Failed to sync desktop theme colors: " + e.getMessage());
+      }
+
+      fireThemeEvents();
+   }
+
+   private void syncDesktopThemeColors()
+   {
+      if (!Desktop.hasDesktopFrame())
+         return;
+
+      if (currentTheme_ == null)
+         return;
+
+      // find 'rstudio_container' element (note that this may not exist
+      // in some satellite windows; e.g. the Git window)
+      Element el = Document.get().getElementById("rstudio_container");
+      if (el == null)
+         return;
+
+      Style style = DomUtils.getComputedStyles(el);
+      String color = style.getBackgroundColor();
+      RGBColor parsed = RGBColor.fromCss(color);
+
+      JsArrayInteger colors = JsArrayInteger.createArray(3).cast();
+      colors.set(0, parsed.red());
+      colors.set(1, parsed.green());
+      colors.set(2, parsed.blue());
+      Desktop.getFrame().setBackgroundColor(colors);
+      Desktop.getFrame().syncToEditorTheme(currentTheme_.isDark());
+
+      Element[] toolbarEls = DomUtils.getElementsByClassName("rstheme_toolbarWrapper");
+      if (toolbarEls.length == 0)
+         return;
+
+      el = toolbarEls[0];
+      style = DomUtils.getComputedStyles(el);
+      color = style.getBackgroundColor();
+      parsed = RGBColor.fromCss(color);
+
+      Desktop.getFrame().changeTitleBarColor(parsed.red(), parsed.green(), parsed.blue());
+   }
+
+   private void onThemeCssError()
+   {
+      Debug.logWarning("Failed to load Ace theme CSS: " +
+         (currentTheme_ != null ? currentTheme_.getUrl() : "<unknown>"));
+
+      // Fire events even on error so that downstream consumers
+      // (iframe theme variables, client state, desktop frame, etc.)
+      // get default/fallback values rather than remaining permanently stale.
+      fireThemeEvents();
+   }
+
+   private void fireThemeEvents()
+   {
+      if (currentTheme_ != null)
+      {
+         events_.fireEvent(new EditorThemeChangedEvent(currentTheme_));
+      }
+      events_.fireEvent(new ComputeThemeColorsEvent());
+   }
+
+   private void onFontCssLoaded()
+   {
+      // Nothing to do -- font CSS doesn't affect theme colors, and the
+      // theme CSS load handler already fires the necessary events.
+      //
+      // The error handler below fires ComputeThemeColorsEvent because a
+      // font load failure may affect sampled style values, warranting a
+      // recomputation as a precaution.
+   }
+
+   private void onFontCssError()
+   {
+      String fontName = prefs_.get().serverEditorFont().getValue();
+      Debug.logWarning("Failed to load editor font CSS: " +
+         (!StringUtil.isNullOrEmpty(fontName) ? fontName : "<unknown>"));
+
+      events_.fireEvent(new ComputeThemeColorsEvent());
+   }
+
    private AceTheme currentTheme_;
 
    private ThemeServerOperations themeServerOperations_;

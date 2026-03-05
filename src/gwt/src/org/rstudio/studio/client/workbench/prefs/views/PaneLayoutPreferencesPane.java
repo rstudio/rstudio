@@ -919,18 +919,23 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_,
                sidebar, sidebarVisible, sidebarLocation);
 
-         // Defer setting global value when layout changes require browser rendering.
-         // The panes ValueChangeHandler checks getOffsetWidth() which returns 0 before browser
-         // renders the new layout, causing it to resize all columns to 0.
          if (columnCountChanged || sidebarVisibilityChanged || sidebarLocationChanged)
          {
-            // Only refresh sidebar if it was already visible. When showing a hidden sidebar,
-            // the ValueChangeHandler's showSidebar(true) call handles everything. Calling
-            // refreshSidebar() would cause a redundant destroy/recreate cycle that breaks layout.
+            // Write the new config into the pref layer immediately
+            // (without firing events) so that doSaveChanges()
+            // serializes the correct value. The ValueChangeEvent is
+            // fired in the deferred command below, after the browser
+            // has rendered the new layout — this avoids the
+            // getOffsetWidth()==0 problem that collapses columns.
             boolean sidebarWasVisible = prevConfig.getSidebarVisible();
+            userPrefs_.panes().setGlobalValue(newConfig, false);
             Scheduler.get().scheduleDeferred(() ->
             {
-               userPrefs_.panes().setGlobalValue(newConfig);
+               ValueChangeEvent.fire(
+                  userPrefs_.panes(), userPrefs_.panes().getValue());
+               // Only refresh if the sidebar was already showing;
+               // when first made visible, showSidebar(true) in the
+               // ValueChangeHandler handles initialization.
                if (sidebarWasVisible)
                {
                   paneManager_.clearSidebarCache();

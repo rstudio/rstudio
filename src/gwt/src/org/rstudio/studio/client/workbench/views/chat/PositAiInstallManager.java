@@ -49,7 +49,7 @@ public class PositAiInstallManager
       /**
        * Called when an update or initial install is available.
        *
-       * @param currentVersion The currently installed version (empty string if not installed)
+       * @param currentVersion The currently installed version ("0.0.0" if not installed)
        * @param newVersion The version that can be installed
        * @param isInitialInstall True if this is a fresh install, false if it's an update
        */
@@ -59,6 +59,33 @@ public class PositAiInstallManager
        * Called when no compatible version of Posit AI is available for this RStudio version.
        */
       void onIncompatibleVersion();
+
+      /**
+       * Called when the installed version is unsupported and an upgrade is available.
+       *
+       * @param currentVersion The currently installed (unsupported) version
+       * @param newVersion The version to upgrade to
+       */
+      void onUnsupportedVersionUpgradeRequired(
+          String currentVersion, String newVersion);
+
+      /**
+       * Called when the installed version is unsupported and no upgrade is available.
+       *
+       * @param currentVersion The currently installed (unsupported) version
+       */
+      void onUnsupportedVersionNoUpdate(String currentVersion);
+
+      /**
+       * Called when the current RStudio protocol version is unsupported.
+       */
+      void onUnsupportedProtocol();
+
+      /**
+       * Called when the manifest could not be downloaded (network error, missing file, etc.)
+       * and Posit AI cannot verify compatibility.
+       */
+      void onManifestUnavailable();
 
       /**
        * Called when the update check failed (e.g., network error).
@@ -126,7 +153,20 @@ public class PositAiInstallManager
          @Override
          public void onResponseReceived(JsObject result)
          {
-            // Check for incompatible protocol version first
+            boolean manifestUnavailable = result.getBoolean("manifestUnavailable");
+            if (manifestUnavailable)
+            {
+               callback.onManifestUnavailable();
+               return;
+            }
+
+            boolean unsupportedProtocol = result.getBoolean("unsupportedProtocol");
+            if (unsupportedProtocol)
+            {
+               callback.onUnsupportedProtocol();
+               return;
+            }
+
             boolean noCompatibleVersion = result.getBoolean("noCompatibleVersion");
             if (noCompatibleVersion)
             {
@@ -134,8 +174,27 @@ public class PositAiInstallManager
                return;
             }
 
+            boolean unsupportedVersion = result.getBoolean("unsupportedInstalledVersion");
             boolean updateAvailable = result.getBoolean("updateAvailable");
             boolean isInitialInstall = result.getBoolean("isInitialInstall");
+
+            // unsupportedVersion is only true when an actual package is installed
+            // (isVersionUnsupported returns false for "0.0.0"/not-installed)
+            if (unsupportedVersion)
+            {
+               String currentVersion = result.getString("currentVersion");
+               if (updateAvailable)
+               {
+                  String newVersion = result.getString("newVersion");
+                  callback.onUnsupportedVersionUpgradeRequired(
+                      currentVersion, newVersion);
+               }
+               else
+               {
+                  callback.onUnsupportedVersionNoUpdate(currentVersion);
+               }
+               return;
+            }
 
             if (updateAvailable)
             {

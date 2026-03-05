@@ -14,6 +14,7 @@
  */
 
 #include "SessionAssistant.hpp"
+#include "SessionChat.hpp"
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -155,6 +156,7 @@ private:
    boost::posix_time::ptime time_;
 };
 
+// keep in sync with AssistantResponseTypes.AssistantAgentNotRunningReason
 enum class AgentNotRunningReason
 {
    Unknown,
@@ -163,9 +165,10 @@ enum class AgentNotRunningReason
    DisabledViaProjectPreferences,
    DisabledViaGlobalPreferences,
    LaunchError,
+   Unsupported,
 };
 
-// keep in sync with constants in AssistantStatusChangedEvent.java
+// keep in sync with AssistantRuntimeStatusChangedEvent.java
 enum class AgentRuntimeStatus
 {
    Unknown,
@@ -257,6 +260,8 @@ std::string agentNotRunningReason()
          return "AI assistant has been disabled via global preferences.";
       case AgentNotRunningReason::LaunchError:
          return "The AI assistant agent failed to launch: " + s_agentStartupError;
+      case AgentNotRunningReason::Unsupported:
+         return "The installed AI assistant version is no longer supported.";
    }
 
    return "Unknown";
@@ -570,6 +575,13 @@ bool isAssistantEnabled(const std::string& assistantType = "")
    if (!isAgentInstalled(assistant))
    {
       s_agentNotRunningReason = AgentNotRunningReason::NotInstalled;
+      return false;
+   }
+
+   // For Posit AI, block if version/protocol is unsupported or manifest unavailable
+   if (assistant == kAssistantPosit && chat::isPositAiUnsupported())
+   {
+      s_agentNotRunningReason = AgentNotRunningReason::Unsupported;
       return false;
    }
 

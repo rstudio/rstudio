@@ -101,12 +101,19 @@ namespace {
 // Process management
 // ============================================================================
 PidType s_chatBackendPid = -1;
-int s_chatBackendPort = -1;
+int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
+
+// Clear the backend port in both SessionChat and ChatStaticFiles
+void clearChatBackendPort()
+{
+   s_chatBackendPort = constants::kChatBackendPortNone;
+   staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
+}
 
 // Track whether session is closing (vs suspending/restarting)
 static bool s_sessionClosing = false;
@@ -3185,6 +3192,9 @@ struct UpdateState
 {
    bool updateAvailable;
    bool noCompatibleVersion;
+   bool unsupportedInstalledVersion;
+   bool unsupportedProtocol;
+   bool manifestUnavailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -3205,6 +3215,9 @@ struct UpdateState
    UpdateState()
       : updateAvailable(false),
         noCompatibleVersion(false),
+        unsupportedInstalledVersion(false),
+        unsupportedProtocol(false),
+        manifestUnavailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -3340,68 +3353,75 @@ Error downloadManifest(json::Object* pManifest)
       // Validate path ends with manifest.json
       if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
       {
-         WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json', ignoring: {}",
-              debugManifestPath);
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json': " +
+               debugManifestPath,
+            ERROR_LOCATION);
       }
-      else
+
+      FilePath debugManifestFile(debugManifestPath);
+      if (!debugManifestFile.exists())
       {
-         FilePath debugManifestFile(debugManifestPath);
-         if (debugManifestFile.exists())
-         {
-            DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
-
-            // Read and parse JSON from local file
-            std::string manifestContent;
-            Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
-            if (error)
-            {
-               WLOG("Failed to read debug manifest file: {}", error.getMessage());
-               return error;
-            }
-
-            // Parse JSON
-            json::Value manifestValue;
-            if (manifestValue.parse(manifestContent))
-            {
-               WLOG("Failed to parse debug manifest JSON");
-               return systemError(boost::system::errc::protocol_error,
-                                 "Invalid JSON in debug manifest",
-                                 ERROR_LOCATION);
-            }
-
-            if (!manifestValue.isObject())
-            {
-               return systemError(boost::system::errc::protocol_error,
-                                 "Debug manifest must be a JSON object",
-                                 ERROR_LOCATION);
-            }
-
-            *pManifest = manifestValue.getObject();
-            DLOG("Successfully loaded and parsed debug manifest");
-            return Success();
-         }
-         else
-         {
-            WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST file does not exist, ignoring: {}", debugManifestPath);
-         }
+         return systemError(
+            boost::system::errc::no_such_file_or_directory,
+            "Debug manifest file not found: " + debugManifestPath,
+            ERROR_LOCATION);
       }
+
+      DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
+      // Read and parse JSON from local file
+      std::string manifestContent;
+      Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
+      if (error)
+      {
+         WLOG("Failed to read debug manifest file: {}", error.getMessage());
+         return error;
+      }
+
+      // Parse JSON
+      json::Value manifestValue;
+      if (manifestValue.parse(manifestContent))
+      {
+         WLOG("Failed to parse debug manifest JSON");
+         return systemError(boost::system::errc::protocol_error,
+                           "Invalid JSON in debug manifest",
+                           ERROR_LOCATION);
+      }
+
+      if (!manifestValue.isObject())
+      {
+         return systemError(boost::system::errc::protocol_error,
+                           "Debug manifest must be a JSON object",
+                           ERROR_LOCATION);
+      }
+
+      *pManifest = manifestValue.getObject();
+      DLOG("Successfully loaded and parsed debug manifest");
+      return Success();
    }
 #endif
 
-   // Get download URI via redirector
-   std::string downloadUri = "https://www.rstudio.org/links/posit-assistant-manifest";
+   // Get download URI via redirector; use test manifest when opted in
+   std::string downloadUri = options().positAssistantTestManifest()
+      ? "https://www.rstudio.org/links/posit-assistant-manifest-test"
+      : "https://www.rstudio.org/links/posit-assistant-manifest";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
    // Create temp file for download
    FilePath tempFile = module_context::tempFile("manifest", "json");
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- let R use whatever method the
+   // user/admin has configured via options(download.file.method).  Corporate
+   // proxy environments typically set method = "curl" with a --cacert option
+   // in download.file.extra to trust the proxy's CA certificate.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", downloadUri);
    downloadFunc.addParam("destfile", tempFile.getAbsolutePath());
    downloadFunc.addParam("quiet", true);
-   downloadFunc.addParam("method", "libcurl");  // Use libcurl for HTTPS support
    downloadFunc.addParam("timeout", 30);  // 30 second timeout
 
    Error error = downloadFunc.call();
@@ -3627,6 +3647,168 @@ void showRStudioVersionWarning(
    module_context::enqueClientEvent(event);
 }
 
+// Constraints from the manifest's "unsupported" object. Versions below
+// minimumPackageVersion or listed in packageVersions are blocked, as are
+// listed protocol versions.
+struct UnsupportedInfo
+{
+   std::string minimumPackageVersion;
+   std::vector<std::string> packageVersions;
+   std::vector<std::string> protocols;
+};
+
+// Parse the optional "unsupported" object from the manifest.
+// Returns Success() if the key is absent (backwards compat) or parsed OK.
+// Returns an error if the field is present but malformed in a way that
+// would prevent reliable unsupported-version checks.
+Error getUnsupportedInfo(
+    const json::Object& manifest,
+    UnsupportedInfo* pInfo)
+{
+   json::Object::Iterator it = manifest.find("unsupported");
+   if (it == manifest.end())
+      return Success();
+
+   if (!(*it).getValue().isObject())
+   {
+      return systemError(
+         boost::system::errc::invalid_argument,
+         "Manifest 'unsupported' field is not an object",
+         ERROR_LOCATION);
+   }
+
+   json::Object obj = (*it).getValue().getObject();
+
+   // minimumPackageVersion (optional string, must be valid semver if present)
+   json::Object::Iterator minIt = obj.find("minimumPackageVersion");
+   if (minIt != obj.end())
+   {
+      if (!(*minIt).getValue().isString())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not a string",
+            ERROR_LOCATION);
+      }
+
+      std::string minVersion = (*minIt).getValue().getString();
+      SemanticVersion parsed;
+      if (!parsed.parse(minVersion))
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not valid semver: " +
+               minVersion,
+            ERROR_LOCATION);
+      }
+      pInfo->minimumPackageVersion = minVersion;
+   }
+
+   // packageVersions (optional array of strings)
+   json::Object::Iterator pvIt = obj.find("packageVersions");
+   if (pvIt != obj.end())
+   {
+      if (!(*pvIt).getValue().isArray())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.packageVersions' is not an array",
+            ERROR_LOCATION);
+      }
+
+      json::Array arr = (*pvIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->packageVersions.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.packageVersions");
+      }
+   }
+
+   // protocols (optional array of strings)
+   json::Object::Iterator prIt = obj.find("protocols");
+   if (prIt != obj.end())
+   {
+      if (!(*prIt).getValue().isArray())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.protocols' is not an array",
+            ERROR_LOCATION);
+      }
+
+      json::Array arr = (*prIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->protocols.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.protocols");
+      }
+   }
+
+   return Success();
+}
+
+// Check if the installed version is unsupported per the manifest.
+// Returns false for empty/"0.0.0" (not installed yet).
+bool isVersionUnsupported(
+    const std::string& version,
+    const UnsupportedInfo& info)
+{
+   if (version.empty() || version == "0.0.0")
+      return false;
+
+   // Check explicit blocklist (exact string match, so pre-release suffixes
+   // like "1.2.3-beta1" must be listed individually)
+   for (const std::string& blocked : info.packageVersions)
+   {
+      if (version == blocked)
+         return true;
+   }
+
+   // Check minimum version (minimumPackageVersion is validated as parseable
+   // semver by getUnsupportedInfo, so parse failure here means the installed
+   // version has an unusual format — fail closed to be safe)
+   if (!info.minimumPackageVersion.empty())
+   {
+      SemanticVersion installed, minimum;
+      if (!installed.parse(version))
+      {
+         WLOG("Failed to parse installed version '{}' for unsupported check, "
+              "treating as unsupported", version);
+         return true;
+      }
+
+      if (!minimum.parse(info.minimumPackageVersion))
+      {
+         // Should not happen since getUnsupportedInfo validates this
+         WLOG("Failed to parse minimumPackageVersion '{}', "
+              "treating as unsupported", info.minimumPackageVersion);
+         return true;
+      }
+
+      if (installed < minimum)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+// Check if the current protocol version is unsupported
+bool isProtocolUnsupported(const UnsupportedInfo& info)
+{
+   for (const std::string& protocol : info.protocols)
+   {
+      if (protocol == kProtocolVersion)
+         return true;
+   }
+   return false;
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -3665,12 +3847,12 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- see downloadManifest() comment.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", url);
    downloadFunc.addParam("destfile", destPath.getAbsolutePath());
    downloadFunc.addParam("quiet", false);  // Show progress for user feedback
-   downloadFunc.addParam("method", "libcurl");
    downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
    downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
 
@@ -3821,18 +4003,62 @@ void doUpdateCheck()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
    }
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return;
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -3861,10 +4087,22 @@ void doUpdateCheck()
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
+      {
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+      else
+      {
+         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         s_updateState.updateAvailable = true;
+         s_updateState.newVersion = packageVersion;
+         s_updateState.downloadUrl = downloadUrl;
+      }
    }
    else
    {
@@ -3892,7 +4130,10 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
-   s_updateState.currentVersion = installedVersion;
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.currentVersion = installedVersion;
+   }
 
    // Check if we should skip due to throttling
    // Skip check if:
@@ -3908,14 +4149,57 @@ Error checkForUpdatesOnStartup()
    // Record that we attempted an update check (prevents hammering server on failures)
    saveUpdateCheckState();
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
-      // Silent failure - don't block feature usage
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return Success();
+   }
+
+   // Manifest succeeded — clear the failure flag
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.manifestUnavailable = false;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return Success();
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -3931,6 +4215,7 @@ Error checkForUpdatesOnStartup()
       // Check if this is specifically a "protocol not found" error
       if (error.getCode() == boost::system::errc::protocol_not_supported)
       {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
          // Protocol version not in manifest - only block if there's no installed
          // version to fall back on
          if (installedVersion == "0.0.0")
@@ -3940,41 +4225,63 @@ Error checkForUpdatesOnStartup()
          s_updateState.updateAvailable = false;
       }
 
-      // For other errors (network, parsing, etc), do silent failure as before
+      // For non-protocol errors (e.g. missing fields), allow the installed
+      // version to continue running if one exists
       return Success();
    }
 
    // Compare versions - offer install if versions differ (upgrade or downgrade)
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      // Determine if this is an upgrade or downgrade
-      SemanticVersion installed, available;
-      bool isDowngrade = false;
-
-      // These parses should always succeed since shouldInstallVersion validated them
-      if (installed.parse(installedVersion) && available.parse(packageVersion))
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
       {
-         isDowngrade = (available < installed);
-         DLOG("{} available: {} -> {}",
-              isDowngrade ? "Downgrade" : "Update",
-              installedVersion, packageVersion);
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.noCompatibleVersion = true;
+            s_updateState.updateAvailable = false;
+         }
       }
       else
       {
-         // Defensive: this shouldn't happen, but handle gracefully
-         WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-              installedVersion, packageVersion);
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      }
+         // Determine if this is an upgrade or downgrade
+         SemanticVersion installed, available;
+         bool isDowngrade = false;
 
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+         // These parses should always succeed since shouldInstallVersion validated them
+         if (installed.parse(installedVersion) && available.parse(packageVersion))
+         {
+            isDowngrade = (available < installed);
+            DLOG("{} available: {} -> {}",
+                 isDowngrade ? "Downgrade" : "Update",
+                 installedVersion, packageVersion);
+         }
+         else
+         {
+            // Defensive: this shouldn't happen, but handle gracefully
+            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
+                 installedVersion, packageVersion);
+            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         }
+
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.updateAvailable = true;
+            s_updateState.newVersion = packageVersion;
+            s_updateState.downloadUrl = downloadUrl;
+         }
+      }
    }
    else
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
-      s_updateState.updateAvailable = false;
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.updateAvailable = false;
+      }
    }
 
    // Check for recommended RStudio version
@@ -4226,7 +4533,7 @@ void onBackendExit(int exitCode)
 
    // Clear state
    s_chatBackendPid = -1;
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
    s_peerSentCapabilities = false;
@@ -4281,6 +4588,9 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
+
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
    // Build command arguments
@@ -4325,6 +4635,28 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // In server mode, disable embedded origin lockdown since rserver's
+   // proxy authentication and port-token cookies prevent CSWSH.
+   // Desktop mode (the default) locks down CORS and WebSocket origins
+   // to localhost to prevent cross-site WebSocket hijacking.
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      args.push_back("--server-mode");
+   }
+
+   // In desktop mode, allow the chat UI (served by rsession on a different
+   // port) to connect to the databot WebSocket through the origin check.
+   // Not needed in server mode where embedded origin lockdown is disabled.
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string wwwPort = options().wwwPort();
+      if (!wwwPort.empty())
+      {
+         args.push_back("--allowed-origin");
+         args.push_back("http://127.0.0.1:" + wwwPort);
+      }
+   }
+
    // Add resume-conversation flag if resuming after suspend/restart
    if (resumeConversation)
    {
@@ -4335,6 +4667,12 @@ Error startChatBackend(bool resumeConversation)
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
+
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile =
+      session::options().positAssistantSslCertificatesFile();
+   if (!certificatesFile.empty())
+      core::system::setenv(&environment, "NODE_EXTRA_CA_CERTS", certificatesFile);
 
    // Enable Node.js proxy support for fetch().
    // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
@@ -4392,7 +4730,7 @@ Error startChatBackend(bool resumeConversation)
    if (error)
    {
       LOG_ERROR(error);
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
       return error;
    }
 
@@ -4519,7 +4857,7 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
    s_chatBackendPid = -1;
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear busy state
    s_chatBusy = false;
@@ -4625,13 +4963,19 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
+   result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
+   result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
+   result["manifestUnavailable"] = s_updateState.manifestUnavailable;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
    result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
 
-   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}",
-        s_updateState.updateAvailable, s_updateState.noCompatibleVersion);
+   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}, "
+        "unsupportedVersion={}, unsupportedProtocol={}, manifestUnavailable={}",
+        s_updateState.updateAvailable, s_updateState.noCompatibleVersion,
+        s_updateState.unsupportedInstalledVersion, s_updateState.unsupportedProtocol,
+        s_updateState.manifestUnavailable);
 
    pResponse->setResult(result);
    return Success();
@@ -4683,6 +5027,11 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    s_updateState.installStatus = UpdateState::Status::Downloading;
    s_updateState.installMessage = "Downloading update...";
 
+   // Capture values before unlocking — a concurrent doUpdateCheck() could
+   // reset s_updateState while we're downloading
+   std::string downloadUrl = s_updateState.downloadUrl;
+   std::string newVersion = s_updateState.newVersion;
+
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
 
@@ -4696,7 +5045,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
          WLOG("Failed to stop backend: {}", error.getMessage());
       }
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Stop assistant agent (language server) if running - it also uses pai/bin/
@@ -4708,7 +5057,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
    // Download package
    FilePath tempPackage = module_context::tempFile("pai-update", "zip");
-   Error error = downloadPackage(s_updateState.downloadUrl, tempPackage);
+   Error error = downloadPackage(downloadUrl, tempPackage);
 
    if (error)
    {
@@ -4795,8 +5144,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       s_updateState.installStatus = UpdateState::Status::Complete;
       s_updateState.installMessage = "Update complete";
-      s_updateState.updateAvailable = false;  // Clear update flag
-      s_updateState.currentVersion = s_updateState.newVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.currentVersion = newVersion;
    }
 
    pResponse->setResult(json::Value());
@@ -4928,7 +5278,7 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
 
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Clear busy state and JSON-RPC buffer
@@ -5018,7 +5368,7 @@ void onShutdown(bool terminatedNormally)
    }
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear notification queue
    {
@@ -5039,6 +5389,14 @@ bool isSuspendable()
 {
    // Session can suspend if chat backend is NOT busy
    return !s_chatBusy;
+}
+
+bool isPositAiUnsupported()
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   return s_updateState.unsupportedInstalledVersion ||
+          s_updateState.unsupportedProtocol ||
+          s_updateState.manifestUnavailable;
 }
 
 // ============================================================================
