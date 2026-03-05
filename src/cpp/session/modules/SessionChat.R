@@ -64,7 +64,10 @@
 # sensitive system files.
 .rs.setVar("chat.denySystemPatterns", c(
    "^/etc/passwd$",
-   "^/etc/shadow$"
+   "^/etc/shadow$",
+   "^/etc/master\\.passwd$",
+   "^/etc/sudoers$",
+   "^/proc/self/environ$"
 ))
 
 
