@@ -926,19 +926,34 @@ public:
 
          // For a native R style pipe |>, this is only true if we see a '_' at the top level
 
-         bool usesTopLevelPlaceholder;
+         bool usesTopLevelPlaceholder = false;
          if (prevToken.contentEquals(L"|>"))
-            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, "_");
-         else
-            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, ".");
-         if (!usesTopLevelPlaceholder)
          {
+            // For the native pipe |>, the _ placeholder is only
+            // valid as the value of a named argument.
             for (auto&& item : namedArguments)
             {
-               if (item.second == ".")
+               if (item.second == "_")
                {
                   usesTopLevelPlaceholder = true;
                   break;
+               }
+            }
+         }
+         else
+         {
+            // For magrittr's %>%, the . placeholder can appear
+            // as either an unnamed or named argument value.
+            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, ".");
+            if (!usesTopLevelPlaceholder)
+            {
+               for (auto&& item : namedArguments)
+               {
+                  if (item.second == ".")
+                  {
+                     usesTopLevelPlaceholder = true;
+                     break;
+                  }
                }
             }
          }
@@ -1623,7 +1638,7 @@ void handleIdentifier(RTokenCursor& cursor,
                break;
             }
             
-            if (node->getReferencedSymbols().count(symbolName))
+            if (node->getDefinedSymbols().count(symbolName))
             {
                break;
             }
@@ -1725,7 +1740,7 @@ bool closesArgumentList(const RTokenCursor& cursor,
    case ParseStatus::ParseStateParenArgumentList:
       return cursor.isType(RToken::RPAREN);
    case ParseStatus::ParseStateSingleBracketArgumentList:
-      return cursor.isType(RToken::RBRACE);
+      return cursor.isType(RToken::RBRACKET);
    case ParseStatus::ParseStateDoubleBracketArgumentList:
       return cursor.isType(RToken::RDBRACKET);
    default:
@@ -2199,19 +2214,19 @@ void validateGlueCallImpl(RTokenCursor cursor,
          
       case EmbeddedString:
       {
+         // Skip escapes.
+         if (value[it] == '\\')
+         {
+            it += 1;
+            continue;
+         }
+
+         // Check for closing delimiter.
          if (value[it] == stringDelimiter)
          {
             state = previousState;
          }
-         else if (value[it] == '\\')
-         {
-            it += 1;
-            
-            char ch = value[it];
-            if (ch == stringDelimiter)
-               state = previousState;
-         }
-         
+
          continue;
       }
          
@@ -2329,14 +2344,18 @@ void validateFunctionCall(RTokenCursor cursor,
       if (matched.namedArguments().count(".open"))
       {
          std::string value = matched.namedArguments().at(".open");
-         Error error = string_utils::jsonLiteralUnescape(value, &open);
+         std::string unescaped;
+         if (!string_utils::jsonLiteralUnescape(value, &unescaped))
+            open = unescaped;
       }
-      
+
       std::string close = "}";
       if (matched.namedArguments().count(".close"))
       {
          std::string value = matched.namedArguments().at(".close");
-         Error error = string_utils::jsonLiteralUnescape(value, &close);
+         std::string unescaped;
+         if (!string_utils::jsonLiteralUnescape(value, &unescaped))
+            close = unescaped;
       }
       
       validateGlueCall(cursor, status, open, close, keys);
@@ -2659,35 +2678,41 @@ bool handleElseToken(RTokenCursor& cursor,
    if (!cursor.moveToNextSignificantToken())
       return false;
    
-   // The 'else' can consume all non-if control flow statements.
-   while (status.isInControlFlowStatement())
+   // The 'else' can consume all non-if control flow statements
+   // and expressions, then pop the matching 'if' state.
+   while (status.isInControlFlowStatement() ||
+          status.isInControlFlowExpression())
    {
       if (status.isInIfStatementOrExpression())
          break;
-      
+
       status.popState();
    }
-   
-   // TODO: Can we validate that this 'else' was valid?
-   
-   // Now, pop the 'if' state.
-   status.popState();
-   
-   // Interestingly, this construct is _not_ valid at the top level:
-   //
-   //    if (1) 2
-   //    else 3
-   //
-   // but this is okay:
-   //
-   //    {
-   //       if (1) 2
-   //       else 3
-   //    }
-   //
-   // So, if we're now at the top level, this is an error!
-   if (status.isAtTopLevel() && cursor.isFirstSignificantTokenOnLine())
+
+   if (!status.isInIfStatementOrExpression())
+   {
+      // 'else' without a matching 'if'
       status.lint().unexpectedToken(cursor);
+   }
+   else
+   {
+      status.popState();
+      if (status.isAtTopLevel() && cursor.isFirstSignificantTokenOnLine())
+      {
+         // This construct is _not_ valid at the top level:
+         //
+         //    if (1) 2
+         //    else 3
+         //
+         // but this is okay:
+         //
+         //    {
+         //       if (1) 2
+         //       else 3
+         //    }
+         status.lint().unexpectedToken(cursor);
+      }
+   }
    
    // Move after the 'else' token.
    if (!cursor.moveToNextSignificantToken())

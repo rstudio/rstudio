@@ -292,6 +292,7 @@ TEST(DiagnosticsTest, ValidExpressionsGenerateNoLint) {
    EXPECT_NO_LINT("x <- (1)");
    
    EXPECT_NO_LINT("apples <- 42; glue(\"{apples} and {bananas}\", bananas = 24)");
+   EXPECT_NO_LINT("x <- 1; glue(\"{ x + \\\"hello\\\" }\")"); // escaped quotes in glue expression
    EXPECT_NO_LINT("mtcars %>% stats::lm(mpg ~ cyl, data = .)");
    
    EXPECT_NO_LINT("r'())'");
@@ -304,6 +305,62 @@ TEST(DiagnosticsTest, ValidExpressionsGenerateNoLint) {
    EXPECT_NO_LINT("{ .[apple, banana] <- c(1, 2); apple + banana }");
 
    EXPECT_NO_ERRORS("c(warning = function() {}); warning(42)");
+
+   // single bracket argument lists
+   EXPECT_NO_ERRORS("x[]");
+   EXPECT_NO_ERRORS("x[1]");
+   EXPECT_NO_ERRORS("x[1, 2]");
+   EXPECT_NO_ERRORS("x[, 1]");
+   EXPECT_NO_ERRORS("x[1, ]");
+}
+
+TEST(DiagnosticsTest, SymbolRangesDoNotLeakAcrossParseOperations) {
+   // Parse a first expression that would populate the parse tree
+   ParseResults results1 = parse("{ x <- 1; y <- 2; x + y }", s_parseOptions);
+   EXPECT_TRUE(results1.lint().get().empty());
+
+   // A second parse should not see symbols from the first
+   ParseResults results2 = parse("{ x + y }", s_parseOptions);
+
+   // The symbols from the first parse should not leak into the second.
+   // Verify that x and y are unresolved in the second parse.
+   std::vector<ParseItem> unresolved;
+   results2.parseTree()->findAllUnresolvedSymbols(&unresolved);
+   EXPECT_FALSE(unresolved.empty());
+}
+
+TEST(DiagnosticsTest, IsSymbolDefinedButNotUsed) {
+   // Single definition, one self-reference: defined but not used
+   ParseResults results1 = parse("function() { x <- 1 }", s_parseOptions);
+   ParseNode* fnNode1 = results1.parseTree()->getChildren()[0].get();
+   EXPECT_TRUE(fnNode1->isSymbolDefinedButNotUsed("x", false, false));
+
+   // Single definition with a real usage: not "defined but not used"
+   ParseResults results2 = parse("function() { x <- 1; print(x) }", s_parseOptions);
+   ParseNode* fnNode2 = results2.parseTree()->getChildren()[0].get();
+   EXPECT_FALSE(fnNode2->isSymbolDefinedButNotUsed("x", false, false));
+
+   // Multiple definitions, no real usage: defined but not used
+   ParseResults results3 = parse("function() { x <- 1; x <- 2 }", s_parseOptions);
+   ParseNode* fnNode3 = results3.parseTree()->getChildren()[0].get();
+   EXPECT_TRUE(fnNode3->isSymbolDefinedButNotUsed("x", false, false));
+}
+
+TEST(DiagnosticsTest, ParentAssignmentWalksDefinitions) {
+   // x is defined in outer scope; <<- should find it
+   EXPECT_NO_LINT("{ x <- 1; f <- function() { x <<- 2 }; x }");
+}
+
+TEST(DiagnosticsTest, HandleElseTokenDoesNotCorruptState) {
+   // else following if inside braces with subsequent statements
+   EXPECT_NO_ERRORS("{if(1) function(){} else 2; 3}");
+   EXPECT_NO_ERRORS("{if(1) function() function(){} else 2; 3}");
+
+   // nested control flow before else
+   EXPECT_NO_ERRORS("{if(1) while(2) for(i in 3) 4 else 5; 6}");
+
+   // stray else without matching if
+   EXPECT_ERRORS("{1 else 2}");
 }
 
 TEST(DiagnosticsTest, RStudioFilesCanBeSuccessfullyLinted) {
