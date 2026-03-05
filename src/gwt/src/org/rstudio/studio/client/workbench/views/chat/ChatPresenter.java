@@ -471,6 +471,10 @@ public class ChatPresenter extends BasePresenter
             {
                String wsUrl = response.getString("url");
                String authToken = response.hasKey("auth_token") ? response.getString("auth_token") : "";
+               if (authToken.isEmpty())
+               {
+                  Debug.log("Chat backend reported ready but auth_token is missing");
+               }
                boolean resumeChat = response.hasKey("resume_chat") && response.getBoolean("resume_chat");
                loadChatUI(wsUrl, authToken, resumeChat);
             }

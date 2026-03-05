@@ -111,7 +111,7 @@ std::string s_chatBackendAuthToken;
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
 
-// Clear the backend port and auth token in both SessionChat and ChatStaticFiles
+// Clear the backend port (in both SessionChat and ChatStaticFiles) and auth token
 void clearChatBackendPort()
 {
    s_chatBackendPort = constants::kChatBackendPortNone;
