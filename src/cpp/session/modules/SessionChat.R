@@ -63,11 +63,11 @@
 # PCRE patterns matched against normalized paths to deny access to
 # sensitive system files.
 .rs.setVar("chat.denySystemPatterns", c(
-   "^/etc/master\\.passwd$",
-   "^/etc/passwd$",
-   "^/etc/shadow$",
-   "^/etc/sudoers$",
-   "^/proc/self/environ$"
+   "/etc/master\\.passwd$",
+   "/etc/passwd$",
+   "/etc/shadow$",
+   "/etc/sudoers$",
+   "/proc/self/environ$"
 ))
 
 
@@ -233,10 +233,6 @@
 #'   give the reason the read was denied.
 .rs.addFunction("chat.isFileReadAllowed", function(path)
 {
-   # keep the raw path for system pattern matching, since normalization
-   # may resolve symlinks (e.g. /etc -> /private/etc on macOS)
-   rawPath <- path
-
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
 
@@ -253,11 +249,9 @@
    pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
    reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
 
-   # deny reads on sensitive system files; match against both the raw
-   # and normalized paths to handle symlinked system directories
+   # deny reads on sensitive system files
    pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
-   deny <- .rs.chat.pathMatches(pattern, rawPath) | .rs.chat.pathMatches(pattern, path)
-   reasons[deny] <- "File may contain sensitive system information."
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
 
    reasons
 })
@@ -287,10 +281,6 @@
 #'   give the reason the edit was denied.
 .rs.addFunction("chat.isFileEditAllowed", function(path)
 {
-   # keep the raw path for system pattern matching, since normalization
-   # may resolve symlinks (e.g. /etc -> /private/etc on macOS)
-   rawPath <- path
-
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
 
@@ -326,11 +316,9 @@
    pattern <- paste(c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns), collapse = "|")
    reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
 
-   # deny edits on sensitive system files; match against both the raw
-   # and normalized paths to handle symlinked system directories
+   # deny edits on sensitive system files
    pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
-   deny <- .rs.chat.pathMatches(pattern, rawPath) | .rs.chat.pathMatches(pattern, path)
-   reasons[deny] <- "File may contain sensitive system information."
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
 
    reasons
 })
