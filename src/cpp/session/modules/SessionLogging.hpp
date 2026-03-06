@@ -64,6 +64,11 @@ inline std::string logNameFromFile(const char* file)
    return name;
 }
 
+// Runtime stderr log level registry. Allows toggling stderr mirroring
+// for any named section without recompilation.
+int stderrLogLevel(const std::string& section);
+void setStderrLogLevel(const std::string& section, int level);
+
 } // namespace logging
 } // namespace session
 } // namespace rstudio
@@ -150,7 +155,9 @@ const std::string s_logSection(SESSION_LOG_SECTION);
 // DLOG / WLOG / ELOG / ILOG / TLOG: convenience macros using fmt::format
 // with automatic function-name prefix.
 //
-// When SESSION_STDERR_LOG_LEVEL >= 1, output is also mirrored to stderr.
+// Output is mirrored to stderr when either the compile-time
+// SESSION_STDERR_LOG_LEVEL hook >= 1, or the runtime registry
+// (setStderrLogLevel) has been set >= 1 for this section.
 
 #define SESSION_LOG_IMPL_(__LOGGER__, __FMT__, ...)                            \
    do                                                                          \
@@ -158,7 +165,8 @@ const std::string s_logSection(SESSION_LOG_SECTION);
       std::string formatted =                                                  \
           fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__);              \
       __LOGGER__(s_logSection, formatted);                                     \
-      if ((SESSION_STDERR_LOG_LEVEL) >= 1)                                     \
+      if ((SESSION_STDERR_LOG_LEVEL) >= 1 ||                                   \
+          rstudio::session::logging::stderrLogLevel(s_logSection) >= 1)        \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
