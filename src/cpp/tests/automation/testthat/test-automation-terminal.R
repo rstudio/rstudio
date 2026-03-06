@@ -79,7 +79,12 @@ withr::defer(.rs.automation.deleteRemote())
    remote$keyboard.executeShortcut("Enter")
 
    # wait for terminal output before capturing
-   Sys.sleep(1)
+   .rs.waitUntil("terminal output appears", function() {
+      remote$console.executeExpr({
+         ids <- rstudioapi::terminalList()
+         length(ids) > 0 && any(grepl("^2$", rstudioapi::terminalBuffer(ids[[1]])))
+      })
+   }, swallowErrors = TRUE)
 
    remote$commands.execute("sendTerminalToEditor")
    
