@@ -398,5 +398,143 @@ TEST(SharedCoreTest, SymlinksTests)
 
 #endif
 
+TEST(SharedCoreTests, FilePathAlias)
+{
+   // Test basic tilde detection
+   EXPECT_TRUE(FilePath::isAliasedPath("~"));
+   EXPECT_TRUE(FilePath::isAliasedPath("~/"));
+   EXPECT_TRUE(FilePath::isAliasedPath("~/projects"));
+   EXPECT_TRUE(FilePath::isAliasedPath("~/projects/myproject"));
+   EXPECT_TRUE(FilePath::isAliasedPath("~/projects/myproject/file.txt"));
+
+   // Test non-aliased paths
+   EXPECT_FALSE(FilePath::isAliasedPath(""));
+   EXPECT_FALSE(FilePath::isAliasedPath("/home/user/projects"));
+   EXPECT_FALSE(FilePath::isAliasedPath("./relative/path"));
+   EXPECT_FALSE(FilePath::isAliasedPath("../parent/path"));
+   EXPECT_FALSE(FilePath::isAliasedPath("projects"));
+
+   // Test nonsense cases
+   EXPECT_FALSE(FilePath::isAliasedPath("~unsupportedSyntax"));
+   EXPECT_FALSE(FilePath::isAliasedPath("badSyntax~"));
+   EXPECT_FALSE(FilePath::isAliasedPath("/more/bad/syntax/~"));
+   EXPECT_FALSE(FilePath::isAliasedPath("/egregious/~/syntax/"));
+   EXPECT_FALSE(FilePath::isAliasedPath(" ~/leadingSpace"));
+
+#ifdef _WIN32
+   EXPECT_FALSE(FilePath::isAliasedPath("C:\\Users\\user"));
+   EXPECT_FALSE(FilePath::isAliasedPath("C:/Users/user"));
+   EXPECT_TRUE(FilePath::isAliasedPath("~\\Documents"));
+#endif
+}
+
+TEST(SharedCoreTests, ResolveAliasedPath)
+{
+   FilePath userHome = createPath("/home/testuser");
+
+   // Test resolving basic aliased paths
+   FilePath resolved = FilePath::resolveAliasedPath("~", userHome);
+   EXPECT_EQ(userHome, resolved);
+
+   // Test resolving empty path
+   resolved = FilePath::resolveAliasedPath("", userHome);
+   EXPECT_EQ(userHome, resolved);
+
+   // Test resolving paths within user home
+   resolved = FilePath::resolveAliasedPath("~/projects", userHome);
+   EXPECT_EQ(createPath("/home/testuser/projects"), resolved);
+
+   // Test resolving file within user home
+   resolved = FilePath::resolveAliasedPath("~/projects/myproject/file.txt", userHome);
+   EXPECT_EQ(createPath("/home/testuser/projects/myproject/file.txt"), resolved);
+
+   // Test idempotency - resolving an already resolved path
+   FilePath resolved1 = FilePath::resolveAliasedPath("~/projects", userHome);
+   FilePath resolved2 = FilePath::resolveAliasedPath(resolved1.getAbsolutePath(), userHome);
+   EXPECT_EQ(resolved1, resolved2);
+}
+
+TEST(SharedCoreTests, CreateAliasedPath)
+{
+   FilePath userHome = createPath("/home/testuser");
+
+   // Test creating aliased path for user home directory
+   std::string aliased = FilePath::createAliasedPath(userHome, userHome);
+   EXPECT_EQ("~", aliased);
+
+   // Test creating aliased path for subdirectory of user home
+   FilePath projectPath = createPath("/home/testuser/projects");
+   aliased = FilePath::createAliasedPath(projectPath, userHome);
+   EXPECT_EQ("~/projects", aliased);
+
+   FilePath filePath = createPath("/home/testuser/documents/file.txt");
+   aliased = FilePath::createAliasedPath(filePath, userHome);
+   EXPECT_EQ("~/documents/file.txt", aliased);
+
+   // Test creating aliased path for path outside user home
+   FilePath otherPath = createPath("/opt/software");
+   aliased = FilePath::createAliasedPath(otherPath, userHome);
+   EXPECT_EQ(otherPath.getAbsolutePath(), aliased);
+
+   // Test idempotency - creating alias from already aliased path
+   projectPath = createPath("/home/testuser/projects");
+   std::string aliased1 = FilePath::createAliasedPath(projectPath, userHome);
+   FilePath resolved = FilePath::resolveAliasedPath(aliased1, userHome);
+   std::string aliased2 = FilePath::createAliasedPath(resolved, userHome);
+   EXPECT_EQ(aliased1, aliased2);
+
+   // Test idempotency - multiple creates of same path
+   filePath = createPath("/home/testuser/documents/file.txt");
+   aliased1 = FilePath::createAliasedPath(filePath, userHome);
+   aliased2 = FilePath::createAliasedPath(filePath, userHome);
+   EXPECT_EQ(aliased1, aliased2);
+}
+
+TEST(SharedCoreTests, AliasedPathRoundTrip)
+{
+   FilePath userHome = createPath("/home/testuser");
+
+   // Test round trip: original -> aliased -> resolved -> aliased
+   {
+      FilePath original = createPath("/home/testuser/workspace/project");
+
+      std::string aliased = FilePath::createAliasedPath(original, userHome);
+      EXPECT_EQ("~/workspace/project", aliased);
+      EXPECT_TRUE(FilePath::isAliasedPath(aliased));
+
+      FilePath resolved = FilePath::resolveAliasedPath(aliased, userHome);
+      EXPECT_EQ(original, resolved);
+
+      std::string aliasedAgain = FilePath::createAliasedPath(resolved, userHome);
+      EXPECT_EQ(aliased, aliasedAgain);
+   }
+
+   // Test round trip with user home itself
+   {
+      std::string aliased = FilePath::createAliasedPath(userHome, userHome);
+      EXPECT_EQ("~", aliased);
+
+      FilePath resolved = FilePath::resolveAliasedPath(aliased, userHome);
+      EXPECT_EQ(userHome, resolved);
+
+      std::string aliasedAgain = FilePath::createAliasedPath(resolved, userHome);
+      EXPECT_EQ(aliased, aliasedAgain);
+   }
+
+   // Test round trip with path outside user home
+   {
+      FilePath outsidePath = createPath("/usr/local/bin");
+
+      std::string aliased = FilePath::createAliasedPath(outsidePath, userHome);
+      EXPECT_EQ(outsidePath.getAbsolutePath(), aliased);
+      EXPECT_FALSE(FilePath::isAliasedPath(aliased));
+
+      FilePath resolved = FilePath::resolveAliasedPath(aliased, userHome);
+
+      std::string aliasedAgain = FilePath::createAliasedPath(resolved, userHome);
+      EXPECT_EQ(aliased, aliasedAgain);
+   }
+}
+
 } // namespace core
 } // namespace rstudio

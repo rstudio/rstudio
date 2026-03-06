@@ -169,6 +169,15 @@ public:
    static std::string createAliasedPath(const FilePath& in_filePath, const FilePath& in_userHomePath);
 
    /**
+    * @brief Checks whether the specified path string contains the home path alias (~).
+    *
+    * @param in_path   The path string to check.
+    *
+    * @return True if the path starts with "~/" or is exactly "~"; false otherwise.
+    */
+   static bool isAliasedPath(const std::string& in_path);
+
+   /**
     * @brief Checks whether the specified path exists.
     *
     * @param in_filePath       The path to check.

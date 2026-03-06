@@ -471,6 +471,13 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
    }
 }
 
+bool FilePath::isAliasedPath(const std::string& in_path)
+{
+   return !in_path.empty() &&
+          (boost::algorithm::equals(in_path, homePathLeafAlias()) ||
+           boost::algorithm::starts_with(in_path, homePathAlias()));
+}
+
 bool FilePath::exists(const std::string& in_filePath)
 {
    if (in_filePath.empty())
