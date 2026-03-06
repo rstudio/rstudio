@@ -221,6 +221,8 @@ public class YamlTreeTests extends GWTTestCase
             output.contains("toc: true"));
       assertTrue("theme should be preserved",
             output.contains("theme: united"));
+      assertTrue("blank line should be preserved",
+            output.contains("\n\n"));
 
       // theme should still be a child of html_document, not displaced
       List<String> htmlChildren = tree.getChildKeys("html_document");
@@ -247,5 +249,23 @@ public class YamlTreeTests extends GWTTestCase
             paramsPos < commentPos && commentPos < p1Pos);
 
       assertEquals("1", tree.getKeyValue("p1"));
+   }
+
+   public void testBlankLinesAndCommentsInNestedBlock()
+   {
+      String yaml =
+            "params:\n" +
+            "\n" +
+            "  # P1\n" +
+            "  p1: 1\n" +
+            "\n" +
+            "  # P2\n" +
+            "  p2: 2\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      assertEquals("Round-trip should preserve input", yaml, output);
+      assertEquals("1", tree.getKeyValue("p1"));
+      assertEquals("2", tree.getKeyValue("p2"));
    }
 }
