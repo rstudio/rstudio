@@ -473,8 +473,18 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
 
 bool FilePath::isAliasedPath(const std::string& in_path)
 {
-   return in_path == homePathLeafAlias() ||
-          in_path.find(homePathAlias()) == 0;
+   if (in_path == homePathLeafAlias())
+      return true;
+   
+   if (boost::algorithm::starts_with(in_path, homePathAlias()))
+      return true;
+
+#ifdef _WIN32
+   if (boost::algorithm::starts_with(in_path, "~\\"))
+      return true;
+#endif
+
+   return false;
 }
 
 bool FilePath::exists(const std::string& in_filePath)

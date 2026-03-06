@@ -398,7 +398,7 @@ TEST(SharedCoreTest, SymlinksTests)
 
 #endif
 
-TEST(SharedCoreTests, FilePathAlias)
+TEST(SharedCoreTest, FilePathAlias)
 {
    // Test basic tilde detection
    EXPECT_TRUE(FilePath::isAliasedPath("~"));
@@ -428,7 +428,7 @@ TEST(SharedCoreTests, FilePathAlias)
 #endif
 }
 
-TEST(SharedCoreTests, ResolveAliasedPath)
+TEST(SharedCoreTest, ResolveAliasedPath)
 {
    FilePath userHome = createPath("/home/testuser");
 
@@ -454,7 +454,7 @@ TEST(SharedCoreTests, ResolveAliasedPath)
    EXPECT_EQ(resolved1, resolved2);
 }
 
-TEST(SharedCoreTests, CreateAliasedPath)
+TEST(SharedCoreTest, CreateAliasedPath)
 {
    FilePath userHome = createPath("/home/testuser");
 
@@ -490,7 +490,7 @@ TEST(SharedCoreTests, CreateAliasedPath)
    EXPECT_EQ(aliased1, aliased2);
 }
 
-TEST(SharedCoreTests, AliasedPathRoundTrip)
+TEST(SharedCoreTest, AliasedPathRoundTrip)
 {
    FilePath userHome = createPath("/home/testuser");
 
