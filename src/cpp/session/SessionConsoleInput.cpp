@@ -455,7 +455,11 @@ bool rConsoleRead(const std::string& prompt,
 
    if (!pConsoleInput->isNoEcho()) 
    {
-      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = pConsoleInput->console;
+      promptData[kConsoleAgent] = false;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
       clientEventQueue().add(promptEvent);
       enqueueConsoleInput(*pConsoleInput);
    }

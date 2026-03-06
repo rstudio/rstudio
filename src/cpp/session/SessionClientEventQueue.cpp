@@ -241,6 +241,14 @@ void ClientEventQueue::add(const ClientEvent& event)
             flushAllBufferedOutputExcept(event.type());
             bufferedOutputs_[event.type()].append(event.data().getString());
          }
+         else
+         {
+            // Non-string payloads (e.g. JSON with agent metadata) can't be
+            // coalesced into the string buffer. Flush first to preserve
+            // ordering, then add the event directly.
+            flushAllBufferedOutput();
+            pendingEvents_.push_back(event);
+         }
       }
       else if (event.type() == client_events::kBuildOutput &&
                event.data().getType() == json::Type::OBJECT)

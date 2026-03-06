@@ -42,7 +42,12 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputEvent.Ha
    {
       return output_.console;
    }
-   
+
+   public boolean isAgent()
+   {
+      return output_.agent;
+   }
+
    @Override
    protected void dispatch(Handler handler)
    {
