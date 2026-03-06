@@ -232,7 +232,7 @@ public:
 
    bool connectToServer()
    {
-      std::string uri = "http://localhost:" +
+      std::string uri = "http://127.0.0.1:" +
             boost::lexical_cast<std::string>(port_) +
             "/terminal/" + handle_ + "/";
       return connectToServerWithUri(uri);
@@ -496,7 +496,7 @@ TEST(ConsoleProcessSocketTest, ValidateRejectsMalformedUrl) {
    // connect with a URL that has no terminal handle (just a bare slash)
    boost::shared_ptr<SocketClient> pClient =
          boost::make_shared<SocketClient>("", pSocket->port());
-   std::string uri = "http://localhost:" +
+   std::string uri = "http://127.0.0.1:" +
          boost::lexical_cast<std::string>(pSocket->port()) + "/";
    EXPECT_TRUE(pClient->connectToServerWithUri(uri));
 
@@ -518,7 +518,7 @@ TEST(ConsoleProcessSocketTest, ValidateRejectsUrlWithoutTrailingSlash) {
    // connect with a URL missing the required trailing slash
    boost::shared_ptr<SocketClient> pClient =
          boost::make_shared<SocketClient>(handle1, pSocket->port());
-   std::string uri = "http://localhost:" +
+   std::string uri = "http://127.0.0.1:" +
          boost::lexical_cast<std::string>(pSocket->port()) +
          "/terminal/" + handle1;  // no trailing slash
    EXPECT_TRUE(pClient->connectToServerWithUri(uri));
