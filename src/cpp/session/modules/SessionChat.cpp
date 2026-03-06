@@ -51,6 +51,8 @@
 #include <core/system/Xdg.hpp>
 #include <core/Version.hpp>
 
+#include <r/RCntxt.hpp>
+#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
@@ -268,6 +270,65 @@ using chat_installation::getInstalledVersion;
 using chat_staticfiles::handleAIChatRequest;
 
 // Logging functions are now in chat/ChatLogging.hpp/.cpp
+
+// ============================================================================
+// R interface
+// ============================================================================
+
+SEXP rs_chatCallStackFunctions()
+{
+   r::sexp::Protect protect;
+   std::vector<SEXP> functions;
+
+   for (auto ctxt = r::context::RCntxt::begin();
+        ctxt != r::context::RCntxt::end();
+        ctxt++)
+   {
+      if (ctxt->callflag() & CTXT_FUNCTION)
+      {
+         SEXP fn = ctxt->callfun();
+         if (fn != R_NilValue)
+            functions.push_back(fn);
+      }
+   }
+
+   SEXP resultSEXP = Rf_allocVector(VECSXP, functions.size());
+   protect.add(resultSEXP);
+
+   for (std::size_t i = 0; i < functions.size(); i++)
+      SET_VECTOR_ELT(resultSEXP, i, functions[i]);
+
+   return resultSEXP;
+}
+
+SEXP rs_chatNormalizePath(SEXP pathSEXP)
+{
+   std::vector<std::string> paths;
+   Error error = r::sexp::extract(pathSEXP, &paths, true);
+   if (error)
+   {
+      LOG_ERROR(error);
+      int n = r::sexp::length(pathSEXP);
+      r::sexp::Protect protect;
+      SEXP resultSEXP = Rf_allocVector(STRSXP, n);
+      protect.add(resultSEXP);
+      for (int i = 0; i < n; i++)
+         SET_STRING_ELT(resultSEXP, i, R_BlankString);
+      return resultSEXP;
+   }
+
+   for (auto& path : paths)
+   {
+      if (!path.empty())
+      {
+         FilePath filePath(path);
+         path = filePath.getWeaklyCanonicalPath();
+      }
+   }
+
+   r::sexp::Protect protect;
+   return r::sexp::createUtf8(paths, &protect);
+}
 
 // ============================================================================
 // Execution Tracking (for cancellation support)
@@ -5456,6 +5517,8 @@ Error initialize()
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_chatCallStackFunctions);
+   RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);

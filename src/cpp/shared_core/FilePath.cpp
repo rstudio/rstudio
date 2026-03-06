@@ -945,7 +945,10 @@ std::string FilePath::getWeaklyCanonicalPath() const
 
    try
    {
-      return BOOST_FS_PATH2STR(boost::filesystem::weakly_canonical(m_impl->Path));
+      // Apply lexically_normal() so that "." and ".." components in the
+      // non-existent tail are always resolved, regardless of Boost version.
+      return BOOST_FS_PATH2STR(
+         boost::filesystem::weakly_canonical(m_impl->Path).lexically_normal());
    }
    catch (boost::filesystem::filesystem_error& e)
    {
