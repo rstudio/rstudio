@@ -107,14 +107,18 @@ int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
+// Per-session auth token for WebSocket connections (defense-in-depth)
+std::string s_chatBackendAuthToken;
+
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
 
-// Clear the backend port in both SessionChat and ChatStaticFiles
+// Clear the backend port (in both SessionChat and ChatStaticFiles) and auth token
 void clearChatBackendPort()
 {
    s_chatBackendPort = constants::kChatBackendPortNone;
    staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
+   s_chatBackendAuthToken.clear();
 }
 
 // Track whether session is closing (vs suspending/restarting)
@@ -4721,6 +4725,11 @@ Error startChatBackend(bool resumeConversation)
    // Share the port with the static file handler for CSP connect-src
    staticfiles::setChatBackendPort(s_chatBackendPort);
 
+   // Generate per-session auth token for WebSocket authentication.
+   // This is defense-in-depth against local non-browser attackers that
+   // bypass origin checks (malware, browser extensions, local processes).
+   s_chatBackendAuthToken = core::system::generateUuid(false);
+
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
    // Build command arguments
@@ -4809,6 +4818,9 @@ Error startChatBackend(bool resumeConversation)
    // this tells Node.js 22.21+ to route fetch() through the proxy.
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+
+   // Pass per-session auth token for WebSocket authentication
+   core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than
@@ -5014,6 +5026,7 @@ Error chatGetBackendUrl(const json::JsonRpcRequest& request,
    result["url"] = url;
    result["port"] = s_chatBackendPort;
    result["ready"] = (s_chatBackendPid != -1 && !url.empty());
+   result["auth_token"] = s_chatBackendAuthToken;
 
    pResponse->setResult(result);
    return Success();
@@ -5044,6 +5057,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
       std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
       result["url"] = url;
+      result["auth_token"] = s_chatBackendAuthToken;
       result["resume_chat"] = s_resumeChat;
    }
 

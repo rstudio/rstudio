@@ -470,8 +470,13 @@ public class ChatPresenter extends BasePresenter
             if (status.equals("ready"))
             {
                String wsUrl = response.getString("url");
+               String authToken = response.hasKey("auth_token") ? response.getString("auth_token") : "";
+               if (authToken.isEmpty())
+               {
+                  Debug.log("Chat backend reported ready but auth_token is missing");
+               }
                boolean resumeChat = response.hasKey("resume_chat") && response.getBoolean("resume_chat");
-               loadChatUI(wsUrl, resumeChat);
+               loadChatUI(wsUrl, authToken, resumeChat);
             }
             else
             {
@@ -554,7 +559,7 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   private void loadChatUI(String wsUrl, boolean resumeChat)
+   private void loadChatUI(String wsUrl, String authToken, boolean resumeChat)
    {
       // Re-check preference before loading (guards against preference change during polling)
       if (!paiUtil_.isChatProviderPosit())
@@ -568,9 +573,13 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL and timestamp as query parameters to bust cache
+      // Append WebSocket URL, auth token, and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
       String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
+      if (authToken != null && !authToken.isEmpty())
+      {
+         params += "&authToken=" + URL.encodeQueryString(authToken);
+      }
 
       String loadUrl = baseUrl + params;
       if (resumeChat)
