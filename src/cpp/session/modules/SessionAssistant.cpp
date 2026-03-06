@@ -15,6 +15,8 @@
 
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
+
+#include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
 #include <boost/current_function.hpp>
@@ -50,27 +52,6 @@
 #include "SessionLSP.hpp"
 
 #include "session-config.h"
-
-#define _LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                   \
-   {                                                                    \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);    \
-      std::string __formatted__ =                                       \
-          fmt::format("[{}]: {}", __func__, __message__);               \
-      __LOGGER__("assistant", __formatted__);                           \
-      if (assistantLogLevel() >= 1)                                     \
-         std::cerr << __formatted__ << std::endl;                       \
-   } while (0)
-
-#define DLOG(__FMT__, ...) _LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) _LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) _LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-
-// Use a default section of 'assistant' for errors / warnings
-#ifdef LOG_ERROR
-# undef LOG_ERROR
-# define LOG_ERROR(error) LOG_ERROR_NAMED("assistant", error)
-#endif
 
 #define kAssistantDefaultDocumentVersion (0)
 #define kMaxIndexingFileSize (1048576)
@@ -1121,9 +1102,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    if (s_isSessionShuttingDown)
       return;
 
-   LOG_ERROR_MESSAGE_NAMED("assistant", stdErr);
-   if (assistantLogLevel() >= 1)
-      std::cerr << stdErr << std::endl;
+   LOG_ERROR_MESSAGE(stdErr);
  
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
@@ -1147,6 +1126,8 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 
 void onError(ProcessOperations& operations, const Error& error)
 {
+   ELOG("Agent process error: {}", error.getMessage());
+   s_agentStartupError = error.getMessage();
    s_agentPid = -1;
    s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
@@ -1154,6 +1135,11 @@ void onError(ProcessOperations& operations, const Error& error)
 
 void onExit(int status)
 {
+   if (status != 0)
+      WLOG("Agent process exited with status {}.", status);
+   else
+      DLOG("Agent process exited normally.");
+
    s_agentPid = -1;
    s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
@@ -1231,10 +1217,18 @@ Error startAgent(const std::string& assistantType = "")
    FilePath nodePath;
    error = node_tools::findNode(&nodePath, "rstudio.copilot.nodeBinaryPath");
    if (error)
+   {
+      ELOG("Failed to find node.js: {}", error.getMessage());
       return error;
+   }
 
    if (!nodePath.exists())
+   {
+      ELOG("node.js path '{}' does not exist.", nodePath.getAbsolutePath());
       return fileNotFoundError("node", ERROR_LOCATION);
+   }
+
+   DLOG("Using node.js at '{}'.", nodePath.getAbsolutePath());
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -1323,6 +1317,7 @@ Error startAgent(const std::string& assistantType = "")
    
    if (error)
    {
+      ELOG("Failed to launch {} agent: {}", assistant, error.getMessage());
       setAgentRuntimeStatus(AgentRuntimeStatus::Unknown);
       return error;
    }
@@ -1337,6 +1332,8 @@ Error startAgent(const std::string& assistantType = "")
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
+      ELOG("Agent startup timed out [node='{}', stderr='{}'].",
+           nodePath.getAbsolutePath(), s_agentStartupError);
       s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
@@ -1984,6 +1981,7 @@ SEXP rs_assistantSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
    s_assistantLogLevel = logLevel;
+   rstudio::session::logging::setStderrLogLevel("assistant", logLevel);
    return logLevelSEXP;
 }
 
@@ -2670,7 +2668,10 @@ Error initialize()
       assistantLogLevel = core::system::getenv("AI_LOG_LEVEL");
 
    if (!assistantLogLevel.empty())
+   {
       s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
+      rstudio::session::logging::setStderrLogLevel("assistant", s_assistantLogLevel);
+   }
    
    // Read project options
    if (projects::projectContext().hasProject())

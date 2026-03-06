@@ -82,12 +82,6 @@
 
 #include "session-config.h"
 
-// Use a default section of 'chat' for errors / warnings
-#ifdef LOG_ERROR
-# undef LOG_ERROR
-# define LOG_ERROR(error) LOG_ERROR_NAMED("chat", error)
-#endif
-
 using namespace rstudio::core;
 using namespace rstudio::core::system;
 using namespace rstudio::session::module_context;
