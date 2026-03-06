@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import java.util.List;
+
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class YamlTreeTests extends GWTTestCase
@@ -202,5 +204,30 @@ public class YamlTreeTests extends GWTTestCase
       int authorPos = output.indexOf("author:");
       assertTrue("Ordering should be preserved",
             titlePos < commentPos && commentPos < authorPos);
+   }
+
+   public void testNestedBlankLinePreservesTreeStructure()
+   {
+      String yaml =
+            "output:\n" +
+            "  html_document:\n" +
+            "    toc: true\n" +
+            "\n" +
+            "    theme: united\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      assertTrue("toc should be preserved",
+            output.contains("toc: true"));
+      assertTrue("theme should be preserved",
+            output.contains("theme: united"));
+
+      // theme should still be a child of html_document, not displaced
+      List<String> htmlChildren = tree.getChildKeys("html_document");
+      assertNotNull("html_document should have children", htmlChildren);
+      assertTrue("toc should be a child of html_document",
+            htmlChildren.contains("toc"));
+      assertTrue("theme should be a child of html_document",
+            htmlChildren.contains("theme"));
    }
 }

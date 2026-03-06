@@ -33,21 +33,21 @@ public class YamlTree
    {
       public YamlTreeNode(String line)
       {
+         // detect comment and blank lines before extracting key, so that
+         // comments with colons (e.g. "# Note: important") don't produce
+         // bogus keys, and blank lines are preserved in position
+         String trimmed = line.trim();
+         isCommentOrBlank = trimmed.isEmpty() || trimmed.startsWith("#");
+
          // the YAML package outputs tildes to represent null values; these
          // are valid YAML but "null" is easier to read for R users
-         if (line.endsWith(": ~"))
+         if (!isCommentOrBlank && line.endsWith(": ~"))
          {
             line = StringUtil.substring(line, 0, line.length() - 1) + "null";
          }
          yamlLine = line;
 
-         // detect comment and blank lines before extracting key, so that
-         // comments with colons (e.g. "# Note: important") don't produce
-         // bogus keys, and blank lines are preserved in position
-         String trimmed = line.trim();
-         isComment = trimmed.isEmpty() || trimmed.startsWith("#");
-
-         key = isComment ? "" : getKey(line);
+         key = isCommentOrBlank ? "" : getKey(line);
          indentLevel = getIndentLevel();
       }
       
@@ -58,7 +58,7 @@ public class YamlTree
          // if this node has a key or is a comment, add it as a tree node;
          // otherwise, add its line data to this node (as a multi-line
          // continuation)
-         if (child.key.length() > 0 || child.isComment)
+         if (child.key.length() > 0 || child.isCommentOrBlank)
          {
             children.add(child);
             child.parent = this;
@@ -131,7 +131,7 @@ public class YamlTree
       public String yamlLine;
       public String key;
       public int indentLevel = 0;
-      public boolean isComment = false;
+      public boolean isCommentOrBlank = false;
       public YamlTreeNode parent = null;
       public List<YamlTreeNode> children = new ArrayList<>();
       
@@ -170,20 +170,29 @@ public class YamlTree
          return;
       YamlTreeNode parent = keyMap_.get(orderedKeys.get(0)).parent;
       
-      // Move around subtrees to match the given list of ordered keys 
-      // (swap subtrees into a position matching that specified)
+      // Move around subtrees to match the given list of ordered keys
+      // (swap subtrees into a position matching that specified);
+      // skip over comment/blank nodes so they stay in place
+      int targetPos = 0;
       for (int i = 0; i < orderedKeys.size(); i++)
       {
-         for (int j = i; j < parent.children.size(); j++)
+         while (targetPos < parent.children.size() &&
+                parent.children.get(targetPos).isCommentOrBlank)
+         {
+            targetPos++;
+         }
+
+         for (int j = targetPos; j < parent.children.size(); j++)
          {
             YamlTreeNode child = parent.children.get(j);
             if (orderedKeys.get(i) == child.key)
             {
-               YamlTreeNode previousChild = parent.children.get(i);
-               parent.children.set(i, child);
+               YamlTreeNode previousChild = parent.children.get(targetPos);
+               parent.children.set(targetPos, child);
                parent.children.set(j, previousChild);
             }
          }
+         targetPos++;
       }
    }
 
@@ -197,7 +206,8 @@ public class YamlTree
          ArrayList<String> result = new ArrayList<>();
          for (YamlTreeNode child: parent.children)
          {
-            result.add(child.key);
+            if (!child.isCommentOrBlank)
+               result.add(child.key);
          }
          return result;
       }
@@ -373,6 +383,16 @@ public class YamlTree
       for (String line: lines)
       {
          YamlTreeNode child = new YamlTreeNode(line);
+
+         // comment and blank nodes are added to the current parent but
+         // don't affect tree-building state, so subsequent real nodes
+         // see the same context as if the comment/blank wasn't there
+         if (child.isCommentOrBlank)
+         {
+            currentParent.addChild(child);
+            continue;
+         }
+
          if (child.indentLevel > currentIndentLevel)
          {
             // Descending: we're recording children of the previous line
@@ -388,7 +408,7 @@ public class YamlTree
             }
             while (currentParent != null &&
                    currentParent.indentLevel >= child.indentLevel);
-            
+
             // if we unwound all the way to the top, use the root as the parent
             if (currentParent == null)
                currentParent = root;
@@ -421,7 +441,7 @@ public class YamlTree
          // add this key if it doesn't already exist, or if it does exist and
          // this key is closer to the root than the existing key;
          // skip comment nodes as they don't have real keys
-         if (key.length() > 0 && !child.isComment &&
+         if (key.length() > 0 && !child.isCommentOrBlank &&
              (!output.containsKey(key) ||
               child.indentLevel < output.get(key).indentLevel))
          {
