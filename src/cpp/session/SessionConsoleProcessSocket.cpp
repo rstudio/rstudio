@@ -19,7 +19,6 @@
 
 #include <boost/make_shared.hpp>
 
-#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/http/URL.hpp>
@@ -164,23 +163,8 @@ Error ConsoleProcessSocket::ensureServerRunning()
                // be reachable from the network; in server mode the rserver
                // proxy handles external connections, and in desktop mode
                // only the local Electron client needs access
-               //
-               // note: on Linux, binding to ::1 may not accept IPv4
-               // connections depending on the IPV6_V6ONLY sysctl setting,
-               // so we prefer IPv4 loopback and only use IPv6 on systems
-               // that lack IPv4 (detected via /proc/net/if_inet6)
-#if !defined(_WIN32) && !defined(__APPLE__)
-               if (core::FilePath("/proc/net/if_inet6").exists())
-               {
-                  pwsServer_->listen(boost::asio::ip::address_v6::loopback(),
-                                     static_cast<uint16_t>(port));
-               }
-               else
-#endif
-               {
-                  pwsServer_->listen(boost::asio::ip::address_v4::loopback(),
-                                     static_cast<uint16_t>(port));
-               }
+               pwsServer_->listen(boost::asio::ip::address_v4::loopback(),
+                                  static_cast<uint16_t>(port));
             }
 
             pwsServer_->start_accept();
