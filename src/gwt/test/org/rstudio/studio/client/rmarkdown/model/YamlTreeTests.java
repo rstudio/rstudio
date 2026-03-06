@@ -230,4 +230,22 @@ public class YamlTreeTests extends GWTTestCase
       assertTrue("theme should be a child of html_document",
             htmlChildren.contains("theme"));
    }
+
+   public void testCommentAsFirstChildPreserved()
+   {
+      String yaml =
+            "params:\n" +
+            "  # P1\n" +
+            "  p1: 1\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      int paramsPos = output.indexOf("params:");
+      int commentPos = output.indexOf("# P1");
+      int p1Pos = output.indexOf("p1:");
+      assertTrue("Comment should be between params and p1",
+            paramsPos < commentPos && commentPos < p1Pos);
+
+      assertEquals("1", tree.getKeyValue("p1"));
+   }
 }

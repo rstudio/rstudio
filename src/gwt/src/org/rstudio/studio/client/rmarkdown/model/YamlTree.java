@@ -384,12 +384,37 @@ public class YamlTree
       {
          YamlTreeNode child = new YamlTreeNode(line);
 
-         // comment and blank nodes are added to the current parent but
-         // don't affect tree-building state, so subsequent real nodes
-         // see the same context as if the comment/blank wasn't there
+         // comment and blank nodes don't affect tree-building state, so
+         // subsequent real nodes see the same context as if the
+         // comment/blank wasn't there; comments use the indent logic to
+         // find the right parent, while blank lines (indent 0 regardless
+         // of context) just attach to the current parent
          if (child.isCommentOrBlank)
          {
-            currentParent.addChild(child);
+            if (child.yamlLine.trim().isEmpty())
+            {
+               currentParent.addChild(child);
+            }
+            else
+            {
+               YamlTreeNode commentParent = currentParent;
+               if (child.indentLevel > currentIndentLevel)
+               {
+                  commentParent = lastNode;
+               }
+               else if (child.indentLevel < currentIndentLevel)
+               {
+                  do
+                  {
+                     commentParent = commentParent.parent;
+                  }
+                  while (commentParent != null &&
+                         commentParent.indentLevel >= child.indentLevel);
+                  if (commentParent == null)
+                     commentParent = root;
+               }
+               commentParent.addChild(child);
+            }
             continue;
          }
 
