@@ -421,4 +421,5 @@ For branch naming:
 - When opening an issue, always add the label `new`
 - If the issue describes a bug, add the label `bug`
 - If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
- 
+- These labels apply to issues only, not to pull requests
+
