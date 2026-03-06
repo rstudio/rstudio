@@ -20,15 +20,14 @@
 #include <iostream>
 #include <string>
 
-#include <core/Log.hpp>
 #include <fmt/format.h>
 
-namespace rstudio
-{
-namespace session
-{
-namespace logging
-{
+#include <core/Log.hpp>
+
+
+namespace rstudio {
+namespace session {
+namespace logging {
 
 // Derives a log section name from __FILE__.
 // Strips the directory, removes a "Session" prefix if present,
