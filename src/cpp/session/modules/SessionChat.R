@@ -17,32 +17,72 @@
 # misuse and unintentionally destructive AI-generated code. They should
 # not be relied upon to defend against deliberately malicious code.
 
+# Base package names, excluded from "trusted caller" detection
+# because the agent could call them directly to access files.
+.rs.setVar("chat.basePackages", rownames(
+   installed.packages(priority = "base", lib.loc = .Library)
+))
+
+
 # Each hooked namespace gets its own environment within this container,
 # keyed by the namespace name. The per-namespace environment maps
 # binding names to their original values.
 .rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
 .rs.setVar("chat.bindingsInjected", FALSE)
 
+
 # PCRE patterns matched against normalized paths to deny reads.
 # Paths are always absolute and normalized before matching.
+#
+# NOTE: The primary defense against credential file reads is the file
+# permission check in isFileReadAllowed (denying files without world-
+# readable permissions). These patterns are defense-in-depth for common
+# credential paths, in case file permissions are misconfigured.
 .rs.setVar("chat.denyReadPatterns", c(
-   
+
    # Deny files that are likely to contain credentials
    "/\\.aws/credentials$",
    "/\\.aws/config$",
    "/\\.netrc$",
    "/\\.npmrc$",
    "/\\.ssh/config$",
-   
-   # Deny files like .env, .env.local, and so on.
+
+   # Deny container/cloud credential directories
+   "/\\.docker(/|$)",
+   "/\\.kube(/|$)",
+
+   # Deny cloud provider credential directories
+   "/\\.config/gcloud(/|$)",
+   "/\\.azure(/|$)",
+
+   # Deny GPG private keys
+   "/\\.gnupg(/|$)",
+
+   # Deny package registry credential files
+   "/\\.pypirc$",
+   "/\\.gem/credentials$",
+
+   # Deny database credential files
+   "/\\.pgpass$",
+   "/\\.my(login)?\\.cnf$",
+
+   # Deny git credential store
+   "/\\.git-credentials$",
+
+   # Deny CLI/API token files
+   "/\\.config/gh/hosts\\.ya?ml$",
+   "/\\.huggingface/token$",
+
+   # Deny files like .env, .env.local, .Renviron, .Rprofile, and so on.
    "/\\.env(\\.|$)",
    "/\\.Renviron(\\.|$)",
    "/\\.Rprofile(\\.|$)",
-   
+
    # Deny access to non-public files within the .ssh directory.
    "/\\.ssh/id.*(?<!\\.pub)$"
    
 ))
+
 
 # PCRE patterns matched against normalized paths to deny edits.
 # Note that file edits are disallowed by default, except for files within
@@ -50,6 +90,9 @@
 # - The R temporary directory
 # - The project directory (when a project is open)
 # - The current working directory
+# - The RStudio scratch path
+# - R library paths (.libPaths())
+# - R user directories (data, config, cache)
 #
 # This list serves to deny edits for certain files even if they're within
 # one of the above 'allowed' directories.
@@ -118,41 +161,6 @@
    })
 })
 
-.rs.addFunction("chat.restoreBindings", function()
-{
-   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
-   allRestored <- TRUE
-
-   for (package in packages)
-   {
-      originals <- .rs.chat.hookedBindings[[package]]
-      bindings <- ls(envir = originals, all.names = TRUE)
-
-      for (binding in bindings)
-      {
-         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
-         if (inherits(status, "error"))
-         {
-            warning(sprintf(
-               "failed to restore binding '%s' in '%s': %s",
-               binding, package, conditionMessage(status)
-            ))
-            allRestored <- FALSE
-         }
-         else
-         {
-            rm(list = binding, envir = originals)
-         }
-      }
-
-      # only remove the package entry if all bindings were restored
-      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
-         rm(list = package, envir = .rs.chat.hookedBindings)
-   }
-
-   if (allRestored)
-      .rs.setVar("chat.bindingsInjected", FALSE)
-})
 
 #' Match paths against a pattern.
 #'
@@ -176,39 +184,75 @@
 #' @param directory A single directory path.
 .rs.addFunction("chat.isPathWithin", function(path, directory)
 {
+   # guard against empty, root, or bare Windows drive root directory,
+   # any of which would match all (or nearly all) paths
+   if (!nzchar(directory) || directory == "/" || grepl("^[A-Za-z]:/?$", directory))
+      return(rep.int(FALSE, length(path)))
+
    pattern <- paste0("^\\Q", directory, "\\E(/|$)")
    .rs.chat.pathMatches(pattern, path)
 })
 
 #' Normalize file paths for use in guardrail path comparisons.
 #'
-#' For existing paths, delegates to `normalizePath()`. For non-existing
-#' paths, normalizes the dirname and appends the basename. Rejects paths
-#' containing unresolved '..' components to prevent path traversal.
+#' Expands leading '~' via `path.expand()`, then uses Boost filesystem to
+#' resolve symlinks, normalize separators to '/', and remove '.' and '..'
+#' components.
 #'
 #' @param path A character vector of file paths.
 .rs.addFunction("chat.normalizePath", function(path)
 {
-   exists <- file.exists(path)
+   path[is.na(path)] <- ""
+   .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
+})
 
-   path[exists] <- normalizePath(path[exists], winslash = "/", mustWork = TRUE)
+#' Check whether a list of functions contains one from a non-base package.
+#'
+#' Given a list of functions (typically extracted from the call stack),
+#' returns `TRUE` if any function's environment is a non-base, non-recommended
+#' package namespace. When such a function is found, the call is considered
+#' "trusted" -- package code legitimately accessing files should not be
+#' blocked by the credential-path deny list.
+#'
+#' Base packages are excluded because they are
+#' general-purpose utilities that the agent could call directly to
+#' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
+#'
+#' @param fns A list of functions to check.
+#' @return `TRUE` if a non-base package namespace is found.
+.rs.addFunction("chat.isCalledFromPackageImpl", function(fns)
+{
+   basePkgs <- .rs.chat.basePackages
 
-   path[!exists] <- file.path(
-      normalizePath(dirname(path[!exists]), winslash = "/", mustWork = FALSE),
-      basename(path[!exists])
-   )
+   for (fn in fns)
+   {
+      envir <- environment(fn)
+      if (is.null(envir))
+         next
 
-   # Reject paths that still contain '..' after normalization, since
-   # normalizePath(mustWork = FALSE) won't resolve '..' when the parent
-   # directory doesn't exist, which could allow path traversal.
-   unresolved <- grepl("(?:^|/)\\.\\.(?:/|$)", path)
-   if (any(unresolved))
-      stop(sprintf(
-         "path contains unresolved '..' components: %s",
-         paste(path[unresolved], collapse = ", ")
-      ))
+      if (!isNamespace(envir))
+         next
 
-   path
+      pkg <- getNamespaceName(envir)
+      if (pkg %in% basePkgs)
+         next
+
+      return(TRUE)
+   }
+
+   FALSE
+})
+
+#' Check whether the current call originates from a non-base package.
+#'
+#' Collects the functions on the call stack and delegates to
+#' `.rs.chat.isCalledFromPackageImpl()`.
+#'
+#' @return `TRUE` if a non-base package namespace is on the call stack.
+.rs.addFunction("chat.isCalledFromPackage", function()
+{
+   fns <- .Call("rs_chatCallStackFunctions", PACKAGE = "(embedding)")
+   .rs.chat.isCalledFromPackageImpl(fns)
 })
 
 #' Check whether reading the given paths is allowed.
@@ -217,9 +261,14 @@
 #' world-readable permissions, match well-known sensitive path
 #' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
 #'
+#' When `trusted` is `TRUE` (i.e. the call originates from a
+#' non-base package), the deny-pattern check is skipped so that
+#' package code can legitimately access credential files.
+#'
 #' @param path A character vector of file paths.
+#' @param trusted Whether to skip the deny-pattern check.
 #' @return A logical vector the same length as `path`.
-.rs.addFunction("chat.isFileReadAllowed", function(path)
+.rs.addFunction("chat.isFileReadAllowed", function(path, trusted = FALSE)
 {
    # normalize path for comparison
    path <- .rs.chat.normalizePath(path)
@@ -234,8 +283,12 @@
    ok[which(deny)] <- FALSE
 
    # deny reads matching sensitive path patterns
-   pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
-   ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   # (skip for trusted callers, i.e. non-base package code)
+   if (!trusted)
+   {
+      pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
+      ok[.rs.chat.pathMatches(pattern, path)] <- FALSE
+   }
 
    ok
 })
@@ -256,8 +309,9 @@
 #'
 #' Edits are denied by default, but allowed within the R temporary
 #' directory, the active project directory, the current working
-#' directory, and the RStudio user scratch path. Edits within
-#' sensitive directories (e.g. `~/.ssh`) are always denied.
+#' directory, the RStudio user scratch path, R library paths, and
+#' R user directories (data, config, cache). Edits within sensitive
+#' directories (e.g. `~/.ssh`) are always denied.
 #'
 #' @param path A character vector of file paths.
 #' @return A logical vector the same length as `path`.
@@ -270,25 +324,45 @@
    ok <- rep.int(FALSE, length(path))
 
    # allow edits within the R temporary directory
-   tempDir <- normalizePath(tempdir(), winslash = "/", mustWork = TRUE)
+   tempDir <- .rs.chat.normalizePath(tempdir())
    ok[.rs.chat.isPathWithin(path, tempDir)] <- TRUE
 
    # allow edits within the project directory
    projectDir <- .rs.getProjectDirectory()
    if (!is.null(projectDir))
    {
-      projectDir <- normalizePath(projectDir, winslash = "/", mustWork = TRUE)
+      projectDir <- .rs.chat.normalizePath(projectDir)
       ok[.rs.chat.isPathWithin(path, projectDir)] <- TRUE
    }
 
    # allow edits within the current working directory
-   workingDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
+   workingDir <- .rs.chat.normalizePath(getwd())
    ok[.rs.chat.isPathWithin(path, workingDir)] <- TRUE
 
    # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
    # since tool-invoked code may update files there
    scratchDir <- .rs.chat.userScratchPath()
    ok[.rs.chat.isPathWithin(path, scratchDir)] <- TRUE
+
+   # allow edits within R library paths (e.g. for package installation)
+   for (libPath in .libPaths())
+   {
+      libPath <- .rs.chat.normalizePath(libPath)
+      ok[.rs.chat.isPathWithin(path, libPath)] <- TRUE
+   }
+
+   # allow edits within R user directories (data, config, cache),
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
+   # Use dirname() to obtain the parent directory from a dummy package name.
+   # tools::R_user_dir was introduced in R 4.0.0.
+   if (getRversion() >= "4.0.0")
+   {
+      for (which in c("data", "config", "cache"))
+      {
+         rDir <- .rs.chat.normalizePath(dirname(tools::R_user_dir("_", which = which)))
+         ok[.rs.chat.isPathWithin(path, rDir)] <- TRUE
+      }
+   }
 
    # deny edits matching sensitive path patterns (both read and edit
    # deny lists apply, since edits should be at least as restrictive)
@@ -311,7 +385,8 @@
 
 .rs.addFunction("chat.validateFileRead", function(action, path)
 {
-   ok <- .rs.chat.isFileReadAllowed(path)
+   trusted <- .rs.chat.isCalledFromPackage()
+   ok <- .rs.chat.isFileReadAllowed(path, trusted = trusted)
    if (all(ok))
       return(TRUE)
 
@@ -362,8 +437,8 @@
          # Block recursive deletes in the user's home directory
          if ("*" %in% x)
          {
-            workDir <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-            homeDir <- normalizePath("~", winslash = "/", mustWork = TRUE)
+            workDir <- .rs.chat.normalizePath(getwd())
+            homeDir <- .rs.chat.normalizePath("~")
             if (identical(workDir, homeDir))
             {
                msg <- "denied agent from executing unlink(\"*\") on user home directory"
@@ -620,6 +695,43 @@
    invisible(TRUE)
 })
 
+.rs.addFunction("chat.restoreBindings", function()
+{
+   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+   allRestored <- TRUE
+   
+   for (package in packages)
+   {
+      originals <- .rs.chat.hookedBindings[[package]]
+      bindings <- ls(envir = originals, all.names = TRUE)
+      
+      for (binding in bindings)
+      {
+         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+         if (inherits(status, "error"))
+         {
+            warning(sprintf(
+               "failed to restore binding '%s' in '%s': %s",
+               binding, package, conditionMessage(status)
+            ))
+            allRestored <- FALSE
+         }
+         else
+         {
+            rm(list = binding, envir = originals)
+         }
+      }
+      
+      # only remove the package entry if all bindings were restored
+      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+         rm(list = package, envir = .rs.chat.hookedBindings)
+   }
+   
+   if (allRestored)
+      .rs.setVar("chat.bindingsInjected", FALSE)
+})
+
+
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
@@ -689,11 +801,7 @@
    if (dev.cur() <= 1)
       return(NULL)
 
-   tryCatch({
-      recordPlot()
-   }, error = function(e) {
-      NULL
-   })
+   tryCatch(recordPlot(), error = function(e) NULL)
 })
 
 # Capture the current plot, but only if plotting occurred since the given
