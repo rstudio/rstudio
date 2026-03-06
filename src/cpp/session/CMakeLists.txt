@@ -381,6 +381,7 @@ set(SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
+   projects/SessionProjectsOverlay.cpp
    "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
 )
 
