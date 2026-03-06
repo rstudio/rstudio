@@ -183,7 +183,6 @@
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
-#include "modules/SessionLogging.hpp"
 #include "modules/SessionUserPrefs.hpp"
 #include "modules/automation/SessionAutomation.hpp"
 #include "modules/build/SessionBuild.hpp"
@@ -248,6 +247,18 @@
 #include "session-config.h"
 
 #include <tests/TestRunner.hpp>
+
+// Forward declare to avoid pulling in SessionLogging.hpp, which
+// redefines logging macros for section tagging.
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace logging {
+core::Error initialize();
+} // namespace logging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
 
 using namespace rstudio;
 using namespace rstudio::core;

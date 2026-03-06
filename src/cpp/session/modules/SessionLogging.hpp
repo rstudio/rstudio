@@ -39,8 +39,8 @@ namespace logging
 {
 
 // Derives a log section name from __FILE__.
-// Strips the directory, removes a "Session" prefix if present,
-// strips the file extension, and lowercases the result.
+// Strips the directory, strips the file extension, removes a
+// "Session" prefix if present, and lowercases the result.
 //
 // Examples:
 //   "src/cpp/session/modules/SessionAssistant.cpp" -> "assistant"
