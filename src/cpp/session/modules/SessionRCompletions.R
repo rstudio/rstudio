@@ -1079,8 +1079,228 @@ assign(x = ".rs.acCompletionTypes",
    
    result <- .rs.appendCompletions(result, ggplotCompletions)
    
+   # If the function has `...` in its formals and the package author used
+   # @inheritDotParams, expand those documented dot-arguments into named
+   # completions, as if they were native arguments of the wrapper.
+   # NOTE: formals$formals is token-filtered by resolveFormals and values are
+   # formatted as "name = ", so check for "... = " first (fast path), then
+   # fall back to formals(object) if the token filtered it out.
+   hasDots <- "... = " %in% formals$formals
+   if (!hasDots)
+      hasDots <- tryCatch("..." %in% names(formals(object)), error = function(e) FALSE)
+   if (hasDots)
+   {
+      result <- .rs.appendCompletions(
+         result,
+         .rs.getCompletionsInheritDotParams(token, string, object, matchedCall, formals$formals)
+      )
+   }
+   
    result
    
+})
+
+# Retrieve completions arising from @inheritDotParams documentation.
+#
+# When a function passes `...` to another function and has been documented
+# with roxygen2's @inheritDotParams tag, the compiled help database contains
+# a structured \arguments entry listing each forwarded argument name inside a
+# \describe block. This function parses that Rd structure and returns
+# completions for those argument names.
+#
+# Local (explicitly declared) formals always take precedence: any name already
+# present in the wrapper's own formals is excluded from the returned set,
+# matching the behaviour of @inheritParams. Only the first `\item{...}{...}`
+# whose name is `...` or `\dots` is considered (expansion is shallow).
+.rs.addFunction("getCompletionsInheritDotParams", function(token,
+                                                            string,
+                                                            object,
+                                                            matchedCall,
+                                                            ownFormals)
+{
+   # Derive the plain function name and (optionally) package from `string`,
+   # e.g. "pkg::foo" -> pkg = "pkg", fn = "foo"; "foo" -> pkg = NULL, fn = "foo"
+   splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
+   fnName  <- splat[[length(splat)]]
+   pkgName <- if (length(splat) == 2) splat[[1]] else NULL
+
+   # If no package was specified via ::, resolve it from the function's
+   # environment. This ensures the cache key is always fully qualified,
+   # so a user changing the last loaded library cannot cause a stale hit.
+   # Non-package functions (global, anonymous, primitive) cannot have a
+   # compiled help database entry, so exit early for those.
+   if (is.null(pkgName))
+   {
+      envName <- tryCatch(
+         environmentName(environment(object)),
+         error = function(e) ""
+      )
+      if (!nzchar(envName) || envName == "R_GlobalEnv" || envName == "R_EmptyEnv")
+         return(.rs.emptyCompletions())
+
+      pkgName <- envName
+   }
+   
+   # Parse the \arguments section of the compiled help file to extract the
+   # target function name and the allowed arg names documented via
+   # @inheritDotParams (already filtered for partial @inheritDotParams).
+   parsed <- tryCatch(
+      .rs.parseInheritDotParamsFromHelp(fnName, pkgName),
+      error = function(e) NULL
+   )
+
+   if (is.null(parsed) || !nzchar(parsed$targetName))
+      return(.rs.emptyCompletions())
+
+   # Use the target function name as the provenance hint shown in the
+   # completion popup. Prefix with "pkg::" to match how direct-arg hints are shown.
+   completionSource <- paste0(pkgName, "::", parsed$targetName)
+
+   # Format arg names as "name = " (with backtick-quoting for unusual names).
+   allFormals <- vapply(parsed$argNames, function(fml) {
+      paste(deparse(as.name(fml), backtick = TRUE), "= ")
+   }, FUN.VALUE = character(1))
+
+   # Exclude args the wrapper declares in its own formals (those take
+   # precedence and are already offered as direct completions), args already
+   # used in the current call, and filter by the current token prefix.
+   usedNames <- paste0(names(as.list(matchedCall)[-1]), " = ")
+   inheritedFormals <- allFormals[
+      !allFormals %in% c(ownFormals, usedNames) &
+      .rs.fuzzyMatches(parsed$argNames, token)
+   ]
+
+   if (!length(inheritedFormals))
+      return(.rs.emptyCompletions())
+
+   .rs.makeCompletions(
+      token    = token,
+      results  = inheritedFormals,
+      packages = rep(completionSource, length(inheritedFormals)),
+      type     = .rs.acCompletionTypes$ARGUMENT,
+      excludeOtherCompletions = FALSE,
+      excludeOtherArgumentCompletions = TRUE,
+      fguess   = string,
+      orderStartsWithAlnumFirst = FALSE
+   )
+})
+
+# Walk a parsed Rd object and extract argument names documented via
+# @inheritDotParams. This is the pure Rd-logic layer, separated from help
+# database lookup so it can be called directly in tests with a fixture Rd.
+#
+# Returns a character vector of argument names, or NULL if the pattern is
+# not found.
+.rs.addFunction("parseInheritDotParamsFromRd", function(rd)
+{
+   rdTag   <- function(x) attr(x, "Rd_tag")
+   nodeText <- function(x) trimws(paste(unlist(x), collapse = ""))
+
+   argumentsNode <- NULL
+   for (node in rd)
+   {
+      if (identical(rdTag(node), "\\arguments"))
+      {
+         argumentsNode <- node
+         break
+      }
+   }
+
+   if (is.null(argumentsNode))
+      return(NULL)
+
+   # Find the \item{...}{} node — the one whose name is `...` or a dots macro.
+   dotsNode <- NULL
+   for (itemNode in argumentsNode)
+   {
+      if (!identical(rdTag(itemNode), "\\item"))
+         next
+      if (length(itemNode) < 2L)
+         next
+      nameTxt <- nodeText(itemNode[[1L]])
+      if (nameTxt %in% c("...", "\\dots", "\\ldots"))
+      {
+         dotsNode <- itemNode[[2L]]
+         break
+      }
+   }
+
+   if (is.null(dotsNode))
+      return(NULL)
+
+   # Check whether the dots item was generated by @inheritDotParams by looking
+   # for the sentinel text "Arguments passed on to" as the first non-whitespace
+   # TEXT node in the description. If it's not there, this is a regular `...`
+   # argument and we have nothing to expand.
+   # Loop 1: find the sentinel TEXT and extract the target function name from
+   # the \code node immediately following it.
+   inheritDotParamsText <- "Arguments passed on to"
+   targetName <- NULL
+   for (i in seq_along(dotsNode))
+   {
+      child <- dotsNode[[i]]
+      if (!identical(rdTag(child), "TEXT"))
+         next
+      childTxt <- trimws(nodeText(child), which = "left")
+      if (!nzchar(childTxt))
+         next
+      # If the first non-whitespace TEXT node does not match the sentinel, or
+      # there is no node immediately following it, there is nothing to expand.
+      if (!startsWith(childTxt, inheritDotParamsText) || i == length(dotsNode))
+         return(NULL)
+      # The \code node immediately following the sentinel TEXT contains
+      # the target function name, e.g. \code{\link[=discrete_scale]{discrete_scale}}
+      nextChild <- dotsNode[[i + 1L]]
+      if (!identical(rdTag(nextChild), "\\code"))
+         return(NULL)
+      targetName <- nodeText(nextChild)
+      break
+   }
+
+   if (is.null(targetName))
+      return(NULL)
+
+   # Loop 2: find the \describe block. roxygen2 places it last, so search
+   # from the end. It contains one \item per forwarded argument, respecting
+   # partial @inheritDotParams (e.g. @inheritDotParams target -excluded_arg).
+   descNode <- NULL
+   for (node in rev(dotsNode))
+   {
+      if (identical(rdTag(node), "\\describe"))
+      {
+         descNode <- node
+         break
+      }
+   }
+
+   if (is.null(descNode))
+      return(NULL)
+
+   # Extract arg names from each \item in the \describe block.
+   items <- Filter(function(n) identical(rdTag(n), "\\item") && length(n) >= 1L, descNode)
+   argNames <- vapply(items, function(itemNode) {
+      tryCatch(nodeText(itemNode[[1L]]), error = function(e) "")
+   }, FUN.VALUE = character(1))
+
+   list(targetName = targetName, argNames = argNames[nzchar(argNames)])
+})
+
+# Fetch the help database entry for `fnName` (optionally in `pkgName`),
+# parse it into an Rd object, and delegate to parseInheritDotParamsFromRd.
+# R already caches the help database in memory after first access, so no
+# additional caching is needed here.
+.rs.addFunction("parseInheritDotParamsFromHelp", function(fnName, pkgName)
+{
+   rd <- tryCatch({
+      helpResult <- eval(.rs.makeHelpCall(fnName, pkgName))
+      get(".getHelpFile", envir = asNamespace("utils"), mode = "function")(helpResult)
+      },
+      error = function(e) NULL
+   )
+   if (is.null(rd))
+      return(NULL)
+
+   .rs.parseInheritDotParamsFromRd(rd)
 })
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
@@ -3630,7 +3850,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Otherwise, get the completions
-   parsed <- tryCatch(
+   parsedTargetName <- tryCatch(
       suppressWarnings(parse(file)),
       error = function(e) NULL
    )
@@ -3750,7 +3970,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Otherwise, get the completions
-   parsed <- tryCatch(
+   parsedTargetName <- tryCatch(
       suppressWarnings(parse(file)),
       error = function(e) NULL
    )
