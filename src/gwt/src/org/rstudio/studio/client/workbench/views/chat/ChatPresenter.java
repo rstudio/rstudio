@@ -224,10 +224,14 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   // When R is busy (has function frames on the stack) and a console prompt
-   // fires, it means something mid-execution is requesting user input (e.g.
-   // readline, browser, scan). Show a notification so the user knows to
-   // respond in the Console.
+   // When the console prompt fires while R is busy (i.e. executing code rather
+   // than at the top-level REPL), it means something mid-execution is requesting
+   // user input (e.g. readline, browser, scan). Show a notification so the user
+   // knows to respond in the Console.
+   //
+   // NOTE: This intentionally triggers for all mid-execution prompts, not just
+   // AI-initiated ones. A browser() or readline() call is worth surfacing even
+   // if it wasn't triggered by the assistant, since the user may need to act.
    //
    // TODO: When Posit Assistant gains support for handling input requests
    // directly, we should signal the assistant here instead of (or in
@@ -265,7 +269,8 @@ public class ChatPresenter extends BasePresenter
          // Posit AI is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
-         display_.hideUpdateNotification();  // Clean up all notifications
+         display_.hideReadlineNotification();
+         display_.hideUpdateNotification();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
       }
    }
