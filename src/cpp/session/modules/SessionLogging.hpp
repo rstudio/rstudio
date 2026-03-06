@@ -89,53 +89,44 @@ inline std::string logNameFromFile(const char* file)
 #define SESSION_STDERR_LOG_LEVEL 0
 #endif
 
+// Log section name, computed once per translation unit.
+namespace {
+const std::string s_logSection(SESSION_LOG_SECTION);
+} // anonymous namespace
+
 // Override LOG_ERROR, LOG_ERROR_MESSAGE, and LOG_WARNING_MESSAGE to
 // automatically supply the log section name.
 #ifdef LOG_ERROR
 #undef LOG_ERROR
 #endif
 #define LOG_ERROR(error)                                                       \
-   do                                                                          \
-   {                                                                           \
-      static const std::string section(SESSION_LOG_SECTION);                   \
-      rstudio::core::log::logError(error, section, ERROR_LOCATION);            \
-   } while (0)
+   rstudio::core::log::logError(error, s_logSection, ERROR_LOCATION)
 
 #ifdef LOG_ERROR_MESSAGE
 #undef LOG_ERROR_MESSAGE
 #endif
 #define LOG_ERROR_MESSAGE(message)                                             \
-   do                                                                          \
-   {                                                                           \
-      static const std::string section(SESSION_LOG_SECTION);                   \
-      rstudio::core::log::logErrorMessage(                                     \
-          message, section, boost::none, ERROR_LOCATION);                      \
-   } while (0)
+   rstudio::core::log::logErrorMessage(                                        \
+       message, s_logSection, boost::none, ERROR_LOCATION)
 
 #ifdef LOG_WARNING_MESSAGE
 #undef LOG_WARNING_MESSAGE
 #endif
 #define LOG_WARNING_MESSAGE(message)                                           \
-   do                                                                          \
-   {                                                                           \
-      static const std::string section(SESSION_LOG_SECTION);                   \
-      rstudio::core::log::logWarningMessage(                                   \
-          message, section, boost::none, ERROR_LOCATION);                      \
-   } while (0)
+   rstudio::core::log::logWarningMessage(                                      \
+       message, s_logSection, boost::none, ERROR_LOCATION)
 
 // DLOG / WLOG / ELOG / ILOG / TLOG: convenience macros using fmt::format
 // with automatic function-name prefix.
 //
-// The log section name is cached in a static local per call site.
 // When SESSION_STDERR_LOG_LEVEL >= 1, output is also mirrored to stderr.
 
 #define _SESSION_LOG_IMPL(__LOGGER__, __FMT__, ...)                            \
    do                                                                          \
    {                                                                           \
-      static const std::string section(SESSION_LOG_SECTION);                   \
       std::string formatted =                                                  \
           fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__);              \
-      __LOGGER__(section, formatted);                                          \
+      __LOGGER__(s_logSection, formatted);                                     \
       if ((SESSION_STDERR_LOG_LEVEL) >= 1)                                     \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
