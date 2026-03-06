@@ -15,6 +15,8 @@
 
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
+
+#define SESSION_STDERR_LOG_LEVEL s_assistantLogLevel
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -1128,6 +1130,7 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onError(ProcessOperations& operations, const Error& error)
 {
    ELOG("Agent process error: {}", error.getMessage());
+   s_agentStartupError = error.getMessage();
    s_agentPid = -1;
    s_runningAgentType.clear();
    setAgentRuntimeStatus(AgentRuntimeStatus::Stopped);
@@ -1332,6 +1335,8 @@ Error startAgent(const std::string& assistantType = "")
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
+      ELOG("Agent startup timed out [node='{}', stderr='{}'].",
+           nodePath.getAbsolutePath(), s_agentStartupError);
       s_agentRuntimeStatus = AgentRuntimeStatus::Unknown;
       s_runningAgentType.clear();  // Clear since agent failed to start
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);

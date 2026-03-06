@@ -17,13 +17,18 @@
 #define SESSION_MODULES_SESSION_LOGGING_HPP
 
 #include <algorithm>
+#include <iostream>
 #include <string>
 
 #include <core/Log.hpp>
+#include <fmt/format.h>
 
-namespace rstudio {
-namespace session {
-namespace logging {
+namespace rstudio
+{
+namespace session
+{
+namespace logging
+{
 
 // Derives a log section name from __FILE__.
 // Strips the directory, removes a "Session" prefix if present,
@@ -52,7 +57,9 @@ inline std::string logNameFromFile(const char* file)
       name = name.substr(7);
 
    // Lowercase
-   std::transform(name.begin(), name.end(), name.begin(),
+   std::transform(name.begin(),
+                  name.end(),
+                  name.begin(),
                   [](unsigned char c) { return std::tolower(c); });
 
    return name;
@@ -62,64 +69,87 @@ inline std::string logNameFromFile(const char* file)
 } // namespace session
 } // namespace rstudio
 
-// Override LOG_ERROR and LOG_ERROR_MESSAGE to automatically supply the
-// log section name derived from the source file.
+// ---------------------------------------------------------------------------
+// Configurable hooks (define before including this header to customize)
+//
+// SESSION_LOG_SECTION
+//   The log section name. Defaults to an auto-derived name from __FILE__.
+//   Example: #define SESSION_LOG_SECTION "chat"
+//
+// SESSION_STDERR_LOG_LEVEL
+//   An expression returning int; when >= 1, DLOG/WLOG/ELOG/ILOG/TLOG also
+//   mirror output to stderr. Defaults to 0 (disabled).
+//   Example: #define SESSION_STDERR_LOG_LEVEL chatLogLevel()
+// ---------------------------------------------------------------------------
+
+#ifndef SESSION_LOG_SECTION
+#define SESSION_LOG_SECTION rstudio::session::logging::logNameFromFile(__FILE__)
+#endif
+
+#ifndef SESSION_STDERR_LOG_LEVEL
+#define SESSION_STDERR_LOG_LEVEL 0
+#endif
+
+// Override LOG_ERROR, LOG_ERROR_MESSAGE, and LOG_WARNING_MESSAGE to
+// automatically supply the log section name.
 #ifdef LOG_ERROR
-# undef LOG_ERROR
+#undef LOG_ERROR
 #endif
 #define LOG_ERROR(error)                                                       \
-   do {                                                                        \
-      rstudio::core::log::logError(                                            \
-         error,                                                                \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         ERROR_LOCATION);                                                      \
+   do                                                                          \
+   {                                                                           \
+      static const std::string section(SESSION_LOG_SECTION);                   \
+      rstudio::core::log::logError(error, section, ERROR_LOCATION);            \
    } while (0)
 
 #ifdef LOG_ERROR_MESSAGE
-# undef LOG_ERROR_MESSAGE
+#undef LOG_ERROR_MESSAGE
 #endif
 #define LOG_ERROR_MESSAGE(message)                                             \
-   do {                                                                        \
+   do                                                                          \
+   {                                                                           \
+      static const std::string section(SESSION_LOG_SECTION);                   \
       rstudio::core::log::logErrorMessage(                                     \
-         message,                                                              \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         boost::none,                                                          \
-         ERROR_LOCATION);                                                      \
+          message, section, boost::none, ERROR_LOCATION);                      \
    } while (0)
 
 #ifdef LOG_WARNING_MESSAGE
-# undef LOG_WARNING_MESSAGE
+#undef LOG_WARNING_MESSAGE
 #endif
 #define LOG_WARNING_MESSAGE(message)                                           \
-   do {                                                                        \
+   do                                                                          \
+   {                                                                           \
+      static const std::string section(SESSION_LOG_SECTION);                   \
       rstudio::core::log::logWarningMessage(                                   \
-         message,                                                              \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         boost::none,                                                          \
-         ERROR_LOCATION);                                                      \
+          message, section, boost::none, ERROR_LOCATION);                      \
    } while (0)
 
-// DLOG / WLOG / ELOG: convenience macros using fmt::format with automatic
-// function name prefix.
+// DLOG / WLOG / ELOG / ILOG / TLOG: convenience macros using fmt::format
+// with automatic function-name prefix.
+//
+// The log section name is cached in a static local per call site.
+// When SESSION_STDERR_LOG_LEVEL >= 1, output is also mirrored to stderr.
+
+#define _SESSION_LOG_IMPL(__LOGGER__, __FMT__, ...)                            \
+   do                                                                          \
+   {                                                                           \
+      static const std::string section(SESSION_LOG_SECTION);                   \
+      std::string formatted =                                                  \
+          fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__);              \
+      __LOGGER__(section, formatted);                                          \
+      if ((SESSION_STDERR_LOG_LEVEL) >= 1)                                     \
+         std::cerr << formatted << std::endl;                                  \
+   } while (0)
+
+#define TLOG(__FMT__, ...)                                                     \
+   _SESSION_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define DLOG(__FMT__, ...)                                                     \
-   do {                                                                        \
-      LOG_DEBUG_MESSAGE_NAMED(                                                 \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__));              \
-   } while (0)
-
+   _SESSION_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+#define ILOG(__FMT__, ...)                                                     \
+   _SESSION_LOG_IMPL(LOG_INFO_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define WLOG(__FMT__, ...)                                                     \
-   do {                                                                        \
-      LOG_WARNING_MESSAGE_NAMED(                                               \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__));              \
-   } while (0)
-
+   _SESSION_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define ELOG(__FMT__, ...)                                                     \
-   do {                                                                        \
-      LOG_ERROR_MESSAGE_NAMED(                                                 \
-         rstudio::session::logging::logNameFromFile(__FILE__),                 \
-         fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__));              \
-   } while (0)
+   _SESSION_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 
 #endif // SESSION_MODULES_SESSION_LOGGING_HPP
