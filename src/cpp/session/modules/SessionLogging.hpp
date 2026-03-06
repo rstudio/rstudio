@@ -73,6 +73,24 @@ void setStderrLogLevel(const std::string& section, int level);
 } // namespace session
 } // namespace rstudio
 
+namespace rstudio {
+namespace core {
+class Error;
+} // namespace core
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace logging {
+
+core::Error initialize();
+
+} // namespace logging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
 // ---------------------------------------------------------------------------
 // Configurable hooks (define before including this header to customize)
 //

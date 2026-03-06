@@ -17,6 +17,15 @@
 
 #include <map>
 
+#include <r/RRoutines.hpp>
+#include <r/RSexp.hpp>
+
+#include <core/Exec.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace session {
 namespace logging {
@@ -44,5 +53,41 @@ void setStderrLogLevel(const std::string& section, int level)
 }
 
 } // namespace logging
+} // namespace session
+} // namespace rstudio
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace logging {
+
+namespace {
+
+SEXP rs_loggingSetStderrLogLevel(SEXP sectionSEXP, SEXP levelSEXP)
+{
+   std::string section = r::sexp::asString(sectionSEXP);
+   int level = r::sexp::asInteger(levelSEXP);
+   rstudio::session::logging::setStderrLogLevel(section, level);
+   return R_NilValue;
+}
+
+} // anonymous namespace
+
+core::Error initialize()
+{
+   RS_REGISTER_CALL_METHOD(rs_loggingSetStderrLogLevel);
+
+   using boost::bind;
+   using namespace module_context;
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionLogging.R"));
+
+   return initBlock.execute();
+}
+
+} // namespace logging
+} // namespace modules
 } // namespace session
 } // namespace rstudio

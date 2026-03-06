@@ -183,6 +183,7 @@
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
+#include "modules/SessionLogging.hpp"
 #include "modules/SessionUserPrefs.hpp"
 #include "modules/automation/SessionAutomation.hpp"
 #include "modules/build/SessionBuild.hpp"
@@ -645,6 +646,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
+      (modules::logging::initialize)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)
