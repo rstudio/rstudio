@@ -167,36 +167,51 @@ public class YamlTree
    
    public void reorder(List<String> orderedKeys)
    {
-      // Sort the YAML lines into a tree
       if (!keyMap_.containsKey(orderedKeys.get(0)))
          return;
       YamlTreeNode parent = keyMap_.get(orderedKeys.get(0)).parent;
-      
-      // Move around subtrees to match the given list of ordered keys
-      // (swap subtrees into a position matching that specified);
-      // skip over comment/blank nodes so they stay in place
-      int targetPos = 0;
+
+      // Group children into blocks: each block is a run of leading
+      // comment/blank nodes followed by a data node. Comments "stick"
+      // to the data node they precede so they move together on reorder.
+      List<List<YamlTreeNode>> groups = new ArrayList<>();
+      List<YamlTreeNode> current = new ArrayList<>();
+      for (YamlTreeNode child : parent.children)
+      {
+         current.add(child);
+         if (!child.isComment && !child.isBlank)
+         {
+            groups.add(current);
+            current = new ArrayList<>();
+         }
+      }
+      // trailing comments/blanks not followed by a data node
+      List<YamlTreeNode> trailing = current;
+
+      // Swap groups into the positions specified by orderedKeys
       for (int i = 0; i < orderedKeys.size(); i++)
       {
-         while (targetPos < parent.children.size() &&
-                (parent.children.get(targetPos).isComment ||
-                 parent.children.get(targetPos).isBlank))
+         for (int j = i; j < groups.size(); j++)
          {
-            targetPos++;
-         }
-
-         for (int j = targetPos; j < parent.children.size(); j++)
-         {
-            YamlTreeNode child = parent.children.get(j);
-            if (orderedKeys.get(i) == child.key)
+            List<YamlTreeNode> group = groups.get(j);
+            YamlTreeNode dataNode = group.get(group.size() - 1);
+            if (orderedKeys.get(i) == dataNode.key)
             {
-               YamlTreeNode previousChild = parent.children.get(targetPos);
-               parent.children.set(targetPos, child);
-               parent.children.set(j, previousChild);
+               List<YamlTreeNode> temp = groups.get(i);
+               groups.set(i, groups.get(j));
+               groups.set(j, temp);
+               break;
             }
          }
-         targetPos++;
       }
+
+      // Flatten groups back into the children list
+      parent.children.clear();
+      for (List<YamlTreeNode> group : groups)
+      {
+         parent.children.addAll(group);
+      }
+      parent.children.addAll(trailing);
    }
 
    public List<String> getChildKeys(String parentKey)
@@ -251,8 +266,10 @@ public class YamlTree
       }
       
       // no existing value, create a wholly new node
-      child = parentKey == null ? new YamlTreeNode(line) : 
-            new YamlTreeNode(parent.getIndent() + "  " + line);
+      child = parentKey == null
+         ? new YamlTreeNode(line)
+         : new YamlTreeNode(parent.getIndent() + "  " + line);
+
       keyMap_.put(key, child);
       parent.addChild(child);
    }
@@ -375,6 +392,38 @@ public class YamlTree
              value == "true" || value == "on";
    }
    
+   private static void flushPending(List<YamlTreeNode> pending,
+                                    YamlTreeNode parent)
+   {
+      for (YamlTreeNode node : pending)
+         parent.addChild(node);
+      pending.clear();
+   }
+
+   private static YamlTreeNode findParentForIndent(
+         int childIndent,
+         int currentIndent,
+         YamlTreeNode currentParent,
+         YamlTreeNode lastNode,
+         YamlTreeNode root)
+   {
+      if (childIndent > currentIndent)
+      {
+         return lastNode;
+      }
+      else if (childIndent < currentIndent)
+      {
+         YamlTreeNode parent = currentParent;
+         do
+         {
+            parent = parent.parent;
+         }
+         while (parent != null && parent.indentLevel >= childIndent);
+         return parent != null ? parent : root;
+      }
+      return currentParent;
+   }
+
    private YamlTreeNode createYamlTree(String yaml)
    {
       String[] lines = yaml.split("\n");
@@ -383,69 +432,34 @@ public class YamlTree
       YamlTreeNode currentParent = root;
       YamlTreeNode lastNode = root;
       int currentIndentLevel = 0;
+      List<YamlTreeNode> pending = new ArrayList<>();
       for (String line: lines)
       {
          YamlTreeNode child = new YamlTreeNode(line);
 
-         // blank lines are added to lastNode so they appear in position
-         // without disrupting tree-building state (their indent is always
-         // 0, so the indent logic would misplace them)
-         if (child.isBlank)
+         // buffer comments and blank lines so they attach to the next
+         // data node's parent; neither affects tree-building state
+         if (child.isComment || child.isBlank)
          {
-            lastNode.addChild(child);
+            pending.add(child);
             continue;
          }
 
-         // comments use the indent logic to find the right parent but
-         // don't affect tree-building state, so subsequent real nodes
-         // see the same context as if the comment wasn't there
-         if (child.isComment)
-         {
-            YamlTreeNode commentParent = currentParent;
-            if (child.indentLevel > currentIndentLevel)
-            {
-               commentParent = lastNode;
-            }
-            else if (child.indentLevel < currentIndentLevel)
-            {
-               do
-               {
-                  commentParent = commentParent.parent;
-               }
-               while (commentParent != null &&
-                      commentParent.indentLevel >= child.indentLevel);
-               if (commentParent == null)
-                  commentParent = root;
-            }
-            commentParent.addChild(child);
-            continue;
-         }
+         currentParent = findParentForIndent(
+               child.indentLevel,
+               currentIndentLevel,
+               currentParent,
+               lastNode,
+               root);
 
-         if (child.indentLevel > currentIndentLevel)
-         {
-            // Descending: we're recording children of the previous line
-            currentParent = lastNode;
-         }
-         else if (child.indentLevel < currentIndentLevel)
-         {
-            // Ascending: find the first parent node in the hierarchy that has
-            // an indent level less than this node's
-            do
-            {
-               currentParent = currentParent.parent;
-            }
-            while (currentParent != null &&
-                   currentParent.indentLevel >= child.indentLevel);
-
-            // if we unwound all the way to the top, use the root as the parent
-            if (currentParent == null)
-               currentParent = root;
-         }
-
+         flushPending(pending, currentParent);
          currentIndentLevel = child.indentLevel;
          if (currentParent.addChild(child))
             lastNode = child;
       }
+
+      // flush any trailing comments/blanks
+      flushPending(pending, currentParent);
       return root;
    }
    
@@ -467,9 +481,9 @@ public class YamlTree
       {
          String key = child.key;
          // add this key if it doesn't already exist, or if it does exist and
-         // this key is closer to the root than the existing key;
-         // skip comment nodes as they don't have real keys
-         if (key.length() > 0 && !child.isComment &&
+         // this key is closer to the root than the existing key
+         // (comments and blanks are skipped implicitly: their key is "")
+         if (key.length() > 0 &&
              (!output.containsKey(key) ||
               child.indentLevel < output.get(key).indentLevel))
          {

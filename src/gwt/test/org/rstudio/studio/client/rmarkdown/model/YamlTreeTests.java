@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -267,5 +268,73 @@ public class YamlTreeTests extends GWTTestCase
       assertEquals("Round-trip should preserve input", yaml, output);
       assertEquals("1", tree.getKeyValue("p1"));
       assertEquals("2", tree.getKeyValue("p2"));
+   }
+
+   public void testBlankLineBetweenCommentsPreserved()
+   {
+      String yaml =
+            "params:\n" +
+            "\n" +
+            "  # P3\n" +
+            "  p3: 3\n" +
+            "\n" +
+            "  # P1\n" +
+            "  # This is another comment.\n" +
+            "\n" +
+            "  # Hello world.\n" +
+            "  p1: 1\n" +
+            "\n" +
+            "  # P2\n" +
+            "  p2: 2\n";
+      YamlTree tree = new YamlTree(yaml);
+      String output = tree.toString();
+
+      assertEquals("Round-trip should preserve input", yaml, output);
+      assertEquals("3", tree.getKeyValue("p3"));
+      assertEquals("1", tree.getKeyValue("p1"));
+      assertEquals("2", tree.getKeyValue("p2"));
+   }
+
+   public void testReorderMovesCommentsWithKeys()
+   {
+      String yaml =
+            "# About title\n" +
+            "title: Test\n" +
+            "# About author\n" +
+            "author: Me\n";
+      YamlTree tree = new YamlTree(yaml);
+      tree.reorder(Arrays.asList("author", "title"));
+      String output = tree.toString();
+
+      String expected =
+            "# About author\n" +
+            "author: Me\n" +
+            "# About title\n" +
+            "title: Test\n";
+      assertEquals("Comments should move with their keys", expected, output);
+   }
+
+   public void testReorderWithBlankLinesAndComments()
+   {
+      String yaml =
+            "# Title comment\n" +
+            "title: Test\n" +
+            "\n" +
+            "# Author comment\n" +
+            "author: Me\n";
+      YamlTree tree = new YamlTree(yaml);
+      tree.reorder(Arrays.asList("author", "title"));
+      String output = tree.toString();
+
+      int authorComment = output.indexOf("# Author comment");
+      int authorKey = output.indexOf("author:");
+      int titleComment = output.indexOf("# Title comment");
+      int titleKey = output.indexOf("title:");
+      assertTrue("Author comment should precede author key",
+            authorComment < authorKey);
+      assertTrue("Author block should come before title block",
+            authorKey < titleComment);
+      assertTrue("Title comment should precede title key",
+            titleComment < titleKey);
    }
 }
