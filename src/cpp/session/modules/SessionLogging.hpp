@@ -94,8 +94,8 @@ namespace {
 const std::string s_logSection(SESSION_LOG_SECTION);
 } // anonymous namespace
 
-// Override LOG_ERROR, LOG_ERROR_MESSAGE, and LOG_WARNING_MESSAGE to
-// automatically supply the log section name.
+// Override standard logging macros to automatically supply the log
+// section name derived from SESSION_LOG_SECTION.
 #ifdef LOG_ERROR
 #undef LOG_ERROR
 #endif
@@ -116,12 +116,43 @@ const std::string s_logSection(SESSION_LOG_SECTION);
    rstudio::core::log::logWarningMessage(                                      \
        message, s_logSection, boost::none, ERROR_LOCATION)
 
+#ifdef LOG_INFO_MESSAGE
+#undef LOG_INFO_MESSAGE
+#endif
+#define LOG_INFO_MESSAGE(message)                                              \
+   rstudio::core::log::logInfoMessage(                                         \
+       message, s_logSection, boost::none, LOG_LOCATION_IF_ENABLED())
+
+#ifdef LOG_DEBUG_MESSAGE
+#undef LOG_DEBUG_MESSAGE
+#endif
+#define LOG_DEBUG_MESSAGE(message)                                             \
+   (rstudio::core::log::isLogLevel(                                            \
+       rstudio::core::log::LogLevel::DEBUG_LEVEL)                              \
+        ? (rstudio::core::log::logDebugMessage(                                \
+               message, s_logSection, boost::none,                             \
+               LOG_LOCATION_IF_ENABLED()),                                     \
+           true)                                                               \
+        : false)
+
+#ifdef LOG_TRACE_MESSAGE
+#undef LOG_TRACE_MESSAGE
+#endif
+#define LOG_TRACE_MESSAGE(message)                                             \
+   (rstudio::core::log::isLogLevel(                                            \
+       rstudio::core::log::LogLevel::TRACE_LEVEL)                              \
+        ? (rstudio::core::log::logTraceMessage(                                \
+               message, s_logSection, boost::none,                             \
+               LOG_LOCATION_IF_ENABLED()),                                     \
+           true)                                                               \
+        : false)
+
 // DLOG / WLOG / ELOG / ILOG / TLOG: convenience macros using fmt::format
 // with automatic function-name prefix.
 //
 // When SESSION_STDERR_LOG_LEVEL >= 1, output is also mirrored to stderr.
 
-#define _SESSION_LOG_IMPL(__LOGGER__, __FMT__, ...)                            \
+#define SESSION_LOG_IMPL_(__LOGGER__, __FMT__, ...)                            \
    do                                                                          \
    {                                                                           \
       std::string formatted =                                                  \
@@ -132,14 +163,14 @@ const std::string s_logSection(SESSION_LOG_SECTION);
    } while (0)
 
 #define TLOG(__FMT__, ...)                                                     \
-   _SESSION_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+   SESSION_LOG_IMPL_(LOG_TRACE_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define DLOG(__FMT__, ...)                                                     \
-   _SESSION_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+   SESSION_LOG_IMPL_(LOG_DEBUG_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define ILOG(__FMT__, ...)                                                     \
-   _SESSION_LOG_IMPL(LOG_INFO_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+   SESSION_LOG_IMPL_(LOG_INFO_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define WLOG(__FMT__, ...)                                                     \
-   _SESSION_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+   SESSION_LOG_IMPL_(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define ELOG(__FMT__, ...)                                                     \
-   _SESSION_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+   SESSION_LOG_IMPL_(LOG_ERROR_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 
 #endif // SESSION_MODULES_SESSION_LOGGING_HPP
