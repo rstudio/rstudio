@@ -14,7 +14,7 @@
 /* Notification panel - base light theme style */
 .chatUpdateNotification {
    background-color: THEME_DEFAULT_BACKGROUND;
-   padding: 10px;
+   padding: 6px;
    border-bottom: 1px solid THEME_DEFAULT_BORDER;
    overflow: hidden;
 }

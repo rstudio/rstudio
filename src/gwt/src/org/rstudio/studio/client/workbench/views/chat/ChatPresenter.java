@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -35,6 +36,7 @@ import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
+   implements ConsolePromptEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ChatPresenter>
    {
@@ -85,6 +87,8 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
       void showManifestUnavailable();
+      void showReadlineNotification();
+      void hideReadlineNotification();
       void updateCachedUrl(String url);
    }
 
@@ -155,12 +159,16 @@ public class ChatPresenter extends BasePresenter
          }
       });
 
+      // Listen for console prompt events (to detect when R is waiting for input)
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
+
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
       {
          @Override
          public void onChatBackendExit(ChatBackendExitEvent event)
          {
+            display_.hideReadlineNotification();
             if (event.getCrashed())
             {
                display_.showCrashedMessage(event.getExitCode());
@@ -177,6 +185,7 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               display_.hideReadlineNotification();
                display_.showSuspendedMessage();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -215,6 +224,28 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
+   // When the console prompt fires while R is busy (i.e. executing code rather
+   // than at the top-level REPL), it means something mid-execution is requesting
+   // user input (e.g. readline, browser, scan). Show a notification so the user
+   // knows to respond in the Console.
+   //
+   // NOTE: This intentionally triggers for all mid-execution prompts, not just
+   // AI-initiated ones. A browser() or readline() call is worth surfacing even
+   // if it wasn't triggered by the assistant, since the user may need to act.
+   //
+   // TODO: When Posit Assistant gains support for handling input requests
+   // directly, we should signal the assistant here instead of (or in
+   // addition to) showing a passive notification.
+   // https://github.com/posit-dev/databot/issues/770
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      if (event.getPrompt().getBusy())
+         display_.showReadlineNotification();
+      else
+         display_.hideReadlineNotification();
+   }
+
    /**
     * Called when either global chat provider preference or project options change.
     * Re-evaluates whether chat should be enabled based on the effective provider.
@@ -238,7 +269,8 @@ public class ChatPresenter extends BasePresenter
          // Posit AI is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
-         display_.hideUpdateNotification();  // Clean up all notifications
+         display_.hideReadlineNotification();
+         display_.hideUpdateNotification();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
       }
    }
