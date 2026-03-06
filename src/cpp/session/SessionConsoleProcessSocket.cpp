@@ -159,10 +159,15 @@ Error ConsoleProcessSocket::ensureServerRunning()
             }
             else
             {
-               // bind to loopback only -- the terminal websocket should not
-               // be reachable from the network; in server mode the rserver
-               // proxy handles external connections, and in desktop mode
-               // only the local Electron client needs access
+               // bind to IPv4 loopback only -- the terminal websocket should
+               // not be reachable from the network. in server mode the rserver
+               // proxy handles external connections, and in desktop mode only
+               // the local Electron client needs access.
+               //
+               // IPv4 loopback (127.0.0.1) is sufficient because:
+               // - desktop mode: the Electron client connects to ws://127.0.0.1
+               // - server mode: the GWT client uses the /p/ proxy path (not /p6/),
+               //   so rserver connects via "localhost" which resolves to 127.0.0.1
                pwsServer_->listen(boost::asio::ip::address_v4::loopback(),
                                   static_cast<uint16_t>(port));
             }

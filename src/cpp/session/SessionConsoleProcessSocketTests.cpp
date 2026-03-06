@@ -36,6 +36,11 @@ namespace tests {
 const std::string handle1("unit-test01");
 const std::string msgString1("Sample message text");
 
+// Loopback address for test connections. Use 127.0.0.1 explicitly to match
+// the server's IPv4 loopback binding and avoid DNS resolution issues with
+// "localhost" on systems that prefer IPv6.
+const std::string kLoopbackAddress("127.0.0.1");
+
 using namespace console_process;
 using namespace boost::placeholders;
 
@@ -232,7 +237,7 @@ public:
 
    bool connectToServer()
    {
-      std::string uri = "http://127.0.0.1:" +
+      std::string uri = "http://" + kLoopbackAddress + ":" +
             boost::lexical_cast<std::string>(port_) +
             "/terminal/" + handle_ + "/";
       return connectToServerWithUri(uri);
@@ -266,6 +271,10 @@ public:
          client::connection_ptr con = client_.get_connection(uri, ec);
          if (ec)
             return false;
+
+         // set Origin header to satisfy validation in desktop mode
+         con->append_header("Origin", "http://" + kLoopbackAddress + ":" +
+               boost::lexical_cast<std::string>(port_));
 
          // Note that connect here only requests a connection. No network
          // messages are exchanged until the event loop starts running in
@@ -496,7 +505,7 @@ TEST(ConsoleProcessSocketTest, ValidateRejectsMalformedUrl) {
    // connect with a URL that has no terminal handle (just a bare slash)
    boost::shared_ptr<SocketClient> pClient =
          boost::make_shared<SocketClient>("", pSocket->port());
-   std::string uri = "http://127.0.0.1:" +
+   std::string uri = "http://" + kLoopbackAddress + ":" +
          boost::lexical_cast<std::string>(pSocket->port()) + "/";
    EXPECT_TRUE(pClient->connectToServerWithUri(uri));
 
@@ -518,7 +527,7 @@ TEST(ConsoleProcessSocketTest, ValidateRejectsUrlWithoutTrailingSlash) {
    // connect with a URL missing the required trailing slash
    boost::shared_ptr<SocketClient> pClient =
          boost::make_shared<SocketClient>(handle1, pSocket->port());
-   std::string uri = "http://127.0.0.1:" +
+   std::string uri = "http://" + kLoopbackAddress + ":" +
          boost::lexical_cast<std::string>(pSocket->port()) +
          "/terminal/" + handle1;  // no trailing slash
    EXPECT_TRUE(pClient->connectToServerWithUri(uri));
