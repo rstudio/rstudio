@@ -1206,6 +1206,10 @@ public class VirtualConsole
       {
          return RES.styles().groupMessage();
       }
+      else if (type == GROUP_TYPE_AGENT)
+      {
+         return RES.styles().groupAgent();
+      }
       else
       {
          return "";
@@ -1364,6 +1368,7 @@ public class VirtualConsole
       String groupError();
       String groupWarning();
       String groupMessage();
+      String groupAgent();
       
       String error();
       String warning();
@@ -1389,6 +1394,7 @@ public class VirtualConsole
    private static final String GROUP_TYPE_ERROR   = "1";
    private static final String GROUP_TYPE_WARNING = "2";
    private static final String GROUP_TYPE_MESSAGE = "3";
+   private static final String GROUP_TYPE_AGENT   = "4";
 
    private int maxLineLength_;
    

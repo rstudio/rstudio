@@ -105,7 +105,7 @@ public class ConsoleProgressDialog extends ProgressDialog
       
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
-         outputWriter_.consoleWriteOutput(initialOutput);
+         outputWriter_.consoleWriteOutput(initialOutput, false);
       }
 
       if (exitCode != null)
@@ -216,13 +216,13 @@ public class ConsoleProgressDialog extends ProgressDialog
    public void writeOutput(String output)
    {
       maybeShowOnOutput(output);
-      outputWriter_.consoleWriteOutput(output);
+      outputWriter_.consoleWriteOutput(output, false);
    }
-   
+
    public void writePrompt(String prompt)
    {
       maybeShowOnOutput(prompt);
-      outputWriter_.consoleWritePrompt(prompt);
+      outputWriter_.consoleWritePrompt(prompt, false);
    }
 
    @Override
@@ -316,7 +316,7 @@ public class ConsoleProgressDialog extends ProgressDialog
                @Override
                public void onError(ServerError error)
                {
-                  outputWriter_.consoleWriteError(error.getUserMessage());
+                  outputWriter_.consoleWriteError(error.getUserMessage(), false);
                }
             });
       }

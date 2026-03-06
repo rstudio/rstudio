@@ -31,13 +31,14 @@
 #include <vector>
 #include <functional>
 
-#include <boost/thread/mutex.hpp>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/mutex.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
@@ -58,10 +59,12 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RBusy.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -72,12 +75,9 @@
 #include <session/prefs/UserState.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <r/session/RBusy.hpp>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
+#include "SessionConsole.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
@@ -554,6 +554,20 @@ private:
    RSTUDIO_BOOST_CONNECTION connection_;
 };
 
+// RAII guard that sets the agent-executing flag on construction and clears it
+// on destruction. Ensures the flag is always cleared even if an exception
+// occurs during agent code execution.
+class ScopedAgentExecution
+{
+public:
+   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
+   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+
+   // non-copyable
+   ScopedAgentExecution(const ScopedAgentExecution&) = delete;
+   ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+};
+
 // Echo source code with prompts (like evaluate does)
 void echoSourceCode(const std::string& code)
 {
@@ -566,8 +580,39 @@ void echoSourceCode(const std::string& code)
       if (i == lines.size() - 1 && lines[i].empty())
          continue;
 
-      std::string prompt = (i == 0) ? "> " : "+ ";
-      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+      // Use the same event types as the regular console REPL so that
+      // prompts and input are colored / themed consistently.
+      // The 'agent' flag allows the frontend to further distinguish
+      // agent-generated code execution from user input.
+      //
+      // The first prompt is prefixed with a group-start ANSI escape so that
+      // VirtualConsole wraps all agent output (prompt, input, R output,
+      // errors) in a styled group container (purple left border).
+      std::string prompt = (i == 0)
+         ? kAnsiEscapeGroupStartAgent + r::options::getOption<std::string>("prompt")
+         : r::options::getOption<std::string>("continue");
+
+      // Record in console actions so the history survives session reload.
+      // Note: the first prompt includes a raw ANSI group-start escape, which
+      // VirtualConsole will re-process on session restore to recreate the
+      // styled group container.
+      r::session::consoleActions().add(kConsoleActionPrompt, prompt);
+      r::session::consoleActions().add(kConsoleActionInput, lines[i]);
+
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = std::string();
+      promptData[kConsoleAgent] = true;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
+      module_context::enqueClientEvent(promptEvent);
+
+      json::Object inputData;
+      inputData[kConsoleText]  = lines[i] + "\n";
+      inputData[kConsoleId]    = std::string();
+      inputData[kConsoleFlags] = 0;
+      inputData[kConsoleAgent] = true;
+      ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
+      module_context::enqueClientEvent(inputEvent);
    }
 }
 
@@ -1406,6 +1451,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       }
    }
 
+   // Flag that we're executing agent code so console output/error events
+   // emitted by R during evaluation get the agent metadata. Uses RAII to
+   // guarantee the flag is cleared even if an exception occurs.
+   ScopedAgentExecution agentScope;
+
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
@@ -1462,6 +1512,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
+         // Reset pending output type before each expression so that a warning
+         // from expression N doesn't cause all output from expression N+1 to
+         // be grouped as warning text. In the normal REPL this reset happens
+         // via the onBusy signal between top-level evaluations.
+         console_output::setPendingOutputType(console_output::PendingOutputTypeUnknown);
+
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
@@ -1663,9 +1719,22 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI
-      module_context::consoleWriteError(errorOutput);
+      // Send as kConsoleWritePendingError so the event queue's
+      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+      // "Error" prefix). Clear the agent flag so the event goes through the
+      // plain string buffering path where annotation happens.
+      module_context::setAgentExecuting(false);
+      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+      module_context::enqueClientEvent(errorEvent);
    }
+
+   // Close the agent output group started in echoSourceCode().
+   // Clear the agent flag first so the group-end escape goes through the
+   // plain string buffering path in the event queue, where it will also be
+   // recorded in console actions (so the group close survives session reload).
+   module_context::setAgentExecuting(false);
+   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics

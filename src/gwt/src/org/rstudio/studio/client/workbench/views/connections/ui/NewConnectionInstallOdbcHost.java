@@ -91,7 +91,7 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    public void writeOutput(String output)
    {
-      consoleProgressWidget_.consoleWriteOutput(output);
+      consoleProgressWidget_.consoleWriteOutput(output, false);
    }
 
    @Override

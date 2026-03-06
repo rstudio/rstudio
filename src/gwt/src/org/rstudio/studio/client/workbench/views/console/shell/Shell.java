@@ -353,7 +353,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          public void onError(ServerError error)
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError(constants_.errorString(error.getUserMessage()));
+            view_.consoleWriteError(constants_.errorString(error.getUserMessage()), false);
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -362,12 +362,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      view_.consoleWriteOutput(event.getOutput());
+      view_.consoleWriteOutput(event.getOutput(), event.isAgent());
    }
 
    public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
    {
-      view_.consoleWriteError(event.getError());
+      view_.consoleWriteError(event.getError(), event.isAgent());
    }
 
    public void onUnhandledError(UnhandledErrorEvent event)
@@ -384,12 +384,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      view_.consoleWriteInput(event.getInput(), event.getConsole());
+      view_.consoleWriteInput(event.getInput(), event.getConsole(), event.isAgent());
    }
 
    public void onConsoleWritePrompt(ConsoleWritePromptEvent event)
    {
-      view_.consoleWritePrompt(event.getPrompt());
+      view_.consoleWritePrompt(event.getPrompt(), event.isAgent());
    }
 
    public void onConsolePrompt(ConsolePromptEvent event)

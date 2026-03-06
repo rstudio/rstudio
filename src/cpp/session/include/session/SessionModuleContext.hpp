@@ -483,13 +483,19 @@ core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
 // enqueue new console input
 core::Error enqueueConsoleInput(const std::string& input);
 
-// write output to the console (convenience wrapper for enquing a 
+// write output to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteOutput(const std::string& output);
-   
-// write an error to the console (convenience wrapper for enquing a 
+
+// write an error to the console (convenience wrapper for enquing a
 // kConsoleWriteOutput event)
 void consoleWriteError(const std::string& message);
+
+// flag indicating whether an AI agent is currently executing code;
+// when set, console output/error events include agent metadata so the
+// frontend can style them differently
+void setAgentExecuting(bool executing);
+bool isAgentExecuting();
    
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
