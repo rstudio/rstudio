@@ -16,7 +16,6 @@
 #include "SessionAssistant.hpp"
 #include "SessionChat.hpp"
 
-#define SESSION_STDERR_LOG_LEVEL s_assistantLogLevel
 #include "SessionLogging.hpp"
 #include "SessionNodeTools.hpp"
 
@@ -1104,8 +1103,6 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
       return;
 
    LOG_ERROR_MESSAGE(stdErr);
-   if (assistantLogLevel() >= 1)
-      std::cerr << stdErr << std::endl;
  
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
@@ -1984,6 +1981,7 @@ SEXP rs_assistantSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
    s_assistantLogLevel = logLevel;
+   rstudio::session::logging::setStderrLogLevel("assistant", logLevel);
    return logLevelSEXP;
 }
 
@@ -2670,7 +2668,10 @@ Error initialize()
       assistantLogLevel = core::system::getenv("AI_LOG_LEVEL");
 
    if (!assistantLogLevel.empty())
+   {
       s_assistantLogLevel = safe_convert::stringTo<int>(assistantLogLevel, 0);
+      rstudio::session::logging::setStderrLogLevel("assistant", s_assistantLogLevel);
+   }
    
    // Read project options
    if (projects::projectContext().hasProject())

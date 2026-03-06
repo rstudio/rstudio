@@ -16,24 +16,8 @@
 #ifndef SESSION_CHAT_LOGGING_HPP
 #define SESSION_CHAT_LOGGING_HPP
 
-// Forward declare chatLogLevel() so the macro can reference it.
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace chat {
-namespace logging {
-int chatLogLevel();
-} // namespace logging
-} // namespace chat
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-// Configure SessionLogging.hpp: use "chat" section and mirror to stderr
-// when CHAT_LOG_LEVEL >= 1.
+// Configure SessionLogging.hpp: use "chat" section.
 #define SESSION_LOG_SECTION "chat"
-#define SESSION_STDERR_LOG_LEVEL \
-   rstudio::session::modules::chat::logging::chatLogLevel()
 #include "../SessionLogging.hpp"
 
 // Forward declare SEXP for R interface

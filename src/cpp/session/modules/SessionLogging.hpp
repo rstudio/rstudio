@@ -13,6 +13,11 @@
  *
  */
 
+// WARNING: This header redefines core logging macros (LOG_ERROR, etc.)
+// to add section tagging and stderr mirroring. It should only be included
+// from .cpp files, never from other headers (except thin wrappers like
+// ChatLogging.hpp that exist solely to configure and re-export it).
+
 #ifndef SESSION_MODULES_SESSION_LOGGING_HPP
 #define SESSION_MODULES_SESSION_LOGGING_HPP
 
@@ -20,14 +25,18 @@
 #include <iostream>
 #include <string>
 
+#include <boost/optional.hpp>
+
 #include <fmt/format.h>
 
 #include <core/Log.hpp>
 
-
-namespace rstudio {
-namespace session {
-namespace logging {
+namespace rstudio
+{
+namespace session
+{
+namespace logging
+{
 
 // Derives a log section name from __FILE__.
 // Strips the directory, removes a "Session" prefix if present,
@@ -73,16 +82,22 @@ void setStderrLogLevel(const std::string& section, int level);
 } // namespace session
 } // namespace rstudio
 
-namespace rstudio {
-namespace core {
+namespace rstudio
+{
+namespace core
+{
 class Error;
 } // namespace core
 } // namespace rstudio
 
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace logging {
+namespace rstudio
+{
+namespace session
+{
+namespace modules
+{
+namespace logging
+{
 
 core::Error initialize();
 
@@ -97,84 +112,130 @@ core::Error initialize();
 // SESSION_LOG_SECTION
 //   The log section name. Defaults to an auto-derived name from __FILE__.
 //   Example: #define SESSION_LOG_SECTION "chat"
-//
-// SESSION_STDERR_LOG_LEVEL
-//   An expression returning int; when >= 1, DLOG/WLOG/ELOG/ILOG/TLOG also
-//   mirror output to stderr. Defaults to 0 (disabled).
-//   Example: #define SESSION_STDERR_LOG_LEVEL chatLogLevel()
 // ---------------------------------------------------------------------------
 
 #ifndef SESSION_LOG_SECTION
 #define SESSION_LOG_SECTION rstudio::session::logging::logNameFromFile(__FILE__)
 #endif
 
-#ifndef SESSION_STDERR_LOG_LEVEL
-#define SESSION_STDERR_LOG_LEVEL 0
-#endif
-
 // Log section name, computed once per translation unit.
-namespace {
-const std::string s_logSection(SESSION_LOG_SECTION);
+namespace
+{
+const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
 } // anonymous namespace
 
+// Helper macros for generating unique variable names within macros.
+#define CONCAT_IMPL(a, b) a##b
+#define CONCAT(a, b) CONCAT_IMPL(a, b)
+#define VAR(name) CONCAT(name, __LINE__)
+
+// Helper macro: mirror a message to stderr when configured via the
+// runtime registry (setStderrLogLevel).
+#define SESSION_STDERR_MIRROR_(message)                                        \
+   do                                                                          \
+   {                                                                           \
+      using rstudio::session::logging::stderrLogLevel;                         \
+      if (stderrLogLevel(s_sessionLoggingSection) >= 1)                        \
+         std::cerr << (message) << std::endl;                                  \
+   } while (0)
+
 // Override standard logging macros to automatically supply the log
-// section name derived from SESSION_LOG_SECTION.
+// section name derived from SESSION_LOG_SECTION, and mirror to stderr
+// when configured.
 #ifdef LOG_ERROR
 #undef LOG_ERROR
 #endif
 #define LOG_ERROR(error)                                                       \
-   rstudio::core::log::logError(error, s_logSection, ERROR_LOCATION)
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core;                                           \
+      using namespace rstudio::core::log;                                      \
+      Error VAR(error) = (error);                                              \
+      logError(VAR(error), s_sessionLoggingSection, ERROR_LOCATION);           \
+      SESSION_STDERR_MIRROR_(VAR(error).asString());                           \
+   } while (0)
 
 #ifdef LOG_ERROR_MESSAGE
 #undef LOG_ERROR_MESSAGE
 #endif
 #define LOG_ERROR_MESSAGE(message)                                             \
-   rstudio::core::log::logErrorMessage(                                        \
-       message, s_logSection, boost::none, ERROR_LOCATION)
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core::log;                                      \
+      std::string VAR(message) = (message);                                    \
+      logErrorMessage(                                                         \
+          VAR(message), s_sessionLoggingSection, boost::none, ERROR_LOCATION); \
+      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+   } while (0)
 
 #ifdef LOG_WARNING_MESSAGE
 #undef LOG_WARNING_MESSAGE
 #endif
 #define LOG_WARNING_MESSAGE(message)                                           \
-   rstudio::core::log::logWarningMessage(                                      \
-       message, s_logSection, boost::none, ERROR_LOCATION)
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core::log;                                      \
+      std::string VAR(message) = (message);                                    \
+      logWarningMessage(                                                       \
+          VAR(message), s_sessionLoggingSection, boost::none, ERROR_LOCATION); \
+      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+   } while (0)
 
 #ifdef LOG_INFO_MESSAGE
 #undef LOG_INFO_MESSAGE
 #endif
 #define LOG_INFO_MESSAGE(message)                                              \
-   rstudio::core::log::logInfoMessage(                                         \
-       message, s_logSection, boost::none, LOG_LOCATION_IF_ENABLED())
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core::log;                                      \
+      std::string VAR(message) = (message);                                    \
+      logInfoMessage(VAR(message),                                             \
+                     s_sessionLoggingSection,                                  \
+                     boost::none,                                              \
+                     LOG_LOCATION_IF_ENABLED());                               \
+      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+   } while (0)
 
 #ifdef LOG_DEBUG_MESSAGE
 #undef LOG_DEBUG_MESSAGE
 #endif
 #define LOG_DEBUG_MESSAGE(message)                                             \
-   (rstudio::core::log::isLogLevel(                                            \
-       rstudio::core::log::LogLevel::DEBUG_LEVEL)                              \
-        ? (rstudio::core::log::logDebugMessage(                                \
-               message, s_logSection, boost::none,                             \
-               LOG_LOCATION_IF_ENABLED()),                                     \
-           true)                                                               \
-        : false)
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core::log;                                      \
+      if (isLogLevel(LogLevel::DEBUG_LEVEL))                                   \
+      {                                                                        \
+         std::string VAR(message) = (message);                                 \
+         logDebugMessage(VAR(message),                                         \
+                         s_sessionLoggingSection,                              \
+                         boost::none,                                          \
+                         LOG_LOCATION_IF_ENABLED());                           \
+         SESSION_STDERR_MIRROR_(VAR(message));                                 \
+      }                                                                        \
+   } while (0)
 
 #ifdef LOG_TRACE_MESSAGE
 #undef LOG_TRACE_MESSAGE
 #endif
 #define LOG_TRACE_MESSAGE(message)                                             \
-   (rstudio::core::log::isLogLevel(                                            \
-       rstudio::core::log::LogLevel::TRACE_LEVEL)                              \
-        ? (rstudio::core::log::logTraceMessage(                                \
-               message, s_logSection, boost::none,                             \
-               LOG_LOCATION_IF_ENABLED()),                                     \
-           true)                                                               \
-        : false)
+   do                                                                          \
+   {                                                                           \
+      using namespace rstudio::core::log;                                      \
+      if (isLogLevel(LogLevel::TRACE_LEVEL))                                   \
+      {                                                                        \
+         std::string VAR(message) = (message);                                 \
+         logTraceMessage(VAR(message),                                         \
+                         s_sessionLoggingSection,                              \
+                         boost::none,                                          \
+                         LOG_LOCATION_IF_ENABLED());                           \
+         SESSION_STDERR_MIRROR_(VAR(message));                                 \
+      }                                                                        \
+   } while (0)
 
 // DLOG / WLOG / ELOG / ILOG / TLOG: convenience macros using fmt::format
 // with automatic function-name prefix.
 //
-// Output is mirrored to stderr when either the compile-time
-// SESSION_STDERR_LOG_LEVEL hook >= 1, or the runtime registry
+// Output is mirrored to stderr when the runtime registry
 // (setStderrLogLevel) has been set >= 1 for this section.
 
 #define SESSION_LOG_IMPL_(__LOGGER__, __FMT__, ...)                            \
@@ -182,10 +243,8 @@ const std::string s_logSection(SESSION_LOG_SECTION);
    {                                                                           \
       std::string formatted =                                                  \
           fmt::format("[{}]: " __FMT__, __func__, ##__VA_ARGS__);              \
-      __LOGGER__(s_logSection, formatted);                                     \
-      if ((SESSION_STDERR_LOG_LEVEL) >= 1 ||                                   \
-          rstudio::session::logging::stderrLogLevel(s_logSection) >= 1)        \
-         std::cerr << formatted << std::endl;                                  \
+      __LOGGER__(s_sessionLoggingSection, formatted);                          \
+      SESSION_STDERR_MIRROR_(formatted);                                       \
    } while (0)
 
 #define TLOG(__FMT__, ...)                                                     \
