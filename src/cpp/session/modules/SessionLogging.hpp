@@ -150,9 +150,9 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
    {                                                                           \
       using namespace rstudio::core;                                           \
       using namespace rstudio::core::log;                                      \
-      Error VAR(error) = (error);                                              \
-      logError(VAR(error), s_sessionLoggingSection, ERROR_LOCATION);           \
-      SESSION_STDERR_MIRROR_(VAR(error).asString());                           \
+      Error VAR(err) = (error);                                                \
+      logError(VAR(err), s_sessionLoggingSection, ERROR_LOCATION);             \
+      SESSION_STDERR_MIRROR_(VAR(err).asString());                             \
    } while (0)
 
 #ifdef LOG_ERROR_MESSAGE
@@ -162,10 +162,10 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
    do                                                                          \
    {                                                                           \
       using namespace rstudio::core::log;                                      \
-      std::string VAR(message) = (message);                                    \
+      std::string VAR(msg) = (message);                                        \
       logErrorMessage(                                                         \
-          VAR(message), s_sessionLoggingSection, boost::none, ERROR_LOCATION); \
-      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+          VAR(msg), s_sessionLoggingSection, boost::none, ERROR_LOCATION);     \
+      SESSION_STDERR_MIRROR_(VAR(msg));                                        \
    } while (0)
 
 #ifdef LOG_WARNING_MESSAGE
@@ -175,10 +175,10 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
    do                                                                          \
    {                                                                           \
       using namespace rstudio::core::log;                                      \
-      std::string VAR(message) = (message);                                    \
+      std::string VAR(msg) = (message);                                        \
       logWarningMessage(                                                       \
-          VAR(message), s_sessionLoggingSection, boost::none, ERROR_LOCATION); \
-      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+          VAR(msg), s_sessionLoggingSection, boost::none, ERROR_LOCATION);     \
+      SESSION_STDERR_MIRROR_(VAR(msg));                                        \
    } while (0)
 
 #ifdef LOG_INFO_MESSAGE
@@ -188,12 +188,12 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
    do                                                                          \
    {                                                                           \
       using namespace rstudio::core::log;                                      \
-      std::string VAR(message) = (message);                                    \
-      logInfoMessage(VAR(message),                                             \
+      std::string VAR(msg) = (message);                                        \
+      logInfoMessage(VAR(msg),                                                 \
                      s_sessionLoggingSection,                                  \
                      boost::none,                                              \
                      LOG_LOCATION_IF_ENABLED());                               \
-      SESSION_STDERR_MIRROR_(VAR(message));                                    \
+      SESSION_STDERR_MIRROR_(VAR(msg));                                        \
    } while (0)
 
 #ifdef LOG_DEBUG_MESSAGE
@@ -205,12 +205,12 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
       using namespace rstudio::core::log;                                      \
       if (isLogLevel(LogLevel::DEBUG_LEVEL))                                   \
       {                                                                        \
-         std::string VAR(message) = (message);                                 \
-         logDebugMessage(VAR(message),                                         \
+         std::string VAR(msg) = (message);                                     \
+         logDebugMessage(VAR(msg),                                             \
                          s_sessionLoggingSection,                              \
                          boost::none,                                          \
                          LOG_LOCATION_IF_ENABLED());                           \
-         SESSION_STDERR_MIRROR_(VAR(message));                                 \
+         SESSION_STDERR_MIRROR_(VAR(msg));                                     \
       }                                                                        \
    } while (0)
 
@@ -223,12 +223,12 @@ const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
       using namespace rstudio::core::log;                                      \
       if (isLogLevel(LogLevel::TRACE_LEVEL))                                   \
       {                                                                        \
-         std::string VAR(message) = (message);                                 \
-         logTraceMessage(VAR(message),                                         \
+         std::string VAR(msg) = (message);                                     \
+         logTraceMessage(VAR(msg),                                             \
                          s_sessionLoggingSection,                              \
                          boost::none,                                          \
                          LOG_LOCATION_IF_ENABLED());                           \
-         SESSION_STDERR_MIRROR_(VAR(message));                                 \
+         SESSION_STDERR_MIRROR_(VAR(msg));                                     \
       }                                                                        \
    } while (0)
 
