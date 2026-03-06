@@ -16,12 +16,12 @@ package org.rstudio.studio.client.common.shell;
 
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
-public interface ShellOutputWriter 
+public interface ShellOutputWriter
 {
-   void consoleWriteError(String string);
+   void consoleWriteError(String string, boolean agent);
    void consoleWriteExtendedError(
-         String string, UnhandledError traceInfo, 
+         String string, UnhandledError traceInfo,
          boolean expand, String command);
-   void consoleWriteOutput(String output);
-   void consoleWritePrompt(String prompt);
+   void consoleWriteOutput(String output, boolean agent);
+   void consoleWritePrompt(String prompt, boolean agent);
 }

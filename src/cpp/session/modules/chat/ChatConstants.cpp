@@ -26,9 +26,10 @@ const char* const kPositAiDirName = "pai/bin";
 const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
+const char* const kCspConfigPath = "dist/csp.json";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-const char* const kProtocolVersion = "8.0";
+const char* const kProtocolVersion = "9.0";
 
 // Capabilities: JSON-RPC methods that RStudio handles
 const std::vector<std::string>& rstudioCapabilities()

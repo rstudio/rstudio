@@ -13,14 +13,775 @@
 #
 #
 
+# NOTE: The guardrails implemented here are intended to prevent accidental
+# misuse and unintentionally destructive AI-generated code. They should
+# not be relied upon to defend against deliberately malicious code.
+
+# Base package names, excluded from "trusted caller" detection
+# because the agent could call them directly to access files.
+.rs.setVar("chat.basePackages", rownames(
+   installed.packages(priority = "base", lib.loc = .Library)
+))
+
+
+# Each hooked namespace gets its own environment within this container,
+# keyed by the namespace name. The per-namespace environment maps
+# binding names to their original values.
+.rs.setVar("chat.hookedBindings", new.env(parent = emptyenv()))
+.rs.setVar("chat.bindingsInjected", FALSE)
+
+
+# PCRE patterns matched against normalized paths to deny reads.
+# Paths are always absolute and normalized before matching.
+#
+# NOTE: The primary defense against credential file reads is the file
+# permission check in isFileReadAllowed (denying files without world-
+# readable permissions). These patterns are defense-in-depth for common
+# credential paths, in case file permissions are misconfigured.
+.rs.setVar("chat.denyReadPatterns", c(
+
+   # Deny files that are likely to contain credentials
+   "/\\.aws/credentials$",
+   "/\\.aws/config$",
+   "/\\.netrc$",
+   "/\\.npmrc$",
+   "/\\.ssh/config$",
+
+   # Deny container/cloud credential directories
+   "/\\.docker(/|$)",
+   "/\\.kube(/|$)",
+
+   # Deny cloud provider credential directories
+   "/\\.config/gcloud(/|$)",
+   "/\\.azure(/|$)",
+
+   # Deny GPG private keys
+   "/\\.gnupg(/|$)",
+
+   # Deny package registry credential files
+   "/\\.pypirc$",
+   "/\\.gem/credentials$",
+
+   # Deny database credential files
+   "/\\.pgpass$",
+   "/\\.my(login)?\\.cnf$",
+
+   # Deny git credential store
+   "/\\.git-credentials$",
+
+   # Deny CLI/API token files
+   "/\\.config/gh/hosts\\.ya?ml$",
+   "/\\.huggingface/token$",
+
+   # Deny files like .env, .env.local, .Renviron, .Rprofile, and so on.
+   "/\\.env(\\.|$)",
+   "/\\.Renviron(\\.|$)",
+   "/\\.Rprofile(\\.|$)",
+
+   # Deny access to non-public files within the .ssh directory.
+   "/\\.ssh/id.*(?<!\\.pub)$"
+   
+))
+
+
+# PCRE patterns matched against normalized paths to deny edits.
+# Note that file edits are disallowed by default, except for files within
+#
+# - The R temporary directory
+# - The project directory (when a project is open)
+# - The current working directory
+# - The RStudio scratch path
+# - R library paths (.libPaths())
+# - R user directories (data, config, cache)
+#
+# This list serves to deny edits for certain files even if they're within
+# one of the above 'allowed' directories.
+.rs.setVar("chat.denyEditPatterns", c(
+
+   # Deny edits on or within the .ssh directory.
+   "/\\.ssh(/|$)"
+
+))
+
+# PCRE patterns matched against normalized paths to deny access to
+# sensitive system files.
+.rs.setVar("chat.denySystemPatterns", c(
+   "/etc/master\\.passwd$",
+   "/etc/passwd$",
+   "/etc/shadow$",
+   "/etc/sudoers$",
+   "/proc/self/environ$"
+))
+
+
+#' Add a preflight validation hook to an existing function.
+#'
+#' Prepends the body of `hook` to the body of the target function,
+#' so that the hook runs before the original implementation. The
+#' original binding is saved for later restoration by
+#' `.rs.chat.restoreBindings`.
+#'
+#' @param package The name of the package containing the binding.
+#' @param binding The name of the function to hook.
+#' @param hook A function whose body will be prepended to the original.
+.rs.addFunction("chat.addPreflightHook", function(package, binding, hook)
+{
+   # resolve the namespace environment
+   envir <- asNamespace(package)
+
+   # skip bindings that don't exist (e.g. removed in a future R version)
+   if (!exists(binding, envir = envir, inherits = FALSE))
+   {
+      warning(sprintf("binding '%s' not found in '%s'; skipping hook", binding, package))
+      return(invisible(NULL))
+   }
+
+   # grab the original binding
+   original <- envir[[binding]]
+
+   # get or create the per-namespace storage for original bindings
+   if (!exists(package, envir = .rs.chat.hookedBindings, inherits = FALSE))
+      .rs.chat.hookedBindings[[package]] <- new.env(parent = emptyenv())
+   .rs.chat.hookedBindings[[package]][[binding]] <- original
+
+   # set hook environment and formals to match original (replaceBinding
+   # will also set the environment, but we need it here so the merged
+   # body can resolve symbols from the original namespace)
+   environment(hook) <- environment(original)
+   formals(hook) <- formals(original)
+
+   # inject the body of our hook as a prefix to the original code
+   body(hook) <- call("{", body(hook), body(original))
+
+   # replace in both namespace and search path
+   .rs.replaceBinding(binding, package, hook)
+
+   # return old binding in case caller needs it
+   invisible(original)
+})
+
+.rs.addFunction("chat.addPreflightHooks", function(package, hooks)
+{
+   if (!isNamespaceLoaded(package))
+      return(invisible())
+
+   .rs.enumerate(hooks, function(binding, hook)
+   {
+      .rs.chat.addPreflightHook(package, binding, hook)
+   })
+})
+
+
+#' Match paths against a pattern.
+#'
+#' Wrapper around grepl that uses case-insensitive matching on
+#' platforms with case-insensitive filesystems (macOS, Windows).
+#'
+#' @param pattern A PCRE regular expression.
+#' @param x A character vector of file paths.
+#' @param ... Additional arguments passed to `grepl()`.
+.rs.addFunction("chat.pathMatches", function(pattern, x, ...)
+{
+   grepl(pattern, x, ignore.case = !.rs.platform.isLinux, perl = TRUE, ...)
+})
+
+#' Check whether a path lies within a directory.
+#'
+#' Both `path` and `directory` should be normalized before calling
+#' this function.
+#'
+#' @param path A character vector of file paths.
+#' @param directory A single directory path.
+.rs.addFunction("chat.isPathWithin", function(path, directory)
+{
+   # guard against empty, root, or bare Windows drive root directory,
+   # any of which would match all (or nearly all) paths
+   if (!nzchar(directory) || directory == "/" || grepl("^[A-Za-z]:/?$", directory))
+      return(rep.int(FALSE, length(path)))
+
+   pattern <- paste0("^\\Q", directory, "\\E(/|$)")
+   .rs.chat.pathMatches(pattern, path)
+})
+
+#' Normalize file paths for use in guardrail path comparisons.
+#'
+#' Expands leading '~' via `path.expand()`, then uses Boost filesystem to
+#' resolve symlinks, normalize separators to '/', and remove '.' and '..'
+#' components.
+#'
+#' @param path A character vector of file paths.
+.rs.addFunction("chat.normalizePath", function(path)
+{
+   path[is.na(path)] <- ""
+   .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
+})
+
+#' Check whether a list of functions contains one from a non-base package.
+#'
+#' Given a list of functions (typically extracted from the call stack),
+#' returns `TRUE` if any function's environment is a non-base, non-recommended
+#' package namespace. When such a function is found, the call is considered
+#' "trusted" -- package code legitimately accessing files should not be
+#' blocked by the credential-path deny list.
+#'
+#' Base packages are excluded because they are
+#' general-purpose utilities that the agent could call directly to
+#' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
+#'
+#' @param fns A list of functions to check.
+#' @return `TRUE` if a non-base package namespace is found.
+.rs.addFunction("chat.isCalledFromPackageImpl", function(fns)
+{
+   basePkgs <- .rs.chat.basePackages
+
+   for (fn in fns)
+   {
+      envir <- environment(fn)
+      if (is.null(envir))
+         next
+
+      if (!isNamespace(envir))
+         next
+
+      pkg <- getNamespaceName(envir)
+      if (pkg %in% basePkgs)
+         next
+
+      return(TRUE)
+   }
+
+   FALSE
+})
+
+#' Check whether the current call originates from a non-base package.
+#'
+#' Collects the functions on the call stack and delegates to
+#' `.rs.chat.isCalledFromPackageImpl()`.
+#'
+#' @return `TRUE` if a non-base package namespace is on the call stack.
+.rs.addFunction("chat.isCalledFromPackage", function()
+{
+   fns <- .Call("rs_chatCallStackFunctions", PACKAGE = "(embedding)")
+   .rs.chat.isCalledFromPackageImpl(fns)
+})
+
+#' Check whether reading the given paths is allowed.
+#'
+#' Reads are allowed by default, but denied for files that lack
+#' world-readable permissions, match well-known sensitive path
+#' patterns (e.g. `~/.aws/credentials`, `.env`, `.Renviron`).
+#'
+#' When `trusted` is `TRUE` (i.e. the call originates from a
+#' non-base package), the deny-pattern check is skipped so that
+#' package code can legitimately access credential files.
+#'
+#' @param path A character vector of file paths.
+#' @param trusted Whether to skip the deny-pattern check.
+#' @return A character vector the same length as `path`, where
+#'   empty strings indicate allowed reads and non-empty strings
+#'   give the reason the read was denied.
+.rs.addFunction("chat.isFileReadAllowed", function(path, trusted = FALSE)
+{
+   # normalize path for comparison
+   path <- .rs.chat.normalizePath(path)
+
+   # assume file reads are permitted by default
+   reasons <- rep.int("", length(path))
+
+   # deny reads on files that lack read permission for 'others'
+   # (use which() to drop NA modes from non-existent files)
+   info <- suppressWarnings(file.info(path))
+   deny <- bitwAnd(info$mode, 4L) == 0L
+   reasons[which(deny)] <- "File is not world-readable."
+
+   # deny reads matching sensitive path patterns
+   # (skip for trusted callers, i.e. non-base package code)
+   if (!trusted)
+   {
+      pattern <- paste(.rs.chat.denyReadPatterns, collapse = "|")
+      reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
+   }
+
+   # deny reads on sensitive system files
+   pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
+
+   reasons
+})
+
+#' Compute the RStudio user scratch path.
+#'
+#' Delegates to the C++ `xdg::userDataDir()` so the resolution logic
+#' (environment variable overrides, platform defaults, directory
+#' creation) stays in one place.
+#'
+#' @return A single normalized directory path.
+.rs.addFunction("chat.userScratchPath", function()
+{
+   .Call("rs_userDataDir", PACKAGE = "(embedding)")
+})
+
+#' Check whether editing the given paths is allowed.
+#'
+#' Edits are denied by default, but allowed within the R temporary
+#' directory, the active project directory, the current working
+#' directory, the RStudio user scratch path, R library paths, and
+#' R user directories (data, config, cache). Edits within sensitive
+#' directories (e.g. `~/.ssh`) are always denied.
+#'
+#' @param path A character vector of file paths.
+#' @return A character vector the same length as `path`, where
+#'   empty strings indicate allowed edits and non-empty strings
+#'   give the reason the edit was denied.
+.rs.addFunction("chat.isFileEditAllowed", function(path)
+{
+   # normalize path for comparison
+   path <- .rs.chat.normalizePath(path)
+
+   # assume file edits are disallowed by default
+   reasons <- rep.int(
+      "Path is not within the project, working directory, or other allowed locations.",
+      length(path)
+   )
+
+   # allow edits within the R temporary directory
+   tempDir <- .rs.chat.normalizePath(tempdir())
+   reasons[.rs.chat.isPathWithin(path, tempDir)] <- ""
+
+   # allow edits within the project directory
+   projectDir <- .rs.getProjectDirectory()
+   if (!is.null(projectDir))
+   {
+      projectDir <- .rs.chat.normalizePath(projectDir)
+      reasons[.rs.chat.isPathWithin(path, projectDir)] <- ""
+   }
+
+   # allow edits within the current working directory
+   workingDir <- .rs.chat.normalizePath(getwd())
+   reasons[.rs.chat.isPathWithin(path, workingDir)] <- ""
+
+   # allow edits within the RStudio scratch path (e.g. ~/.local/share/rstudio),
+   # since tool-invoked code may update files there
+   scratchDir <- .rs.chat.userScratchPath()
+   reasons[.rs.chat.isPathWithin(path, scratchDir)] <- ""
+
+   # allow edits within R library paths (e.g. for package installation)
+   for (libPath in .libPaths())
+   {
+      libPath <- .rs.chat.normalizePath(libPath)
+      reasons[.rs.chat.isPathWithin(path, libPath)] <- ""
+   }
+
+   # allow edits within R user directories (data, config, cache),
+   # e.g. ~/.local/share/R, ~/.config/R, ~/.cache/R on Linux.
+   # Use dirname() to obtain the parent directory from a dummy package name.
+   # tools::R_user_dir was introduced in R 4.0.0.
+   if (getRversion() >= "4.0.0")
+   {
+      for (which in c("data", "config", "cache"))
+      {
+         rDir <- .rs.chat.normalizePath(dirname(tools::R_user_dir("_", which = which)))
+         reasons[.rs.chat.isPathWithin(path, rDir)] <- ""
+      }
+   }
+
+   # deny edits matching sensitive path patterns (both read and edit
+   # deny lists apply, since edits should be at least as restrictive)
+   pattern <- paste(c(.rs.chat.denyReadPatterns, .rs.chat.denyEditPatterns), collapse = "|")
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain secret keys or credentials."
+
+   # deny edits on sensitive system files
+   pattern <- paste(.rs.chat.denySystemPatterns, collapse = "|")
+   reasons[.rs.chat.pathMatches(pattern, path)] <- "File may contain sensitive system information."
+
+   reasons
+})
+
+.rs.addFunction("chat.validateFileEdit", function(action, path)
+{
+   reasons <- .rs.chat.isFileEditAllowed(path)
+   denied <- nzchar(reasons)
+   if (!any(denied))
+      return(TRUE)
+
+   details <- sprintf("- Action: %s()\n- Path:   %s\n- Reason: %s",
+      action, path[denied], reasons[denied])
+   msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
+   stop(msg, call. = FALSE)
+})
+
+.rs.addFunction("chat.validateFileRead", function(action, path)
+{
+   trusted <- .rs.chat.isCalledFromPackage()
+   reasons <- .rs.chat.isFileReadAllowed(path, trusted = trusted)
+   denied <- nzchar(reasons)
+   if (!any(denied))
+      return(TRUE)
+
+   details <- sprintf("- Action: %s()\n- Path:   %s\n- Reason: %s",
+      action, path[denied], reasons[denied])
+   msg <- paste(c("One or more agent file operations were blocked.", details), collapse = "\n\n")
+   stop(msg, call. = FALSE)
+})
+
+#' Validate a connection open based on the open mode.
+#'
+#' When `open` is "" (deferred), the connection could later be used for
+#' reading or writing, so it is validated as an edit (which applies both
+#' the read and edit deny lists).
+#'
+#' @param name The name of the connection function (e.g. "file", "gzfile").
+#' @param description The file path passed to the connection constructor.
+#' @param open The open mode string.
+.rs.addFunction("chat.validateConnection", function(name, description, open)
+{
+   if (!nzchar(description))
+      return()
+
+   if (!nzchar(open) || grepl("[wWaA+]", open))
+   {
+      .rs.chat.validateFileEdit(name, description)
+   }
+   else
+   {
+      .rs.chat.validateFileRead(name, description)
+   }
+})
+
+# inject preflight validation hooks into security-sensitive R
+# functions. Each hook is prepended to the original function body via
+# .rs.chat.addPreflightHook so that calls are validated before the real
+# implementation executes. hooks are removed by .rs.chat.restoreBindings.
+.rs.addFunction("chat.injectBindings", function()
+{
+   # guard against reentrant calls -- if hooks are already injected,
+   # skip injection to avoid overwriting saved originals
+   if (.rs.chat.bindingsInjected)
+      return(invisible())
+
+   baseHooks <- list(
+
+      unlink = function()
+      {
+         # Block recursive deletes in the user's home directory
+         if ("*" %in% x)
+         {
+            workDir <- .rs.chat.normalizePath(getwd())
+            homeDir <- .rs.chat.normalizePath("~")
+            if (identical(workDir, homeDir))
+            {
+               msg <- "denied agent from executing unlink(\"*\") on user home directory"
+               stop(msg, call. = FALSE)
+            }
+         }
+         
+         # The 'expand' formal was added in R 4.0.0; on older versions,
+         # unlink always performed glob expansion.
+         doExpand <- getRversion() < "4.0.0" || expand
+         paths <- if (doExpand) Sys.glob(x) else x
+         .rs.chat.validateFileEdit("unlink", paths)
+      },
+
+      file.create = function()
+      {
+         .rs.chat.validateFileEdit("file.create", c(...))
+      },
+
+      file.remove = function()
+      {
+         .rs.chat.validateFileEdit("file.remove", c(...))
+      },
+
+      file.rename = function()
+      {
+         .rs.chat.validateFileEdit("file.rename", c(from, to))
+      },
+
+      file.append = function()
+      {
+         .rs.chat.validateFileEdit("file.append", file1)
+         .rs.chat.validateFileRead("file.append", file2)
+      },
+
+      file.copy = function()
+      {
+         .rs.chat.validateFileRead("file.copy", from)
+         .rs.chat.validateFileEdit("file.copy", to)
+      },
+
+      file.symlink = function()
+      {
+         .rs.chat.validateFileRead("file.symlink", from)
+         .rs.chat.validateFileEdit("file.symlink", to)
+      },
+
+      file.link = function()
+      {
+         .rs.chat.validateFileRead("file.link", from)
+         .rs.chat.validateFileEdit("file.link", to)
+      },
+
+      file = function()
+      {
+         .rs.chat.validateConnection("file", description, open)
+      },
+
+      gzfile = function()
+      {
+         .rs.chat.validateConnection("gzfile", description, open)
+      },
+
+      bzfile = function()
+      {
+         .rs.chat.validateConnection("bzfile", description, open)
+      },
+
+      xzfile = function()
+      {
+         .rs.chat.validateConnection("xzfile", description, open)
+      },
+
+      readLines = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readLines", con)
+      },
+      
+      writeLines = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeLines", con)
+      },
+
+      cat = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("cat", file)
+      },
+
+      readChar = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readChar", con)
+      },
+
+      writeChar = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeChar", con)
+      },
+
+      readBin = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileRead("readBin", con)
+      },
+
+      writeBin = function()
+      {
+         if (is.character(con) && nzchar(con))
+            .rs.chat.validateFileEdit("writeBin", con)
+      },
+
+      save = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("save", file)
+      },
+
+      load = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("load", file)
+      },
+
+      source = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("source", file)
+      },
+
+      sys.source = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("sys.source", file)
+      },
+
+      readRDS = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileRead("readRDS", file)
+      },
+
+      saveRDS = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("saveRDS", file)
+      },
+
+      dput = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("dput", file)
+      },
+
+      dump = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("dump", file)
+      },
+
+      dir.create = function()
+      {
+         .rs.chat.validateFileEdit("dir.create", path)
+      },
+
+      Sys.chmod = function()
+      {
+         .rs.chat.validateFileEdit("Sys.chmod", paths)
+      },
+
+      Sys.setFileTime = function()
+      {
+         .rs.chat.validateFileEdit("Sys.setFileTime", path)
+      },
+
+      sink = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("sink", file)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks("base", baseHooks)
+
+   utilsHooks <- list(
+
+      download.file = function()
+      {
+         .rs.chat.validateFileEdit("download.file", destfile)
+      },
+
+      write.table = function()
+      {
+         if (is.character(file) && nzchar(file))
+            .rs.chat.validateFileEdit("write.table", file)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks("utils", utilsHooks)
+
+   fsHooks <- list(
+
+      file_create = function()
+      {
+         .rs.chat.validateFileEdit("file_create", path)
+      },
+
+      file_delete = function()
+      {
+         .rs.chat.validateFileEdit("file_delete", path)
+      },
+
+      file_copy = function()
+      {
+         .rs.chat.validateFileRead("file_copy", path)
+         .rs.chat.validateFileEdit("file_copy", new_path)
+      },
+
+      file_move = function()
+      {
+         .rs.chat.validateFileEdit("file_move", c(path, new_path))
+      },
+
+      file_chmod = function()
+      {
+         .rs.chat.validateFileEdit("file_chmod", path)
+      },
+
+      file_chown = function()
+      {
+         .rs.chat.validateFileEdit("file_chown", path)
+      },
+
+      file_touch = function()
+      {
+         .rs.chat.validateFileEdit("file_touch", path)
+      },
+
+      file_show = function()
+      {
+         .rs.chat.validateFileRead("file_show", path)
+      }
+
+   )
+
+   .rs.chat.addPreflightHooks("fs", fsHooks)
+
+   .rs.setVar("chat.bindingsInjected", TRUE)
+   invisible(TRUE)
+})
+
+.rs.addFunction("chat.restoreBindings", function()
+{
+   packages <- ls(envir = .rs.chat.hookedBindings, all.names = TRUE)
+   allRestored <- TRUE
+   
+   for (package in packages)
+   {
+      originals <- .rs.chat.hookedBindings[[package]]
+      bindings <- ls(envir = originals, all.names = TRUE)
+      
+      for (binding in bindings)
+      {
+         status <- .rs.tryCatch(.rs.replaceBinding(binding, package, originals[[binding]]))
+         if (inherits(status, "error"))
+         {
+            warning(sprintf(
+               "failed to restore binding '%s' in '%s': %s",
+               binding, package, conditionMessage(status)
+            ))
+            allRestored <- FALSE
+         }
+         else
+         {
+            rm(list = binding, envir = originals)
+         }
+      }
+      
+      # only remove the package entry if all bindings were restored
+      if (length(ls(envir = originals, all.names = TRUE)) == 0L)
+         rm(list = package, envir = .rs.chat.hookedBindings)
+   }
+   
+   if (allRestored)
+      .rs.setVar("chat.bindingsInjected", FALSE)
+})
+
+
 # Helper function for evaluating code for the 'runCode' tool.
 .rs.addFunction("chat.safeEval", function(expr, envir = globalenv())
 {
-   tryCatch(
-      withVisible(eval(expr, envir = envir)),
-      error = identity,
-      interrupt = identity
-   )
+   tryCatch(error = identity, interrupt = identity, {
+
+      # Register cleanup first so bindings are restored even if
+      # injectBindings() itself errors partway through
+      on.exit({
+         tryCatch(
+            .rs.chat.restoreBindings(),
+            error = function(e) {
+               warning("failed to restore bindings: ", conditionMessage(e))
+            }
+         )
+      }, add = TRUE)
+      .rs.chat.injectBindings()
+      
+      # Evaluate the provided code
+      withVisible(eval(expr, envir = envir))
+
+   })
 })
 
 # Helper function to capture a recorded plot as base64-encoded PNG
@@ -69,11 +830,7 @@
    if (dev.cur() <= 1)
       return(NULL)
 
-   tryCatch({
-      recordPlot()
-   }, error = function(e) {
-      NULL
-   })
+   tryCatch(recordPlot(), error = function(e) NULL)
 })
 
 # Capture the current plot, but only if plotting occurred since the given

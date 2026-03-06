@@ -14,8 +14,11 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import java.util.Map;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -60,7 +63,8 @@ public class ChatPane
       UPDATING,
       UPDATE_COMPLETE,
       UPDATE_ERROR,
-      UPDATE_CHECK_FAILURE
+      UPDATE_CHECK_FAILURE,
+      READLINE
    }
 
    @Inject
@@ -123,8 +127,15 @@ public class ChatPane
       updateButtonPanel_ = new FlowPanel();
       updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
+      notificationIcon_ = new DecorativeImage(
+         new ImageResource2x(MessageDialogImages.INSTANCE.dialog_info2x()));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.getElement().getStyle().setProperty("flexShrink", "0");
+      notificationIcon_.setVisible(false);
+
       notificationContent_ = new FlowPanel();
       notificationContent_.setStyleName(RES.styles().chatNotificationContent());
+      notificationContent_.add(notificationIcon_);
       notificationContent_.add(updateMessageLabel_);
       notificationContent_.add(updateButtonPanel_);
       updateNotificationPanel_.add(notificationContent_);
@@ -478,6 +489,7 @@ public class ChatPane
    @Override
    public void showUpdatingStatus()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdating());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -491,6 +503,7 @@ public class ChatPane
    @Override
    public void showUpdateComplete()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateComplete());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -504,6 +517,7 @@ public class ChatPane
    @Override
    public void showUpdateError(String errorMessage)
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -525,8 +539,16 @@ public class ChatPane
    public void hideUpdateNotification()
    {
       currentNotificationType_ = NotificationType.NONE;
+      notificationIcon_.setVisible(false);
       updateNotificationPanel_.setVisible(false);
       updateFrameLayout();
+   }
+
+   private void setNotificationIcon(com.google.gwt.resources.client.ImageResource resource)
+   {
+      notificationIcon_.setResource(new ImageResource2x(resource));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.setVisible(true);
    }
 
    @Override
@@ -540,8 +562,41 @@ public class ChatPane
    }
 
    @Override
+   public void showReadlineNotification()
+   {
+      // Don't overwrite higher-priority update notifications
+      if (currentNotificationType_ == NotificationType.UPDATING ||
+          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         return;
+      }
+
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
+      updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
+
+      currentNotificationType_ = NotificationType.READLINE;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideReadlineNotification()
+   {
+      if (currentNotificationType_ == NotificationType.READLINE)
+      {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
    public void showUpdateCheckFailure()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -558,6 +613,33 @@ public class ChatPane
    {
       String message = constants_.chatIncompatibleVersion();
       showMessage(message);
+   }
+
+   @Override
+   public void showUnsupportedVersionUpgradeRequired(
+       String currentVersion, String newVersion)
+   {
+      String html = generateUnsupportedVersionUpgradeHTML(
+          currentVersion, newVersion);
+      updateFrameContent(html);
+   }
+
+   @Override
+   public void showUnsupportedProtocol()
+   {
+      showMessage(constants_.chatUnsupportedProtocolMessage());
+   }
+
+   @Override
+   public void showManifestUnavailable()
+   {
+      showMessage(constants_.chatManifestUnavailableMessage());
+   }
+
+   @Override
+   public void showUnsupportedVersionNoUpdate(String currentVersion)
+   {
+      showMessage(constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
    }
 
    @Override
@@ -638,6 +720,7 @@ public class ChatPane
       html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
       html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
       html.append("  border-radius: 4px;");
+      html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append(".chatIframeButton:hover {");
       html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
@@ -665,6 +748,9 @@ public class ChatPane
       html.append("<button id='install-btn' class='chatIframeButton'>");
       html.append(constants_.chatInstallButton());
       html.append("</button>");
+      html.append("<p class='detail'>");
+      html.append(constants_.chatInstallTermsOfUse());
+      html.append("</p>");
       html.append("</div>");
       html.append("<script>");
       html.append("document.getElementById('install-btn').addEventListener('click', function() {");
@@ -761,6 +847,92 @@ public class ChatPane
       html.append("});");
       html.append("document.getElementById('ignore-btn').addEventListener('click', function() {");
       html.append("  window.parent.postMessage('remind-later', '*');");
+      html.append("});");
+      html.append("</script>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   private String generateUnsupportedVersionUpgradeHTML(
+       String currentVersion, String newVersion)
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
+      html.append("  margin: 0 0 24px 0;");
+      html.append("}");
+      html.append(".chatIframeButton {");
+      html.append("  padding: 10px 20px;");
+      html.append("  font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, " + widgetBgColor + ");");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
+      html.append("  border-radius: 4px;");
+      html.append("  margin: 0 8px;");
+      html.append("}");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(constants_.chatUpdateRequiredTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(constants_.chatUnsupportedVersionMessage(currentVersion, newVersion));
+      html.append("</p>");
+      html.append("<button id='update-btn' class='chatIframeButton'>");
+      html.append(constants_.chatUpdateButton());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('update-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('install-now', '*');");
       html.append("});");
       html.append("</script>");
       html.append("</body>");
@@ -1219,6 +1391,7 @@ public class ChatPane
    private FlowPanel notificationContent_;
    private HTML updateMessageLabel_;
    private FlowPanel updateButtonPanel_;
+   private DecorativeImage notificationIcon_;
 
    // Injected ----
    private final EventBus events_;

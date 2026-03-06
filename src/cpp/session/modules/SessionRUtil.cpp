@@ -27,6 +27,7 @@
 
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Xdg.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Macros.hpp>
 #include <core/YamlUtil.hpp>
@@ -359,6 +360,13 @@ SEXP rs_getSessionOverlayOption(SEXP keySEXP)
    return r::sexp::create(value, &protect);
 }
 
+SEXP rs_userDataDir()
+{
+   r::sexp::Protect protect;
+   std::string userDataDir = core::system::xdg::userDataDir().getAbsolutePath();
+   return r::sexp::createUtf8(userDataDir, &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -374,7 +382,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    RS_REGISTER_CALL_METHOD(rs_promiseCode);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
-   
+   RS_REGISTER_CALL_METHOD(rs_userDataDir);
+
    using boost::bind;
    using namespace module_context;
 

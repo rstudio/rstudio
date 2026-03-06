@@ -612,6 +612,11 @@ export class SessionLauncher {
       argList.push('--automation-agent');
     }
 
+    // if we're using the test manifest, forward that to the R session
+    if (app.commandLine.hasSwitch('posit-assistant-test-manifest')) {
+      argList.push('--posit-assistant-test-manifest');
+    }
+
     // In Windows development builds, move the session executable
     // to a separate location, so we can more easily build and restart
     // with an "active" rsession executable.

@@ -34,4 +34,8 @@ public class ConsolePrompt extends JavaScriptObject
    public final native String getLanguage() /*-{
       return this.language;
    }-*/;
+
+   public final native boolean getBusy() /*-{
+      return this.busy || false;
+   }-*/;
 }

@@ -2346,6 +2346,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    response[["value"]]
 })
 
+.rs.addFunction("ifElse", function(condition, consequence, alternative)
+{
+   if (condition) consequence else alternative
+})
+
 .rs.addFunction("safeEval", function(expr, envir)
 {
    # Allow evaluation of symbols

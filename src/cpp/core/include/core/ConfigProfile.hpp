@@ -33,6 +33,7 @@ class ConfigProfile
 {
 public:
    typedef std::pair<uint32_t, std::string> Level;
+   typedef std::map<std::string, std::string> ValuesMap;
    typedef boost::function<bool(const std::string&, std::string*)> ValidatorFunc;
 
    template <typename T>
@@ -143,6 +144,43 @@ public:
       return Success();
    }
 
+   core::Error getCompoundParam(const std::string& paramName, ValuesMap* pValue, std::vector<Level> levels) const
+   {
+      // initialize the param to the default value
+      DefaultParamValuesMap::const_iterator defaultValuesIter = defaultValues_.find(paramName);
+      if (defaultValuesIter == defaultValues_.end())
+      {
+         return systemError(boost::system::errc::invalid_argument,
+                            "Parameter not found",
+                            ERROR_LOCATION);
+      }
+      *pValue = boost::any_cast<ValuesMap>(defaultValuesIter->second);
+
+      // sort the levels in ascending level order
+      std::sort(levels.begin(),
+                levels.end(),
+                [](const Level& a, const Level& b) { return a.first < b.first; });
+
+      // apply param value overrides in ascending level order
+      for (const LevelCompoundValues& configLevel : compoundLevels_)
+      {
+         for (const Level& suppliedLevel : levels)
+         {
+            if (suppliedLevel == configLevel.first)
+            {
+               // levels match - apply configuration
+               CompoundMap::const_iterator iter = configLevel.second.find(paramName);
+               if (iter != configLevel.second.end())
+               {
+                  *pValue = iter->second;
+               }
+            }
+         }
+      }
+
+      return Success();
+   }
+
 private:
    typedef std::map<std::string, boost::any> DefaultParamValuesMap;
    DefaultParamValuesMap defaultValues_;
@@ -152,9 +190,11 @@ private:
 
    std::map<uint32_t, std::string> sections_;
 
-   typedef std::map<std::string, std::string> ValuesMap;
    typedef std::pair<Level, ValuesMap> LevelValues;
+   typedef std::map<std::string, ValuesMap> CompoundMap;
+   typedef std::pair<Level, CompoundMap> LevelCompoundValues;
    std::vector<LevelValues> levels_;
+   std::vector<LevelCompoundValues> compoundLevels_;
 
    core::Error validateParam(const std::string& paramName,
                              const std::string& paramValue) const;

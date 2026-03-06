@@ -1,9 +1,17 @@
 library(testthat)
 
 runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
- 
+
    options(rstudio.tests.running = TRUE)
    on.exit(options(rstudio.tests.running = FALSE), add = TRUE)
+
+   # Disable ANSI escape codes in CI environments so that test output
+   # is plain text in build logs.
+   if (nzchar(Sys.getenv("JENKINS_URL")) || nzchar(Sys.getenv("CI")))
+   {
+      Sys.setenv(NO_COLOR = "1")
+      options(cli.num_colors = 1)
+   }
 
    "%||%" <- function(x, y) if (is.null(x)) y else x
 

@@ -36,6 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
+#include <r/session/RBusy.hpp>
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
 
@@ -151,8 +152,13 @@ void setExecuting(bool executing)
 
 void consolePrompt(const std::string& prompt, bool addToHistory)
 {
-   // save the last prompt (for re-issuing)
-   s_lastPrompt = prompt;
+   // save the last prompt for re-issuing, but only when R is at the
+   // top-level REPL. mid-execution prompts (e.g. readline, browser)
+   // should not overwrite the saved prompt, since reissueLastConsolePrompt
+   // is called after code execution completes and should restore the
+   // top-level prompt, not a transient one.
+   if (!r::session::isBusy())
+      s_lastPrompt = prompt;
 
    // enque the event
    json::Object data;
@@ -162,7 +168,8 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
       prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
    data["language"] = modules::reticulate::isReplActive() ? "Python" : "R";
-   
+   data["busy"] = r::session::isBusy();
+
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    clientEventQueue().add(consolePromptEvent);
    
@@ -448,7 +455,11 @@ bool rConsoleRead(const std::string& prompt,
 
    if (!pConsoleInput->isNoEcho()) 
    {
-      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = pConsoleInput->console;
+      promptData[kConsoleAgent] = false;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
       clientEventQueue().add(promptEvent);
       enqueueConsoleInput(*pConsoleInput);
    }
