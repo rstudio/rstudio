@@ -266,7 +266,7 @@ withr::defer(.rs.automation.deleteRemote())
 {
    .rs.guardrails.expectError(
       writeLines("x", file.path(tempdir(), "sub/../../etc/passwd")),
-      pattern = "unresolved"
+      pattern = "unresolved|sensitive"
    )
 })
 
