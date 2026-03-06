@@ -150,20 +150,20 @@ test_that("chat.normalizePath resolves . and .. components", {
 test_that("isFileEditAllowed permits edits in temp directory", {
 
    path <- file.path(tempdir(), "test-file.R")
-   expect_true(.rs.chat.isFileEditAllowed(path))
+   expect_equal(.rs.chat.isFileEditAllowed(path), "")
 
 })
 
 test_that("isFileEditAllowed denies edits in arbitrary directories", {
 
-   expect_false(.rs.chat.isFileEditAllowed(file.path(path.expand("~"), "..", "nowhere", "file.R")))
+   expect_true(nzchar(.rs.chat.isFileEditAllowed(file.path(path.expand("~"), "..", "nowhere", "file.R"))))
 
 })
 
 test_that("isFileEditAllowed denies edits in .ssh even within allowed dirs", {
 
    path <- file.path(getwd(), ".ssh/id_rsa")
-   expect_false(.rs.chat.isFileEditAllowed(path))
+   expect_true(nzchar(.rs.chat.isFileEditAllowed(path)))
 
 })
 
@@ -172,7 +172,7 @@ test_that("isFileEditAllowed permits edits in R library paths", {
    for (libPath in .libPaths())
    {
       path <- file.path(libPath, "testpkg/DESCRIPTION")
-      expect_true(.rs.chat.isFileEditAllowed(path))
+      expect_equal(.rs.chat.isFileEditAllowed(path), "")
    }
 
 })
@@ -184,7 +184,7 @@ test_that("isFileEditAllowed permits edits in R user directories", {
    for (which in c("data", "config", "cache"))
    {
       path <- file.path(tools::R_user_dir("testpkg", which = which), "config.yml")
-      expect_true(.rs.chat.isFileEditAllowed(path))
+      expect_equal(.rs.chat.isFileEditAllowed(path), "")
    }
 
 })
@@ -195,22 +195,22 @@ test_that("isFileReadAllowed denies reads on credential files", {
 
    home <- path.expand("~")
 
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".env")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".docker/config.json")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".docker/trust/private/root.key")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".kube/config")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".kube/cache/oidc-login/token")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".git-credentials")))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".env"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".docker/config.json"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".docker/trust/private/root.key"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".kube/config"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".kube/cache/oidc-login/token"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".git-credentials"))))
 
 })
 
 test_that("isFileReadAllowed permits reads on SSH public keys", {
 
    home <- path.expand("~")
-   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa.pub")))
-   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_ed25519.pub")))
+   expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_rsa.pub")), "")
+   expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".ssh/id_ed25519.pub")), "")
 
 })
 
@@ -219,14 +219,14 @@ test_that("isFileReadAllowed allows credential files when trusted", {
    home <- path.expand("~")
 
    # denied by default (untrusted)
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron")))
-   expect_false(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile")))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron"))))
+   expect_true(nzchar(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile"))))
 
    # allowed when trusted
-   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"), trusted = TRUE))
-   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron"), trusted = TRUE))
-   expect_true(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile"), trusted = TRUE))
+   expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".aws/credentials"), trusted = TRUE), "")
+   expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".Renviron"), trusted = TRUE), "")
+   expect_equal(.rs.chat.isFileReadAllowed(file.path(home, ".Rprofile"), trusted = TRUE), "")
 
 })
 
