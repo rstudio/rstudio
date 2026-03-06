@@ -317,7 +317,7 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ConsoleWritePrompt)
          {
-            String prompt = event.getData();
+            ConsoleText prompt = event.getData();
             eventBus_.dispatchEvent(new ConsoleWritePromptEvent(prompt));
          }
          else if (type == ClientEvent.ConsoleWriteInput)

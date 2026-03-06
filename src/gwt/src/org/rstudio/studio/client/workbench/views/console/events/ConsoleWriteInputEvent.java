@@ -43,6 +43,11 @@ public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputEvent.Hand
       return text_.console;
    }
 
+   public boolean isAgent()
+   {
+      return text_.agent;
+   }
+
    private final ConsoleText text_;
 
    @Override

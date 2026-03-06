@@ -346,6 +346,100 @@ TEST(ConfigProfileTest, CanCheckIfParameterDefined)
    ASSERT_FALSE(singleLevelProfile.isParamDefined("nonExistentParam"));
 }
 
+TEST(ConfigProfileTest, CanParseCompoundValue)
+{
+   std::string profileStr = R"([*]
+          param/foo=val
+          param/bar=val2)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}});
+   profile.addParams("param", ConfigProfile::ValuesMap{});
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   ConfigProfile::ValuesMap param;
+   ConfigProfile::ValuesMap expected{
+      { "foo", "val" },
+      { "bar", "val2" },
+   };
+   error = profile.getCompoundParam("param", &param, {{0, std::string()}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(expected, param);
+}
+
+TEST(ConfigProfileTest, CanDetectCompoundValueError)
+{
+   std::string profileStr = R"([*]
+          param/foo=val
+          param/=val2)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"}});
+   profile.addParams("param", ConfigProfile::ValuesMap{});
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_TRUE(error);
+}
+
+TEST(ConfigProfileTest, CanParseTwoLevelCompoundValue)
+{
+   std::string profileStr = R"([*]
+          param/foo=val
+          param/bar=val2
+
+          [@user]
+          param/foo=user-param
+
+          [@admin]
+          adminParam=admin-param)";
+
+   ConfigProfile profile;
+   profile.addSections({{0, "*"},
+                  {1, "@"}});
+
+   profile.addParams("param", ConfigProfile::ValuesMap{},
+                  "adminParam", std::string());
+
+   Error error = profile.parseString(profileStr);
+   ASSERT_FALSE(error);
+
+   ConfigProfile::ValuesMap param;
+   ConfigProfile::ValuesMap expected{
+      { "foo", "val" },
+      { "bar", "val2" },
+   };
+   error = profile.getCompoundParam("param", &param, {{0, std::string()}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(expected, param);
+
+   ConfigProfile::ValuesMap userParam;
+   ConfigProfile::ValuesMap userExpected{
+      { "foo", "user-param" },
+   };
+   error = profile.getCompoundParam("param", &userParam,
+                  {{0, std::string()},
+                  {1, "user"}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(userExpected, userParam);
+
+   ConfigProfile::ValuesMap adminParam;
+   error = profile.getCompoundParam("param", &adminParam,
+                  {{0, std::string()},
+                  {1, "admin"}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(expected, adminParam);
+
+   ConfigProfile::ValuesMap nonUserParam;
+   error = profile.getCompoundParam("param", &nonUserParam,
+                  {{0, std::string()},
+                  {1, "non-user"}});
+   ASSERT_FALSE(error);
+   ASSERT_EQ(expected, nonUserParam);
+}
+
+
 } // namespace tests
 } // namespace core
 } // namespace rstudio
