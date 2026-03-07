@@ -1055,8 +1055,12 @@ public:
          std::size_t formalIndex = formalIndices[index];
          std::string formalName = formalNames[formalIndex];
          DEBUG("-- Adding positional match: " << formalName);
-         
+
          matchedCall[formalName] = argument;
+
+         // Track matched indices so that formalIndices can be
+         // trimmed below, consistent with sections 1 and 2.
+         matchedIndices.push_back(formalIndex);
          index++;
       }
       
@@ -1455,7 +1459,7 @@ void lookAheadAndWarnOnUsagesOfSymbol(const RTokenCursor& startCursor,
                                       RTokenCursor& clone,
                                       ParseStatus& status)
 {
-   std::size_t braceBalance = 0;
+   int braceBalance = 0;
    std::wstring symbol = startCursor.content();
    
    do
@@ -1674,7 +1678,7 @@ ParseResults parse(const FilePath& filePath,
                    const std::wstring& rCode,
                    const ParseOptions& parseOptions)
 {
-   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::string::npos)
+   if (rCode.empty() || rCode.find_first_not_of(L" \r\n\t\v") == std::wstring::npos)
       return ParseResults();
    
    RTokens rTokens(rCode, RTokens::StripComments);
