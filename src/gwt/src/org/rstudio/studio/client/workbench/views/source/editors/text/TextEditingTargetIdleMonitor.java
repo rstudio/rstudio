@@ -32,7 +32,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -141,16 +140,6 @@ public class TextEditingTargetIdleMonitor
             timer_.schedule(DELAY_MS);
          }
       }));
-
-      monitors_.add(display_.addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            if (!event.isAttached())
-               onDetach();
-         }
-      }));
    }
 
    public void endMonitoring()
@@ -160,7 +149,7 @@ public class TextEditingTargetIdleMonitor
       monitors_.clear();
    }
 
-   private void onDetach()
+   public void onDetach()
    {
       endMonitoring();
       TARGET_MAP.remove(display_);

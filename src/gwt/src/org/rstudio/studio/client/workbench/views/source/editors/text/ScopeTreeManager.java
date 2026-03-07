@@ -25,8 +25,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.core.client.HandlerRegistrations;
+
 import com.google.gwt.user.client.Timer;
 
 // NOTE: Historically, scope tree management was implemented as part of
@@ -49,37 +49,35 @@ public abstract class ScopeTreeManager
       docDisplay_ = docDisplay;
       worker_ = new Worker();
       scopeManager_ = new ScopeManager();
-      
-      handlers_ = new HandlerRegistration[] {
-            
-            docDisplay.addAttachHandler((AttachEvent event) -> {
-               if (!event.isAttached())
-                  detach();
-            }),
-            
-            docDisplay.addDocumentChangedHandler((DocumentChangedEvent event) -> {
-               final Position position = event.getEvent().getRange().getStart();
-               Scheduler.get().scheduleDeferred(() -> {
-                  
-                  Position rebuildPos = scopeManager_.invalidateFrom(Position.create(position));
-                  if (rebuildPos == null)
-                     rebuildPos = position;
-                     
-                  worker_.rebuildScopeTreeFromRow(rebuildPos.getRow());
-               });
-            }),
-            
-            docDisplay.addCursorChangedHandler((CursorChangedEvent event) -> {
-               final Position position = event.getPosition();
-               Scope scope = scopeManager_.getScopeAt(position);
-               if (lastActiveScope_ != scope)
-               {
-                  lastActiveScope_ = scope;
-                  docDisplay_.fireEvent(new ActiveScopeChangedEvent(scope));
-               }
-            })
-            
-      };
+      handlers_ = new HandlerRegistrations();
+      addHandlers();
+   }
+
+   private void addHandlers()
+   {
+      handlers_.removeHandler();
+
+      handlers_.add(docDisplay_.addDocumentChangedHandler((DocumentChangedEvent event) -> {
+         final Position position = event.getEvent().getRange().getStart();
+         Scheduler.get().scheduleDeferred(() -> {
+
+            Position rebuildPos = scopeManager_.invalidateFrom(Position.create(position));
+            if (rebuildPos == null)
+               rebuildPos = position;
+
+            worker_.rebuildScopeTreeFromRow(rebuildPos.getRow());
+         });
+      }));
+
+      handlers_.add(docDisplay_.addCursorChangedHandler((CursorChangedEvent event) -> {
+         final Position position = event.getPosition();
+         Scope scope = scopeManager_.getScopeAt(position);
+         if (lastActiveScope_ != scope)
+         {
+            lastActiveScope_ = scope;
+            docDisplay_.fireEvent(new ActiveScopeChangedEvent(scope));
+         }
+      }));
    }
    
    public Scope getScopeAt(Position position)
@@ -98,10 +96,16 @@ public abstract class ScopeTreeManager
       return parsePosition.getRow() > row;
    }
    
+   public void attach()
+   {
+      addHandlers();
+      worker_.rebuildScopeTreeFromRow(0);
+   }
+
    public void detach()
    {
-      for (HandlerRegistration handler : handlers_)
-         handler.removeHandler();
+      handlers_.removeHandler();
+      worker_.cancel();
    }
    
    private class Worker
@@ -118,6 +122,11 @@ public abstract class ScopeTreeManager
          };
       }
       
+      public void cancel()
+      {
+         timer_.cancel();
+      }
+
       public void rebuildScopeTreeFromRow(int row)
       {
          startRow_ = row;
@@ -195,5 +204,5 @@ public abstract class ScopeTreeManager
    protected final DocDisplay docDisplay_;
    private final Worker worker_;
    private final ScopeManager scopeManager_;
-   private final HandlerRegistration[] handlers_;
+   private final HandlerRegistrations handlers_;
 }
