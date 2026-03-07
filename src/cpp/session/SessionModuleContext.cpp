@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <atomic>
 #include <vector>
 
 #include <boost/assert.hpp>
@@ -2245,22 +2246,62 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 // the code here ape the actions of RWriteConsoleEx with a more explicit
 // thread safety constraint
 
+namespace {
+std::atomic<bool> s_agentExecuting{false};
+} // anonymous namespace
+
+void setAgentExecuting(bool executing)
+{
+   s_agentExecuting.store(executing, std::memory_order_release);
+}
+
+bool isAgentExecuting()
+{
+   return s_agentExecuting.load(std::memory_order_acquire);
+}
+
 void consoleWriteOutput(const std::string& output)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // enque write output (same as session::rConsoleWrite)
-   ClientEvent event(client_events::kConsoleWriteOutput, output);
-   enqueClientEvent(event);
+   if (s_agentExecuting)
+   {
+      // Send as a JSON object so the agent flag survives the event queue's
+      // string-based output buffering, and the frontend can style it.
+      json::Object data;
+      data["text"]    = output;
+      data["console"] = std::string();
+      data["agent"]   = true;
+      ClientEvent event(client_events::kConsoleWriteOutput, data);
+      enqueClientEvent(event);
+   }
+   else
+   {
+      // enque write output (same as session::rConsoleWrite)
+      ClientEvent event(client_events::kConsoleWriteOutput, output);
+      enqueClientEvent(event);
+   }
 }
 
 void consoleWriteError(const std::string& message)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // enque write error (same as session::rConsoleWrite)
-   ClientEvent event(client_events::kConsoleWriteError, message);
-   enqueClientEvent(event);
+   if (s_agentExecuting)
+   {
+      json::Object data;
+      data["text"]    = message;
+      data["console"] = std::string();
+      data["agent"]   = true;
+      ClientEvent event(client_events::kConsoleWriteError, data);
+      enqueClientEvent(event);
+   }
+   else
+   {
+      // enque write error (same as session::rConsoleWrite)
+      ClientEvent event(client_events::kConsoleWriteError, message);
+      enqueClientEvent(event);
+   }
 }
 
 void showErrorMessage(const std::string& title, const std::string& message)

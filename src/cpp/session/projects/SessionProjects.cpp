@@ -14,6 +14,7 @@
  */
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/projects/SessionProjectsOverlay.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -364,6 +365,9 @@ Error createProject(const json::JsonRpcRequest& request,
                                        ProjectContext::defaultConfig());
       if (error)
          return error;
+
+      FilePath projectDir = projectFilePath.getParent();
+      overlay::onCreateProject(projectDir);
 
       return Success();
    }
@@ -826,7 +830,9 @@ Error writeProjectConfig(const json::Object& configJson)
    error = writeProjectScratchPath(configJson);
    if (error)
       LOG_ERROR(error);
-   
+
+   overlay::onProjectConfigUpdate(existingConfig, config);
+
    return Success();
 }
 
@@ -1142,6 +1148,8 @@ void startup(const std::string& firstProjectPath)
       // for project sharing events
       s_projectId = options().sessionScope().projectId();
    }
+
+   overlay::onProjectStartup(s_projectContext, s_projectId);
 }
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)

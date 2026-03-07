@@ -31,13 +31,14 @@
 #include <vector>
 #include <functional>
 
-#include <boost/thread/mutex.hpp>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/mutex.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
@@ -51,15 +52,19 @@
 #include <core/system/Xdg.hpp>
 #include <core/Version.hpp>
 
+#include <r/RCntxt.hpp>
+#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RBusy.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -70,21 +75,12 @@
 #include <session/prefs/UserState.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <r/session/RBusy.hpp>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
+#include "SessionConsole.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
-
-// Use a default section of 'chat' for errors / warnings
-#ifdef LOG_ERROR
-# undef LOG_ERROR
-# define LOG_ERROR(error) LOG_ERROR_NAMED("chat", error)
-#endif
 
 using namespace rstudio::core;
 using namespace rstudio::core::system;
@@ -105,14 +101,18 @@ int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
+// Per-session auth token for WebSocket connections (defense-in-depth)
+std::string s_chatBackendAuthToken;
+
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
 
-// Clear the backend port in both SessionChat and ChatStaticFiles
+// Clear the backend port (in both SessionChat and ChatStaticFiles) and auth token
 void clearChatBackendPort()
 {
    s_chatBackendPort = constants::kChatBackendPortNone;
    staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
+   s_chatBackendAuthToken.clear();
 }
 
 // Track whether session is closing (vs suspending/restarting)
@@ -268,6 +268,65 @@ using chat_installation::getInstalledVersion;
 using chat_staticfiles::handleAIChatRequest;
 
 // Logging functions are now in chat/ChatLogging.hpp/.cpp
+
+// ============================================================================
+// R interface
+// ============================================================================
+
+SEXP rs_chatCallStackFunctions()
+{
+   r::sexp::Protect protect;
+   std::vector<SEXP> functions;
+
+   for (auto ctxt = r::context::RCntxt::begin();
+        ctxt != r::context::RCntxt::end();
+        ctxt++)
+   {
+      if (ctxt->callflag() & CTXT_FUNCTION)
+      {
+         SEXP fn = ctxt->callfun();
+         if (fn != R_NilValue)
+            functions.push_back(fn);
+      }
+   }
+
+   SEXP resultSEXP = Rf_allocVector(VECSXP, functions.size());
+   protect.add(resultSEXP);
+
+   for (std::size_t i = 0; i < functions.size(); i++)
+      SET_VECTOR_ELT(resultSEXP, i, functions[i]);
+
+   return resultSEXP;
+}
+
+SEXP rs_chatNormalizePath(SEXP pathSEXP)
+{
+   std::vector<std::string> paths;
+   Error error = r::sexp::extract(pathSEXP, &paths, true);
+   if (error)
+   {
+      LOG_ERROR(error);
+      int n = r::sexp::length(pathSEXP);
+      r::sexp::Protect protect;
+      SEXP resultSEXP = Rf_allocVector(STRSXP, n);
+      protect.add(resultSEXP);
+      for (int i = 0; i < n; i++)
+         SET_STRING_ELT(resultSEXP, i, R_BlankString);
+      return resultSEXP;
+   }
+
+   for (auto& path : paths)
+   {
+      if (!path.empty())
+      {
+         FilePath filePath(path);
+         path = filePath.getWeaklyCanonicalPath();
+      }
+   }
+
+   r::sexp::Protect protect;
+   return r::sexp::createUtf8(paths, &protect);
+}
 
 // ============================================================================
 // Execution Tracking (for cancellation support)
@@ -493,6 +552,20 @@ private:
    RSTUDIO_BOOST_CONNECTION connection_;
 };
 
+// RAII guard that sets the agent-executing flag on construction and clears it
+// on destruction. Ensures the flag is always cleared even if an exception
+// occurs during agent code execution.
+class ScopedAgentExecution
+{
+public:
+   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
+   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+
+   // non-copyable
+   ScopedAgentExecution(const ScopedAgentExecution&) = delete;
+   ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+};
+
 // Echo source code with prompts (like evaluate does)
 void echoSourceCode(const std::string& code)
 {
@@ -505,8 +578,39 @@ void echoSourceCode(const std::string& code)
       if (i == lines.size() - 1 && lines[i].empty())
          continue;
 
-      std::string prompt = (i == 0) ? "> " : "+ ";
-      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+      // Use the same event types as the regular console REPL so that
+      // prompts and input are colored / themed consistently.
+      // The 'agent' flag allows the frontend to further distinguish
+      // agent-generated code execution from user input.
+      //
+      // The first prompt is prefixed with a group-start ANSI escape so that
+      // VirtualConsole wraps all agent output (prompt, input, R output,
+      // errors) in a styled group container (purple left border).
+      std::string prompt = (i == 0)
+         ? kAnsiEscapeGroupStartAgent + r::options::getOption<std::string>("prompt")
+         : r::options::getOption<std::string>("continue");
+
+      // Record in console actions so the history survives session reload.
+      // Note: the first prompt includes a raw ANSI group-start escape, which
+      // VirtualConsole will re-process on session restore to recreate the
+      // styled group container.
+      r::session::consoleActions().add(kConsoleActionPrompt, prompt);
+      r::session::consoleActions().add(kConsoleActionInput, lines[i]);
+
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = std::string();
+      promptData[kConsoleAgent] = true;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
+      module_context::enqueClientEvent(promptEvent);
+
+      json::Object inputData;
+      inputData[kConsoleText]  = lines[i] + "\n";
+      inputData[kConsoleId]    = std::string();
+      inputData[kConsoleFlags] = 0;
+      inputData[kConsoleAgent] = true;
+      ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
+      module_context::enqueClientEvent(inputEvent);
    }
 }
 
@@ -1345,6 +1449,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       }
    }
 
+   // Flag that we're executing agent code so console output/error events
+   // emitted by R during evaluation get the agent metadata. Uses RAII to
+   // guarantee the flag is cleared even if an exception occurs.
+   ScopedAgentExecution agentScope;
+
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
@@ -1401,6 +1510,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
+         // Reset pending output type before each expression so that a warning
+         // from expression N doesn't cause all output from expression N+1 to
+         // be grouped as warning text. In the normal REPL this reset happens
+         // via the onBusy signal between top-level evaluations.
+         console_output::setPendingOutputType(console_output::PendingOutputTypeUnknown);
+
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
@@ -1602,9 +1717,22 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI
-      module_context::consoleWriteError(errorOutput);
+      // Send as kConsoleWritePendingError so the event queue's
+      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+      // "Error" prefix). Clear the agent flag so the event goes through the
+      // plain string buffering path where annotation happens.
+      module_context::setAgentExecuting(false);
+      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+      module_context::enqueClientEvent(errorEvent);
    }
+
+   // Close the agent output group started in echoSourceCode().
+   // Clear the agent flag first so the group-end escape goes through the
+   // plain string buffering path in the event queue, where it will also be
+   // recorded in console actions (so the group close survives session reload).
+   module_context::setAgentExecuting(false);
+   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics
@@ -4591,6 +4719,11 @@ Error startChatBackend(bool resumeConversation)
    // Share the port with the static file handler for CSP connect-src
    staticfiles::setChatBackendPort(s_chatBackendPort);
 
+   // Generate per-session auth token for WebSocket authentication.
+   // This is defense-in-depth against local non-browser attackers that
+   // bypass origin checks (malware, browser extensions, local processes).
+   s_chatBackendAuthToken = core::system::generateUuid(false);
+
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
    // Build command arguments
@@ -4679,6 +4812,9 @@ Error startChatBackend(bool resumeConversation)
    // this tells Node.js 22.21+ to route fetch() through the proxy.
    // See: https://github.com/nodejs/node/pull/57165
    core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+
+   // Pass per-session auth token for WebSocket authentication
+   core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than
@@ -4884,6 +5020,7 @@ Error chatGetBackendUrl(const json::JsonRpcRequest& request,
    result["url"] = url;
    result["port"] = s_chatBackendPort;
    result["ready"] = (s_chatBackendPid != -1 && !url.empty());
+   result["auth_token"] = s_chatBackendAuthToken;
 
    pResponse->setResult(result);
    return Success();
@@ -4914,6 +5051,7 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
       std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
       result["url"] = url;
+      result["auth_token"] = s_chatBackendAuthToken;
       result["resume_chat"] = s_resumeChat;
    }
 
@@ -5456,6 +5594,8 @@ Error initialize()
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_chatCallStackFunctions);
+   RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);

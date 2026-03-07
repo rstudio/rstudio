@@ -1,7 +1,7 @@
 /*
- * ShellOutputWriter.java
+ * SessionProjectsOverlay.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -12,16 +12,23 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.shell;
 
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+#include <session/projects/SessionProjectsOverlay.hpp>
 
-public interface ShellOutputWriter
+namespace rstudio::session::projects::overlay {
+
+void onProjectConfigUpdate(const core::r_util::RProjectConfig&,
+                           const core::r_util::RProjectConfig&)
 {
-   void consoleWriteError(String string, boolean agent);
-   void consoleWriteExtendedError(
-         String string, UnhandledError traceInfo,
-         boolean expand, String command);
-   void consoleWriteOutput(String output, boolean agent);
-   void consoleWritePrompt(String prompt, boolean agent);
 }
+
+void onProjectStartup(const ProjectContext&,
+                      const core::r_util::ProjectId&)
+{
+}
+
+void onCreateProject(const core::FilePath&)
+{
+}
+
+} // namespace rstudio::session::projects::overlay

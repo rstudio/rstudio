@@ -734,6 +734,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                                                kSessionSharedStoragePath))));
                   }
 
+                  // Set project ID for this session
+                  activeSession().setProjectId(scope.projectId().id());
+
                   // set next session url
                   s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
                                                               scope);

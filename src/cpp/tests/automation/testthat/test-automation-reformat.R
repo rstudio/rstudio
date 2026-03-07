@@ -39,7 +39,12 @@ remote$console.executeExpr({
    editor <- remote$editor.getInstance()
    editor$insert("1+1; 2+2")
    remote$keyboard.insertText("<Ctrl + S>")
-   contents <- editor$session$doc$getValue()
+   contents <- .rs.waitUntil("document is reformatted", function() {
+      contents <- editor$session$doc$getValue()
+      if (contents != "1+1; 2+2")
+         return(contents)
+      return(FALSE)
+   })
    expect_equal(contents, "1 + 1\n2 + 2\n")
    remote$editor.closeDocument()
    
@@ -90,7 +95,12 @@ remote$console.executeExpr({
    editor <- remote$editor.getInstance()
    editor$insert("example<-function(){1+1;2+2}")
    remote$keyboard.insertText("<Ctrl + S>")
-   contents <- editor$session$doc$getValue()
+   contents <- .rs.waitUntil("document is reformatted", function() {
+      contents <- editor$session$doc$getValue()
+      if (contents != "example<-function(){1+1;2+2}")
+         return(contents)
+      return(FALSE)
+   })
    expect_equal(contents, "example <- function() {\n    1 + 1\n    2 + 2\n}\n")
    remote$editor.closeDocument()
    
