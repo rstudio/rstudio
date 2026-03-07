@@ -337,4 +337,28 @@ public class YamlTreeTests extends GWTTestCase
       assertTrue("Title comment should precede title key",
             titleComment < titleKey);
    }
+
+   public void testReorderPartialKeyListWithComments()
+   {
+      String yaml =
+            "# About title\n" +
+            "title: Test\n" +
+            "# About date\n" +
+            "date: 2024-01-01\n" +
+            "# About author\n" +
+            "author: Me\n";
+      YamlTree tree = new YamlTree(yaml);
+      tree.reorder(Arrays.asList("author"));
+      String output = tree.toString();
+
+      String expected =
+            "# About author\n" +
+            "author: Me\n" +
+            "# About date\n" +
+            "date: 2024-01-01\n" +
+            "# About title\n" +
+            "title: Test\n";
+      assertEquals("Single-key reorder should move that key to front",
+            expected, output);
+   }
 }

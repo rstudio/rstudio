@@ -80,9 +80,13 @@ public class YamlTree
       {
          for (YamlTreeNode child: node.children)
          {
-            // increase the indentation level of the children to match our own
-            child.indentLevel += indentLevel + 2;
-            child.yamlLine = getIndent() + "  " + child.yamlLine;
+            // increase the indentation level of the children to match our
+            // own; blank lines stay empty (no spurious whitespace)
+            if (!child.isBlank)
+            {
+               child.indentLevel += indentLevel + 2;
+               child.yamlLine = getIndent() + "  " + child.yamlLine;
+            }
             
             // if this is the root node, adopt is children as our own
             if (isRoot)
@@ -189,7 +193,7 @@ public class YamlTree
       List<YamlTreeNode> trailing = current;
 
       // Swap groups into the positions specified by orderedKeys
-      for (int i = 0; i < orderedKeys.size(); i++)
+      for (int i = 0; i < orderedKeys.size() && i < groups.size(); i++)
       {
          for (int j = i; j < groups.size(); j++)
          {
