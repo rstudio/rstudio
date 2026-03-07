@@ -332,16 +332,19 @@ TEST(DiagnosticsTest, SymbolRangesDoNotLeakAcrossParseOperations) {
 TEST(DiagnosticsTest, IsSymbolDefinedButNotUsed) {
    // Single definition, one self-reference: defined but not used
    ParseResults results1 = parse("function() { x <- 1 }", s_parseOptions);
+   ASSERT_FALSE(results1.parseTree()->getChildren().empty());
    ParseNode* fnNode1 = results1.parseTree()->getChildren()[0].get();
    EXPECT_TRUE(fnNode1->isSymbolDefinedButNotUsed("x", false, false));
 
    // Single definition with a real usage: not "defined but not used"
    ParseResults results2 = parse("function() { x <- 1; print(x) }", s_parseOptions);
+   ASSERT_FALSE(results2.parseTree()->getChildren().empty());
    ParseNode* fnNode2 = results2.parseTree()->getChildren()[0].get();
    EXPECT_FALSE(fnNode2->isSymbolDefinedButNotUsed("x", false, false));
 
    // Multiple definitions, no real usage: defined but not used
    ParseResults results3 = parse("function() { x <- 1; x <- 2 }", s_parseOptions);
+   ASSERT_FALSE(results3.parseTree()->getChildren().empty());
    ParseNode* fnNode3 = results3.parseTree()->getChildren()[0].get();
    EXPECT_TRUE(fnNode3->isSymbolDefinedButNotUsed("x", false, false));
 }

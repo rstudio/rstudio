@@ -2345,7 +2345,8 @@ void validateFunctionCall(RTokenCursor cursor,
       {
          std::string value = matched.namedArguments().at(".open");
          std::string unescaped;
-         if (!string_utils::jsonLiteralUnescape(value, &unescaped))
+         Error error = string_utils::jsonLiteralUnescape(value, &unescaped);
+         if (!error)
             open = unescaped;
       }
 
@@ -2354,7 +2355,8 @@ void validateFunctionCall(RTokenCursor cursor,
       {
          std::string value = matched.namedArguments().at(".close");
          std::string unescaped;
-         if (!string_utils::jsonLiteralUnescape(value, &unescaped))
+         Error error = string_utils::jsonLiteralUnescape(value, &unescaped);
+         if (!error)
             close = unescaped;
       }
       
