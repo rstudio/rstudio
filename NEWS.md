@@ -37,6 +37,7 @@
 - ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
 - ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
 - ([#17115](https://github.com/rstudio/rstudio/issues/17115)): Fixed an issue on macOS Desktop where the "Close" keyboard shortcut in secondary windows (e.g. Shiny app, Help pop-out) were also processed by the main window
+- ([#14882](https://github.com/rstudio/rstudio/issues/14882)): Fixed an issue where YAML comments in R Markdown documents were dropped or displaced when the front matter was modified (e.g. when toggling "Chunk Output in Console")
 
 ### Dependencies
 - Ace 1.43.5
