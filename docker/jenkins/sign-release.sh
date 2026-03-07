@@ -64,7 +64,7 @@ gpg --version
 
 # import signing key
 echo "Installing signing key from $KEYFILE..."
-gpg --no-default-keyring --keyring=$TMP_PUB_KEYRING --secret-keyring=$TMP_SEC_KEYRING --import $KEYFILE
+gpg --batch --pinentry-mode loopback --passphrase-file $PASSFILE --no-default-keyring --keyring=$TMP_PUB_KEYRING --secret-keyring=$TMP_SEC_KEYRING --import $KEYFILE
 PASSPHRASE=$(cat $PASSFILE)
 
 # scrape out the signing key ID
