@@ -211,14 +211,12 @@ core::Error UserPrefsProjectLayer::writePrivatePref(const std::string& name,
    json::Object prefs;
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      if (!privatePrefsCache_)
-         privatePrefsCache_ = boost::make_shared<json::Object>();
-
-      (*privatePrefsCache_)[name] = value;
-      prefs = *privatePrefsCache_;
+      if (privatePrefsCache_)
+         prefs = *privatePrefsCache_;
    }
    END_LOCK_MUTEX
 
+   prefs[name] = value;
    return writePrefs(prefs);
 }
 

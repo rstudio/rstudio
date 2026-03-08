@@ -737,7 +737,11 @@ void ProjectContext::onDeferredInit(bool newSession)
    context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
    context.ignoredComponents = fileMonitorIgnoredComponents();
 
-   // initialize gitignore support
+   // Initialize gitignore support. The Git object (and its underlying
+   // git_repository handle) is kept alive for the lifetime of the file
+   // monitor. This is safe because git_ignore_path_is_ignored() re-reads
+   // .gitignore files on each call, so updated rules are picked up
+   // without needing to re-open the repository.
    if (prefs::userPrefs().fileMonitorUseGitignore())
    {
       using modules::libgit2::Git;

@@ -1,7 +1,7 @@
 /*
  * SessionLibGit2.cpp
  *
- * Copyright (C) 2025 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -15,10 +15,14 @@
 
 #include "SessionLibGit2.hpp"
 
+#include <git2.h>
+
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
 
-#include <git2.h>
+#include <session/SessionModuleContext.hpp>
+
 
 using namespace rstudio::core;
 
@@ -27,9 +31,19 @@ namespace session {
 namespace modules {
 namespace libgit2 {
 
+namespace {
+
+void onShutdown(bool)
+{
+   git_libgit2_shutdown();
+}
+
+} // anonymous namespace
+
 Error initialize()
 {
    git_libgit2_init();
+   module_context::events().onShutdown.connect(onShutdown);
    return Success();
 }
 
