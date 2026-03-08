@@ -839,8 +839,12 @@ bool ProjectContext::fileMonitorFilter(
       if (boost::algorithm::icontains(path, component))
          return false;
 
-   // check gitignore rules
-   if (context.pGit && context.pGit->isOpen())
+   // Check gitignore rules for directories only. The primary goal is to
+   // exclude build directories (build/, node_modules/, _site/, etc.) from
+   // the file monitor and code search index. Individual gitignored files
+   // (e.g. .R files generated from .R.in) are still indexed so they
+   // remain discoverable via Go to File/Function.
+   if (fileInfo.isDirectory() && context.pGit && context.pGit->isOpen())
    {
       std::string dirPath = directory().getAbsolutePath();
       if (path.size() > dirPath.size() + 1)
