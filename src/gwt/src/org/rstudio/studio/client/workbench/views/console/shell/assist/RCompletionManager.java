@@ -426,9 +426,14 @@ public class RCompletionManager implements CompletionManager
          // Check if the user just inserted some text matching the current
          // ghost text. If so, we'll suppress the next cursor change handler,
          // so we can continue presenting the current ghost text.
+         //
+         // Skip this when modifier keys are held (Ctrl, Alt, Meta), as those
+         // indicate a keyboard shortcut rather than regular typing.
+         // https://github.com/rstudio/rstudio/issues/16973
          String key = EventProperty.key(event);
          AceGhostText ghostText = docDisplay_.getGhostText();
-         if (ghostText.text.startsWith(key))
+         boolean hasModifier = event.getCtrlKey() || event.getAltKey() || event.getMetaKey();
+         if (!hasModifier && ghostText.text.startsWith(key))
          {
             String newGhostText = StringUtil.substring(ghostText.text, 1);
             docDisplay_.insertCode(key);

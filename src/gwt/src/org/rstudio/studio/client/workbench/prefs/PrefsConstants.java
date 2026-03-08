@@ -655,6 +655,12 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String positAiCancelButton();
     String positAiIncompatibleTitle();
     String positAiIncompatibleMessage();
+    String positAiUnsupportedVersionTitle();
+    String positAiUnsupportedVersionMessage();
+    String positAiUnsupportedProtocolTitle();
+    String positAiUnsupportedProtocolMessage();
+    String positAiManifestUnavailableTitle();
+    String positAiManifestUnavailableMessage();
     String positAiCheckFailedTitle();
     String positAiCheckFailedMessage(String error);
     String positAiInstallingMessage();

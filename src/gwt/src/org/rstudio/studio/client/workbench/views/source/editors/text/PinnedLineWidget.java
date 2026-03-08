@@ -56,13 +56,19 @@ public class PinnedLineWidget
       folded_ = folded();
       
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
-      lineWidget_.setFixedWidth(true); 
+      lineWidget_.setFixedWidth(true);
+      // Set column so that Ace's line widget manager does not automatically
+      // shift this widget when a newline is inserted on its row. Without this,
+      // the widget can be displaced in cases where PinnedLineWidget's anchor-based
+      // repositioning cannot detect the shift (e.g. at the end of the document,
+      // where anchors are clamped to the last row).
+      lineWidget_.setColumn(0);
 
       renderLineWidget();
       
-      // the Ace line widget manage emits a 'changeFold' event when a line
+      // the Ace line widget manager emits a 'changeFold' event when a line
       // widget is destroyed; this is our only signal that it's been
-      // removed, so when it happens, we need check to see if the widget
+      // removed, so when it happens, we need to check to see if the widget
       // has been removed
       registrations_ = new HandlerRegistrations(
          display_.addFoldChangeHandler(this));

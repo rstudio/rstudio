@@ -230,5 +230,39 @@ withr::defer(.rs.automation.deleteRemote())
    output <- remote$console.getOutput()
    expect_true("Some output." %in% output)
    expect_true("Some more output." %in% output)
-   
+
+})
+
+# https://github.com/rstudio/rstudio/issues/16973
+.rs.test("AceEditorCommandDispatcher shortcuts work in console", {
+
+   remote$console.clear()
+
+   # Focus the console input
+   remote$keyboard.insertText("<Ctrl + 2>")
+   Sys.sleep(0.5)
+
+   # Execute insert pipe operator shortcut
+   remote$keyboard.executeShortcut("Ctrl + Shift + M")
+   Sys.sleep(0.5)
+
+   # Read the console input editor's value
+   contents <- remote$js.eval(
+      "document.getElementById('rstudio_console_input').env.editor.getValue()"
+   )
+   expect_true(grepl("|>", contents, fixed = TRUE) || grepl("%>%", contents, fixed = TRUE))
+
+   # Clear and try insert assignment operator
+   remote$keyboard.insertText("<Ctrl + A>", "<Backspace>")
+   remote$keyboard.executeShortcut("Alt + -")
+   Sys.sleep(0.5)
+
+   contents <- remote$js.eval(
+      "document.getElementById('rstudio_console_input').env.editor.getValue()"
+   )
+   expect_true(grepl("<-", contents, fixed = TRUE))
+
+   # Clean up
+   remote$keyboard.insertText("<Ctrl + A>", "<Backspace>")
+
 })

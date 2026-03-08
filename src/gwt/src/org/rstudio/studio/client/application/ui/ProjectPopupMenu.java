@@ -46,6 +46,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -113,6 +114,34 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
             // also set the doc title so the browser tab carries the project
             if (!Desktop.isDesktop())
                setDocumentTitle();
+
+            // Update UI when the project display name changes.
+            // Tied to the toolbar button lifecycle (session-long)
+            // rather than the popup lifecycle (transient).
+            projectNameHandler_ = pUserPrefs_.get().projectName().addValueChangeHandler(valueChangeEvent ->
+            {
+               if (!Desktop.isDesktop())
+                  setDocumentTitle();
+
+               String title = workbenchContext_.createWindowTitle();
+               if (title != null)
+                  events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
+
+               ProjectMRUEntry entry = new ProjectMRUEntry(activeProjectFile_, valueChangeEvent.getValue());
+               pWorkbenchLists_.get().getProjectNameMruList().updateExtraData(entry.getMRUValue());
+
+               if (toolbarButton_ != null)
+                  toolbarButton_.setText(getProjectDisplayName());
+            });
+
+            toolbarButton_.addAttachHandler(event ->
+            {
+               if (!event.isAttached() && projectNameHandler_ != null)
+               {
+                  projectNameHandler_.removeHandler();
+                  projectNameHandler_ = null;
+               }
+            });
          }
         
           if (activeProjectFile_ == null)
@@ -307,46 +336,6 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addItem(commands_.projectOptions().createMenuItem(false));
       
       callback.onPopupMenu(this);
-   }
-
-   @Override
-   protected void onLoad()
-   {
-      super.onLoad();
-
-      if (activeProjectFile_ != null && projectNameHandler_ == null)
-      {
-         projectNameHandler_ = pUserPrefs_.get().projectName().addValueChangeHandler(valueChangeEvent ->
-         {
-            // update title of document and satellite editors if project name is changed
-            if (!Desktop.isDesktop())
-               setDocumentTitle();
-
-            String title = workbenchContext_.createWindowTitle();
-            if (title != null)
-               events_.fireEventToAllSatellites(new UpdateWindowTitleEvent(title));
-
-            // update project name in the Project MRU list
-            ProjectMRUEntry entry = new ProjectMRUEntry(activeProjectFile_, valueChangeEvent.getValue());
-            pWorkbenchLists_.get().getProjectNameMruList().updateExtraData(entry.getMRUValue());
-
-            // update the button text
-            if (toolbarButton_ != null)
-               toolbarButton_.setText(getProjectDisplayName());
-         });
-      }
-   }
-
-   @Override
-   protected void onUnload()
-   {
-      super.onUnload();
-
-      if (projectNameHandler_ != null)
-      {
-         projectNameHandler_.removeHandler();
-         projectNameHandler_ = null;
-      }
    }
 
    private static final Resources RESOURCES = GWT.create(Resources.class);

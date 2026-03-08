@@ -16,17 +16,26 @@
 #include "ChatStaticFiles.hpp"
 #include "ChatConstants.hpp"
 #include "ChatInstallation.hpp"
+#include "ChatLogging.hpp"
+#include "session-config.h"
 
+#include <atomic>
 #include <map>
+#include <mutex>
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 #include <fmt/format.h>
 
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/System.hpp>
+#include <shared_core/json/Json.hpp>
+
+#include <session/SessionOptions.hpp>
 
 #include "../SessionThemes.hpp"
 
@@ -46,37 +55,235 @@ namespace {
 constexpr const char* kAiChatUriPrefix = "/ai-chat/";
 constexpr size_t kAiChatUriPrefixLength = 9; // Length of "/ai-chat/"
 
+// Chat backend port, set by SessionChat.cpp when the backend starts.
+// Used to build connect-src in the CSP header for desktop mode.
+// Atomic because it is written from the main thread and read from HTTP
+// handler threads.
+std::atomic<int> s_chatBackendPort{kChatBackendPortNone};
+
 /**
- * Inject theme-related modifications into HTML content:
- * - CSS variables for --ui-background and --ui-foreground
- * - 'dark' class on body element if using a dark theme
+ * Inject theme information into HTML content without inline scripts.
  *
- * Injects a script before </body> to ensure document.body is available.
+ * Two modifications:
+ * 1. Adds class="dark" to the <html> tag when the IDE uses a dark theme.
+ *    This parser is intentionally simple and only handles the known Vite
+ *    build output format (<html lang="en">). It assumes no `>` characters
+ *    appear inside attribute values.
+ * 2. Injects a <meta name="rstudio-theme"> tag in <head> carrying the
+ *    background and foreground colors as data attributes. The databot
+ *    frontend reads these on startup and applies them as CSS variables.
+ *
+ * This avoids inline scripts entirely, so no CSP nonce is needed.
  */
 void injectThemeInfo(std::string* pContent)
 {
    themes::ThemeColors colors = themes::getThemeColors();
 
-   // Build script injection
-   std::string script = fmt::format(R"(
-<script>
-(function() {{
-   document.documentElement.style.setProperty('--ui-background', '{background}');
-   document.documentElement.style.setProperty('--ui-foreground', '{foreground}');
-   if ({isDark}) document.body.classList.add('dark');
-}})();
-</script>)",
-      fmt::arg("background", colors.background),
-      fmt::arg("foreground", colors.foreground),
-      fmt::arg("isDark", colors.isDark ? "true" : "false"));
-
-   // Insert before </body>
-   constexpr const char* kBodyCloseTag = "</body>";
-   size_t bodyPos = pContent->find(kBodyCloseTag);
-   if (bodyPos != std::string::npos)
+   if (colors.isDark)
    {
-      pContent->insert(bodyPos, script);
+      size_t htmlPos = pContent->find("<html");
+      if (htmlPos != std::string::npos)
+      {
+         size_t gtPos = pContent->find(">", htmlPos);
+         if (gtPos != std::string::npos)
+         {
+            std::string htmlTag =
+               pContent->substr(htmlPos, gtPos - htmlPos);
+            constexpr const char* kClassAttr = "class=\"";
+            size_t classPos = htmlTag.find(kClassAttr);
+            if (classPos != std::string::npos)
+            {
+               size_t insertAt =
+                  htmlPos + classPos + strlen(kClassAttr);
+               pContent->insert(insertAt, "dark ");
+            }
+            else
+            {
+               pContent->insert(gtPos, " class=\"dark\"");
+            }
+         }
+      }
+      else
+      {
+         DLOG("injectThemeInfo: <html tag not found, "
+              "skipping dark class");
+      }
    }
+
+   std::string bg = string_utils::htmlEscape(colors.background, true);
+   std::string fg = string_utils::htmlEscape(colors.foreground, true);
+
+   std::string meta = fmt::format(
+      R"(<meta name="rstudio-theme" data-background="{background}" data-foreground="{foreground}">)",
+      fmt::arg("background", bg),
+      fmt::arg("foreground", fg));
+
+   constexpr const char* kHeadCloseTag = "</head>";
+   size_t headPos = pContent->find(kHeadCloseTag);
+   if (headPos != std::string::npos)
+   {
+      pContent->insert(headPos, meta + "\n");
+   }
+   else
+   {
+      DLOG("injectThemeInfo: </head> not found, "
+           "skipping meta tag injection");
+   }
+}
+
+/**
+ * Load CSP directives from dist/csp.json in the Posit AI installation.
+ *
+ * Reads the file once and caches the result. The file is emitted by the
+ * databot build and contains the same defaults that DatabotServer uses
+ * in its Express middleware.
+ *
+ * Once loaded (or once a failure is encountered), the result is cached
+ * for the lifetime of the session. A missing or broken file will not be
+ * retried.
+ *
+ * @return Directive map (e.g., {"default-src": "'self'", ...}), or empty
+ *         map if the file is missing or unparseable.
+ */
+std::map<std::string, std::string> loadCspDirectives()
+{
+   static const auto s_cached = []()
+   {
+      std::map<std::string, std::string> result;
+
+      FilePath positAiPath = locatePositAiInstallation();
+      if (positAiPath.isEmpty())
+         return result;
+
+      FilePath cspFile = positAiPath.completeChildPath(kCspConfigPath);
+      if (!cspFile.exists())
+         return result;
+
+      std::string content;
+      Error error = readStringFromFile(cspFile, &content);
+      if (error)
+      {
+         WLOG("Failed to read CSP config: {}", error.getMessage());
+         return result;
+      }
+
+      json::Value jsonValue;
+      if (jsonValue.parse(content))
+      {
+         WLOG("Failed to parse CSP config: {}",
+              cspFile.getAbsolutePath());
+         return result;
+      }
+
+      if (!jsonValue.isObject())
+      {
+         WLOG("CSP config must be a JSON object: {}",
+              cspFile.getAbsolutePath());
+         return result;
+      }
+
+      json::Object obj = jsonValue.getObject();
+      for (auto it = obj.begin(); it != obj.end(); ++it)
+      {
+         json::Value val = (*it).getValue();
+         if (val.isString())
+         {
+            result[(*it).getName()] = val.getString();
+         }
+         else
+         {
+            WLOG("Ignoring non-string CSP directive: {}",
+                 (*it).getName());
+         }
+      }
+
+      return result;
+   }();
+
+   return s_cached;
+}
+
+// Cached CSP header string, rebuilt when the backend port changes.
+std::mutex s_cspMutex;
+std::string s_cachedCspHeader;
+bool s_cspHeaderBuilt = false;
+
+/**
+ * Rebuild the cached CSP header string from dist/csp.json directives.
+ *
+ * Called once lazily on the first HTML request and again whenever the
+ * backend port changes via setChatBackendPort().
+ */
+void rebuildCspHeaderCache()
+{
+   std::map<std::string, std::string> directives = loadCspDirectives();
+
+   // If csp.json was missing, use a restrictive fallback
+   if (directives.empty())
+      directives["default-src"] = "'self'";
+
+   // Prevent clickjacking: the chat pane should never be framed by
+   // external origins.
+   if (directives.find("frame-ancestors") == directives.end())
+      directives["frame-ancestors"] = "'self'";
+
+   // In desktop mode, the WebSocket connects to a different port (different
+   // origin), so connect-src must include it explicitly. In server mode the
+   // WebSocket path is same-origin (relative), so 'self' suffices.
+   //
+   // Uses the same two-level check as buildWebSocketUrl() in SessionChat.cpp:
+   // compile-time #ifdef for server-capable builds, then runtime programMode()
+   // check, because Development builds define RSTUDIO_SERVER but can run in
+   // either desktop or server mode.
+   bool isServerMode = false;
+
+#ifdef RSTUDIO_SERVER
+   isServerMode = (options().programMode() == kSessionProgramModeServer);
+#endif
+
+   int port = s_chatBackendPort.load();
+   if (!isServerMode && port >= 0)
+   {
+      std::string& connectSrc = directives["connect-src"];
+      if (connectSrc.empty())
+         connectSrc = "'self'";
+      connectSrc += " ws://127.0.0.1:" +
+                    boost::lexical_cast<std::string>(port);
+   }
+
+   // Serialize directives into the header string
+   std::string header;
+   for (const auto& pair : directives)
+   {
+      if (!header.empty())
+         header += "; ";
+      header += pair.first + " " + pair.second;
+   }
+
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+   s_cachedCspHeader = header;
+   s_cspHeaderBuilt = true;
+}
+
+/**
+ * Get the Content-Security-Policy header value.
+ *
+ * Returns a cached string built from dist/csp.json directives, augmented
+ * with RStudio-specific additions. The cache is rebuilt lazily on first
+ * call and whenever the backend port changes.
+ *
+ * @return CSP header string
+ */
+std::string buildCspHeader()
+{
+   {
+      std::lock_guard<std::mutex> lock(s_cspMutex);
+      if (s_cspHeaderBuilt)
+         return s_cachedCspHeader;
+   }
+   rebuildCspHeaderCache();
+   std::lock_guard<std::mutex> lock(s_cspMutex);
+   return s_cachedCspHeader;
 }
 
 } // anonymous namespace
@@ -234,10 +441,12 @@ Error handleAIChatRequest(const http::Request& request,
    // Set content type
    std::string extension = resolvedPath.getExtension();
 
-   // Inject theme CSS variables into HTML files
+   // For HTML files: set CSP header; inject theme info only into index.html
    if (extension == ".html" || extension == ".htm")
    {
-      injectThemeInfo(&content);
+      if (resolvedPath.getFilename() == kIndexFileName)
+         injectThemeInfo(&content);
+      pResponse->setHeader("Content-Security-Policy", buildCspHeader());
    }
    pResponse->setContentType(getContentType(extension));
 
@@ -262,6 +471,12 @@ Error handleAIChatRequest(const http::Request& request,
    pResponse->setBody(content);
 
    return Success();
+}
+
+void setChatBackendPort(int port)
+{
+   s_chatBackendPort = port;
+   rebuildCspHeaderCache();
 }
 
 } // namespace staticfiles

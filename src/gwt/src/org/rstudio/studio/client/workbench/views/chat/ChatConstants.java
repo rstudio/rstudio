@@ -16,40 +16,29 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatTitle();
-    String chatPaneTitle();
     String chatTabLabel();
-    String errorDetectingInstallationCaption();
-    String errorDetectingInstallationMessage();
     String checkingInstallationMessage();
     String chatNotInstalledMessage();
     String startingChatMessage();
     String restartingChatMessage();
-    String chatUpdateAvailable(String version);
-    String chatUpdateNow();
-    String chatRemindLater();
     String chatUpdating();
     String chatUpdateComplete();
     String chatUpdateFailed(String error);
     String chatUpdateCheckFailed();
     String chatRetry();
     String chatDismiss();
-    String chatInstallAvailable(String version);
-    String chatInstallNow();
     String chatIgnore();
-    String chatInstalling();
-    String chatInstallComplete();
-    String chatUpdate();
     String chatNotInstalledTitle();
     String chatNotInstalledWithVersionMessage(String version);
+    String chatNotInstalledDescription();
+    String chatLearnMore();
     String chatInstallButton();
+    String chatInstallTermsOfUse();
     String chatUpdateAvailableTitle();
     String chatUpdateAvailableWithVersionsMessage(String currentVersion, String newVersion);
     String chatUpdateButton();
     String chatIncompatibleVersion();
     String chatErrorPrefix(String error);
-    String chatSessionSuspendedTitle();
-    String chatSessionSuspendedMessage1();
-    String chatSessionSuspendedMessage2();
     String chatUpdateRequiredTitle();
     String chatRStudioTooOldMessage();
     String chatAssistantTooOldMessage();
@@ -65,8 +54,13 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatBackendStartTimeout();
     String chatBackendStatusCheckFailed(String error);
     String chatRestartFailed(String error);
-    String chatAssistantNotSelected();
     String chatAssistantNotEnabledTitle();
     String chatAssistantNotEnabledMessage();
     String chatGlobalOptionsButton();
+    String chatUnsupportedVersionMessage(
+        String currentVersion, String newVersion);
+    String chatUnsupportedVersionNoUpdateMessage(String currentVersion);
+    String chatUnsupportedProtocolMessage();
+    String chatManifestUnavailableMessage();
+    String chatReadlineWaiting();
 }

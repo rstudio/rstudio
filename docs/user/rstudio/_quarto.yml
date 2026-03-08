@@ -82,6 +82,7 @@ website:
               - ide/guide/tools/jobs-in-action.qmd
               - ide/guide/tools/version-control.qmd
               - ide/guide/tools/copilot.qmd
+              - ide/guide/tools/posit-ai.qmd
           - section: "Productivity"
             contents:
               - ide/guide/productivity/text-editor.qmd

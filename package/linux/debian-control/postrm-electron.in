@@ -3,8 +3,43 @@
 # errors shouldn't cause script to exit
 set +e 
 
-# remove softlink to rstudio 
+# remove softlink to rstudio
 rm -f /usr/bin/rstudio
+
+# remove symlinks from Yaru icon themes
+for theme_dir in /usr/share/icons/Yaru*; do
+   if [ -d "$theme_dir" ]; then
+      for size in 16x16 24x24 32x32 48x48 256x256; do
+         mime_dir="$theme_dir/$size/mimetypes"
+         if [ -d "$mime_dir" ]; then
+            for icon in "$mime_dir"/application-x-r-*.png "$mime_dir"/text-x-r-*.png "$mime_dir"/text-x-quarto-*.png; do
+               if [ -L "$icon" ]; then
+                  rm -f "$icon"
+               fi
+            done
+         fi
+      done
+   fi
+done
+
+# refresh mime database and icon cache
+if command -v update-mime-database > /dev/null; then
+   if ! update-mime-database /usr/share/mime > /dev/null; then
+      echo "rstudio postrm: warning: update-mime-database failed" >&2
+   fi
+fi
+if command -v gtk-update-icon-cache > /dev/null; then
+   if ! gtk-update-icon-cache -f -t /usr/share/icons/hicolor > /dev/null; then
+      echo "rstudio postrm: warning: gtk-update-icon-cache failed for hicolor" >&2
+   fi
+   for theme_dir in /usr/share/icons/Yaru*; do
+      if [ -f "$theme_dir/index.theme" ]; then
+         if ! gtk-update-icon-cache -f -t "$theme_dir" > /dev/null; then
+            echo "rstudio postrm: warning: gtk-update-icon-cache failed for $theme_dir" >&2
+         fi
+      fi
+   done
+fi
 
 # clear error termination state
 set -e

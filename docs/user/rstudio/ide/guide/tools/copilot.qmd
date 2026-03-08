@@ -26,8 +26,8 @@ to `/etc/rstudio/rsession.conf`.
 
 To enable GitHub Copilot in RStudio:
 
-1.  Navigate to Tools \> Global Options \> Copilot.\
-2.  Check the box to "Enable GitHub Copilot".\
+1.  Navigate to Tools \> Global Options \> Assistant.\
+2.  Select "GitHub Copilot" from the "Use code assistant" dropdown.\
 3.  Download and install the Copilot Agent components.\
 4.  Click the "Sign In" button.\
 5.  In the "GitHub Copilot: Sign in" dialog, copy the Verification Code.\
@@ -41,8 +41,8 @@ To enable GitHub Copilot in RStudio:
 
 To disable GitHub Copilot either:
 
--   Navigate to Tools \> Global Options \> Copilot and uncheck "Enable GitHub Copilot", or\
--   Use the Command Palette <kbd>Cmd+Shift+P</kbd> on Mac or <kbd>Ctrl+Shift+P</kbd> on Windows/Linux, search for "Enable GitHub Copilot" and then uncheck "Enable GitHub Copilot".
+-   Navigate to Tools \> Global Options \> Assistant and select a different option in the "Use code assistant" dropdown, or\
+-   Use the Command Palette <kbd>Cmd+Shift+P</kbd> on Mac or <kbd>Ctrl+Shift+P</kbd> on Windows/Linux, search for "AI Assistant" and then select a different option.
 
 ### Using GitHub Copilot with Proxy Servers
 
@@ -83,7 +83,7 @@ If you are having trouble setting up GitHub Copilot in an environment with limit
 
 ### Copilot Diagnostics
 
-The GitHub Copilot agent used by RStudio can also generate a diagnostics report. This report is accessible from the Copilot preferences pane, using the `Diagnostics` button:
+The GitHub Copilot agent used by RStudio can also generate a diagnostics report. This report is accessible from the Assistant preferences pane, using the `Diagnostics` button:
 
 ![](images/copilot-diagnostics-button.png){fig-alt="GitHub Copilot: Diagnostics button"}
 

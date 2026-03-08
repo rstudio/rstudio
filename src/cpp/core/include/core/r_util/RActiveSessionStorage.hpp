@@ -38,7 +38,28 @@ public:
    Error virtual writeProperty(const std::string& name, const std::string& value) = 0;
    Error virtual writeProperties(const std::map<std::string, std::string>& properties) = 0;
    Error virtual destroy() = 0;
-   Error virtual isValid(bool* pValue) = 0;
+   Error virtual clearScratchPath() = 0;
+
+   // Returns true if the session storage exists (e.g. scratch path exists, or row in DB).
+   // Does NOT check whether the session metadata is complete/valid.
+   Error virtual isEmpty(bool* pIsEmpty) = 0;
+
+   // Returns true if the session is valid — storage exists AND has required metadata
+   // (e.g. for R sessions: editor and project are present). Implementations that cannot
+   // check metadata (like RPC) may delegate to the server-side validate.
+   // Default: delegates to isEmpty for backward compatibility.
+   Error virtual isValid(bool* pValue)
+   {
+      bool isEmptyVal = true;
+      Error error = isEmpty(&isEmptyVal);
+      if (error)
+         return error;
+      *pValue = !isEmptyVal;
+      return Success();
+   }
+
+   // Implemented for File and Rpc storage to look at scratchPath suspended-data for size
+   uintmax_t virtual computeSuspendSize() { return 0; }
 
 protected:
    virtual ~IActiveSessionStorage() = default;
@@ -56,7 +77,11 @@ public:
    Error writeProperty(const std::string& name, const std::string& value) override;
    Error writeProperties(const std::map<std::string, std::string>& properties) override;
    Error destroy() override;
+   Error clearScratchPath() override;
+   Error isEmpty(bool* pIsEmpty) override;
    Error isValid(bool* pValue) override;
+
+   uintmax_t computeSuspendSize() override;
 
 private:
    // Scratch Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18
@@ -65,7 +90,7 @@ private:
 
    // Properties Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18/properites
    FilePath scratchPath_;
-   const core::r_util::FilePathToProjectId& projectToIdFunction_;
+   const core::r_util::FilePathToProjectId projectToIdFunction_;
 
    const std::string propertiesDirName_ = "properites";
 
@@ -113,7 +138,11 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
       core::Error writeProperties(const std::map<std::string, std::string>& properties) override;
 
       core::Error destroy() override;
+      Error clearScratchPath() override;
+      core::Error isEmpty(bool* pIsEmpty) override;
       core::Error isValid(bool* pValue) override;
+
+      uintmax_t computeSuspendSize() override;
 
    private:
       const core::system::User user_;

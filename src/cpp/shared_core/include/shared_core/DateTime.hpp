@@ -1,6 +1,6 @@
 /*
  * DateTime.hpp
- * 
+ *
  * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
@@ -27,6 +27,7 @@
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <algorithm>
 #include <string>
 
 namespace rstudio {
@@ -80,6 +81,8 @@ inline bool parseUtcTimeFromFormatString(const std::string& timeStr,
    return false;
 }
 
+// Parses dates in ISO 8601:2004 Extended format (YYYY-MM-DD hh:mm:ss).
+// Ignores time zone specifiers.
 inline bool parseUtcTimeFromIsoString(const std::string& timeStr,
                                       boost::posix_time::ptime *pOutTime)
 {
@@ -88,12 +91,110 @@ inline bool parseUtcTimeFromIsoString(const std::string& timeStr,
                                        pOutTime);
 }
 
+// Parses dates in ISO 8601:2019 Extended format (YYYY-MM-DDThh:mm:ss).
+// Ignores time zone specifiers.
 inline bool parseUtcTimeFromIso8601String(const std::string& timeStr,
                                           boost::posix_time::ptime *pOutTime)
 {
    return parseUtcTimeFromFormatString(timeStr,
                                        kIso8601Format,
                                        pOutTime);
+}
+
+// Parses dates in any of the following formats:
+//    UNIX timestamp (in seconds, no fractional seconds)
+//    ISO 8601:2004 Basic (YYYYMMDD hhmmss.sss)
+//    ISO 8601:2004 Extended (YYYY-MM-DD hh:mm:ss.sss)
+//    ISO 8601:2019 Basic (YYYYMMDDThhmmss.sss)
+//    ISO 8601:2019 Extended (YYYY-MM-DDThh:mm:ss.sss)
+// Fractional seconds are optional. The ISO 8601 formats support time zones
+// in the form Z, [+-]hh, [+-]hhmm, or [+-]hh:mm. If no zone information is
+// provided, UTC is assumed.
+//
+// The return value is always in UTC.
+inline bool parseUtcTimeFromZoneString(std::string timeStr,
+                                       boost::posix_time::ptime *pOutTime)
+{
+   try {
+      if (std::all_of(timeStr.begin(), timeStr.end(), [](char ch){ return std::isdigit(ch); }))
+      {
+         // purely numeric, treat as UNIX timestamp
+         time_t timestamp = std::stoll(timeStr);
+         *pOutTime = boost::posix_time::from_time_t(timestamp);
+         return true;
+      }
+
+      std::string zoneStr;
+      std::size_t zonePos = timeStr.rfind('Z');
+      if (zonePos == std::string::npos)
+      {
+         zonePos = timeStr.rfind('+');
+         if (zonePos == std::string::npos)
+         {
+            // only check the last 6 chars to avoid getting confused by a - in the date
+            zonePos = timeStr.find('-', timeStr.size() - 6);
+         }
+      }
+      if (zonePos != std::string::npos)
+      {
+         zoneStr = timeStr.substr(zonePos);
+         timeStr = timeStr.substr(0, zonePos);
+      }
+
+      std::size_t tPos = timeStr.find('T');
+      if (tPos == std::string::npos)
+         tPos = timeStr.find(' ');
+
+      std::size_t dashPos = timeStr.find('-');
+      if (dashPos == std::string::npos)
+      {
+         // ISO 8601 Basic
+         timeStr[tPos] = 'T'; // convert 2004 to 2019
+         *pOutTime = boost::posix_time::from_iso_string(timeStr);
+      }
+      else
+      {
+         // ISO 8601 Extended
+         timeStr[tPos] = ' '; // convert 2019 to 2004 because that's what this version of Boost supports
+         *pOutTime = boost::posix_time::time_from_string(timeStr);
+      }
+
+      if (!zoneStr.empty() && zoneStr != "Z")
+      {
+         int hours = 0;
+         int minutes = 0;
+         if (zoneStr.size() <= 3)
+         {
+            hours = std::stoi(zoneStr);
+         }
+         else
+         {
+            // Split the string this way in case there's a colon
+            hours = std::stoi(zoneStr.substr(0, 3));
+            minutes = std::stoi(zoneStr.substr(zoneStr.size() - 2));
+         }
+
+         if (hours < 0)
+            minutes = -minutes;
+
+         minutes += hours * 60;
+
+         *pOutTime -= boost::posix_time::minutes(minutes);
+      }
+      return true;
+   }
+   catch (boost::bad_lexical_cast&)
+   {
+      // invalid input string, return failure but it's not an error
+      return false;
+   }
+   catch (std::exception& e)
+   {
+#ifdef LOG_DEBUG_MESSAGE
+      LOG_DEBUG_MESSAGE(std::string("Error parsing date \"") + timeStr + "\": " + e.what());
+#endif
+      return false;
+   }
 }
 
 } // namespace date_time

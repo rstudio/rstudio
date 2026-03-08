@@ -26,7 +26,7 @@ namespace rstudio {
 namespace server {
 namespace storage {
 
-class DBActiveSessionStorage : public core::r_util::IActiveSessionStorage 
+class DBActiveSessionStorage : public core::r_util::IActiveSessionStorage
 {
 public:
    explicit DBActiveSessionStorage(const std::string& sessionId, const core::system::User& user);
@@ -35,12 +35,14 @@ public:
       const core::system::User& user,
       boost::shared_ptr<core::database::IConnection> overrideConnection);
    ~DBActiveSessionStorage() = default;
-   core::Error readProperty(const std::string& name, std::string* pValue) override;   
+   core::Error readProperty(const std::string& name, std::string* pValue) override;
    core::Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
    core::Error readProperties(std::map<std::string, std::string>* pValues) override;
    core::Error writeProperty(const std::string& name, const std::string& value) override;
    core::Error writeProperties(const std::map<std::string, std::string>& properties) override;
    core::Error destroy() override;
+   core::Error clearScratchPath() override;
+   core::Error isEmpty(bool* pIsEmpty) override;
    core::Error isValid(bool* pValue) override;
 
 private:

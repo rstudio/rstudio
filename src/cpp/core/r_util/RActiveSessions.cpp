@@ -34,6 +34,28 @@ using namespace boost::placeholders;
 namespace rstudio {
 namespace core {
 namespace r_util {
+namespace {
+
+
+} // anonymous namespace
+
+void ActiveSession::writeJsonProperty(const std::string& name, const core::json::Value& value) const
+{
+   writeProperty(name, value.writeFormatted());
+}
+
+core::json::Value ActiveSession::readJsonProperty(const std::string& name) const
+{
+   json::Value value;
+   std::string s = readProperty(name);
+   if (s.empty())
+      return json::Value();
+   if (value.parse(s))
+   {
+      LOG_WARNING_MESSAGE("failed to parse property '" + name + "' of session " + id_);
+   }
+   return value;
+}
 
 const std::string ActiveSession::kCreated = "created";
 const std::string ActiveSession::kExecuting = "executing";
@@ -41,6 +63,7 @@ const std::string ActiveSession::kInitial = "initial";
 const std::string ActiveSession::kLastUsed = "last_used";
 const std::string ActiveSession::kLabel = "label";
 const std::string ActiveSession::kProject = "project";
+const std::string ActiveSession::kProjectId = "project_id";
 const std::string ActiveSession::kSavePromptRequired = "save_prompt_required";
 const std::string ActiveSession::kRunning = "running";
 const std::string ActiveSession::kRVersion = "r_version";
@@ -54,7 +77,10 @@ const std::string ActiveSession::kLastResumed = "last_resumed";
 const std::string ActiveSession::kSuspendTimestamp = "suspend_timestamp";
 const std::string ActiveSession::kBlockingSuspend = "blocking_suspend";
 const std::string ActiveSession::kLaunchParameters = "launch_parameters";
-
+const std::string ActiveSession::kSuspendSize = "suspend_size";
+const std::string ActiveSession::kWorkbench = "workbench";
+const std::string ActiveSession::kId = "id";
+const std::string ActiveSession::kDisplayName = "display_name";
 
 ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath) :
    storage_(storage)
@@ -69,6 +95,7 @@ ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage) 
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
+                             const json::Value& launchParams,
                              bool initial,
                              const std::string& editor,
                              std::string* pId) const
@@ -107,10 +134,16 @@ Error ActiveSessions::create(const std::string& project,
    if (editor == kWorkbenchRStudio)
      initialMetadata.emplace(ActiveSession::kLastResumed, ActiveSession::getNowAsPTimestamp());
 
+   if (launchParams.isObject())
+   {
+      initialMetadata[ActiveSession::kLaunchParameters] = launchParams.writeFormatted();
+      initialMetadata[ActiveSession::kLabel] = launchParams.getObject()["name"].getString();
+   }
    LOG_DEBUG_MESSAGE("Creating new session: " + id + ":" + editor + " project: " + project + " dir: " + workingDir);
 
    auto session = get(id);
    session->writeProperties(initialMetadata);
+
 
    // return the id if requested
    if (pId != NULL)
@@ -133,12 +166,46 @@ bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
 std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validate,
                                                                     std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions) const
 {
-   std::vector<std::string> sessionIds = storage_->listSessionIds();
+   // Delegate to the property-caching overload with an empty set (= all properties)
+   return list(validate, {}, invalidSessions);
+}
+
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(bool validate,
+                                                                    const std::set<std::string>& propertiesToCache,
+                                                                    std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions) const
+{
+   // Try batch loading all session properties in one call
+   std::map<std::string, std::map<std::string, std::string>> batchProperties;
+   Error batchError = storage_->listSessionProperties(propertiesToCache, &batchProperties);
+   bool hasBatchData = !batchError && !batchProperties.empty();
+
+   std::vector<std::string> sessionIds;
+   if (hasBatchData)
+   {
+      // Use session IDs from the batch result
+      for (const auto& kv : batchProperties)
+         sessionIds.push_back(kv.first);
+   }
+   else
+   {
+      // Fall back to listing IDs separately
+      sessionIds = storage_->listSessionIds();
+   }
+
    std::vector<boost::shared_ptr<ActiveSession>> sessions{};
 
    for(const std::string& id : sessionIds)
    {
       boost::shared_ptr<ActiveSession> candidateSession = get(id);
+
+      // Pre-populate cache from batch data if available
+      if (hasBatchData)
+      {
+         auto it = batchProperties.find(id);
+         if (it != batchProperties.end())
+            candidateSession->populateCache(it->second);
+      }
+
       if (validate)
       {
          if (candidateSession->validate())
@@ -190,6 +257,29 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
    }
    else
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+}
+
+boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id,
+                                                     const std::set<std::string>& propertiesToCache) const
+{
+   boost::shared_ptr<ActiveSession> session = get(id);
+   if (!session->empty())
+   {
+      if (propertiesToCache.empty())
+      {
+         // Load all properties
+         session->loadAllProperties();
+      }
+      else
+      {
+         // Load specific properties into cache
+         std::map<std::string, std::string> props;
+         Error error = session->readProperties(propertiesToCache, &props);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+   return session;
 }
 
 

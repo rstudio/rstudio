@@ -289,6 +289,77 @@ Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool*
 #endif
 }
 
+Error RpcActiveSessionsStorage::listSessionProperties(
+   const std::set<std::string>& properties,
+   std::map<std::string, std::map<std::string, std::string>>* pSessionProperties) const
+{
+#ifndef _WIN32
+   // Build the fields array for the RPC. Empty properties = get all fields on the server side.
+   json::Array fields;
+   for (const auto& prop : properties)
+      fields.push_back(prop);
+
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageFieldsField] = fields;
+   body[kSessionStorageOperationField] = kSessionStorageReadAllOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected response from the server when batch reading session properties for user " + user_.getUsername());
+      error.addProperty("response", response.result().write());
+      LOG_ERROR(error);
+      return error;
+   }
+
+   json::Array sessionsArr;
+   error = json::readObject(response.result().getObject(), kSessionStorageSessionsField, sessionsArr);
+   if (error)
+      return error;
+
+   for (json::Array::Iterator itr = sessionsArr.begin(); itr != sessionsArr.end(); ++itr)
+   {
+      if (!(*itr).isObject())
+         continue;
+
+      const json::Object& sessionObj = (*itr).getObject();
+      std::string id;
+      error = json::readObject(sessionObj, kSessionStorageIdField, id);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      std::map<std::string, std::string> props;
+      for (auto memberIt = sessionObj.begin(); memberIt != sessionObj.end(); ++memberIt)
+      {
+         const std::string& key = (*memberIt).getName();
+         if (key == kSessionStorageIdField)
+            continue; // skip the id field itself
+         if ((*memberIt).getValue().isString())
+            props[key] = (*memberIt).getValue().getString();
+      }
+
+      (*pSessionProperties)[id] = std::move(props);
+   }
+#endif
+
+   return Success();
+}
+
 } // namespace r_util
 } // namsepace core
 } // namespace rstudio

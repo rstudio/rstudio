@@ -482,13 +482,16 @@ protected:
    pPai->add_options()
       ("posit-assistant-enabled",
       value<bool>(&positAssistantEnabled_)->default_value(true),
-      "Indicates whether or not Posit Assistant integration can be enabled.")
+      "Indicates whether or not Posit AI integration can be enabled.")
       ("posit-assistant-ssl-certificates-file",
       value<std::string>(&positAssistantSslCertificatesFile_)->default_value(""),
       "The path to a file containing one or more trusted certificates in PEM format.")
       ("posit-assistant-helper",
       value<std::string>(&positAssistantHelper_)->default_value(std::string()),
-      "The path to an optional shell script, which when invoked, should start the Posit Assistant Language Server.");
+      "The path to an optional shell script, which when invoked, should start the Posit Next Edit Suggestions Language Server.")
+      ("posit-assistant-test-manifest",
+      value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
+      "Use the test manifest URL for Posit AI package updates.");
 
    pMisc->add_options();
 
@@ -626,6 +629,7 @@ public:
    bool positAssistantEnabled() const { return positAssistantEnabled_; }
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
+   bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
 
 
 protected:
@@ -758,6 +762,7 @@ protected:
    bool positAssistantEnabled_;
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
+   bool positAssistantTestManifest_;
    virtual bool allowOverlay() const { return false; };
 };
 

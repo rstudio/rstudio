@@ -15,6 +15,7 @@
 
 #include "SessionModuleContextInternal.hpp"
 
+#include <atomic>
 #include <vector>
 
 #include <boost/assert.hpp>
@@ -655,7 +656,8 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
    }
 }
 
-boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
+boost::shared_ptr<tree<FileInfo> > monitoredPathTree(
+   Error* pScanError = nullptr)
 {
    boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
    core::system::FileScannerOptions options;
@@ -667,14 +669,26 @@ boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
    if (scanError)
       LOG_ERROR(scanError);
 
+   if (pScanError)
+      *pScanError = scanError;
+
    return pMonitoredTree;
 }
 
 bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
 {
+   // scan the current state of the monitored directory
+   Error scanError;
+   boost::shared_ptr<tree<FileInfo> > pCurrentTree =
+      monitoredPathTree(&scanError);
+
+   // if the scan failed, skip this cycle and retry next interval;
+   // keep the previous (good) tree so we don't generate spurious events
+   if (scanError)
+      return true;
+
    // check for changes
    std::vector<core::system::FileChangeEvent> changes;
-   boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
    core::system::collectFileChangeEvents(pPrevTree->begin(),
                                          pPrevTree->end(),
                                          pCurrentTree->begin(),
@@ -709,6 +723,19 @@ void onMonitoringError(const Error& error)
 
 void initializeMonitoredUserScratchDir()
 {
+#ifdef _WIN32
+   // Use periodic scanning instead of native file monitoring for the
+   // monitored scratch directory. This directory is tiny (a handful of
+   // files, a few KB) so scanning is cheap, and it avoids
+   // ReadDirectoryChangesW / IRP_MJ_DIRECTORY_CONTROL operations that
+   // enterprise endpoint security software can intercept synchronously,
+   // adding seconds to startup time on Windows.
+   s_monitorByScanning = true;
+   module_context::schedulePeriodicWork(
+      boost::posix_time::seconds(3),
+      boost::bind(scanForMonitoredPathChanges, monitoredPathTree()),
+      true);
+#else
    // setup callbacks and register
    core::system::file_monitor::Callbacks cb;
    cb.onRegistrationError = onMonitoringError;
@@ -719,6 +746,7 @@ void initializeMonitoredUserScratchDir()
                                     true,
                                     monitoredScratchFilter,
                                     cb);
+#endif
 }
 
 
@@ -2218,22 +2246,62 @@ Error enqueueConsoleInput(const std::string& consoleInput)
 // the code here ape the actions of RWriteConsoleEx with a more explicit
 // thread safety constraint
 
+namespace {
+std::atomic<bool> s_agentExecuting{false};
+} // anonymous namespace
+
+void setAgentExecuting(bool executing)
+{
+   s_agentExecuting.store(executing, std::memory_order_release);
+}
+
+bool isAgentExecuting()
+{
+   return s_agentExecuting.load(std::memory_order_acquire);
+}
+
 void consoleWriteOutput(const std::string& output)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // enque write output (same as session::rConsoleWrite)
-   ClientEvent event(client_events::kConsoleWriteOutput, output);
-   enqueClientEvent(event);
+   if (s_agentExecuting)
+   {
+      // Send as a JSON object so the agent flag survives the event queue's
+      // string-based output buffering, and the frontend can style it.
+      json::Object data;
+      data["text"]    = output;
+      data["console"] = std::string();
+      data["agent"]   = true;
+      ClientEvent event(client_events::kConsoleWriteOutput, data);
+      enqueClientEvent(event);
+   }
+   else
+   {
+      // enque write output (same as session::rConsoleWrite)
+      ClientEvent event(client_events::kConsoleWriteOutput, output);
+      enqueClientEvent(event);
+   }
 }
 
 void consoleWriteError(const std::string& message)
 {
    // NOTE: all actions herein must be threadsafe! (see comment above)
 
-   // enque write error (same as session::rConsoleWrite)
-   ClientEvent event(client_events::kConsoleWriteError, message);
-   enqueClientEvent(event);
+   if (s_agentExecuting)
+   {
+      json::Object data;
+      data["text"]    = message;
+      data["console"] = std::string();
+      data["agent"]   = true;
+      ClientEvent event(client_events::kConsoleWriteError, data);
+      enqueClientEvent(event);
+   }
+   else
+   {
+      // enque write error (same as session::rConsoleWrite)
+      ClientEvent event(client_events::kConsoleWriteError, message);
+      enqueClientEvent(event);
+   }
 }
 
 void showErrorMessage(const std::string& title, const std::string& message)

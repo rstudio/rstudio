@@ -724,7 +724,7 @@ bool isMatrix(SEXP object)
    
 bool isDataFrame(SEXP object)
 {
-   return Rf_isFrame(object);
+   return Rf_inherits(object, "data.frame");
 }
 
 bool isNull(SEXP object)

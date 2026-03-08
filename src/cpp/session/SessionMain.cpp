@@ -249,6 +249,18 @@
 
 #include <tests/TestRunner.hpp>
 
+// Forward declare to avoid pulling in SessionLogging.hpp, which
+// redefines logging macros for section tagging.
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace logging {
+core::Error initialize();
+} // namespace logging
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
 using namespace rstudio;
 using namespace rstudio::core;
 
@@ -650,6 +662,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
+      (modules::logging::initialize)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)

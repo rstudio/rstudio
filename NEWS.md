@@ -1,6 +1,7 @@
 ## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
+- ([#17070](https://github.com/rstudio/rstudio/issues/17070)): Added support for the ANSI Erase in Line (EL / CSI K) escape sequence in the console, improving rendering of progress bars and status updates from CLI tools
 - ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors
 - ([#16734](https://github.com/rstudio/rstudio/issues/16734)): Added mouse wheel support for scrolling pane tabs when there are more tabs than can fit in the visible area
 - (#rstudioapi/316): The documentNew API now permits arbitrary file types and extensions
@@ -8,8 +9,10 @@
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
 - ([#16903](https://github.com/rstudio/rstudio/issues/16903)): Changed the default location of the Sidebar pane to be on the left side of the window
 - ([#16942](https://github.com/rstudio/rstudio/issues/16942)): Enforce a minimum width for the Sidebar pane
+- ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
 
 ### Fixed
+- ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed
 - ([#16632](https://github.com/rstudio/rstudio/issues/16632)): Fixed an issue where not all new files would appear in the Files pane after a git pull
 - ([#16714](https://github.com/rstudio/rstudio/issues/16714)): Fixed an issue where formatting edits with air did not behave well with the editor undo stack
 - ([#16732](https://github.com/rstudio/rstudio/issues/16732)): Fixed an issue where TabSet1 with no tabs assigned would show the Sidebar title
@@ -26,11 +29,20 @@
 - ([#16885](https://github.com/rstudio/rstudio/issues/16885)): Fixed an issue where console warning annotation boxes could include excess content
 - ([#16842](https://github.com/rstudio/rstudio/issues/16842)): Fixed issue where Packages pane checkboxes did not display the correct state for renv projects using a shared cache
 - ([#16985](https://github.com/rstudio/rstudio/issues/16985)): Fixed an issue where the Environment pane would drop the first list element when a user-defined `str` method existed in the global environment
+- ([#16995](https://github.com/rstudio/rstudio/issues/16995)): Fixed an issue where the chunk toolbar could be duplicated when pressing Enter after a chunk header at the end of a document
+- ([#17026](https://github.com/rstudio/rstudio/pull/17026)): Fixed an issue where roxygen parentheses interfered with Ctrl+Enter execution
+- ([#14626](https://github.com/rstudio/rstudio/issues/14626)): Fixed an issue where RStudio-specific file type icons (e.g. .Rmd, .qmd, .Rpres) were not shown in file managers on Linux
+- ([#15609](https://github.com/rstudio/rstudio/issues/15609)): Fixed an issue where RStudio startup on Windows was delayed by several seconds on systems with endpoint security software
+- ([#15863](https://github.com/rstudio/rstudio/issues/15863)): Fixed an issue where "Use Selection for Find" (Cmd+E) incorrectly jumped to the next match instead of only populating the find bar
+- ([#16838](https://github.com/rstudio/rstudio/issues/16838)): Fixed an issue where inline notebook and Quarto plots were blurry on HiDPI displays when custom figure dimensions were specified
+- ([#17095](https://github.com/rstudio/rstudio/issues/17095)): Fixed an issue where declining to save a file with an unexpected extension would disable saving for that file
+- ([#17115](https://github.com/rstudio/rstudio/issues/17115)): Fixed an issue on macOS Desktop where the "Close" keyboard shortcut in secondary windows (e.g. Shiny app, Help pop-out) were also processed by the main window
+- ([#14882](https://github.com/rstudio/rstudio/issues/14882)): Fixed an issue where YAML comments in R Markdown documents were dropped or displaced when the front matter was modified (e.g. when toggling "Chunk Output in Console")
 
 ### Dependencies
 - Ace 1.43.5
-- Copilot Language Server 1.409.0
-- Electron 39.5.1
-- Node.js 22.22.0 (copilot completions)
+- Copilot Language Server 1.425.0
+- Electron 39.7.0
+- Node.js 22.22.0 (copilot, Posit AI)
 - Quarto 1.8.26
 - xterm.js 6.0.0

@@ -1109,6 +1109,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".positai",
                 ".quartoignore",
                 ".r",
                 ".rbuildignore",
@@ -1779,7 +1780,7 @@
         "assistant": {
             "type": "string",
             "enum": ["none", "posit", "copilot"],
-            "enumReadable": ["(None)", "Posit Assistant", "GitHub Copilot"],
+            "enumReadable": ["(None)", "Posit AI Next Edit Suggestions", "GitHub Copilot"],
             "default": "posit",
             "title": "AI Assistant",
             "description": "Select which AI assistant to use for code suggestions and assistance."

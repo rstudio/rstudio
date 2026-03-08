@@ -31,14 +31,11 @@ export const _createContextMenuTemplate = (
   sender: WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
-  let template: ContextMenuItem[] = [];
   if (params.hasImageContents) {
-    template = createContextMenuImageTemplate(sender, params);
+    return createContextMenuImageTemplate(sender, params);
   } else {
-    template = createContextMenuTextTemplate(sender, params);
+    return createContextMenuTextTemplate(sender, params);
   }
-
-  return template;
 };
 
 const createContextMenuImageTemplate = (sender: WebContents, params: Electron.ContextMenuParams): ContextMenuItem[] => {

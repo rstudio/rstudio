@@ -156,6 +156,29 @@ void initializeHttpConnectionListener()
                }
             }
          }
+         else if (wwwAddress == "::")
+         {
+            std::vector<core::system::posix::IpAddress> addrs;
+            Error error = core::system::ipAddresses(&addrs, true);
+            if (!error)
+            {
+               bool hasIpv6 = false;
+               for (const core::system::posix::IpAddress& ip : addrs)
+               {
+                  auto addr = boost::asio::ip::make_address(ip.Address);
+                  if (addr.is_v6())
+                  {
+                     hasIpv6 = true;
+                     break;
+                  }
+               }
+
+               if (!hasIpv6)
+               {
+                  wwwAddress = "0.0.0.0";
+               }
+            }
+         }
 
          // reuse the port we were bound to before restart if specified - this is done
          // to enable smooth session restarts for launcher sessions

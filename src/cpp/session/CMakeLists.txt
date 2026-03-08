@@ -217,6 +217,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
+   modules/SessionLogging.cpp
    modules/SessionLSP.cpp
    modules/SessionMarkers.cpp
    modules/SessionNodeTools.cpp
@@ -381,6 +382,7 @@ set(SESSION_SOURCE_FILES
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
    projects/SessionProjectFirstRun.cpp
+   projects/SessionProjectsOverlay.cpp
    "${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp"
 )
 

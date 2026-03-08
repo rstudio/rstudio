@@ -64,7 +64,19 @@
    if (.rs.platform.isLinux)
       options(repos = c(PPM = "https://packagemanager.posit.co/cran/latest"))
    
-   renv::install(packages, prompt = FALSE)
+   # Only install packages that are missing or older than the CRAN version.
+   installed <- installed.packages()[, "Version"]
+   available <- available.packages()[, "Version"]
+
+   outdated <- vapply(packages, function(pkg) {
+      ours   <- package_version(.rs.nullCoalesce(installed[pkg], "0.0.0"))
+      theirs <- package_version(.rs.nullCoalesce(available[pkg], "0.0.0"))
+      ours < theirs
+   }, logical(1))
+
+   if (any(outdated))
+      renv::install(packages[outdated], prompt = FALSE)
+
    for (package in packages)
       loadNamespace(package)
 })

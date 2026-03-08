@@ -17,16 +17,18 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
-import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -34,6 +36,7 @@ import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
+   implements ConsolePromptEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ChatPresenter>
    {
@@ -69,8 +72,6 @@ public class ChatPresenter extends BasePresenter
       void setStatus(Status status);
       void showError(String errorMessage);
       void loadUrl(String url);
-      void showUpdateNotification(String newVersion);
-      void showInstallNotification(String newVersion);
       void showNotInstalledWithInstall(String newVersion);
       void showUpdateAvailableWithVersions(String currentVersion, String newVersion);
       void showUpdatingStatus();
@@ -82,6 +83,13 @@ public class ChatPresenter extends BasePresenter
       void showCrashedMessage(int exitCode);
       void showSuspendedMessage();
       void showIncompatibleVersion();
+      void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
+      void showUnsupportedVersionNoUpdate(String currentVersion);
+      void showUnsupportedProtocol();
+      void showManifestUnavailable();
+      void showReadlineNotification();
+      void hideReadlineNotification();
+      void updateCachedUrl(String url);
    }
 
    public static class Chat
@@ -151,12 +159,16 @@ public class ChatPresenter extends BasePresenter
          }
       });
 
+      // Listen for console prompt events (to detect when R is waiting for input)
+      events_.addHandler(ConsolePromptEvent.TYPE, this);
+
       // Listen for backend exit events (crashes)
       events_.addHandler(ChatBackendExitEvent.TYPE, new ChatBackendExitEvent.Handler()
       {
          @Override
          public void onChatBackendExit(ChatBackendExitEvent event)
          {
+            display_.hideReadlineNotification();
             if (event.getCrashed())
             {
                display_.showCrashedMessage(event.getExitCode());
@@ -173,6 +185,7 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               display_.hideReadlineNotification();
                display_.showSuspendedMessage();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -211,6 +224,28 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
+   // When the console prompt fires while R is busy (i.e. executing code rather
+   // than at the top-level REPL), it means something mid-execution is requesting
+   // user input (e.g. readline, browser, scan). Show a notification so the user
+   // knows to respond in the Console.
+   //
+   // NOTE: This intentionally triggers for all mid-execution prompts, not just
+   // AI-initiated ones. A browser() or readline() call is worth surfacing even
+   // if it wasn't triggered by the assistant, since the user may need to act.
+   //
+   // TODO: When Posit Assistant gains support for handling input requests
+   // directly, we should signal the assistant here instead of (or in
+   // addition to) showing a passive notification.
+   // https://github.com/posit-dev/databot/issues/770
+   @Override
+   public void onConsolePrompt(ConsolePromptEvent event)
+   {
+      if (event.getPrompt().getBusy())
+         display_.showReadlineNotification();
+      else
+         display_.hideReadlineNotification();
+   }
+
    /**
     * Called when either global chat provider preference or project options change.
     * Re-evaluates whether chat should be enabled based on the effective provider.
@@ -234,7 +269,8 @@ public class ChatPresenter extends BasePresenter
          // Posit AI is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
-         display_.hideUpdateNotification();  // Clean up all notifications
+         display_.hideReadlineNotification();
+         display_.hideUpdateNotification();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
       }
    }
@@ -353,6 +389,36 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
+         public void onUnsupportedVersionUpgradeRequired(
+             String currentVersion, String newVersion)
+         {
+            initializing_ = false;
+            display_.showUnsupportedVersionUpgradeRequired(
+                currentVersion, newVersion);
+         }
+
+         @Override
+         public void onUnsupportedVersionNoUpdate(String currentVersion)
+         {
+            initializing_ = false;
+            display_.showUnsupportedVersionNoUpdate(currentVersion);
+         }
+
+         @Override
+         public void onUnsupportedProtocol()
+         {
+            initializing_ = false;
+            display_.showUnsupportedProtocol();
+         }
+
+         @Override
+         public void onManifestUnavailable()
+         {
+            initializing_ = false;
+            display_.showManifestUnavailable();
+         }
+
+         @Override
          public void onCheckFailed(String errorMessage)
          {
             // Network failure or other error - show message but don't block
@@ -436,7 +502,13 @@ public class ChatPresenter extends BasePresenter
             if (status.equals("ready"))
             {
                String wsUrl = response.getString("url");
-               loadChatUI(wsUrl);
+               String authToken = response.hasKey("auth_token") ? response.getString("auth_token") : "";
+               if (authToken.isEmpty())
+               {
+                  Debug.log("Chat backend reported ready but auth_token is missing");
+               }
+               boolean resumeChat = response.hasKey("resume_chat") && response.getBoolean("resume_chat");
+               loadChatUI(wsUrl, authToken, resumeChat);
             }
             else
             {
@@ -519,7 +591,7 @@ public class ChatPresenter extends BasePresenter
       });
    }
 
-   private void loadChatUI(String wsUrl)
+   private void loadChatUI(String wsUrl, String authToken, boolean resumeChat)
    {
       // Re-check preference before loading (guards against preference change during polling)
       if (!paiUtil_.isChatProviderPosit())
@@ -533,12 +605,29 @@ public class ChatPresenter extends BasePresenter
       // Try relative URL first, which should work in both dev and production
       String baseUrl = "ai-chat/index.html";
 
-      // Append WebSocket URL and timestamp as query parameters to bust cache
+      // Append WebSocket URL, auth token, and timestamp as query parameters to bust cache
       long timestamp = System.currentTimeMillis();
-      String urlWithWsParam = baseUrl + "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
+      String params = "?wsUrl=" + URL.encodeQueryString(wsUrl) + "&_t=" + timestamp;
+      if (authToken != null && !authToken.isEmpty())
+      {
+         params += "&authToken=" + URL.encodeQueryString(authToken);
+      }
 
-      display_.loadUrl(urlWithWsParam);
+      String loadUrl = baseUrl + params;
+      if (resumeChat)
+      {
+         loadUrl += "&resume";
+      }
+
+      display_.loadUrl(loadUrl);
       display_.setStatus(Display.Status.READY);
+
+      // Mark the backend so subsequent status responses include resume_chat=true
+      server_.chatNotifyUILoaded(new VoidServerRequestCallback());
+
+      // Always include &resume in the cached URL so that tab-switch reloads
+      // (via onSelected) signal resume, even if the initial load was fresh
+      display_.updateCachedUrl(baseUrl + params + "&resume");
 
       // Reset initialization flag - we're done
       initializing_ = false;
