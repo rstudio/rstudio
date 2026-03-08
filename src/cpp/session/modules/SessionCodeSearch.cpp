@@ -856,6 +856,9 @@ private:
    {
       using namespace rstudio::core::system;
 
+      // compute once per batch instead of once per file
+      std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
+
       // process a batch of items per scheduler call to reduce
       // per-item function dispatch and time-check overhead
       static const int kBatchSize = 20;
@@ -872,7 +875,7 @@ private:
             case FileChangeEvent::FileAdded:
             case FileChangeEvent::FileModified:
             {
-               updateIndexEntry(fileInfo);
+               updateIndexEntry(fileInfo, ignoreDirs);
                break;
             }
 
@@ -892,7 +895,7 @@ private:
       return indexing_;
    }
 
-   void updateIndexEntry(const FileInfo& fileInfo)
+   void updateIndexEntry(const FileInfo& fileInfo, const std::vector<FilePath>& ignoreDirs)
    {
       // index the source if necessary
       boost::shared_ptr<r_util::RSourceIndex> pIndex;
@@ -901,7 +904,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isWithinIgnoredDirectory(filePath, module_context::ignoreContentDirs()))
+      if (isWithinIgnoredDirectory(filePath, ignoreDirs))
          return;
 
       if (isIndexableSourceFile(fileInfo))
