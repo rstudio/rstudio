@@ -53,7 +53,7 @@ public class RProjectOptions extends JavaScriptObject
       options.packrat_options = packratOptions;
       options.renv_options = renvOptions;
       options.assistant_options = assistantOptions;
-      options.private_prefs = {};
+      options.local_prefs = {};
       return options;
    }-*/;
 
@@ -97,7 +97,7 @@ public class RProjectOptions extends JavaScriptObject
       return this.renv_context;
    }-*/;
 
-   public native final JsObject getPrivatePrefs() /*-{
-      return this.private_prefs || {};
+   public native final JsObject getLocalProjectPrefs() /*-{
+      return this.local_prefs || {};
    }-*/;
 }

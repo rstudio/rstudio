@@ -1605,7 +1605,7 @@
         "file_monitor_use_gitignore": {
             "type": "boolean",
             "default": true,
-            "private": true,
+            "local": true,
             "title": "Use .gitignore for file monitoring",
             "description": "When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing."
         },

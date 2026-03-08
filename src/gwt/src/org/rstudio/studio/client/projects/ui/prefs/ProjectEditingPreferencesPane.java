@@ -186,10 +186,10 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       // initialize gitignore checkbox from private project prefs, falling
       // back to the resolved user preference value
-      JsObject privatePrefs = options.getPrivatePrefs();
-      if (privatePrefs.hasKey(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE))
+      JsObject localPrefs = options.getLocalProjectPrefs();
+      if (localPrefs.hasKey(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE))
       {
-         initialUseGitignore_ = privatePrefs.getBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE);
+         initialUseGitignore_ = localPrefs.getBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE);
       }
       else
       {
@@ -221,7 +221,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       // write the gitignore pref into private project prefs
       boolean useGitignore = chkUseGitignore_.getValue();
-      options.getPrivatePrefs().setBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE, useGitignore);
+      options.getLocalProjectPrefs().setBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE, useGitignore);
       if (useGitignore != initialUseGitignore_)
       {
          restartRequirement.setSessionRestartRequired(true);

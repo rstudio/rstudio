@@ -40,19 +40,19 @@ void UserPrefsProjectLayer::mergePrefs()
    {
       cache_ = boost::make_shared<json::Object>();
 
-      // Start from public prefs
-      if (publicPrefsCache_)
+      // Start from shared prefs
+      if (sharedPrefsCache_)
       {
-         for (const auto& member : *publicPrefsCache_)
+         for (const auto& member : *sharedPrefsCache_)
          {
             (*cache_)[member.getName()] = member.getValue().clone();
          }
       }
 
-      // Overlay private prefs (takes precedence)
-      if (privatePrefsCache_)
+      // Overlay local prefs (takes precedence)
+      if (localPrefsCache_)
       {
-         for (const auto& member : *privatePrefsCache_)
+         for (const auto& member : *localPrefsCache_)
          {
             (*cache_)[member.getName()] = member.getValue().clone();
          }
@@ -65,13 +65,13 @@ void UserPrefsProjectLayer::onProjectConfigChanged()
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      // Re-read public prefs from .Rproj
-      publicPrefsCache_ = boost::make_shared<json::Object>(
+      // Re-read shared prefs from .Rproj
+      sharedPrefsCache_ = boost::make_shared<json::Object>(
          projects::projectContext().uiPrefs());
    }
    END_LOCK_MUTEX
 
-   // Re-merge with private prefs
+   // Re-merge with local prefs
    mergePrefs();
 
    // Pass new values to client
@@ -90,10 +90,10 @@ void UserPrefsProjectLayer::onProjectConfigChanged()
 
 void UserPrefsProjectLayer::onPrefsFileChanged()
 {
-   if (privatePrefsFile_.isEmpty())
+   if (localPrefsFile_.isEmpty())
       return;
 
-   if (privatePrefsFile_.getLastWriteTime() <= lastSync_)
+   if (localPrefsFile_.getLastWriteTime() <= lastSync_)
    {
       // No work to do; we wrote this update ourselves.
       return;
@@ -107,22 +107,22 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    }
    END_LOCK_MUTEX
 
-   // Reload private prefs from file
+   // Reload local prefs from file
    FilePath schemaFile = options().rResourcesPath()
       .completePath("schema")
       .completePath(kUserPrefsSchemaFile);
    json::Object prefs;
-   Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile, &prefs);
+   Error error = loadPrefsFromFile(localPrefsFile_, schemaFile, &prefs);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
 
-   // Update the private prefs cache and rebuild the merged cache
+   // Update the local prefs cache and rebuild the merged cache
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      privatePrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
+      localPrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
    }
    END_LOCK_MUTEX
 
@@ -153,12 +153,12 @@ core::Error UserPrefsProjectLayer::readPrefs()
 {
    if (projects::projectContext().hasProject())
    {
-      // Read public prefs from .Rproj
-      publicPrefsCache_ = boost::make_shared<json::Object>(
+      // Read shared prefs from .Rproj
+      sharedPrefsCache_ = boost::make_shared<json::Object>(
          projects::projectContext().uiPrefs());
 
-      // Read private prefs from scratch path
-      privatePrefsFile_ = projects::projectContext().scratchPath()
+      // Read local prefs from scratch path
+      localPrefsFile_ = projects::projectContext().scratchPath()
          .completePath(kUserPrefsFile);
 
       FilePath schemaFile = options().rResourcesPath()
@@ -166,34 +166,34 @@ core::Error UserPrefsProjectLayer::readPrefs()
          .completePath(kUserPrefsSchemaFile);
 
       json::Object prefs;
-      Error error = loadPrefsFromFile(privatePrefsFile_, schemaFile, &prefs);
+      Error error = loadPrefsFromFile(localPrefsFile_, schemaFile, &prefs);
       if (error)
          LOG_ERROR(error);
 
-      privatePrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
+      localPrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
 
       // Build the merged cache
       mergePrefs();
 
-      // Track the sync time for the private prefs file
-      if (privatePrefsFile_.exists())
-         lastSync_ = privatePrefsFile_.getLastWriteTime();
+      // Track the sync time for the local prefs file
+      if (localPrefsFile_.exists())
+         lastSync_ = localPrefsFile_.getLastWriteTime();
 
       // Keep pref cache in sync with project config (.Rproj) changes
       projects::projectContext().onConfigChanged.connect(
             boost::bind(&UserPrefsProjectLayer::onProjectConfigChanged, this));
 
-      // After deferred init, start monitoring the private prefs file for changes
+      // After deferred init, start monitoring the local prefs file for changes
       module_context::events().onDeferredInit.connect([this](bool)
       {
-         if (!privatePrefsFile_.isEmpty())
-            monitorPrefsFile(privatePrefsFile_);
+         if (!localPrefsFile_.isEmpty())
+            monitorPrefsFile(localPrefsFile_);
       });
    }
    else
    {
-      publicPrefsCache_ = boost::make_shared<json::Object>();
-      privatePrefsCache_ = boost::make_shared<json::Object>();
+      sharedPrefsCache_ = boost::make_shared<json::Object>();
+      localPrefsCache_ = boost::make_shared<json::Object>();
       cache_ = boost::make_shared<json::Object>();
    }
    return Success();
@@ -201,23 +201,23 @@ core::Error UserPrefsProjectLayer::readPrefs()
 
 core::Error UserPrefsProjectLayer::writePrefs(const core::json::Object& prefs)
 {
-   if (privatePrefsFile_.isEmpty())
+   if (localPrefsFile_.isEmpty())
    {
       return fileNotFoundError(ERROR_LOCATION);
    }
 
-   // Update the private prefs cache
+   // Update the local prefs cache
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      privatePrefsCache_ = boost::make_shared<json::Object>(prefs);
+      localPrefsCache_ = boost::make_shared<json::Object>(prefs);
    }
    END_LOCK_MUTEX
 
-   // Write private prefs to disk
-   Error error = writePrefsToFile(prefs, privatePrefsFile_);
+   // Write local prefs to disk
+   Error error = writePrefsToFile(prefs, localPrefsFile_);
    if (!error)
    {
-      lastSync_ = privatePrefsFile_.getLastWriteTime();
+      lastSync_ = localPrefsFile_.getLastWriteTime();
    }
 
    // Rebuild the merged cache
@@ -226,14 +226,14 @@ core::Error UserPrefsProjectLayer::writePrefs(const core::json::Object& prefs)
    return error;
 }
 
-core::Error UserPrefsProjectLayer::writePrivatePref(const std::string& name,
+core::Error UserPrefsProjectLayer::writeLocalPref(const std::string& name,
                                                     const json::Value& value)
 {
    json::Object prefs;
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      if (privatePrefsCache_)
-         prefs = *privatePrefsCache_;
+      if (localPrefsCache_)
+         prefs = *localPrefsCache_;
    }
    END_LOCK_MUTEX
 
@@ -241,13 +241,13 @@ core::Error UserPrefsProjectLayer::writePrivatePref(const std::string& name,
    return writePrefs(prefs);
 }
 
-core::json::Object UserPrefsProjectLayer::readPrivatePrefs()
+core::json::Object UserPrefsProjectLayer::readLocalPrefs()
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      if (privatePrefsCache_)
+      if (localPrefsCache_)
       {
-         return *privatePrefsCache_;
+         return *localPrefsCache_;
       }
    }
    END_LOCK_MUTEX

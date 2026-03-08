@@ -139,7 +139,7 @@ public:
          if (!layer)
             return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
-         Error error = layer->writePrivatePref(name, value);
+         Error error = layer->writeLocalPref(name, value);
          if (error)
             return error;
       }
@@ -149,7 +149,7 @@ public:
       return Success();
    }
 
-   Error writeProjectPrivatePrefsValue(const json::Object& prefs)
+   Error writeProjectLocalPrefsValue(const json::Object& prefs)
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -169,7 +169,7 @@ public:
       return Success();
    }
 
-   json::Object readProjectPrivatePrefsValue()
+   json::Object readProjectLocalPrefsValue()
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -177,7 +177,7 @@ public:
          if (!layer)
             return json::Object();
 
-         return layer->readPrivatePrefs();
+         return layer->readLocalPrefs();
       }
       END_LOCK_MUTEX
 
@@ -223,9 +223,9 @@ Error initializeProjectPrefs()
 
 Error writeProjectPref(const std::string& name, const json::Value& value)
 {
-   // Only preferences marked "private": true in the schema may be written
-   // as private project prefs; reject anything not in the generated allowlist.
-   auto allowed = UserPrefValues::privateProjectPrefs();
+   // Only preferences marked "local": true in the schema may be written
+   // as local project prefs; reject anything not in the generated allowlist.
+   auto allowed = UserPrefValues::localProjectPrefs();
    if (allowed.find(name) == allowed.end())
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
@@ -233,10 +233,10 @@ Error writeProjectPref(const std::string& name, const json::Value& value)
    return instance.writeProjectPrefValue(name, value);
 }
 
-Error writeProjectPrivatePrefs(const json::Object& prefs)
+Error writeProjectLocalPrefs(const json::Object& prefs)
 {
    // Validate all keys against the allowlist before writing any of them.
-   auto allowed = UserPrefValues::privateProjectPrefs();
+   auto allowed = UserPrefValues::localProjectPrefs();
    for (const auto& member : prefs)
    {
       if (allowed.find(member.getName()) == allowed.end())
@@ -244,13 +244,13 @@ Error writeProjectPrivatePrefs(const json::Object& prefs)
    }
 
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
-   return instance.writeProjectPrivatePrefsValue(prefs);
+   return instance.writeProjectLocalPrefsValue(prefs);
 }
 
-json::Object readProjectPrivatePrefs()
+json::Object readProjectLocalPrefs()
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
-   return instance.readProjectPrivatePrefsValue();
+   return instance.readProjectLocalPrefsValue();
 }
 
 } // namespace prefs
