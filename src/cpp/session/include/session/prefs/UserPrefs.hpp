@@ -63,9 +63,9 @@ core::Error initializeSessionPrefs();
 core::Error initializeProjectPrefs();
 
 core::Error writeProjectPref(const std::string& name, const core::json::Value& value);
-core::Error writeProjectLocalPrefs(const core::json::Object& prefs);
+core::Error writeLocalProjectPrefs(const core::json::Object& prefs);
 
-core::json::Object readProjectLocalPrefs();
+core::json::Object readLocalProjectPrefs();
 
 } // namespace prefs
 } // namespace session

@@ -149,7 +149,7 @@ public:
       return Success();
    }
 
-   Error writeProjectLocalPrefsValue(const json::Object& prefs)
+   Error writeLocalProjectPrefsValue(const json::Object& prefs)
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -169,7 +169,7 @@ public:
       return Success();
    }
 
-   json::Object readProjectLocalPrefsValue()
+   json::Object readLocalProjectPrefsValue()
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -233,7 +233,7 @@ Error writeProjectPref(const std::string& name, const json::Value& value)
    return instance.writeProjectPrefValue(name, value);
 }
 
-Error writeProjectLocalPrefs(const json::Object& prefs)
+Error writeLocalProjectPrefs(const json::Object& prefs)
 {
    // Validate all keys against the allowlist before writing any of them.
    auto allowed = UserPrefValues::localProjectPrefs();
@@ -244,13 +244,13 @@ Error writeProjectLocalPrefs(const json::Object& prefs)
    }
 
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
-   return instance.writeProjectLocalPrefsValue(prefs);
+   return instance.writeLocalProjectPrefsValue(prefs);
 }
 
-json::Object readProjectLocalPrefs()
+json::Object readLocalProjectPrefs()
 {
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
-   return instance.readProjectLocalPrefsValue();
+   return instance.readLocalProjectPrefsValue();
 }
 
 } // namespace prefs

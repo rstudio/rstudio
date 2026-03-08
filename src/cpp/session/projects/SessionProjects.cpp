@@ -620,7 +620,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
-   json::Object localPrefs = prefs::readProjectLocalPrefs();
+   json::Object localPrefs = prefs::readLocalProjectPrefs();
    optionsJson["local_prefs"] = localPrefs;
 
    pResponse->setResult(optionsJson);
@@ -902,7 +902,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
 
    // write local project prefs
-   error = prefs::writeProjectLocalPrefs(localPrefsJson);
+   error = prefs::writeLocalProjectPrefs(localPrefsJson);
    if (error)
       LOG_ERROR(error);
 
