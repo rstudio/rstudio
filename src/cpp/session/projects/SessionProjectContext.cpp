@@ -745,9 +745,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    if (prefs::userPrefs().fileMonitorUseGitignore())
    {
       using modules::libgit2::Git;
-      boost::shared_ptr<Git> pGit = boost::make_shared<Git>();
-      pGit->open(directory());
-      context.pGit = pGit;
+      context.pGit = boost::make_shared<Git>(directory());
    }
 
    core::system::file_monitor::registerMonitor(

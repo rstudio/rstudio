@@ -33,15 +33,13 @@ core::Error initialize();
 class Git
 {
 public:
-   Git();
+   // Open a git repository at the given path.
+   // If the path is not a git repo, isOpen() will return false.
+   explicit Git(const core::FilePath& repoPath);
    ~Git();
 
    Git(const Git&) = delete;
    Git& operator=(const Git&) = delete;
-
-   // Open a git repository at the given path.
-   // Returns success even if the path is not a git repo (isOpen() will be false).
-   core::Error open(const core::FilePath& repoPath);
 
    // Check if a path (relative to repo root) is ignored by .gitignore rules.
    bool isIgnored(const std::string& path) const;

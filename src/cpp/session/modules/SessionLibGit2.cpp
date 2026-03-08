@@ -47,29 +47,22 @@ Error initialize()
    return Success();
 }
 
-Git::Git()
+Git::Git(const FilePath& repoPath)
    : pRepo_(nullptr)
 {
+   int rc = git_repository_open(&pRepo_, repoPath.getAbsolutePath().c_str());
+   if (rc != 0)
+   {
+      pRepo_ = nullptr;
+      LOG_DEBUG_MESSAGE("Git: path is not a git repository: " +
+                        repoPath.getAbsolutePath());
+   }
 }
 
 Git::~Git()
 {
    if (pRepo_ != nullptr)
       git_repository_free(pRepo_);
-}
-
-Error Git::open(const FilePath& repoPath)
-{
-   int rc = git_repository_open(&pRepo_, repoPath.getAbsolutePath().c_str());
-   if (rc != 0)
-   {
-      // not a git repo -- this is not an error condition
-      pRepo_ = nullptr;
-      LOG_DEBUG_MESSAGE("Git: path is not a git repository: " +
-                        repoPath.getAbsolutePath());
-   }
-
-   return Success();
 }
 
 bool Git::isIgnored(const std::string& path) const

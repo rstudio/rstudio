@@ -63,9 +63,13 @@ void UserPrefsProjectLayer::mergePrefs()
 
 void UserPrefsProjectLayer::onProjectConfigChanged()
 {
-   // Re-read public prefs from .Rproj
-   publicPrefsCache_ = boost::make_shared<json::Object>(
-      projects::projectContext().uiPrefs());
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      // Re-read public prefs from .Rproj
+      publicPrefsCache_ = boost::make_shared<json::Object>(
+         projects::projectContext().uiPrefs());
+   }
+   END_LOCK_MUTEX
 
    // Re-merge with private prefs
    mergePrefs();
@@ -73,7 +77,13 @@ void UserPrefsProjectLayer::onProjectConfigChanged()
    // Pass new values to client
    json::Object dataJson;
    dataJson["name"] = kUserPrefsProjectLayer;
-   dataJson["values"] = *cache_;
+
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      dataJson["values"] = cache_->clone();
+   }
+   END_LOCK_MUTEX
+
    ClientEvent event(client_events::kUserPrefsChanged, dataJson);
    module_context::enqueClientEvent(event);
 }
@@ -90,8 +100,12 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    }
 
    // Make a copy of the merged cache prior to reloading
-   const json::Value oldVal = cache_->clone();
-   const json::Object old = oldVal.getObject();
+   json::Object cacheOld;
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cacheOld = cache_->clone().getObject();
+   }
+   END_LOCK_MUTEX
 
    // Reload private prefs from file
    FilePath schemaFile = options().rResourcesPath()
@@ -114,14 +128,21 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
 
    mergePrefs();
 
-   // Diff against old merged cache and emit change notifications
+   // Snapshot the new merged cache and diff against old
+   json::Object cacheNew;
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      cacheNew = cache_->clone().getObject();
+   }
+   END_LOCK_MUTEX
+
    for (const auto& key : UserPrefValues::allKeys())
    {
-      const auto itOld = old.find(key);
-      const auto itNew = cache_->find(key);
+      const auto itOld = cacheOld.find(key);
+      const auto itNew = cacheNew.find(key);
 
-      if (itNew != cache_->end() &&
-          (itOld == old.end() || !((*itNew).getValue() == (*itOld).getValue())))
+      if (itNew != cacheNew.end() &&
+          (itOld == cacheOld.end() || !((*itNew).getValue() == (*itOld).getValue())))
       {
          onChanged(key);
       }
