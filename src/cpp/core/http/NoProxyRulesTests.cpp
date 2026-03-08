@@ -166,6 +166,52 @@ TEST(HttpTestNoProxyRule, CreateNoProxyBuilderCreatesCorrectRule)
    // junk will always return an address rule
    rule = createNoProxyRule("junk");
     EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+
+   // IPv6 bracketed address without port
+   rule = createNoProxyRule("[::1]");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("::1", "80"));
+    EXPECT_TRUE(rule->match("::1", "443"));
+
+   // IPv6 bracketed address with port
+   rule = createNoProxyRule("[::1]:8080");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("::1", "8080"));
+    EXPECT_FALSE(rule->match("::1", "443"));
+
+   // IPv6 full address with port
+   rule = createNoProxyRule("[2001:db8::1]:443");
+    EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+    EXPECT_TRUE(rule->match("2001:db8::1", "443"));
+    EXPECT_FALSE(rule->match("2001:db8::1", "80"));
+}
+
+TEST(HttpTestNoProxyRule, IPv6AddressToStringFormatsCorrectly)
+{
+   NoProxyRuleAddress ruleWithPort("::1", "8080");
+   EXPECT_EQ("[::1]:8080", ruleWithPort.toString());
+
+   NoProxyRuleAddress ruleFullAddr("2001:db8::1", "443");
+   EXPECT_EQ("[2001:db8::1]:443", ruleFullAddr.toString());
+
+   NoProxyRuleAddress ruleNoPort("::1");
+   EXPECT_EQ("::1", ruleNoPort.toString());
+
+   NoProxyRuleAddress ipv4Rule("192.168.1.1", "80");
+   EXPECT_EQ("192.168.1.1:80", ipv4Rule.toString());
+}
+
+TEST(HttpTestNoProxyRule, TwoArgCreateNoProxyRuleIPv6)
+{
+   auto rule = createNoProxyRule("::1", "8080");
+   EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule.get()));
+   EXPECT_TRUE(rule->match("::1", "8080"));
+   EXPECT_FALSE(rule->match("::1", "443"));
+
+   auto rule2 = createNoProxyRule("2001:db8::1", "443");
+   EXPECT_NE(nullptr, dynamic_cast<NoProxyRuleAddress*>(rule2.get()));
+   EXPECT_TRUE(rule2->match("2001:db8::1", "443"));
+   EXPECT_FALSE(rule2->match("2001:db8::1", "80"));
 }
 
 } // namespace tests

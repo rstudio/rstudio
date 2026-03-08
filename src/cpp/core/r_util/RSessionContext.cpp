@@ -318,7 +318,7 @@ SessionScopeState validateSessionScope(
    // does this session exist?
    r_util::ActiveSessions activeSessions(storage, userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
-                                          = activeSessions.get(scope.id());
+                                          = activeSessions.get(scope.id(), {ActiveSession::kProject});
    if (pSession->empty() || !pSession->validate())
    {
       if (pSession->empty())
@@ -336,17 +336,30 @@ SessionScopeState validateSessionScope(
                scope,
                projectIdToFilePath);
       if (project.empty())
-         return ScopeMissingProject;
-
-      // if session points to another project then the scope is invalid
-      if (project != pSession->project())
       {
-         *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
-         return ScopeInvalidProject;
+         *pErrorMsg = "Project with id: " + scope.id() + " - not found in project-id-mappings";
+         return ScopeMissingProject;
       }
 
       // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
+
+      // if session points to another project then the scope is invalid
+      if (project != pSession->project())
+      {
+         FilePath sessionProjectDir = FilePath::resolveAliasedPath(pSession->project(), userHomePath);
+         if (projectDir.getAbsolutePath() != sessionProjectDir.getAbsolutePath())
+         {
+            *pErrorMsg = "Project paths do not match:" + project + " and " + pSession->project() + " for session: " + scope.id();
+            return ScopeInvalidProject;
+         }
+         if (pSession->project().empty())
+         {
+            *pErrorMsg = "Session has no project recorded for session: " + scope.id();
+            return ScopeInvalidProject;
+         }
+      }
+
       if (!projectDir.exists())
       {
          *pErrorMsg = "Project directory does not exist:" + projectDir.getAbsolutePath();

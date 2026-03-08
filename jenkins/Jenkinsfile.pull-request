@@ -126,20 +126,6 @@ pipeline {
           }
         }
 
-        stage('Detect Secrets') {
-          environment {
-            STAGE_NODE_URL = utils.getStageUrl(STAGE_NAME)
-          }
-          steps {
-            catchError(buildResult: null, stageResult: 'FAILURE') {
-              script {
-
-                utils.runCheckCmd("docker compose -f ./git_hooks/secrets/docker-compose.yml run run-detect-secrets run-hook-all", "Detect Secrets", STAGE_NODE_URL, !IS_PRO)         
-              }
-            }
-          }
-        }
-
         stage('Build') {
 
           when {

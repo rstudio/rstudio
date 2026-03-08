@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputEvent;
@@ -211,6 +212,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
       eventBus.addHandler(HistoryEntriesAddedEvent.TYPE, this);
 
+      eventBus.addHandler(BusyEvent.TYPE, event ->
+      {
+         if (event.isBusy())
+            view_.setBusy(true);
+      });
+
       final CompletionManager completionManager = new RCompletionManager(
             view_.getInputEditorDisplay(),
             null,
@@ -346,7 +353,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          public void onError(ServerError error)
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError(constants_.errorString(error.getUserMessage()));
+            view_.consoleWriteError(constants_.errorString(error.getUserMessage()), false);
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -355,12 +362,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      view_.consoleWriteOutput(event.getOutput());
+      view_.consoleWriteOutput(event.getOutput(), event.isAgent());
    }
 
    public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
    {
-      view_.consoleWriteError(event.getError());
+      view_.consoleWriteError(event.getError(), event.isAgent());
    }
 
    public void onUnhandledError(UnhandledErrorEvent event)
@@ -377,12 +384,12 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      view_.consoleWriteInput(event.getInput(), event.getConsole());
+      view_.consoleWriteInput(event.getInput(), event.getConsole(), event.isAgent());
    }
 
    public void onConsoleWritePrompt(ConsoleWritePromptEvent event)
    {
-      view_.consoleWritePrompt(event.getPrompt());
+      view_.consoleWritePrompt(event.getPrompt(), event.isAgent());
    }
 
    public void onConsolePrompt(ConsolePromptEvent event)

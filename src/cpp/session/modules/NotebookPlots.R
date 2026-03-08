@@ -26,12 +26,12 @@
 {
    dpi <- if (dpi <= 0) .rs.notebooks.defaultPlotDpi else dpi
    
-   if (units == "px") # px = automatic size behavior 
+   if (units == "px") # px = automatic size behavior
    {
       height <- height * pixelRatio
       width <- width * pixelRatio
-      dpi <- dpi * pixelRatio
    }
+   dpi <- dpi * pixelRatio
 
    # form the arguments to the graphics device creator
    args <- list(

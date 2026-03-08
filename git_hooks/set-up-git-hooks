@@ -27,31 +27,4 @@ do
     chmod +x "$git_hooks_dir"/"$file_name"
 done
 
-echo -e "${color_highlight}Checking git hook dependencies...${color_none}"
-
-# check if detect-secrets is installed and prompt to install if it is not
-# if the user opts out of installing detect-secrets here, they will be prompted again
-# when they try to commit, assuming they have the secret scanning hook enabled
-if ! command -v detect-secrets &> /dev/null
-then
-    read -p $'\t\033[1;95mdetect-secrets\033[0m is not installed. Would you like to install it? (y/n): ' -r
-    if [[ $REPLY =~ ^[Yy]$ ]]
-    then
-        read -p $'\tWould you like to install using \033[1;95mpip\033[0m (p) or \033[1;95mbrew\033[0m (b)?: ' -r
-        if [[ $REPLY =~ ^[Pp]$ ]]
-        then
-            echo -e "\tInstalling detect-secrets with ${color_highlight}pip${color_none}..."
-            pip install detect-secrets
-        elif [[ $REPLY =~ ^[Bb]$ ]]
-        then
-            echo -e "\tInstalling detect-secrets with ${color_highlight}brew${color_none}..."
-            brew install detect-secrets
-        else
-            echo -e >&2 "\tInvalid input. Not installing detect-secrets."
-        fi
-    else
-        echo -e "\tNot installing detect-secrets."
-    fi
-fi
-
 echo -e "${color_highlight}Finished setting up git hooks!${color_none}"

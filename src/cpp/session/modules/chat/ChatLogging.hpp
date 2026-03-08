@@ -16,33 +16,14 @@
 #ifndef SESSION_CHAT_LOGGING_HPP
 #define SESSION_CHAT_LOGGING_HPP
 
-#include <string>
-#include <iostream>
-#include <fmt/format.h>
-#include <core/Log.hpp>
+// Configure SessionLogging.hpp: use "chat" section.
+#define SESSION_LOG_SECTION "chat"
+#include "../SessionLogging.hpp"
 
 // Forward declare SEXP for R interface
 #ifndef R_INTERNALS_H_
 typedef struct SEXPREC *SEXP;
 #endif
-
-// Logging macros - must be in header to capture __func__ at call site
-#define CHAT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
-   do                                                                       \
-   {                                                                        \
-      std::string __message__ = fmt::format(__FMT__, ##__VA_ARGS__);        \
-      std::string __formatted__ =                                           \
-          fmt::format("[{}]: {}", __func__, __message__);                   \
-      __LOGGER__("chat", __formatted__);                                    \
-      if (rstudio::session::modules::chat::logging::chatLogLevel() >= 1)   \
-         std::cerr << __formatted__ << std::endl;                           \
-   } while (0)
-
-#define DLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define ILOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_INFO_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
-#define TLOG(__FMT__, ...) CHAT_LOG_IMPL(LOG_TRACE_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
 
 namespace rstudio {
 namespace session {

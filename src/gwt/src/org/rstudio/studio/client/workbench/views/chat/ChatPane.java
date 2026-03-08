@@ -14,8 +14,11 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import java.util.Map;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -32,12 +35,14 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations.ChatVerifyInstalledResponse;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -55,12 +60,11 @@ public class ChatPane
    private enum NotificationType
    {
       NONE,
-      UPDATE_AVAILABLE,
-      INSTALL_AVAILABLE,
       UPDATING,
       UPDATE_COMPLETE,
       UPDATE_ERROR,
-      UPDATE_CHECK_FAILURE
+      UPDATE_CHECK_FAILURE,
+      READLINE
    }
 
    @Inject
@@ -97,6 +101,12 @@ public class ChatPane
             {
                frame_.injectThemeVariables();
             }
+
+            // Update suspended overlay color for new theme
+            if (suspendedOverlay_ != null)
+            {
+               updateSuspendedOverlayStyle();
+            }
          }
       });
    }
@@ -114,14 +124,21 @@ public class ChatPane
 
       updateMessageLabel_ = new HTML();
       updateMessageLabel_.setStyleName(RES.styles().chatUpdateMessage());
-      updateButtonPanel_ = new HorizontalPanel();
-      updateButtonPanel_.getElement().getStyle().setMarginLeft(10, Unit.PX);
+      updateButtonPanel_ = new FlowPanel();
+      updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
-      HorizontalPanel notificationContent = new HorizontalPanel();
-      notificationContent.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
-      notificationContent.add(updateMessageLabel_);
-      notificationContent.add(updateButtonPanel_);
-      updateNotificationPanel_.add(notificationContent);
+      notificationIcon_ = new DecorativeImage(
+         new ImageResource2x(MessageDialogImages.INSTANCE.dialog_info2x()));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.getElement().getStyle().setProperty("flexShrink", "0");
+      notificationIcon_.setVisible(false);
+
+      notificationContent_ = new FlowPanel();
+      notificationContent_.setStyleName(RES.styles().chatNotificationContent());
+      notificationContent_.add(notificationIcon_);
+      notificationContent_.add(updateMessageLabel_);
+      notificationContent_.add(updateButtonPanel_);
+      updateNotificationPanel_.add(notificationContent_);
 
       frame_ = new RStudioThemedFrame(constants_.chatTitle());
       frame_.setSize("100%", "100%");
@@ -129,12 +146,17 @@ public class ChatPane
       // Store initial message to show after frame loads
       pendingMessage_ = generateMessageHTML(constants_.checkingInstallationMessage());
 
+      // Create suspended overlay (added/removed from panel on suspend/resume)
+      suspendedOverlay_ = new HTML();
+      suspendedOverlay_.setSize("100%", "100%");
+      updateSuspendedOverlayStyle();
+
       // Add update notification and frame to layout
       mainPanel_.add(updateNotificationPanel_);
       mainPanel_.add(frame_);
 
-      // Position update notification at top
-      mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 40, Unit.PX);
+      // Position update notification at top (starts at 0 height since hidden)
+      mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
       mainPanel_.setWidgetLeftRight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
 
       // Position frame below notification (initially at 0 since notification is hidden)
@@ -143,19 +165,36 @@ public class ChatPane
       return mainPanel_;
    }
 
+   private void updateSuspendedOverlayStyle()
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
+   }
+
    private void updateFrameLayout()
    {
       if (updateNotificationPanel_.isVisible())
       {
-         // Notification is showing, frame starts below it
-         mainPanel_.setWidgetTopBottom(frame_, 40, Unit.PX, 0, Unit.PX);
+         // Set minimal temporary height so content overflows, then measure scrollHeight
+         mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 1, Unit.PX);
+         mainPanel_.forceLayout();
+
+         // Measure actual content height (including padding) after layout completes
+         Scheduler.get().scheduleDeferred(() -> {
+            int height = updateNotificationPanel_.getElement().getScrollHeight();
+            mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, height, Unit.PX);
+            mainPanel_.setWidgetTopBottom(frame_, height, Unit.PX, 0, Unit.PX);
+            mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
+         });
       }
       else
       {
          // Notification hidden, frame takes full height
+         mainPanel_.setWidgetTopHeight(updateNotificationPanel_, 0, Unit.PX, 0, Unit.PX);
          mainPanel_.setWidgetTopBottom(frame_, 0, Unit.PX, 0, Unit.PX);
+         mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
       }
-      mainPanel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
    }
 
    /**
@@ -267,22 +306,172 @@ public class ChatPane
       });
    }
 
-   /**
-    * Loads a URL in the iframe and stores it for later refresh.
-    *
-    * @param url The URL to load
-    */
    @Override
    public void loadUrl(String url)
    {
-      // Clear any pending load action from updateFrameContent() to prevent
-      // it from overwriting the URL content when it fires
-      frame_.setOnLoadAction(null);
-
       contentType_ = ContentType.URL;
       currentUrl_ = url;
       currentContent_ = null;
-      frame_.setUrl(url);
+
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         loadUrlFromSuspended(url);
+      }
+      else
+      {
+         frame_.setOnLoadAction(null);
+         frame_.setUrl(url);
+      }
+   }
+
+   private void loadUrlFromSuspended(String url)
+   {
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
+
+      if (pendingSwapTimer_ != null)
+      {
+         pendingSwapTimer_.cancel();
+         pendingSwapTimer_ = null;
+      }
+
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+      }
+
+      final int savedScrollTop = getFrameScrollTop(frame_);
+
+      RStudioThemedFrame newFrame = new RStudioThemedFrame(constants_.chatTitle());
+      newFrame.setSize("100%", "100%");
+      pendingFrame_ = newFrame;
+
+      newFrame.getElement().getStyle().setVisibility(Visibility.HIDDEN);
+
+      mainPanel_.add(newFrame);
+
+      if (updateNotificationPanel_.isVisible())
+      {
+         int height = updateNotificationPanel_.getElement().getScrollHeight();
+         mainPanel_.setWidgetTopBottom(newFrame, height, Unit.PX, 0, Unit.PX);
+      }
+      else
+      {
+         mainPanel_.setWidgetTopBottom(newFrame, 0, Unit.PX, 0, Unit.PX);
+      }
+      mainPanel_.setWidgetLeftRight(newFrame, 0, Unit.PX, 0, Unit.PX);
+
+      loadTimeoutTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            loadTimeoutTimer_ = null;
+            if (newFrame.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(newFrame);
+            }
+            if (pendingFrame_ == newFrame)
+            {
+               pendingFrame_ = null;
+            }
+            if (suspendedOverlay_.getParent() == mainPanel_)
+            {
+               mainPanel_.remove(suspendedOverlay_);
+            }
+            frame_.setUrl(url);
+         }
+      };
+      loadTimeoutTimer_.schedule(FRAME_LOAD_TIMEOUT_MS);
+
+      newFrame.setOnLoadAction(() -> {
+         if (loadTimeoutTimer_ != null)
+         {
+            loadTimeoutTimer_.cancel();
+            loadTimeoutTimer_ = null;
+         }
+         pendingSwapTimer_ = Timers.singleShot(FRAME_SWAP_DELAY_MS, () -> {
+            pendingSwapTimer_ = null;
+            if (mainPanel_.isAttached() &&
+                newFrame.getParent() == mainPanel_ &&
+                suspendedOverlay_.getParent() == mainPanel_)
+            {
+               newFrame.getElement().getStyle().setVisibility(Visibility.VISIBLE);
+               frame_.setUrl("about:blank");
+               mainPanel_.remove(frame_);
+               mainPanel_.remove(suspendedOverlay_);
+               frame_ = newFrame;
+               pendingFrame_ = null;
+               setFrameScrollTop(newFrame, savedScrollTop);
+            }
+            else
+            {
+               if (newFrame.getParent() == mainPanel_)
+               {
+                  mainPanel_.remove(newFrame);
+               }
+               if (pendingFrame_ == newFrame)
+               {
+                  pendingFrame_ = null;
+               }
+            }
+         });
+      });
+      newFrame.setUrl(url);
+   }
+
+   private native int getFrameScrollTop(RStudioThemedFrame frame) /*-{
+      try {
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return 0;
+         var els = win.document.querySelectorAll('*');
+         var target = null;
+         var maxScrollable = 0;
+         for (var i = 0; i < els.length; i++) {
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
+         }
+         return target ? target.scrollTop : 0;
+      } catch (e) {
+         console.error("Error reading frame scroll position:", e);
+         return 0;
+      }
+   }-*/;
+
+   private native void setFrameScrollTop(RStudioThemedFrame frame, int scrollTop) /*-{
+      try {
+         if (scrollTop <= 0) return;
+         var win = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()();
+         if (!win || !win.document) return;
+         var els = win.document.querySelectorAll('*');
+         var target = null;
+         var maxScrollable = 0;
+         for (var i = 0; i < els.length; i++) {
+            var scrollable = els[i].scrollHeight - els[i].clientHeight;
+            if (scrollable > maxScrollable) {
+               maxScrollable = scrollable;
+               target = els[i];
+            }
+         }
+         if (target) target.scrollTop = scrollTop;
+      } catch (e) {
+         console.error("Error restoring frame scroll position:", e);
+      }
+   }-*/;
+
+   @Override
+   public void updateCachedUrl(String url)
+   {
+      if (contentType_ == ContentType.URL)
+      {
+         currentUrl_ = url;
+      }
    }
 
    @Override
@@ -298,58 +487,9 @@ public class ChatPane
    }
 
    @Override
-   public void showUpdateNotification(String newVersion)
-   {
-      updateMessageLabel_.setHTML(constants_.chatUpdateAvailable(newVersion));
-
-      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
-         .clear()
-         .addButton(constants_.chatUpdate(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onUpdateNow();
-            }
-         })
-         .addButton(constants_.chatIgnore(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onRemindLater();
-            }
-         });
-
-      currentNotificationType_ = NotificationType.UPDATE_AVAILABLE;
-      updateNotificationPanel_.setVisible(true);
-      updateFrameLayout();
-   }
-
-   @Override
-   public void showInstallNotification(String newVersion)
-   {
-      updateMessageLabel_.setHTML(constants_.chatInstallAvailable(newVersion));
-
-      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
-         .clear()
-         .addButton(constants_.chatInstallNow(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onUpdateNow();
-            }
-         })
-         .addButton(constants_.chatIgnore(), () -> {
-            if (updateObserver_ != null)
-            {
-               updateObserver_.onRemindLater();
-            }
-         });
-
-      currentNotificationType_ = NotificationType.INSTALL_AVAILABLE;
-      updateNotificationPanel_.setVisible(true);
-      updateFrameLayout();
-   }
-
-   @Override
    public void showUpdatingStatus()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdating());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -363,6 +503,7 @@ public class ChatPane
    @Override
    public void showUpdateComplete()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateComplete());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -376,6 +517,7 @@ public class ChatPane
    @Override
    public void showUpdateError(String errorMessage)
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -397,8 +539,16 @@ public class ChatPane
    public void hideUpdateNotification()
    {
       currentNotificationType_ = NotificationType.NONE;
+      notificationIcon_.setVisible(false);
       updateNotificationPanel_.setVisible(false);
       updateFrameLayout();
+   }
+
+   private void setNotificationIcon(com.google.gwt.resources.client.ImageResource resource)
+   {
+      notificationIcon_.setResource(new ImageResource2x(resource));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.setVisible(true);
    }
 
    @Override
@@ -412,8 +562,41 @@ public class ChatPane
    }
 
    @Override
+   public void showReadlineNotification()
+   {
+      // Don't overwrite higher-priority update notifications
+      if (currentNotificationType_ == NotificationType.UPDATING ||
+          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         return;
+      }
+
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
+      updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
+
+      currentNotificationType_ = NotificationType.READLINE;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideReadlineNotification()
+   {
+      if (currentNotificationType_ == NotificationType.READLINE)
+      {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
    public void showUpdateCheckFailure()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -430,6 +613,33 @@ public class ChatPane
    {
       String message = constants_.chatIncompatibleVersion();
       showMessage(message);
+   }
+
+   @Override
+   public void showUnsupportedVersionUpgradeRequired(
+       String currentVersion, String newVersion)
+   {
+      String html = generateUnsupportedVersionUpgradeHTML(
+          currentVersion, newVersion);
+      updateFrameContent(html);
+   }
+
+   @Override
+   public void showUnsupportedProtocol()
+   {
+      showMessage(constants_.chatUnsupportedProtocolMessage());
+   }
+
+   @Override
+   public void showManifestUnavailable()
+   {
+      showMessage(constants_.chatManifestUnavailableMessage());
+   }
+
+   @Override
+   public void showUnsupportedVersionNoUpdate(String currentVersion)
+   {
+      showMessage(constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
    }
 
    @Override
@@ -494,6 +704,14 @@ public class ChatPane
       html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
       html.append("  margin: 0 0 24px 0;");
       html.append("}");
+      html.append("hr {");
+      html.append("  border: none;");
+      html.append("  border-top: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
+      html.append("  margin: 24px 0;");
+      html.append("}");
+      html.append(".detail {");
+      html.append("  font-size: 12px;");
+      html.append("}");
       html.append(".chatIframeButton {");
       html.append("  padding: 10px 20px;");
       html.append("  font-size: 14px;");
@@ -502,6 +720,7 @@ public class ChatPane
       html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
       html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
       html.append("  border-radius: 4px;");
+      html.append("  margin-bottom: 16px;");
       html.append("}");
       html.append(".chatIframeButton:hover {");
       html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
@@ -516,9 +735,22 @@ public class ChatPane
       html.append("<p>");
       html.append(constants_.chatNotInstalledWithVersionMessage(newVersion));
       html.append("</p>");
+      html.append("<hr>");
+      html.append("<p class='detail'>");
+      html.append(constants_.chatNotInstalledDescription());
+      html.append("</p>");
+      html.append("<p class='detail'>");
+      html.append("<a href='https://posit.ai' target='_blank' rel='noopener noreferrer'>");
+      html.append(constants_.chatLearnMore());
+      html.append("</a>");
+      html.append("</p>");
+      html.append("<hr>");
       html.append("<button id='install-btn' class='chatIframeButton'>");
       html.append(constants_.chatInstallButton());
       html.append("</button>");
+      html.append("<p class='detail'>");
+      html.append(constants_.chatInstallTermsOfUse());
+      html.append("</p>");
       html.append("</div>");
       html.append("<script>");
       html.append("document.getElementById('install-btn').addEventListener('click', function() {");
@@ -615,6 +847,92 @@ public class ChatPane
       html.append("});");
       html.append("document.getElementById('ignore-btn').addEventListener('click', function() {");
       html.append("  window.parent.postMessage('remind-later', '*');");
+      html.append("});");
+      html.append("</script>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
+   private String generateUnsupportedVersionUpgradeHTML(
+       String currentVersion, String newVersion)
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("h2 {");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  margin-bottom: 16px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
+      html.append("  margin: 0 0 24px 0;");
+      html.append("}");
+      html.append(".chatIframeButton {");
+      html.append("  padding: 10px 20px;");
+      html.append("  font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, " + widgetBgColor + ");");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, " + borderColor + ");");
+      html.append("  border-radius: 4px;");
+      html.append("  margin: 0 8px;");
+      html.append("}");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, " + hoverBgColor + ");");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(constants_.chatUpdateRequiredTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(constants_.chatUnsupportedVersionMessage(currentVersion, newVersion));
+      html.append("</p>");
+      html.append("<button id='update-btn' class='chatIframeButton'>");
+      html.append(constants_.chatUpdateButton());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('update-btn').addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('install-now', '*');");
       html.append("});");
       html.append("</script>");
       html.append("</body>");
@@ -768,73 +1086,38 @@ public class ChatPane
    @Override
    public void showSuspendedMessage()
    {
-      String html = generateSuspendedMessageHTML();
-      updateFrameContent(html);
-   }
+      // Add a semi-transparent overlay to dim the chat UI and block interaction.
+      // We intentionally do NOT navigate the iframe to about:blank here;
+      // the overlay blocks interaction, and the iframe content will be
+      // replaced when loadUrl() is called on session resume.
+      frame_.setOnLoadAction(null);
 
-   private String generateSuspendedMessageHTML()
-   {
-      // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
-      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
-      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
-      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
-      String disabledFgColor = colors.getOrDefault("--rstudio-disabledForeground", "#666");
+      if (loadTimeoutTimer_ != null)
+      {
+         loadTimeoutTimer_.cancel();
+         loadTimeoutTimer_ = null;
+      }
 
-      StringBuilder html = new StringBuilder();
-      html.append("<!DOCTYPE html>");
-      html.append("<html lang='");
-      html.append(LocaleCookie.getUiLanguage());
-      html.append("'>");
-      html.append("<head>");
-      html.append("<meta charset='UTF-8'>");
-      html.append("<style>");
-      html.append("html, body {");
-      html.append("  margin: 0;");
-      html.append("  padding: 0;");
-      html.append("  width: 100%;");
-      html.append("  height: 100%;");
-      html.append("  overflow: hidden;");
-      html.append("}");
-      html.append("body {");
-      html.append("  display: flex;");
-      html.append("  align-items: center;");
-      html.append("  justify-content: center;");
-      html.append("  font-family: ");
-      html.append(ThemeFonts.getProportionalFont());
-      html.append(";");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
-      html.append("}");
-      html.append(".message {");
-      html.append("  text-align: center;");
-      html.append("  padding: 40px;");
-      html.append("}");
-      html.append("h2 {");
-      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
-      html.append("  margin-bottom: 16px;");
-      html.append("}");
-      html.append("p {");
-      html.append("  color: var(--rstudio-disabledForeground, " + disabledFgColor + ");");
-      html.append("  margin: 8px 0;");
-      html.append("}");
-      html.append("</style>");
-      html.append("</head>");
-      html.append("<body>");
-      html.append("<div class='message'>");
-      html.append("<h2>");
-      html.append(constants_.chatSessionSuspendedTitle());
-      html.append("</h2>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage1());
-      html.append("</p>");
-      html.append("<p>");
-      html.append(constants_.chatSessionSuspendedMessage2());
-      html.append("</p>");
-      html.append("</div>");
-      html.append("</body>");
-      html.append("</html>");
+      if (pendingSwapTimer_ != null)
+      {
+         pendingSwapTimer_.cancel();
+         pendingSwapTimer_ = null;
+      }
 
-      return html.toString();
+      if (pendingFrame_ != null && pendingFrame_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(pendingFrame_);
+         pendingFrame_ = null;
+      }
+
+      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
+
+      if (suspendedOverlay_.getParent() != mainPanel_)
+      {
+         mainPanel_.add(suspendedOverlay_);
+         mainPanel_.setWidgetLeftRight(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+         mainPanel_.setWidgetTopBottom(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+      }
    }
 
    private String generateCrashedMessageHTML(int exitCode)
@@ -1057,7 +1340,8 @@ public class ChatPane
       // Refreshing HTML content can cause timing issues with pending load handlers
       if (currentStatus_ == ChatPresenter.Display.Status.READY &&
           contentType_ == ContentType.URL &&
-          currentUrl_ != null)
+          currentUrl_ != null &&
+          pendingFrame_ == null)
       {
          frame_.setUrl(currentUrl_);
       }
@@ -1073,7 +1357,9 @@ public class ChatPane
    interface Styles extends CssResource
    {
       String chatUpdateNotification();
+      String chatNotificationContent();
       String chatNotificationButton();
+      String chatNotificationButtonPanel();
       String chatUpdateMessage();
    }
 
@@ -1085,6 +1371,10 @@ public class ChatPane
 
    private LayoutPanel mainPanel_;
    private RStudioThemedFrame frame_;
+   private RStudioThemedFrame pendingFrame_;
+   private Timer pendingSwapTimer_;
+   private Timer loadTimeoutTimer_;
+   private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
@@ -1098,8 +1388,10 @@ public class ChatPane
 
    // Update notification UI components
    private FlowPanel updateNotificationPanel_;
+   private FlowPanel notificationContent_;
    private HTML updateMessageLabel_;
-   private HorizontalPanel updateButtonPanel_;
+   private FlowPanel updateButtonPanel_;
+   private DecorativeImage notificationIcon_;
 
    // Injected ----
    private final EventBus events_;
@@ -1108,5 +1400,7 @@ public class ChatPane
    private final Session session_;
    private final ChatServerOperations server_;
 
+   private static final int FRAME_SWAP_DELAY_MS = 350;
+   private static final int FRAME_LOAD_TIMEOUT_MS = 15000;
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }

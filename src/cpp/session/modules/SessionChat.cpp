@@ -31,13 +31,14 @@
 #include <vector>
 #include <functional>
 
-#include <boost/thread/mutex.hpp>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/mutex.hpp>
 
+#include <core/AnsiEscapes.hpp>
 #include <core/Exec.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileSerializer.hpp>
@@ -51,15 +52,19 @@
 #include <core/system/Xdg.hpp>
 #include <core/Version.hpp>
 
+#include <r/RCntxt.hpp>
+#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/session/RBusy.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/SessionConsoleOutput.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -70,21 +75,12 @@
 #include <session/prefs/UserState.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-#include <r/session/RBusy.hpp>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "../SessionConsoleInput.hpp"
 #include "../SessionDirs.hpp"
+#include "SessionConsole.hpp"
 #include "environment/EnvironmentUtils.hpp"
 
 #include "session-config.h"
-
-// Use a default section of 'chat' for errors / warnings
-#ifdef LOG_ERROR
-# undef LOG_ERROR
-# define LOG_ERROR(error) LOG_ERROR_NAMED("chat", error)
-#endif
 
 using namespace rstudio::core;
 using namespace rstudio::core::system;
@@ -101,12 +97,23 @@ namespace {
 // Process management
 // ============================================================================
 PidType s_chatBackendPid = -1;
-int s_chatBackendPort = -1;
+int s_chatBackendPort = constants::kChatBackendPortNone;
 int s_chatBackendRestartCount = 0;
 boost::shared_ptr<core::system::ProcessOperations> s_chatBackendOps;
 
+// Per-session auth token for WebSocket connections (defense-in-depth)
+std::string s_chatBackendAuthToken;
+
 // Track expected shutdown to distinguish from crashes
 bool s_expectedShutdown = false;
+
+// Clear the backend port (in both SessionChat and ChatStaticFiles) and auth token
+void clearChatBackendPort()
+{
+   s_chatBackendPort = constants::kChatBackendPortNone;
+   staticfiles::setChatBackendPort(constants::kChatBackendPortNone);
+   s_chatBackendAuthToken.clear();
+}
 
 // Track whether session is closing (vs suspending/restarting)
 static bool s_sessionClosing = false;
@@ -115,6 +122,15 @@ static bool s_sessionClosing = false;
 // Suspension blocking
 // ============================================================================
 static bool s_chatBusy = false;
+
+// ============================================================================
+// Resume tracking for chat UI
+// ============================================================================
+// Tracks whether the chat UI should receive a "resume" hint when it loads.
+// Set to the resume-conversation flag on session resume, and unconditionally
+// set to true once the UI has loaded (via chatNotifyUILoaded RPC). Resets
+// naturally when the rsession process restarts (e.g., project switch).
+static bool s_resumeChat = false;
 
 // ============================================================================
 // Focused document tracking for insertAtCursor
@@ -126,6 +142,16 @@ static json::Array s_focusedDocumentSelections;
 // Posit Assistant version tracking for About dialog
 // ============================================================================
 static std::string s_positAssistantVersion;
+
+// ============================================================================
+// Peer capability negotiation
+// ============================================================================
+// Whether the peer sent a capabilities field during the handshake.
+// If false, we assume full compatibility (return true for all methods).
+static bool s_peerSentCapabilities = false;
+
+// The set of JSON-RPC methods the peer advertised it can handle.
+static std::set<std::string> s_peerCapabilities;
 
 // ============================================================================
 // Project-specific assistant options (for chat provider)
@@ -147,6 +173,18 @@ static const size_t kMaxQueuedExecutions = 10;
 
 // Maximum time (milliseconds) an execution can wait in queue before timing out
 static const int kMaxQueueWaitMs = 60000;  // 60 seconds
+
+// ============================================================================
+// Peer capability query
+// ============================================================================
+// Returns true if the peer can handle the given JSON-RPC method.
+// If the peer did not send capabilities, assumes full compatibility.
+bool peerHasCapability(const std::string& method)
+{
+   if (!s_peerSentCapabilities)
+      return true;
+   return s_peerCapabilities.count(method) > 0;
+}
 
 // ============================================================================
 // Feature availability helper
@@ -230,6 +268,65 @@ using chat_installation::getInstalledVersion;
 using chat_staticfiles::handleAIChatRequest;
 
 // Logging functions are now in chat/ChatLogging.hpp/.cpp
+
+// ============================================================================
+// R interface
+// ============================================================================
+
+SEXP rs_chatCallStackFunctions()
+{
+   r::sexp::Protect protect;
+   std::vector<SEXP> functions;
+
+   for (auto ctxt = r::context::RCntxt::begin();
+        ctxt != r::context::RCntxt::end();
+        ctxt++)
+   {
+      if (ctxt->callflag() & CTXT_FUNCTION)
+      {
+         SEXP fn = ctxt->callfun();
+         if (fn != R_NilValue)
+            functions.push_back(fn);
+      }
+   }
+
+   SEXP resultSEXP = Rf_allocVector(VECSXP, functions.size());
+   protect.add(resultSEXP);
+
+   for (std::size_t i = 0; i < functions.size(); i++)
+      SET_VECTOR_ELT(resultSEXP, i, functions[i]);
+
+   return resultSEXP;
+}
+
+SEXP rs_chatNormalizePath(SEXP pathSEXP)
+{
+   std::vector<std::string> paths;
+   Error error = r::sexp::extract(pathSEXP, &paths, true);
+   if (error)
+   {
+      LOG_ERROR(error);
+      int n = r::sexp::length(pathSEXP);
+      r::sexp::Protect protect;
+      SEXP resultSEXP = Rf_allocVector(STRSXP, n);
+      protect.add(resultSEXP);
+      for (int i = 0; i < n; i++)
+         SET_STRING_ELT(resultSEXP, i, R_BlankString);
+      return resultSEXP;
+   }
+
+   for (auto& path : paths)
+   {
+      if (!path.empty())
+      {
+         FilePath filePath(path);
+         path = filePath.getWeaklyCanonicalPath();
+      }
+   }
+
+   r::sexp::Protect protect;
+   return r::sexp::createUtf8(paths, &protect);
+}
 
 // ============================================================================
 // Execution Tracking (for cancellation support)
@@ -455,6 +552,20 @@ private:
    RSTUDIO_BOOST_CONNECTION connection_;
 };
 
+// RAII guard that sets the agent-executing flag on construction and clears it
+// on destruction. Ensures the flag is always cleared even if an exception
+// occurs during agent code execution.
+class ScopedAgentExecution
+{
+public:
+   ScopedAgentExecution() { module_context::setAgentExecuting(true); }
+   ~ScopedAgentExecution() { module_context::setAgentExecuting(false); }
+
+   // non-copyable
+   ScopedAgentExecution(const ScopedAgentExecution&) = delete;
+   ScopedAgentExecution& operator=(const ScopedAgentExecution&) = delete;
+};
+
 // Echo source code with prompts (like evaluate does)
 void echoSourceCode(const std::string& code)
 {
@@ -467,8 +578,39 @@ void echoSourceCode(const std::string& code)
       if (i == lines.size() - 1 && lines[i].empty())
          continue;
 
-      std::string prompt = (i == 0) ? "> " : "+ ";
-      module_context::consoleWriteOutput(prompt + lines[i] + "\n");
+      // Use the same event types as the regular console REPL so that
+      // prompts and input are colored / themed consistently.
+      // The 'agent' flag allows the frontend to further distinguish
+      // agent-generated code execution from user input.
+      //
+      // The first prompt is prefixed with a group-start ANSI escape so that
+      // VirtualConsole wraps all agent output (prompt, input, R output,
+      // errors) in a styled group container (purple left border).
+      std::string prompt = (i == 0)
+         ? kAnsiEscapeGroupStartAgent + r::options::getOption<std::string>("prompt")
+         : r::options::getOption<std::string>("continue");
+
+      // Record in console actions so the history survives session reload.
+      // Note: the first prompt includes a raw ANSI group-start escape, which
+      // VirtualConsole will re-process on session restore to recreate the
+      // styled group container.
+      r::session::consoleActions().add(kConsoleActionPrompt, prompt);
+      r::session::consoleActions().add(kConsoleActionInput, lines[i]);
+
+      json::Object promptData;
+      promptData[kConsoleText]  = prompt;
+      promptData[kConsoleId]    = std::string();
+      promptData[kConsoleAgent] = true;
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, promptData);
+      module_context::enqueClientEvent(promptEvent);
+
+      json::Object inputData;
+      inputData[kConsoleText]  = lines[i] + "\n";
+      inputData[kConsoleId]    = std::string();
+      inputData[kConsoleFlags] = 0;
+      inputData[kConsoleAgent] = true;
+      ClientEvent inputEvent(client_events::kConsoleWriteInput, inputData);
+      module_context::enqueClientEvent(inputEvent);
    }
 }
 
@@ -546,6 +688,13 @@ void sendJsonRpcResponse(core::system::ProcessOperations& ops,
    }
 }
 
+// JSON-RPC 2.0 standard error codes
+// https://www.jsonrpc.org/specification#error_object
+constexpr int kJsonRpcServerError    = -32000;
+constexpr int kJsonRpcMethodNotFound = -32601;
+constexpr int kJsonRpcInvalidParams  = -32602;
+constexpr int kJsonRpcInternalError  = -32603;
+
 void sendJsonRpcError(core::system::ProcessOperations& ops,
                       const json::Value& id,
                       int code,
@@ -584,6 +733,12 @@ void sendStreamingOutput(core::system::ProcessOperations& ops,
                          const std::string& type,
                          const std::string& content)
 {
+   if (!peerHasCapability("runtime/executionOutput"))
+   {
+      DLOG("Peer does not support runtime/executionOutput, skipping");
+      return;
+   }
+
    json::Object notification;
    notification["jsonrpc"] = "2.0";
    notification["method"] = "runtime/executionOutput";
@@ -622,6 +777,12 @@ void requestBackendShutdown(core::system::ProcessOperations& ops,
                             const std::string& reason,
                             int gracePeriodMs = 5000)
 {
+   if (!peerHasCapability("lifecycle/requestShutdown"))
+   {
+      DLOG("Peer does not support lifecycle/requestShutdown, skipping");
+      return;
+   }
+
    json::Object notification;
    notification["jsonrpc"] = "2.0";
    notification["method"] = "lifecycle/requestShutdown";
@@ -1084,7 +1245,7 @@ void processPendingExecution()
       boost::shared_ptr<core::system::ProcessOperations> pOps = request.weakOps.lock();
       if (pOps)
       {
-         sendJsonRpcError(*pOps, request.requestId, -32000,
+         sendJsonRpcError(*pOps, request.requestId, kJsonRpcServerError,
             "Execution timed out. The R console was busy for too long.");
       }
 
@@ -1103,12 +1264,17 @@ void processPendingExecution()
       return;
    }
 
+   // Signal that R is executing chat code
+   console_input::setExecuting(true);
+   ClientEvent busyEvent(client_events::kBusy, true);
+   module_context::enqueClientEvent(busyEvent);
+
    // Execute the code (may take a long time - but we're outside poll callback!)
    executeCodeImpl(request.weakOps.lock(), request.requestId, request.code,
                    request.trackingId, request.captureOutput, request.capturePlot,
                    request.timeout);
 
-   // Schedule next request if queued
+   // Schedule next request if queued, or clear busy state
    {
       boost::mutex::scoped_lock lock(s_pendingExecutionMutex);
       if (!s_pendingExecutionQueue.empty() && !s_executionScheduled)
@@ -1118,6 +1284,15 @@ void processPendingExecution()
             boost::posix_time::milliseconds(1),
             processPendingExecution,
             true);  // idleOnly=true - wait for R to be idle
+      }
+      else if (s_pendingExecutionQueue.empty())
+      {
+         lock.unlock();
+         console_input::setExecuting(false);
+         console_input::updateSessionExecuting();
+         ClientEvent busyEvent(client_events::kBusy, false);
+         module_context::enqueClientEvent(busyEvent);
+         console_input::reissueLastConsolePrompt();
       }
    }
 }
@@ -1135,13 +1310,13 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: " + error.getMessage());
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: " + error.getMessage());
       return;
    }
 
    if (language != "r")
    {
-      sendJsonRpcError(ops, requestId, -32602,
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
          "Unsupported language: " + language + ". Only 'r' is currently supported.");
       return;
    }
@@ -1174,7 +1349,7 @@ void handleExecuteCode(core::system::ProcessOperations& ops,
 
          // Release mutex before I/O operation
          lock.unlock();
-         sendJsonRpcError(ops, requestId, -32000,
+         sendJsonRpcError(ops, requestId, kJsonRpcServerError,
             "R console is busy. Execution queue is full. Please wait for current operations to complete.");
          return;
       }
@@ -1274,6 +1449,11 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       }
    }
 
+   // Flag that we're executing agent code so console output/error events
+   // emitted by R during evaluation get the agent metadata. Uses RAII to
+   // guarantee the flag is cleared even if an exception occurs.
+   ScopedAgentExecution agentScope;
+
    // Echo source code with prompts (like evaluate does)
    echoSourceCode(code);
 
@@ -1330,6 +1510,12 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       // Evaluate each expression
       for (int i = 0; i < numExpressions && !error; i++)
       {
+         // Reset pending output type before each expression so that a warning
+         // from expression N doesn't cause all output from expression N+1 to
+         // be grouped as warning text. In the normal REPL this reset happens
+         // via the onBusy signal between top-level evaluations.
+         console_output::setPendingOutputType(console_output::PendingOutputTypeUnknown);
+
          // Check for cancellation before each expression
          {
             boost::mutex::scoped_lock lock(s_executionTrackingMutex);
@@ -1353,8 +1539,16 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          // The result will be either:
          //   - A condition object (inherits "interrupt" or "error")
          //   - A list with $value and $visible (successful evaluation)
+         //
+         // IMPORTANT: Wrap the expression in quote() to prevent R from evaluating it
+         // during argument passing. Without this, R evaluates exprSEXP before passing
+         // it to the function, which breaks visibility detection (all results become visible).
+         // https://github.com/rstudio/rstudio/issues/17044
+         SEXP quotedExpr = Rf_lang2(Rf_install("quote"), exprSEXP);
+         protect.add(quotedExpr);
+
          Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addParam(exprSEXP)
+            .addParam(quotedExpr)
             .call(&evalResultSEXP, &protect);
 
          // This should only fail if there's a problem calling the wrapper itself
@@ -1523,9 +1717,22 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
       module_context::events().onConsoleOutput(
          module_context::ConsoleOutputError, errorOutput);
 
-      // Also write to console UI
-      module_context::consoleWriteError(errorOutput);
+      // Send as kConsoleWritePendingError so the event queue's
+      // annotateOutput() adds ANSI error highlighting (e.g. coloring the
+      // "Error" prefix). Clear the agent flag so the event goes through the
+      // plain string buffering path where annotation happens.
+      module_context::setAgentExecuting(false);
+      console_output::setPendingOutputType(console_output::PendingOutputTypeError);
+      ClientEvent errorEvent(client_events::kConsoleWritePendingError, errorOutput);
+      module_context::enqueClientEvent(errorEvent);
    }
+
+   // Close the agent output group started in echoSourceCode().
+   // Clear the agent flag first so the group-end escape goes through the
+   // plain string buffering path in the event queue, where it will also be
+   // recorded in console actions (so the group close survives session reload).
+   module_context::setAgentExecuting(false);
+   module_context::consoleWriteOutput(kAnsiEscapeGroupEnd);
 
    // NOTE: We no longer need to print results here because we print each visible
    // expression immediately as we evaluate them in the loop above. This mimics
@@ -1838,6 +2045,143 @@ boost::shared_ptr<source_database::SourceDocument> findOpenDocument(const std::s
    return nullptr;
 }
 
+// Resolve a URI to an open document and/or file path.
+// For untitled: URIs, sets *pDoc and leaves *pPath empty.
+// For file: URIs, sets *pPath and sets *pDoc if the file is open in the editor.
+// Returns true on success; returns false and sends an error response on failure.
+bool resolveDocumentUri(
+   core::system::ProcessOperations& ops,
+   const json::Value& requestId,
+   const std::string& uri,
+   boost::shared_ptr<source_database::SourceDocument>* pDoc,
+   std::string* pPath)
+{
+   if (boost::starts_with(uri, "untitled:"))
+   {
+      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
+      *pDoc = findOpenDocumentById(docId);
+      if (!*pDoc)
+      {
+         DLOG("Untitled document not found: {}", uri);
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Untitled document not found: " + uri);
+         return false;
+      }
+      DLOG("Found untitled document by ID: {}", docId);
+   }
+   else
+   {
+      *pPath = uriToPath(uri);
+      if (pPath->empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid URI format: " + uri);
+         return false;
+      }
+      *pDoc = findOpenDocument(*pPath);
+   }
+   return true;
+}
+
+// Send a save_document editor command to trigger a frontend save, which clears
+// the dirty indicator and persists the buffer to disk.
+void sendSaveDocumentCommand(const std::string& docId)
+{
+   json::Object eventData;
+   eventData["type"] = "save_document";
+   json::Object data;
+   data["id"] = docId;
+   eventData["data"] = data;
+   ClientEvent event(client_events::kEditorCommand, eventData);
+   module_context::enqueClientEvent(event);
+}
+
+// Save a dirty document's buffer contents to disk and update the source
+// database, then notify the frontend to clear its dirty indicator via a
+// "save_document" editor command. This mirrors the essential subset of
+// SessionSource.cpp's saveDocumentCore for same-path saves.
+Error saveDocumentToDisk(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   DLOG("Saving document to disk: {}", pDoc->path());
+
+   std::string path = pDoc->path();
+   FilePath fullDocPath = module_context::resolveAliasedPath(path);
+
+   // Convert from UTF-8 to the document's encoding
+   std::string encoded;
+   Error error = r::util::iconvstr(pDoc->contents(),
+                                   "UTF-8",
+                                   pDoc->encoding(),
+                                   false,
+                                   &encoded);
+   if (error)
+   {
+      // Retry with substitution on encoding failure
+      error = r::util::iconvstr(pDoc->contents(),
+                                "UTF-8",
+                                pDoc->encoding(),
+                                true,
+                                &encoded);
+      if (error)
+         return error;
+
+      module_context::consoleWriteError(
+                       "Not all of the characters in " + path +
+                       " could be encoded using " + pDoc->encoding() +
+                       ". To save using a different encoding, choose \"File | "
+                       "Save with Encoding...\" from the main menu.\n");
+   }
+
+   // Note whether the file existed prior to writing
+   bool newFile = !fullDocPath.exists();
+
+   // Write the encoded contents to disk
+   error = core::writeStringToFile(fullDocPath, encoded,
+                                   module_context::lineEndings(fullDocPath));
+   if (error)
+      return error;
+
+   // Save the original UTF-8 contents before setPathAndContents replaces
+   // them with what was read back from disk (which may differ after encoding
+   // round-trip, e.g. substitution characters in non-UTF-8 files).
+   std::string contents = pDoc->contents();
+
+   // Update the source database entry's hash/timestamps
+   error = pDoc->setPathAndContents(path);
+   if (error)
+      return error;
+
+   // Mark the document as clean in the source database
+   pDoc->setDirty(false);
+
+   // Restore the original UTF-8 editor buffer so the source database stays
+   // in sync with what the user sees in the editor (mirrors saveDocumentCore).
+   pDoc->setContents(contents);
+
+   // Enqueue file changed event if the directory isn't already monitored
+   if (!module_context::isDirectoryMonitored(fullDocPath.getParent()))
+   {
+      using core::system::FileChangeEvent;
+      FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
+                                            FileChangeEvent::FileModified,
+                                  FileInfo(fullDocPath));
+      module_context::enqueFileChangedEvent(changeEvent);
+   }
+
+   // Notify other server modules of the file save
+   module_context::events().onSourceEditorFileSaved(fullDocPath);
+
+   // Persist to the source database and notify listeners
+   error = source_database::put(pDoc);
+   if (error)
+      return error;
+
+   source_database::events().onDocUpdated(pDoc);
+
+   // Tell the frontend to save the document so it clears its dirty indicator.
+   sendSaveDocumentCommand(pDoc->id());
+
+   return Success();
+}
+
 // Read file content from editor buffer if open, otherwise from disk
 // Handles aliased paths (~/file.R), symlinks, project-relative paths, and untitled documents
 void handleReadFileContent(core::system::ProcessOperations& ops,
@@ -1851,70 +2195,60 @@ void handleReadFileContent(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "uri", uri);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: uri required");
       return;
    }
 
    boost::shared_ptr<source_database::SourceDocument> doc;
+   std::string path;
 
-   // Check for untitled: URI scheme
-   if (boost::starts_with(uri, "untitled:"))
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
+
+   if (!doc)
    {
-      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
-      doc = findOpenDocumentById(docId);
-      if (!doc)
+      // File not open in editor - read from disk
+      std::string content;
+      error = core::readStringFromFile(FilePath(path), &content);
+
+      if (error)
       {
-         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
-         return;
-      }
-
-      DLOG("Found untitled document by ID: {}", docId);
-   }
-   else
-   {
-      // Handle file:// URIs
-      std::string path = uriToPath(uri);
-
-      if (path.empty())
-      {
-         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
-         return;
-      }
-
-      // Check if file is open in editor
-      doc = findOpenDocument(path);
-
-      if (!doc)
-      {
-         // File not open - read from disk
-         std::string content;
-         error = core::readStringFromFile(FilePath(path), &content);
-
-         if (error)
+         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
-            // Check if it's a "not found" error
-            if (error.getCode() == boost::system::errc::no_such_file_or_directory)
-            {
-               sendJsonRpcError(ops, requestId, -32602, "File not found: " + path);
-            }
-            else if (error.getCode() == boost::system::errc::permission_denied)
-            {
-               sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
-            }
-            else
-            {
-               sendJsonRpcError(ops, requestId, -32603, "Failed to read file: " + path);
-            }
-            return;
+            sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "File not found: " + path);
          }
+         else if (error.getCode() == boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Failed to read file: " + path);
+         }
+         return;
+      }
 
-         json::Object result;
-         result["content"] = content;
-         result["isModified"] = false;
-         // No languageId for files not open in editor
+      json::Object result;
+      result["content"] = content;
+      result["isModified"] = false;
 
-         DLOG("Read file content from disk: {}", path);
-         sendJsonRpcResponse(ops, requestId, result);
+      DLOG("Read file content from disk: {}", path);
+      sendJsonRpcResponse(ops, requestId, result);
+      return;
+   }
+
+   // For dirty file-backed documents, save to disk so the on-disk file matches
+   // the editor buffer before we report the contents to the chat backend.
+   if (!doc->isUntitled() && doc->dirty())
+   {
+      Error saveError = saveDocumentToDisk(doc);
+      if (saveError)
+      {
+         WLOG("Failed to save dirty document '{}' before read: {}",
+              doc->path(), saveError.getMessage());
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+            "Cannot read file: the document has unsaved changes that "
+            "could not be saved first. Error: " + saveError.getMessage());
          return;
       }
    }
@@ -1951,111 +2285,119 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "uri", uri);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: uri required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: uri required");
       return;
    }
 
    error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
    boost::shared_ptr<source_database::SourceDocument> doc;
-   std::string path;  // Only needed for disk writes
+   std::string path;
 
-   // Check for untitled: URI scheme
-   if (boost::starts_with(uri, "untitled:"))
-   {
-      std::string docId = uri.substr(9);  // Remove "untitled:" prefix
-      doc = findOpenDocumentById(docId);
-      if (!doc)
-      {
-         sendJsonRpcError(ops, requestId, -32602, "Untitled document not found: " + uri);
-         return;
-      }
-
-      DLOG("Found untitled document by ID: {}", docId);
-      // path stays empty - untitled documents can't be written to disk
-   }
-   else
-   {
-      // Handle file:// URIs
-      path = uriToPath(uri);
-      if (path.empty())
-      {
-         sendJsonRpcError(ops, requestId, -32602, "Invalid URI format: " + uri);
-         return;
-      }
-
-      doc = findOpenDocument(path);
-   }
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
 
    json::Object result;
 
    if (doc)
    {
-      // File/untitled doc is open - update source database and notify client via editor event
+      // Compute replace range from OLD content (before mutation)
+      std::string oldContent = doc->contents();
+      std::vector<std::string> oldLines;
+      boost::split(oldLines, oldContent, boost::is_any_of("\n"));
+      int lastRow = static_cast<int>(oldLines.size()) - 1;
+      int lastCol = oldLines.empty()
+         ? 0
+         : static_cast<int>(oldLines.back().length());
 
-      // 1. Update document contents in source database
-      doc->setContents(content);
-      doc->setDirty(true);
+      // Build replace_ranges event (shared by both paths)
+      json::Object replaceData;
+      replaceData["id"] = doc->id();
 
-      // 2. Write to source database with proper event firing
-      error = source_database::put(doc);
-      if (error)
-      {
-         sendJsonRpcError(ops, requestId, -32603,
-                         "Failed to update source database");
-         return;
-      }
-
-      // Fire the critical onDocUpdated event (updates search index, code intelligence, etc.)
-      source_database::events().onDocUpdated(doc);
-
-      // 3. Calculate document dimensions for replace range
-      // Split content into lines to get lastRow and lastCol
-      std::vector<std::string> lines;
-      boost::split(lines, content, boost::is_any_of("\n"));
-      int lastRow = static_cast<int>(lines.size()) - 1;
-      int lastCol = lines.empty() ? 0 : static_cast<int>(lines.back().length());
-
-      // 4. Send editor command to replace entire document content
-      // This updates the editor buffer with an undo point, without writing to disk
-      json::Object eventData;
-      eventData["type"] = "replace_ranges";
-
-      json::Object data;
-      data["id"] = doc->id();
-
-      // Create range covering entire document: [0, 0, lastRow, lastCol]
       json::Array ranges;
       json::Array range;
-      range.push_back(0);           // startRow
-      range.push_back(0);           // startCol
-      range.push_back(lastRow);     // endRow
-      range.push_back(lastCol);     // endCol
+      range.push_back(0);
+      range.push_back(0);
+      range.push_back(lastRow);
+      range.push_back(lastCol);
       ranges.push_back(range);
-      data["ranges"] = ranges;
+      replaceData["ranges"] = ranges;
 
-      // Replacement text
       json::Array text;
       text.push_back(content);
-      data["text"] = text;
+      replaceData["text"] = text;
 
-      eventData["data"] = data;
+      json::Object replaceEventData;
+      replaceEventData["type"] = "replace_ranges";
+      replaceEventData["data"] = replaceData;
 
-      // Emit the editor command event
-      ClientEvent event(client_events::kEditorCommand, eventData);
-      module_context::enqueClientEvent(event);
+      ClientEvent replaceEvent(
+         client_events::kEditorCommand, replaceEventData);
+
+      if (!doc->isUntitled())
+      {
+         // File-backed document: update buffer, sync to disk,
+         // and clear dirty flag via saveDocumentToDisk.
+         doc->setContents(content);
+
+         // Enqueue replace_ranges first so the editor buffer
+         // updates before the save_document command arrives.
+         module_context::enqueClientEvent(replaceEvent);
+
+         Error saveErr = saveDocumentToDisk(doc);
+         if (saveErr)
+         {
+            // Editor already has new content; persist as dirty
+            // so the source database matches what the user sees.
+            doc->setDirty(true);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, kJsonRpcInternalError,
+                  "Failed to save to disk: " + saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
+            source_database::events().onDocUpdated(doc);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to save to disk: " +
+                  saveErr.getMessage());
+            return;
+         }
+      }
+      else
+      {
+         // Untitled document: no backing file to write.
+         doc->setContents(content);
+         doc->setDirty(true);
+
+         Error putErr = source_database::put(doc);
+         if (putErr)
+         {
+            LOG_ERROR(putErr);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to update source database: " +
+                  putErr.getMessage());
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+         module_context::enqueClientEvent(replaceEvent);
+      }
 
       result["success"] = true;
       if (doc->isUntitled())
-      {
-         // For untitled documents, return the tempName for display purposes
          result["tempName"] = doc->getProperty("tempName");
-      }
 
       DLOG("Sent editor command to replace document content");
    }
@@ -2065,7 +2407,7 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       if (path.empty())
       {
          // This shouldn't happen (untitled docs are always open or error earlier)
-         sendJsonRpcError(ops, requestId, -32603, "Cannot write to disk: not a file URI");
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Cannot write to disk: not a file URI");
          return;
       }
 
@@ -2075,19 +2417,19 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       {
          if (error.getCode() == boost::system::errc::permission_denied)
          {
-            sendJsonRpcError(ops, requestId, -32603, "Permission denied: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Permission denied: " + path);
          }
          else if (error.getCode() == boost::system::errc::no_such_file_or_directory)
          {
             // Parent directory doesn't exist
             FilePath filePath(path);
             std::string parentDir = filePath.getParent().getAbsolutePath();
-            sendJsonRpcError(ops, requestId, -32603,
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
                            "Directory does not exist: " + parentDir);
          }
          else
          {
-            sendJsonRpcError(ops, requestId, -32603, "Failed to write file: " + path);
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError, "Failed to write file: " + path);
          }
          return;
       }
@@ -2095,6 +2437,352 @@ void handleWriteFileContent(core::system::ProcessOperations& ops,
       result["success"] = true;
 
       DLOG("Wrote file content to disk: {}", path);
+   }
+
+   sendJsonRpcResponse(ops, requestId, result);
+}
+
+// Find all non-overlapping byte offsets of 'needle' in 'haystack'.
+// Returns offsets in ascending order.
+std::vector<std::size_t> findAllOccurrences(
+   const std::string& haystack,
+   const std::string& needle)
+{
+   std::vector<std::size_t> offsets;
+   std::size_t pos = 0;
+   while (pos < haystack.size())
+   {
+      pos = haystack.find(needle, pos);
+      if (pos == std::string::npos)
+         break;
+      offsets.push_back(pos);
+      pos += needle.size();
+   }
+   return offsets;
+}
+
+// Convert a byte offset within LF-normalized UTF-8 content to a 0-based
+// (row, col) pair. Column is measured in Unicode code points (matching
+// Ace editor's character-based positioning) rather than bytes.
+std::pair<int, int> offsetToRowCol(
+   const std::string& content,
+   std::size_t offset)
+{
+   int row = 0;
+   std::size_t lineStart = 0;
+   for (std::size_t i = 0; i < offset && i < content.size(); ++i)
+   {
+      if (content[i] == '\n')
+      {
+         ++row;
+         lineStart = i + 1;
+      }
+   }
+   std::string linePrefix = content.substr(lineStart, offset - lineStart);
+   size_t col = 0;
+   Error error = string_utils::utf8Distance(
+      linePrefix.begin(), linePrefix.end(), &col);
+   if (error)
+   {
+      // Fall back to byte length for invalid UTF-8
+      col = linePrefix.size();
+   }
+   return std::make_pair(row, static_cast<int>(col));
+}
+
+// Edit content in editor buffer if open, otherwise on disk.
+// Performs targeted search-and-replace with undo support.
+void handleEditFileContent(core::system::ProcessOperations& ops,
+                           const json::Value& requestId,
+                           const json::Object& params)
+{
+   DLOG("Handling workspace/editFileContent request");
+
+   // Extract required parameters
+   std::string uri;
+   Error error = json::readObject(params, "uri", uri);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: uri required");
+      return;
+   }
+
+   std::string oldString;
+   error = json::readObject(params, "oldString", oldString);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: oldString required");
+      return;
+   }
+
+   std::string newString;
+   error = json::readObject(params, "newString", newString);
+   if (error)
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: newString required");
+      return;
+   }
+
+   if (oldString.empty())
+   {
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                       "Invalid params: oldString must not be empty");
+      return;
+   }
+
+   // Optional replaceAll (default false)
+   bool replaceAll = false;
+   json::readObject(params, "replaceAll", replaceAll);
+
+   // Resolve the URI to an open document and/or a file path
+   boost::shared_ptr<source_database::SourceDocument> doc;
+   std::string path;
+
+   if (!resolveDocumentUri(ops, requestId, uri, &doc, &path))
+      return;
+
+   // Label used in error messages
+   std::string label = path.empty() ? uri : path;
+
+   json::Object result;
+
+   if (doc)
+   {
+      // Document is open in the editor
+      std::string content = doc->contents();
+
+      std::vector<std::size_t> offsets =
+         findAllOccurrences(content, oldString);
+
+      if (offsets.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "oldString not found in file: " + label);
+         return;
+      }
+
+      if (offsets.size() > 1 && !replaceAll)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+            "oldString is ambiguous: found " +
+            std::to_string(offsets.size()) +
+            " occurrences. Set replaceAll to true or provide "
+            "a more specific string.");
+         return;
+      }
+
+      int occurrences = static_cast<int>(offsets.size());
+
+      // Build replacement ranges (for the editor event)
+      json::Array ranges;
+      for (std::size_t i = 0; i < offsets.size(); ++i)
+      {
+         auto start = offsetToRowCol(content, offsets[i]);
+         auto end = offsetToRowCol(
+            content, offsets[i] + oldString.size());
+
+         json::Array range;
+         range.push_back(start.first);
+         range.push_back(start.second);
+         range.push_back(end.first);
+         range.push_back(end.second);
+         ranges.push_back(range);
+      }
+
+      // Build new content by replacing in reverse offset order
+      // so earlier offsets stay valid
+      std::string newContent = content;
+      for (int i = static_cast<int>(offsets.size()) - 1; i >= 0; --i)
+      {
+         newContent.replace(
+            offsets[i], oldString.size(), newString);
+      }
+
+      // Build the replace_ranges editor event
+      json::Object replaceData;
+      replaceData["id"] = doc->id();
+      replaceData["ranges"] = ranges;
+
+      json::Array text;
+      text.push_back(newString);
+      replaceData["text"] = text;
+
+      json::Object replaceEventData;
+      replaceEventData["type"] = "replace_ranges";
+      replaceEventData["data"] = replaceData;
+
+      ClientEvent replaceEvent(
+         client_events::kEditorCommand, replaceEventData);
+
+      if (!doc->isUntitled())
+      {
+         // File-backed document: update buffer, sync to disk,
+         // and clear dirty flag via saveDocumentToDisk.
+         doc->setContents(newContent);
+
+         // Enqueue replace_ranges first so the editor buffer
+         // updates before the save_document command arrives.
+         module_context::enqueClientEvent(replaceEvent);
+
+         Error saveErr = saveDocumentToDisk(doc);
+         if (saveErr)
+         {
+            // Editor already has new content; persist as dirty
+            // so the source database matches what the user sees.
+            doc->setDirty(true);
+            Error putErr = source_database::put(doc);
+            if (putErr)
+            {
+               LOG_ERROR(putErr);
+               sendJsonRpcError(
+                  ops, requestId, kJsonRpcInternalError,
+                  "Failed to save to disk: " +
+                     saveErr.getMessage() +
+                     "; failed to update source database: " +
+                     putErr.getMessage());
+               return;
+            }
+            source_database::events().onDocUpdated(doc);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to save to disk: " +
+                  saveErr.getMessage());
+            return;
+         }
+      }
+      else
+      {
+         // Untitled document: no backing file to write.
+         doc->setContents(newContent);
+         doc->setDirty(true);
+
+         Error putErr = source_database::put(doc);
+         if (putErr)
+         {
+            LOG_ERROR(putErr);
+            sendJsonRpcError(
+               ops, requestId, kJsonRpcInternalError,
+               "Failed to update source database: " +
+                  putErr.getMessage());
+            return;
+         }
+
+         source_database::events().onDocUpdated(doc);
+         module_context::enqueClientEvent(replaceEvent);
+      }
+
+      result["success"] = true;
+      result["occurrences"] = occurrences;
+      if (doc->isUntitled())
+         result["tempName"] = doc->getProperty("tempName");
+
+      DLOG("Edited document content ({} occurrences replaced)", occurrences);
+   }
+   else
+   {
+      // File not open in editor - edit on disk
+      if (path.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                          "Cannot edit: not a file URI");
+         return;
+      }
+
+      std::string content;
+      error = core::readStringFromFile(
+         FilePath(path), &content,
+         string_utils::LineEndingPosix);
+
+      if (error)
+      {
+         if (error.getCode() ==
+             boost::system::errc::no_such_file_or_directory)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                             "File not found: " + path);
+         }
+         else if (error.getCode() ==
+                  boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Permission denied: " + path);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Failed to read file: " + path);
+         }
+         return;
+      }
+
+      std::vector<std::size_t> offsets =
+         findAllOccurrences(content, oldString);
+
+      if (offsets.empty())
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+                          "oldString not found in file: " + path);
+         return;
+      }
+
+      if (offsets.size() > 1 && !replaceAll)
+      {
+         sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams,
+            "oldString is ambiguous: found " +
+            std::to_string(offsets.size()) +
+            " occurrences. Set replaceAll to true or provide "
+            "a more specific string.");
+         return;
+      }
+
+      int occurrences = static_cast<int>(offsets.size());
+
+      // Build new content by replacing in reverse offset order
+      std::string newContent = content;
+      for (int i = static_cast<int>(offsets.size()) - 1; i >= 0; --i)
+      {
+         newContent.replace(
+            offsets[i], oldString.size(), newString);
+      }
+
+      // Write back with original line ending style
+      error = core::writeStringToFile(
+         FilePath(path), newContent,
+         module_context::lineEndings(FilePath(path)));
+
+      if (error)
+      {
+         if (error.getCode() ==
+             boost::system::errc::permission_denied)
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Permission denied: " + path);
+         }
+         else if (error.getCode() ==
+                  boost::system::errc::no_such_file_or_directory)
+         {
+            FilePath filePath(path);
+            std::string parentDir =
+               filePath.getParent().getAbsolutePath();
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Directory does not exist: " + parentDir);
+         }
+         else
+         {
+            sendJsonRpcError(ops, requestId, kJsonRpcInternalError,
+                             "Failed to write file: " + path);
+         }
+         return;
+      }
+
+      result["success"] = true;
+      result["occurrences"] = occurrences;
+
+      DLOG("Edited file on disk ({} occurrences replaced): {}",
+           occurrences, path);
    }
 
    sendJsonRpcResponse(ops, requestId, result);
@@ -2113,14 +2801,14 @@ void handleInsertIntoNewFile(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "languageId", languageId);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: languageId required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: languageId required");
       return;
    }
 
    error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
@@ -2158,7 +2846,7 @@ void handleInsertAtCursor(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "content", content);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: content required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: content required");
       return;
    }
 
@@ -2239,7 +2927,7 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
    Error error = json::readObject(params, "path", path);
    if (error)
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid params: path required");
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid params: path required");
       return;
    }
 
@@ -2248,7 +2936,7 @@ void handleOpenDocument(core::system::ProcessOperations& ops,
 
    if (filePath.empty())
    {
-      sendJsonRpcError(ops, requestId, -32602, "Invalid path: " + path);
+      sendJsonRpcError(ops, requestId, kJsonRpcInvalidParams, "Invalid path: " + path);
       return;
    }
 
@@ -2286,10 +2974,40 @@ void handleGetProtocolVersion(core::system::ProcessOperations& ops,
    // Store the client version for later retrieval via chat_get_version RPC
    s_positAssistantVersion = clientVersion.empty() ? "unknown" : clientVersion;
 
-   // Build response
+   // Read optional capabilities from the peer
+   json::Array peerCaps;
+   Error error = json::readObject(params, "capabilities", peerCaps);
+   if (!error && peerCaps.getSize() > 0)
+   {
+      s_peerSentCapabilities = true;
+      s_peerCapabilities.clear();
+      for (const json::Value& cap : peerCaps)
+      {
+         if (cap.isString())
+            s_peerCapabilities.insert(cap.getString());
+      }
+      DLOG("Peer sent {} capabilities", s_peerCapabilities.size());
+   }
+   else
+   {
+      // Peer did not send capabilities -- assume full compatibility
+      s_peerSentCapabilities = false;
+      s_peerCapabilities.clear();
+      DLOG("Peer did not send capabilities, assuming full compatibility");
+   }
+
+   // Build response with RStudio's own capabilities
    json::Object result;
    result["protocolVersion"] = kProtocolVersion;
    result["rstudioVersion"] = std::string(RSTUDIO_VERSION);
+
+   const auto& caps = chat_constants::rstudioCapabilities();
+   json::Array capsArray;
+   for (const std::string& cap : caps)
+   {
+      capsArray.push_back(cap);
+   }
+   result["capabilities"] = capsArray;
 
    sendJsonRpcResponse(ops, requestId, result);
 }
@@ -2361,6 +3079,10 @@ void handleRequest(core::system::ProcessOperations& ops,
    {
       handleWriteFileContent(ops, requestId, params);
    }
+   else if (method == "workspace/editFileContent")
+   {
+      handleEditFileContent(ops, requestId, params);
+   }
    else if (method == "workspace/insertIntoNewFile")
    {
       handleInsertIntoNewFile(ops, requestId, params);
@@ -2377,7 +3099,7 @@ void handleRequest(core::system::ProcessOperations& ops,
    {
       // Unknown method - send JSON-RPC error response
       WLOG("Unknown JSON-RPC request method: {}", method);
-      sendJsonRpcError(ops, requestId, -32601, "Method not found");
+      sendJsonRpcError(ops, requestId, kJsonRpcMethodNotFound, "Method not found");
    }
 }
 
@@ -2598,6 +3320,9 @@ struct UpdateState
 {
    bool updateAvailable;
    bool noCompatibleVersion;
+   bool unsupportedInstalledVersion;
+   bool unsupportedProtocol;
+   bool manifestUnavailable;
    std::string currentVersion;
    std::string newVersion;
    std::string downloadUrl;
@@ -2618,6 +3343,9 @@ struct UpdateState
    UpdateState()
       : updateAvailable(false),
         noCompatibleVersion(false),
+        unsupportedInstalledVersion(false),
+        unsupportedProtocol(false),
+        manifestUnavailable(false),
         installStatus(Status::Idle)
    {
    }
@@ -2753,68 +3481,75 @@ Error downloadManifest(json::Object* pManifest)
       // Validate path ends with manifest.json
       if (!boost::algorithm::ends_with(debugManifestPath, "manifest.json"))
       {
-         WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json', ignoring: {}",
-              debugManifestPath);
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "RSTUDIO_CHAT_DEBUG_MANIFEST must end with 'manifest.json': " +
+               debugManifestPath,
+            ERROR_LOCATION);
       }
-      else
+
+      FilePath debugManifestFile(debugManifestPath);
+      if (!debugManifestFile.exists())
       {
-         FilePath debugManifestFile(debugManifestPath);
-         if (debugManifestFile.exists())
-         {
-            DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
-
-            // Read and parse JSON from local file
-            std::string manifestContent;
-            Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
-            if (error)
-            {
-               WLOG("Failed to read debug manifest file: {}", error.getMessage());
-               return error;
-            }
-
-            // Parse JSON
-            json::Value manifestValue;
-            if (manifestValue.parse(manifestContent))
-            {
-               WLOG("Failed to parse debug manifest JSON");
-               return systemError(boost::system::errc::protocol_error,
-                                 "Invalid JSON in debug manifest",
-                                 ERROR_LOCATION);
-            }
-
-            if (!manifestValue.isObject())
-            {
-               return systemError(boost::system::errc::protocol_error,
-                                 "Debug manifest must be a JSON object",
-                                 ERROR_LOCATION);
-            }
-
-            *pManifest = manifestValue.getObject();
-            DLOG("Successfully loaded and parsed debug manifest");
-            return Success();
-         }
-         else
-         {
-            WLOG("RSTUDIO_CHAT_DEBUG_MANIFEST file does not exist, ignoring: {}", debugManifestPath);
-         }
+         return systemError(
+            boost::system::errc::no_such_file_or_directory,
+            "Debug manifest file not found: " + debugManifestPath,
+            ERROR_LOCATION);
       }
+
+      DLOG("DEBUG: Using local manifest file: {}", debugManifestPath);
+
+      // Read and parse JSON from local file
+      std::string manifestContent;
+      Error error = core::readStringFromFile(debugManifestFile, &manifestContent);
+      if (error)
+      {
+         WLOG("Failed to read debug manifest file: {}", error.getMessage());
+         return error;
+      }
+
+      // Parse JSON
+      json::Value manifestValue;
+      if (manifestValue.parse(manifestContent))
+      {
+         WLOG("Failed to parse debug manifest JSON");
+         return systemError(boost::system::errc::protocol_error,
+                           "Invalid JSON in debug manifest",
+                           ERROR_LOCATION);
+      }
+
+      if (!manifestValue.isObject())
+      {
+         return systemError(boost::system::errc::protocol_error,
+                           "Debug manifest must be a JSON object",
+                           ERROR_LOCATION);
+      }
+
+      *pManifest = manifestValue.getObject();
+      DLOG("Successfully loaded and parsed debug manifest");
+      return Success();
    }
 #endif
 
-   // Get download URI via redirector
-   std::string downloadUri = "https://www.rstudio.org/links/posit-assistant-manifest";
+   // Get download URI via redirector; use test manifest when opted in
+   std::string downloadUri = options().positAssistantTestManifest()
+      ? "https://www.rstudio.org/links/posit-assistant-manifest-test"
+      : "https://www.rstudio.org/links/posit-assistant-manifest";
 
    DLOG("Downloading manifest from: {}", downloadUri);
 
    // Create temp file for download
    FilePath tempFile = module_context::tempFile("manifest", "json");
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- let R use whatever method the
+   // user/admin has configured via options(download.file.method).  Corporate
+   // proxy environments typically set method = "curl" with a --cacert option
+   // in download.file.extra to trust the proxy's CA certificate.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", downloadUri);
    downloadFunc.addParam("destfile", tempFile.getAbsolutePath());
    downloadFunc.addParam("quiet", true);
-   downloadFunc.addParam("method", "libcurl");  // Use libcurl for HTTPS support
    downloadFunc.addParam("timeout", 30);  // 30 second timeout
 
    Error error = downloadFunc.call();
@@ -3030,7 +3765,7 @@ void showRStudioVersionWarning(
    json::Object msgJson;
    msgJson["severe"] = false;
    boost::format fmt(
-      "A newer version of RStudio (%1%) is recommended for Posit AI beta testing. "
+      "A newer version of RStudio (%1%) is recommended for Posit AI. "
       "<a href=\"%2%\" target=\"_blank\" rel=\"noopener noreferrer\">Download the update</a>"
    );
    msgJson["message"] = boost::str(fmt %
@@ -3038,6 +3773,168 @@ void showRStudioVersionWarning(
       string_utils::htmlEscape(downloadUrl, true));
    ClientEvent event(client_events::kShowWarningBar, msgJson);
    module_context::enqueClientEvent(event);
+}
+
+// Constraints from the manifest's "unsupported" object. Versions below
+// minimumPackageVersion or listed in packageVersions are blocked, as are
+// listed protocol versions.
+struct UnsupportedInfo
+{
+   std::string minimumPackageVersion;
+   std::vector<std::string> packageVersions;
+   std::vector<std::string> protocols;
+};
+
+// Parse the optional "unsupported" object from the manifest.
+// Returns Success() if the key is absent (backwards compat) or parsed OK.
+// Returns an error if the field is present but malformed in a way that
+// would prevent reliable unsupported-version checks.
+Error getUnsupportedInfo(
+    const json::Object& manifest,
+    UnsupportedInfo* pInfo)
+{
+   json::Object::Iterator it = manifest.find("unsupported");
+   if (it == manifest.end())
+      return Success();
+
+   if (!(*it).getValue().isObject())
+   {
+      return systemError(
+         boost::system::errc::invalid_argument,
+         "Manifest 'unsupported' field is not an object",
+         ERROR_LOCATION);
+   }
+
+   json::Object obj = (*it).getValue().getObject();
+
+   // minimumPackageVersion (optional string, must be valid semver if present)
+   json::Object::Iterator minIt = obj.find("minimumPackageVersion");
+   if (minIt != obj.end())
+   {
+      if (!(*minIt).getValue().isString())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not a string",
+            ERROR_LOCATION);
+      }
+
+      std::string minVersion = (*minIt).getValue().getString();
+      SemanticVersion parsed;
+      if (!parsed.parse(minVersion))
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.minimumPackageVersion' is not valid semver: " +
+               minVersion,
+            ERROR_LOCATION);
+      }
+      pInfo->minimumPackageVersion = minVersion;
+   }
+
+   // packageVersions (optional array of strings)
+   json::Object::Iterator pvIt = obj.find("packageVersions");
+   if (pvIt != obj.end())
+   {
+      if (!(*pvIt).getValue().isArray())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.packageVersions' is not an array",
+            ERROR_LOCATION);
+      }
+
+      json::Array arr = (*pvIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->packageVersions.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.packageVersions");
+      }
+   }
+
+   // protocols (optional array of strings)
+   json::Object::Iterator prIt = obj.find("protocols");
+   if (prIt != obj.end())
+   {
+      if (!(*prIt).getValue().isArray())
+      {
+         return systemError(
+            boost::system::errc::invalid_argument,
+            "Manifest 'unsupported.protocols' is not an array",
+            ERROR_LOCATION);
+      }
+
+      json::Array arr = (*prIt).getValue().getArray();
+      for (const json::Value& val : arr)
+      {
+         if (val.isString())
+            pInfo->protocols.push_back(val.getString());
+         else
+            WLOG("Skipping non-string entry in unsupported.protocols");
+      }
+   }
+
+   return Success();
+}
+
+// Check if the installed version is unsupported per the manifest.
+// Returns false for empty/"0.0.0" (not installed yet).
+bool isVersionUnsupported(
+    const std::string& version,
+    const UnsupportedInfo& info)
+{
+   if (version.empty() || version == "0.0.0")
+      return false;
+
+   // Check explicit blocklist (exact string match, so pre-release suffixes
+   // like "1.2.3-beta1" must be listed individually)
+   for (const std::string& blocked : info.packageVersions)
+   {
+      if (version == blocked)
+         return true;
+   }
+
+   // Check minimum version (minimumPackageVersion is validated as parseable
+   // semver by getUnsupportedInfo, so parse failure here means the installed
+   // version has an unusual format — fail closed to be safe)
+   if (!info.minimumPackageVersion.empty())
+   {
+      SemanticVersion installed, minimum;
+      if (!installed.parse(version))
+      {
+         WLOG("Failed to parse installed version '{}' for unsupported check, "
+              "treating as unsupported", version);
+         return true;
+      }
+
+      if (!minimum.parse(info.minimumPackageVersion))
+      {
+         // Should not happen since getUnsupportedInfo validates this
+         WLOG("Failed to parse minimumPackageVersion '{}', "
+              "treating as unsupported", info.minimumPackageVersion);
+         return true;
+      }
+
+      if (installed < minimum)
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+// Check if the current protocol version is unsupported
+bool isProtocolUnsupported(const UnsupportedInfo& info)
+{
+   for (const std::string& protocol : info.protocols)
+   {
+      if (protocol == kProtocolVersion)
+         return true;
+   }
+   return false;
 }
 
 // Compare semantic versions and determine if installation is needed
@@ -3078,12 +3975,12 @@ Error downloadPackage(const std::string& url, const FilePath& destPath)
 
    DLOG("Downloading package from: {} to: {}", url, destPath.getAbsolutePath());
 
-   // Use R's download.file() function with timeout protection
+   // Use R's download.file() function with timeout protection.
+   // Do not hardcode the download method -- see downloadManifest() comment.
    r::exec::RFunction downloadFunc("download.file");
    downloadFunc.addParam("url", url);
    downloadFunc.addParam("destfile", destPath.getAbsolutePath());
    downloadFunc.addParam("quiet", false);  // Show progress for user feedback
-   downloadFunc.addParam("method", "libcurl");
    downloadFunc.addParam("mode", "wb");  // Binary mode for zip files
    downloadFunc.addParam("timeout", 60);  // 60 second timeout for larger package
 
@@ -3234,18 +4131,62 @@ void doUpdateCheck()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
    }
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return;
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -3274,10 +4215,22 @@ void doUpdateCheck()
    boost::mutex::scoped_lock lock(s_updateStateMutex);
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
+      {
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         s_updateState.noCompatibleVersion = true;
+         s_updateState.updateAvailable = false;
+      }
+      else
+      {
+         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         s_updateState.updateAvailable = true;
+         s_updateState.newVersion = packageVersion;
+         s_updateState.downloadUrl = downloadUrl;
+      }
    }
    else
    {
@@ -3305,7 +4258,10 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
-   s_updateState.currentVersion = installedVersion;
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.currentVersion = installedVersion;
+   }
 
    // Check if we should skip due to throttling
    // Skip check if:
@@ -3321,14 +4277,57 @@ Error checkForUpdatesOnStartup()
    // Record that we attempted an update check (prevents hammering server on failures)
    saveUpdateCheckState();
 
-   // Download manifest (silent failure)
+   // Download manifest
    json::Object manifest;
    Error error = downloadManifest(&manifest);
    if (error)
    {
       WLOG("Failed to download manifest: {}", error.getMessage());
-      // Silent failure - don't block feature usage
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
       return Success();
+   }
+
+   // Manifest succeeded — clear the failure flag
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.manifestUnavailable = false;
+   }
+
+   // Check for unsupported versions/protocols
+   UnsupportedInfo unsupportedInfo;
+   error = getUnsupportedInfo(manifest, &unsupportedInfo);
+   if (error)
+   {
+      // Malformed unsupported info — fail closed to be safe
+      WLOG("Failed to parse unsupported info (blocking Posit AI): {}",
+           error.getMessage());
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.manifestUnavailable = true;
+      }
+      assistant::stopAgentForUpdate();
+      return Success();
+   }
+
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
+      s_updateState.unsupportedInstalledVersion =
+         isVersionUnsupported(installedVersion, unsupportedInfo);
+
+      DLOG("Unsupported check: protocol={}, installedVersion={}",
+           s_updateState.unsupportedProtocol,
+           s_updateState.unsupportedInstalledVersion);
+   }
+
+   // Stop Posit AI agent if version/protocol is unsupported or manifest unavailable
+   if (isPositAiUnsupported())
+   {
+      assistant::stopAgentForUpdate();
    }
 
    // Get package info for our protocol version
@@ -3344,6 +4343,7 @@ Error checkForUpdatesOnStartup()
       // Check if this is specifically a "protocol not found" error
       if (error.getCode() == boost::system::errc::protocol_not_supported)
       {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
          // Protocol version not in manifest - only block if there's no installed
          // version to fall back on
          if (installedVersion == "0.0.0")
@@ -3353,41 +4353,63 @@ Error checkForUpdatesOnStartup()
          s_updateState.updateAvailable = false;
       }
 
-      // For other errors (network, parsing, etc), do silent failure as before
+      // For non-protocol errors (e.g. missing fields), allow the installed
+      // version to continue running if one exists
       return Success();
    }
 
    // Compare versions - offer install if versions differ (upgrade or downgrade)
    if (shouldInstallVersion(installedVersion, packageVersion))
    {
-      // Determine if this is an upgrade or downgrade
-      SemanticVersion installed, available;
-      bool isDowngrade = false;
-
-      // These parses should always succeed since shouldInstallVersion validated them
-      if (installed.parse(installedVersion) && available.parse(packageVersion))
+      // Don't offer an update if the available version is also unsupported
+      if (isVersionUnsupported(packageVersion, unsupportedInfo))
       {
-         isDowngrade = (available < installed);
-         DLOG("{} available: {} -> {}",
-              isDowngrade ? "Downgrade" : "Update",
-              installedVersion, packageVersion);
+         WLOG("Available version {} is also unsupported (minimum: {}), "
+              "no compatible version available",
+              packageVersion, unsupportedInfo.minimumPackageVersion);
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.noCompatibleVersion = true;
+            s_updateState.updateAvailable = false;
+         }
       }
       else
       {
-         // Defensive: this shouldn't happen, but handle gracefully
-         WLOG("Version re-parsing failed unexpectedly: {} -> {}",
-              installedVersion, packageVersion);
-         DLOG("Update available: {} -> {}", installedVersion, packageVersion);
-      }
+         // Determine if this is an upgrade or downgrade
+         SemanticVersion installed, available;
+         bool isDowngrade = false;
 
-      s_updateState.updateAvailable = true;
-      s_updateState.newVersion = packageVersion;
-      s_updateState.downloadUrl = downloadUrl;
+         // These parses should always succeed since shouldInstallVersion validated them
+         if (installed.parse(installedVersion) && available.parse(packageVersion))
+         {
+            isDowngrade = (available < installed);
+            DLOG("{} available: {} -> {}",
+                 isDowngrade ? "Downgrade" : "Update",
+                 installedVersion, packageVersion);
+         }
+         else
+         {
+            // Defensive: this shouldn't happen, but handle gracefully
+            WLOG("Version re-parsing failed unexpectedly: {} -> {}",
+                 installedVersion, packageVersion);
+            DLOG("Update available: {} -> {}", installedVersion, packageVersion);
+         }
+
+         {
+            boost::mutex::scoped_lock lock(s_updateStateMutex);
+            s_updateState.updateAvailable = true;
+            s_updateState.newVersion = packageVersion;
+            s_updateState.downloadUrl = downloadUrl;
+         }
+      }
    }
    else
    {
       DLOG("No update needed (installed: {}, available: {})", installedVersion, packageVersion);
-      s_updateState.updateAvailable = false;
+      {
+         boost::mutex::scoped_lock lock(s_updateStateMutex);
+         s_updateState.updateAvailable = false;
+      }
    }
 
    // Check for recommended RStudio version
@@ -3607,7 +4629,7 @@ void onBackendStderr(core::system::ProcessOperations& ops, const std::string& ou
 
 void onBackendExit(int exitCode)
 {
-   WLOG("Chat backend exited with code: {}", exitCode);
+   ILOG("Chat backend exited with code: {}", exitCode);
 
    // Clear chat backend busy state to prevent stuck suspension blocking
    if (s_chatBusy)
@@ -3639,9 +4661,11 @@ void onBackendExit(int exitCode)
 
    // Clear state
    s_chatBackendPid = -1;
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
    s_backendOutputBuffer.clear();
    s_chatBackendOps.reset();
+   s_peerSentCapabilities = false;
+   s_peerCapabilities.clear();
    s_chatBackendRestartCount = kMaxRestartAttempts;
 
    // Notify client of backend exit (with correct crashed flag)
@@ -3692,6 +4716,14 @@ Error startChatBackend(bool resumeConversation)
    if (error)
       return error;
 
+   // Share the port with the static file handler for CSP connect-src
+   staticfiles::setChatBackendPort(s_chatBackendPort);
+
+   // Generate per-session auth token for WebSocket authentication.
+   // This is defense-in-depth against local non-browser attackers that
+   // bypass origin checks (malware, browser extensions, local processes).
+   s_chatBackendAuthToken = core::system::generateUuid(false);
+
    DLOG("Allocated port {} for chat backend", s_chatBackendPort);
 
    // Build command arguments
@@ -3736,6 +4768,28 @@ Error startChatBackend(bool resumeConversation)
    args.push_back("--workspace-id");
    args.push_back(workspaceId);
 
+   // In server mode, disable embedded origin lockdown since rserver's
+   // proxy authentication and port-token cookies prevent CSWSH.
+   // Desktop mode (the default) locks down CORS and WebSocket origins
+   // to localhost to prevent cross-site WebSocket hijacking.
+   if (options().programMode() == kSessionProgramModeServer)
+   {
+      args.push_back("--server-mode");
+   }
+
+   // In desktop mode, allow the chat UI (served by rsession on a different
+   // port) to connect to the databot WebSocket through the origin check.
+   // Not needed in server mode where embedded origin lockdown is disabled.
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string wwwPort = options().wwwPort();
+      if (!wwwPort.empty())
+      {
+         args.push_back("--allowed-origin");
+         args.push_back("http://127.0.0.1:" + wwwPort);
+      }
+   }
+
    // Add resume-conversation flag if resuming after suspend/restart
    if (resumeConversation)
    {
@@ -3746,6 +4800,28 @@ Error startChatBackend(bool resumeConversation)
    // Set up environment
    core::system::Options environment;
    core::system::environment(&environment);
+
+   // Set NODE_EXTRA_CA_CERTS if a custom certificates file is provided.
+   std::string certificatesFile =
+      session::options().positAssistantSslCertificatesFile();
+   if (!certificatesFile.empty())
+      core::system::setenv(&environment, "NODE_EXTRA_CA_CERTS", certificatesFile);
+
+   // Enable Node.js proxy support for fetch().
+   // When HTTP_PROXY / HTTPS_PROXY env vars are set (e.g. via ~/.Renviron),
+   // this tells Node.js 22.21+ to route fetch() through the proxy.
+   // See: https://github.com/nodejs/node/pull/57165
+   core::system::setenv(&environment, "NODE_USE_ENV_PROXY", "1");
+
+   // Pass per-session auth token for WebSocket authentication
+   core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
+
+#ifdef _WIN32
+   // On Windows, R sets HOME to the user's Documents directory rather than
+   // %USERPROFILE%. Correct it so child processes (e.g. git) find their
+   // expected config files.
+   core::system::setHomeToUserProfile(&environment);
+#endif
 
    // Set up callbacks
    core::system::ProcessCallbacks callbacks;
@@ -3790,7 +4866,7 @@ Error startChatBackend(bool resumeConversation)
    if (error)
    {
       LOG_ERROR(error);
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
       return error;
    }
 
@@ -3917,7 +4993,7 @@ Error chatStopBackend(const json::JsonRpcRequest& request,
    s_chatBackendPid = -1;
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear busy state
    s_chatBusy = false;
@@ -3944,6 +5020,7 @@ Error chatGetBackendUrl(const json::JsonRpcRequest& request,
    result["url"] = url;
    result["port"] = s_chatBackendPort;
    result["ready"] = (s_chatBackendPid != -1 && !url.empty());
+   result["auth_token"] = s_chatBackendAuthToken;
 
    pResponse->setResult(result);
    return Success();
@@ -3974,9 +5051,20 @@ Error chatGetBackendStatus(const json::JsonRpcRequest& request,
       std::string url = buildWebSocketUrl(s_chatBackendPort);
       result["status"] = "ready";
       result["url"] = url;
+      result["auth_token"] = s_chatBackendAuthToken;
+      result["resume_chat"] = s_resumeChat;
    }
 
    pResponse->setResult(result);
+   return Success();
+}
+
+Error chatNotifyUILoaded(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   DLOG("Chat UI loaded notification received, setting s_resumeChat = true");
+   s_resumeChat = true;
+   pResponse->setResult(json::Value());
    return Success();
 }
 
@@ -4013,13 +5101,19 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    json::Object result;
    result["updateAvailable"] = s_updateState.updateAvailable;
    result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
+   result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
+   result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
+   result["manifestUnavailable"] = s_updateState.manifestUnavailable;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;
    result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
 
-   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}",
-        s_updateState.updateAvailable, s_updateState.noCompatibleVersion);
+   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}, "
+        "unsupportedVersion={}, unsupportedProtocol={}, manifestUnavailable={}",
+        s_updateState.updateAvailable, s_updateState.noCompatibleVersion,
+        s_updateState.unsupportedInstalledVersion, s_updateState.unsupportedProtocol,
+        s_updateState.manifestUnavailable);
 
    pResponse->setResult(result);
    return Success();
@@ -4071,6 +5165,11 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    s_updateState.installStatus = UpdateState::Status::Downloading;
    s_updateState.installMessage = "Downloading update...";
 
+   // Capture values before unlocking — a concurrent doUpdateCheck() could
+   // reset s_updateState while we're downloading
+   std::string downloadUrl = s_updateState.downloadUrl;
+   std::string newVersion = s_updateState.newVersion;
+
    // Unlock mutex during download/install to allow status queries
    lock.unlock();
 
@@ -4084,7 +5183,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
          WLOG("Failed to stop backend: {}", error.getMessage());
       }
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Stop assistant agent (language server) if running - it also uses pai/bin/
@@ -4096,7 +5195,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
    // Download package
    FilePath tempPackage = module_context::tempFile("pai-update", "zip");
-   Error error = downloadPackage(s_updateState.downloadUrl, tempPackage);
+   Error error = downloadPackage(downloadUrl, tempPackage);
 
    if (error)
    {
@@ -4109,7 +5208,8 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
       if (cleanupError)
          WLOG("Failed to remove temp package after download failure: {}", cleanupError.getMessage());
 
-      return error;
+      pResponse->setResult(json::Value());
+      return Success();
    }
 
    // Install package
@@ -4132,7 +5232,20 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    {
       boost::mutex::scoped_lock lock2(s_updateStateMutex);
       s_updateState.installStatus = UpdateState::Status::Error;
-      s_updateState.installMessage = "Installation failed: " + error.getMessage();
+
+#ifdef _WIN32
+      if (error.getCode() == ERROR_ACCESS_DENIED ||
+          error.getCode() == ERROR_SHARING_VIOLATION)
+      {
+         s_updateState.installMessage =
+            "Unable to install update (access denied). "
+            "Please close all other instances of RStudio and try again.";
+      }
+      else
+#endif
+      {
+         s_updateState.installMessage = "Installation failed: " + error.getMessage();
+      }
 
       // Note: installPackage() already handles backup restoration internally,
       // so we don't need to call restoreFromBackup() here again.
@@ -4148,7 +5261,8 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
             WLOG("Failed to clean up backup directory after failed install: {}", prevCleanup.getMessage());
       }
 
-      return error;
+      pResponse->setResult(json::Value());
+      return Success();
    }
 
    // Success - ensure backup is cleaned up
@@ -4168,8 +5282,9 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
 
       s_updateState.installStatus = UpdateState::Status::Complete;
       s_updateState.installMessage = "Update complete";
-      s_updateState.updateAvailable = false;  // Clear update flag
-      s_updateState.currentVersion = s_updateState.newVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.currentVersion = newVersion;
    }
 
    pResponse->setResult(json::Value());
@@ -4301,7 +5416,7 @@ void onSuspend(const r::session::RSuspendOptions& options, Settings* pSettings)
 
       // Clear state (rsession is exiting anyway)
       s_chatBackendPid = -1;
-      s_chatBackendPort = -1;
+      clearChatBackendPort();
    }
 
    // Clear busy state and JSON-RPC buffer
@@ -4319,6 +5434,7 @@ void onResume(const Settings& settings)
 
    if (wasSuspended)
    {
+      s_resumeChat = resumeConversation;
       DLOG("Restarting chat backend (resume conversation: {})", resumeConversation);
 
       Error error = startChatBackend(resumeConversation);
@@ -4390,7 +5506,7 @@ void onShutdown(bool terminatedNormally)
    }
 
    // Clear port
-   s_chatBackendPort = -1;
+   clearChatBackendPort();
 
    // Clear notification queue
    {
@@ -4411,6 +5527,14 @@ bool isSuspendable()
 {
    // Session can suspend if chat backend is NOT busy
    return !s_chatBusy;
+}
+
+bool isPositAiUnsupported()
+{
+   boost::mutex::scoped_lock lock(s_updateStateMutex);
+   return s_updateState.unsupportedInstalledVersion ||
+          s_updateState.unsupportedProtocol ||
+          s_updateState.manifestUnavailable;
 }
 
 // ============================================================================
@@ -4470,6 +5594,8 @@ Error initialize()
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
+   RS_REGISTER_CALL_METHOD(rs_chatCallStackFunctions);
+   RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers
    registerNotificationHandler("logger/log", handleLoggerLog);
@@ -4507,6 +5633,7 @@ Error initialize()
       (bind(registerRpcMethod, "chat_install_update", chatInstallUpdate))
       (bind(registerRpcMethod, "chat_get_update_status", chatGetUpdateStatus))
       (bind(registerRpcMethod, "chat_doc_focused", chatDocFocused))
+      (bind(registerRpcMethod, "chat_notify_ui_loaded", chatNotifyUILoaded))
       (bind(registerUriHandler, "/ai-chat", handleAIChatRequest))
       (bind(sourceModuleRFile, "SessionChat.R"))
       ;

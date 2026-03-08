@@ -243,23 +243,25 @@ export class MainWindow extends GwtWindow {
   quit(): void {
     RCommandEvaluator.setMainWindow(null);
     this.quitConfirmed = true;
-    this.window.close();
+    if (!this.window.isDestroyed()) {
+      this.window.close();
+    } else {
+      logger().logDebug('quit() called but BrowserWindow already destroyed');
+    }
   }
 
   invokeCommand(cmdId: string): void {
-    let cmd = '';
-    if (process.platform === 'darwin') {
-      cmd = `
+    const cmd =
+      process.platform === 'darwin'
+        ? `
         var wnd;
         try {
           wnd = window.$RStudio.last_focused_window;
         } catch (e) {
           wnd = window;
         }
-        (wnd || window).desktopHooks.invokeCommand('${cmdId}');`;
-    } else {
-      cmd = `window.desktopHooks.invokeCommand("${cmdId}")`;
-    }
+        (wnd || window).desktopHooks.invokeCommand('${cmdId}');`
+        : `window.desktopHooks.invokeCommand("${cmdId}")`;
     this.executeJavaScript(cmd).catch((error) => {
       logger().logError(error);
     });

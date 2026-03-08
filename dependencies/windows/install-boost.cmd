@@ -2,7 +2,7 @@
 setlocal
 
 REM Variables defining the build. Update as appropriate.
-set BOOST_VERSION=1.87.0
+set BOOST_VERSION=1.90.0
 set MSVC_TOOLSET_VERSION=143
 
 REM The file name prefix used for Boost build folders.
@@ -13,8 +13,8 @@ set PATH=%CD%\tools;%PATH%
 
 REM Build Boost.
 cd install-boost
-R --vanilla -s -f install-boost.R --args debug static
-R --vanilla -s -f install-boost.R --args release static
+cmd.exe /C R --vanilla -s -f install-boost.R --args debug static
+cmd.exe /C R --vanilla -s -f install-boost.R --args release static
 cd ..
 
 REM Build the Boost archive for upload to S3.

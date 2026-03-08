@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -125,6 +126,7 @@ public class TextEditingTargetFindReplace
          findReplace_.notifyClosing();
          findReplace_ = null;
          findReplaceBar_ = null;
+         findFromSelectionCursorPos_ = null;
          findReplaceButton_.setLeftImage(FindReplaceBar.getFindIcon());
       }
       container_.getEditor().focus();
@@ -153,8 +155,15 @@ public class TextEditingTargetFindReplace
       boolean multiLineSelection = selection.indexOf('\n') != -1;
       if ((selection.length()) > 0 && !multiLineSelection)
       {
-         boolean hasFindReplaceBar = findReplaceBar_ != null;
-         if (hasFindReplaceBar)
+         // If the find bar is already active and the cursor hasn't moved
+         // since the last findFromSelection call, advance to the next match.
+         Position cursorPos = container_.getEditor().getCursorPosition();
+         boolean isContinuation =
+               findReplaceBar_ != null &&
+               findFromSelectionCursorPos_ != null &&
+               cursorPos.isEqualTo(findFromSelectionCursorPos_);
+
+         if (isContinuation)
          {
             findReplace_.activate(selection, true, false);
             findReplace_.findNext();
@@ -164,6 +173,8 @@ public class TextEditingTargetFindReplace
             ensureFindReplaceBar(true);
             findReplace_.activate(selection, true, false);
          }
+
+         findFromSelectionCursorPos_ = container_.getEditor().getCursorPosition();
       }
    }
    
@@ -195,6 +206,7 @@ public class TextEditingTargetFindReplace
    private final boolean showReplace_;
    private FindReplace findReplace_;
    private FindReplaceBar findReplaceBar_;
+   private Position findFromSelectionCursorPos_;
    private ToolbarButton findReplaceButton_;
    private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

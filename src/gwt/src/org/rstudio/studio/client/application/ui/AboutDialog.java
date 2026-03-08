@@ -58,7 +58,7 @@ public class AboutDialog extends ModalDialogBase
          // Append Posit Assistant version if available
          if (!positAssistantVersion_.isEmpty())
          {
-            versionText += ", Posit Assistant " + positAssistantVersion_;
+            versionText += ", Posit AI " + positAssistantVersion_;
          }
          
          Clipboard.setText(versionText);
@@ -141,7 +141,7 @@ public class AboutDialog extends ModalDialogBase
             if (version != null && !version.isEmpty())
             {
                positAssistantVersion_ = version;
-               contents_.appendToUserAgent(", Posit Assistant " + version);
+               contents_.appendToUserAgent(", Posit AI " + version);
             }
          }
 

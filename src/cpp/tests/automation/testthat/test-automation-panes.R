@@ -787,7 +787,7 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.resetUILayout(remote)
 })
 
-.rs.test("Zoomed left column with sidebar on left works as expected", {
+.rs.test("Zoomed left column with sidebar on right works as expected", {
    # skipping to cut down run times on CI
    skip_on_ci()
 
@@ -799,20 +799,20 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Move sidebar to the left
+   # Move sidebar to the right
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved left", function() {
+   .rs.waitUntil("sidebar moved right", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated after recreation
    Sys.sleep(0.3)
 
-   # Verify the sidebar exists and is visible on the left
+   # Verify the sidebar exists and is visible on the right
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to left")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to right")
 
    sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible")
@@ -836,11 +836,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomLeftColumn")
 
    # Calculate expected width: console should expand to fill the space previously occupied
-   # by both TabSet1 and Sidebar (sidebar is on left now)
+   # by both TabSet1 and Sidebar (sidebar is on right now)
    expectedZoomedWidth <- initialConsoleWidth + initialTabSet1Width + initialSidebarWidth
 
    # Wait for layout to change - console should expand to fill the right column and sidebar space
-   .rs.waitUntil("left column zoomed with sidebar on left", function() {
+   .rs.waitUntil("left column zoomed with sidebar on right", function() {
       consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
       # Allow some tolerance for dividers/borders (within 30px)
       abs(consoleElement$offsetWidth - expectedZoomedWidth) < 30
@@ -888,7 +888,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomLeftColumn")
 
    # Wait for layout to be restored - console should return to original size and sidebar/TabSet1 should be visible
-   .rs.waitUntil("left column unzoomed with sidebar on left", function() {
+   .rs.waitUntil("left column unzoomed with sidebar on right", function() {
       consoleElement <- remote$js.querySelector("#rstudio_Console_pane")
       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
       sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
@@ -937,25 +937,25 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: move sidebar back to the right
+   # Clean up: move sidebar back to the left
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved right", function() {
+   .rs.waitUntil("sidebar moved left", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated
    Sys.sleep(0.3)
 
-   # Verify the sidebar is still visible after moving right
+   # Verify the sidebar is still visible after moving left
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
+   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving left")
 
    .rs.resetUILayout(remote)
 })
 
-.rs.test("Zoomed right column with sidebar on left works as expected", {
+.rs.test("Zoomed right column with sidebar on right works as expected", {
    # skipping to cut down run times on CI
    skip_on_ci()
 
@@ -967,20 +967,20 @@ withr::defer(.rs.automation.deleteRemote())
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
-   # Move sidebar to the left
+   # Move sidebar to the right
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved left", function() {
+   .rs.waitUntil("sidebar moved right", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated after recreation
    Sys.sleep(0.3)
 
-   # Verify the sidebar exists and is visible on the left
+   # Verify the sidebar exists and is visible on the right
    sidebarExists <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to left")
+   expect_true(sidebarExists, "rstudio_Sidebar_pane should exist after moving to right")
 
    sidebarElement <- remote$js.querySelector("#rstudio_Sidebar_pane")
    expect_true(sidebarElement$offsetWidth > 0, "rstudio_Sidebar_pane should be visible")
@@ -1004,11 +1004,11 @@ withr::defer(.rs.automation.deleteRemote())
    remote$commands.execute("layoutZoomRightColumn")
 
    # Calculate expected width: TabSet1 should expand to fill the space previously occupied
-   # by both Console and Sidebar (sidebar is on left)
+   # by both Console and Sidebar (sidebar is on right)
    expectedZoomedWidth <- initialTabSet1Width + initialConsoleWidth + initialSidebarWidth
 
    # Wait for layout to change - TabSet1 should expand to fill the left column and sidebar space
-   .rs.waitUntil("right column zoomed with sidebar on left", function() {
+   .rs.waitUntil("right column zoomed with sidebar on right", function() {
       tabSet1Element <- remote$js.querySelector("#rstudio_TabSet1_pane")
       # Allow some tolerance for dividers/borders (within 30px)
       abs(tabSet1Element$offsetWidth - expectedZoomedWidth) < 30
@@ -1107,20 +1107,20 @@ withr::defer(.rs.automation.deleteRemote())
                paste0("Sidebar pane should return to original width after un-zooming. ",
                       "Initial: ", initialSidebarWidth, ", Restored: ", restoredSidebarWidth))
 
-   # Clean up: move sidebar back to the right
+   # Clean up: move sidebar back to the left
    remote$commands.execute("toggleSidebarLocation")
 
    # Wait for the sidebar to be repositioned
-   .rs.waitUntil("sidebar moved right", function() {
+   .rs.waitUntil("sidebar moved left", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane")
    })
 
    # Add a small delay to ensure DOM is fully updated
    Sys.sleep(0.3)
 
-   # Verify the sidebar is still visible after moving right
+   # Verify the sidebar is still visible after moving left
    sidebarExistsRight <- remote$dom.elementExists("#rstudio_Sidebar_pane")
-   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving right")
+   expect_true(sidebarExistsRight, "rstudio_Sidebar_pane should still exist after moving left")
 
    .rs.resetUILayout(remote)
 })
@@ -1797,5 +1797,137 @@ withr::defer(.rs.automation.deleteRemote())
    expect_true(sidebarElement$offsetWidth > 0,
                paste0("Sidebar should be visible: ", sidebarElement$offsetWidth))
 
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Moving Posit Assistant from visible sidebar to TabSet1 persists across UI reload", {
+   skip_on_ci()
+
+   # Pane layout dialog selectors (defined in test-automation-pane-layout.R)
+   PL_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
+   PL_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+   PL_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
+
+   # 0. Show the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   # Wait for the sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 1. Verify default state: Posit Assistant is in the sidebar, not in TabSet1
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be in sidebar by default")
+   expect_false(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+                info = "Posit Assistant should not be in TabSet1 by default")
+
+   # 2. Move Posit Assistant to TabSet1 by checking it there
+   expect_true(.rs.toggleTab(remote, PL_RIGHT_TOP, "Posit Assistant"))
+
+   # 3. Verify it moved: checked in TabSet1, unchecked in sidebar
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should now be checked in TabSet1")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should no longer be in sidebar")
+
+   # Sidebar visibility should have auto-unchecked (last tab removed)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should auto-uncheck when last tab removed")
+
+   # 4. Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.5)
+
+   # 5. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
+
+   # 6. Wait for page to reload (TabSet1 should reappear)
+   .rs.waitUntil("page reloaded", function() {
+      remote$dom.elementExists("#rstudio_TabSet1_pane")
+   })
+   Sys.sleep(0.5)
+
+   # 7. Re-open the Pane Layout dialog and verify the change persisted
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should still be in TabSet1 after reload")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should not be in sidebar after reload")
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should still be unchecked after reload")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+
+   # 8. Reset layout
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Moving Posit Assistant from hidden sidebar to TabSet1 persists across UI reload", {
+   skip_on_ci()
+
+   # Pane layout dialog selectors (defined in test-automation-pane-layout.R)
+   PL_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
+   PL_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+   PL_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
+
+   # 1. Verify default state: Posit Assistant is in the sidebar, not in TabSet1
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be in sidebar by default")
+   expect_false(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+                info = "Posit Assistant should not be in TabSet1 by default")
+
+   # 2. Move Posit Assistant to TabSet1 by checking it there
+   expect_true(.rs.toggleTab(remote, PL_RIGHT_TOP, "Posit Assistant"))
+
+   # 3. Verify it moved: checked in TabSet1, unchecked in sidebar
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should now be checked in TabSet1")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should no longer be in sidebar")
+
+   # Sidebar visibility should have auto-unchecked (last tab removed)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should auto-uncheck when last tab removed")
+
+   # 4. Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.5)
+
+   # 5. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
+
+   # 6. Wait for page to reload (TabSet1 should reappear)
+   .rs.waitUntil("page reloaded", function() {
+      remote$dom.elementExists("#rstudio_TabSet1_pane")
+   })
+   Sys.sleep(0.5)
+
+   # 7. Re-open the Pane Layout dialog and verify the change persisted
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should still be in TabSet1 after reload")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should not be in sidebar after reload")
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should still be unchecked after reload")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+
+   # 8. Reset layout
    .rs.resetUILayout(remote)
 })

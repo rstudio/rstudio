@@ -134,5 +134,16 @@ c("a
 b"
 )
 
+# 21: roxygen with function link and single-line function
+#' similar to [foo()]
+#' @return NULL
+f <- function() {}
+
+# 22: roxygen with function link and multi-line function
+#' similar to [foo()]
+#' @return NULL
+f <- function() {
+}
+
 # cursor should end here after executing all lines
 EOF

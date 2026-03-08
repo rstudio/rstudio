@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -51,6 +52,7 @@ import org.rstudio.studio.client.events.EditorCommandEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.InsertAtCursorEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
+import org.rstudio.studio.client.events.SaveDocumentEvent;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -698,8 +700,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          InsertAtCursorEvent.Data data = event.getData();
          fireEventForDocument(data.getId(), new InsertAtCursorEvent(data));
       }
+      else if (type == EditorCommandEvent.TYPE_SAVE_DOCUMENT)
+      {
+         SaveDocumentEvent.Data data = event.getData();
+         Set<String> ids = Collections.singleton(data.getId());
+         pSource_.get().saveUnsavedDocuments(ids, () -> {});
+      }
       else
+      {
          assert false: "Unrecognized editor event type '" + type + "'";
+      }
    }
 
    @Override
