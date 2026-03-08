@@ -7,7 +7,7 @@ withr::defer(.rs.automation.deleteRemote())
 
 # Helper: inject guardrail bindings, execute code in the console,
 # and verify that the output contains the expected error text.
-.rs.guardrails.expectError <- function(expr, pattern = "denied")
+.rs.guardrails.expectError <- function(expr, pattern = "blocked")
 {
    code <- paste(deparse(rlang::enexpr(expr)), collapse = "\n")
    remote$console.executeExpr({ .rs.chat.injectBindings() })
@@ -28,7 +28,7 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.clear()
    remote$console.execute(code)
    output <- paste(remote$console.getOutput(), collapse = "\n")
-   expect_no_match(output, "denied")
+   expect_no_match(output, "blocked")
    expect_no_match(output, "Error")
 }
 
@@ -193,13 +193,80 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 
+# -- Error message structure --------------------------------------------------
+
+.rs.test("read denial error includes action, path, and reason",
+{
+   remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
+   remote$console.clear()
+   remote$console.execute("readLines('~/.aws/credentials')")
+   output <- paste(remote$console.getOutput(), collapse = "\n")
+   expect_match(output, "One or more agent file operations were blocked")
+   expect_match(output, "Action:")
+   expect_match(output, "Path:")
+   expect_match(output, "Reason:")
+   expect_match(output, "secret keys or credentials")
+})
+
+.rs.test("edit denial error includes reason for path outside allowed locations",
+{
+   path <- file.path(dirname(tempdir()), "not-in-project.txt")
+   remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
+   remote$console.clear()
+   remote$console.execute(paste0("writeLines('x', '", path, "')"))
+   output <- paste(remote$console.getOutput(), collapse = "\n")
+   expect_match(output, "One or more agent file operations were blocked")
+   expect_match(output, "not within the project")
+})
+
+.rs.test("edit denial on .ssh path includes credentials reason",
+{
+   remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
+   remote$console.clear()
+   remote$console.execute("writeLines('x', '~/.ssh/test')")
+   output <- paste(remote$console.getOutput(), collapse = "\n")
+   expect_match(output, "One or more agent file operations were blocked")
+   expect_match(output, "secret keys or credentials")
+})
+
+
+# -- System file guardrails --------------------------------------------------
+
+.rs.test("reading /etc/passwd is denied",
+{
+   .rs.guardrails.expectError(
+      readLines("/etc/passwd"),
+      pattern = "sensitive system information"
+   )
+})
+
+.rs.test("reading /etc/shadow is denied",
+{
+   .rs.guardrails.expectError(
+      readLines("/etc/shadow"),
+      pattern = "sensitive system information"
+   )
+})
+
+.rs.test("writing /etc/passwd is denied",
+{
+   .rs.guardrails.expectError(
+      writeLines("x", "/etc/passwd"),
+      pattern = "sensitive system information"
+   )
+})
+
+
 # -- Path traversal -----------------------------------------------------------
 
 .rs.test("path traversal with '..' is rejected",
 {
    .rs.guardrails.expectError(
       writeLines("x", file.path(tempdir(), "sub/../../etc/passwd")),
-      pattern = "unresolved"
+      pattern = "unresolved|sensitive"
    )
 })
 
@@ -225,7 +292,7 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
    output <- paste(remote$console.getOutput(), collapse = "\n")
-   expect_no_match(output, "denied")
+   expect_no_match(output, "blocked")
 })
 
 .rs.test("safeEval blocks writes outside project directory",
@@ -270,8 +337,8 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
    output <- paste(remote$console.getOutput(), collapse = "\n")
-   expect_no_match(output, "denied")
-   expect_no_match(output, "not allowed")
+   expect_no_match(output, "blocked")
+   expect_no_match(output, "not within")
 })
 
 .rs.test("safeEval restores bindings when user code errors",
@@ -292,7 +359,7 @@ withr::defer(.rs.automation.deleteRemote())
    })
 
    output <- paste(remote$console.getOutput(), collapse = "\n")
-   expect_no_match(output, "denied")
-   expect_no_match(output, "not allowed")
+   expect_no_match(output, "blocked")
+   expect_no_match(output, "not within")
 })
 

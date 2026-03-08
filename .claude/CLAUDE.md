@@ -401,6 +401,7 @@ When generating a pull request that fixes a known issue, please ensure the pull 
 
     Addresses <issue>.
 
+When generating a pull request, set the Milestone of the pull request to match contents of @version/RELEASE, if there is a matching milestone already defined. Never create a new milestone.
 
 ## Git Conventions
 
@@ -414,3 +415,11 @@ For branch naming:
 - Use the 'bugfix/' prefix for code changes which fix an existing issue.
 - Use the 'feature/' prefix for code changes that add or extend existing functionality.
 - Use the 'developer/' prefix for code changes that are primarily for developer ergonomics.
+
+## Issues
+
+- When opening an issue, always add the label `new`
+- If the issue describes a bug, add the label `bug`
+- If the issue is for a new feature or enhancements to an existing feature, add the label `enhancement`
+- These labels apply to issues only, not to pull requests
+

@@ -42,6 +42,7 @@ int chatLogLevel()
 void setChatLogLevel(int level)
 {
    s_chatLogLevel = level;
+   rstudio::session::logging::setStderrLogLevel("chat", level);
 }
 
 void setBackendMinLogLevel(const std::string& level)
@@ -122,6 +123,7 @@ SEXP rs_chatSetLogLevel(SEXP logLevelSEXP)
 {
    int logLevel = r::sexp::asInteger(logLevelSEXP);
    s_chatLogLevel = logLevel;
+   rstudio::session::logging::setStderrLogLevel("chat", logLevel);
    return logLevelSEXP;
 }
 

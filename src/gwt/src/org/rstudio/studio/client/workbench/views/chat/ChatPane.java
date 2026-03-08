@@ -14,8 +14,11 @@ package org.rstudio.studio.client.workbench.views.chat;
 
 import java.util.Map;
 
+import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -60,7 +63,8 @@ public class ChatPane
       UPDATING,
       UPDATE_COMPLETE,
       UPDATE_ERROR,
-      UPDATE_CHECK_FAILURE
+      UPDATE_CHECK_FAILURE,
+      READLINE
    }
 
    @Inject
@@ -123,8 +127,15 @@ public class ChatPane
       updateButtonPanel_ = new FlowPanel();
       updateButtonPanel_.setStyleName(RES.styles().chatNotificationButtonPanel());
 
+      notificationIcon_ = new DecorativeImage(
+         new ImageResource2x(MessageDialogImages.INSTANCE.dialog_info2x()));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.getElement().getStyle().setProperty("flexShrink", "0");
+      notificationIcon_.setVisible(false);
+
       notificationContent_ = new FlowPanel();
       notificationContent_.setStyleName(RES.styles().chatNotificationContent());
+      notificationContent_.add(notificationIcon_);
       notificationContent_.add(updateMessageLabel_);
       notificationContent_.add(updateButtonPanel_);
       updateNotificationPanel_.add(notificationContent_);
@@ -478,6 +489,7 @@ public class ChatPane
    @Override
    public void showUpdatingStatus()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdating());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -491,6 +503,7 @@ public class ChatPane
    @Override
    public void showUpdateComplete()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateComplete());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -504,6 +517,7 @@ public class ChatPane
    @Override
    public void showUpdateError(String errorMessage)
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateFailed(errorMessage));
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -525,8 +539,16 @@ public class ChatPane
    public void hideUpdateNotification()
    {
       currentNotificationType_ = NotificationType.NONE;
+      notificationIcon_.setVisible(false);
       updateNotificationPanel_.setVisible(false);
       updateFrameLayout();
+   }
+
+   private void setNotificationIcon(com.google.gwt.resources.client.ImageResource resource)
+   {
+      notificationIcon_.setResource(new ImageResource2x(resource));
+      notificationIcon_.setPixelSize(24, 24);
+      notificationIcon_.setVisible(true);
    }
 
    @Override
@@ -540,8 +562,41 @@ public class ChatPane
    }
 
    @Override
+   public void showReadlineNotification()
+   {
+      // Don't overwrite higher-priority update notifications
+      if (currentNotificationType_ == NotificationType.UPDATING ||
+          currentNotificationType_ == NotificationType.UPDATE_ERROR ||
+          currentNotificationType_ == NotificationType.UPDATE_COMPLETE ||
+          currentNotificationType_ == NotificationType.UPDATE_CHECK_FAILURE)
+      {
+         return;
+      }
+
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_info2x());
+      updateMessageLabel_.setHTML(constants_.chatReadlineWaiting());
+
+      new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
+         .clear();
+
+      currentNotificationType_ = NotificationType.READLINE;
+      updateNotificationPanel_.setVisible(true);
+      updateFrameLayout();
+   }
+
+   @Override
+   public void hideReadlineNotification()
+   {
+      if (currentNotificationType_ == NotificationType.READLINE)
+      {
+         hideUpdateNotification();
+      }
+   }
+
+   @Override
    public void showUpdateCheckFailure()
    {
+      setNotificationIcon(MessageDialogImages.INSTANCE.dialog_error2x());
       updateMessageLabel_.setHTML(constants_.chatUpdateCheckFailed());
 
       new NotificationBuilder(updateButtonPanel_, RES.styles().chatNotificationButton())
@@ -1336,6 +1391,7 @@ public class ChatPane
    private FlowPanel notificationContent_;
    private HTML updateMessageLabel_;
    private FlowPanel updateButtonPanel_;
+   private DecorativeImage notificationIcon_;
 
    // Injected ----
    private final EventBus events_;

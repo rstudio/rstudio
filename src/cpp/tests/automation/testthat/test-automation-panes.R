@@ -1799,3 +1799,135 @@ withr::defer(.rs.automation.deleteRemote())
 
    .rs.resetUILayout(remote)
 })
+
+.rs.test("Moving Posit Assistant from visible sidebar to TabSet1 persists across UI reload", {
+   skip_on_ci()
+
+   # Pane layout dialog selectors (defined in test-automation-pane-layout.R)
+   PL_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
+   PL_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+   PL_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
+
+   # 0. Show the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   # Wait for the sidebar to be created
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 1. Verify default state: Posit Assistant is in the sidebar, not in TabSet1
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be in sidebar by default")
+   expect_false(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+                info = "Posit Assistant should not be in TabSet1 by default")
+
+   # 2. Move Posit Assistant to TabSet1 by checking it there
+   expect_true(.rs.toggleTab(remote, PL_RIGHT_TOP, "Posit Assistant"))
+
+   # 3. Verify it moved: checked in TabSet1, unchecked in sidebar
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should now be checked in TabSet1")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should no longer be in sidebar")
+
+   # Sidebar visibility should have auto-unchecked (last tab removed)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should auto-uncheck when last tab removed")
+
+   # 4. Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.5)
+
+   # 5. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
+
+   # 6. Wait for page to reload (TabSet1 should reappear)
+   .rs.waitUntil("page reloaded", function() {
+      remote$dom.elementExists("#rstudio_TabSet1_pane")
+   })
+   Sys.sleep(0.5)
+
+   # 7. Re-open the Pane Layout dialog and verify the change persisted
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should still be in TabSet1 after reload")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should not be in sidebar after reload")
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should still be unchecked after reload")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+
+   # 8. Reset layout
+   .rs.resetUILayout(remote)
+})
+
+.rs.test("Moving Posit Assistant from hidden sidebar to TabSet1 persists across UI reload", {
+   skip_on_ci()
+
+   # Pane layout dialog selectors (defined in test-automation-pane-layout.R)
+   PL_RIGHT_TOP <- "#rstudio_pane_layout_right_top"
+   PL_SIDEBAR <- "#rstudio_pane_layout_sidebar"
+   PL_SIDEBAR_VISIBLE <- "#rstudio_pane_layout_sidebar_visible"
+
+   # 1. Verify default state: Posit Assistant is in the sidebar, not in TabSet1
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+               info = "Posit Assistant should be in sidebar by default")
+   expect_false(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+                info = "Posit Assistant should not be in TabSet1 by default")
+
+   # 2. Move Posit Assistant to TabSet1 by checking it there
+   expect_true(.rs.toggleTab(remote, PL_RIGHT_TOP, "Posit Assistant"))
+
+   # 3. Verify it moved: checked in TabSet1, unchecked in sidebar
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should now be checked in TabSet1")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should no longer be in sidebar")
+
+   # Sidebar visibility should have auto-unchecked (last tab removed)
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should auto-uncheck when last tab removed")
+
+   # 4. Apply changes by clicking OK
+   remote$dom.clickElement(selector = "#rstudio_preferences_confirm")
+   .rs.waitUntil("dialog closed", function() {
+      !remote$dom.elementExists(".gwt-DialogBox")
+   })
+   Sys.sleep(0.5)
+
+   # 5. Reload the UI to test persistence
+   remote$js.eval("window.location.reload()")
+
+   # 6. Wait for page to reload (TabSet1 should reappear)
+   .rs.waitUntil("page reloaded", function() {
+      remote$dom.elementExists("#rstudio_TabSet1_pane")
+   })
+   Sys.sleep(0.5)
+
+   # 7. Re-open the Pane Layout dialog and verify the change persisted
+   .rs.openPaneLayoutOptions(remote)
+
+   expect_true(.rs.isTabChecked(remote, PL_RIGHT_TOP, "Posit Assistant"),
+               info = "Posit Assistant should still be in TabSet1 after reload")
+   expect_false(.rs.isTabChecked(remote, PL_SIDEBAR, "Posit Assistant"),
+                info = "Posit Assistant should not be in sidebar after reload")
+   expect_false(remote$dom.isChecked(remote$dom.querySelector(PL_SIDEBAR_VISIBLE)),
+                info = "Sidebar visibility should still be unchecked after reload")
+
+   # Close dialog
+   remote$keyboard.insertText("<Escape>")
+
+   # 8. Reset layout
+   .rs.resetUILayout(remote)
+})
