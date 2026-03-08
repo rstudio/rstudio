@@ -332,6 +332,8 @@ public:
          Entry dirEntry(path);
          DEBUG("Entry: '" << dirEntry.fileInfo.absolutePath() << "'");
 
+         // this fires for the root node (path ""), which is always
+         // reachable via begin() and doesn't need a map entry
          if (isSamePath(*parent, dirEntry))
          {
             DEBUG("- Node already exists as parent; skipping...");
@@ -408,14 +410,48 @@ public:
 
 public:
 
-   iterator find_leaf(const Entry& entry)
+   iterator find(const Entry& entry)
    {
       // try O(1) lookup first
       auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
       if (mapIt != pathLookup_.end())
          return mapIt->second;
 
-      // fall back to linear scan
+      // fall back to type-specific search
+      if (entry.fileInfo.isDirectory())
+         return find_branch(entry);
+      else
+         return find_leaf(entry);
+   }
+
+public:
+
+   void clear()
+   {
+      tree<Entry>::clear();
+      pathLookup_.clear();
+   }
+
+   void eraseEntry(iterator it)
+   {
+      // remove all descendants from the lookup map
+      iterator descIt = it;
+      iterator descEnd = it;
+      descEnd.skip_children();
+      ++descEnd;
+      for (; descIt != descEnd; ++descIt)
+      {
+         const std::string& path = (*descIt).fileInfo.absolutePath();
+         if (!path.empty())
+            pathLookup_.erase(path);
+      }
+      erase(it);
+   }
+
+private:
+
+   iterator find_leaf(const Entry& entry)
+   {
       leaf_iterator it = begin_leaf();
       for (; is_valid(it); ++it)
          if (isSamePath(*it, entry))
@@ -425,19 +461,11 @@ public:
 
    iterator find_branch(const Entry& entry)
    {
-      // try O(1) lookup first
-      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
-      if (mapIt != pathLookup_.end())
-         return mapIt->second;
-
-      // fall back to DFS
       iterator parent = begin();
       iterator result = end();
       do_find_branch(entry, parent, &result);
       return result;
    }
-   
-private:
 
    void do_find_branch(const Entry& entry,
                        iterator parent,
@@ -461,47 +489,6 @@ private:
          }
       }
    }
-
-public:
-
-   iterator find(const Entry& entry)
-   {
-      // try O(1) lookup first
-      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
-      if (mapIt != pathLookup_.end())
-         return mapIt->second;
-
-      // fall back to type-specific search
-      if (entry.fileInfo.isDirectory())
-         return find_branch(entry);
-      else
-         return find_leaf(entry);
-   }
-
-public:
-
-   void clearPathLookup()
-   {
-      pathLookup_.clear();
-   }
-
-   void eraseEntry(iterator it)
-   {
-      // remove all descendants from the lookup map
-      iterator descIt = it;
-      iterator descEnd = it;
-      descEnd.skip_children();
-      ++descEnd;
-      for (; descIt != descEnd; ++descIt)
-      {
-         const std::string& path = (*descIt).fileInfo.absolutePath();
-         if (!path.empty())
-            pathLookup_.erase(path);
-      }
-      erase(it);
-   }
-
-private:
 
    Entry dummyEntry_;
    std::unordered_map<std::string, iterator> pathLookup_;
@@ -839,7 +826,7 @@ public:
                   boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
       Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);
+      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
       {
          LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.getAbsolutePath() + "'");
@@ -861,7 +848,6 @@ public:
       indexing_ = false;
       indexingQueue_ = std::queue<core::system::FileChangeEvent>();
       pEntries_->clear();
-      pEntries_->clearPathLookup();
    }
 
 private:
