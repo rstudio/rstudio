@@ -13,14 +13,18 @@
 package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.model.SatelliteWindowGeometry;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -28,6 +32,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
@@ -120,7 +127,8 @@ public class ChatPresenter extends BasePresenter
       ChatServerOperations server,
       PaiUtil paiUtil,
       UserPrefs prefs,
-      SatelliteManager satelliteManager)
+      SatelliteManager satelliteManager,
+      Session session)
    {
       super(display);
       binder.bind(commands, this);
@@ -132,6 +140,7 @@ public class ChatPresenter extends BasePresenter
       prefs_ = prefs;
       installManager_ = new PositAiInstallManager();
       satelliteManager_ = satelliteManager;
+      session_ = session;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -197,10 +206,11 @@ public class ChatPresenter extends BasePresenter
             display_.hideReadlineNotification();
             if (event.getCrashed())
             {
-               // If popped out, close the satellite and show crash UI in main
+               // If popped out, save geometry and close satellite but keep
+               // poppedOut_ true so it auto-reopens after restart
                if (poppedOut_)
                {
-                  poppedOut_ = false;
+                  updateSavedGeometry();
                   satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
                }
                display_.showCrashedMessage(event.getExitCode());
@@ -218,9 +228,11 @@ public class ChatPresenter extends BasePresenter
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
                display_.hideReadlineNotification();
+               // Save geometry and close satellite but keep poppedOut_ true
+               // so it auto-reopens on resume
                if (poppedOut_)
                {
-                  poppedOut_ = false;
+                  updateSavedGeometry();
                   satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
                }
                display_.showSuspendedMessage();
@@ -251,6 +263,13 @@ public class ChatPresenter extends BasePresenter
       // Listen for satellite closed events
       events_.addHandler(SatelliteClosedEvent.TYPE, this);
 
+      // Track when the application is quitting so we don't reset poppedOut_
+      // during shutdown. LastChanceSaveEvent fires early in the GWT quit flow,
+      // before any windows close, so this flag is set regardless of which
+      // window had focus when the user pressed Cmd+Q.
+      events_.addHandler(LastChanceSaveEvent.TYPE,
+         (LastChanceSaveEvent event) -> windowsClosing_ = true);
+
       // Listen for chat return-to-main events from satellite
       events_.addHandler(ChatReturnToMainEvent.TYPE, this);
 
@@ -265,6 +284,46 @@ public class ChatPresenter extends BasePresenter
       {
          onChatProviderChanged();
       });
+
+      // Persist pop-out state and satellite geometry across sessions
+      new JSObjectStateValue(
+         "chat-window",
+         "chatSatelliteState",
+         ClientState.PROJECT_PERSISTENT,
+         session.getSessionInfo().getClientState(),
+         false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value != null)
+            {
+               poppedOut_ = value.getBoolean("poppedOut");
+               if (value.hasKey("geometry"))
+                  savedGeometry_ = value.getObject("geometry").cast();
+            }
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            // Capture live geometry from the satellite window if it's open
+            if (poppedOut_)
+               updateSavedGeometry();
+
+            JsObject state = JsObject.createJsObject();
+            state.setBoolean("poppedOut", poppedOut_);
+            if (savedGeometry_ != null)
+               state.setObject("geometry", savedGeometry_);
+            return state;
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            return true;
+         }
+      };
    }
 
    // When the console prompt fires while R is busy (i.e. executing code rather
@@ -292,10 +351,17 @@ public class ChatPresenter extends BasePresenter
    @Override
    public void onSatelliteClosed(SatelliteClosedEvent event)
    {
-      if (ChatSatellite.NAME.equals(event.getName()) && poppedOut_)
+      if (!ChatSatellite.NAME.equals(event.getName()) || !poppedOut_)
+         return;
+
+      // When Cmd+Q is pressed from the satellite window, SatelliteClosedEvent
+      // arrives before LastChanceSaveEvent sets windowsClosing_. Deferring by
+      // one tick lets the quit flow's LastChanceSaveEvent fire first.
+      Scheduler.get().scheduleDeferred(() ->
       {
-         returnChatToMain();
-      }
+         if (!windowsClosing_)
+            returnChatToMain();
+      });
    }
 
    @Override
@@ -320,10 +386,18 @@ public class ChatPresenter extends BasePresenter
          // Backend already running — open satellite immediately
          ChatSatelliteParams params = ChatSatelliteParams.create(
             cachedUrl_, cachedAuthToken_, true);
+         Size size = (savedGeometry_ != null)
+            ? savedGeometry_.getSize()
+            : new Size(500, 700);
+         Point position = (savedGeometry_ != null)
+            ? savedGeometry_.getPosition()
+            : null;
          satelliteManager_.openSatellite(
             ChatSatellite.NAME,
             params,
-            new Size(500, 700));
+            size,
+            position,
+            true);
       }
       else
       {
@@ -367,6 +441,21 @@ public class ChatPresenter extends BasePresenter
       }
    }
 
+   private void updateSavedGeometry()
+   {
+      WindowEx window = satelliteManager_.getSatelliteWindowObject(
+         ChatSatellite.NAME);
+      if (window != null)
+      {
+         savedGeometry_ = SatelliteWindowGeometry.create(
+            0,
+            window.getScreenX(),
+            window.getScreenY(),
+            window.getInnerWidth(),
+            window.getInnerHeight());
+      }
+   }
+
    private void returnChatToMain()
    {
       if (!poppedOut_)
@@ -374,6 +463,7 @@ public class ChatPresenter extends BasePresenter
          return;
       }
 
+      updateSavedGeometry();
       poppedOut_ = false;
       satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
       display_.hidePoppedOutPlaceholder();
@@ -794,10 +884,18 @@ public class ChatPresenter extends BasePresenter
       {
          ChatSatelliteParams satelliteParams = ChatSatelliteParams.create(
             loadUrl, authToken, resumeChat);
+         Size size = (savedGeometry_ != null)
+            ? savedGeometry_.getSize()
+            : new Size(500, 700);
+         Point position = (savedGeometry_ != null)
+            ? savedGeometry_.getPosition()
+            : null;
          satelliteManager_.openSatellite(
             ChatSatellite.NAME,
             satelliteParams,
-            new Size(500, 700));
+            size,
+            position,
+            true);
 
          display_.setStatus(Display.Status.READY);
          display_.showPoppedOutPlaceholder();
@@ -845,6 +943,7 @@ public class ChatPresenter extends BasePresenter
    private final UserPrefs prefs_;
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
+   private final Session session_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
@@ -853,7 +952,9 @@ public class ChatPresenter extends BasePresenter
    private boolean initializing_ = false;
 
    // Satellite pop-out state
+   private boolean windowsClosing_ = false;
    private boolean poppedOut_ = false;
+   private SatelliteWindowGeometry savedGeometry_ = null;
    private String cachedUrl_ = null;
    private String cachedAuthToken_ = null;
 
