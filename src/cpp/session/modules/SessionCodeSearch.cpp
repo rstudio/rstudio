@@ -285,6 +285,10 @@ public:
       return static_cast<const_iterator>(end());
    }
    
+   // NOTE: this method is not exception-safe w.r.t. pathLookup_. If an
+   // exception occurs between a tree modification and its corresponding
+   // map update, the two structures may become out of sync. In practice
+   // only std::bad_alloc could trigger this, which is unrecoverable.
    void insertEntry(const Entry& entry)
    {
       std::string absolutePath = entry.fileInfo.absolutePath();
@@ -427,14 +431,22 @@ public:
       if (mapIt != pathLookup_.end())
          return mapIt->second;
 
-      // fall back to type-specific search
+      // fall back to type-specific search; if this finds the entry,
+      // pathLookup_ is out of sync with the tree
+      iterator result;
       if (entry.fileInfo.isDirectory())
-         return find_branch(entry);
+         result = find_branch(entry);
       else
-         return find_leaf(entry);
-   }
+         result = find_leaf(entry);
 
-public:
+      if (result != end())
+      {
+         WLOGF("pathLookup_ miss for '{}'; found via tree traversal",
+               entry.fileInfo.absolutePath());
+      }
+
+      return result;
+   }
 
    void clear()
    {
@@ -453,7 +465,7 @@ public:
       for (; descIt != descEnd; ++descIt)
       {
          const std::string& path = (*descIt).fileInfo.absolutePath();
-         if (!path.empty())
+         if (!path.empty()) // skip dummy entries
             pathLookup_.erase(path);
       }
       erase(it);
@@ -570,7 +582,7 @@ public:
       // schedule indexing if necessary. don't index anything immediately
       // (this is to defend against large numbers of files being enqueued
       // at once and tying up the main thread). rather, schedule indexing
-      // in 20ms intervals, processing a batch of items per interval
+      // in 20ms time slices, calling dequeAndIndex repeatedly within each slice
       if (!indexing_)
       {
          indexing_ = true;
@@ -682,11 +694,19 @@ public:
 
          it = parent.begin();
       }
+      else if (indexing_)
+      {
+         // index still building; search from root for now
+         WLOGF("Parent node '{}' not yet indexed; falling back to root search",
+               parentPath.getAbsolutePath());
+      }
       else
       {
-         // index may still be building; search available entries from root
-         WLOGF("Parent node '{}' not found in index; falling back to root search",
+         // index is complete but node not found -- callers validate the path
+         // exists, so this indicates a bug in the index
+         ELOGF("Parent node '{}' not found in completed index",
                parentPath.getAbsolutePath());
+         return;
       }
       
       // iterate over the files
@@ -758,12 +778,23 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
 
-      // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
       {
-         WLOGF("Parent node '{}' not found in index; falling back to root search",
-               parentPath.getAbsolutePath());
-         parentItr = pEntries_->begin();
+         if (indexing_)
+         {
+            // index still building; search from root for now
+            WLOGF("Parent node '{}' not yet indexed; falling back to root search",
+                  parentPath.getAbsolutePath());
+            parentItr = pEntries_->begin();
+         }
+         else
+         {
+            // index is complete but node not found -- callers validate the path
+            // exists, so this indicates a bug in the index
+            ELOGF("Parent node '{}' not found in completed index",
+                  parentPath.getAbsolutePath());
+            return;
+         }
       }
 
       EntryTree::iterator it = parentItr.begin();
@@ -806,12 +837,23 @@ public:
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
 
-      // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
       {
-         WLOGF("Parent node '{}' not found in index; falling back to root search",
-               parentPath.getAbsolutePath());
-         parentItr = pEntries_->begin();
+         if (indexing_)
+         {
+            // index still building; search from root for now
+            WLOGF("Parent node '{}' not yet indexed; falling back to root search",
+                  parentPath.getAbsolutePath());
+            parentItr = pEntries_->begin();
+         }
+         else
+         {
+            // index is complete but node not found -- callers validate the path
+            // exists, so this indicates a bug in the index
+            ELOGF("Parent node '{}' not found in completed index",
+                  parentPath.getAbsolutePath());
+            return;
+         }
       }
 
       EntryTree::iterator it = parentItr.begin();
@@ -854,8 +896,12 @@ public:
       {
          // don't fall back to root here -- walking the entire project tree
          // would return incorrect results for a scoped symbol lookup
-         WLOGF("Parent node '{}' not found in index; skipping walk",
-               parentPath.getAbsolutePath());
+         if (indexing_)
+            WLOGF("Parent node '{}' not yet indexed; skipping walk",
+                  parentPath.getAbsolutePath());
+         else
+            ELOGF("Parent node '{}' not found in completed index",
+                  parentPath.getAbsolutePath());
          return;
       }
       
@@ -887,7 +933,7 @@ private:
 
       // process a batch of items per scheduler call to reduce
       // per-item function dispatch and time-check overhead
-      static const int kBatchSize = 20;
+      static constexpr int kBatchSize = 20;
       for (int i = 0; i < kBatchSize && !indexingQueue_.empty(); ++i)
       {
          // remove the event from the queue
@@ -917,7 +963,16 @@ private:
                   break;
             }
          }
-         CATCH_UNEXPECTED_EXCEPTION
+         catch (const std::exception& e)
+         {
+            ELOGF("Exception indexing '{}': {}",
+                  event.fileInfo().absolutePath(), e.what());
+         }
+         catch (...)
+         {
+            ELOGF("Unknown exception indexing '{}'",
+                  event.fileInfo().absolutePath());
+         }
       }
 
       // return status
@@ -980,7 +1035,7 @@ private:
          pEntries_->eraseEntry(it);
       else
       {
-         DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
+         WLOGF("Failed to remove index entry for file: '{}'", fileInfo.absolutePath());
          print_tree(*pEntries_);
       }
    }
