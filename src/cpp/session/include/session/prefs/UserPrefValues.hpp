@@ -1901,7 +1901,7 @@ public:
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
 
    /**
-    * When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.
+    * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
     */
    bool fileMonitorUseGitignore();
    core::Error setFileMonitorUseGitignore(bool val);

@@ -2,7 +2,7 @@
     "$id": "https://rstudio.com/rstudio.preferences.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "RStudio User Preferences",
-    "$comment": "Preferences marked '\"public\": false' can be overridden at the project level and are stored privately in .Rproj.user (per-user). Preferences without a 'public' field, or with '\"public\": true', are either global-only or stored in the shared .Rproj file.",
+    "$comment": "Preferences marked '\"local\": true' can be overridden at the project level and are stored in .Rproj.user (per-user). Preferences without a 'local' field are either global-only or stored in the shared .Rproj file.",
     "type": "object",
     "properties": {
         "run_rprofile_on_resume": {
@@ -1607,7 +1607,7 @@
             "default": true,
             "local": true,
             "title": "Use .gitignore for file monitoring",
-            "description": "When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing."
+            "description": "When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing."
         },
         "install_pkg_deps_individually": {
             "type": "boolean",

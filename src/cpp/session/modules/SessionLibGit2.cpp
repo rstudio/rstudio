@@ -21,9 +21,6 @@
 
 #include <core/Log.hpp>
 
-#include <session/SessionModuleContext.hpp>
-
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -31,19 +28,21 @@ namespace session {
 namespace modules {
 namespace libgit2 {
 
-namespace {
-
-void onShutdown(bool)
-{
-   git_libgit2_shutdown();
-}
-
-} // anonymous namespace
-
 Error initialize()
 {
-   git_libgit2_init();
-   module_context::events().onShutdown.connect(onShutdown);
+   // NOTE: We do not call git_libgit2_shutdown(). The Git object's lifetime
+   // is managed by shared_ptr in file monitor callbacks and may extend past
+   // the shutdown signal. Calling git_repository_free() after
+   // git_libgit2_shutdown() is undefined behavior per the libgit2 API.
+   // Process exit reclaims all resources.
+   int rc = git_libgit2_init();
+   if (rc < 0)
+   {
+      const git_error* err = git_error_last();
+      std::string msg = err ? err->message : "unknown error";
+      LOG_ERROR_MESSAGE("git_libgit2_init() failed: " + msg);
+      return systemError(boost::system::errc::io_error, msg, ERROR_LOCATION);
+   }
    return Success();
 }
 
@@ -54,8 +53,18 @@ Git::Git(const FilePath& repoPath)
    if (rc != 0)
    {
       pRepo_ = nullptr;
-      LOG_DEBUG_MESSAGE("Git: path is not a git repository: " +
-                        repoPath.getAbsolutePath());
+      if (rc == GIT_ENOTFOUND)
+      {
+         LOG_DEBUG_MESSAGE("Git: path is not a git repository: " +
+                           repoPath.getAbsolutePath());
+      }
+      else
+      {
+         const git_error* err = git_error_last();
+         std::string msg = err ? err->message : "unknown error";
+         LOG_WARNING_MESSAGE("Git: failed to open repository at " +
+                             repoPath.getAbsolutePath() + ": " + msg);
+      }
    }
 }
 
@@ -73,7 +82,12 @@ bool Git::isIgnored(const std::string& path) const
    int ignored = 0;
    int rc = git_ignore_path_is_ignored(&ignored, pRepo_, path.c_str());
    if (rc != 0)
+   {
+      const git_error* err = git_error_last();
+      std::string msg = err ? err->message : "unknown error";
+      LOG_DEBUG_MESSAGE("git_ignore_path_is_ignored() failed for '" + path + "': " + msg);
       return false;
+   }
 
    return ignored != 0;
 }

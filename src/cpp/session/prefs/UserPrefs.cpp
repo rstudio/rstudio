@@ -181,6 +181,7 @@ public:
       }
       END_LOCK_MUTEX
 
+      // unreachable; suppresses compiler warning
       return json::Object();
    }
 };
@@ -227,7 +228,8 @@ Error writeProjectPref(const std::string& name, const json::Value& value)
    // as local project prefs; reject anything not in the generated allowlist.
    auto allowed = UserPrefValues::localProjectPrefs();
    if (allowed.find(name) == allowed.end())
-      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      return systemError(boost::system::errc::invalid_argument,
+         "pref '" + name + "' is not in the local project allowlist", ERROR_LOCATION);
 
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());
    return instance.writeProjectPrefValue(name, value);
@@ -240,7 +242,9 @@ Error writeLocalProjectPrefs(const json::Object& prefs)
    for (const auto& member : prefs)
    {
       if (allowed.find(member.getName()) == allowed.end())
-         return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+         return systemError(boost::system::errc::invalid_argument,
+            "pref '" + member.getName() + "' is not in the local project allowlist",
+            ERROR_LOCATION);
    }
 
    UserPrefs& instance = static_cast<UserPrefs&>(userPrefs());

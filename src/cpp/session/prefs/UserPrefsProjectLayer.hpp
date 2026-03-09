@@ -30,9 +30,9 @@ namespace prefs {
 //   cache_              (inherited) The merged view: shared prefs overlaid with local prefs.
 //
 // mergePrefs() rebuilds cache_ from the two source caches. Local prefs take
-// precedence over shared prefs when both define the same key. The source caches
-// must be deep-copied into cache_ (via json::Value::clone()) because json::Value
-// assignment is destructive (move semantics).
+// precedence over shared prefs when both define the same key. mergePrefs() uses
+// json::Value::clone() to copy values into cache_. (Note: json::Value copy
+// assignment also performs a deep copy, but clone() makes the intent explicit.)
 class UserPrefsProjectLayer: public PrefLayer
 {
 public:

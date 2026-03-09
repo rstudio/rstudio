@@ -2182,8 +2182,8 @@
 
 # Use .gitignore for file monitoring
 #
-# When enabled, files ignored by Git (.gitignore rules) will also be excluded
-# from project file monitoring and code indexing.
+# When enabled, directories ignored by Git (.gitignore rules) and their contents
+# will be excluded from project file monitoring and code indexing.
 .rs.uiPrefs$fileMonitorUseGitignore <- list(
    get = function() { .rs.getUserPref("file_monitor_use_gitignore") },
    set = function(value) { .rs.setUserPref("file_monitor_use_gitignore", value) },

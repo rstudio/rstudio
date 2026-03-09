@@ -739,9 +739,9 @@ void ProjectContext::onDeferredInit(bool newSession)
 
    // Initialize gitignore support. The Git object (and its underlying
    // git_repository handle) is kept alive for the lifetime of the file
-   // monitor. This is safe because git_ignore_path_is_ignored() re-reads
-   // .gitignore files on each call, so updated rules are picked up
-   // without needing to re-open the repository.
+   // monitor. This is safe because libgit2 uses an internal attribute
+   // cache that checks .gitignore file timestamps and reloads when they
+   // change, so updated rules are picked up without re-opening the repo.
    if (prefs::userPrefs().fileMonitorUseGitignore())
    {
       using modules::libgit2::Git;

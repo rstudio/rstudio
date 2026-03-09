@@ -621,7 +621,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // preference access)
       (modules::prefs::initialize)
 
-      // libgit2 (early init required -- projects below uses libgit2
+      // libgit2 (early init required -- project init below uses libgit2
       // for gitignore-aware file monitoring)
       (modules::libgit2::initialize)
 

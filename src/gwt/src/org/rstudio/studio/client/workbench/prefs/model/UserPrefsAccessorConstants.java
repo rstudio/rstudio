@@ -1962,11 +1962,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorIgnoredComponentsDescription();
 
    /**
-    * When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.
+    * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
     */
    @DefaultStringValue("Use .gitignore for file monitoring")
    String fileMonitorUseGitignoreTitle();
-   @DefaultStringValue("When enabled, files ignored by Git (.gitignore rules) will also be excluded from project file monitoring and code indexing.")
+   @DefaultStringValue("When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.")
    String fileMonitorUseGitignoreDescription();
 
    /**
