@@ -152,6 +152,19 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onPaneReady(boolean installed, String installedVersion)
          {
+            if (poppedOut_)
+            {
+               if (cachedUrl_ != null)
+               {
+                  // Satellite already open — show placeholder now that
+                  // the pane is in the DOM.
+                  display_.showPoppedOutPlaceholder();
+                  display_.setStatus(Display.Status.READY);
+               }
+               // else: backend still starting from eager init — let it
+               // finish; initializing_ guard prevents re-entry
+               return;
+            }
             initializeChat(installed, installedVersion);
          }
 
@@ -210,8 +223,7 @@ public class ChatPresenter extends BasePresenter
             display_.hideReadlineNotification();
             if (event.getCrashed())
             {
-               // If popped out, save geometry and close satellite but keep
-               // poppedOut_ true so it auto-reopens after restart
+               cachedUrl_ = null;
                if (poppedOut_)
                {
                   updateSavedGeometry();
@@ -304,6 +316,14 @@ public class ChatPresenter extends BasePresenter
                poppedOut_ = value.getBoolean("poppedOut");
                if (value.hasKey("geometry"))
                   savedGeometry_ = value.getObject("geometry").cast();
+
+               // Eagerly start the backend when popped out — the normal
+               // trigger (ChatPane.onLoad) won't fire if the sidebar is
+               // hidden.
+               if (poppedOut_)
+               {
+                  Scheduler.get().scheduleDeferred(() -> initializeChat());
+               }
             }
          }
 

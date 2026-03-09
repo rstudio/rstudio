@@ -12,6 +12,8 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
@@ -24,10 +26,21 @@ public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
    }
 
    @Inject
-   public ChatTab(Shim shim)
+   public ChatTab(Shim shim, Session session)
    {
       super(constants_.chatTitle(), shim);
       shim_ = shim;
+
+      // If chat was popped out in a previous session, force-load the
+      // presenter eagerly so it can restore the satellite window even
+      // when the sidebar is hidden (bypassing DelayLoad deferral).
+      JsObject group = session.getSessionInfo().getClientState()
+         .peek("chat-window");
+      JsObject state = group.getObject("chatSatelliteState");
+      if (state != null && state.getBoolean("poppedOut"))
+      {
+         shim_.forceLoad(false, null);
+      }
    }
 
    @SuppressWarnings("unused") private final Shim shim_;
