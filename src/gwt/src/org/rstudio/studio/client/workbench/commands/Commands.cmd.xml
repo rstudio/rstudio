@@ -4397,4 +4397,18 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
+
+   <cmd id="popOutChat"
+        label="Show Chat in Separate Window"
+        buttonLabel=""
+        desc="Show chat in a separate window"/>
+
+   <cmd id="returnChatToMain"
+        label="Return Chat to Main Window"
+        buttonLabel=""
+        desc="Return to main window"/>
+
+   <cmd id="bringChatToFront"
+        label="Bring Chat Window to Front"
+        desc="Bring the chat window to the front"/>
 </commands>

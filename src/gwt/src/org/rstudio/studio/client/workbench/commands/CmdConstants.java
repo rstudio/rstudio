@@ -4158,4 +4158,26 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();
     
+    // popOutChat
+    @DefaultStringValue("Show Chat in Separate Window") // $NON-NLS-1$
+    String popOutChatLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String popOutChatButtonLabel();
+    @DefaultStringValue("Show chat in a separate window") // $NON-NLS-1$
+    String popOutChatDesc();
+    
+    // returnChatToMain
+    @DefaultStringValue("Return Chat to Main Window") // $NON-NLS-1$
+    String returnChatToMainLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String returnChatToMainButtonLabel();
+    @DefaultStringValue("Return to main window") // $NON-NLS-1$
+    String returnChatToMainDesc();
+    
+    // bringChatToFront
+    @DefaultStringValue("Bring Chat Window to Front") // $NON-NLS-1$
+    String bringChatToFrontLabel();
+    @DefaultStringValue("Bring the chat window to the front") // $NON-NLS-1$
+    String bringChatToFrontDesc();
+    
 }

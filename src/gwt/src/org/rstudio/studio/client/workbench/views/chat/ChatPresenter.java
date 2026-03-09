@@ -13,11 +13,15 @@
 package org.rstudio.studio.client.workbench.views.chat;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -27,6 +31,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
+import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 
@@ -36,7 +42,9 @@ import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 
 public class ChatPresenter extends BasePresenter
-   implements ConsolePromptEvent.Handler
+   implements ConsolePromptEvent.Handler,
+              SatelliteClosedEvent.Handler,
+              ChatReturnToMainEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ChatPresenter>
    {
@@ -58,6 +66,8 @@ public class ChatPresenter extends BasePresenter
       {
          void onPaneReady(boolean installed, String installedVersion);
          void onRestartBackend();
+         void onBringChatToFront();
+         void onReturnChatToMain();
       }
 
       interface UpdateObserver
@@ -90,6 +100,8 @@ public class ChatPresenter extends BasePresenter
       void showReadlineNotification();
       void hideReadlineNotification();
       void updateCachedUrl(String url);
+      void showPoppedOutPlaceholder();
+      void hidePoppedOutPlaceholder();
    }
 
    public static class Chat
@@ -107,7 +119,8 @@ public class ChatPresenter extends BasePresenter
       Binder binder,
       ChatServerOperations server,
       PaiUtil paiUtil,
-      UserPrefs prefs)
+      UserPrefs prefs,
+      SatelliteManager satelliteManager)
    {
       super(display);
       binder.bind(commands, this);
@@ -118,6 +131,7 @@ public class ChatPresenter extends BasePresenter
       paiUtil_ = paiUtil;
       prefs_ = prefs;
       installManager_ = new PositAiInstallManager();
+      satelliteManager_ = satelliteManager;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
@@ -132,6 +146,18 @@ public class ChatPresenter extends BasePresenter
          public void onRestartBackend()
          {
             restartBackend();
+         }
+
+         @Override
+         public void onBringChatToFront()
+         {
+            onBringChatToFrontCommand();
+         }
+
+         @Override
+         public void onReturnChatToMain()
+         {
+            returnChatToMain();
          }
       });
 
@@ -171,6 +197,12 @@ public class ChatPresenter extends BasePresenter
             display_.hideReadlineNotification();
             if (event.getCrashed())
             {
+               // If popped out, close the satellite and show crash UI in main
+               if (poppedOut_)
+               {
+                  poppedOut_ = false;
+                  satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
+               }
                display_.showCrashedMessage(event.getExitCode());
             }
          }
@@ -186,6 +218,11 @@ public class ChatPresenter extends BasePresenter
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
                display_.hideReadlineNotification();
+               if (poppedOut_)
+               {
+                  poppedOut_ = false;
+                  satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
+               }
                display_.showSuspendedMessage();
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
@@ -210,6 +247,12 @@ public class ChatPresenter extends BasePresenter
             }
          }
       });
+
+      // Listen for satellite closed events
+      events_.addHandler(SatelliteClosedEvent.TYPE, this);
+
+      // Listen for chat return-to-main events from satellite
+      events_.addHandler(ChatReturnToMainEvent.TYPE, this);
 
       // Listen for chat provider preference changes (global setting)
       prefs_.chatProvider().addValueChangeHandler((event) ->
@@ -246,6 +289,109 @@ public class ChatPresenter extends BasePresenter
          display_.hideReadlineNotification();
    }
 
+   @Override
+   public void onSatelliteClosed(SatelliteClosedEvent event)
+   {
+      if (ChatSatellite.NAME.equals(event.getName()) && poppedOut_)
+      {
+         returnChatToMain();
+      }
+   }
+
+   @Override
+   public void onChatReturnToMain(ChatReturnToMainEvent event)
+   {
+      returnChatToMain();
+   }
+
+   @Handler
+   void onPopOutChat()
+   {
+      if (poppedOut_)
+      {
+         return;
+      }
+
+      poppedOut_ = true;
+      display_.showPoppedOutPlaceholder();
+
+      if (cachedUrl_ != null)
+      {
+         // Backend already running — open satellite immediately
+         ChatSatelliteParams params = ChatSatelliteParams.create(
+            cachedUrl_, cachedAuthToken_, true);
+         satelliteManager_.openSatellite(
+            ChatSatellite.NAME,
+            params,
+            new Size(500, 700));
+      }
+      else
+      {
+         // Backend not initialized (e.g. sidebar was hidden at startup).
+         // Start initialization; loadChatUI() will open the satellite
+         // because poppedOut_ is already true.
+         initializeChat();
+      }
+   }
+
+   @Handler
+   void onReturnChatToMain()
+   {
+      returnChatToMain();
+   }
+
+   @Handler
+   void onBringChatToFront()
+   {
+      onBringChatToFrontCommand();
+   }
+
+   private void onBringChatToFrontCommand()
+   {
+      if (poppedOut_)
+      {
+         satelliteManager_.activateSatelliteWindow(ChatSatellite.NAME);
+      }
+   }
+
+   /**
+    * Resets popped-out state when initialization fails before the satellite
+    * could be opened (e.g. backend error, provider not selected).
+    */
+   private void cancelPopOut()
+   {
+      if (poppedOut_)
+      {
+         poppedOut_ = false;
+         display_.hidePoppedOutPlaceholder();
+      }
+   }
+
+   private void returnChatToMain()
+   {
+      if (!poppedOut_)
+      {
+         return;
+      }
+
+      poppedOut_ = false;
+      satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
+      display_.hidePoppedOutPlaceholder();
+
+      // Reload chat in the main window
+      if (cachedUrl_ != null)
+      {
+         display_.loadUrl(cachedUrl_);
+         display_.setStatus(Display.Status.READY);
+      }
+      else
+      {
+         // Backend wasn't initialized yet (e.g. pop-out triggered before
+         // backend was ready). Re-initialize to load chat in the main pane.
+         initializeChat();
+      }
+   }
+
    /**
     * Called when either global chat provider preference or project options change.
     * Re-evaluates whether chat should be enabled based on the effective provider.
@@ -266,12 +412,20 @@ public class ChatPresenter extends BasePresenter
       }
       else
       {
+         // If popped out, close the satellite first
+         if (poppedOut_)
+         {
+            poppedOut_ = false;
+            satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
+         }
+
          // Posit AI is not the effective chat provider, stop backend and show not-selected message
          initializing_ = false;  // Cancel any ongoing initialization
          stopBackend();
          display_.hideReadlineNotification();
          display_.hideUpdateNotification();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+   
       }
    }
 
@@ -306,6 +460,7 @@ public class ChatPresenter extends BasePresenter
       // Check if Posit AI is selected as chat provider before initializing
       if (!paiUtil_.isChatProviderPosit())
       {
+         cancelPopOut();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          return;
       }
@@ -334,6 +489,7 @@ public class ChatPresenter extends BasePresenter
             {
                String error = response.getString("error");
                initializing_ = false;
+               cancelPopOut();
                display_.setStatus(Display.Status.ERROR);
                display_.showError(constants_.chatBackendStartFailed(error));
             }
@@ -343,6 +499,7 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             initializing_ = false;
+            cancelPopOut();
             display_.setStatus(Display.Status.ERROR);
             display_.showError(constants_.chatBackendStartError(error.getMessage()));
          }
@@ -365,6 +522,7 @@ public class ChatPresenter extends BasePresenter
          {
             // Reset initialization flag - we're pausing for user action
             initializing_ = false;
+            cancelPopOut();
 
             if (isInitialInstall)
             {
@@ -385,6 +543,7 @@ public class ChatPresenter extends BasePresenter
          public void onIncompatibleVersion()
          {
             initializing_ = false;
+            cancelPopOut();
             display_.showIncompatibleVersion();
          }
 
@@ -393,6 +552,7 @@ public class ChatPresenter extends BasePresenter
              String currentVersion, String newVersion)
          {
             initializing_ = false;
+            cancelPopOut();
             display_.showUnsupportedVersionUpgradeRequired(
                 currentVersion, newVersion);
          }
@@ -401,6 +561,7 @@ public class ChatPresenter extends BasePresenter
          public void onUnsupportedVersionNoUpdate(String currentVersion)
          {
             initializing_ = false;
+            cancelPopOut();
             display_.showUnsupportedVersionNoUpdate(currentVersion);
          }
 
@@ -408,6 +569,7 @@ public class ChatPresenter extends BasePresenter
          public void onUnsupportedProtocol()
          {
             initializing_ = false;
+            cancelPopOut();
             display_.showUnsupportedProtocol();
          }
 
@@ -415,6 +577,7 @@ public class ChatPresenter extends BasePresenter
          public void onManifestUnavailable()
          {
             initializing_ = false;
+            cancelPopOut();
             display_.showManifestUnavailable();
          }
 
@@ -487,6 +650,7 @@ public class ChatPresenter extends BasePresenter
       if (attemptCount > 30) // 30 seconds timeout
       {
          initializing_ = false;
+         cancelPopOut();
          display_.setStatus(Display.Status.ERROR);
          display_.showError(constants_.chatBackendStartTimeout());
          return;
@@ -530,6 +694,7 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             initializing_ = false;
+            cancelPopOut();
             display_.setStatus(Display.Status.ERROR);
             display_.showError(constants_.chatBackendStatusCheckFailed(error.getMessage()));
          }
@@ -597,6 +762,7 @@ public class ChatPresenter extends BasePresenter
       if (!paiUtil_.isChatProviderPosit())
       {
          initializing_ = false;
+         cancelPopOut();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
          return;
       }
@@ -619,15 +785,39 @@ public class ChatPresenter extends BasePresenter
          loadUrl += "&resume";
       }
 
-      display_.loadUrl(loadUrl);
-      display_.setStatus(Display.Status.READY);
+      // Cache the URL and auth token for satellite use
+      cachedUrl_ = loadUrl;
+      cachedAuthToken_ = authToken;
+
+      // If popped out, send URL to satellite instead of loading in ChatPane
+      if (poppedOut_)
+      {
+         ChatSatelliteParams satelliteParams = ChatSatelliteParams.create(
+            loadUrl, authToken, resumeChat);
+         satelliteManager_.openSatellite(
+            ChatSatellite.NAME,
+            satelliteParams,
+            new Size(500, 700));
+
+         display_.setStatus(Display.Status.READY);
+         display_.showPoppedOutPlaceholder();
+   
+      }
+      else
+      {
+         display_.loadUrl(loadUrl);
+         display_.setStatus(Display.Status.READY);
+   
+      }
 
       // Mark the backend so subsequent status responses include resume_chat=true
       server_.chatNotifyUILoaded(new VoidServerRequestCallback());
 
       // Always include &resume in the cached URL so that tab-switch reloads
       // (via onSelected) signal resume, even if the initial load was fresh
-      display_.updateCachedUrl(baseUrl + params + "&resume");
+      String cachedResumeUrl = baseUrl + params + "&resume";
+      display_.updateCachedUrl(cachedResumeUrl);
+      cachedUrl_ = cachedResumeUrl;
 
       // Reset initialization flag - we're done
       initializing_ = false;
@@ -649,18 +839,23 @@ public class ChatPresenter extends BasePresenter
 
    private final Display display_;
    private final EventBus events_;
-   @SuppressWarnings("unused")
    private final Commands commands_;
    private final ChatServerOperations server_;
    private final PaiUtil paiUtil_;
    private final UserPrefs prefs_;
    private final PositAiInstallManager installManager_;
+   private final SatelliteManager satelliteManager_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;
 
    // Guard against concurrent initialization (multiple polling loops)
    private boolean initializing_ = false;
+
+   // Satellite pop-out state
+   private boolean poppedOut_ = false;
+   private String cachedUrl_ = null;
+   private String cachedAuthToken_ = null;
 
    private static final ChatConstants constants_ = com.google.gwt.core.client.GWT.create(ChatConstants.class);
 }

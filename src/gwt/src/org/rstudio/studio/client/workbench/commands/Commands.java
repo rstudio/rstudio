@@ -768,6 +768,11 @@ public abstract class
    // Databricks
    public abstract AppCommand layoutZoomDatabricks();
 
+   // Chat satellite window
+   public abstract AppCommand popOutChat();
+   public abstract AppCommand returnChatToMain();
+   public abstract AppCommand bringChatToFront();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();

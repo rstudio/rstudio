@@ -83,6 +83,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatellite;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
@@ -406,6 +407,7 @@ public interface RStudioGinjector extends Ginjector
    HtmlMessageListener getHtmlMessageListener();
    PlumberViewerTypePopupMenu getPlumberViewerTypePopupMenu();
    PlumberAPISatellite getPlumberAPISatellite();
+   ChatSatellite getChatSatellite();
    PlumberAPI getPlumberAPI();
    JobManager getJobManager();
    SessionOpener getSessionOpener();

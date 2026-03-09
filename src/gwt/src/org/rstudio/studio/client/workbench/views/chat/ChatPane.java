@@ -18,9 +18,10 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DecorativeImage;
-import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -83,9 +84,6 @@ public class ChatPane
       server_ = server;
 
       ensureWidget();
-
-      // Hide empty toolbar until we have content to show
-      setMainToolbarVisible(false);
 
       // Listen for theme changes to update iframe content
       events_.addHandler(ThemeChangedEvent.TYPE, new ThemeChangedEvent.Handler()
@@ -1120,6 +1118,98 @@ public class ChatPane
       }
    }
 
+   @Override
+   public void showPoppedOutPlaceholder()
+   {
+      String html = generatePoppedOutPlaceholderHTML();
+      updateFrameContent(html);
+   }
+
+   @Override
+   public void hidePoppedOutPlaceholder()
+   {
+      // Content will be replaced by loadUrl() when chat returns to main
+   }
+
+   private String generatePoppedOutPlaceholderHTML()
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
+      String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault("--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault("--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0;");
+      html.append("  padding: 0;");
+      html.append("  width: 100%;");
+      html.append("  height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, " + fgColor + ");");
+      html.append("  background-color: var(--rstudio-editor-background, " + bgColor + ");");
+      html.append("}");
+      html.append(".message {");
+      html.append("  text-align: center;");
+      html.append("  padding: 40px;");
+      html.append("}");
+      html.append("p {");
+      html.append("  font-size: 13px;");
+      html.append("  margin-bottom: 20px;");
+      html.append("}");
+      html.append(".button-group {");
+      html.append("  display: flex;");
+      html.append("  gap: 8px;");
+      html.append("  justify-content: center;");
+      html.append("}");
+      html.append("button {");
+      html.append("  padding: 6px 16px;");
+      html.append("  font-size: 12px;");
+      html.append("  border: 1px solid " + borderColor + ";");
+      html.append("  border-radius: 4px;");
+      html.append("  background-color: " + widgetBgColor + ";");
+      html.append("  color: " + fgColor + ";");
+      html.append("  cursor: pointer;");
+      html.append("}");
+      html.append("button:hover {");
+      html.append("  background-color: " + hoverBgColor + ";");
+      html.append("}");
+      html.append("</style>");
+      html.append("</head>");
+      html.append("<body>");
+      html.append("<div class='message'>");
+      html.append("<p>" + constants_.chatPoppedOutMessage() + "</p>");
+      html.append("<div class='button-group'>");
+      html.append("<button onclick=\"window.parent.postMessage('bring-chat-to-front', '*')\">");
+      html.append(constants_.chatBringToFrontButton());
+      html.append("</button>");
+      html.append("<button onclick=\"window.parent.postMessage('return-chat-to-main', '*')\">");
+      html.append(constants_.chatReturnHereButton());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("</div>");
+      html.append("</body>");
+      html.append("</html>");
+
+      return html.toString();
+   }
+
    private String generateCrashedMessageHTML(int exitCode)
    {
       // Determine title and message based on exit code
@@ -1230,6 +1320,9 @@ public class ChatPane
    {
       toolbar_ = new Toolbar(constants_.chatTabLabel());
 
+      popOutButton_ = commands_.popOutChat().createToolbarButton();
+      toolbar_.addRightWidget(popOutButton_);
+
       return toolbar_;
    }
 
@@ -1299,6 +1392,12 @@ public class ChatPane
          else if (event.data === 'open-global-options') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleOpenGlobalOptionsRequest()();
          }
+         else if (event.data === 'bring-chat-to-front') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleBringToFrontRequest()();
+         }
+         else if (event.data === 'return-chat-to-main') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleReturnToMainRequest()();
+         }
       });
    }-*/;
 
@@ -1329,6 +1428,22 @@ public class ChatPane
    private void handleOpenGlobalOptionsRequest()
    {
       commands_.showAssistantOptions().execute();
+   }
+
+   private void handleBringToFrontRequest()
+   {
+      if (observer_ != null)
+      {
+         observer_.onBringChatToFront();
+      }
+   }
+
+   private void handleReturnToMainRequest()
+   {
+      if (observer_ != null)
+      {
+         observer_.onReturnChatToMain();
+      }
    }
 
    @Override
@@ -1376,6 +1491,7 @@ public class ChatPane
    private Timer loadTimeoutTimer_;
    private HTML suspendedOverlay_;
    private Toolbar toolbar_;
+   private ToolbarButton popOutButton_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
    private ContentType contentType_ = ContentType.HTML;
