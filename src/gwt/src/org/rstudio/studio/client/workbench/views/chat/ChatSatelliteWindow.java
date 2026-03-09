@@ -16,6 +16,8 @@ import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
@@ -26,6 +28,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -70,6 +73,12 @@ public class ChatSatelliteWindow extends SatelliteWindow
       frame_.setSize("100%", "100%");
       frame_.setUrl(chatUrl);
 
+      // Create suspend overlay (shown during session suspend to block interaction)
+      suspendedOverlay_ = new HTML();
+      suspendedOverlay_.setSize("100%", "100%");
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor("#000");
+      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
+
       // Add toolbar and frame to main panel
       mainPanel.add(toolbar);
       mainPanel.setWidgetTopHeight(toolbar, 0, Unit.PX, 29, Unit.PX);
@@ -78,11 +87,45 @@ public class ChatSatelliteWindow extends SatelliteWindow
       mainPanel.add(frame_);
       mainPanel.setWidgetTopBottom(frame_, 29, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
+
+      // Show overlay during session suspend, hide on resume
+      pEventBus_.get().addHandler(
+         SessionSerializationEvent.TYPE,
+         event ->
+         {
+            int action = event.getAction().getType();
+            if (action == SessionSerializationAction.SUSPEND_SESSION)
+            {
+               showSuspendOverlay();
+            }
+         });
+   }
+
+   private void showSuspendOverlay()
+   {
+      LayoutPanel panel = getMainPanel();
+      if (suspendedOverlay_.getParent() != panel)
+      {
+         panel.add(suspendedOverlay_);
+         panel.setWidgetTopBottom(suspendedOverlay_, 29, Unit.PX, 0, Unit.PX);
+         panel.setWidgetLeftRight(suspendedOverlay_, 0, Unit.PX, 0, Unit.PX);
+      }
+   }
+
+   private void hideSuspendOverlay()
+   {
+      LayoutPanel panel = getMainPanel();
+      if (suspendedOverlay_.getParent() == panel)
+      {
+         panel.remove(suspendedOverlay_);
+      }
    }
 
    @Override
    public void reactivate(JavaScriptObject params)
    {
+      hideSuspendOverlay();
+
       if (params != null)
       {
          ChatSatelliteParams chatParams = params.cast();
@@ -107,6 +150,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
    }
 
    private RStudioThemedFrame frame_;
+   private HTML suspendedOverlay_;
    private final Provider<EventBus> pEventBus_;
    private final Commands commands_;
 

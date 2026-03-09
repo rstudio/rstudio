@@ -229,12 +229,11 @@ public class ChatPresenter extends BasePresenter
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
                display_.hideReadlineNotification();
-               // Save geometry and close satellite but keep poppedOut_ true
-               // so it auto-reopens on resume
                if (poppedOut_)
                {
+                  // Save geometry; satellite stays open and shows its own
+                  // suspend overlay via SessionSerializationEvent forwarding
                   updateSavedGeometry();
-                  satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
                }
                display_.showSuspendedMessage();
             }

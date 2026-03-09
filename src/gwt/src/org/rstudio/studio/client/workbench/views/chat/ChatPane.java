@@ -1121,6 +1121,12 @@ public class ChatPane
    @Override
    public void showPoppedOutPlaceholder()
    {
+      // Remove suspended overlay if present (e.g. after session resume)
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(suspendedOverlay_);
+      }
+
       String html = generatePoppedOutPlaceholderHTML();
       updateFrameContent(html);
    }
