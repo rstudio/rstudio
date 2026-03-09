@@ -75,7 +75,8 @@ namespace code_search {
 namespace {
 
 // Cache of directory-path -> is-ignored results. Cleared when the file
-// monitor is enabled or disabled, or when a marker file changes.
+// monitor is enabled or disabled, when a marker file changes, or when
+// a directory that is ignored by name is created or deleted.
 std::unordered_map<std::string, bool> s_ignoredDirCache;
 
 // Marker files whose presence determines whether a directory is ignored.
@@ -84,6 +85,16 @@ static const char* s_ignoredDirMarkerFiles[] = {
    "CMakeCache.txt",
    "activate.R",
    "packrat.lock"
+};
+
+// Directories that are ignored by name alone (no marker file needed).
+// If one of these is created or deleted, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirNames[] = {
+   "__pycache__",
+   "node_modules",
+   "packrat",
+   "renv",
+   "revdep"
 };
 
 bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
@@ -135,7 +146,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
       return false;
    }
    
-   // check if it's ignored content
+   // files within ignoreContentDirs (e.g. python venvs, quarto output)
+   // are already excluded from indexing by their own filter; they are
+   // not "ignored directories" in the code-search sense, so return false
+   // (meaning "don't skip") to let the caller's own filter handle them
    if (module_context::isIgnoredContent(filePath, ignoreDirs))
       return false;
 
@@ -346,8 +360,8 @@ public:
          Entry dirEntry(path);
          DEBUG("Entry: '" << dirEntry.fileInfo.absolutePath() << "'");
 
-         // this fires for the root node (path ""), which is always
-         // reachable via begin() and doesn't need a map entry
+         // for absolute paths the first dirPath is "" (matching the root
+         // node); the root is always reachable via begin() so skip it
          if (isSamePath(*parent, dirEntry))
          {
             DEBUG("- Node already exists as parent; skipping...");
@@ -443,6 +457,7 @@ public:
       {
          WLOGF("pathLookup_ miss for '{}'; found via tree traversal",
                entry.fileInfo.absolutePath());
+         pathLookup_[entry.fileInfo.absolutePath()] = result;
       }
 
       return result;
@@ -452,6 +467,11 @@ public:
    {
       tree<Entry>::clear();
       pathLookup_.clear();
+
+      // re-insert the root dummy node -- append_child() asserts that
+      // position.node != feet, which fails on an empty tree
+      Entry dummy(FileInfo("", true));
+      insert(begin(), dummy);
    }
 
    void eraseEntry(iterator it)
@@ -509,6 +529,8 @@ private:
          {
             DEBUG("-- Searching children of branch");
             do_find_branch(entry, it, pResult);
+            if (*pResult != this->end())
+               return;
          }
       }
    }
@@ -679,35 +701,13 @@ public:
 
       // create wildcard pattern if the search has a '*'
       boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
-      
-      // get the start and end iterators -- default to all leaves
-      EntryTree::leaf_iterator it = pEntries_->begin_leaf();
-      
-      DEBUG("Searching for node '" << parentPath.getAbsolutePath());
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parent = pEntries_->find(parentEntry);
-      if (parent != pEntries_->end())
-      {
-         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
-         DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
-         DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
 
-         it = parent.begin();
-      }
-      else if (indexing_)
-      {
-         // index still building; search from root for now
-         WLOGF("Parent node '{}' not yet indexed; falling back to root search",
-               parentPath.getAbsolutePath());
-      }
-      else
-      {
-         // index is complete but node not found -- callers validate the path
-         // exists, so this indicates a bug in the index
-         ELOGF("Parent node '{}' not found in completed index",
-               parentPath.getAbsolutePath());
+      // find the parent node in the tree
+      EntryTree::iterator parent;
+      if (!findParent(parentPath, &parent))
          return;
-      }
+
+      EntryTree::leaf_iterator it = parent.begin();
       
       // iterate over the files
       for (; pEntries_->is_valid(it); ++it)
@@ -774,28 +774,10 @@ public:
                       T* pPaths,
                       bool* pMoreAvailable)
    {
-      // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
-
-      if (parentItr == pEntries_->end())
-      {
-         if (indexing_)
-         {
-            // index still building; search from root for now
-            WLOGF("Parent node '{}' not yet indexed; falling back to root search",
-                  parentPath.getAbsolutePath());
-            parentItr = pEntries_->begin();
-         }
-         else
-         {
-            // index is complete but node not found -- callers validate the path
-            // exists, so this indicates a bug in the index
-            ELOGF("Parent node '{}' not found in completed index",
-                  parentPath.getAbsolutePath());
-            return;
-         }
-      }
+      // find the parent node in the tree
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
+         return;
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -833,28 +815,10 @@ public:
                               T* pPaths,
                               bool* pMoreAvailable)
    {
-      // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
-
-      if (parentItr == pEntries_->end())
-      {
-         if (indexing_)
-         {
-            // index still building; search from root for now
-            WLOGF("Parent node '{}' not yet indexed; falling back to root search",
-                  parentPath.getAbsolutePath());
-            parentItr = pEntries_->begin();
-         }
-         else
-         {
-            // index is complete but node not found -- callers validate the path
-            // exists, so this indicates a bug in the index
-            ELOGF("Parent node '{}' not found in completed index",
-                  parentPath.getAbsolutePath());
-            return;
-         }
-      }
+      // find the parent node in the tree
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
+         return;
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -890,20 +854,9 @@ public:
                   boost::function<void(const Entry&)> operation,
                   boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
-      if (parentItr == pEntries_->end())
-      {
-         // don't fall back to root here -- walking the entire project tree
-         // would return incorrect results for a scoped symbol lookup
-         if (indexing_)
-            WLOGF("Parent node '{}' not yet indexed; skipping walk",
-                  parentPath.getAbsolutePath());
-         else
-            ELOGF("Parent node '{}' not found in completed index",
-                  parentPath.getAbsolutePath());
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
          return;
-      }
       
       EntryTree::leaf_iterator it = parentItr.begin();
       for (; pEntries_->is_valid(it); ++it)
@@ -923,6 +876,24 @@ public:
    }
 
 private:
+
+   // Find the parent node for a scoped search. Returns false (and logs)
+   // when the node is not found, so callers can return empty results.
+   bool findParent(const FilePath& parentPath, EntryTree::iterator* pItr)
+   {
+      Entry parentEntry(core::toFileInfo(parentPath));
+      *pItr = pEntries_->find(parentEntry);
+      if (*pItr != pEntries_->end())
+         return true;
+
+      if (indexing_)
+         WLOGF("Parent node '{}' not yet indexed; skipping search",
+               parentPath.getAbsolutePath());
+      else
+         ELOGF("Parent node '{}' not found in completed index",
+               parentPath.getAbsolutePath());
+      return false;
+   }
 
    bool dequeAndIndex()
    {
@@ -970,8 +941,11 @@ private:
          }
          catch (...)
          {
+            // insertEntry is not exception-safe w.r.t. pathLookup_;
+            // stop the batch to avoid operating on corrupted state
             ELOGF("Unknown exception indexing '{}'",
                   event.fileInfo().absolutePath());
+            break;
          }
       }
 
@@ -2666,9 +2640,9 @@ void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   // invalidate the ignored-directory cache when a marker file changes,
-   // so that directories like packrat/ or renv/ are re-evaluated
-   auto hasMarkerFileChange = [&]()
+   // invalidate the ignored-directory cache when a marker file changes or
+   // when a directory that is ignored by name is created/deleted
+   auto shouldInvalidateCache = [&]()
    {
       for (const auto& event : events)
       {
@@ -2676,11 +2650,18 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
          for (const char* marker : s_ignoredDirMarkerFiles)
             if (filename == marker)
                return true;
+
+         if (event.fileInfo().isDirectory())
+         {
+            for (const char* dirName : s_ignoredDirNames)
+               if (filename == dirName)
+                  return true;
+         }
       }
       return false;
    };
 
-   if (hasMarkerFileChange())
+   if (shouldInvalidateCache())
       s_ignoredDirCache.clear();
 
    std::for_each(
