@@ -422,6 +422,8 @@ public class ChatPresenter extends BasePresenter
             size,
             adjustSize,
             position);
+
+         paneManager_.hideSidebarIfOnlyChatTab();
       }
       else
       {
@@ -429,6 +431,12 @@ public class ChatPresenter extends BasePresenter
          // Start initialization; loadChatUI() will open the satellite
          // because poppedOut_ is already true.
          initializeChat();
+
+         // Hide sidebar only if pop-out wasn't cancelled during init
+         if (poppedOut_)
+         {
+            paneManager_.hideSidebarIfOnlyChatTab();
+         }
       }
    }
 
@@ -513,6 +521,10 @@ public class ChatPresenter extends BasePresenter
          // backend was ready). Re-initialize to load chat in the main pane.
          initializeChat();
       }
+
+      // Ensure the chat pane is visible — handles both sidebar and
+      // quadrant configurations correctly
+      onActivateChat();
    }
 
    /**

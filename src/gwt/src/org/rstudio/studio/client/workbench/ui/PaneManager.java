@@ -1107,7 +1107,23 @@ public class PaneManager
 
       commands_.toggleSidebar().setChecked(showSidebar);
    }
-   
+
+   /**
+    * Hides the sidebar if Chat is the only tab assigned to it.
+    * No-op when Chat is not in the sidebar or other tabs are present.
+    */
+   public void hideSidebarIfOnlyChatTab()
+   {
+      PaneConfig config = getCurrentConfig();
+      ArrayList<Tab> tabs = tabNamesToTabs(config.getSidebar());
+      tabs.remove(Tab.Chat);
+      if (tabs.isEmpty())
+      {
+         showSidebar(false);
+         setSidebarPref(false);
+      }
+   }
+
    public void clearSidebarCache()
    {
       // Remove the cached sidebar window so it gets recreated with new tabs
