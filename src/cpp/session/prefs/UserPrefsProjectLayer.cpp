@@ -93,11 +93,15 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    if (localPrefsFile_.isEmpty())
       return;
 
-   if (localPrefsFile_.getLastWriteTime() <= lastSync_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      // No work to do; we wrote this update ourselves.
-      return;
+      if (localPrefsFile_.getLastWriteTime() <= lastSync_)
+      {
+         // No work to do; we wrote this update ourselves.
+         return;
+      }
    }
+   END_LOCK_MUTEX
 
    // Make a copy of the merged cache prior to reloading
    json::Object cacheOld;
@@ -179,8 +183,12 @@ core::Error UserPrefsProjectLayer::readPrefs()
       mergePrefs();
 
       // Track the sync time for the local prefs file
-      if (localPrefsFile_.exists())
-         lastSync_ = localPrefsFile_.getLastWriteTime();
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         if (localPrefsFile_.exists())
+            lastSync_ = localPrefsFile_.getLastWriteTime();
+      }
+      END_LOCK_MUTEX
 
       // Keep pref cache in sync with project config (.Rproj) changes
       projects::projectContext().onConfigChanged.connect(
@@ -228,10 +236,9 @@ core::Error UserPrefsProjectLayer::writePrefs(const core::json::Object& prefs)
    if (error)
       return error;
 
-   lastSync_ = localPrefsFile_.getLastWriteTime();
-
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
+      lastSync_ = localPrefsFile_.getLastWriteTime();
       localPrefsCache_ = boost::make_shared<json::Object>(std::move(localPrefs));
    }
    END_LOCK_MUTEX
@@ -262,7 +269,7 @@ core::json::Object UserPrefsProjectLayer::readLocalPrefs()
    {
       if (localPrefsCache_)
       {
-         return *localPrefsCache_;
+         return localPrefsCache_->clone().getObject();
       }
    }
    END_LOCK_MUTEX

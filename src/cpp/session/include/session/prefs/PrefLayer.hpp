@@ -84,7 +84,6 @@ public:
 
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
-      // Ensure we have a cache to use as a baseline for writing
       core::Error error;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -96,11 +95,9 @@ public:
             return error;
          }
          (*cache_)[name] = value;
+         error = writePrefs(*cache_);
       }
       END_LOCK_MUTEX;
-
-      // WritePrefs does its own mutex locking
-      error = writePrefs(*cache_);
 
       // Notify listeners that the pref has a new value
       onChanged(name);

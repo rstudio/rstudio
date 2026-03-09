@@ -184,7 +184,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
       setEncoding(initialConfig_.getEncoding());
 
-      // initialize gitignore checkbox from private project prefs, falling
+      // initialize gitignore checkbox from local project prefs, falling
       // back to the resolved user preference value
       JsObject localPrefs = options.getLocalProjectPrefs();
       if (localPrefs.hasKey(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE))

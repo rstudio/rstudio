@@ -742,6 +742,10 @@ void ProjectContext::onDeferredInit(bool newSession)
    // monitor. This is safe because libgit2 uses an internal attribute
    // cache that checks .gitignore file timestamps and reloads when they
    // change, so updated rules are picked up without re-opening the repo.
+   //
+   // NOTE: git_repository objects are not thread-safe for concurrent access.
+   // This is fine here because the file monitor filter callback is invoked
+   // from a single thread.
    if (prefs::userPrefs().fileMonitorUseGitignore())
    {
       using modules::libgit2::Git;
