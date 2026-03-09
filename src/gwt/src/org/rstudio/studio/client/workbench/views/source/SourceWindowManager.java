@@ -1037,8 +1037,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = getSourceWindowObject(mostRecentSourceWindow_);
             if (window != null && !window.isClosed())
             {
-               size = new Size(window.getInnerWidth(),
-                     window.getInnerHeight());
+               size = Desktop.hasDesktopFrame()
+                     ? new Size(window.getOuterWidth(),
+                           window.getOuterHeight())
+                     : new Size(window.getInnerWidth(),
+                           window.getInnerHeight());
                if (position == null)
                   position = Point.create(
                         window.getScreenX() + 50,
@@ -1162,13 +1165,23 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             WindowEx window = input.second;
 
             // read the window's current geometry
+            // In desktop mode, use outer dimensions because Electron's
+            // setSize() sets the outer window size including title bar.
+            // In web mode, use inner dimensions because window.open()
+            // width/height set the content area size.
+            int width = Desktop.hasDesktopFrame()
+                  ? window.getOuterWidth()
+                  : window.getInnerWidth();
+            int height = Desktop.hasDesktopFrame()
+                  ? window.getOuterHeight()
+                  : window.getInnerHeight();
             SatelliteWindowGeometry newGeometry =
                   SatelliteWindowGeometry.create(
                         sourceWindows_.get(windowId),
                         window.getScreenX(),
                         window.getScreenY(),
-                        window.getInnerWidth(),
-                        window.getInnerHeight());
+                        width,
+                        height);
 
             // compare to the old geometry (if any)
             if (windowGeometry_.hasKey(windowId))

@@ -19,6 +19,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -392,12 +393,13 @@ public class ChatPresenter extends BasePresenter
          Point position = (savedGeometry_ != null)
             ? savedGeometry_.getPosition()
             : null;
+         boolean adjustSize = (savedGeometry_ == null);
          satelliteManager_.openSatellite(
             ChatSatellite.NAME,
             params,
             size,
-            position,
-            true);
+            adjustSize,
+            position);
       }
       else
       {
@@ -447,12 +449,22 @@ public class ChatPresenter extends BasePresenter
          ChatSatellite.NAME);
       if (window != null)
       {
+         // In desktop mode, use outer dimensions because Electron's
+         // setSize() sets the outer window size including title bar.
+         // In web mode, use inner dimensions because window.open()
+         // width/height set the content area size.
+         int width = Desktop.hasDesktopFrame()
+            ? window.getOuterWidth()
+            : window.getInnerWidth();
+         int height = Desktop.hasDesktopFrame()
+            ? window.getOuterHeight()
+            : window.getInnerHeight();
          savedGeometry_ = SatelliteWindowGeometry.create(
             0,
             window.getScreenX(),
             window.getScreenY(),
-            window.getInnerWidth(),
-            window.getInnerHeight());
+            width,
+            height);
       }
    }
 
@@ -890,12 +902,13 @@ public class ChatPresenter extends BasePresenter
          Point position = (savedGeometry_ != null)
             ? savedGeometry_.getPosition()
             : null;
+         boolean adjustSize = (savedGeometry_ == null);
          satelliteManager_.openSatellite(
             ChatSatellite.NAME,
             satelliteParams,
             size,
-            position,
-            true);
+            adjustSize,
+            position);
 
          display_.setStatus(Display.Status.READY);
          display_.showPoppedOutPlaceholder();
