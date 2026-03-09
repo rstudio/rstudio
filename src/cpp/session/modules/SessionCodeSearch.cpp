@@ -74,7 +74,17 @@ namespace code_search {
 
 namespace {
 
+// Cache of directory-path -> is-ignored results. Cleared when the file
+// monitor is enabled or disabled, or when a marker file changes.
 std::unordered_map<std::string, bool> s_ignoredDirCache;
+
+// Marker files whose presence determines whether a directory is ignored.
+// If any of these change, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirMarkerFiles[] = {
+   "CMakeCache.txt",
+   "activate.R",
+   "packrat.lock"
+};
 
 bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
 {
@@ -434,7 +444,8 @@ public:
 
    void eraseEntry(iterator it)
    {
-      // remove all descendants from the lookup map
+      // remove this entry and all its descendants from the lookup map
+      // (safe: the tree is intact during iteration; erase() follows after)
       iterator descIt = it;
       iterator descEnd = it;
       descEnd.skip_children();
@@ -491,6 +502,9 @@ private:
    }
 
    Entry dummyEntry_;
+
+   // Maps absolute paths to their tree iterators for O(1) lookup.
+   // Must be kept in sync with the tree: every insert/erase must update this map.
    std::unordered_map<std::string, iterator> pathLookup_;
 
 };
@@ -554,9 +568,9 @@ public:
       indexingQueue_.push(event);
 
       // schedule indexing if necessary. don't index anything immediately
-      // (this is to defend against large numbers of files being enqued
-      // at once and typing up the main thread). rather, schedule indexing
-      // to occur during idle time in 20ms chunks
+      // (this is to defend against large numbers of files being enqueued
+      // at once and tying up the main thread). rather, schedule indexing
+      // in 20ms intervals, processing a batch of items per interval
       if (!indexing_)
       {
          indexing_ = true;
@@ -671,7 +685,8 @@ public:
       else
       {
          // index may still be building; search available entries from root
-         DEBUG("Parent node not yet indexed; searching from root.");
+         WLOGF("Parent node '{}' not found in index; falling back to root search",
+               parentPath.getAbsolutePath());
       }
       
       // iterate over the files
@@ -745,7 +760,11 @@ public:
 
       // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
+      {
+         WLOGF("Parent node '{}' not found in index; falling back to root search",
+               parentPath.getAbsolutePath());
          parentItr = pEntries_->begin();
+      }
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -789,7 +808,11 @@ public:
 
       // if parent not yet indexed, search from root
       if (parentItr == pEntries_->end())
+      {
+         WLOGF("Parent node '{}' not found in index; falling back to root search",
+               parentPath.getAbsolutePath());
          parentItr = pEntries_->begin();
+      }
 
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
@@ -829,7 +852,10 @@ public:
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
       if (parentItr == pEntries_->end())
       {
-         LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.getAbsolutePath() + "'");
+         // don't fall back to root here -- walking the entire project tree
+         // would return incorrect results for a scoped symbol lookup
+         WLOGF("Parent node '{}' not found in index; skipping walk",
+               parentPath.getAbsolutePath());
          return;
       }
       
@@ -868,26 +894,30 @@ private:
          FileChangeEvent event = indexingQueue_.front();
          indexingQueue_.pop();
 
-         // process the change
-         const FileInfo& fileInfo = event.fileInfo();
-         switch(event.type())
+         try
          {
-            case FileChangeEvent::FileAdded:
-            case FileChangeEvent::FileModified:
+            // process the change
+            const FileInfo& fileInfo = event.fileInfo();
+            switch(event.type())
             {
-               updateIndexEntry(fileInfo, ignoreDirs);
-               break;
-            }
+               case FileChangeEvent::FileAdded:
+               case FileChangeEvent::FileModified:
+               {
+                  updateIndexEntry(fileInfo, ignoreDirs);
+                  break;
+               }
 
-            case FileChangeEvent::FileRemoved:
-            {
-               removeIndexEntry(fileInfo);
-               break;
-            }
+               case FileChangeEvent::FileRemoved:
+               {
+                  removeIndexEntry(fileInfo);
+                  break;
+               }
 
-            case FileChangeEvent::None:
-               break;
+               case FileChangeEvent::None:
+                  break;
+            }
          }
+         CATCH_UNEXPECTED_EXCEPTION
       }
 
       // return status
@@ -2581,6 +2611,23 @@ void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
+   // invalidate the ignored-directory cache when a marker file changes,
+   // so that directories like packrat/ or renv/ are re-evaluated
+   auto hasMarkerFileChange = [&]()
+   {
+      for (const auto& event : events)
+      {
+         std::string filename = FilePath(event.fileInfo().absolutePath()).getFilename();
+         for (const char* marker : s_ignoredDirMarkerFiles)
+            if (filename == marker)
+               return true;
+      }
+      return false;
+   };
+
+   if (hasMarkerFileChange())
+      s_ignoredDirCache.clear();
+
    std::for_each(
          events.begin(),
          events.end(),
