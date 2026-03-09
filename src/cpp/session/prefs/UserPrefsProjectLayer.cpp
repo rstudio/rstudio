@@ -63,23 +63,14 @@ void UserPrefsProjectLayer::mergePrefs()
 
 void UserPrefsProjectLayer::onProjectConfigChanged()
 {
-   RECURSIVE_LOCK_MUTEX(mutex_)
-   {
-      // Re-read shared prefs from .Rproj
-      sharedPrefsCache_ = boost::make_shared<json::Object>(
-         projects::projectContext().uiPrefs());
-   }
-   END_LOCK_MUTEX
-
-   // Re-merge with local prefs
-   mergePrefs();
-
-   // Pass new values to client
    json::Object dataJson;
    dataJson["name"] = kUserPrefsProjectLayer;
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
+      sharedPrefsCache_ = boost::make_shared<json::Object>(
+         projects::projectContext().uiPrefs());
+      mergePrefs();
       dataJson["values"] = cache_->clone();
    }
    END_LOCK_MUTEX
@@ -93,6 +84,9 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    if (localPrefsFile_.isEmpty())
       return;
 
+   json::Object cacheOld;
+   json::Object cacheNew;
+
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       if (localPrefsFile_.getLastWriteTime() <= lastSync_)
@@ -100,46 +94,30 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
          // No work to do; we wrote this update ourselves.
          return;
       }
-   }
-   END_LOCK_MUTEX
 
-   // Make a copy of the merged cache prior to reloading
-   json::Object cacheOld;
-   RECURSIVE_LOCK_MUTEX(mutex_)
-   {
+      // Snapshot the merged cache prior to reloading
       cacheOld = cache_->clone().getObject();
-   }
-   END_LOCK_MUTEX
 
-   // Reload local prefs from file
-   FilePath schemaFile = options().rResourcesPath()
-      .completePath("schema")
-      .completePath(kUserPrefsSchemaFile);
-   json::Object prefs;
-   Error error = loadPrefsFromFile(localPrefsFile_, schemaFile, &prefs);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+      // Reload local prefs from file
+      FilePath schemaFile = options().rResourcesPath()
+         .completePath("schema")
+         .completePath(kUserPrefsSchemaFile);
+      json::Object prefs;
+      Error error = loadPrefsFromFile(localPrefsFile_, schemaFile, &prefs);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
 
-   // Update the local prefs cache and rebuild the merged cache
-   RECURSIVE_LOCK_MUTEX(mutex_)
-   {
+      // Update the local prefs cache and rebuild the merged cache
       localPrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
-   }
-   END_LOCK_MUTEX
-
-   mergePrefs();
-
-   // Snapshot the new merged cache and diff against old
-   json::Object cacheNew;
-   RECURSIVE_LOCK_MUTEX(mutex_)
-   {
+      mergePrefs();
       cacheNew = cache_->clone().getObject();
    }
    END_LOCK_MUTEX
 
+   // Diff against old cache and notify listeners of changed keys
    for (const auto& key : UserPrefValues::allKeys())
    {
       const auto itOld = cacheOld.find(key);
@@ -176,15 +154,7 @@ core::Error UserPrefsProjectLayer::readPrefs()
             projects::projectContext().uiPrefs());
          localPrefsCache_ = boost::make_shared<json::Object>(std::move(prefs));
          localPrefsFile_ = localPrefsFile;
-      }
-      END_LOCK_MUTEX
-
-      // Build the merged cache
-      mergePrefs();
-
-      // Track the sync time for the local prefs file
-      RECURSIVE_LOCK_MUTEX(mutex_)
-      {
+         mergePrefs();
          if (localPrefsFile_.exists())
             lastSync_ = localPrefsFile_.getLastWriteTime();
       }
@@ -240,10 +210,9 @@ core::Error UserPrefsProjectLayer::writePrefs(const core::json::Object& prefs)
    {
       lastSync_ = localPrefsFile_.getLastWriteTime();
       localPrefsCache_ = boost::make_shared<json::Object>(std::move(localPrefs));
+      mergePrefs();
    }
    END_LOCK_MUTEX
-
-   mergePrefs();
 
    return Success();
 }
