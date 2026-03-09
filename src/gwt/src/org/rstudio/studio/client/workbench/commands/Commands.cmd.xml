@@ -4408,7 +4408,4 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel=""
         desc="Return to main window"/>
 
-   <cmd id="bringChatToFront"
-        label="Bring Chat Window to Front"
-        desc="Bring the chat window to the front"/>
 </commands>

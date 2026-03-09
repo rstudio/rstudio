@@ -1440,7 +1440,7 @@ public class ChatPane
    {
       if (observer_ != null)
       {
-         observer_.onBringChatToFront();
+         observer_.onActivateChat();
       }
    }
 

@@ -4174,10 +4174,4 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Return to main window") // $NON-NLS-1$
     String returnChatToMainDesc();
     
-    // bringChatToFront
-    @DefaultStringValue("Bring Chat Window to Front") // $NON-NLS-1$
-    String bringChatToFrontLabel();
-    @DefaultStringValue("Bring the chat window to the front") // $NON-NLS-1$
-    String bringChatToFrontDesc();
-    
 }

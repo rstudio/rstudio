@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEven
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -74,7 +75,7 @@ public class ChatPresenter extends BasePresenter
       {
          void onPaneReady(boolean installed, String installedVersion);
          void onRestartBackend();
-         void onBringChatToFront();
+         void onActivateChat();
          void onReturnChatToMain();
       }
 
@@ -129,6 +130,7 @@ public class ChatPresenter extends BasePresenter
       PaiUtil paiUtil,
       UserPrefs prefs,
       SatelliteManager satelliteManager,
+      PaneManager paneManager,
       Session session)
    {
       super(display);
@@ -141,6 +143,7 @@ public class ChatPresenter extends BasePresenter
       prefs_ = prefs;
       installManager_ = new PositAiInstallManager();
       satelliteManager_ = satelliteManager;
+      paneManager_ = paneManager;
       session_ = session;
 
       // Set up observer
@@ -159,9 +162,9 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onBringChatToFront()
+         public void onActivateChat()
          {
-            onBringChatToFrontCommand();
+            ChatPresenter.this.onActivateChat();
          }
 
          @Override
@@ -416,16 +419,15 @@ public class ChatPresenter extends BasePresenter
    }
 
    @Handler
-   void onBringChatToFront()
-   {
-      onBringChatToFrontCommand();
-   }
-
-   private void onBringChatToFrontCommand()
+   void onActivateChat()
    {
       if (poppedOut_)
       {
          satelliteManager_.activateSatelliteWindow(ChatSatellite.NAME);
+      }
+      else
+      {
+         paneManager_.activateTab(PaneManager.Tab.Chat);
       }
    }
 
@@ -955,6 +957,7 @@ public class ChatPresenter extends BasePresenter
    private final UserPrefs prefs_;
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
+   private final PaneManager paneManager_;
    private final Session session_;
 
    // Track whether we're reloading after an install/update completion
