@@ -46,7 +46,8 @@ public class ThemeColorExtractor
     * Results are cached by theme name for performance.
     * This includes both essential and extended colors for complete theme matching.
     *
-    * @return Map of CSS variable names (e.g. "--rstudio-editor-background") to color values
+    * @return Map of CSS variable names to color values, or null when the
+    *         ace theme CSS is not loaded yet (callers should skip injection)
     */
    public static Map<String, String> extractEssentialColors()
    {
@@ -62,8 +63,12 @@ public class ThemeColorExtractor
          return new HashMap<>(cachedColors_);
       }
 
-      // Extract fresh colors (now includes extended palette)
+      // Extract fresh colors (now includes extended palette).
+      // Returns null when the ace theme CSS is not yet loaded
+      // (e.g. satellite window still initializing).
       Map<String, String> colors = doExtractExtendedColors();
+      if (colors == null)
+         return null;
 
       // Cache results
       cachedThemeName_ = currentThemeName;
@@ -114,6 +119,16 @@ public class ThemeColorExtractor
          // Extract background and foreground colors
          String background = computed.getBackgroundColor();
          String foreground = computed.getColor();
+
+         // When the ace theme CSS has not been applied yet (e.g. in a
+         // satellite window that is still initializing), the sampler's
+         // background is transparent.  Return null so callers know the
+         // theme is not ready and can skip injection.
+         if (isTransparent(background))
+         {
+            sampler.removeFromParent();
+            return null;
+         }
 
          colors.put("--rstudio-editor-background", background);
          colors.put("--rstudio-editor-foreground", foreground);
@@ -230,6 +245,22 @@ public class ThemeColorExtractor
       }
 
       return colors;
+   }
+
+   /**
+    * Check if a CSS color string represents a fully transparent color
+    * (e.g. "rgba(0, 0, 0, 0)"), which indicates no theme CSS is loaded.
+    */
+   private static boolean isTransparent(String cssColor)
+   {
+      if (cssColor == null || cssColor.isEmpty())
+         return true;
+
+      if (cssColor.equals("transparent"))
+         return true;
+
+      // The browser returns "rgba(0, 0, 0, 0)" for unstyled elements
+      return cssColor.contains("rgba") && cssColor.contains(", 0)");
    }
 
    /**

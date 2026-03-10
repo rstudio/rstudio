@@ -166,7 +166,9 @@ public class ChatPane
    private void updateSuspendedOverlayStyle()
    {
       Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
-      String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
+      String bgColor = (colors != null)
+         ? colors.getOrDefault("--rstudio-editor-background", "#fff")
+         : "#fff";
       suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
    }
 

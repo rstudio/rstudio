@@ -244,8 +244,13 @@ public class RStudioThemedFrame extends RStudioFrame
          if (document == null)
             return;
 
-         // Extract colors (cache is managed inside ThemeColorExtractor)
+         // Extract colors (cache is managed inside ThemeColorExtractor).
+         // Returns null when the ace theme is not yet loaded (e.g. satellite
+         // window still initializing); skip injection and let the
+         // ThemeColorsComputedEvent handler retry once the theme is ready.
          Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+         if (colors == null)
+            return;
 
          // Get iframe's html element
          Element htmlElement = document.getDocumentElement();
