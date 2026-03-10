@@ -39,8 +39,8 @@ namespace r_util {
       virtual Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const = 0;
 
       // Returns session IDs along with their properties in a single batch call.
-      // Default implementation return an error, telling the callers to go back and
-      // first get the ids, then get each session separately.
+      // Default implementation returns empty - callers should fall back to per-session reads.
+      // The outer map is keyed by session ID, the inner map is property name -> value.
       virtual Error listSessionProperties(
          const std::set<std::string>& properties,
          std::map<std::string, std::map<std::string, std::string>>* pSessionProperties) const
