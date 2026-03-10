@@ -342,6 +342,26 @@ dependency(ZLIB
    CUSTOM     TRUE
 )
 
+# Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
+# Without this, FindZLIB fails during libgit2 configure and it falls back
+# to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
+if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB)
+   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/zlib-src")
+   set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
+   set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
+   set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
+   set(ZLIB_LIBRARY "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_DEBUG "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_RELEASE "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
+endif()
+
+# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
+# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
+# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
+# deps/zlib, resulting in duplicate zlib symbols in the final binary.
+fetch(zlib ZLIB)
+
 fetch(
    dtl          DTL
    fmt          FMT
@@ -353,8 +373,7 @@ fetch(
    tl-expected  TL_EXPECTED
    utfcpp       UTFCPP
    websocketpp  WEBSOCKETPP
-   yaml-cpp     YAML_CPP
-   zlib         ZLIB)
+   yaml-cpp     YAML_CPP)
 
 restore_global_settings()
 

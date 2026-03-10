@@ -190,6 +190,7 @@ inline bool parseUtcTimeFromZoneString(std::string timeStr,
    }
    catch (std::exception& e)
    {
+      (void) e; // silence unused variable warning
 #ifdef LOG_DEBUG_MESSAGE
       LOG_DEBUG_MESSAGE(std::string("Error parsing date \"") + timeStr + "\": " + e.what());
 #endif
