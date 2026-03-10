@@ -62,15 +62,8 @@ Error UserPrefsLayer::readPrefs()
 
 void UserPrefsLayer::onPrefsFileChanged()
 {
-   if (prefsFile_.getLastWriteTime() <= lastSync_)
-   {
-      // No work to do; we wrote this update ourselves.
-      return;
-   }
-
-   // Make a copy of the prefs prior to reloading, so we can diff against the old copy
-   const json::Value oldVal = cache_->clone();
-   const json::Object old = oldVal.getObject();
+   json::Object cacheOld;
+   json::Object cacheNew;
 
    // Reload the prefs from the file
    json::Object prefs;
@@ -85,21 +78,31 @@ void UserPrefsLayer::onPrefsFileChanged()
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
+      if (prefsFile_.getLastWriteTime() <= lastSync_)
+      {
+         // No work to do; we wrote this update ourselves.
+         return;
+      }
+
+      // Snapshot the old cache prior to replacing it
+      cacheOld = cache_->clone().getObject();
       cache_ = boost::make_shared<json::Object>(std::move(prefs));
+      cacheNew = cache_->clone().getObject();
    }
    END_LOCK_MUTEX
 
-   // Figure out what prefs changed in the file
-   for (const auto& key: UserPrefValues::allKeys())
+   // Diff against old cache and notify listeners of changed keys.
+   // This does not currently emit events for pref values that have been removed.
+   for (const auto& key : UserPrefValues::allKeys())
    {
-      const auto itOld = old.find(key);
-      const auto itNew = cache_->find(key);
+      const auto itOld = cacheOld.find(key);
+      const auto itNew = cacheNew.find(key);
 
-      // A pref is considered to be changed if it (a) exists in the new set of prefs, and (b) either
-      // didn't exist in the old set, or existed there with a new value. This does not currently
-      // emit events for pref values that have been removed.
-      if (itNew != cache_->end() &&
-          (itOld == old.end() || !((*itNew).getValue() == (*itOld).getValue())))
+      bool existsInNew = itNew != cacheNew.end();
+      bool isNew = itOld == cacheOld.end();
+      bool isChanged = !isNew && !((*itOld).getValue() == (*itNew).getValue());
+
+      if (existsInNew && (isNew || isChanged))
       {
          onChanged(key);
       }
@@ -112,36 +115,35 @@ Error UserPrefsLayer::writePrefs(const core::json::Object &prefs)
    {
       return fileNotFoundError(ERROR_LOCATION);
    }
-   Error error;
+
+   // Write to disk first; only update in-memory state on success
+   Error error = writePrefsToFile(prefs, prefsFile_);
+   if (error)
+   {
+      // Modify the error to be more descriptive
+      if (isFileNotFoundError(error))
+      {
+         error = Error(
+            error.getName(),
+            error.getCode(),
+            "Unable to save preferences. Please verify that " +
+               prefsFile_.getAbsolutePath() +
+               " exists and is owned by the user '" +
+               system::username() + "'.",
+            error,
+            ERROR_LOCATION);
+      }
+      return error;
+   }
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       *cache_ = prefs;
+      lastSync_ = prefsFile_.getLastWriteTime();
    }
    END_LOCK_MUTEX
 
-   error = writePrefsToFile(*cache_, prefsFile_);
-   if (!error)
-   {
-      // If we successfully wrote the contents, mark the last sync time
-      lastSync_ = prefsFile_.getLastWriteTime();
-   }
-
-   // Modify the error to be more descriptive
-   if (isFileNotFoundError(error))
-   {
-      error = Error(
-         error.getName(),
-         error.getCode(),
-         "Unable to save preferences. Please verify that " + 
-            prefsFile_.getAbsolutePath() +
-            " exists and is owned by the user '" +
-            system::username() + "'.",
-         error,
-         ERROR_LOCATION);
-   }
-
-   return error;
+   return Success();
 }
 
 } // namespace prefs

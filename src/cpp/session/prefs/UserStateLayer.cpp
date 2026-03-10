@@ -84,13 +84,18 @@ core::Error UserStateLayer::writePrefs(const core::json::Object &prefs)
    }
 #endif
 
+   // Write to disk first; only update in-memory state on success
+   Error error = writePrefsToFile(prefs, stateFile_);
+   if (error)
+      return error;
+
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
       *cache_ = prefs;
    }
    END_LOCK_MUTEX
 
-   return writePrefsToFile(*cache_, stateFile_);
+   return Success();
 }
 
 } // namespace prefs

@@ -117,14 +117,18 @@ void UserPrefsProjectLayer::onPrefsFileChanged()
    }
    END_LOCK_MUTEX
 
-   // Diff against old cache and notify listeners of changed keys
+   // Diff against old cache and notify listeners of changed keys.
+   // This does not currently emit events for pref values that have been removed.
    for (const auto& key : UserPrefValues::allKeys())
    {
       const auto itOld = cacheOld.find(key);
       const auto itNew = cacheNew.find(key);
 
-      if (itNew != cacheNew.end() &&
-          (itOld == cacheOld.end() || !((*itNew).getValue() == (*itOld).getValue())))
+      bool existsInNew = itNew != cacheNew.end();
+      bool isNew = itOld == cacheOld.end();
+      bool isChanged = !isNew && !((*itOld).getValue() == (*itNew).getValue());
+
+      if (existsInNew && (isNew || isChanged))
       {
          onChanged(key);
       }
