@@ -202,7 +202,14 @@ public class ChatSatelliteWindow extends SatelliteWindow
          doc.write(html);
          doc.close();
       } catch (e) {
-         console.error("Error setting frame content:", e);
+         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+            "Failed to write content to chat satellite frame: " + e.message);
+         try {
+            var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+            doc.open();
+            doc.write("<html><body><p>Error loading content. Please close and reopen this window.</p></body></html>");
+            doc.close();
+         } catch (e2) {}
       }
    }-*/;
 

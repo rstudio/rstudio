@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -207,6 +208,8 @@ public class ChatPane
    {
       // Get current theme colors for CSS fallbacks to avoid flash of wrong theme
       Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      if (colors == null)
+         colors = new HashMap<>();
       String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
       String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#000");
 
@@ -296,7 +299,6 @@ public class ChatPane
    /**
     * Injects theme variables into the frame after a short delay.
     * This ensures the HTML content is fully parsed before variables are applied.
-    * Uses 100ms delay here, followed by RStudioThemedFrame's 1000ms delay (1100ms total).
     */
    private void injectThemeVariablesDelayed(RStudioThemedFrame frame)
    {
@@ -1142,6 +1144,8 @@ public class ChatPane
    private String generatePoppedOutPlaceholderHTML()
    {
       Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      if (colors == null)
+         colors = new HashMap<>();
       String bgColor = colors.getOrDefault("--rstudio-editor-background", "#fff");
       String fgColor = colors.getOrDefault("--rstudio-editor-foreground", "#333");
       String widgetBgColor = colors.getOrDefault("--rstudio-editorWidget-background", "#f4f8f9");
@@ -1517,6 +1521,8 @@ public class ChatPane
    private String generateCrashedMessageHTML(String errorMessage)
    {
       Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      if (colors == null)
+         colors = new HashMap<>();
       String bgColor = colors.getOrDefault(
          "--rstudio-editor-background", "#fff");
       String fgColor = colors.getOrDefault(

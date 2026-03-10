@@ -179,7 +179,7 @@ public class ChatPresenter extends BasePresenter
                // finish; initializing_ guard prevents re-entry
                return;
             }
-            initializeChat(installed, installedVersion);
+            initializeChat();
          }
 
          @Override
@@ -430,6 +430,9 @@ public class ChatPresenter extends BasePresenter
          case "open-global-options":
             commands_.showAssistantOptions().execute();
             break;
+         default:
+            Debug.log("Unrecognized chat satellite action: " + action);
+            break;
       }
    }
 
@@ -447,21 +450,8 @@ public class ChatPresenter extends BasePresenter
       if (cachedUrl_ != null)
       {
          // Backend already running — open satellite immediately
-         ChatSatelliteParams params = ChatSatelliteParams.create(
-            cachedUrl_, cachedAuthToken_, true);
-         Size size = (savedGeometry_ != null)
-            ? savedGeometry_.getSize()
-            : new Size(500, 700);
-         Point position = (savedGeometry_ != null)
-            ? savedGeometry_.getPosition()
-            : null;
-         boolean adjustSize = (savedGeometry_ == null);
-         satelliteManager_.openSatellite(
-            ChatSatellite.NAME,
-            params,
-            size,
-            adjustSize,
-            position);
+         openChatSatellite(ChatSatelliteParams.create(
+            cachedUrl_, cachedAuthToken_, true));
 
          paneManager_.hideSidebarIfOnlyChatTab();
       }
@@ -504,15 +494,17 @@ public class ChatPresenter extends BasePresenter
       }
    }
 
+   private static final Size DEFAULT_SATELLITE_SIZE = new Size(500, 700);
+
    /**
-    * Opens or reactivates the satellite window with the given HTML content.
+    * Opens or reactivates the satellite window with the given parameters,
+    * using saved geometry if available.
     */
-   private void showHtmlInSatellite(String html)
+   private void openChatSatellite(ChatSatelliteParams params)
    {
-      ChatSatelliteParams params = ChatSatelliteParams.createWithHtml(html);
       Size size = (savedGeometry_ != null)
          ? savedGeometry_.getSize()
-         : new Size(500, 700);
+         : DEFAULT_SATELLITE_SIZE;
       Point position = (savedGeometry_ != null)
          ? savedGeometry_.getPosition()
          : null;
@@ -523,6 +515,14 @@ public class ChatPresenter extends BasePresenter
          size,
          adjustSize,
          position);
+   }
+
+   /**
+    * Opens or reactivates the satellite window with the given HTML content.
+    */
+   private void showHtmlInSatellite(String html)
+   {
+      openChatSatellite(ChatSatelliteParams.createWithHtml(html));
    }
 
    /**
@@ -641,17 +641,6 @@ public class ChatPresenter extends BasePresenter
     * Flow: initializeChat() -> checkForUpdates() -> startBackend() -> pollForBackendUrl() -> loadChatUI()
     */
    public void initializeChat()
-   {
-      initializeChat(false, null);
-   }
-
-   /**
-    * Initialize the Chat pane with known installation status.
-    *
-    * @param installed Whether Posit Assistant is currently installed
-    * @param installedVersion The currently installed version (null if not installed)
-    */
-   public void initializeChat(boolean installed, String installedVersion)
    {
       // Prevent concurrent initialization (e.g., from multiple event sources)
       if (initializing_)
@@ -1090,21 +1079,8 @@ public class ChatPresenter extends BasePresenter
       // If popped out, send URL to satellite instead of loading in ChatPane
       if (poppedOut_)
       {
-         ChatSatelliteParams satelliteParams = ChatSatelliteParams.create(
-            loadUrl, authToken, resumeChat);
-         Size size = (savedGeometry_ != null)
-            ? savedGeometry_.getSize()
-            : new Size(500, 700);
-         Point position = (savedGeometry_ != null)
-            ? savedGeometry_.getPosition()
-            : null;
-         boolean adjustSize = (savedGeometry_ == null);
-         satelliteManager_.openSatellite(
-            ChatSatellite.NAME,
-            satelliteParams,
-            size,
-            adjustSize,
-            position);
+         openChatSatellite(ChatSatelliteParams.create(
+            loadUrl, authToken, resumeChat));
 
          display_.setStatus(Display.Status.READY);
          display_.showPoppedOutPlaceholder();
