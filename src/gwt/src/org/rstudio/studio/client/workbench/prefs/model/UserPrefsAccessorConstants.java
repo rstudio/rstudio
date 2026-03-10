@@ -1962,6 +1962,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String fileMonitorIgnoredComponentsDescription();
 
    /**
+    * When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.
+    */
+   @DefaultStringValue("Use .gitignore for file monitoring")
+   String fileMonitorUseGitignoreTitle();
+   @DefaultStringValue("When enabled, directories ignored by Git (.gitignore rules) and their contents will be excluded from project file monitoring and code indexing.")
+   String fileMonitorUseGitignoreDescription();
+
+   /**
     * Whether to install R package dependencies one at a time.
     */
    @DefaultStringValue("Install R package dependencies one at a time")

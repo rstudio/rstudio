@@ -462,6 +462,12 @@ std::vector<std::string> UserStateValues::allKeys()
       kPositAssistant,
    });
 }
+
+std::set<std::string> UserStateValues::localProjectPrefs()
+{
+   return std::set<std::string>({
+   });
+}
    
 
 }

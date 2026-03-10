@@ -84,7 +84,6 @@ public:
 
    template <typename T> core::Error writePref(const std::string& name, T value)
    {
-      // Ensure we have a cache to use as a baseline for writing
       core::Error error;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -95,15 +94,26 @@ public:
                   layerName() + "' before reading it");
             return error;
          }
+         bool hadValue = cache_->hasMember(name);
+         core::json::Value prevValue;
+         if (hadValue)
+            prevValue = (*cache_)[name].clone();
+
          (*cache_)[name] = value;
+         error = writePrefs(*cache_);
+         if (error)
+         {
+            // Revert so the cache stays consistent with what's on disk.
+            if (hadValue)
+               (*cache_)[name] = prevValue;
+            else
+               cache_->erase(name);
+         }
       }
       END_LOCK_MUTEX;
 
-      // WritePrefs does its own mutex locking
-      error = writePrefs(*cache_);
-
-      // Notify listeners that the pref has a new value
-      onChanged(name);
+      if (!error)
+         onChanged(name);
 
       return error;
    }
@@ -118,7 +128,9 @@ public:
 
 protected:
    // I/O methods
-   core::Error loadPrefsFromFile(const core::FilePath& prefsFile, const core::FilePath& schemaFile);
+   core::Error loadPrefsFromFile(const core::FilePath& prefsFile,
+                                const core::FilePath& schemaFile,
+                                core::json::Object* pOutPrefs);
    core::Error loadPrefsFromSchema(const core::FilePath& schemaFile);
    core::Error writePrefsToFile(const core::json::Object& prefs, const core::FilePath& prefsFile);
 

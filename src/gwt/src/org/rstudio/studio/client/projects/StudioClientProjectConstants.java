@@ -255,5 +255,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String miscellaneousTitle();
     String generalTitle();
     String customProjectNameLabel();
+    String chkUseGitignoreLabel();
     String scratchPathLabel();
 }
