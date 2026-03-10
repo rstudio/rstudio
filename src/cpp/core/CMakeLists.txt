@@ -394,6 +394,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       target_link_libraries(rstudio-core-tests zlibstatic)
    endif()
 
+   target_compile_definitions(rstudio-core-tests PRIVATE
+      RSTUDIO_DB_SCHEMA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../server/db"
+   )
+
    enable_testing()
    include(GoogleTest)
    gtest_discover_tests(rstudio-core-tests)
