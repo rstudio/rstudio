@@ -28,6 +28,17 @@ public class ChatSatelliteParams extends JavaScriptObject
       params.chat_url = chatUrl;
       params.auth_token = authToken;
       params.resume_chat = resumeChat;
+      params.content_html = null;
+      return params;
+   }-*/;
+
+   public static native ChatSatelliteParams createWithHtml(
+      String htmlContent) /*-{
+      var params = new Object();
+      params.chat_url = null;
+      params.auth_token = null;
+      params.resume_chat = false;
+      params.content_html = htmlContent;
       return params;
    }-*/;
 
@@ -41,5 +52,9 @@ public class ChatSatelliteParams extends JavaScriptObject
 
    public final native boolean getResumeChat() /*-{
       return this.resume_chat;
+   }-*/;
+
+   public final native String getContentHtml() /*-{
+      return this.content_html;
    }-*/;
 }

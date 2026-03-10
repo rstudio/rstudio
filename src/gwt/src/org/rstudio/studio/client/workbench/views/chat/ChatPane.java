@@ -1453,6 +1453,157 @@ public class ChatPane
    }
 
    @Override
+   public String getNotInstalledWithInstallHTML(String newVersion)
+   {
+      return generateNotInstalledWithInstallHTML(newVersion);
+   }
+
+   @Override
+   public String getUpdateAvailableWithVersionsHTML(
+      String currentVersion, String newVersion)
+   {
+      return generateUpdateAvailableHTML(currentVersion, newVersion);
+   }
+
+   @Override
+   public String getMessageHTML(String message)
+   {
+      return generateMessageHTML(message);
+   }
+
+   @Override
+   public String getIncompatibleVersionHTML()
+   {
+      return generateMessageHTML(constants_.chatIncompatibleVersion());
+   }
+
+   @Override
+   public String getUnsupportedVersionUpgradeHTML(
+      String currentVersion, String newVersion)
+   {
+      return generateUnsupportedVersionUpgradeHTML(
+         currentVersion, newVersion);
+   }
+
+   @Override
+   public String getUnsupportedVersionNoUpdateHTML(String currentVersion)
+   {
+      return generateMessageHTML(
+         constants_.chatUnsupportedVersionNoUpdateMessage(currentVersion));
+   }
+
+   @Override
+   public String getUnsupportedProtocolHTML()
+   {
+      return generateMessageHTML(
+         constants_.chatUnsupportedProtocolMessage());
+   }
+
+   @Override
+   public String getManifestUnavailableHTML()
+   {
+      return generateMessageHTML(
+         constants_.chatManifestUnavailableMessage());
+   }
+
+   @Override
+   public String getErrorHTML(String errorMessage)
+   {
+      return generateCrashedMessageHTML(errorMessage);
+   }
+
+   private String generateCrashedMessageHTML(String errorMessage)
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault(
+         "--rstudio-editor-background", "#fff");
+      String fgColor = colors.getOrDefault(
+         "--rstudio-editor-foreground", "#333");
+      String disabledFgColor = colors.getOrDefault(
+         "--rstudio-disabledForeground", "#666");
+      String widgetBgColor = colors.getOrDefault(
+         "--rstudio-editorWidget-background", "#f4f8f9");
+      String borderColor = colors.getOrDefault(
+         "--rstudio-panel-border", "#d6dadc");
+      String hoverBgColor = colors.getOrDefault(
+         "--rstudio-list-hoverBackground", "#d6dadc");
+
+      StringBuilder html = new StringBuilder();
+      html.append("<!DOCTYPE html>");
+      html.append("<html lang='");
+      html.append(LocaleCookie.getUiLanguage());
+      html.append("'>");
+      html.append("<head>");
+      html.append("<meta charset='UTF-8'>");
+      html.append("<style>");
+      html.append("html, body {");
+      html.append("  margin: 0; padding: 0;");
+      html.append("  width: 100%; height: 100%;");
+      html.append("  overflow: hidden;");
+      html.append("}");
+      html.append("body {");
+      html.append("  display: flex;");
+      html.append("  align-items: center;");
+      html.append("  justify-content: center;");
+      html.append("  font-family: ");
+      html.append(ThemeFonts.getProportionalFont());
+      html.append(";");
+      html.append("  color: var(--rstudio-editor-foreground, ");
+      html.append(fgColor);
+      html.append(");");
+      html.append("  background-color: var(--rstudio-editor-background, ");
+      html.append(bgColor);
+      html.append(");");
+      html.append("}");
+      html.append(".message { text-align: center; padding: 40px; }");
+      html.append("h2 { color: var(--rstudio-editor-foreground, ");
+      html.append(fgColor);
+      html.append("); margin-bottom: 16px; }");
+      html.append("p { color: var(--rstudio-disabledForeground, ");
+      html.append(disabledFgColor);
+      html.append("); margin: 0 0 24px 0; }");
+      html.append(".chatIframeButton {");
+      html.append("  padding: 10px 20px; font-size: 14px;");
+      html.append("  cursor: pointer;");
+      html.append("  background-color: var(--rstudio-editorWidget-background, ");
+      html.append(widgetBgColor);
+      html.append(");");
+      html.append("  color: var(--rstudio-editor-foreground, ");
+      html.append(fgColor);
+      html.append(");");
+      html.append("  border: 1px solid var(--rstudio-panel-border, ");
+      html.append(borderColor);
+      html.append(");");
+      html.append("  border-radius: 4px;");
+      html.append("}");
+      html.append(".chatIframeButton:hover {");
+      html.append("  background-color: var(--rstudio-list-hoverBackground, ");
+      html.append(hoverBgColor);
+      html.append(");");
+      html.append("}");
+      html.append("</style></head><body>");
+      html.append("<div class='message'>");
+      html.append("<h2>");
+      html.append(constants_.chatProcessExitedTitle());
+      html.append("</h2>");
+      html.append("<p>");
+      html.append(errorMessage);
+      html.append("</p>");
+      html.append("<button id='restart-btn' class='chatIframeButton'>");
+      html.append(constants_.chatRestartButton());
+      html.append("</button>");
+      html.append("</div>");
+      html.append("<script>");
+      html.append("document.getElementById('restart-btn')");
+      html.append(".addEventListener('click', function() {");
+      html.append("  window.parent.postMessage('restart-backend', '*');");
+      html.append("});");
+      html.append("</script></body></html>");
+
+      return html.toString();
+   }
+
+   @Override
    public void onSelected()
    {
       super.onSelected();

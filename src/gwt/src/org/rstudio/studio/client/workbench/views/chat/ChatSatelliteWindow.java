@@ -25,10 +25,12 @@ import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
@@ -57,7 +59,6 @@ public class ChatSatelliteWindow extends SatelliteWindow
                                 JavaScriptObject params)
    {
       ChatSatelliteParams chatParams = params.cast();
-      String chatUrl = chatParams.getChatUrl();
 
       Window.setTitle(constants_.chatSatelliteWindowTitle());
 
@@ -74,7 +75,16 @@ public class ChatSatelliteWindow extends SatelliteWindow
       // Create themed iframe for chat content
       frame_ = new RStudioThemedFrame(constants_.chatSatelliteWindowTitle());
       frame_.setSize("100%", "100%");
-      frame_.setUrl(chatUrl);
+
+      // Set URL if loading a chat URL (HTML content is deferred below)
+      String contentHtml = chatParams.getContentHtml();
+      if (contentHtml == null)
+      {
+         frame_.setUrl(chatParams.getChatUrl());
+      }
+
+      // Forward postMessage from iframe to main window
+      setupMessageForwarder();
 
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();
@@ -89,6 +99,16 @@ public class ChatSatelliteWindow extends SatelliteWindow
       mainPanel.add(frame_);
       mainPanel.setWidgetTopBottom(frame_, 29, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
+
+      // Write HTML content after frame is attached to the DOM.
+      // Cannot use setOnLoadAction + setUrl("about:blank") here because
+      // the load event for about:blank doesn't fire reliably on an
+      // unattached iframe.
+      if (contentHtml != null)
+      {
+         final String html = contentHtml;
+         Scheduler.get().scheduleDeferred(() -> setFrameContent(frame_, html));
+      }
 
       // Manage suspend overlay across session lifecycle
       pEventBus_.get().addHandler(
@@ -143,12 +163,20 @@ public class ChatSatelliteWindow extends SatelliteWindow
    {
       hideSuspendOverlay();
 
-      if (params != null)
+      if (params != null && frame_ != null)
       {
          ChatSatelliteParams chatParams = params.cast();
-         String chatUrl = chatParams.getChatUrl();
-         if (frame_ != null)
+         String contentHtml = chatParams.getContentHtml();
+         if (contentHtml != null)
          {
+            // Write directly — doc.open()/write()/close() replaces
+            // any existing document content and stops running scripts.
+            setFrameContent(frame_, contentHtml);
+         }
+         else
+         {
+            String chatUrl = chatParams.getChatUrl();
+            frame_.setOnLoadAction(null);
             frame_.setUrl(chatUrl);
          }
       }
@@ -164,6 +192,35 @@ public class ChatSatelliteWindow extends SatelliteWindow
    public Widget getWidget()
    {
       return this;
+   }
+
+   private native void setFrameContent(RStudioThemedFrame frame, String html) /*-{
+      try {
+         var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+         doc.open();
+         doc.write(html);
+         doc.close();
+      } catch (e) {
+         console.error("Error setting frame content:", e);
+      }
+   }-*/;
+
+   private native void setupMessageForwarder() /*-{
+      var self = this;
+      $wnd.addEventListener('message', function(event) {
+         var recognized = [
+            'install-now', 'remind-later', 'restart-backend',
+            'open-global-options'
+         ];
+         if (recognized.indexOf(event.data) !== -1) {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatSatelliteWindow::onIframeAction(Ljava/lang/String;)(event.data);
+         }
+      });
+   }-*/;
+
+   private void onIframeAction(String action)
+   {
+      pEventBus_.get().fireEvent(new ChatSatelliteActionEvent(action));
    }
 
    private RStudioThemedFrame frame_;

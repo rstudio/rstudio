@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatBackendExitEvent;
 import org.rstudio.studio.client.workbench.views.chat.events.ChatReturnToMainEvent;
+import org.rstudio.studio.client.workbench.views.chat.events.ChatSatelliteActionEvent;
 import org.rstudio.studio.client.workbench.views.chat.model.ChatSatelliteParams;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
@@ -53,7 +54,8 @@ import com.google.inject.Inject;
 public class ChatPresenter extends BasePresenter
    implements ConsolePromptEvent.Handler,
               SatelliteClosedEvent.Handler,
-              ChatReturnToMainEvent.Handler
+              ChatReturnToMainEvent.Handler,
+              ChatSatelliteActionEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ChatPresenter>
    {
@@ -111,6 +113,18 @@ public class ChatPresenter extends BasePresenter
       void updateCachedUrl(String url);
       void showPoppedOutPlaceholder();
       void hidePoppedOutPlaceholder();
+
+      String getNotInstalledWithInstallHTML(String newVersion);
+      String getUpdateAvailableWithVersionsHTML(
+         String currentVersion, String newVersion);
+      String getMessageHTML(String message);
+      String getIncompatibleVersionHTML();
+      String getUnsupportedVersionUpgradeHTML(
+         String currentVersion, String newVersion);
+      String getUnsupportedVersionNoUpdateHTML(String currentVersion);
+      String getUnsupportedProtocolHTML();
+      String getManifestUnavailableHTML();
+      String getErrorHTML(String errorMessage);
    }
 
    public static class Chat
@@ -288,6 +302,10 @@ public class ChatPresenter extends BasePresenter
       // Listen for chat return-to-main events from satellite
       events_.addHandler(ChatReturnToMainEvent.TYPE, this);
 
+      // Listen for satellite iframe action events (button clicks in
+      // install/update/error views)
+      events_.addHandler(ChatSatelliteActionEvent.TYPE, this);
+
       // Listen for chat provider preference changes (global setting)
       prefs_.chatProvider().addValueChangeHandler((event) ->
       {
@@ -393,6 +411,28 @@ public class ChatPresenter extends BasePresenter
       returnChatToMain();
    }
 
+   @Override
+   public void onChatSatelliteAction(ChatSatelliteActionEvent event)
+   {
+      String action = event.getAction();
+      switch (action)
+      {
+         case "install-now":
+            installUpdate();
+            break;
+         case "remind-later":
+            display_.hideUpdateNotification();
+            startBackend();
+            break;
+         case "restart-backend":
+            restartBackend();
+            break;
+         case "open-global-options":
+            commands_.showAssistantOptions().execute();
+            break;
+      }
+   }
+
    @Handler
    void onPopOutChat()
    {
@@ -432,9 +472,13 @@ public class ChatPresenter extends BasePresenter
          // because poppedOut_ is already true.
          initializeChat();
 
-         // Hide sidebar only if pop-out wasn't cancelled during init
+         // If still popped out after synchronous init checks, open the
+         // satellite with a "checking" message so the user sees something
+         // while the async update check runs.
          if (poppedOut_)
          {
+            showHtmlInSatellite(display_.getMessageHTML(
+               constants_.checkingInstallationMessage()));
             paneManager_.hideSidebarIfOnlyChatTab();
          }
       }
@@ -457,6 +501,27 @@ public class ChatPresenter extends BasePresenter
       {
          paneManager_.activateTab(PaneManager.Tab.Chat);
       }
+   }
+
+   /**
+    * Opens or reactivates the satellite window with the given HTML content.
+    */
+   private void showHtmlInSatellite(String html)
+   {
+      ChatSatelliteParams params = ChatSatelliteParams.createWithHtml(html);
+      Size size = (savedGeometry_ != null)
+         ? savedGeometry_.getSize()
+         : new Size(500, 700);
+      Point position = (savedGeometry_ != null)
+         ? savedGeometry_.getPosition()
+         : null;
+      boolean adjustSize = (savedGeometry_ == null);
+      satelliteManager_.openSatellite(
+         ChatSatellite.NAME,
+         params,
+         size,
+         adjustSize,
+         position);
    }
 
    /**
@@ -625,9 +690,16 @@ public class ChatPresenter extends BasePresenter
             {
                String error = response.getString("error");
                initializing_ = false;
-               cancelPopOut();
-               display_.setStatus(Display.Status.ERROR);
-               display_.showError(constants_.chatBackendStartFailed(error));
+               String errorMsg = constants_.chatBackendStartFailed(error);
+               if (poppedOut_)
+               {
+                  showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+               }
+               else
+               {
+                  display_.setStatus(Display.Status.ERROR);
+                  display_.showError(errorMsg);
+               }
             }
          }
 
@@ -635,9 +707,17 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.setStatus(Display.Status.ERROR);
-            display_.showError(constants_.chatBackendStartError(error.getMessage()));
+            String errorMsg = constants_.chatBackendStartError(
+               error.getMessage());
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+            }
+            else
+            {
+               display_.setStatus(Display.Status.ERROR);
+               display_.showError(errorMsg);
+            }
          }
       });
    }
@@ -658,17 +738,32 @@ public class ChatPresenter extends BasePresenter
          {
             // Reset initialization flag - we're pausing for user action
             initializing_ = false;
-            cancelPopOut();
 
             if (isInitialInstall)
             {
-               // Show "not installed" message with install button in main content area
-               display_.showNotInstalledWithInstall(newVersion);
+               if (poppedOut_)
+               {
+                  showHtmlInSatellite(
+                     display_.getNotInstalledWithInstallHTML(newVersion));
+               }
+               else
+               {
+                  display_.showNotInstalledWithInstall(newVersion);
+               }
             }
             else
             {
-               // Show update available message with version info in main content area
-               display_.showUpdateAvailableWithVersions(currentVersion, newVersion);
+               if (poppedOut_)
+               {
+                  showHtmlInSatellite(
+                     display_.getUpdateAvailableWithVersionsHTML(
+                        currentVersion, newVersion));
+               }
+               else
+               {
+                  display_.showUpdateAvailableWithVersions(
+                     currentVersion, newVersion);
+               }
             }
             // Do NOT start backend when update/install is available
             // Backend will start after user clicks "Update/Install Now" and it completes,
@@ -679,8 +774,15 @@ public class ChatPresenter extends BasePresenter
          public void onIncompatibleVersion()
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.showIncompatibleVersion();
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(
+                  display_.getIncompatibleVersionHTML());
+            }
+            else
+            {
+               display_.showIncompatibleVersion();
+            }
          }
 
          @Override
@@ -688,33 +790,63 @@ public class ChatPresenter extends BasePresenter
              String currentVersion, String newVersion)
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.showUnsupportedVersionUpgradeRequired(
-                currentVersion, newVersion);
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(
+                  display_.getUnsupportedVersionUpgradeHTML(
+                     currentVersion, newVersion));
+            }
+            else
+            {
+               display_.showUnsupportedVersionUpgradeRequired(
+                  currentVersion, newVersion);
+            }
          }
 
          @Override
          public void onUnsupportedVersionNoUpdate(String currentVersion)
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.showUnsupportedVersionNoUpdate(currentVersion);
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(
+                  display_.getUnsupportedVersionNoUpdateHTML(
+                     currentVersion));
+            }
+            else
+            {
+               display_.showUnsupportedVersionNoUpdate(currentVersion);
+            }
          }
 
          @Override
          public void onUnsupportedProtocol()
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.showUnsupportedProtocol();
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(
+                  display_.getUnsupportedProtocolHTML());
+            }
+            else
+            {
+               display_.showUnsupportedProtocol();
+            }
          }
 
          @Override
          public void onManifestUnavailable()
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.showManifestUnavailable();
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(
+                  display_.getManifestUnavailableHTML());
+            }
+            else
+            {
+               display_.showManifestUnavailable();
+            }
          }
 
          @Override
@@ -740,6 +872,11 @@ public class ChatPresenter extends BasePresenter
          public void onInstallStarted()
          {
             display_.showUpdatingStatus();
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getMessageHTML(
+                  constants_.chatUpdating()));
+            }
          }
 
          @Override
@@ -753,6 +890,11 @@ public class ChatPresenter extends BasePresenter
          {
             // Update complete - restart backend and reload UI
             display_.showUpdateComplete();
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getMessageHTML(
+                  constants_.chatUpdateComplete()));
+            }
 
             // Give user a moment to see the success message
             Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
@@ -772,6 +914,10 @@ public class ChatPresenter extends BasePresenter
          public void onInstallFailed(String errorMessage)
          {
             display_.showUpdateError(errorMessage);
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getErrorHTML(errorMessage));
+            }
          }
       });
    }
@@ -786,9 +932,16 @@ public class ChatPresenter extends BasePresenter
       if (attemptCount > 30) // 30 seconds timeout
       {
          initializing_ = false;
-         cancelPopOut();
-         display_.setStatus(Display.Status.ERROR);
-         display_.showError(constants_.chatBackendStartTimeout());
+         String errorMsg = constants_.chatBackendStartTimeout();
+         if (poppedOut_)
+         {
+            showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+         }
+         else
+         {
+            display_.setStatus(Display.Status.ERROR);
+            display_.showError(errorMsg);
+         }
          return;
       }
 
@@ -830,9 +983,17 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             initializing_ = false;
-            cancelPopOut();
-            display_.setStatus(Display.Status.ERROR);
-            display_.showError(constants_.chatBackendStatusCheckFailed(error.getMessage()));
+            String errorMsg = constants_.chatBackendStatusCheckFailed(
+               error.getMessage());
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+            }
+            else
+            {
+               display_.setStatus(Display.Status.ERROR);
+               display_.showError(errorMsg);
+            }
          }
       });
    }
