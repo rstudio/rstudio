@@ -12,6 +12,9 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import java.util.Map;
+
+import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -76,8 +79,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
       // Create suspend overlay (shown during session suspend to block interaction)
       suspendedOverlay_ = new HTML();
       suspendedOverlay_.setSize("100%", "100%");
-      suspendedOverlay_.getElement().getStyle().setBackgroundColor("#000");
-      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
+      updateSuspendedOverlayStyle();
 
       // Add toolbar and frame to main panel
       mainPanel.add(toolbar);
@@ -88,7 +90,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
       mainPanel.setWidgetTopBottom(frame_, 29, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
 
-      // Show overlay during session suspend, hide on resume
+      // Manage suspend overlay across session lifecycle
       pEventBus_.get().addHandler(
          SessionSerializationEvent.TYPE,
          event ->
@@ -98,11 +100,26 @@ public class ChatSatelliteWindow extends SatelliteWindow
             {
                showSuspendOverlay();
             }
+            else if (action == SessionSerializationAction.RESUME_SESSION)
+            {
+               hideSuspendOverlay();
+            }
          });
+   }
+
+   private void updateSuspendedOverlayStyle()
+   {
+      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+      String bgColor = colors.getOrDefault(
+         "--rstudio-editor-background", "#fff");
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
    }
 
    private void showSuspendOverlay()
    {
+      updateSuspendedOverlayStyle();
+      suspendedOverlay_.getElement().getStyle().setOpacity(0.5);
+
       LayoutPanel panel = getMainPanel();
       if (suspendedOverlay_.getParent() != panel)
       {

@@ -313,7 +313,7 @@ public class ChatPresenter extends BasePresenter
          {
             if (value != null)
             {
-               poppedOut_ = value.getBoolean("poppedOut");
+               poppedOut_ = Boolean.TRUE.equals(value.getBoolean("poppedOut"));
                if (value.hasKey("geometry"))
                   savedGeometry_ = value.getObject("geometry").cast();
 
@@ -552,6 +552,7 @@ public class ChatPresenter extends BasePresenter
          {
             poppedOut_ = false;
             satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
+            display_.hidePoppedOutPlaceholder();
          }
 
          // Posit AI is not the effective chat provider, stop backend and show not-selected message

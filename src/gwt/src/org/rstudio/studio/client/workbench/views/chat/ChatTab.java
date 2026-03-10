@@ -37,7 +37,7 @@ public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
       JsObject group = session.getSessionInfo().getClientState()
          .peek("chat-window");
       JsObject state = group.getObject("chatSatelliteState");
-      if (state != null && state.getBoolean("poppedOut"))
+      if (state != null && Boolean.TRUE.equals(state.getBoolean("poppedOut")))
       {
          shim_.forceLoad(false, null);
       }
