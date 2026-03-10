@@ -12,7 +12,10 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -21,15 +24,21 @@ import com.google.inject.Inject;
 
 public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
 {
+   public interface Binder extends CommandBinder<Commands, Shim> {}
+
    public abstract static class Shim extends DelayLoadTabShim<ChatPresenter, ChatTab>
    {
+      @Handler
+      public abstract void onActivateChat();
    }
 
    @Inject
-   public ChatTab(Shim shim, Session session)
+   public ChatTab(Shim shim, Binder binder, Commands commands, Session session)
    {
       super(constants_.chatTitle(), shim);
       shim_ = shim;
+
+      binder.bind(commands, shim_);
 
       // If chat was popped out in a previous session, force-load the
       // presenter eagerly so it can restore the satellite window even

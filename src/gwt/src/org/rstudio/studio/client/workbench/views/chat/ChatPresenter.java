@@ -490,7 +490,8 @@ public class ChatPresenter extends BasePresenter
       returnChatToMain();
    }
 
-   @Handler
+   // No @Handler: bound via ChatTab.Shim so the command works before the
+   // presenter is delay-loaded (e.g. sidebar hidden at startup).
    void onActivateChat()
    {
       if (poppedOut_)
