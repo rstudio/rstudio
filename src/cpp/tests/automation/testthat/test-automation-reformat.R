@@ -112,4 +112,55 @@ remote$console.executeExpr({
 
 })
 
+# https://github.com/rstudio/rstudio/issues/16721
+.rs.test("air: format on save does not use air when useAirFormatter is false", {
+
+   # make sure 'air' is installed
+   remote$console.executeExpr({
+      writeLines(Sys.which("air"))
+   })
+
+   output <- remote$console.getOutput(1L)
+   if (!nzchar(output))
+      skip("air is not installed")
+
+   # enable reformat on save, but leave useAirFormatter disabled
+   remote$console.executeExpr({
+      .rs.uiPrefs$reformatOnSave$set(TRUE)
+      .rs.uiPrefs$codeFormatter$set("none")
+      .rs.uiPrefs$useAirFormatter$set(FALSE)
+   })
+
+   # write an air.toml so Air would have config if it ran
+   airToml <- .rs.heredoc('
+      [format]
+      line-width = 80
+      indent-width = 4
+   ')
+
+   remote$console.executeExpr({
+      writeLines(!!airToml, con = "air.toml")
+   })
+
+   name <- basename(tempfile("script-", fileext = ".R"))
+   remote$editor.openDocument(name)
+
+   editor <- remote$editor.getInstance()
+   editor$insert("1+1;2+2")
+   remote$keyboard.insertText("<Ctrl + S>")
+   Sys.sleep(2)
+
+   # verify the code was NOT reformatted by Air
+   # (Air would reformat "1+1;2+2" to "1 + 1\n2 + 2\n")
+   contents <- editor$getValue()
+   expect_true(startsWith(contents, "1+1;2+2"))
+   remote$editor.closeDocument()
+
+   remote$console.executeExpr({
+      .rs.uiPrefs$reformatOnSave$set(FALSE)
+      .rs.uiPrefs$codeFormatter$set("none")
+   })
+
+})
+
 remote$project.close()

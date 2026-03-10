@@ -793,6 +793,13 @@ Error formatDocumentImpl(
    std::string formatType = prefs::userPrefs().codeFormatter();
    if (formatType == kCodeFormatterNone)
    {
+      if (!prefs::userPrefs().useAirFormatter())
+      {
+         json::JsonRpcResponse response = callback();
+         continuation(Success(), &response);
+         return Success();
+      }
+
       std::string airExePath;
       Error error = r::exec::RFunction(".rs.air.ensureAvailable").call(&airExePath);
       if (error)
