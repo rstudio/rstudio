@@ -4399,12 +4399,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copy RStudio Version" />
 
    <cmd id="popOutChat"
-        label="Show Chat in Separate Window"
+        label="Show Posit Assistant in Separate Window"
         buttonLabel=""
-        desc="Show chat in a separate window"/>
+        desc="Show Posit Assistant in a separate window"/>
 
    <cmd id="returnChatToMain"
-        label="Return Chat to Main Window"
+        label="Return Posit Assistant to Main Window"
         buttonLabel=""
         desc="Return to main window"/>
 
