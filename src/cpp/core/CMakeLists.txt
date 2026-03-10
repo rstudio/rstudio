@@ -345,7 +345,7 @@ target_link_libraries(rstudio-core
 )
 
 if(WIN32)
-   target_link_libraries(rstudio-core zlibstatic)
+   target_link_libraries(rstudio-core rstudio-zlib)
 endif()
 
 # define executable (for running unit tests)
@@ -391,7 +391,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    endif()
 
    if(WIN32)
-      target_link_libraries(rstudio-core-tests zlibstatic)
+      target_link_libraries(rstudio-core-tests rstudio-zlib)
    endif()
 
    enable_testing()

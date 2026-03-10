@@ -330,12 +330,16 @@ endif()
 
 
 # zlib
+# CUSTOM TRUE: we manage the build target manually as 'rstudio-zlib' to avoid
+# a target name collision with the 'zlib' OBJECT target that libgit2 creates
+# from its own bundled deps/zlib when find_package(ZLIB) fails on Windows.
 dependency(ZLIB
    COMMENT    "zlib is a general purpose data compression library."
    VERSION    "1.3.1"
    REPOSITORY "https://github.com/madler/zlib"
    REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
    PLATFORMS  WIN32
+   CUSTOM     TRUE
 )
 
 fetch(
@@ -391,4 +395,24 @@ target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source
 # Create websocketpp target.
 add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+
+
+# Create zlib target (Windows only).
+# Uses a custom target name to avoid colliding with the 'zlib' OBJECT target
+# that libgit2 creates from its bundled deps/zlib.
+if(WIN32 AND ZLIB_ENABLED)
+   # Generate zconf.h from the template (normally done by zlib's CMakeLists.txt).
+   # The only two #cmakedefine tokens (Z_PREFIX, Z_HAVE_UNISTD_H) are both
+   # undefined on Windows, so configure_file produces the correct defaults.
+   configure_file(
+      "${ZLIB_SOURCE_DIR}/zconf.h.cmakein"
+      "${ZLIB_BINARY_DIR}/zconf.h"
+      @ONLY)
+
+   file(GLOB ZLIB_SOURCE_FILES "${ZLIB_SOURCE_DIR}/*.c")
+   file(GLOB ZLIB_HEADER_FILES "${ZLIB_SOURCE_DIR}/*.h")
+   add_library(rstudio-zlib STATIC ${ZLIB_SOURCE_FILES} ${ZLIB_HEADER_FILES})
+   # Source dir for zlib.h et al.; binary dir for the generated zconf.h.
+   target_include_directories(rstudio-zlib PUBLIC "${ZLIB_SOURCE_DIR}" "${ZLIB_BINARY_DIR}")
+endif()
 
