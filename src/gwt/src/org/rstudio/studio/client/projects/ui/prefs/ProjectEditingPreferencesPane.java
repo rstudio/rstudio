@@ -219,7 +219,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       RestartRequirement restartRequirement = new RestartRequirement();
 
-      // write the gitignore pref into private project prefs
+      // write the gitignore pref into local project prefs
       boolean useGitignore = chkUseGitignore_.getValue();
       options.getLocalProjectPrefs().setBoolean(UserPrefsAccessor.FILE_MONITOR_USE_GITIGNORE, useGitignore);
       if (useGitignore != initialUseGitignore_)

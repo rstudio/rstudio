@@ -850,13 +850,11 @@ bool ProjectContext::fileMonitorFilter(
    // remain discoverable via Go to File/Function.
    if (fileInfo.isDirectory() && context.pGit && context.pGit->isOpen())
    {
-      std::string dirPath = directory().getAbsolutePath();
-      if (path.size() > dirPath.size() + 1)
-      {
-         std::string relativePath = path.substr(dirPath.size() + 1);
-         if (context.pGit->isIgnored(relativePath))
-            return false;
-      }
+      // Pass the absolute path directly; libgit2's git_ignore_path_is_ignored
+      // accepts absolute paths and internally computes the workdir-relative
+      // path. This correctly handles projects nested inside a larger git repo.
+      if (context.pGit->isIgnored(path))
+         return false;
    }
 
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);

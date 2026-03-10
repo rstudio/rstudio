@@ -41,7 +41,11 @@ public:
    Git(const Git&) = delete;
    Git& operator=(const Git&) = delete;
 
-   // Check if a path (relative to repo root) is ignored by .gitignore rules.
+   // Check if a path is ignored by .gitignore rules.
+   // Accepts both absolute paths and paths relative to the repo workdir.
+   // (Confirmed in the libgit2 implementation: git_attr_path__init() uses
+   // git_fs_path_join_unrooted() which detects rooted paths and strips the
+   // workdir prefix via git_fs_path_equal_or_prefixed().)
    bool isIgnored(const std::string& path) const;
 
    // Whether a repository was successfully opened.

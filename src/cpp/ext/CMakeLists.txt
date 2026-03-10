@@ -220,6 +220,10 @@ dependency(LIBGIT2
    REVISION   "ca225744b992bf2bf24e9a2eb357ddef78179667" # pragma: allowlist secret
 )
 
+# Snapshot global settings before libgit2 overrides, so restore_global_settings()
+# can revert to the original values (e.g. BUILD_SHARED_LIBS may be undefined).
+save_global_settings()
+
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(BUILD_CLI OFF CACHE BOOL "" FORCE)
@@ -333,8 +337,6 @@ dependency(ZLIB
    REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
    PLATFORMS  WIN32
 )
-
-save_global_settings()
 
 fetch(
    dtl          DTL

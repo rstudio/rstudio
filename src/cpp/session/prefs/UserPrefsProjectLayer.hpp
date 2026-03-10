@@ -27,6 +27,8 @@ namespace prefs {
 //
 //   sharedPrefsCache_   UI prefs embedded in the .Rproj file (shared across users).
 //   localPrefsCache_    Per-user prefs stored in .Rproj.user/<ctx>/rstudio-prefs.json.
+//                       Only prefs marked "local": true in user-prefs-schema.json may
+//                       be written here (enforced by the localProjectPrefs() allowlist).
 //   cache_              (inherited) The merged view: shared prefs overlaid with local prefs.
 //
 // mergePrefs() rebuilds cache_ from the two source caches. Local prefs take

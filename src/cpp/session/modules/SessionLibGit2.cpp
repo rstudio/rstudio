@@ -20,6 +20,7 @@
 #include <shared_core/Error.hpp>
 
 #include <core/Log.hpp>
+#include <core/Macros.hpp>
 
 using namespace rstudio::core;
 
@@ -83,9 +84,13 @@ bool Git::isIgnored(const std::string& path) const
    int rc = git_ignore_path_is_ignored(&ignored, pRepo_, path.c_str());
    if (rc != 0)
    {
-      const git_error* err = git_error_last();
-      std::string msg = err ? err->message : "unknown error";
-      LOG_DEBUG_MESSAGE("git_ignore_path_is_ignored() failed for '" + path + "': " + msg);
+      if (RS_ONCE())
+      {
+         const git_error* err = git_error_last();
+         std::string msg = err ? err->message : "unknown error";
+         LOG_WARNING_MESSAGE("git_ignore_path_is_ignored() failed for '" + path +
+                             "': " + msg + " (further errors will be suppressed)");
+      }
       return false;
    }
 
