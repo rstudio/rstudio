@@ -4528,7 +4528,7 @@ std::string buildWebSocketUrl(int port)
          sessionUrl.pop_back();
 
       std::string wsPath = sessionUrl + portmappedPath + "/ai-chat";
-      DLOG("Server WebSocket path (relative): {}", wsPath);
+      DLOG("Server WebSocket path: {}", wsPath);
       return wsPath;
    }
 #endif
@@ -4874,7 +4874,6 @@ Error startChatBackend(bool resumeConversation)
          "Failed to launch chat backend: node=" +
          nodePath.getAbsolutePath() + ", workingDir=" +
          processOpts.workingDir.getAbsolutePath());
-      LOG_ERROR(error);
       clearChatBackendPort();
       return error;
    }
