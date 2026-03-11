@@ -1233,11 +1233,14 @@ assign(x = ".rs.acCompletionTypes",
    # for the sentinel text "Arguments passed on to" as the first non-whitespace
    # TEXT node in the description. If it's not there, this is a regular `...`
    # argument and we have nothing to expand.
+   #
+   # Note: if multiple @inheritDotParams tags exist, Loop 1 (which searches
+   # from the top) and Loop 2 (which searches in reverse), will return results
+   # from separate blocks; these may not correspond. This limitation is accepted
+   # as multiple @inheritDotParams on a single function is uncommon.
+   
    # Loop 1: find the sentinel TEXT and extract the target function name from
-   # the \code node immediately following it. Note: if multiple @inheritDotParams
-   # tags exist, Loop 1 finds the first target name and Loop 2 finds the last
-   # \describe block; these may not correspond. This limitation is accepted as
-   # multiple @inheritDotParams on a single function is uncommon.
+   # the \code node immediately following it. 
    inheritDotParamsText <- "Arguments passed on to"
    targetName <- NULL
    for (i in seq_along(dotsNode))
