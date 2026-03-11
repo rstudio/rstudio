@@ -4493,8 +4493,8 @@ Error allocatePort(int* pPort)
 // ============================================================================
 
 // Returns either:
-// - Server mode: relative path (e.g., "/p/58fab3e4/ai-chat")
-// - Desktop mode: absolute URL (e.g., "ws://127.0.0.1:1234/ai-chat")
+// - Server mode: path with session prefix (e.g., "/s/{id}/p/58fab3e4/ai-chat")
+//   or without prefix in single-session mode (e.g., "/p/58fab3e4/ai-chat")
 std::string buildWebSocketUrl(int port)
 {
 #ifdef RSTUDIO_SERVER
@@ -4517,12 +4517,16 @@ std::string buildWebSocketUrl(int port)
       if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
          portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
 
-      // Return RELATIVE path (client will construct absolute URL from window.location)
-      // This ensures the WebSocket connection uses the same hostname as the page,
-      // guaranteeing the port-token cookie is sent with the upgrade request.
-      // Without this fix, accessing RStudio via IP address would fail because the
-      // cookie domain wouldn't match the WebSocket URL's hostname.
-      std::string wsPath = portmappedPath + "/ai-chat";
+      // Prepend session URL prefix (e.g., "/s/{session-id}") so the browser
+      // sends the port-token cookie with the WebSocket upgrade request. The
+      // cookie is scoped to the session path in Workbench; without the prefix,
+      // the browser won't include it and port descrambling fails.
+      // In open-source (single-session) mode, RS_SESSION_URL is empty.
+      std::string sessionUrl = core::system::getenv(kSessionUrlEnvVar);
+      if (!sessionUrl.empty() && sessionUrl.back() == '/')
+         sessionUrl.pop_back();
+
+      std::string wsPath = sessionUrl + portmappedPath + "/ai-chat";
       DLOG("Server WebSocket path (relative): {}", wsPath);
       return wsPath;
    }
@@ -4865,6 +4869,10 @@ Error startChatBackend(bool resumeConversation)
 
    if (error)
    {
+      error.addProperty("description",
+         "Failed to launch chat backend: node=" +
+         nodePath.getAbsolutePath() + ", workingDir=" +
+         processOpts.workingDir.getAbsolutePath());
       LOG_ERROR(error);
       clearChatBackendPort();
       return error;
@@ -4923,7 +4931,15 @@ Error chatStartBackend(const json::JsonRpcRequest& request,
    json::Object result;
    result["success"] = !error;
    if (error)
-      result["error"] = error.getMessage();
+   {
+      LOG_ERROR(error);
+
+      // Prefer the description property (which contains actionable context
+      // like file paths) over getMessage() (which is just the bare errno
+      // string like "No such file or directory").
+      std::string description = error.getProperty("description");
+      result["error"] = description.empty() ? error.getMessage() : description;
+   }
 
    pResponse->setResult(result);
    return Success();
