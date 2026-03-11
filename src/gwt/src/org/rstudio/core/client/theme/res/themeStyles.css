@@ -15,6 +15,7 @@
 @external search;
 @external highlight, disabled;
 @external gwt-Button, gwt-Button-DialogAction, gwt-Button-DefaultDialogAction;
+@external themedButton, buttonContent;
 @external gwt-CheckBox, gwt-RadioButton;
 @external gwt-DialogBox, gwt-DialogBox-ModalDialog;
 @external gwt-PopupPanelGlass;
@@ -62,6 +63,9 @@
 @external rstudio-themes-dark-menus;
 
 @external rstudio-classic-inverts;
+@external rstudio-theme-aware-dialog;
+@external rstudio-lock-keyhole;
+@external rstudio-trust-detail;
 
 @external rstudio-animating;
 
@@ -789,7 +793,7 @@ pre {
 }
 
 .gwt-SuggestBoxPopup {
-   z-index: 1000;
+   z-index: 1001;
    cursor: default;
 }
 
@@ -2454,6 +2458,72 @@ input[type="checkbox"]:checked:before {
 .gwt-DialogBox .dialogContent {
    padding-left: 10px;
    padding-right: 10px;
+}
+
+/* Dark theme support for opt-in dialogs.
+   rstudio-themes-dark is added directly to the dialog element by setThemeAware(),
+   since GWT popups live outside #rstudio_container in the DOM. */
+.rstudio-themes-dark.rstudio-theme-aware-dialog {
+   background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTopCenter {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+   border-bottom-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .Caption {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="text"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog textarea,
+.rstudio-themes-dark.rstudio-theme-aware-dialog select,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-ListBox {
+   background: THEME_DARK_CONTROL_BACKGROUND;
+   border-color: THEME_DARK_CONTROL_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .search input[type="text"] {
+   background: transparent;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child {
+   background: THEME_DARKGREY_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   box-shadow: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button:active > table:first-child {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button[disabled] .buttonContent {
+   color: #777;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog a {
+   color: #6cb4ee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog svg {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-lock-keyhole {
+   fill: THEME_DARKGREY_BACKGROUND;
+}
+
+.rstudio-trust-detail {
+   color: #888;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail {
+   color: #aaa;
 }
 
 .rstheme_minimizedWindowObject .left {

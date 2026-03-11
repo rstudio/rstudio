@@ -1008,8 +1008,17 @@
             "description": "Use the test manifest URL for Posit AI package updates."
          }
       ],
+      "trust": [
+         {
+            "name": "trust-enabled",
+            "type": "bool",
+            "memberName": "trustEnabled_",
+            "defaultValue": true,
+            "description": "When enabled, RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled, all directories are implicitly trusted."
+         }
+      ],
       "misc": [
-         
+
       ]
    }
 }

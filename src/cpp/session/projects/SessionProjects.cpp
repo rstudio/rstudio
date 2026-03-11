@@ -34,6 +34,7 @@
 
 #include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
+#include "../modules/SessionTrust.hpp"
 
 using namespace rstudio::core;
 
@@ -622,6 +623,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
    json::Object localPrefs = prefs::readLocalProjectPrefs();
    optionsJson["local_prefs"] = localPrefs;
+   optionsJson["trust_status"] = modules::trust::explicitTrustSetting();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -905,6 +907,26 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = prefs::writeLocalProjectPrefs(localPrefsJson);
    if (error)
       LOG_ERROR(error);
+
+   // write trust status if provided
+   json::Object allOptions;
+   error = json::readParam(request.params, 0, &allOptions);
+   if (!error)
+   {
+      auto it = allOptions.find("trust_status");
+      if (it != allOptions.end() && json::isType<std::string>((*it).getValue()))
+      {
+         std::string trustStatus = (*it).getValue().getString();
+         std::string directory = s_projectContext.directory().getAbsolutePath();
+
+         if (trustStatus == "trusted")
+            modules::trust::setTrust(directory, true);
+         else if (trustStatus == "untrusted")
+            modules::trust::setTrust(directory, false);
+         else if (trustStatus == "default")
+            modules::trust::resetTrust();
+      }
+   }
 
    // notify modules
    module_context::events().onProjectOptionsUpdated();

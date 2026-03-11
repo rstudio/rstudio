@@ -257,6 +257,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
+   modules/SessionTrust.cpp
    modules/SessionUserPrefs.cpp
    modules/SessionUserPrefsMigration.cpp
    modules/build/SessionBuild.cpp

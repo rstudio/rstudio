@@ -1136,10 +1136,10 @@ void onError(ProcessOperations& operations, const Error& error)
 
 void onExit(int status)
 {
-   if (status != 0)
+   if (status != 0 && !s_isSessionShuttingDown)
       WLOG("Agent process exited with status {}.", status);
    else
-      DLOG("Agent process exited normally.");
+      DLOG("Agent process exited with status {}.", status);
 
    s_agentPid = -1;
    s_runningAgentType.clear();

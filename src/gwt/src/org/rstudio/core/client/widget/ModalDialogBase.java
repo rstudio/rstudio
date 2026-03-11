@@ -38,6 +38,7 @@ import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -128,6 +129,25 @@ public abstract class ModalDialogBase extends DialogBox
       }, KeyDownEvent.getType());
    }
    
+   protected void setThemeAware(boolean themeAware)
+   {
+      themeAware_ = themeAware;
+
+      if (themeAware)
+      {
+         addStyleName("rstudio-theme-aware-dialog");
+
+         Element container = Document.get().getElementById("rstudio_container");
+         if (container != null && container.hasClassName("rstudio-themes-dark"))
+            addStyleName("rstudio-themes-dark");
+      }
+      else
+      {
+         removeStyleName("rstudio-theme-aware-dialog");
+         removeStyleName("rstudio-themes-dark");
+      }
+   }
+
    protected void hideButtons()
    {
      buttonPanel_.setVisible(false);
@@ -163,7 +183,8 @@ public abstract class ModalDialogBase extends DialogBox
       {
       }
 
-      RStudioThemes.disableDarkMenus();
+      if (!themeAware_)
+         RStudioThemes.disableDarkMenus();
    }
 
    @Override
@@ -175,7 +196,8 @@ public abstract class ModalDialogBase extends DialogBox
 
       ModalDialogTracker.onHide(this);
 
-      RStudioThemes.enableDarkMenus();
+      if (!themeAware_)
+         RStudioThemes.enableDarkMenus();
 
       super.onUnload();
    }
@@ -874,6 +896,7 @@ public abstract class ModalDialogBase extends DialogBox
    private Handle shortcutDisableHandle_;
 
    private boolean escapeDisabled_ = false;
+   private boolean themeAware_ = false;
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;

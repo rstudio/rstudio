@@ -159,6 +159,7 @@
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
+#include "modules/SessionTrust.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
@@ -750,6 +751,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lsp::initialize)
       (modules::assistant::initialize)
       (modules::chat::initialize)
+      (modules::trust::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)
 
@@ -2520,6 +2522,9 @@ int main(int argc, char * const argv[])
       // persist the value to the session state as soon as possible
       module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
 
+      // check directory trust before R initialization
+      modules::trust::checkTrust(workingDir, options.userHomePath());
+
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
@@ -2677,6 +2682,22 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+
+      // apply trust overrides for untrusted or unknown directories
+      if (modules::trust::shouldSuppressStartupFiles())
+      {
+         // redirect .Rprofile and .Renviron to the user's home directory,
+         // bypassing any project-level versions of these files
+         FilePath homeRprofile = options.userHomePath().completePath(".Rprofile");
+         FilePath homeRenviron = options.userHomePath().completePath(".Renviron");
+         core::system::setenv("R_PROFILE_USER", homeRprofile.getAbsolutePath());
+         core::system::setenv("R_ENVIRON_USER", homeRenviron.getAbsolutePath());
+      }
+
+      if (modules::trust::shouldSuppressWorkspaceRestore())
+      {
+         rOptions.restoreWorkspace = false;
+      }
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

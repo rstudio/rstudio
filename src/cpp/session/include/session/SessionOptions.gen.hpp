@@ -59,6 +59,7 @@ protected:
                 boost::program_options::options_description* pUser,
                 boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pPai,
+                boost::program_options::options_description* pTrust,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
                 int* wwwSameSite,
@@ -493,6 +494,11 @@ protected:
       value<bool>(&positAssistantTestManifest_)->default_value(false)->implicit_value(true),
       "Use the test manifest URL for Posit AI package updates.");
 
+   pTrust->add_options()
+      ("trust-enabled",
+      value<bool>(&trustEnabled_)->default_value(true),
+      "When enabled, RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled, all directories are implicitly trusted.");
+
    pMisc->add_options();
 
    FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
@@ -630,6 +636,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
+   bool trustEnabled() const { return trustEnabled_; }
 
 
 protected:
@@ -763,6 +770,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
+   bool trustEnabled_;
    virtual bool allowOverlay() const { return false; };
 };
 

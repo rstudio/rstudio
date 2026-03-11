@@ -36,4 +36,11 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
     String noLabel();
     String yesLabel();
     String adminNotificationCaption();
+    String trustDialogHeader();
+    String trustDialogDescription();
+    String trustDialogFilesDetected();
+    String trustDialogTrustButton();
+    String trustDialogDontTrustButton();
+    String trustDialogTrustExplanation();
+    String trustDialogDontTrustExplanation();
 }

@@ -114,7 +114,13 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                             ServerRequestCallback<Void> requestCallback);
    
    void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback);
-   
+
+   void grantTrust(String directory, ServerRequestCallback<Void> requestCallback);
+
+   void revokeTrust(String directory, ServerRequestCallback<Void> requestCallback);
+
+   void resetTrust(String directory, ServerRequestCallback<Void> requestCallback);
+
    void openFileDialogCompleted(String path, ServerRequestCallback<Void> requestCallback);
    
    void getTerminalOptions(

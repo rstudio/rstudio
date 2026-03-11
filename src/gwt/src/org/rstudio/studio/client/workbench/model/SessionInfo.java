@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.projects.model.RProjectAssistantOptions;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.events.TrustRequestEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -641,6 +642,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native SessionInitOptions getInitOptions() /*-{
       return this.init_options;
+   }-*/;
+
+   public final native TrustRequestEvent.Data getTrustRequest() /*-{
+      return this.trust_request;
    }-*/;
 
    /**

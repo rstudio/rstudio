@@ -33,6 +33,8 @@ import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -74,6 +76,7 @@ import org.rstudio.studio.client.workbench.events.ShowMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.events.TrustRequestEvent;
 import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.events.UserPromptEvent;
 import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
@@ -270,6 +273,14 @@ public class Workbench implements BusyEvent.Handler,
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
       session_.updateSessionInfo(event.getData());
+
+      // check for pending trust request
+      TrustRequestEvent.Data trustData =
+         session_.getSessionInfo().getTrustRequest();
+      if (trustData != null && trustData.getDirectory() != null)
+      {
+         showTrustRequestDialog(trustData);
+      }
    }
 
    public void onBusy(BusyEvent event)
@@ -291,6 +302,32 @@ public class Workbench implements BusyEvent.Handler,
       globalDisplay_.showMessage(showMessage.getType(),
                                  showMessage.getCaption(),
                                  showMessage.getMessage());
+   }
+
+   private void showTrustRequestDialog(TrustRequestEvent.Data data)
+   {
+      String directory = data.getDirectory();
+
+      TrustRequestDialog dialog = new TrustRequestDialog(
+         directory,
+         data.getRiskyFiles(),
+         () ->
+         {
+            server_.grantTrust(directory, new VoidServerRequestCallback()
+            {
+               @Override
+               public void onSuccess()
+               {
+                  eventBus_.fireEvent(new SuspendAndRestartEvent(
+                     SuspendOptions.createSaveMinimal(false)));
+               }
+            });
+         },
+         () ->
+         {
+            server_.revokeTrust(directory, new VoidServerRequestCallback());
+         });
+      dialog.showModal();
    }
 
    @Override
