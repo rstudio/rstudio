@@ -4495,6 +4495,7 @@ Error allocatePort(int* pPort)
 // Returns either:
 // - Server mode: path with session prefix (e.g., "/s/{id}/p/58fab3e4/ai-chat")
 //   or without prefix in single-session mode (e.g., "/p/58fab3e4/ai-chat")
+// - Desktop mode: absolute URL (e.g., "ws://127.0.0.1:1234/ai-chat")
 std::string buildWebSocketUrl(int port)
 {
 #ifdef RSTUDIO_SERVER
