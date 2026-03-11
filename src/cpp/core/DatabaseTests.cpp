@@ -23,8 +23,6 @@
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
-#include "config.h"
-
 namespace rstudio {
 namespace core {
 namespace tests {
@@ -301,7 +299,28 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
       GTEST_SKIP() << "Skipping Postgres migration tests as POSTGRES_ENABLED is not set";
    }
    Error error;
-   // generate some schema files
+
+   // Copy the real CreateTables files to a temp directory so we can add test migration
+   // files alongside them. This validates the production schema as part of the test.
+   FilePath dbSchemaDir(RSTUDIO_DB_SCHEMA_DIR);
+   FilePath schemaDir;
+   ASSERT_FALSE(FilePath::tempFilePath(schemaDir));
+   ASSERT_FALSE(schemaDir.ensureDirectory());
+
+   std::string createTablesContent;
+   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.sqlite"), &createTablesContent);
+   ASSERT_FALSE(error) << "Failed to read CreateTables.sqlite from " << dbSchemaDir.getAbsolutePath();
+   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.sqlite"), createTablesContent);
+   ASSERT_FALSE(error) << "Failed to copy CreateTables.sqlite";
+
+   error = readStringFromFile(dbSchemaDir.completeChildPath("CreateTables.postgresql"), &createTablesContent);
+   ASSERT_FALSE(error) << "Failed to read CreateTables.postgresql from " << dbSchemaDir.getAbsolutePath();
+   error = writeStringToFile(schemaDir.completeChildPath("CreateTables.postgresql"), createTablesContent);
+   ASSERT_FALSE(error) << "Failed to copy CreateTables.postgresql";
+
+   // Test migration files create and modify test-specific tables.
+   // Migration filenames use the 3-part convention: {version}_{Release-Name}_{Description}.{ext}
+   // Versions use "99..." timestamps to sort after all production migration versions.
    std::string schema1 =
       R""(
       CREATE TABLE TestTable1_Persons(
@@ -315,6 +334,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
          id int,
          fk_person_id int
       );
+
+      UPDATE schema_version SET current_version = '99000000000000000000001', release_name = 'Test Release';
       )"";
 
    // sqlite cannot alter tables very well, so adding constraints necessitates dropping
@@ -341,6 +362,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       DROP TABLE TestTable2_AccountHolders;
       ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+
+      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
       )"";
 
    // postgresql supports modification of tables
@@ -354,6 +377,8 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       ALTER TABLE TestTable2_AccountHolders
       ADD FOREIGN KEY (fk_person_id) REFERENCES TestTable1_Persons(id);
+
+      UPDATE schema_version SET current_version = '99000000000000000000002', release_name = 'Test Release';
       )"";
 
    std::string schema3Sqlite =
@@ -368,23 +393,26 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
 
       DROP TABLE TestTable2_AccountHolders;
       ALTER TABLE TestTable2_AccountHolders_new RENAME TO TestTable2_AccountHolders;
+
+      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
       )"";
 
    std::string schema3Postgresql =
       R""(
       ALTER TABLE TestTable2_AccountHolders
       ADD COLUMN creation_time text;
+
+      UPDATE schema_version SET current_version = '99000000000000000000003', release_name = 'Test Release';
       )"";
 
-   FilePath workingDir = core::system::currentWorkingDir(core::system::currentProcessId());
-   FilePath outFile1 = workingDir.completeChildPath("1_InitialTables.sql");
-   FilePath outFile2Sqlite = workingDir.completeChildPath("2_ConstraintsForInitialTables.sqlite");
-   FilePath outFile2Postgresql = workingDir.completeChildPath("2_ConstraintsForInitialTables.postgresql");
-   FilePath outFile3Sqlite = workingDir.completeChildPath("3_AddAccountCreationTime.sqlite");
-   FilePath outFile3Postgresql = workingDir.completeChildPath("3_AddAccountCreationTime.postgresql");
+   FilePath outFile1 = schemaDir.completeChildPath("99000000000000000000001_Test-Release_InitialTables.sql");
+   FilePath outFile2Sqlite = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.sqlite");
+   FilePath outFile2Postgresql = schemaDir.completeChildPath("99000000000000000000002_Test-Release_AddConstraints.postgresql");
+   FilePath outFile3Sqlite = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.sqlite");
+   FilePath outFile3Postgresql = schemaDir.completeChildPath("99000000000000000000003_Test-Release_AddCreationTime.postgresql");
 
    error = writeStringToFile(outFile1, schema1);
-   ASSERT_FALSE(error) << "Failed to write initial schema file: " << error.getMessage();
+   ASSERT_FALSE(error) << "Failed to write initial test tables schema file: " << error.getMessage();
 
    error = writeStringToFile(outFile2Sqlite, schema2Sqlite);
    ASSERT_FALSE(error) << "Failed to write SQLite constraints schema file: " << error.getMessage();
@@ -402,24 +430,39 @@ TEST_F(DatabaseTestsFixture, CanUpdateSchemas)
    error = connect(postgresConnectionOptions(), &postgresConnection);
    ASSERT_FALSE(error) << "Failed to connect to PostgreSQL database for schema update test: " << error.getMessage();
 
-   SchemaUpdater sqliteUpdater(sqliteConnection, workingDir);
-   SchemaUpdater postgresUpdater(postgresConnection, workingDir);
+   // Reset the PostgreSQL test database so the test is repeatable.
+   // The SQLite DB is already cleaned up by the fixture (file is deleted in TearDown).
+   error = postgresConnection->executeStr("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+   ASSERT_FALSE(error) << "Failed to reset PostgreSQL test database: " << error.getMessage();
 
+   SchemaUpdater sqliteUpdater(sqliteConnection, schemaDir);
+   SchemaUpdater postgresUpdater(postgresConnection, schemaDir);
+
+   // First update: creates schema from the real CreateTables files (production version)
    error = sqliteUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update SQLite schema: " << error.getMessage();
+   ASSERT_FALSE(error) << "Failed initial SQLite schema creation: " << error.getMessage();
 
    error = postgresUpdater.update();
-   ASSERT_FALSE(error) << "Failed to update PostgreSQL schema: " << error.getMessage();
+   ASSERT_FALSE(error) << "Failed initial PostgreSQL schema creation: " << error.getMessage();
+
+   // Second update: applies test migration files (versions higher than production)
+   error = sqliteUpdater.update();
+   ASSERT_FALSE(error) << "Failed to apply SQLite test migrations: " << error.getMessage();
+
+   error = postgresUpdater.update();
+   ASSERT_FALSE(error) << "Failed to apply PostgreSQL test migrations: " << error.getMessage();
+
+   SchemaVersion expectedVersion("99000000000000000000003", "Test Release");
 
    SchemaVersion currentSchemaVersion;
    error = sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get SQLite schema version: " << error.getMessage();
-   ASSERT_EQ(currentSchemaVersion, SchemaVersion("3", RSTUDIO_RELEASE_NAME));
+   ASSERT_EQ(currentSchemaVersion, expectedVersion);
 
    currentSchemaVersion = SchemaVersion();
    error = postgresUpdater.databaseSchemaVersion(&currentSchemaVersion);
    ASSERT_FALSE(error) << "Failed to get PostgreSQL schema version: " << error.getMessage();
-   ASSERT_EQ(currentSchemaVersion, SchemaVersion("3", RSTUDIO_RELEASE_NAME));
+   ASSERT_EQ(currentSchemaVersion, expectedVersion);
 
    // ensure repeated calls to update work without error
    error = sqliteUpdater.update();
@@ -623,6 +666,7 @@ TEST(DatabaseTest, CanCorrectlyParsePostgresqlConnectionUris)
    EXPECT_FALSE(validateOptions(options, &connectionStr));
    EXPECT_EQ(std::string("host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test' password='12345'"), connectionStr);
 
+   // When password is returned separately (3-arg validateOptions), it doesn't appear in the connection string
    std::string password;
    EXPECT_FALSE(validateOptions(options, &connectionStr, &password));
    EXPECT_EQ(std::string("12345"), password) << "Expected password to be '12345' but got '" << password << "'";
@@ -853,6 +897,7 @@ TEST_F(ConnectionPoolTestsFixture, CanUseConnectionPool)
    ASSERT_FALSE(error) << "Failed to execute second query: " << error.getMessage();
    ASSERT_TRUE(dataReturned) << "Expected data for id=25";
 }
+
 } // namespace tests
 } // namespace core
 } // namespace rstudio
