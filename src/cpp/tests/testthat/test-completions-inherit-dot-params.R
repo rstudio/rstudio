@@ -1,7 +1,7 @@
 #
 # test-completions-inherit-dot-params.R
 #
-# Copyright (C) 2022 by Posit Software, PBC
+# Copyright (C) 2026 by Posit Software, PBC
 #
 # Unless you have received this program directly from Posit Software pursuant
 # to the terms of a commercial license agreement with Posit Software, then
@@ -67,6 +67,7 @@ test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
    expect_in("alpha", result$argNames)
    expect_in("beta",  result$argNames)
    expect_in("gamma", result$argNames)
+   expect_in("if",    result$argNames)
 })
 
 test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
@@ -199,6 +200,21 @@ test_that("getCompletionsInheritDotParams excludes already-used args", {
    })
 })
 
+test_that("getCompletionsInheritDotParams backtick-quotes reserved word arg names", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   with_fixture_completions({
+      result <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      # Reserved words like `if` require backtick-quoting when deparsed
+      expect_in("`if` = ", result$results)
+   })
+})
+
 test_that("getCompletionsInheritDotParams filters by token prefix", {
    skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
@@ -248,3 +264,52 @@ test_that("getCompletionsFunction returns inherited dot args with partial token"
    expect_in("breaks",  returned_names)
    expect_disjoint("labels", returned_names)
 })
+
+test_that("getCompletionsFunction resolves package via environment when no :: used", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   skip_if_not_installed("ggplot2")
+   # Use the function object from ggplot2 but pass a bare name as string --
+   # exercises the environmentName(environment(object)) fallback path.
+   withr::with_package("ggplot2", {
+      result <- .rs.getCompletionsFunction(
+         token        = "",
+         string       = "scale_color_grey",
+         functionCall = quote(scale_color_grey()),
+         numCommas    = 0L,
+         envir        = globalenv()
+      )
+   })
+   returned_names <- sub(" = $", "", result$results)
+   expect_in("breaks", returned_names)
+})
+
+test_that("getCompletionsFunction handles triple-colon pkg:::fn syntax", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   skip_if_not_installed("ggplot2")
+   result <- .rs.getCompletionsFunction(
+      token        = "",
+      string       = "ggplot2:::scale_color_grey",
+      functionCall = quote(ggplot2:::scale_color_grey()),
+      numCommas    = 0L,
+      envir        = globalenv()
+   )
+   returned_names <- sub(" = $", "", result$results)
+   expect_in("breaks", returned_names)
+})
+
+test_that("getCompletionsFunction returns completions when token filters out ...", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   skip_if_not_installed("ggplot2")
+   # When token = "br", resolveFormals filters out "... = " from formals$formals,
+   # so the hasDots fallback via formals(object) must be exercised.
+   result <- .rs.getCompletionsFunction(
+      token        = "br",
+      string       = "ggplot2::scale_color_grey",
+      functionCall = quote(ggplot2::scale_color_grey(br)),
+      numCommas    = 0L,
+      envir        = globalenv()
+   )
+   returned_names <- sub(" = $", "", result$results)
+   expect_in("breaks", returned_names)
+})
+

@@ -1125,10 +1125,10 @@ assign(x = ".rs.acCompletionTypes",
    pkgName <- if (length(splat) == 2) splat[[1]] else NULL
 
    # If no package was specified via ::, resolve it from the function's
-   # environment. This ensures the cache key is always fully qualified,
-   # so a user changing the last loaded library cannot cause a stale hit.
-   # Non-package functions (global, anonymous, primitive) cannot have a
-   # compiled help database entry, so exit early for those.
+   # environment so the correct help database is queried.
+   # Functions whose environment does not resolve to a named package
+   # namespace (global env, empty env, or missing) are unlikely to have
+   # @inheritDotParams documentation, so exit early.
    if (is.null(pkgName))
    {
       envName <- tryCatch(
@@ -1156,7 +1156,8 @@ assign(x = ".rs.acCompletionTypes",
    # completion popup. Prefix with "pkg::" to match how direct-arg hints are shown.
    completionSource <- paste0(pkgName, "::", parsed$targetName)
 
-   # Format arg names as "name = " (with backtick-quoting for unusual names).
+   # Format arg names as "name = ". backtick = TRUE handles reserved words
+   # (e.g. `if`, `for`) which are valid argument names but require quoting.
    allFormals <- vapply(parsed$argNames, function(fml) {
       paste(deparse(as.name(fml), backtick = TRUE), "= ")
    }, FUN.VALUE = character(1))
@@ -1189,8 +1190,8 @@ assign(x = ".rs.acCompletionTypes",
 # @inheritDotParams. This is the pure Rd-logic layer, separated from help
 # database lookup so it can be called directly in tests with a fixture Rd.
 #
-# Returns a character vector of argument names, or NULL if the pattern is
-# not found.
+# Returns a list with fields `targetName` (character scalar) and `argNames`
+# (character vector), or NULL if the @inheritDotParams pattern is not found.
 .rs.addFunction("parseInheritDotParamsFromRd", function(rd)
 {
    rdTag   <- function(x) attr(x, "Rd_tag")
@@ -1233,7 +1234,10 @@ assign(x = ".rs.acCompletionTypes",
    # TEXT node in the description. If it's not there, this is a regular `...`
    # argument and we have nothing to expand.
    # Loop 1: find the sentinel TEXT and extract the target function name from
-   # the \code node immediately following it.
+   # the \code node immediately following it. Note: if multiple @inheritDotParams
+   # tags exist, Loop 1 finds the first target name and Loop 2 finds the last
+   # \describe block; these may not correspond. This limitation is accepted as
+   # multiple @inheritDotParams on a single function is uncommon.
    inheritDotParamsText <- "Arguments passed on to"
    targetName <- NULL
    for (i in seq_along(dotsNode))
@@ -1287,15 +1291,24 @@ assign(x = ".rs.acCompletionTypes",
 
 # Fetch the help database entry for `fnName` (optionally in `pkgName`),
 # parse it into an Rd object, and delegate to parseInheritDotParamsFromRd.
-# R already caches the help database in memory after first access, so no
-# additional caching is needed here.
 .rs.addFunction("parseInheritDotParamsFromHelp", function(fnName, pkgName)
 {
-   rd <- tryCatch({
-      helpResult <- eval(.rs.makeHelpCall(fnName, pkgName))
-      get(".getHelpFile", envir = asNamespace("utils"), mode = "function")(helpResult)
-      },
+   # Help lookup failing is expected for unknown functions -- return NULL silently.
+   helpResult <- tryCatch(
+      eval(.rs.makeHelpCall(fnName, pkgName)),
       error = function(e) NULL
+   )
+   if (is.null(helpResult) || length(helpResult) == 0L)
+      return(NULL)
+
+   # .getHelpFile failing is unexpected -- warn so future R changes are visible.
+   rd <- tryCatch(
+      get(".getHelpFile", envir = asNamespace("utils"), mode = "function")(helpResult),
+      error = function(e) {
+         warning("getCompletionsInheritDotParams: failed to load Rd for '",
+                 fnName, "': ", conditionMessage(e))
+         NULL
+      }
    )
    if (is.null(rd))
       return(NULL)
@@ -3850,7 +3863,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Otherwise, get the completions
-   parsedTargetName <- tryCatch(
+   parsed <- tryCatch(
       suppressWarnings(parse(file)),
       error = function(e) NULL
    )
@@ -3970,7 +3983,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Otherwise, get the completions
-   parsedTargetName <- tryCatch(
+   parsed <- tryCatch(
       suppressWarnings(parse(file)),
       error = function(e) NULL
    )
