@@ -75,7 +75,7 @@ public class ChatPresenter extends BasePresenter
 
       interface Observer
       {
-         void onPaneReady(boolean installed, String installedVersion);
+         void onPaneReady();
          void onRestartBackend();
          void onActivateChat();
          void onReturnChatToMain();
@@ -158,13 +158,12 @@ public class ChatPresenter extends BasePresenter
       installManager_ = new PositAiInstallManager();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
-      session_ = session;
 
       // Set up observer
       display_.setObserver(new Display.Observer()
       {
          @Override
-         public void onPaneReady(boolean installed, String installedVersion)
+         public void onPaneReady()
          {
             if (poppedOut_)
             {
@@ -1012,7 +1011,16 @@ public class ChatPresenter extends BasePresenter
             else
             {
                initializing_ = false;
-               display_.showError(constants_.chatRestartFailed(response.getString("error")));
+               String errorMsg = constants_.chatRestartFailed(
+                  response.getString("error"));
+               if (poppedOut_)
+               {
+                  showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+               }
+               else
+               {
+                  display_.showError(errorMsg);
+               }
             }
          }
 
@@ -1020,7 +1028,16 @@ public class ChatPresenter extends BasePresenter
          public void onError(ServerError error)
          {
             initializing_ = false;
-            display_.showError(constants_.chatRestartFailed(error.getMessage()));
+            String errorMsg = constants_.chatRestartFailed(
+               error.getMessage());
+            if (poppedOut_)
+            {
+               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
+            }
+            else
+            {
+               display_.showError(errorMsg);
+            }
          }
       });
    }
@@ -1129,7 +1146,6 @@ public class ChatPresenter extends BasePresenter
    private final PositAiInstallManager installManager_;
    private final SatelliteManager satelliteManager_;
    private final PaneManager paneManager_;
-   private final Session session_;
 
    // Track whether we're reloading after an install/update completion
    private boolean reloadingAfterUpdate_ = false;

@@ -44,19 +44,28 @@ public class ChatTab extends DelayLoadWorkbenchTab<ChatPresenter>
       // If chat was popped out in a previous session, force-load the
       // presenter eagerly so it can restore the satellite window even
       // when the sidebar is hidden (bypassing DelayLoad deferral).
+      boolean shouldRestore = false;
       try
       {
          JsObject group = session.getSessionInfo().getClientState()
             .peek("chat-window");
-         JsObject state = group.getObject("chatSatelliteState");
-         if (state != null && Boolean.TRUE.equals(state.getBoolean("poppedOut")))
+         if (group != null)
          {
-            shim_.forceLoad(false, null);
+            JsObject state = group.getObject("chatSatelliteState");
+            if (state != null && Boolean.TRUE.equals(state.getBoolean("poppedOut")))
+            {
+               shouldRestore = true;
+            }
          }
       }
       catch (Exception e)
       {
-         Debug.log("Failed to restore chat satellite state: " + e.getMessage());
+         Debug.log("Failed to read chat satellite state: " + e.getMessage());
+      }
+
+      if (shouldRestore)
+      {
+         shim_.forceLoad(false, null);
       }
    }
 

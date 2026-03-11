@@ -280,6 +280,32 @@ public class RStudioThemedFrame extends RStudioFrame
       htmlElement.style.setProperty(property, value);
    }-*/;
 
+   /**
+    * Writes HTML content directly into the frame's document via
+    * doc.open()/write()/close(). Logs errors instead of swallowing them.
+    */
+   public native void setFrameContent(String html) /*-{
+      var self = this;
+      try {
+         var doc = self.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+         doc.open();
+         doc.write(html);
+         doc.close();
+      } catch (e) {
+         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+            "Failed to write content to frame: " + e.message);
+         try {
+            var doc = self.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+            doc.open();
+            doc.write("<html><body><p>Error loading content.</p></body></html>");
+            doc.close();
+         } catch (e2) {
+            @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+               "Failed to write fallback content to frame: " + e2.message);
+         }
+      }
+   }-*/;
+
    private static final native boolean isEligibleForCustomStyles(Document document)
    /*-{
       // We disable custom styling for most vignettes, as we cannot guarantee

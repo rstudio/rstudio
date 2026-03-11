@@ -78,6 +78,18 @@ public class ThemeColorExtractor
    }
 
    /**
+    * Returns the current editor background color, or the given default
+    * when the ace theme CSS is not yet loaded.
+    */
+   public static String getEditorBackgroundColor(String defaultColor)
+   {
+      Map<String, String> colors = extractEssentialColors();
+      return (colors != null)
+         ? colors.getOrDefault("--rstudio-editor-background", defaultColor)
+         : defaultColor;
+   }
+
+   /**
     * Clear the color cache. Call this when theme changes.
     */
    public static void clearCache()

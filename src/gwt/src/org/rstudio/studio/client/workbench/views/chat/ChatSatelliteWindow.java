@@ -12,8 +12,6 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
-import java.util.Map;
-
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -107,7 +105,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
       if (contentHtml != null)
       {
          final String html = contentHtml;
-         Scheduler.get().scheduleDeferred(() -> setFrameContent(frame_, html));
+         Scheduler.get().scheduleDeferred(() -> frame_.setFrameContent(html));
       }
 
       // Manage suspend overlay across session lifecycle
@@ -129,11 +127,8 @@ public class ChatSatelliteWindow extends SatelliteWindow
 
    private void updateSuspendedOverlayStyle()
    {
-      Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
-      String bgColor = (colors != null)
-         ? colors.getOrDefault("--rstudio-editor-background", "#fff")
-         : "#fff";
-      suspendedOverlay_.getElement().getStyle().setBackgroundColor(bgColor);
+      suspendedOverlay_.getElement().getStyle().setBackgroundColor(
+         ThemeColorExtractor.getEditorBackgroundColor("#fff"));
    }
 
    private void showSuspendOverlay()
@@ -172,7 +167,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
          {
             // Write directly — doc.open()/write()/close() replaces
             // any existing document content and stops running scripts.
-            setFrameContent(frame_, contentHtml);
+            frame_.setFrameContent(contentHtml);
          }
          else
          {
@@ -194,24 +189,6 @@ public class ChatSatelliteWindow extends SatelliteWindow
    {
       return this;
    }
-
-   private native void setFrameContent(RStudioThemedFrame frame, String html) /*-{
-      try {
-         var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
-         doc.open();
-         doc.write(html);
-         doc.close();
-      } catch (e) {
-         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
-            "Failed to write content to chat satellite frame: " + e.message);
-         try {
-            var doc = frame.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
-            doc.open();
-            doc.write("<html><body><p>Error loading content. Please close and reopen this window.</p></body></html>");
-            doc.close();
-         } catch (e2) {}
-      }
-   }-*/;
 
    private native void setupMessageForwarder() /*-{
       var self = this;
