@@ -251,11 +251,29 @@ public class RStudioThemedFrame extends RStudioFrame
 
          // Extract colors (cache is managed inside ThemeColorExtractor).
          // Returns null when the ace theme is not yet loaded (e.g. satellite
-         // window still initializing); skip injection and let the
-         // ThemeColorsComputedEvent handler retry once the theme is ready.
+         // window still initializing). Schedule a one-shot deferred retry
+         // because ThemeColorsComputedEvent is not a CrossWindowEvent and
+         // won't fire in satellite windows.
          Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
          if (colors == null)
+         {
+            if (!themeRetryScheduled_)
+            {
+               themeRetryScheduled_ = true;
+               com.google.gwt.user.client.Timer retryTimer =
+                  new com.google.gwt.user.client.Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        themeRetryScheduled_ = false;
+                        injectThemeVariables();
+                     }
+                  };
+               retryTimer.schedule(500);
+            }
             return;
+         }
 
          // Get iframe's html element
          Element htmlElement = document.getDocumentElement();
@@ -358,4 +376,7 @@ public class RStudioThemedFrame extends RStudioFrame
 
    // Pending action to execute on next frame load (one-shot)
    private Runnable pendingLoadAction_ = null;
+
+   // Guards against multiple concurrent theme retry timers
+   private boolean themeRetryScheduled_ = false;
 }

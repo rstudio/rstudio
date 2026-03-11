@@ -40,6 +40,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -866,11 +867,19 @@ public class ChatPane
       String body =
          "<p>" + constants_.chatPoppedOutMessage() + "</p>" +
          "<div class='button-group'>" +
-         "<button onclick=\"window.parent.postMessage('bring-chat-to-front', '*')\">" +
+         "<button id='bring-to-front-btn'>" +
          constants_.chatBringToFrontButton() + "</button>" +
-         "<button onclick=\"window.parent.postMessage('return-chat-to-main', '*')\">" +
+         "<button id='return-to-main-btn'>" +
          constants_.chatReturnHereButton() + "</button>" +
          "</div>";
+
+      String script =
+         "document.getElementById('bring-to-front-btn').addEventListener('click', function() {" +
+         "  window.parent.postMessage('bring-chat-to-front', '*');" +
+         "});" +
+         "document.getElementById('return-to-main-btn').addEventListener('click', function() {" +
+         "  window.parent.postMessage('return-chat-to-main', '*');" +
+         "});";
 
       String extraCss =
          ".message { padding: 40px; }" +
@@ -888,7 +897,7 @@ public class ChatPane
          "  background-color: var(--rstudio-list-hoverBackground, #d6dadc);" +
          "}";
 
-      return wrapInThemedHtml(body, null, false, false, extraCss);
+      return wrapInThemedHtml(body, script, false, false, extraCss);
    }
 
    private String generateCrashedMessageHTML(int exitCode)
@@ -957,8 +966,11 @@ public class ChatPane
    private native void setupMessageListener() /*-{
       var self = this;
 
-      // Listen for button clicks via postMessage
+      // Listen for button clicks via postMessage from our iframe only
       $wnd.addEventListener('message', function(event) {
+         var frame = self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::getFrameElement()();
+         if (!frame || event.source !== frame.contentWindow) return;
+
          if (event.data === 'restart-backend') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRestartRequest()();
          }
@@ -979,6 +991,11 @@ public class ChatPane
          }
       });
    }-*/;
+
+   private com.google.gwt.dom.client.Element getFrameElement()
+   {
+      return (frame_ != null) ? frame_.getElement() : null;
+   }
 
    private void handleRestartRequest()
    {
@@ -1093,9 +1110,12 @@ public class ChatPane
 
    private String generateCrashedOrErrorHTML(String title, String message)
    {
+      String safeTitle = SafeHtmlUtils.htmlEscape(title);
+      String safeMessage = SafeHtmlUtils.htmlEscape(message);
+
       String body =
-         "<h2>" + title + "</h2>" +
-         "<p>" + message + "</p>" +
+         "<h2>" + safeTitle + "</h2>" +
+         "<p>" + safeMessage + "</p>" +
          "<button id='restart-btn' class='chatIframeButton'>" +
          constants_.chatRestartButton() + "</button>";
 

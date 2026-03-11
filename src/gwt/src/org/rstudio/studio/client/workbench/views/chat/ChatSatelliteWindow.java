@@ -193,6 +193,9 @@ public class ChatSatelliteWindow extends SatelliteWindow
    private native void setupMessageForwarder() /*-{
       var self = this;
       $wnd.addEventListener('message', function(event) {
+         var frame = self.@org.rstudio.studio.client.workbench.views.chat.ChatSatelliteWindow::getFrameElement()();
+         if (!frame || event.source !== frame.contentWindow) return;
+
          var recognized = [
             'install-now', 'remind-later', 'restart-backend',
             'open-global-options'
@@ -202,6 +205,11 @@ public class ChatSatelliteWindow extends SatelliteWindow
          }
       });
    }-*/;
+
+   private com.google.gwt.dom.client.Element getFrameElement()
+   {
+      return (frame_ != null) ? frame_.getElement() : null;
+   }
 
    private void onIframeAction(String action)
    {

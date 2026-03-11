@@ -339,6 +339,7 @@ public class ChatPresenter extends BasePresenter
                // sidebar is hidden.
                if (poppedOut_)
                {
+                  commands_.popOutChat().setEnabled(false);
                   Scheduler.get().scheduleDeferred(() -> initializeChat());
                }
             }
@@ -351,6 +352,8 @@ public class ChatPresenter extends BasePresenter
             if (poppedOut_)
                updateSavedGeometry();
 
+            stateDirty_ = false;
+
             JsObject state = JsObject.createJsObject();
             state.setBoolean("poppedOut", poppedOut_);
             if (savedGeometry_ != null)
@@ -361,7 +364,7 @@ public class ChatPresenter extends BasePresenter
          @Override
          protected boolean hasChanged()
          {
-            return true;
+            return stateDirty_;
          }
       };
    }
@@ -444,6 +447,8 @@ public class ChatPresenter extends BasePresenter
       }
 
       poppedOut_ = true;
+      stateDirty_ = true;
+      commands_.popOutChat().setEnabled(false);
       display_.showPoppedOutPlaceholder();
 
       if (cachedUrl_ != null)
@@ -570,6 +575,8 @@ public class ChatPresenter extends BasePresenter
       if (poppedOut_)
       {
          poppedOut_ = false;
+         stateDirty_ = true;
+         commands_.popOutChat().setEnabled(true);
          display_.hidePoppedOutPlaceholder();
       }
    }
@@ -596,6 +603,7 @@ public class ChatPresenter extends BasePresenter
             window.getScreenY(),
             width,
             height);
+         stateDirty_ = true;
       }
    }
 
@@ -608,6 +616,8 @@ public class ChatPresenter extends BasePresenter
 
       updateSavedGeometry();
       poppedOut_ = false;
+      stateDirty_ = true;
+      commands_.popOutChat().setEnabled(true);
       satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
       display_.hidePoppedOutPlaceholder();
 
@@ -653,6 +663,8 @@ public class ChatPresenter extends BasePresenter
          if (poppedOut_)
          {
             poppedOut_ = false;
+            stateDirty_ = true;
+            commands_.popOutChat().setEnabled(true);
             satelliteManager_.closeSatelliteWindow(ChatSatellite.NAME);
             display_.hidePoppedOutPlaceholder();
          }
@@ -1092,6 +1104,7 @@ public class ChatPresenter extends BasePresenter
    // Satellite pop-out state
    private boolean windowsClosing_ = false;
    private boolean poppedOut_ = false;
+   private boolean stateDirty_ = false;
    private SatelliteWindowGeometry savedGeometry_ = null;
    private String cachedUrl_ = null;
    private String cachedAuthToken_ = null;
