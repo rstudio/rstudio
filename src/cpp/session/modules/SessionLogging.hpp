@@ -124,10 +124,9 @@ namespace
 const std::string s_sessionLoggingSection(SESSION_LOG_SECTION);
 } // anonymous namespace
 
-// Helper macros for generating unique variable names within macros.
-#define CONCAT_IMPL(a, b) a##b
-#define CONCAT(a, b) CONCAT_IMPL(a, b)
-#define VAR(name) CONCAT(name, __LINE__)
+// Use RS_VAR from Macros.hpp for generating unique variable names.
+#include <core/Macros.hpp>
+#define VAR(name) RS_VAR(name)
 
 // Helper macro: mirror a message to stderr when configured via the
 // runtime registry (setStderrLogLevel).

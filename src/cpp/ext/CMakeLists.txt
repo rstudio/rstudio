@@ -85,6 +85,46 @@ function(dependency)
 endfunction()
 
 
+#
+# Global settings protection for FetchContent dependencies.
+#
+# Some dependencies (e.g. libgit2) set global cache variables like
+# CMAKE_C_STANDARD, BUILD_SHARED_LIBS, etc. as part of their CMakeLists.txt.
+# These leak into the parent project and can break the build.
+#
+# save_global_settings() / restore_global_settings() snapshot and restore
+# the listed variables around the fetch() call to prevent this.
+#
+set(_PROTECTED_GLOBAL_SETTINGS
+   BUILD_SHARED_LIBS
+   CMAKE_C_STANDARD
+   CMAKE_C_EXTENSIONS
+   CMAKE_CXX_STANDARD
+   CMAKE_CXX_EXTENSIONS
+)
+
+macro(save_global_settings)
+   foreach(_VAR IN LISTS _PROTECTED_GLOBAL_SETTINGS)
+      if(DEFINED CACHE{${_VAR}})
+         set(_SAVED_${_VAR} "${${_VAR}}")
+         set(_SAVED_${_VAR}_DEFINED TRUE)
+      else()
+         set(_SAVED_${_VAR}_DEFINED FALSE)
+      endif()
+   endforeach()
+endmacro()
+
+macro(restore_global_settings)
+   foreach(_VAR IN LISTS _PROTECTED_GLOBAL_SETTINGS)
+      if(_SAVED_${_VAR}_DEFINED)
+         set(${_VAR} "${_SAVED_${_VAR}}" CACHE STRING "" FORCE)
+      else()
+         unset(${_VAR} CACHE)
+      endif()
+   endforeach()
+endmacro()
+
+
 function(fetch)
 
    set(_INDEX 0)
@@ -170,6 +210,30 @@ dependency(FMT
 )
 
 set(FMT_INSTALL OFF)
+
+
+# libgit2
+dependency(LIBGIT2
+   COMMENT    "libgit2 is a portable, pure C implementation of the Git core methods."
+   VERSION    "1.9.2"
+   REPOSITORY "https://github.com/libgit2/libgit2"
+   REVISION   "ca225744b992bf2bf24e9a2eb357ddef78179667" # pragma: allowlist secret
+)
+
+# Snapshot global settings before libgit2 overrides, so restore_global_settings()
+# can revert to the original values (e.g. BUILD_SHARED_LIBS may be undefined).
+save_global_settings()
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_CLI OFF CACHE BOOL "" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(USE_SSH OFF CACHE BOOL "" FORCE)
+set(USE_HTTPS OFF CACHE BOOL "" FORCE)
+set(USE_ICONV OFF CACHE BOOL "" FORCE)
+set(USE_NTLMCLIENT OFF CACHE BOOL "" FORCE)
+set(USE_BUNDLED_ZLIB OFF CACHE BOOL "" FORCE)
+set(REGEX_BACKEND "builtin" CACHE STRING "" FORCE)
 
 
 # gsl-lite
@@ -266,26 +330,52 @@ endif()
 
 
 # zlib
+# CUSTOM TRUE: we manage the build target manually as 'rstudio-zlib' to avoid
+# a target name collision with the 'zlib' OBJECT target that libgit2 creates
+# from its own bundled deps/zlib when find_package(ZLIB) fails on Windows.
 dependency(ZLIB
    COMMENT    "zlib is a general purpose data compression library."
    VERSION    "1.3.1"
    REPOSITORY "https://github.com/madler/zlib"
    REVISION   "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf" # pragma: allowlist secret
    PLATFORMS  WIN32
+   CUSTOM     TRUE
 )
+
+# Ensure libgit2 resolves zlib to our top-level zlib build on Windows.
+# Without this, FindZLIB fails during libgit2 configure and it falls back
+# to its bundled deps/zlib, producing mixed zlib linkage in final binaries.
+if(WIN32 AND NOT RSTUDIO_USE_SYSTEM_DEPENDENCIES AND NOT RSTUDIO_USE_SYSTEM_ZLIB)
+   set(_RSTUDIO_ZLIB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/zlib-src")
+   set(_RSTUDIO_ZLIB_LIBRARY "${CMAKE_BINARY_DIR}/src/cpp/ext/rstudio-zlib.lib")
+   set(ZLIB_INCLUDE_DIR "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE PATH "" FORCE)
+   set(ZLIB_INCLUDE_DIRS "${_RSTUDIO_ZLIB_INCLUDE_DIR}" CACHE STRING "" FORCE)
+   set(ZLIB_LIBRARY "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_DEBUG "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARY_RELEASE "${_RSTUDIO_ZLIB_LIBRARY}" CACHE FILEPATH "" FORCE)
+   set(ZLIB_LIBRARIES "${_RSTUDIO_ZLIB_LIBRARY}" CACHE STRING "" FORCE)
+endif()
+
+# zlib must be fetched before libgit2 so that the ZLIB cache variables point to
+# a valid library artifact when libgit2's SelectZlib.cmake calls find_package(ZLIB).
+# If zlib is not yet present, FindZLIB fails and libgit2 falls back to its bundled
+# deps/zlib, resulting in duplicate zlib symbols in the final binary.
+fetch(zlib ZLIB)
 
 fetch(
    dtl          DTL
    fmt          FMT
    gsl-lite     GSL_LITE
+   libgit2      LIBGIT2
    gtest        GTEST
    hunspell     HUNSPELL
    rapidjson    RAPIDJSON
    tl-expected  TL_EXPECTED
    utfcpp       UTFCPP
    websocketpp  WEBSOCKETPP
-   yaml-cpp     YAML_CPP
-   zlib         ZLIB)
+   yaml-cpp     YAML_CPP)
+
+restore_global_settings()
 
 
 # Create dtl target.
@@ -324,4 +414,24 @@ target_include_directories(rstudio-utfcpp INTERFACE "${UTFCPP_SOURCE_DIR}/source
 # Create websocketpp target.
 add_library(rstudio-websocketpp INTERFACE EXCLUDE_FROM_ALL)
 target_include_directories(rstudio-websocketpp INTERFACE "${WEBSOCKETPP_SOURCE_DIR}")
+
+
+# Create zlib target (Windows only).
+# Uses a custom target name to avoid colliding with the 'zlib' OBJECT target
+# that libgit2 creates from its bundled deps/zlib.
+if(WIN32 AND ZLIB_ENABLED)
+   # Generate zconf.h from the template (normally done by zlib's CMakeLists.txt).
+   # The only two #cmakedefine tokens (Z_PREFIX, Z_HAVE_UNISTD_H) are both
+   # undefined on Windows, so configure_file produces the correct defaults.
+   configure_file(
+      "${ZLIB_SOURCE_DIR}/zconf.h.cmakein"
+      "${ZLIB_BINARY_DIR}/zconf.h"
+      @ONLY)
+
+   file(GLOB ZLIB_SOURCE_FILES "${ZLIB_SOURCE_DIR}/*.c")
+   file(GLOB ZLIB_HEADER_FILES "${ZLIB_SOURCE_DIR}/*.h")
+   add_library(rstudio-zlib STATIC ${ZLIB_SOURCE_FILES} ${ZLIB_HEADER_FILES})
+   # Source dir for zlib.h et al.; binary dir for the generated zconf.h.
+   target_include_directories(rstudio-zlib PUBLIC "${ZLIB_SOURCE_DIR}" "${ZLIB_BINARY_DIR}")
+endif()
 

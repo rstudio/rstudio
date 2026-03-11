@@ -28,6 +28,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String buildToolsPanel();
       String workspaceGrid();
       String enableCodeIndexing();
+      String useGitignore();
       String useSpacesForTab();
       String numberOfTabs();
       String useNativePipeOperator();

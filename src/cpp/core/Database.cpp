@@ -176,6 +176,12 @@ bool isSecretParamName(const std::string& paramName)
 // Threshold in milliseconds for logging slow queries when debug logging is enabled
 static constexpr double kSlowQueryThresholdMs = 100.0;
 
+// Threshold in milliseconds for warning about connections held too long - longer than the longest query should take...
+static constexpr long kConnectionHeldTooLongMs = 500;
+
+// Minimum interval between held-too-long warnings (seconds)
+static constexpr int kHeldTooLongWarningIntervalSec = 3600;
+
 // Maximum number of retries for transient SQLite locking errors
 static constexpr int kMaxSqliteRetries = 3;
 
@@ -1448,9 +1454,15 @@ std::string PooledConnection::driverName() const
 }
 
 ConnectionPool::ConnectionPool(const ConnectionOptions& options) :
-   connectionOptions_(options)
+   connectionOptions_(options),
+   totalRequests_(0),
+   totalLatencyMs_(0)
+
 {
 }
+
+// Skip the health check if the connection was used recently (within this many seconds)
+static constexpr int kHealthCheckIdleThresholdSeconds = 30;
 
 bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
 {
@@ -1459,6 +1471,18 @@ bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
    // indicate a very serious programming error
    if (connection->driver() == Driver::Sqlite)
       return true;
+
+   // Skip the health check if the connection was recently used. Under load, connections are
+   // returned and re-checked out quickly, so stale connections are unlikely. This avoids an
+   // extra SELECT 1 round trip on every getConnection() call.
+   boost::posix_time::ptime lastReturned = connection->lastReturnedTime();
+   if (!lastReturned.is_not_a_date_time())
+   {
+      boost::posix_time::time_duration idle =
+         boost::posix_time::microsec_clock::universal_time() - lastReturned;
+      if (idle.total_seconds() < kHealthCheckIdleThresholdSeconds)
+         return true;
+   }
 
    // it is possible for connections to go stale (such as if the upstream connection is closed)
    // which will prevent it from being usable - we test for this by running a very efficient query
@@ -1502,6 +1526,9 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
          if (!testAndReconnect(connection))
             LOG_WARNING_MESSAGE("DB get connection - returning invalid connection");
 
+         connection->setCheckoutTime(boost::posix_time::microsec_clock::universal_time());
+         ++totalRequests_;
+
          // create wrapper PooledConnection around retrieved Connection
          return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
       }
@@ -1532,12 +1559,66 @@ bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWa
       LOG_WARNING_MESSAGE("Unable to get valid DB connection for operation");
       validConnection = false;
    }
+
+   connection->setCheckoutTime(boost::posix_time::microsec_clock::universal_time());
+   ++totalRequests_;
+
    pConnection->reset(new PooledConnection(shared_from_this(), connection));
    return validConnection;
 }
 
 void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
 {
+   auto now = boost::posix_time::microsec_clock::universal_time();
+   connection->setLastReturnedTime(now);
+
+   // Compute hold duration and update aggregate stats
+   long holdMs = 0;
+   if (!connection->checkoutTime().is_not_a_date_time())
+   {
+      holdMs = (now - connection->checkoutTime()).total_milliseconds();
+      totalLatencyMs_ += holdMs;
+   }
+
+   uint64_t totalReqs = totalRequests_.load();
+   uint64_t totalLatency = totalLatencyMs_.load();
+   uint64_t avgLatency = totalReqs > 0 ? totalLatency / totalReqs : 0;
+
+   // Rate-limited warning if held too long
+   if (holdMs >= kConnectionHeldTooLongMs)
+   {
+      bool shouldWarn = false;
+      {
+         boost::lock_guard<boost::mutex> lock(warningMutex_);
+         if (lastHeldTooLongWarning_.is_not_a_date_time() ||
+             (now - lastHeldTooLongWarning_).total_seconds() >= kHeldTooLongWarningIntervalSec)
+         {
+            lastHeldTooLongWarning_ = now;
+            shouldWarn = true;
+         }
+      }
+      if (shouldWarn)
+      {
+         LOG_WARNING_MESSAGE_WITH_PROPS(
+            "DB connection held for " + std::to_string(holdMs) + "ms before being returned to pool",
+            log::LogMessageProperties({
+               {"holdTimeMs", static_cast<uint64_t>(holdMs)},
+               {"totalRequests", totalReqs},
+               {"avgLatencyMs", avgLatency}
+            }));
+      }
+      else
+      {
+         LOG_DEBUG_MESSAGE_WITH_PROPS(
+            "DB connection returned to pool (held " + std::to_string(holdMs) + "ms)",
+            log::LogMessageProperties({
+               {"holdTimeMs", static_cast<uint64_t>(holdMs)},
+               {"totalRequests", totalReqs},
+               {"avgLatencyMs", avgLatency}
+            }));
+      }
+   }
+
    connections_.enque(connection);
 }
 

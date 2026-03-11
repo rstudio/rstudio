@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 
+#include <atomic>
 #include <functional>
 #include <map>
 #include <sstream>
@@ -548,6 +549,12 @@ public:
 
    soci::session& session() override { return session_; }
 
+   boost::posix_time::ptime lastReturnedTime() const { return lastReturnedTime_; }
+   void setLastReturnedTime(const boost::posix_time::ptime& time) { lastReturnedTime_ = time; }
+
+   boost::posix_time::ptime checkoutTime() const { return checkoutTime_; }
+   void setCheckoutTime(const boost::posix_time::ptime& time) { checkoutTime_ = time; }
+
 private:
    friend class ConnectVisitor;
    friend class Transaction;
@@ -557,6 +564,14 @@ private:
               const std::string& connectionStr);
 
    soci::session session_;
+
+   // Tracks when this connection was last returned to the pool after use.
+   // Used to skip the SELECT 1 health check for recently-used connections.
+   boost::posix_time::ptime lastReturnedTime_;
+
+   // Tracks when this connection was checked out from the pool.
+   // Used to compute hold duration for monitoring.
+   boost::posix_time::ptime checkoutTime_;
 };
 
 class PooledConnection : public IConnection
@@ -614,6 +629,14 @@ private:
 
    thread::ThreadsafeQueue<boost::shared_ptr<Connection> > connections_;
    ConnectionOptions connectionOptions_;
+
+   // Aggregate stats for connection pool monitoring
+   std::atomic<uint64_t> totalRequests_;
+   std::atomic<uint64_t> totalLatencyMs_;
+
+   // Rate limiting for held-too-long warnings
+   boost::posix_time::ptime lastHeldTooLongWarning_;
+   boost::mutex warningMutex_;
 };
 
 class Transaction

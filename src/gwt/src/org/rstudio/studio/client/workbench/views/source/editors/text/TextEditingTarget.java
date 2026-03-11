@@ -4019,7 +4019,7 @@ public class TextEditingTarget implements
       if (prefs_.useAirFormatter().getValue())
       {
          boolean hasAirToml = context.air != null && context.air.path != null;
-         return hasAirToml;
+         return !hasAirToml;
       }
 
       return true;
@@ -4497,26 +4497,36 @@ public class TextEditingTarget implements
          return;
       }
 
-      docUpdateSentinel_.withSavedDoc(() ->
+      withFormatContext((context) ->
       {
-         server_.formatDocument(
-               docUpdateSentinel_.getId(),
-               new ServerRequestCallback<FormatDocumentResult>()
-               {
-                  @Override
-                  public void onResponseReceived(FormatDocumentResult response)
-                  {
-                     applyEdits(response);
-                     onFormatted.execute();
-                  }
+         // If no external formatter is configured, skip formatting on save
+         if (useBuiltinFormatter(context))
+         {
+            onFormatted.execute();
+            return;
+         }
 
-                  @Override
-                  public void onError(ServerError error)
+         docUpdateSentinel_.withSavedDoc(() ->
+         {
+            server_.formatDocument(
+                  docUpdateSentinel_.getId(),
+                  new ServerRequestCallback<FormatDocumentResult>()
                   {
-                     Debug.logError(error);
-                     onFormatted.execute();
-                  }
-               });
+                     @Override
+                     public void onResponseReceived(FormatDocumentResult response)
+                     {
+                        applyEdits(response);
+                        onFormatted.execute();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        onFormatted.execute();
+                     }
+                  });
+         });
       });
    }
 

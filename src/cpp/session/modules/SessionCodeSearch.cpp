@@ -21,6 +21,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <unordered_map>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/shared_ptr.hpp>
@@ -73,6 +74,58 @@ namespace code_search {
 
 namespace {
 
+// Cache of directory-path -> is-ignored results. Cleared when the file
+// monitor is enabled or disabled, when a marker file changes, or when
+// a directory that is ignored by name is created or deleted.
+std::unordered_map<std::string, bool> s_ignoredDirCache;
+
+// Marker files whose presence determines whether a directory is ignored.
+// If any of these change, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirMarkerFiles[] = {
+   "CMakeCache.txt",
+   "activate.R",
+   "packrat.lock"
+};
+
+// Directories that are ignored by name alone (no marker file needed).
+// If one of these is created or deleted, s_ignoredDirCache must be invalidated.
+static const char* s_ignoredDirNames[] = {
+   "__pycache__",
+   "node_modules",
+   "packrat",
+   "renv",
+   "revdep"
+};
+
+bool isIgnoredDirectory(const FilePath& dirPath, bool isPackageProject)
+{
+   std::string dirName = dirPath.getFilename();
+
+   // node_modules
+   if (dirName == "node_modules")
+      return true;
+
+   // packrat
+   if (dirName == "packrat" &&
+       dirPath.completeChildPath("packrat.lock").exists())
+      return true;
+
+   // renv
+   if (dirName == "renv" &&
+       dirPath.completeChildPath("activate.R").exists())
+      return true;
+
+   // cmake build directory
+   if (dirPath.completeChildPath("CMakeCache.txt").exists())
+      return true;
+
+   // revdep sub-directories
+   if (isPackageProject && dirName == "revdep")
+      return true;
+
+   return false;
+}
+
 bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePath>& ignoreDirs)
 {
    using namespace projects;
@@ -93,7 +146,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
       return false;
    }
    
-   // check if it's ignored content
+   // files within ignoreContentDirs (e.g. python venvs, quarto output)
+   // are already excluded from indexing by their own filter; they are
+   // not "ignored directories" in the code-search sense, so return false
+   // (meaning "don't skip") to let the caller's own filter handle them
    if (module_context::isIgnoredContent(filePath, ignoreDirs))
       return false;
 
@@ -105,31 +161,24 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
         !parentPath.isEmpty() && parentPath != projDir;
         parentPath = parentPath.getParent())
    {
-      std::string parentName = parentPath.getFilename();
-      
-      // node_modules
-      if (parentName == "node_modules")
-         return true;
-            
-      // packrat
-      if (parentName == "packrat" &&
-         parentPath.completeChildPath("packrat.lock").exists())
-         return true;
+      std::string parentStr = parentPath.getAbsolutePath();
 
-      // renv
-      if (parentName == "renv" &&
-         parentPath.completeChildPath("activate.R").exists())
-         return true;
+      // check the cache first
+      auto cacheIt = s_ignoredDirCache.find(parentStr);
+      if (cacheIt != s_ignoredDirCache.end())
+      {
+         if (cacheIt->second)
+            return true;
+         continue;
+      }
 
-      // cmake build directory
-      if (parentPath.completeChildPath("CMakeCache.txt").exists())
-         return true;
+      bool ignored = isIgnoredDirectory(parentPath, isPackageProject);
+      s_ignoredDirCache[parentStr] = ignored;
 
-      // revdep sub-directories
-      if (isPackageProject && parentName == "revdep")
+      if (ignored)
          return true;
    }
-   
+
    return false;
 }
 
@@ -250,6 +299,10 @@ public:
       return static_cast<const_iterator>(end());
    }
    
+   // NOTE: this method is not exception-safe w.r.t. pathLookup_. If an
+   // exception occurs between a tree modification and its corresponding
+   // map update, the two structures may become out of sync. In practice
+   // only std::bad_alloc could trigger this, which is unrecoverable.
    void insertEntry(const Entry& entry)
    {
       std::string absolutePath = entry.fileInfo.absolutePath();
@@ -272,59 +325,55 @@ public:
       DEBUG("First parent: '" << (*parent).fileInfo.absolutePath() << "'");
 
       std::string::size_type matchIndex = absolutePath.find('/');
-      
+
+      // optimization: if the file's immediate parent directory is already
+      // in the lookup map, skip the directory walk entirely
+      std::string::size_type lastSlash = absolutePath.rfind('/');
+      if (lastSlash != std::string::npos && lastSlash > 0)
+      {
+         std::string parentDirPath = absolutePath.substr(0, lastSlash);
+         auto mapIt = pathLookup_.find(parentDirPath);
+         if (mapIt != pathLookup_.end())
+         {
+            DEBUG("- Fast path: parent directory '" << parentDirPath << "' found in lookup map");
+            parent = mapIt->second;
+            matchIndex = std::string::npos; // skip the directory walk
+         }
+      }
+
       DEBUG("Entering directory node insertion phase");
       while (matchIndex != std::string::npos)
       {
-         FileInfo path(
-                  absolutePath.substr(0, matchIndex), // note: don't include the trailing '/'
-                  true);
-         
-         Entry entry(path);
-         DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
+         std::string dirPath = absolutePath.substr(0, matchIndex);
 
-         if (isSamePath(*parent, entry))
+         // check the lookup map first -- O(1) vs O(siblings) scan
+         auto mapIt = pathLookup_.find(dirPath);
+         if (mapIt != pathLookup_.end())
+         {
+            DEBUG("- Fast path: '" << dirPath << "' found in lookup map");
+            parent = mapIt->second;
+            matchIndex = absolutePath.find('/', matchIndex + 1);
+            continue;
+         }
+
+         FileInfo path(dirPath, true);
+         Entry dirEntry(path);
+         DEBUG("Entry: '" << dirEntry.fileInfo.absolutePath() << "'");
+
+         // for absolute paths the first dirPath is "" (matching the root
+         // node); the root is always reachable via begin() so skip it
+         if (isSamePath(*parent, dirEntry))
          {
             DEBUG("- Node already exists as parent; skipping...");
          }
-
-         else if (number_of_children(parent) == 0)
-         {
-            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
-
-            iterator newItr = append_child(parent, entry);
-            DEBUG("- Parent now has " << number_of_children(parent) << " children.");
-            DEBUG("- Parent now has " << number_of_siblings(parent) << " siblings.");
-            parent = newItr;
-         }
          else
          {
-            DEBUG("- Searching the children of this node");
-            sibling_iterator it = parent.begin();
-            sibling_iterator end = parent.end();
-
-            for (; it != end; ++it)
-            {
-               DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-               if (isSamePath(*it, entry))
-               {
-                  DEBUG("-- Found it!");
-                  break;
-               }
-            }
-
-            if (it == end)
-            {
-               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.absolutePath() << "'");
-               parent = append_child(parent, entry);
-            }
-            else
-            {
-               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.absolutePath() << ")");
-               parent = it;
-            }
+            DEBUG("- Adding child to parent '" << (*parent).fileInfo.absolutePath() << "'");
+            iterator newItr = append_child(parent, dirEntry);
+            pathLookup_[dirPath] = newItr;
+            parent = newItr;
          }
-         
+
          matchIndex = absolutePath.find('/', matchIndex + 1);
       }
       DEBUG("Exiting directory node insertion phase");
@@ -332,10 +381,22 @@ public:
       // Now, we have the filename. We append that to the parent.
       DEBUG("Parent: '" << (*parent).fileInfo.absolutePath() << "'");
       DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
-      if (parent.number_of_children() == 0)
+
+      // check if this entry already exists in the lookup map
+      auto existingIt = pathLookup_.find(absolutePath);
+      if (existingIt != pathLookup_.end())
+      {
+         // update the existing entry (its associated index may have changed)
+         DEBUG("- Entry exists in lookup map; updating");
+         *(existingIt->second) = entry;
+         parent = existingIt->second;
+      }
+      else if (parent.number_of_children() == 0)
       {
          DEBUG("- No children at parent node; adding child");
-         parent = append_child(parent, entry);
+         iterator newItr = append_child(parent, entry);
+         pathLookup_[absolutePath] = newItr;
+         parent = newItr;
       }
 
       // We check for a dummy node. If we are inserting a file
@@ -347,37 +408,18 @@ public:
          DEBUG("- Replacing dummy node");
          iterator firstChild = child(parent, 0);
          *firstChild = entry;
+         pathLookup_[absolutePath] = firstChild;
+         parent = firstChild;
       }
 
-      // Otherwise, loop through all the children and try to find
-      // the node. If we don't find it, append it, otherwise no-op.
+      // Entry is not in the map and parent has real children --
+      // we know it doesn't exist, so just append it.
       else
       {
-         sibling_iterator it = parent.begin();
-         sibling_iterator end = parent.end();
-         for (; it != end; ++it)
-         {
-            DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
-            
-            if (isSamePath(*it, entry))
-            {
-               DEBUG("- Found it!");
-               break;
-            }
-         }
-
-         if (it == end)
-         {
-            DEBUG("- Adding another child to parent");
-            parent = append_child(parent, entry);
-         }
-         else
-         {
-            // We update the entry (because its associated index may
-            // have changed)
-            *it = entry;
-         }
+         DEBUG("- Adding another child to parent");
+         iterator newItr = append_child(parent, entry);
+         pathLookup_[absolutePath] = newItr;
+         parent = newItr;
       }
 
       // If we just inserted a folder, we append an empty child
@@ -396,6 +438,61 @@ public:
 
 public:
 
+   iterator find(const Entry& entry)
+   {
+      // try O(1) lookup first
+      auto mapIt = pathLookup_.find(entry.fileInfo.absolutePath());
+      if (mapIt != pathLookup_.end())
+         return mapIt->second;
+
+      // fall back to type-specific search; if this finds the entry,
+      // pathLookup_ is out of sync with the tree
+      iterator result;
+      if (entry.fileInfo.isDirectory())
+         result = find_branch(entry);
+      else
+         result = find_leaf(entry);
+
+      if (result != end())
+      {
+         WLOGF("pathLookup_ miss for '{}'; found via tree traversal",
+               entry.fileInfo.absolutePath());
+         pathLookup_[entry.fileInfo.absolutePath()] = result;
+      }
+
+      return result;
+   }
+
+   void clear()
+   {
+      tree<Entry>::clear();
+      pathLookup_.clear();
+
+      // re-insert the root dummy node -- append_child() asserts that
+      // position.node != feet, which fails on an empty tree
+      Entry dummy(FileInfo("", true));
+      insert(begin(), dummy);
+   }
+
+   void eraseEntry(iterator it)
+   {
+      // remove this entry and all its descendants from the lookup map
+      // (safe: the tree is intact during iteration; erase() follows after)
+      iterator descIt = it;
+      iterator descEnd = it;
+      descEnd.skip_children();
+      ++descEnd;
+      for (; descIt != descEnd; ++descIt)
+      {
+         const std::string& path = (*descIt).fileInfo.absolutePath();
+         if (!path.empty()) // skip dummy entries
+            pathLookup_.erase(path);
+      }
+      erase(it);
+   }
+
+private:
+
    iterator find_leaf(const Entry& entry)
    {
       leaf_iterator it = begin_leaf();
@@ -412,8 +509,6 @@ public:
       do_find_branch(entry, parent, &result);
       return result;
    }
-   
-private:
 
    void do_find_branch(const Entry& entry,
                        iterator parent,
@@ -434,24 +529,18 @@ private:
          {
             DEBUG("-- Searching children of branch");
             do_find_branch(entry, it, pResult);
+            if (*pResult != this->end())
+               return;
          }
       }
    }
 
-public:
-
-   iterator find(const Entry& entry)
-   {
-      if (entry.fileInfo.isDirectory())
-         return find_branch(entry);
-      else
-         return find_leaf(entry);
-   }
-
-private:
-
    Entry dummyEntry_;
-   
+
+   // Maps absolute paths to their tree iterators for O(1) lookup.
+   // Must be kept in sync with the tree: every insert/erase must update this map.
+   std::unordered_map<std::string, iterator> pathLookup_;
+
 };
 
 class SourceFileIndex : boost::noncopyable
@@ -492,16 +581,16 @@ public:
          indexingQueue_.push(addEvent);
       }
 
-      // schedule indexing if necessary. perform up to 200ms of work
-      // immediately and then continue in periodic 20ms chunks until
+      // schedule indexing if necessary. perform up to 500ms of work
+      // immediately and then continue in periodic 50ms chunks until
       // we are completed.
       if (!indexingQueue_.empty() && !indexing_)
       {
          indexing_ = true;
 
          module_context::scheduleIncrementalWork(
-                           boost::posix_time::milliseconds(200),
-                           boost::posix_time::milliseconds(20),
+                           boost::posix_time::milliseconds(500),
+                           boost::posix_time::milliseconds(50),
                            boost::bind(&SourceFileIndex::dequeAndIndex, this),
                            false /* allow indexing even when non-idle */);
       }
@@ -513,9 +602,9 @@ public:
       indexingQueue_.push(event);
 
       // schedule indexing if necessary. don't index anything immediately
-      // (this is to defend against large numbers of files being enqued
-      // at once and typing up the main thread). rather, schedule indexing
-      // to occur during idle time in 20ms chunks
+      // (this is to defend against large numbers of files being enqueued
+      // at once and tying up the main thread). rather, schedule indexing
+      // in 20ms time slices, calling dequeAndIndex repeatedly within each slice
       if (!indexing_)
       {
          indexing_ = true;
@@ -612,27 +701,13 @@ public:
 
       // create wildcard pattern if the search has a '*'
       boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
-      
-      // get the start and end iterators -- default to all leaves
-      EntryTree::leaf_iterator it = pEntries_->begin_leaf();
-      
-      DEBUG("Searching for node '" << parentPath.getAbsolutePath());
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parent = pEntries_->find(parentEntry);
-      if (parent != pEntries_->end())
-      {
-         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
-         DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
-         DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
 
-         it = parent.begin();
-      }
-      else
-      {
-         DEBUG("Failed to find node.");
-         LOG_ERROR_MESSAGE("Failed to find parent node when searching index");
+      // find the parent node in the tree
+      EntryTree::iterator parent;
+      if (!findParent(parentPath, &parent))
          return;
-      }
+
+      EntryTree::leaf_iterator it = parent.begin();
       
       // iterate over the files
       for (; pEntries_->is_valid(it); ++it)
@@ -699,12 +774,11 @@ public:
                       T* pPaths,
                       bool* pMoreAvailable)
    {
-      // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
-      if (parentItr == pEntries_->end())
+      // find the parent node in the tree
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
          return;
-      
+
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
       for (; it != end; ++it)
@@ -741,10 +815,9 @@ public:
                               T* pPaths,
                               bool* pMoreAvailable)
    {
-      // Find the parent node in the tree
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
-      if (parentItr == pEntries_->end())
+      // find the parent node in the tree
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
          return;
 
       EntryTree::iterator it = parentItr.begin();
@@ -781,13 +854,9 @@ public:
                   boost::function<void(const Entry&)> operation,
                   boost::function<bool(const Entry&)> filter = boost::function<bool(const Entry&)>())
    {
-      Entry parentEntry(core::toFileInfo(parentPath));
-      EntryTree::iterator parentItr = pEntries_->find_branch(parentEntry);
-      if (parentItr == pEntries_->end())
-      {
-         LOG_ERROR_MESSAGE("Failed to find node '" + parentPath.getAbsolutePath() + "'");
+      EntryTree::iterator parentItr;
+      if (!findParent(parentPath, &parentItr))
          return;
-      }
       
       EntryTree::leaf_iterator it = parentItr.begin();
       for (; pEntries_->is_valid(it); ++it)
@@ -808,35 +877,75 @@ public:
 
 private:
 
+   // Find the parent node for a scoped search. Returns false (and logs)
+   // when the node is not found, so callers can return empty results.
+   bool findParent(const FilePath& parentPath, EntryTree::iterator* pItr)
+   {
+      Entry parentEntry(core::toFileInfo(parentPath));
+      *pItr = pEntries_->find(parentEntry);
+      if (*pItr != pEntries_->end())
+         return true;
+
+      if (indexing_)
+         WLOGF("Parent node '{}' not yet indexed; skipping search",
+               parentPath.getAbsolutePath());
+      else
+         ELOGF("Parent node '{}' not found in completed index",
+               parentPath.getAbsolutePath());
+      return false;
+   }
+
    bool dequeAndIndex()
    {
       using namespace rstudio::core::system;
 
-      if (!indexingQueue_.empty())
+      // compute once per batch instead of once per file
+      std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
+
+      // process a batch of items per scheduler call to reduce
+      // per-item function dispatch and time-check overhead
+      static constexpr int kBatchSize = 20;
+      for (int i = 0; i < kBatchSize && !indexingQueue_.empty(); ++i)
       {
          // remove the event from the queue
          FileChangeEvent event = indexingQueue_.front();
          indexingQueue_.pop();
 
-         // process the change
-         const FileInfo& fileInfo = event.fileInfo();
-         switch(event.type())
+         try
          {
-            case FileChangeEvent::FileAdded:
-            case FileChangeEvent::FileModified:
+            // process the change
+            const FileInfo& fileInfo = event.fileInfo();
+            switch(event.type())
             {
-               updateIndexEntry(fileInfo);
-               break;
-            }
+               case FileChangeEvent::FileAdded:
+               case FileChangeEvent::FileModified:
+               {
+                  updateIndexEntry(fileInfo, ignoreDirs);
+                  break;
+               }
 
-            case FileChangeEvent::FileRemoved:
-            {
-               removeIndexEntry(fileInfo);
-               break;
-            }
+               case FileChangeEvent::FileRemoved:
+               {
+                  removeIndexEntry(fileInfo);
+                  break;
+               }
 
-            case FileChangeEvent::None:
-               break;
+               case FileChangeEvent::None:
+                  break;
+            }
+         }
+         catch (const std::exception& e)
+         {
+            ELOGF("Exception indexing '{}': {}",
+                  event.fileInfo().absolutePath(), e.what());
+         }
+         catch (...)
+         {
+            // insertEntry is not exception-safe w.r.t. pathLookup_;
+            // stop the batch to avoid operating on corrupted state
+            ELOGF("Unknown exception indexing '{}'",
+                  event.fileInfo().absolutePath());
+            break;
          }
       }
 
@@ -845,7 +954,7 @@ private:
       return indexing_;
    }
 
-   void updateIndexEntry(const FileInfo& fileInfo)
+   void updateIndexEntry(const FileInfo& fileInfo, const std::vector<FilePath>& ignoreDirs)
    {
       // index the source if necessary
       boost::shared_ptr<r_util::RSourceIndex> pIndex;
@@ -854,7 +963,7 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // filter certain directories (e.g. those that exist in build directories)
-      if (isWithinIgnoredDirectory(filePath, module_context::ignoreContentDirs()))
+      if (isWithinIgnoredDirectory(filePath, ignoreDirs))
          return;
 
       if (isIndexableSourceFile(fileInfo))
@@ -897,10 +1006,10 @@ private:
 
       EntryTree::iterator it = pEntries_->find(entry);
       if (it != pEntries_->end())
-         pEntries_->erase(it);
+         pEntries_->eraseEntry(it);
       else
       {
-         DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
+         WLOGF("Failed to remove index entry for file: '{}'", fileInfo.absolutePath());
          print_tree(*pEntries_);
       }
    }
@@ -2525,11 +2634,36 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
 
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
+   s_ignoredDirCache.clear();
    projectIndex().enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
+   // invalidate the ignored-directory cache when a marker file changes or
+   // when a directory that is ignored by name is created/deleted
+   auto shouldInvalidateCache = [&]()
+   {
+      for (const auto& event : events)
+      {
+         std::string filename = FilePath(event.fileInfo().absolutePath()).getFilename();
+         for (const char* marker : s_ignoredDirMarkerFiles)
+            if (filename == marker)
+               return true;
+
+         if (event.fileInfo().isDirectory())
+         {
+            for (const char* dirName : s_ignoredDirNames)
+               if (filename == dirName)
+                  return true;
+         }
+      }
+      return false;
+   };
+
+   if (shouldInvalidateCache())
+      s_ignoredDirCache.clear();
+
    std::for_each(
          events.begin(),
          events.end(),
@@ -2539,6 +2673,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 void onFileMonitorDisabled()
 {
    // clear the index so we don't ever get stale results
+   s_ignoredDirCache.clear();
    projectIndex().clear();
 }
 
