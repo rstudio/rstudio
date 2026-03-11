@@ -4397,4 +4397,15 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
+
+   <cmd id="popOutChat"
+        label="Show Posit Assistant in Separate Window"
+        buttonLabel=""
+        desc="Show Posit Assistant in a separate window"/>
+
+   <cmd id="returnChatToMain"
+        label="Return Posit Assistant to Main Window"
+        buttonLabel=""
+        desc="Return to main window"/>
+
 </commands>

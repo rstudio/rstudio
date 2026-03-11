@@ -91,6 +91,8 @@ import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIPanel;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIView;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIWindow;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatelliteView;
+import org.rstudio.studio.client.workbench.views.chat.ChatSatelliteWindow;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
@@ -357,6 +359,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(PlumberAPIView.class).to(PlumberAPIWindow.class);
+      bind(ChatSatelliteView.class).to(ChatSatelliteWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       
