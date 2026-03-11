@@ -335,8 +335,8 @@ public class ChatPresenter extends BasePresenter
                   savedGeometry_ = value.getObject("geometry").cast();
 
                // Eagerly start the backend when popped out — the normal
-               // trigger (ChatPane.onLoad) won't fire if the sidebar is
-               // hidden.
+               // trigger (the onPaneReady callback) won't fire if the
+               // sidebar is hidden.
                if (poppedOut_)
                {
                   Scheduler.get().scheduleDeferred(() -> initializeChat());
@@ -525,6 +525,43 @@ public class ChatPresenter extends BasePresenter
    }
 
    /**
+    * Displays an error in the satellite (as HTML) or the main pane (via
+    * display), and resets initialization state.
+    */
+   private void showErrorMessage(String errorMessage)
+   {
+      initializing_ = false;
+      if (poppedOut_)
+      {
+         showHtmlInSatellite(display_.getErrorHTML(errorMessage));
+      }
+      else
+      {
+         display_.setStatus(Display.Status.ERROR);
+         display_.showError(errorMessage);
+      }
+   }
+
+   /**
+    * Displays content in the satellite (as HTML) or the main pane (via the
+    * given action), and resets initialization state. Used for non-error
+    * informational views (install prompts, version warnings, etc.).
+    */
+   private void showInDisplayOrSatellite(String satelliteHtml,
+                                         Runnable displayAction)
+   {
+      initializing_ = false;
+      if (poppedOut_)
+      {
+         showHtmlInSatellite(satelliteHtml);
+      }
+      else
+      {
+         displayAction.run();
+      }
+   }
+
+   /**
     * Resets popped-out state when initialization fails before the satellite
     * could be opened (e.g. backend error, provider not selected).
     */
@@ -626,7 +663,6 @@ public class ChatPresenter extends BasePresenter
          display_.hideReadlineNotification();
          display_.hideUpdateNotification();
          display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
-   
       }
    }
 
@@ -661,6 +697,16 @@ public class ChatPresenter extends BasePresenter
 
    private void startBackend()
    {
+      // Re-check preference before starting (guards against provider change
+      // during the async update check)
+      if (!paiUtil_.isChatProviderPosit())
+      {
+         initializing_ = false;
+         cancelPopOut();
+         display_.setStatus(Display.Status.ASSISTANT_NOT_SELECTED);
+         return;
+      }
+
       // Show loading state
       display_.setStatus(Display.Status.STARTING);
 
@@ -678,35 +724,16 @@ public class ChatPresenter extends BasePresenter
             else
             {
                String error = response.getString("error");
-               initializing_ = false;
-               String errorMsg = constants_.chatBackendStartFailed(error);
-               if (poppedOut_)
-               {
-                  showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-               }
-               else
-               {
-                  display_.setStatus(Display.Status.ERROR);
-                  display_.showError(errorMsg);
-               }
+               showErrorMessage(
+                  constants_.chatBackendStartFailed(error));
             }
          }
 
          @Override
          public void onError(ServerError error)
          {
-            initializing_ = false;
-            String errorMsg = constants_.chatBackendStartError(
-               error.getMessage());
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-            }
-            else
-            {
-               display_.setStatus(Display.Status.ERROR);
-               display_.showError(errorMsg);
-            }
+            showErrorMessage(
+               constants_.chatBackendStartError(error.getMessage()));
          }
       });
    }
@@ -725,117 +752,66 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onUpdateAvailable(String currentVersion, String newVersion, boolean isInitialInstall)
          {
-            // Reset initialization flag - we're pausing for user action
-            initializing_ = false;
-
+            // Pausing for user action — do NOT start backend.
+            // Backend starts after user clicks "Update/Install Now" and it
+            // completes, or after user clicks "Ignore".
             if (isInitialInstall)
             {
-               if (poppedOut_)
-               {
-                  showHtmlInSatellite(
-                     display_.getNotInstalledWithInstallHTML(newVersion));
-               }
-               else
-               {
-                  display_.showNotInstalledWithInstall(newVersion);
-               }
+               showInDisplayOrSatellite(
+                  display_.getNotInstalledWithInstallHTML(newVersion),
+                  () -> display_.showNotInstalledWithInstall(newVersion));
             }
             else
             {
-               if (poppedOut_)
-               {
-                  showHtmlInSatellite(
-                     display_.getUpdateAvailableWithVersionsHTML(
-                        currentVersion, newVersion));
-               }
-               else
-               {
-                  display_.showUpdateAvailableWithVersions(
-                     currentVersion, newVersion);
-               }
+               showInDisplayOrSatellite(
+                  display_.getUpdateAvailableWithVersionsHTML(
+                     currentVersion, newVersion),
+                  () -> display_.showUpdateAvailableWithVersions(
+                     currentVersion, newVersion));
             }
-            // Do NOT start backend when update/install is available
-            // Backend will start after user clicks "Update/Install Now" and it completes,
-            // or after user clicks "Ignore"
          }
 
          @Override
          public void onIncompatibleVersion()
          {
-            initializing_ = false;
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(
-                  display_.getIncompatibleVersionHTML());
-            }
-            else
-            {
-               display_.showIncompatibleVersion();
-            }
+            showInDisplayOrSatellite(
+               display_.getIncompatibleVersionHTML(),
+               () -> display_.showIncompatibleVersion());
          }
 
          @Override
          public void onUnsupportedVersionUpgradeRequired(
              String currentVersion, String newVersion)
          {
-            initializing_ = false;
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(
-                  display_.getUnsupportedVersionUpgradeHTML(
-                     currentVersion, newVersion));
-            }
-            else
-            {
-               display_.showUnsupportedVersionUpgradeRequired(
-                  currentVersion, newVersion);
-            }
+            showInDisplayOrSatellite(
+               display_.getUnsupportedVersionUpgradeHTML(
+                  currentVersion, newVersion),
+               () -> display_.showUnsupportedVersionUpgradeRequired(
+                  currentVersion, newVersion));
          }
 
          @Override
          public void onUnsupportedVersionNoUpdate(String currentVersion)
          {
-            initializing_ = false;
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(
-                  display_.getUnsupportedVersionNoUpdateHTML(
-                     currentVersion));
-            }
-            else
-            {
-               display_.showUnsupportedVersionNoUpdate(currentVersion);
-            }
+            showInDisplayOrSatellite(
+               display_.getUnsupportedVersionNoUpdateHTML(currentVersion),
+               () -> display_.showUnsupportedVersionNoUpdate(currentVersion));
          }
 
          @Override
          public void onUnsupportedProtocol()
          {
-            initializing_ = false;
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(
-                  display_.getUnsupportedProtocolHTML());
-            }
-            else
-            {
-               display_.showUnsupportedProtocol();
-            }
+            showInDisplayOrSatellite(
+               display_.getUnsupportedProtocolHTML(),
+               () -> display_.showUnsupportedProtocol());
          }
 
          @Override
          public void onManifestUnavailable()
          {
-            initializing_ = false;
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(
-                  display_.getManifestUnavailableHTML());
-            }
-            else
-            {
-               display_.showManifestUnavailable();
-            }
+            showInDisplayOrSatellite(
+               display_.getManifestUnavailableHTML(),
+               () -> display_.showManifestUnavailable());
          }
 
          @Override
@@ -920,17 +896,7 @@ public class ChatPresenter extends BasePresenter
    {
       if (attemptCount > 30) // 30 seconds timeout
       {
-         initializing_ = false;
-         String errorMsg = constants_.chatBackendStartTimeout();
-         if (poppedOut_)
-         {
-            showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-         }
-         else
-         {
-            display_.setStatus(Display.Status.ERROR);
-            display_.showError(errorMsg);
-         }
+         showErrorMessage(constants_.chatBackendStartTimeout());
          return;
       }
 
@@ -971,18 +937,8 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            initializing_ = false;
-            String errorMsg = constants_.chatBackendStatusCheckFailed(
-               error.getMessage());
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-            }
-            else
-            {
-               display_.setStatus(Display.Status.ERROR);
-               display_.showError(errorMsg);
-            }
+            showErrorMessage(
+               constants_.chatBackendStatusCheckFailed(error.getMessage()));
          }
       });
    }
@@ -1010,34 +966,16 @@ public class ChatPresenter extends BasePresenter
             }
             else
             {
-               initializing_ = false;
-               String errorMsg = constants_.chatRestartFailed(
-                  response.getString("error"));
-               if (poppedOut_)
-               {
-                  showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-               }
-               else
-               {
-                  display_.showError(errorMsg);
-               }
+               showErrorMessage(
+                  constants_.chatRestartFailed(response.getString("error")));
             }
          }
 
          @Override
          public void onError(ServerError error)
          {
-            initializing_ = false;
-            String errorMsg = constants_.chatRestartFailed(
-               error.getMessage());
-            if (poppedOut_)
-            {
-               showHtmlInSatellite(display_.getErrorHTML(errorMsg));
-            }
-            else
-            {
-               display_.showError(errorMsg);
-            }
+            showErrorMessage(
+               constants_.chatRestartFailed(error.getMessage()));
          }
       });
    }
@@ -1101,13 +1039,11 @@ public class ChatPresenter extends BasePresenter
 
          display_.setStatus(Display.Status.READY);
          display_.showPoppedOutPlaceholder();
-   
       }
       else
       {
          display_.loadUrl(loadUrl);
          display_.setStatus(Display.Status.READY);
-   
       }
 
       // Mark the backend so subsequent status responses include resume_chat=true

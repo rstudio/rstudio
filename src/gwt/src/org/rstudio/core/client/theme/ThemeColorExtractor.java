@@ -41,10 +41,9 @@ public class ThemeColorExtractor
    private static Map<String, String> cachedColors_ = null;
 
    /**
-    * Extract extended CSS variables for theming iframes.
-    * Returns a map of CSS variable names to color values.
+    * Extract CSS variables for theming iframes (both core UI colors and
+    * extended palette for widgets, syntax highlighting, etc.).
     * Results are cached by theme name for performance.
-    * This includes both essential and extended colors for complete theme matching.
     *
     * @return Map of CSS variable names to color values, or null when the
     *         ace theme CSS is not loaded yet (callers should skip injection)
@@ -261,7 +260,9 @@ public class ThemeColorExtractor
 
    /**
     * Check if a CSS color string represents a fully transparent color
-    * (e.g. "rgba(0, 0, 0, 0)"), which indicates no theme CSS is loaded.
+    * (e.g. "rgba(0, 0, 0, 0)"). When a sampler element with theme classes
+    * has a transparent background, it indicates the ace theme CSS hasn't
+    * loaded yet (browsers return transparent for unstyled elements).
     */
    private static boolean isTransparent(String cssColor)
    {
@@ -271,8 +272,28 @@ public class ThemeColorExtractor
       if (cssColor.equals("transparent"))
          return true;
 
-      // The browser returns "rgba(0, 0, 0, 0)" for unstyled elements
-      return cssColor.contains("rgba") && cssColor.contains(", 0)");
+      // Parse the alpha value from rgba(..., alpha) rather than relying
+      // on exact spacing (browsers may format differently).
+      if (cssColor.contains("rgba"))
+      {
+         int lastComma = cssColor.lastIndexOf(',');
+         if (lastComma > 0)
+         {
+            String alphaPart = cssColor.substring(lastComma + 1)
+               .replace(")", "").trim();
+            try
+            {
+               return Double.parseDouble(alphaPart) == 0.0;
+            }
+            catch (NumberFormatException e)
+            {
+               Debug.logWarning(
+                  "Failed to parse alpha from CSS color: " + cssColor);
+            }
+         }
+      }
+
+      return false;
    }
 
    /**

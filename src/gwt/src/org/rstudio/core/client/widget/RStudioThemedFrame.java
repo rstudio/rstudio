@@ -133,7 +133,7 @@ public class RStudioThemedFrame extends RStudioFrame
 
    /**
     * Sets a custom action to be executed when the frame loads.
-    * This action will be executed INSTEAD of the default theming behavior.
+    * This action will be executed BEFORE the default theming behavior.
     * The action is cleared after execution (one-shot).
     * Pass null to clear any pending action.
     *
@@ -237,7 +237,12 @@ public class RStudioThemedFrame extends RStudioFrame
          }
          catch (Exception e)
          {
-            // Cross-origin iframe - can't inject, skip silently
+            // Expected for cross-origin iframes; log unexpected errors
+            if (!(e instanceof com.google.gwt.core.client.JavaScriptException))
+            {
+               Debug.logWarning("Unexpected error accessing iframe document: " +
+                  e.getClass().getName() + " - " + e.getMessage());
+            }
             return;
          }
 

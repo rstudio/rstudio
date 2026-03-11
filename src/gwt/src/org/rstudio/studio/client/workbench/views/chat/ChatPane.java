@@ -445,7 +445,8 @@ public class ChatPane
          }
          return target ? target.scrollTop : 0;
       } catch (e) {
-         console.error("Error reading frame scroll position:", e);
+         @org.rstudio.core.client.Debug::logWarning(Ljava/lang/String;)(
+            "Error reading frame scroll position: " + e.message);
          return 0;
       }
    }-*/;
@@ -467,7 +468,8 @@ public class ChatPane
          }
          if (target) target.scrollTop = scrollTop;
       } catch (e) {
-         console.error("Error restoring frame scroll position:", e);
+         @org.rstudio.core.client.Debug::logWarning(Ljava/lang/String;)(
+            "Error restoring frame scroll position: " + e.message);
       }
    }-*/;
 
