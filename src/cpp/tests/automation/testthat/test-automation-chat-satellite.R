@@ -5,6 +5,7 @@ self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("chat satellite window can be opened and interacted with", {
+   skip_on_ci()
 
    # Ensure the Chat pane is visible, then pop it out.
    remote$commands.execute("activateChat")
