@@ -171,15 +171,26 @@ std::string Request::proxiedUri() const
       {
          port = firstInList(port);
 
-         std::size_t pos = forwardedHost.find(':');
-         if (pos == std::string::npos)
+         // strip any existing port from the forwarded host
+         // IPv6 addresses use [host]:port; IPv4/hostnames use host:port
+         std::string hostOnly;
+         if (!forwardedHost.empty() && forwardedHost[0] == '[')
          {
-            forwardedHost += ":" + port;
+            std::size_t close = forwardedHost.find(']');
+            if (close != std::string::npos)
+               hostOnly = forwardedHost.substr(0, close + 1);
+            else
+               hostOnly = forwardedHost;
          }
          else
          {
-            forwardedHost = forwardedHost.substr(0, pos + 1) + port;
+            std::size_t pos = forwardedHost.find(':');
+            if (pos != std::string::npos)
+               hostOnly = forwardedHost.substr(0, pos);
+            else
+               hostOnly = forwardedHost;
          }
+         forwardedHost = hostOnly + ":" + port;
       }
 
       return URL::complete(protocol + "://" + forwardedHost, root + '/' + uri());
