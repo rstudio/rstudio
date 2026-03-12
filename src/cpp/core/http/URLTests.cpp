@@ -136,7 +136,6 @@ test_context("HttpUtil Tests")
       expect_equal(URL::uncomplete("/foo/bar/baz/", "/foo/qux/quux"), "../../qux/quux");
       expect_equal(URL::uncomplete("/bar/baz", "/qux/quux"), "../qux/quux");
    }
-}
 
    test_that("Can parse IPv6 loopback with default port")
    {

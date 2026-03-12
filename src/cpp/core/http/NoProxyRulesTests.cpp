@@ -171,7 +171,6 @@ test_context("NoProxyRulesTests")
       rule = createNoProxyRule("junk");
       REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
    }
-}
 
    test_that("createNoProxyBuilder creates correct IPv6 rules")
    {
@@ -193,7 +192,6 @@ test_context("NoProxyRulesTests")
       REQUIRE(rule->match("2001:db8::1", "443"));
       REQUIRE_FALSE(rule->match("2001:db8::1", "80"));
    }
-}
 
    test_that("IPv6 address toString formats correctly")
    {
