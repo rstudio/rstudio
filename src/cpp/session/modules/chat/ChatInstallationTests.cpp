@@ -195,3 +195,74 @@ TEST(ChatInstallation, LocatePositAiInstallationRespectsRStudioPositAiPathEnvVar
 
    tempDir.removeIfExists();
 }
+
+TEST(ChatInstallation, GetInstalledProtocolVersionReturnsEmptyForLegacyInstall)
+{
+   // Create mock installation without .protocol-version file
+   FilePath tempDir;
+   FilePath::tempFilePath(tempDir);
+   tempDir.ensureDirectory();
+
+   FilePath clientDir = tempDir.completeChildPath(kClientDirPath);
+   clientDir.ensureDirectory();
+
+   FilePath serverScript = tempDir.completeChildPath(kServerScriptPath);
+   serverScript.getParent().ensureDirectory();
+   writeStringToFile(serverScript, "// mock");
+
+   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+   writeStringToFile(indexHtml, "<html>mock</html>");
+
+   // Set env var to point to this installation
+   std::string originalPath = system::getenv("RSTUDIO_POSIT_AI_PATH");
+   system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
+
+   // No .protocol-version file → should return empty
+   std::string proto = getInstalledProtocolVersion();
+   EXPECT_TRUE(proto.empty());
+
+   // Cleanup
+   if (!originalPath.empty())
+      system::setenv("RSTUDIO_POSIT_AI_PATH", originalPath);
+   else
+      system::unsetenv("RSTUDIO_POSIT_AI_PATH");
+
+   tempDir.removeIfExists();
+}
+
+TEST(ChatInstallation, GetInstalledProtocolVersionReturnsCorrectVersion)
+{
+   // Create mock installation with .protocol-version file
+   FilePath tempDir;
+   FilePath::tempFilePath(tempDir);
+   tempDir.ensureDirectory();
+
+   FilePath clientDir = tempDir.completeChildPath(kClientDirPath);
+   clientDir.ensureDirectory();
+
+   FilePath serverScript = tempDir.completeChildPath(kServerScriptPath);
+   serverScript.getParent().ensureDirectory();
+   writeStringToFile(serverScript, "// mock");
+
+   FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
+   writeStringToFile(indexHtml, "<html>mock</html>");
+
+   // Write .protocol-version file
+   FilePath protoFile = tempDir.completeChildPath(kProtocolVersionFileName);
+   writeStringToFile(protoFile, "10.0");
+
+   // Set env var to point to this installation
+   std::string originalPath = system::getenv("RSTUDIO_POSIT_AI_PATH");
+   system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
+
+   std::string proto = getInstalledProtocolVersion();
+   EXPECT_EQ(proto, "10.0");
+
+   // Cleanup
+   if (!originalPath.empty())
+      system::setenv("RSTUDIO_POSIT_AI_PATH", originalPath);
+   else
+      system::unsetenv("RSTUDIO_POSIT_AI_PATH");
+
+   tempDir.removeIfExists();
+}

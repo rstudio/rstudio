@@ -18,6 +18,7 @@
 #include "ChatLogging.hpp"
 
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -138,6 +139,33 @@ std::string getInstalledVersion()
    }
 
    DLOG("Installed version: {}", version);
+   return version;
+}
+
+std::string getInstalledProtocolVersion()
+{
+   core::FilePath positAiPath = locatePositAiInstallation();
+   if (positAiPath.isEmpty())
+      return "";
+
+   core::FilePath versionFile =
+      positAiPath.completeChildPath(kProtocolVersionFileName);
+   if (!versionFile.exists())
+   {
+      DLOG("No .protocol-version file found (legacy install)");
+      return "";
+   }
+
+   std::string content;
+   core::Error error = core::readStringFromFile(versionFile, &content);
+   if (error)
+   {
+      WLOG("Failed to read .protocol-version: {}", error.getMessage());
+      return "";
+   }
+
+   std::string version = core::string_utils::trimWhitespace(content);
+   DLOG("Installed protocol version: {}", version);
    return version;
 }
 

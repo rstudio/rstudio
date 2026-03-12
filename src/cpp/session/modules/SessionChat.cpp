@@ -240,6 +240,7 @@ namespace chat_staticfiles = rstudio::session::modules::chat::staticfiles;
 
 // Constants used throughout
 using chat_constants::kProtocolVersion;
+using chat_constants::kProtocolVersionFileName;
 using chat_constants::kMaxQueueSize;
 using chat_constants::kMaxBufferSize;
 using chat_constants::kMaxDelay;
@@ -263,6 +264,7 @@ using chat_logging::rs_chatSetLogLevel;
 using chat_installation::locatePositAiInstallation;
 using chat_installation::verifyPositAiInstallation;
 using chat_installation::getInstalledVersion;
+using chat_installation::getInstalledProtocolVersion;
 
 // Static file handler (used once for URI registration)
 using chat_staticfiles::handleAIChatRequest;
@@ -4113,6 +4115,15 @@ Error installPackage(const FilePath& packagePath)
       }
    }
 
+   // Write protocol version file so future update checks can detect mismatches
+   core::FilePath protoFile =
+      aiDir.completeChildPath(kProtocolVersionFileName);
+   Error protoError = core::writeStringToFile(protoFile, kProtocolVersion);
+   if (protoError)
+   {
+      WLOG("Failed to write .protocol-version: {}", protoError.getMessage());
+   }
+
    DLOG("Package installation complete");
    return Success();
 }
@@ -4172,11 +4183,27 @@ void doUpdateCheck()
       return;
    }
 
+   // Read protocol version outside the lock (file I/O)
+   bool protocolMismatch = false;
+   if (installedVersion != "0.0.0")
+   {
+      std::string installedProto = getInstalledProtocolVersion();
+      protocolMismatch = installedProto.empty() ||
+                         installedProto != kProtocolVersion;
+      if (protocolMismatch)
+      {
+         DLOG("Protocol mismatch: installed='{}', expected='{}'",
+              installedProto.empty() ? "(legacy)" : installedProto,
+              kProtocolVersion);
+      }
+   }
+
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
       s_updateState.unsupportedInstalledVersion =
-         isVersionUnsupported(installedVersion, unsupportedInfo);
+         isVersionUnsupported(installedVersion, unsupportedInfo) ||
+         protocolMismatch;
 
       DLOG("Unsupported check: protocol={}, installedVersion={}",
            s_updateState.unsupportedProtocol,
@@ -4313,11 +4340,27 @@ Error checkForUpdatesOnStartup()
       return Success();
    }
 
+   // Read protocol version outside the lock (file I/O)
+   bool protocolMismatch = false;
+   if (installedVersion != "0.0.0")
+   {
+      std::string installedProto = getInstalledProtocolVersion();
+      protocolMismatch = installedProto.empty() ||
+                         installedProto != kProtocolVersion;
+      if (protocolMismatch)
+      {
+         DLOG("Protocol mismatch: installed='{}', expected='{}'",
+              installedProto.empty() ? "(legacy)" : installedProto,
+              kProtocolVersion);
+      }
+   }
+
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.unsupportedProtocol = isProtocolUnsupported(unsupportedInfo);
       s_updateState.unsupportedInstalledVersion =
-         isVersionUnsupported(installedVersion, unsupportedInfo);
+         isVersionUnsupported(installedVersion, unsupportedInfo) ||
+         protocolMismatch;
 
       DLOG("Unsupported check: protocol={}, installedVersion={}",
            s_updateState.unsupportedProtocol,
