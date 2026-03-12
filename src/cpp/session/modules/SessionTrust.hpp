@@ -62,9 +62,9 @@ core::Error initialize();
 
 namespace overlay {
 
-// Returns the default value for trust-enabled when not explicitly configured.
+// Returns the default value for project-trust-dialogs when not explicitly configured.
 // Open-source returns false; Pro/Workbench overrides to return true.
-bool trustEnabledByDefault();
+bool trustDialogsEnabledByDefault();
 
 } // namespace overlay
 

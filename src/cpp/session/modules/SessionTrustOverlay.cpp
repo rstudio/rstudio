@@ -19,7 +19,7 @@ namespace modules {
 namespace trust {
 namespace overlay {
 
-bool trustEnabledByDefault()
+bool trustDialogsEnabledByDefault()
 {
    return false;
 }

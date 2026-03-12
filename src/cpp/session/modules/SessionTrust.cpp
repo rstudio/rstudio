@@ -387,15 +387,15 @@ void initializeTrustState(const FilePath& projectDir,
 {
    s_projectDir = projectDir;
 
-   // Check if trust checking is enabled.
+   // Check if trust dialogs are enabled.
    // Explicit setting (0 or 1) takes precedence; if unset (-1),
    // fall back to the edition-specific overlay default.
-   int trustSetting = options().trustEnabled();
-   bool trustEnabled = (trustSetting == -1)
-      ? overlay::trustEnabledByDefault()
-      : (trustSetting != 0);
+   int trustDialogs = options().projectTrustDialogs();
+   bool trustDialogsEnabled = (trustDialogs == -1)
+      ? overlay::trustDialogsEnabledByDefault()
+      : (trustDialogs != 0);
 
-   if (!trustEnabled)
+   if (!trustDialogsEnabled)
    {
       s_trustStatus = TrustStatus::Trusted;
       return;

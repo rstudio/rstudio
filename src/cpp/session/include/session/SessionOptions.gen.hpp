@@ -495,8 +495,8 @@ protected:
       "Use the test manifest URL for Posit AI package updates.");
 
    pTrust->add_options()
-      ("trust-enabled",
-      value<int>(&trustEnabled_)->default_value(-1),
+      ("project-trust-dialogs",
+      value<int>(&projectTrustDialogs_)->default_value(-1),
       "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.");
 
    pMisc->add_options();
@@ -636,7 +636,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
-   int trustEnabled() const { return trustEnabled_; }
+   int projectTrustDialogs() const { return projectTrustDialogs_; }
 
 
 protected:
@@ -770,7 +770,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
-   int trustEnabled_;
+   int projectTrustDialogs_;
    virtual bool allowOverlay() const { return false; };
 };
 
