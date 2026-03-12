@@ -920,9 +920,9 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
          FilePath directory = s_projectContext.directory();
 
          if (trustStatus == "trusted")
-            modules::trust::setTrust(directory, true);
+            modules::trust::grantTrust(directory);
          else if (trustStatus == "untrusted")
-            modules::trust::setTrust(directory, false);
+            modules::trust::revokeTrust(directory);
          else if (trustStatus == "default")
             modules::trust::resetTrust();
       }

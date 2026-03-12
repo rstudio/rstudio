@@ -40,8 +40,14 @@ bool shouldSuppressWorkspaceRestore();
 // "trusted", "untrusted", or "default" (not in either list)
 std::string explicitTrustSetting();
 
-// Add a directory to the trusted or untrusted list
-core::Error setTrust(const core::FilePath& directory, bool trusted);
+// Add a directory to the trusted list (and remove from untrusted)
+core::Error grantTrust(const core::FilePath& directory);
+
+// Add a directory to the untrusted list (and remove from trusted)
+core::Error revokeTrust(const core::FilePath& directory);
+
+// Remove a directory from both trust lists
+core::Error resetTrust(const core::FilePath& directory);
 
 // Remove the current project directory from both trust lists
 core::Error resetTrust();
