@@ -252,6 +252,14 @@ public class Workbench implements BusyEvent.Handler,
       {
          Desktop.getFrame().setAutohideMenubar(pPrefs_.get().autohideMenubar().getValue());
       }
+
+      // check for pending trust request
+      TrustRequestEvent.Data trustData =
+         session_.getSessionInfo().getTrustRequest();
+      if (trustData != null && trustData.getDirectory() != null)
+      {
+         showTrustRequestDialog(trustData);
+      }
    }
 
    public void onTutorialLaunch(final TutorialLaunchEvent event)
@@ -273,14 +281,6 @@ public class Workbench implements BusyEvent.Handler,
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
       session_.updateSessionInfo(event.getData());
-
-      // check for pending trust request
-      TrustRequestEvent.Data trustData =
-         session_.getSessionInfo().getTrustRequest();
-      if (trustData != null && trustData.getDirectory() != null)
-      {
-         showTrustRequestDialog(trustData);
-      }
    }
 
    public void onBusy(BusyEvent event)
