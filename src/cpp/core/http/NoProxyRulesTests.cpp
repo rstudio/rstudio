@@ -195,6 +195,35 @@ test_context("NoProxyRulesTests")
    }
 }
 
+   test_that("IPv6 address toString formats correctly")
+   {
+      NoProxyRuleAddress ruleWithPort("::1", "8080");
+      REQUIRE(ruleWithPort.toString() == "[::1]:8080");
+
+      NoProxyRuleAddress ruleFullAddr("2001:db8::1", "443");
+      REQUIRE(ruleFullAddr.toString() == "[2001:db8::1]:443");
+
+      NoProxyRuleAddress ruleNoPort("::1");
+      REQUIRE(ruleNoPort.toString() == "::1");
+
+      NoProxyRuleAddress ipv4Rule("192.168.1.1", "80");
+      REQUIRE(ipv4Rule.toString() == "192.168.1.1:80");
+   }
+
+   test_that("Two-arg createNoProxyRule works for IPv6")
+   {
+      auto rule = createNoProxyRule("::1", "8080");
+      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
+      REQUIRE(rule->match("::1", "8080"));
+      REQUIRE_FALSE(rule->match("::1", "443"));
+
+      auto rule2 = createNoProxyRule("2001:db8::1", "443");
+      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule2.get()) != nullptr);
+      REQUIRE(rule2->match("2001:db8::1", "443"));
+      REQUIRE_FALSE(rule2->match("2001:db8::1", "80"));
+   }
+}
+
 } // end namespace tests
 } // end namespace http
 } // end namespace core
