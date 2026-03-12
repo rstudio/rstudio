@@ -38,3 +38,54 @@ withr::defer(.rs.automation.deleteRemote())
    # reset UI back to default layout
    .rs.resetUILayout(remote)
 })
+
+.rs.test("chat pop-out and return buttons work via DOM clicks", {
+   skip_on_ci()
+
+   # Activate the chat pane to ensure the sidebar is visible.
+   remote$commands.execute("activateChat")
+   .rs.waitUntil("sidebar is visible", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Click the pop-out button in the chat pane toolbar.
+   remote$dom.clickElement("#rstudio_tb_popoutchat")
+
+   # Verify the satellite window opened.
+   remote$satellites.waitForOpen("Posit Assistant")
+   expect_true(remote$satellites.isOpen("Posit Assistant"))
+
+   # Switch to the satellite and verify the return-to-main button exists.
+   remote$satellites.switchTo("Posit Assistant")
+   nodeId <- remote$dom.waitForElement("#rstudio_chat_return_to_main_button")
+   expect_true(nodeId > 0L)
+   remote$satellites.switchToMain()
+
+   # Verify the sidebar is hidden in the main window.
+   .rs.waitUntil("sidebar is hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Click the return-to-main button in the satellite window.
+   remote$satellites.switchTo("Posit Assistant")
+   remote$dom.clickElement("#rstudio_chat_return_to_main_button")
+   remote$satellites.switchToMain()
+
+   # Verify the satellite window closes.
+   .rs.waitUntil("satellite closes", function() {
+      !remote$satellites.isOpen("Posit Assistant")
+   })
+   expect_false(remote$satellites.isOpen("Posit Assistant"))
+
+   # Verify the sidebar is visible again.
+   .rs.waitUntil("sidebar is visible again", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Verify the sidebar contains the Chat tab.
+   chatTab <- remote$dom.querySelector("#rstudio_workbench_tab_posit_assistant")
+   expect_true(chatTab > 0L)
+
+   # Reset to default UI state.
+   .rs.resetUILayout(remote)
+})

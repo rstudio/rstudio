@@ -12,6 +12,7 @@
  */
 package org.rstudio.studio.client.workbench.views.chat;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.ThemeColorExtractor;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -68,6 +69,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
          commands_.returnChatToMain().getDesc(),
          commands_.returnChatToMain().getImageResource(),
          event -> pEventBus_.get().fireEvent(new ChatReturnToMainEvent()));
+      ElementIds.assignElementId(returnButton, ElementIds.CHAT_RETURN_TO_MAIN_BUTTON);
       toolbar.addRightWidget(returnButton);
 
       // Create themed iframe for chat content
