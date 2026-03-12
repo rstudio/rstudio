@@ -348,8 +348,15 @@ void checkTrust(const FilePath& projectDir,
 {
    s_projectDir = projectDir;
 
-   // Check if trust checking is enabled via admin option
-   if (!options().trustEnabled())
+   // Check if trust checking is enabled.
+   // Explicit setting (0 or 1) takes precedence; if unset (-1),
+   // fall back to the edition-specific overlay default.
+   int trustSetting = options().trustEnabled();
+   bool trustEnabled = (trustSetting == -1)
+      ? overlay::trustEnabledByDefault()
+      : (trustSetting != 0);
+
+   if (!trustEnabled)
    {
       s_trustStatus = TrustStatus::Trusted;
       return;

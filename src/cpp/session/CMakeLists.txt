@@ -258,6 +258,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionTrust.cpp
+   modules/SessionTrustOverlay.cpp
    modules/SessionUserPrefs.cpp
    modules/SessionUserPrefsMigration.cpp
    modules/build/SessionBuild.cpp

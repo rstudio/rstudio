@@ -1011,10 +1011,10 @@
       "trust": [
          {
             "name": "trust-enabled",
-            "type": "bool",
+            "type": "int",
             "memberName": "trustEnabled_",
-            "defaultValue": true,
-            "description": "When enabled, RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled, all directories are implicitly trusted."
+            "defaultValue": -1,
+            "description": "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio."
          }
       ],
       "misc": [

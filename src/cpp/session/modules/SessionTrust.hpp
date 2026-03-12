@@ -54,6 +54,14 @@ core::json::Object trustRequestData();
 // Module initialization (registers RPCs and client event handlers)
 core::Error initialize();
 
+namespace overlay {
+
+// Returns the default value for trust-enabled when not explicitly configured.
+// Open-source returns false; Pro/Workbench overrides to return true.
+bool trustEnabledByDefault();
+
+} // namespace overlay
+
 } // namespace trust
 } // namespace modules
 } // namespace session

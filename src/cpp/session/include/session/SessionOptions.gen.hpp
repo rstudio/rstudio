@@ -496,8 +496,8 @@ protected:
 
    pTrust->add_options()
       ("trust-enabled",
-      value<bool>(&trustEnabled_)->default_value(true),
-      "When enabled, RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled, all directories are implicitly trusted.");
+      value<int>(&trustEnabled_)->default_value(-1),
+      "When enabled (1), RStudio will prompt users to trust project directories that contain auto-executing files (.Rprofile, .RData, .Renviron). When disabled (0), all directories are implicitly trusted. When unset (-1), the default depends on the edition of RStudio.");
 
    pMisc->add_options();
 
@@ -636,7 +636,7 @@ public:
    std::string positAssistantSslCertificatesFile() const { return positAssistantSslCertificatesFile_; }
    core::FilePath positAssistantHelper() const { return core::FilePath(positAssistantHelper_); }
    bool positAssistantTestManifest() const { return positAssistantTestManifest_; }
-   bool trustEnabled() const { return trustEnabled_; }
+   int trustEnabled() const { return trustEnabled_; }
 
 
 protected:
@@ -770,7 +770,7 @@ protected:
    std::string positAssistantSslCertificatesFile_;
    std::string positAssistantHelper_;
    bool positAssistantTestManifest_;
-   bool trustEnabled_;
+   int trustEnabled_;
    virtual bool allowOverlay() const { return false; };
 };
 
