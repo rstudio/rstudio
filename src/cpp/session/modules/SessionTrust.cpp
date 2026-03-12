@@ -1,7 +1,7 @@
 /*
  * SessionTrust.cpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -14,8 +14,6 @@
  */
 
 #include "SessionTrust.hpp"
-
-#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -105,26 +103,16 @@ Error writeTrustFile(const json::Array& trusted, const json::Array& untrusted)
    return writeStringToFile(trustFilePath(), os.str());
 }
 
-bool isSubdirectoryOf(const FilePath& child, const FilePath& parent)
-{
-   std::string childPath = child.getAbsolutePath();
-   std::string parentPath = parent.getAbsolutePath();
-
-   if (!parentPath.empty() && parentPath.back() != '/')
-      parentPath += '/';
-
-   return boost::algorithm::starts_with(childPath, parentPath);
-}
-
 bool matchesDirectoryList(const FilePath& dir, const json::Array& dirs)
 {
+   FilePath canonicalDir(dir.getCanonicalPath());
    for (const json::Value& val : dirs)
    {
       if (!json::isType<std::string>(val))
          continue;
 
       FilePath listed(val.getString());
-      if (dir == listed || isSubdirectoryOf(dir, listed))
+      if (canonicalDir.isWithin(listed))
          return true;
    }
    return false;
@@ -208,8 +196,10 @@ bool hasRiskyFiles(const FilePath& dir)
    return !findRiskyFiles(dir).empty();
 }
 
-Error addToTrustList(const std::string& directory, bool trusted)
+Error addToTrustList(const FilePath& directory, bool trusted)
 {
+   std::string directoryPath = directory.getCanonicalPath();
+
    json::Array trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
@@ -222,7 +212,7 @@ Error addToTrustList(const std::string& directory, bool trusted)
    json::Array filteredOther;
    for (const json::Value& val : otherList)
    {
-      if (json::isType<std::string>(val) && val.getString() != directory)
+      if (json::isType<std::string>(val) && val.getString() != directoryPath)
          filteredOther.push_back(val);
    }
    otherList = filteredOther;
@@ -231,20 +221,22 @@ Error addToTrustList(const std::string& directory, bool trusted)
    bool found = false;
    for (const json::Value& val : targetList)
    {
-      if (json::isType<std::string>(val) && val.getString() == directory)
+      if (json::isType<std::string>(val) && val.getString() == directoryPath)
       {
          found = true;
          break;
       }
    }
    if (!found)
-      targetList.push_back(directory);
+      targetList.push_back(directoryPath);
 
    return writeTrustFile(trustedDirs, untrustedDirs);
 }
 
-Error removeFromBothLists(const std::string& directory)
+Error removeFromBothLists(const FilePath& directory)
 {
+   std::string directoryPath = directory.getCanonicalPath();
+
    json::Array trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
@@ -253,14 +245,14 @@ Error removeFromBothLists(const std::string& directory)
    json::Array filteredTrusted;
    for (const json::Value& val : trustedDirs)
    {
-      if (json::isType<std::string>(val) && val.getString() != directory)
+      if (json::isType<std::string>(val) && val.getString() != directoryPath)
          filteredTrusted.push_back(val);
    }
 
    json::Array filteredUntrusted;
    for (const json::Value& val : untrustedDirs)
    {
-      if (json::isType<std::string>(val) && val.getString() != directory)
+      if (json::isType<std::string>(val) && val.getString() != directoryPath)
          filteredUntrusted.push_back(val);
    }
 
@@ -275,7 +267,7 @@ Error grantTrust(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return addToTrustList(directory, true);
+   return addToTrustList(FilePath(directory), true);
 }
 
 Error revokeTrust(const json::JsonRpcRequest& request,
@@ -286,7 +278,7 @@ Error revokeTrust(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return addToTrustList(directory, false);
+   return addToTrustList(FilePath(directory), false);
 }
 
 Error resetTrustRpc(const json::JsonRpcRequest& request,
@@ -297,13 +289,13 @@ Error resetTrustRpc(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return removeFromBothLists(directory);
+   return removeFromBothLists(FilePath(directory));
 }
 
 SEXP rs_trustGrant(SEXP directorySEXP)
 {
    std::string directory = r::sexp::asString(directorySEXP);
-   Error error = addToTrustList(directory, true);
+   Error error = addToTrustList(FilePath(directory), true);
    if (error)
       LOG_ERROR(error);
    return R_NilValue;
@@ -312,7 +304,7 @@ SEXP rs_trustGrant(SEXP directorySEXP)
 SEXP rs_trustRevoke(SEXP directorySEXP)
 {
    std::string directory = r::sexp::asString(directorySEXP);
-   Error error = addToTrustList(directory, false);
+   Error error = addToTrustList(FilePath(directory), false);
    if (error)
       LOG_ERROR(error);
    return R_NilValue;
@@ -321,7 +313,7 @@ SEXP rs_trustRevoke(SEXP directorySEXP)
 SEXP rs_trustReset(SEXP directorySEXP)
 {
    std::string directory = r::sexp::asString(directorySEXP);
-   Error error = removeFromBothLists(directory);
+   Error error = removeFromBothLists(FilePath(directory));
    if (error)
       LOG_ERROR(error);
    return R_NilValue;
@@ -414,7 +406,7 @@ bool shouldSuppressWorkspaceRestore()
           s_trustStatus == TrustStatus::Unknown;
 }
 
-Error setTrust(const std::string& directory, bool trusted)
+Error setTrust(const FilePath& directory, bool trusted)
 {
    return addToTrustList(directory, trusted);
 }
@@ -440,7 +432,7 @@ std::string explicitTrustSetting()
 
 Error resetTrust()
 {
-   return removeFromBothLists(s_projectDir.getAbsolutePath());
+   return removeFromBothLists(s_projectDir);
 }
 
 json::Object trustRequestData()

@@ -917,7 +917,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       if (it != allOptions.end() && json::isType<std::string>((*it).getValue()))
       {
          std::string trustStatus = (*it).getValue().getString();
-         std::string directory = s_projectContext.directory().getAbsolutePath();
+         FilePath directory = s_projectContext.directory();
 
          if (trustStatus == "trusted")
             modules::trust::setTrust(directory, true);

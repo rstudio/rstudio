@@ -1,7 +1,7 @@
 /*
  * SessionTrust.hpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -41,7 +41,7 @@ bool shouldSuppressWorkspaceRestore();
 std::string explicitTrustSetting();
 
 // Add a directory to the trusted or untrusted list
-core::Error setTrust(const std::string& directory, bool trusted);
+core::Error setTrust(const core::FilePath& directory, bool trusted);
 
 // Remove the current project directory from both trust lists
 core::Error resetTrust();

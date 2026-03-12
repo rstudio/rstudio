@@ -1,7 +1,7 @@
 /*
  * TrustRequestDialog.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -122,7 +123,7 @@ public class TrustRequestDialog extends ModalDialogBase
             }
 
             final String filename = riskyFiles_.get(i);
-            final String filePath = directory_ + "/" + filename;
+            final String filePath = FileSystemItem.createDir(directory_).completePath(filename);
 
             // .RData is binary; only make text files clickable
             if (filename.equals(".RData"))
