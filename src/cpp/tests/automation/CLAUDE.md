@@ -349,6 +349,48 @@ remote$console.executeExpr({
 remote$console.execute(paste0("data <- data.frame(", "x = 1:10, ", "y = rnorm(10)", ")"))
 ```
 
+### Satellite Windows (`remote$satellites.*`)
+
+Satellite windows (pop-out chat, source windows) are separate CDP targets. The `satellites.*` methods handle target switching so existing `dom.*`, `js.*`, and `keyboard.*` methods work against the switched-to window.
+
+```r
+# List all satellite windows (excludes main RStudio window)
+satellites <- remote$satellites.list()
+
+# Check if a satellite is open by its window title
+remote$satellites.isOpen("Posit Assistant")
+
+# Wait for a satellite to appear (polls with retries)
+remote$satellites.waitForOpen("Posit Assistant")
+
+# Switch CDP context to a satellite — all subsequent commands target it
+remote$satellites.switchTo("Posit Assistant")
+nodeId <- remote$dom.waitForElement("#rstudio_container")
+
+# Switch back to the main RStudio window
+remote$satellites.switchToMain()
+
+# Convenience: run a callback in satellite context, auto-switch back
+remote$satellites.execute("Posit Assistant", function() {
+   remote$dom.clickElement("#some_button")
+})
+```
+
+**Important:** `js.querySelector()` blocks until the element appears — it cannot detect element absence. Use `dom.elementExists()` when checking that an element is gone or a window's DOM has changed:
+
+```r
+# Correct: check element absence
+.rs.waitUntil("sidebar is hidden", function() {
+   !remote$dom.elementExists("#rstudio_Sidebar_pane")
+})
+
+# Wrong: js.querySelector will time out waiting for a missing element
+.rs.waitUntil("sidebar is hidden", function() {
+   el <- remote$js.querySelector("#rstudio_Sidebar_pane")  # blocks!
+   is.null(el)
+})
+```
+
 ## Debugging Tests
 
 When tests fail unexpectedly, inspect the current state:
