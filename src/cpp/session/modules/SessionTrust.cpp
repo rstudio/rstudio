@@ -29,8 +29,6 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/projects/SessionProjects.hpp>
-#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
@@ -175,37 +173,6 @@ bool isRprofileSafe(const FilePath& rprofilePath)
           code == "source('renv/activate.R')";
 }
 
-// Check whether .RData would be restored for the current project,
-// following the same fallback chain as restoreWorkspaceOption():
-// session option > project .Rproj setting > user pref.
-bool wouldRestoreRData()
-{
-   // session-level override
-   int sessionOverride = options().rRestoreWorkspace();
-   if (sessionOverride == kRestoreWorkspaceNo)
-      return false;
-   else if (sessionOverride == kRestoreWorkspaceYes)
-      return true;
-
-   // project-level setting
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch (projContext.config().restoreWorkspace)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         break;
-      }
-   }
-
-   // fall back to user pref
-   return prefs::userPrefs().loadWorkspace();
-}
-
 std::vector<std::string> findRiskyFiles(const FilePath& dir)
 {
    std::vector<std::string> result;
@@ -220,7 +187,7 @@ std::vector<std::string> findRiskyFiles(const FilePath& dir)
          continue;
 
       // .RData is only risky if workspace restore is enabled
-      if (std::string(filename) == ".RData" && !wouldRestoreRData())
+      if (std::string(filename) == ".RData" && !module_context::restoreWorkspaceEnabled())
          continue;
 
       result.push_back(filename);

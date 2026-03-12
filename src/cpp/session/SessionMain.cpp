@@ -1702,31 +1702,7 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
-   // check options for session-specific override
-   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
-      return false;
-   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
-      return true;
-
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().restoreWorkspace)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   // no project override
-   return prefs::userPrefs().loadWorkspace() ||
-          !rsession::options().initialEnvironmentFileOverride().isEmpty();
+   return module_context::restoreWorkspaceEnabled();
 }
 
 bool alwaysSaveHistoryOption()
