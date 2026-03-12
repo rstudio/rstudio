@@ -65,7 +65,8 @@ Error initialize()
       (boost::bind(sourceModuleRFile, "SessionAutomationRemoteObject.R"))
       (boost::bind(sourceModuleRFile, "SessionAutomationTools.R"))
       (boost::bind(sourceModuleRFile, "SessionAutomationToolsConsole.R"))
-      (boost::bind(sourceModuleRFile, "SessionAutomationToolsProjects.R"));
+      (boost::bind(sourceModuleRFile, "SessionAutomationToolsProjects.R"))
+      (boost::bind(sourceModuleRFile, "SessionAutomationToolsSatellites.R"));
    
    Error error = initBlock.execute();
    if (error)

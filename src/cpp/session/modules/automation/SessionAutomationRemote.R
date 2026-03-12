@@ -347,6 +347,11 @@
 
 .rs.automation.addRemoteFunction("session.reset", function()
 {
+   # Ensure we're targeting the main window.
+   mainSessionId <- .rs.automation.mainSessionId
+   if (!is.null(mainSessionId))
+      .rs.setVar("automation.sessionId", mainSessionId)
+
    # Clear any popups that might be visible.
    self$keyboard.insertText("<Escape>")
    
