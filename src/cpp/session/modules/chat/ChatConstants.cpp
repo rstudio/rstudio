@@ -27,7 +27,7 @@ const char* const kClientDirPath = "dist/client";
 const char* const kServerScriptPath = "dist/server/main.js";
 const char* const kIndexFileName = "index.html";
 const char* const kCspConfigPath = "dist/csp.json";
-const char* const kProtocolVersionFileName = ".protocol-version";
+const char* const kProtocolVersionFileName = "protocol.json";
 
 // Protocol Version (SUPPORTED_PROTOCOL_VERSION)
 const char* const kProtocolVersion = "10.0";

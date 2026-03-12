@@ -198,7 +198,7 @@ TEST(ChatInstallation, LocatePositAiInstallationRespectsRStudioPositAiPathEnvVar
 
 TEST(ChatInstallation, GetInstalledProtocolVersionReturnsEmptyForLegacyInstall)
 {
-   // Create mock installation without .protocol-version file
+   // Create mock installation without protocol file
    FilePath tempDir;
    FilePath::tempFilePath(tempDir);
    tempDir.ensureDirectory();
@@ -217,7 +217,7 @@ TEST(ChatInstallation, GetInstalledProtocolVersionReturnsEmptyForLegacyInstall)
    std::string originalPath = system::getenv("RSTUDIO_POSIT_AI_PATH");
    system::setenv("RSTUDIO_POSIT_AI_PATH", tempDir.getAbsolutePath());
 
-   // No .protocol-version file → should return empty
+   // No protocol file → should return empty
    std::string proto = getInstalledProtocolVersion();
    EXPECT_TRUE(proto.empty());
 
@@ -232,7 +232,7 @@ TEST(ChatInstallation, GetInstalledProtocolVersionReturnsEmptyForLegacyInstall)
 
 TEST(ChatInstallation, GetInstalledProtocolVersionReturnsCorrectVersion)
 {
-   // Create mock installation with .protocol-version file
+   // Create mock installation with protocol file
    FilePath tempDir;
    FilePath::tempFilePath(tempDir);
    tempDir.ensureDirectory();
@@ -247,9 +247,9 @@ TEST(ChatInstallation, GetInstalledProtocolVersionReturnsCorrectVersion)
    FilePath indexHtml = clientDir.completeChildPath(kIndexFileName);
    writeStringToFile(indexHtml, "<html>mock</html>");
 
-   // Write .protocol-version file
+   // Write protocol.json file
    FilePath protoFile = tempDir.completeChildPath(kProtocolVersionFileName);
-   writeStringToFile(protoFile, "10.0");
+   writeStringToFile(protoFile, "{\"protocol\": \"10.0\"}");
 
    // Set env var to point to this installation
    std::string originalPath = system::getenv("RSTUDIO_POSIT_AI_PATH");

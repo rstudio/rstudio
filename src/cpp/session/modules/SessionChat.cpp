@@ -4134,10 +4134,13 @@ Error installPackage(const FilePath& packagePath)
       }
    }
 
-   // Write protocol version file so future update checks can detect mismatches
+   // Write protocol.json so future update checks can detect mismatches
    core::FilePath protoFile =
       aiDir.completeChildPath(kProtocolVersionFileName);
-   Error protoError = core::writeStringToFile(protoFile, kProtocolVersion);
+   json::Object protoJson;
+   protoJson["protocol"] = kProtocolVersion;
+   Error protoError = core::writeStringToFile(
+      protoFile, protoJson.write());
    if (protoError)
    {
       return protoError;
