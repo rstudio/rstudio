@@ -2498,8 +2498,8 @@ int main(int argc, char * const argv[])
       // persist the value to the session state as soon as possible
       module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
 
-      // check directory trust before R initialization
-      modules::trust::checkTrust(workingDir, options.userHomePath());
+      // initialize directory trust state before R initialization
+      modules::trust::initializeTrustState(workingDir, options.userHomePath());
 
       // start http connection listener
       error = waitWithTimeout(

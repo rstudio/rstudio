@@ -382,8 +382,8 @@ SEXP rs_trustStatus(SEXP directorySEXP)
 
 } // anonymous namespace
 
-void checkTrust(const FilePath& projectDir,
-                const FilePath& userHomePath)
+void initializeTrustState(const FilePath& projectDir,
+                          const FilePath& userHomePath)
 {
    s_projectDir = projectDir;
 
