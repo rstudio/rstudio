@@ -208,6 +208,24 @@ std::unique_ptr<NoProxyRule> createNoProxyRule(const std::string& rule)
           new NoProxyRuleCidrBlock(cidrBlockResult.value()));
    }
 
+   // Handle IPv6 bracketed addresses: [addr] or [addr]:port
+   if (!rule.empty() && rule[0] == '[')
+   {
+      size_t close = rule.find(']');
+      if (close != std::string::npos)
+      {
+         std::string addr = rule.substr(1, close - 1);
+         if (close + 1 < rule.size() && rule[close + 1] == ':')
+         {
+            std::string port = rule.substr(close + 2);
+            return std::unique_ptr<NoProxyRuleAddress>(
+                new NoProxyRuleAddress(addr, port));
+         }
+         return std::unique_ptr<NoProxyRuleAddress>(
+             new NoProxyRuleAddress(addr));
+      }
+   }
+
    std::vector<std::string> parts;
    boost::split(parts, rule, boost::is_any_of(":"));
    if (parts.size() == 2)

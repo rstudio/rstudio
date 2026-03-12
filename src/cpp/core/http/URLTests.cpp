@@ -138,6 +138,88 @@ test_context("HttpUtil Tests")
    }
 }
 
+   test_that("Can parse IPv6 loopback with default port")
+   {
+      URL url("http://[::1]/path");
+
+      expect_true(url.isValid());
+      expect_true(url.protocol() == "http");
+      expect_true(url.hostname() == "::1");
+      expect_true(url.portStr() == "80");
+      expect_true(url.port() == 80);
+      expect_true(url.path() == "/path");
+   }
+
+   test_that("Can parse IPv6 loopback with port")
+   {
+      URL url("https://[::1]:9443/path");
+
+      expect_true(url.isValid());
+      expect_true(url.protocol() == "https");
+      expect_true(url.hostname() == "::1");
+      expect_true(url.portStr() == "9443");
+      expect_true(url.port() == 9443);
+      expect_true(url.path() == "/path");
+   }
+
+   test_that("Can parse IPv6 full address with port and query")
+   {
+      URL url("http://[2001:db8::1]:8080/path?query=1");
+
+      expect_true(url.isValid());
+      expect_true(url.protocol() == "http");
+      expect_true(url.hostname() == "2001:db8::1");
+      expect_true(url.portStr() == "8080");
+      expect_true(url.port() == 8080);
+      expect_true(url.path() == "/path?query=1");
+   }
+
+   test_that("Can parse IPv4-mapped IPv6 address")
+   {
+      URL url("http://[::ffff:192.168.1.1]:3000/");
+
+      expect_true(url.isValid());
+      expect_true(url.protocol() == "http");
+      expect_true(url.hostname() == "::ffff:192.168.1.1");
+      expect_true(url.portStr() == "3000");
+      expect_true(url.port() == 3000);
+      expect_true(url.path() == "/");
+   }
+
+   test_that("formatHostPort works for IPv4")
+   {
+      expect_equal(URL::formatHostPort("192.168.1.1", "8080"), std::string("192.168.1.1:8080"));
+      expect_equal(URL::formatHostPort("example.com", "443"), std::string("example.com:443"));
+   }
+
+   test_that("formatHostPort works for bare IPv6")
+   {
+      expect_equal(URL::formatHostPort("::1", "8080"), std::string("[::1]:8080"));
+      expect_equal(URL::formatHostPort("2001:db8::1", "443"), std::string("[2001:db8::1]:443"));
+   }
+
+   test_that("formatHostPort works for bracketed IPv6")
+   {
+      expect_equal(URL::formatHostPort("[::1]", "8080"), std::string("[::1]:8080"));
+      expect_equal(URL::formatHostPort("[2001:db8::1]", "443"), std::string("[2001:db8::1]:443"));
+   }
+
+   test_that("formatAddress works")
+   {
+      expect_equal(URL::formatAddress("http", "192.168.1.1", "80"), std::string("http://192.168.1.1:80"));
+      expect_equal(URL::formatAddress("https", "::1", "443"), std::string("https://[::1]:443"));
+      expect_equal(URL::formatAddress("http", "2001:db8::1", "8080"), std::string("http://[2001:db8::1]:8080"));
+   }
+
+   test_that("Can complete IPv6 URLs")
+   {
+      expect_equal(URL::complete("http://[::1]", "foo"), std::string("http://[::1]/foo"));
+      expect_equal(URL::complete("http://[::1]:8080/foo", "bar"), std::string("http://[::1]:8080/bar"));
+      expect_equal(URL::complete("http://[::1]:8080/foo/", "bar"), std::string("http://[::1]:8080/foo/bar"));
+      expect_equal(URL::complete("http://[::1]:8080/foo/", "/bar"), std::string("http://[::1]:8080/bar"));
+   }
+}
+
 } // end namespace util
 } // end namespace http
 } // end namespace core

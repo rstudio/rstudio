@@ -179,7 +179,7 @@ std::string generateNewPortToken()
 bool portmapPathForLocalhostUrl(const std::string& url, const std::string& token, 
       std::string* pPath)
 {
-   // match an http URL (ipv4 localhost or ipv6 localhst) and extract the port
+   // match an http URL (IPv4 localhost or IPv6 localhost) and extract the port
    boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1|::1|\\[::1\\]):([0-9]+)(/.*)?");
    boost::smatch match;
    if (core::regex_utils::search(url, match, re))

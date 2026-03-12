@@ -173,6 +173,28 @@ test_context("NoProxyRulesTests")
    }
 }
 
+   test_that("createNoProxyBuilder creates correct IPv6 rules")
+   {
+      // IPv6 bracketed address without port
+      auto rule = createNoProxyRule("[::1]");
+      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
+      REQUIRE(rule->match("::1", "80"));
+      REQUIRE(rule->match("::1", "443"));
+
+      // IPv6 bracketed address with port
+      rule = createNoProxyRule("[::1]:8080");
+      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
+      REQUIRE(rule->match("::1", "8080"));
+      REQUIRE_FALSE(rule->match("::1", "443"));
+
+      // IPv6 full address with port
+      rule = createNoProxyRule("[2001:db8::1]:443");
+      REQUIRE(dynamic_cast<NoProxyRuleAddress*>(rule.get()) != nullptr);
+      REQUIRE(rule->match("2001:db8::1", "443"));
+      REQUIRE_FALSE(rule->match("2001:db8::1", "80"));
+   }
+}
+
 } // end namespace tests
 } // end namespace http
 } // end namespace core
