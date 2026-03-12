@@ -3939,6 +3939,25 @@ bool isProtocolUnsupported(const UnsupportedInfo& info)
    return false;
 }
 
+// Check if the installed package's protocol version differs from expected.
+// Returns false when nothing is installed (version "0.0.0").
+bool hasProtocolMismatch(const std::string& installedVersion)
+{
+   if (installedVersion == "0.0.0")
+      return false;
+
+   std::string installedProto = getInstalledProtocolVersion();
+   bool mismatch = installedProto.empty() ||
+                   installedProto != kProtocolVersion;
+   if (mismatch)
+   {
+      DLOG("Protocol mismatch: installed='{}', expected='{}'",
+           installedProto.empty() ? "(legacy)" : installedProto,
+           kProtocolVersion);
+   }
+   return mismatch;
+}
+
 // Compare semantic versions and determine if installation is needed
 // Returns true if versions differ, enabling both upgrades (available > installed)
 // and downgrades (available < installed) when RStudio version changes
@@ -4121,7 +4140,7 @@ Error installPackage(const FilePath& packagePath)
    Error protoError = core::writeStringToFile(protoFile, kProtocolVersion);
    if (protoError)
    {
-      WLOG("Failed to write .protocol-version: {}", protoError.getMessage());
+      return protoError;
    }
 
    DLOG("Package installation complete");
@@ -4183,20 +4202,8 @@ void doUpdateCheck()
       return;
    }
 
-   // Read protocol version outside the lock (file I/O)
-   bool protocolMismatch = false;
-   if (installedVersion != "0.0.0")
-   {
-      std::string installedProto = getInstalledProtocolVersion();
-      protocolMismatch = installedProto.empty() ||
-                         installedProto != kProtocolVersion;
-      if (protocolMismatch)
-      {
-         DLOG("Protocol mismatch: installed='{}', expected='{}'",
-              installedProto.empty() ? "(legacy)" : installedProto,
-              kProtocolVersion);
-      }
-   }
+   // Check for protocol mismatch (file I/O, done outside the lock)
+   bool protocolMismatch = hasProtocolMismatch(installedVersion);
 
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
@@ -4340,20 +4347,8 @@ Error checkForUpdatesOnStartup()
       return Success();
    }
 
-   // Read protocol version outside the lock (file I/O)
-   bool protocolMismatch = false;
-   if (installedVersion != "0.0.0")
-   {
-      std::string installedProto = getInstalledProtocolVersion();
-      protocolMismatch = installedProto.empty() ||
-                         installedProto != kProtocolVersion;
-      if (protocolMismatch)
-      {
-         DLOG("Protocol mismatch: installed='{}', expected='{}'",
-              installedProto.empty() ? "(legacy)" : installedProto,
-              kProtocolVersion);
-      }
-   }
+   // Check for protocol mismatch (file I/O, done outside the lock)
+   bool protocolMismatch = hasProtocolMismatch(installedVersion);
 
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);

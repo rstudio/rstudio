@@ -160,7 +160,7 @@ std::string getInstalledProtocolVersion()
    core::Error error = core::readStringFromFile(versionFile, &content);
    if (error)
    {
-      WLOG("Failed to read .protocol-version: {}", error.getMessage());
+      ELOG("Failed to read .protocol-version: {}", error.getMessage());
       return "";
    }
 

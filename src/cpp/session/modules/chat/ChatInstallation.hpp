@@ -72,7 +72,7 @@ std::string getInstalledVersion();
  * Reads the .protocol-version file written at install time. Legacy installs
  * (before this file existed) return an empty string.
  *
- * @return Protocol version string (e.g., "10.0"), or empty string if missing
+ * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
  */
 std::string getInstalledProtocolVersion();
 
