@@ -18,13 +18,13 @@ withr::defer(.rs.automation.deleteRemote())
    titles <- vapply(satellites, function(t) t$title, FUN.VALUE = character(1))
    expect_true("Posit Assistant" %in% titles)
 
-   # Switch to the satellite and verify we can find an element in it.
-   remote$satellites.switchTo("Posit Assistant")
-   nodeId <- remote$dom.waitForElement("#rstudio_container")
-   expect_true(nodeId > 0L)
+   # Switch to the satellite and verify the return button is present.
+   result <- remote$satellites.execute("Posit Assistant", function() {
+      remote$dom.waitForElement("#rstudio_chat_return_to_main_button")
+   })
+   expect_true(result > 0L)
 
-   # Switch back to the main window and verify it still works.
-   remote$satellites.switchToMain()
+   # Verify auto-switch back to the main window works.
    consoleId <- remote$dom.querySelector("#rstudio_console_input")
    expect_true(consoleId > 0L)
 

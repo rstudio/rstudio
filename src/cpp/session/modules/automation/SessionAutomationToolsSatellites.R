@@ -56,7 +56,8 @@
 #' Polls until a satellite window with the given title appears.
 #'
 #' @param name The title of the satellite window to wait for.
-#' @param timeout Maximum time to wait, in seconds.
+#' @param retryCount Number of poll attempts before giving up. Defaults to 50.
+#' @param waitTimeSecs Seconds between poll attempts. Defaults to 0.2.
 .rs.automation.addRemoteFunction("satellites.waitForOpen", function(name,
                                                                     retryCount = 50L,
                                                                     waitTimeSecs = 0.2)
@@ -64,7 +65,7 @@
    fmt <- "satellite '%s' to open"
    .rs.waitUntil(sprintf(fmt, name), function() {
       self$satellites.isOpen(name)
-   }, waitTimeSecs = waitTimeSecs, retryCount = retryCount)
+   }, waitTimeSecs = waitTimeSecs, retryCount = retryCount, swallowErrors = TRUE)
 })
 
 #' Switch to a satellite window
@@ -90,6 +91,8 @@
          targetId = targetId,
          flatten = TRUE
       )
+      if (is.null(response$sessionId))
+         stop(sprintf("Target.attachToTarget() for satellite '%s' returned no sessionId", name))
       assign(targetId, response$sessionId, envir = cache)
    }
 

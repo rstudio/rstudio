@@ -347,7 +347,9 @@
 
 .rs.automation.addRemoteFunction("session.reset", function()
 {
-   # Ensure we're targeting the main window.
+   # Restore main window targeting in case a previous test left us in a
+   # satellite context. The NULL guard handles sessions initialized before
+   # satellite support was added.
    mainSessionId <- .rs.automation.mainSessionId
    if (!is.null(mainSessionId))
       .rs.setVar("automation.sessionId", mainSessionId)
