@@ -486,7 +486,7 @@ json::Object trustRequestData()
    if (s_trustStatus == TrustStatus::Unknown)
    {
       FilePath projectDir = projects::projectContext().directory();
-      data["directory"] = projectDir.getAbsolutePath();
+      data["directory"] = module_context::createAliasedPath(projectDir);
 
       json::Array riskyFiles;
       for (const std::string& filename : findRiskyFiles(projectDir))
