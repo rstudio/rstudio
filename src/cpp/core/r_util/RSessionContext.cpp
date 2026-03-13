@@ -293,12 +293,23 @@ SessionScopeState validateSessionScope(
       if (project.empty())
          return ScopeMissingProject;
 
-      // if session points to another project then the scope is invalid
-      if (project != pSession->project())
-         return ScopeInvalidProject;
-
       // get the path to the project directory
       FilePath projectDir = FilePath::resolveAliasedPath(project, userHomePath);
+
+      // if session points to another project then the scope is invalid
+      if (project != pSession->project())
+      {
+         FilePath sessionProjectDir = FilePath::resolveAliasedPath(pSession->project(), userHomePath);
+         if (projectDir.getAbsolutePath() != sessionProjectDir.getAbsolutePath())
+         {
+            return ScopeInvalidProject;
+         }
+         if (pSession->project().empty())
+         {
+            return ScopeInvalidProject;
+         }
+      }
+
       if (!projectDir.exists())
          return ScopeMissingProject;
 
