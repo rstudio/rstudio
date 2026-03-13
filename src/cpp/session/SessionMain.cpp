@@ -2499,11 +2499,7 @@ int main(int argc, char * const argv[])
       module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
 
       // initialize directory trust state before R initialization
-      // use the project directory when a project is open, otherwise the working directory
-      FilePath trustDir = projects::projectContext().hasProject()
-         ? projects::projectContext().directory()
-         : workingDir;
-      modules::trust::initializeTrustState(trustDir, options.userHomePath());
+      modules::trust::initializeTrustState();
 
       // start http connection listener
       error = waitWithTimeout(

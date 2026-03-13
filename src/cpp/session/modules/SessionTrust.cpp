@@ -29,6 +29,7 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace rstudio::core;
 
@@ -48,7 +49,6 @@ enum class TrustStatus
 };
 
 TrustStatus s_trustStatus = TrustStatus::NotRequired;
-FilePath s_projectDir;
 
 const char* const kRiskyFiles[] = {
    ".Rprofile",
@@ -382,11 +382,8 @@ SEXP rs_trustStatus(SEXP directorySEXP)
 
 } // anonymous namespace
 
-void initializeTrustState(const FilePath& projectDir,
-                          const FilePath& userHomePath)
+void initializeTrustState()
 {
-   s_projectDir = projectDir;
-
    // Check if trust dialogs are enabled.
    // Explicit setting (0 or 1) takes precedence; if unset (-1),
    // fall back to the edition-specific overlay default.
@@ -401,8 +398,18 @@ void initializeTrustState(const FilePath& projectDir,
       return;
    }
 
+   // Only applicable when a project is open
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (!projContext.hasProject())
+   {
+      s_trustStatus = TrustStatus::Trusted;
+      return;
+   }
+
+   FilePath projectDir = projContext.directory();
+
    // Skip trust check if project dir is the user's home directory
-   if (projectDir == userHomePath)
+   if (projectDir == options().userHomePath())
    {
       s_trustStatus = TrustStatus::Trusted;
       return;
@@ -454,6 +461,8 @@ bool shouldSuppressWorkspaceRestore()
 
 std::string explicitTrustSetting()
 {
+   FilePath projectDir = projects::projectContext().directory();
+
    json::Array trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
@@ -462,10 +471,10 @@ std::string explicitTrustSetting()
       return "default";
    }
 
-   if (matchesDirectoryList(s_projectDir, trustedDirs))
+   if (matchesDirectoryList(projectDir, trustedDirs))
       return "trusted";
 
-   if (matchesDirectoryList(s_projectDir, untrustedDirs))
+   if (matchesDirectoryList(projectDir, untrustedDirs))
       return "untrusted";
 
    return "default";
@@ -473,7 +482,7 @@ std::string explicitTrustSetting()
 
 Error resetTrust()
 {
-   return resetTrust(s_projectDir);
+   return resetTrust(projects::projectContext().directory());
 }
 
 json::Object trustRequestData()
@@ -481,10 +490,11 @@ json::Object trustRequestData()
    json::Object data;
    if (s_trustStatus == TrustStatus::Unknown)
    {
-      data["directory"] = s_projectDir.getAbsolutePath();
+      FilePath projectDir = projects::projectContext().directory();
+      data["directory"] = projectDir.getAbsolutePath();
 
       json::Array riskyFiles;
-      for (const std::string& filename : findRiskyFiles(s_projectDir))
+      for (const std::string& filename : findRiskyFiles(projectDir))
          riskyFiles.push_back(filename);
       data["risky_files"] = riskyFiles;
    }

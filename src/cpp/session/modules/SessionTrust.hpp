@@ -26,9 +26,8 @@ namespace modules {
 namespace trust {
 
 // Called early in session startup, before R initialization.
-// Determines trust status for the given project directory.
-void initializeTrustState(const core::FilePath& projectDir,
-                          const core::FilePath& userHomePath);
+// Determines trust status for the current project directory.
+void initializeTrustState();
 
 // Whether startup files (.Rprofile, .Renviron) should be suppressed
 bool shouldSuppressStartupFiles();
