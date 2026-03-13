@@ -1662,6 +1662,14 @@ body.windows .toolbar {
    color: #DDD;
 }
 
+.restrictedModeIcon {
+   display: inline-flex;
+   align-items: center;
+   opacity: 0.7;
+   margin-right: 4px;
+   cursor: default;
+}
+
 .emptyProjectMenu .toolbarButtonRightImage {
    margin-left: 4px;
 }

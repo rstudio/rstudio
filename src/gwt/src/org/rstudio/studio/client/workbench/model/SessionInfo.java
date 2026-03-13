@@ -648,6 +648,10 @@ public class SessionInfo extends JavaScriptObject
       return this.trust_request;
    }-*/;
 
+   public final native boolean getStartupFilesSuppressed() /*-{
+      return this.startup_files_suppressed || false;
+   }-*/;
+
    /**
     * @return The list of R packages we depend on
     */
