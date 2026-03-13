@@ -23,6 +23,10 @@
 .rs.setVar("automation.targetId", NULL)
 .rs.setVar("automation.sessionId", NULL)
 
+# Global state for satellite window support.
+.rs.setVar("automation.mainSessionId", NULL)
+.rs.setVar("automation.satelliteSessions", new.env(parent = emptyenv()))
+
 # Global variable for tracking the active automation agent.
 .rs.setVar("automation.agentProcess", NULL)
 
@@ -652,7 +656,8 @@
    .rs.setVar("automation.client", client)
    .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
-   
+   .rs.setVar("automation.mainSessionId", sessionId)
+
    # Return the discovered session ID.
    sessionId
 })
@@ -690,7 +695,8 @@
    .rs.setVar("automation.client", client)
    .rs.setVar("automation.targetId", currentTargetId)
    .rs.setVar("automation.sessionId", sessionId)
-   
+   .rs.setVar("automation.mainSessionId", sessionId)
+
    # TODO: Handle input of authentication credentials?
    # Should that happen here, or elsewhere?
    
