@@ -83,7 +83,10 @@ public class ViewFileDialog extends ModalDialogBase
             @Override
             public void onError(ServerError error)
             {
-               editor_.setCode("Error reading file: " + error.getUserMessage(), false);
+               closeDialog();
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  constants_.progressErrorCaption(),
+                  error.getUserMessage());
             }
          });
 
@@ -92,4 +95,6 @@ public class ViewFileDialog extends ModalDialogBase
 
    private final String filePath_;
    private AceEditor editor_;
+
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

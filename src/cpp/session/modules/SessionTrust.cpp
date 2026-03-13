@@ -17,6 +17,8 @@
 
 #include <algorithm>
 
+#include <boost/thread/mutex.hpp>
+
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
@@ -113,11 +115,6 @@ Error readTrustFile(std::vector<std::string>* pTrusted,
    return Success();
 }
 
-// NOTE: Callers (grantTrust, revokeTrust, resetTrust) perform a
-// read-modify-write cycle that is not atomic. Concurrent sessions
-// for the same user could overwrite each other's changes. This is
-// unlikely in practice since trust decisions are infrequent and
-// user-initiated.
 Error writeTrustFile(const std::vector<std::string>& trusted,
                      const std::vector<std::string>& untrusted)
 {
@@ -256,10 +253,18 @@ bool hasRiskyFiles(const FilePath& dir)
    return !findRiskyFiles(dir).empty();
 }
 
+// Mutex guarding the read-modify-write cycle on trust.json.
+// This protects against concurrent access within the same session;
+// cross-process races (e.g. multiple sessions on RStudio Server)
+// remain possible but are unlikely in practice since trust decisions
+// are infrequent and user-initiated.
+boost::mutex s_trustMutex;
+
 } // anonymous namespace
 
 Error grantTrust(const FilePath& directory)
 {
+   boost::mutex::scoped_lock lock(s_trustMutex);
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
@@ -276,11 +281,15 @@ Error grantTrust(const FilePath& directory)
    if (!isInDirectoryList(directoryPath, trustedDirs))
       trustedDirs.push_back(directoryPath);
 
-   return writeTrustFile(trustedDirs, untrustedDirs);
+   Error writeError = writeTrustFile(trustedDirs, untrustedDirs);
+   if (!writeError)
+      LOG_INFO_MESSAGE("Granted trust for directory: " + directoryPath);
+   return writeError;
 }
 
 Error revokeTrust(const FilePath& directory)
 {
+   boost::mutex::scoped_lock lock(s_trustMutex);
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
@@ -297,11 +306,15 @@ Error revokeTrust(const FilePath& directory)
    if (!isInDirectoryList(directoryPath, untrustedDirs))
       untrustedDirs.push_back(directoryPath);
 
-   return writeTrustFile(trustedDirs, untrustedDirs);
+   Error writeError = writeTrustFile(trustedDirs, untrustedDirs);
+   if (!writeError)
+      LOG_INFO_MESSAGE("Revoked trust for directory: " + directoryPath);
+   return writeError;
 }
 
 Error resetTrust(const FilePath& directory)
 {
+   boost::mutex::scoped_lock lock(s_trustMutex);
    std::string directoryPath = directory.getCanonicalPath();
 
    std::vector<std::string> trustedDirs, untrustedDirs;
@@ -317,42 +330,66 @@ Error resetTrust(const FilePath& directory)
       std::remove(untrustedDirs.begin(), untrustedDirs.end(), directoryPath),
       untrustedDirs.end());
 
-   return writeTrustFile(trustedDirs, untrustedDirs);
+   Error writeError = writeTrustFile(trustedDirs, untrustedDirs);
+   if (!writeError)
+      LOG_INFO_MESSAGE("Reset trust for directory: " + directoryPath);
+   return writeError;
 }
 
 namespace {
 
-Error grantTrustRpc(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error resolveDirectory(const json::JsonRpcRequest& request,
+                       FilePath* pDirectory)
 {
    std::string directory;
    Error error = json::readParams(request.params, &directory);
    if (error)
       return error;
 
-   return grantTrust(module_context::resolveAliasedPath(directory));
+   FilePath resolved = module_context::resolveAliasedPath(directory);
+   if (!resolved.exists() || !resolved.isDirectory())
+   {
+      return systemError(
+         boost::system::errc::no_such_file_or_directory,
+         "Directory does not exist: " + resolved.getAbsolutePath(),
+         ERROR_LOCATION);
+   }
+
+   *pDirectory = std::move(resolved);
+   return Success();
+}
+
+Error grantTrustRpc(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   FilePath directory;
+   Error error = resolveDirectory(request, &directory);
+   if (error)
+      return error;
+
+   return grantTrust(directory);
 }
 
 Error revokeTrustRpc(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string directory;
-   Error error = json::readParams(request.params, &directory);
+   FilePath directory;
+   Error error = resolveDirectory(request, &directory);
    if (error)
       return error;
 
-   return revokeTrust(module_context::resolveAliasedPath(directory));
+   return revokeTrust(directory);
 }
 
 Error resetTrustRpc(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
-   std::string directory;
-   Error error = json::readParams(request.params, &directory);
+   FilePath directory;
+   Error error = resolveDirectory(request, &directory);
    if (error)
       return error;
 
-   return resetTrust(module_context::resolveAliasedPath(directory));
+   return resetTrust(directory);
 }
 
 SEXP rs_trustGrant(SEXP directorySEXP)

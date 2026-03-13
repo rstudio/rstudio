@@ -348,6 +348,8 @@ public class Workbench implements BusyEvent.Handler,
          {
             server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
+               // The toolbar lock icon already indicates restricted mode;
+               // no additional feedback needed here.
                @Override
                public void onResponseReceived(VoidResponse response)
                {
