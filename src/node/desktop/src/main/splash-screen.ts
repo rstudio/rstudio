@@ -15,8 +15,7 @@
 
 import { BrowserWindow } from 'electron';
 import { logger } from '../core/logger';
-
-declare const SPLASH_WEBPACK_ENTRY: string;
+import { getRendererUrl } from './vite-urls';
 
 export function createSplashScreen(): BrowserWindow {
   const splash = new BrowserWindow({
@@ -38,7 +37,7 @@ export function createSplashScreen(): BrowserWindow {
   // https://github.com/electron/electron/pull/49929
   splash.setIgnoreMouseEvents(true);
 
-  splash.loadURL(SPLASH_WEBPACK_ENTRY).catch((err: unknown) => logger().logError(err));
+  splash.loadURL(getRendererUrl('src/ui/splash/splash.html')).catch((err: unknown) => logger().logError(err));
   return splash;
 }
 
