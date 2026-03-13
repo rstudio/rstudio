@@ -272,6 +272,8 @@ public class GlobalToolbar extends Toolbar
          lockIcon.setTitle(constants_.restrictedModeTitle());
          lockIcon.addStyleName(
                ThemeResources.INSTANCE.themeStyles().restrictedModeIcon());
+         lockIcon.addClickHandler(event ->
+               commands_.showTrustRequestDialog().execute());
          addRightWidget(lockIcon);
       }
 

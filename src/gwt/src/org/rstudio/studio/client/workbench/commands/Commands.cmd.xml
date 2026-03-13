@@ -4397,4 +4397,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          
    <cmd id="copyRStudioVersion"
         label="Copy RStudio Version" />
+
+   <cmd id="showTrustRequestDialog"
+        label="Show Trust Dialog"
+        rebindable="false"
+        visible="false" />
 </commands>

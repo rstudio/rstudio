@@ -1667,7 +1667,7 @@ body.windows .toolbar {
    align-items: center;
    opacity: 0.7;
    margin-right: 4px;
-   cursor: default;
+   cursor: pointer;
 }
 
 .emptyProjectMenu .toolbarButtonRightImage {

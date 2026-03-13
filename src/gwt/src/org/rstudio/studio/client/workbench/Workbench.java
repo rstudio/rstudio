@@ -304,6 +304,17 @@ public class Workbench implements BusyEvent.Handler,
                                  showMessage.getMessage());
    }
 
+   @Handler
+   void onShowTrustRequestDialog()
+   {
+      TrustRequestEvent.Data trustData =
+         session_.getSessionInfo().getTrustRequest();
+      if (trustData != null && trustData.getDirectory() != null)
+      {
+         showTrustRequestDialog(trustData);
+      }
+   }
+
    private void showTrustRequestDialog(TrustRequestEvent.Data data)
    {
       String directory = data.getDirectory();
