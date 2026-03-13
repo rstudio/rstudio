@@ -16,21 +16,27 @@
 .rs.addFunction("trust.grant", function(directory = getwd())
 {
    directory <- normalizePath(directory, mustWork = TRUE)
-   .Call("rs_trustGrant", directory, PACKAGE = "(embedding)")
+   error <- .Call("rs_trustGrant", directory, PACKAGE = "(embedding)")
+   if (is.character(error))
+      stop("Failed to grant trust: ", error)
    invisible(directory)
 })
 
 .rs.addFunction("trust.revoke", function(directory = getwd())
 {
    directory <- normalizePath(directory, mustWork = TRUE)
-   .Call("rs_trustRevoke", directory, PACKAGE = "(embedding)")
+   error <- .Call("rs_trustRevoke", directory, PACKAGE = "(embedding)")
+   if (is.character(error))
+      stop("Failed to revoke trust: ", error)
    invisible(directory)
 })
 
 .rs.addFunction("trust.reset", function(directory = getwd())
 {
    directory <- normalizePath(directory, mustWork = TRUE)
-   .Call("rs_trustReset", directory, PACKAGE = "(embedding)")
+   error <- .Call("rs_trustReset", directory, PACKAGE = "(embedding)")
+   if (is.character(error))
+      stop("Failed to reset trust: ", error)
    invisible(directory)
 })
 

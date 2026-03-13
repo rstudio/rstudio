@@ -360,7 +360,10 @@ SEXP rs_trustGrant(SEXP directorySEXP)
    std::string directory = r::sexp::asString(directorySEXP);
    Error error = grantTrust(FilePath(directory));
    if (error)
+   {
       LOG_ERROR(error);
+      return Rf_mkString(error.asString().c_str());
+   }
    return R_NilValue;
 }
 
@@ -369,7 +372,10 @@ SEXP rs_trustRevoke(SEXP directorySEXP)
    std::string directory = r::sexp::asString(directorySEXP);
    Error error = revokeTrust(FilePath(directory));
    if (error)
+   {
       LOG_ERROR(error);
+      return Rf_mkString(error.asString().c_str());
+   }
    return R_NilValue;
 }
 
@@ -378,7 +384,10 @@ SEXP rs_trustReset(SEXP directorySEXP)
    std::string directory = r::sexp::asString(directorySEXP);
    Error error = resetTrust(FilePath(directory));
    if (error)
+   {
       LOG_ERROR(error);
+      return Rf_mkString(error.asString().c_str());
+   }
    return R_NilValue;
 }
 

@@ -148,7 +148,7 @@ bool parseConfigFile(variables_map& vm,
 
       try
       {
-#ifndef RSTUDIO_PACKAGE_BUILD
+#ifdef RSTUDIO_DEVELOPMENT_BUILD
          std::cerr << "-- Reading config file: " << configFile << std::endl;
 #endif
 

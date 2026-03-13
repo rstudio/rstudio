@@ -162,6 +162,8 @@ endif()
 
 if(RSTUDIO_PACKAGE_BUILD)
    add_definitions(-DRSTUDIO_PACKAGE_BUILD)
+else()
+   add_definitions(-DRSTUDIO_DEVELOPMENT_BUILD)
 endif()
 
 # determine whether we should statically link boost. we always do this

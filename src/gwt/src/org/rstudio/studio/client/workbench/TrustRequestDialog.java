@@ -231,6 +231,9 @@ public class TrustRequestDialog extends ModalDialogBase
       return outerPanel;
    }
 
+   // Escape dismisses the dialog without persisting a trust decision.
+   // Startup files remain suppressed for this session, and the dialog
+   // will re-appear on the next session start.
    @Override
    protected void onEscapeKeyDown(NativePreviewEvent preview)
    {
