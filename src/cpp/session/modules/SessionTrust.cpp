@@ -103,19 +103,53 @@ Error writeTrustFile(const json::Array& trusted, const json::Array& untrusted)
    return writeStringToFile(trustFilePath(), os.str());
 }
 
-bool matchesDirectoryList(const FilePath& dir, const json::Array& dirs)
+// Returns the most specific (deepest) matching path from a directory list,
+// or an empty path if no match is found.
+FilePath bestMatch(const FilePath& dir, const json::Array& dirs)
 {
    FilePath canonicalDir(dir.getCanonicalPath());
+   FilePath best;
    for (const json::Value& val : dirs)
    {
       if (!json::isType<std::string>(val))
          continue;
 
       FilePath listed(val.getString());
-      if (canonicalDir.isWithin(listed))
-         return true;
+      if (canonicalDir.isWithin(listed) &&
+          (best.isEmpty() || listed.getAbsolutePath().size() > best.getAbsolutePath().size()))
+      {
+         best = listed;
+      }
    }
-   return false;
+   return best;
+}
+
+// Resolves a directory against the trusted and untrusted lists.
+// Returns "trusted", "untrusted", or "default" (not in either list).
+// When a directory matches entries in both lists, the most specific
+// (deepest) match wins. On equal specificity, untrusted wins.
+std::string resolveTrustStatus(const FilePath& dir,
+                               const json::Array& trustedDirs,
+                               const json::Array& untrustedDirs)
+{
+   FilePath trustedMatch = bestMatch(dir, trustedDirs);
+   FilePath untrustedMatch = bestMatch(dir, untrustedDirs);
+
+   if (trustedMatch.isEmpty() && untrustedMatch.isEmpty())
+      return kTrustStatusDefault;
+
+   if (trustedMatch.isEmpty())
+      return kTrustStatusUntrusted;
+
+   if (untrustedMatch.isEmpty())
+      return kTrustStatusTrusted;
+
+   // both matched: prefer the more specific (longer) path;
+   // untrusted wins ties
+   if (trustedMatch.getAbsolutePath().size() > untrustedMatch.getAbsolutePath().size())
+      return kTrustStatusTrusted;
+
+   return kTrustStatusUntrusted;
 }
 
 // Check if an .Rprofile contains only a call to source("renv/activate.R").
@@ -371,13 +405,8 @@ SEXP rs_trustStatus(SEXP directorySEXP)
       return Rf_mkString(kTrustStatusUnknown);
    }
 
-   if (matchesDirectoryList(dir, trustedDirs))
-      return Rf_mkString(kTrustStatusTrusted);
-
-   if (matchesDirectoryList(dir, untrustedDirs))
-      return Rf_mkString(kTrustStatusUntrusted);
-
-   return Rf_mkString(kTrustStatusDefault);
+   std::string status = resolveTrustStatus(dir, trustedDirs, untrustedDirs);
+   return Rf_mkString(status.c_str());
 }
 
 } // anonymous namespace
@@ -432,19 +461,13 @@ void initializeTrustState()
       return;
    }
 
-   if (matchesDirectoryList(projectDir, trustedDirs))
-   {
+   std::string status = resolveTrustStatus(projectDir, trustedDirs, untrustedDirs);
+   if (status == kTrustStatusTrusted)
       s_trustStatus = TrustStatus::Trusted;
-      return;
-   }
-
-   if (matchesDirectoryList(projectDir, untrustedDirs))
-   {
+   else if (status == kTrustStatusUntrusted)
       s_trustStatus = TrustStatus::Untrusted;
-      return;
-   }
-
-   s_trustStatus = TrustStatus::Unknown;
+   else
+      s_trustStatus = TrustStatus::Unknown;
 }
 
 bool shouldSuppressStartupFiles()
@@ -471,13 +494,7 @@ std::string projectTrustStatus()
       return kTrustStatusDefault;
    }
 
-   if (matchesDirectoryList(projectDir, trustedDirs))
-      return kTrustStatusTrusted;
-
-   if (matchesDirectoryList(projectDir, untrustedDirs))
-      return kTrustStatusUntrusted;
-
-   return kTrustStatusDefault;
+   return resolveTrustStatus(projectDir, trustedDirs, untrustedDirs);
 }
 
 Error resetTrust()
