@@ -25,6 +25,11 @@ namespace session {
 namespace modules {
 namespace trust {
 
+constexpr const char* const kTrustStatusTrusted = "trusted";
+constexpr const char* const kTrustStatusUntrusted = "untrusted";
+constexpr const char* const kTrustStatusDefault = "default";
+constexpr const char* const kTrustStatusUnknown = "unknown";
+
 // Called early in session startup, before R initialization.
 // Determines trust status for the current project directory.
 void initializeTrustState();

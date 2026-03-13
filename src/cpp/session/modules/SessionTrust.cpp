@@ -368,16 +368,16 @@ SEXP rs_trustStatus(SEXP directorySEXP)
    if (error)
    {
       LOG_ERROR(error);
-      return Rf_mkString("unknown");
+      return Rf_mkString(kTrustStatusUnknown);
    }
 
    if (matchesDirectoryList(dir, trustedDirs))
-      return Rf_mkString("trusted");
+      return Rf_mkString(kTrustStatusTrusted);
 
    if (matchesDirectoryList(dir, untrustedDirs))
-      return Rf_mkString("untrusted");
+      return Rf_mkString(kTrustStatusUntrusted);
 
-   return Rf_mkString("default");
+   return Rf_mkString(kTrustStatusDefault);
 }
 
 } // anonymous namespace
@@ -468,16 +468,16 @@ std::string projectTrustStatus()
    if (error)
    {
       LOG_ERROR(error);
-      return "default";
+      return kTrustStatusDefault;
    }
 
    if (matchesDirectoryList(projectDir, trustedDirs))
-      return "trusted";
+      return kTrustStatusTrusted;
 
    if (matchesDirectoryList(projectDir, untrustedDirs))
-      return "untrusted";
+      return kTrustStatusUntrusted;
 
-   return "default";
+   return kTrustStatusDefault;
 }
 
 Error resetTrust()
