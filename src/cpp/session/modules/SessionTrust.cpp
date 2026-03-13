@@ -103,53 +103,41 @@ Error writeTrustFile(const json::Array& trusted, const json::Array& untrusted)
    return writeStringToFile(trustFilePath(), os.str());
 }
 
-// Returns the most specific (deepest) matching path from a directory list,
-// or an empty path if no match is found.
-FilePath bestMatch(const FilePath& dir, const json::Array& dirs)
+bool isInDirectoryList(const std::string& path, const json::Array& dirs)
 {
-   FilePath canonicalDir(dir.getCanonicalPath());
-   FilePath best;
    for (const json::Value& val : dirs)
    {
-      if (!json::isType<std::string>(val))
-         continue;
-
-      FilePath listed(val.getString());
-      if (canonicalDir.isWithin(listed) &&
-          (best.isEmpty() || listed.getAbsolutePath().size() > best.getAbsolutePath().size()))
-      {
-         best = listed;
-      }
+      if (json::isType<std::string>(val) && val.getString() == path)
+         return true;
    }
-   return best;
+   return false;
 }
 
 // Resolves a directory against the trusted and untrusted lists.
-// Returns "trusted", "untrusted", or "default" (not in either list).
-// When a directory matches entries in both lists, the most specific
-// (deepest) match wins. On equal specificity, untrusted wins.
+// Walks up the directory tree from the given path to the root,
+// checking at each level for a match. The closest ancestor wins,
+// with untrusted taking priority at any given level.
 std::string resolveTrustStatus(const FilePath& dir,
                                const json::Array& trustedDirs,
                                const json::Array& untrustedDirs)
 {
-   FilePath trustedMatch = bestMatch(dir, trustedDirs);
-   FilePath untrustedMatch = bestMatch(dir, untrustedDirs);
+   FilePath current(dir.getCanonicalPath());
+   while (!current.isEmpty())
+   {
+      std::string path = current.getAbsolutePath();
 
-   if (trustedMatch.isEmpty() && untrustedMatch.isEmpty())
-      return kTrustStatusDefault;
+      if (isInDirectoryList(path, untrustedDirs))
+         return kTrustStatusUntrusted;
 
-   if (trustedMatch.isEmpty())
-      return kTrustStatusUntrusted;
+      if (isInDirectoryList(path, trustedDirs))
+         return kTrustStatusTrusted;
 
-   if (untrustedMatch.isEmpty())
-      return kTrustStatusTrusted;
+      if (current == current.getParent())
+         break;
 
-   // both matched: prefer the more specific (longer) path;
-   // untrusted wins ties
-   if (trustedMatch.getAbsolutePath().size() > untrustedMatch.getAbsolutePath().size())
-      return kTrustStatusTrusted;
-
-   return kTrustStatusUntrusted;
+      current = current.getParent();
+   }
+   return kTrustStatusDefault;
 }
 
 // Check if an .Rprofile contains only a call to source("renv/activate.R").
