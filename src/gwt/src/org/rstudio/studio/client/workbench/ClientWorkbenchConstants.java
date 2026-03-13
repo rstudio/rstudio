@@ -43,4 +43,5 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
     String trustDialogDontTrustButton();
     String trustDialogTrustExplanation();
     String trustDialogDontTrustExplanation();
+    String progressErrorCaption();
 }
