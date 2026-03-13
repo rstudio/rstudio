@@ -2662,12 +2662,8 @@ int main(int argc, char * const argv[])
       // apply trust overrides for untrusted or unknown directories
       if (modules::trust::shouldSuppressStartupFiles())
       {
-         // redirect .Rprofile and .Renviron to the user's home directory,
-         // bypassing any project-level versions of these files
-         FilePath homeRprofile = options.userHomePath().completePath(".Rprofile");
-         FilePath homeRenviron = options.userHomePath().completePath(".Renviron");
-         core::system::setenv("R_PROFILE_USER", homeRprofile.getAbsolutePath());
-         core::system::setenv("R_ENVIRON_USER", homeRenviron.getAbsolutePath());
+         rOptions.disableRProfileOnStart = true;
+         core::system::setenv("R_ENVIRON_USER", "");
       }
 
       if (modules::trust::shouldSuppressWorkspaceRestore())

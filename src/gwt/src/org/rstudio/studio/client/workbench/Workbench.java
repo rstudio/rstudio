@@ -60,6 +60,7 @@ import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -324,19 +325,41 @@ public class Workbench implements BusyEvent.Handler,
          data.getRiskyFiles(),
          () ->
          {
-            server_.grantTrust(directory, new VoidServerRequestCallback()
+            server_.grantTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onSuccess()
+               public void onResponseReceived(VoidResponse response)
                {
                   eventBus_.fireEvent(new SuspendAndRestartEvent(
-                     SuspendOptions.createSaveMinimal(false)));
+                     SuspendOptions.createSaveAll(false)));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage(
+                     constants_.progressErrorCaption(),
+                     error.getUserMessage());
                }
             });
          },
          () ->
          {
-            server_.revokeTrust(directory, new VoidServerRequestCallback());
+            server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
+            {
+               @Override
+               public void onResponseReceived(VoidResponse response)
+               {
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage(
+                     constants_.progressErrorCaption(),
+                     error.getUserMessage());
+               }
+            });
          });
       dialog.showModal();
    }

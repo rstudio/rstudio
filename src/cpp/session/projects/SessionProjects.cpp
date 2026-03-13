@@ -919,12 +919,15 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
          std::string trustStatus = (*it).getValue().getString();
          FilePath directory = s_projectContext.directory();
 
-         if (trustStatus == "trusted")
-            modules::trust::grantTrust(directory);
-         else if (trustStatus == "untrusted")
-            modules::trust::revokeTrust(directory);
-         else if (trustStatus == "default")
-            modules::trust::resetTrust();
+         if (trustStatus == modules::trust::kTrustStatusTrusted)
+            error = modules::trust::grantTrust(directory);
+         else if (trustStatus == modules::trust::kTrustStatusUntrusted)
+            error = modules::trust::revokeTrust(directory);
+         else if (trustStatus == modules::trust::kTrustStatusDefault)
+            error = modules::trust::resetTrust();
+
+         if (error)
+            LOG_ERROR(error);
       }
    }
 

@@ -99,10 +99,12 @@ Error readTrustFile(std::vector<std::string>* pTrusted,
 
    json::Value value;
    if (value.parse(contents))
-      return Success();
+      return systemError(boost::system::errc::invalid_argument,
+         "Failed to parse " + filePath.getAbsolutePath(), ERROR_LOCATION);
 
    if (!json::isType<json::Object>(value))
-      return Success();
+      return systemError(boost::system::errc::invalid_argument,
+         "Expected JSON object in " + filePath.getAbsolutePath(), ERROR_LOCATION);
 
    json::Object obj = value.getObject();
    *pTrusted = extractStringArray(obj, "trustedDirectories");
@@ -111,6 +113,11 @@ Error readTrustFile(std::vector<std::string>* pTrusted,
    return Success();
 }
 
+// NOTE: Callers (grantTrust, revokeTrust, resetTrust) perform a
+// read-modify-write cycle that is not atomic. Concurrent sessions
+// for the same user could overwrite each other's changes. This is
+// unlikely in practice since trust decisions are infrequent and
+// user-initiated.
 Error writeTrustFile(const std::vector<std::string>& trusted,
                      const std::vector<std::string>& untrusted)
 {
@@ -126,7 +133,7 @@ Error writeTrustFile(const std::vector<std::string>& trusted,
 
    std::ostringstream os;
    obj.writeFormatted(os);
-   return writeStringToFile(trustFilePath(), os.str());
+   return writeStringToFileAtomic(trustFilePath(), os.str());
 }
 
 bool isInDirectoryList(const std::string& path,
@@ -137,8 +144,8 @@ bool isInDirectoryList(const std::string& path,
 
 // Resolves a directory against the trusted and untrusted lists.
 // Walks up the directory tree from the given path to the root,
-// checking at each level for a match. The closest ancestor wins,
-// with untrusted taking priority at any given level.
+// checking at each level for a match. The first (most specific)
+// ancestor found wins.
 std::string resolveTrustStatus(const FilePath& dir,
                                const std::vector<std::string>& trustedDirs,
                                const std::vector<std::string>& untrustedDirs)
@@ -165,6 +172,11 @@ std::string resolveTrustStatus(const FilePath& dir,
 // Check if an .Rprofile contains only a call to source("renv/activate.R").
 // Strips comments and blank lines, then checks if the sole remaining
 // content is the renv activation call.
+//
+// NOTE: This is a heuristic matching renv's default template output.
+// If renv changes its template, this carve-out may need updating.
+// The comment-stripping parser also does not handle escaped quotes,
+// but this is unlikely to matter in practice for .Rprofile files.
 bool isRprofileSafe(const FilePath& rprofilePath)
 {
    std::string contents;
@@ -253,7 +265,7 @@ Error grantTrust(const FilePath& directory)
    std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
-      LOG_ERROR(error);
+      return error;
 
    // Remove from untrusted list if present
    untrustedDirs.erase(
@@ -274,7 +286,7 @@ Error revokeTrust(const FilePath& directory)
    std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
-      LOG_ERROR(error);
+      return error;
 
    // Remove from trusted list if present
    trustedDirs.erase(
@@ -295,7 +307,7 @@ Error resetTrust(const FilePath& directory)
    std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
-      LOG_ERROR(error);
+      return error;
 
    trustedDirs.erase(
       std::remove(trustedDirs.begin(), trustedDirs.end(), directoryPath),

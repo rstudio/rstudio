@@ -36,7 +36,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
@@ -103,12 +102,6 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       grid.setWidget(2, 1, alwaysSaveHistory_);
 
       container.add(grid);
-
-      // trust -- TODO
-      trustSetting_ = new ListBox();
-      trustSetting_.addItem("(Default)", TRUST_DEFAULT);
-      trustSetting_.addItem("Trusted", TRUST_TRUSTED);
-      trustSetting_.addItem("Untrusted", TRUST_UNTRUSTED);
 
       container.add(headerLabel(constants_.miscellaneousTitle()));
 
@@ -190,14 +183,6 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       initialConfig_ = config;
 
-      // trust
-      initialTrustStatus_ = options.getTrustStatus();
-      if (TRUST_TRUSTED.equals(initialTrustStatus_))
-         trustSetting_.setSelectedIndex(1);
-      else if (TRUST_UNTRUSTED.equals(initialTrustStatus_))
-         trustSetting_.setSelectedIndex(2);
-      else
-         trustSetting_.setSelectedIndex(0);
    }
 
    @Override
@@ -231,20 +216,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
          needsRestart = true;
       }
 
-      // apply trust setting changes
-      String selectedTrust = trustSetting_.getValue(trustSetting_.getSelectedIndex());
-      options.setTrustStatus(selectedTrust);
-      if (!StringUtil.equals(selectedTrust, initialTrustStatus_))
-      {
-         needsRestart = true;
-      }
-
       return new RestartRequirement(needsRestart, needsRestart, needsRestart);
    }
-
-   private static final String TRUST_DEFAULT = "default";
-   private static final String TRUST_TRUSTED = "trusted";
-   private static final String TRUST_UNTRUSTED = "untrusted";
 
    private final FormLabel projectNameLabel_;
    private final TextBox projectName_;
@@ -255,11 +228,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault alwaysSaveHistory_;
    private CheckBox disableExecuteRprofile_;
    private CheckBox quitChildProcessesOnExit_;
-   private ListBox trustSetting_;
    private SessionInfo sessionInfo_;
 
    private String tutorialPath_;
-   private String initialTrustStatus_;
 
    private RProjectConfig initialConfig_;
    private RProjectRVersion rVersion_;
