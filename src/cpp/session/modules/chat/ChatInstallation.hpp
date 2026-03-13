@@ -66,6 +66,16 @@ core::FilePath locatePositAiInstallation();
  */
 std::string getInstalledVersion();
 
+/**
+ * Get the protocol version the installed Posit AI package was built for.
+ *
+ * Reads the protocol.json file written at install time. Legacy installs
+ * (before this file existed) return an empty string.
+ *
+ * @return Protocol version string (e.g., "10.0"), or empty string if missing or unreadable
+ */
+std::string getInstalledProtocolVersion();
+
 } // namespace installation
 } // namespace chat
 } // namespace modules
