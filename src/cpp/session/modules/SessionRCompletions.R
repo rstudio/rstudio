@@ -75,6 +75,12 @@ assign(x = ".rs.acCompletionTypes",
        )
 )
 
+# Cache for @inheritDotParams Rd lookups, keyed by "pkg::fn".
+# Stores both positive results (list with targetName/argNames) and negative
+# results (NULL) so that functions without @inheritDotParams are not re-parsed
+# on every keystroke.
+.rs.setVar("inheritDotParamsCache", new.env(parent = emptyenv()))
+
 .rs.addFunction("getCompletionType", function(object)
 {
    # Control-flow keywords
@@ -1082,11 +1088,14 @@ assign(x = ".rs.acCompletionTypes",
    # If the function has `...` in its formals and the package author used
    # @inheritDotParams, expand those documented dot-arguments into named
    # completions, as if they were native arguments of the wrapper.
+   # Primitives (e.g. list, c) cannot have @inheritDotParams documentation so
+   # skip them early before the more expensive formals and environment checks.
    # NOTE: formals$formals is token-filtered by resolveFormals and values are
    # formatted as "name = ", so check for "... = " first (fast path), then
    # fall back to formals(object) if the token filtered it out.
-   if ("... = " %in% formals$formals ||
-       tryCatch("..." %in% names(formals(object)), error = function(e) FALSE))
+   if (!is.primitive(object) &&
+       ("... = " %in% formals$formals ||
+        tryCatch("..." %in% names(formals(object)), error = function(e) FALSE)))
    {
       # Defensive guard: an unexpected error here must not break all completions
       # for the function -- the inherited params portion is best-effort only.
@@ -1101,12 +1110,6 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-# Cache for @inheritDotParams Rd lookups, keyed by "pkg::fn".
-# Stores both positive results (list with targetName/argNames) and negative
-# results (NULL) so that functions without @inheritDotParams are not re-parsed
-# on every keystroke.
-.rs.setVar("inheritDotParamsCache", new.env(parent = emptyenv()))
-
 # Retrieve completions arising from @inheritDotParams documentation.
 #
 # When a function passes `...` to another function and has been documented
@@ -1115,16 +1118,22 @@ assign(x = ".rs.acCompletionTypes",
 # \describe block. This function parses that Rd structure and returns
 # completions for those argument names.
 #
+# NOTE: This implementation is tightly coupled to the Rd output structure that
+# roxygen2 generates for @inheritDotParams. If roxygen2 changes its output
+# format, this parsing will silently return no completions.
+# TODO: work with roxygen2 to expose this information more directly
+# (see r-lib/roxygen2#1808).
+#
 # Local (explicitly declared) formals always take precedence: any name already
 # present in the wrapper's own formals is excluded from the returned set,
 # matching the behaviour of @inheritParams. Only the first `...` argument is
 # expanded (shallow expansion — we do not recurse into the target function's
 # own `...`).
 .rs.addFunction("getCompletionsInheritDotParams", function(token,
-                                                            string,
-                                                            object,
-                                                            matchedCall,
-                                                            ownFormals)
+                                                           string,
+                                                           object,
+                                                           matchedCall,
+                                                           ownFormals)
 {
    # Derive the plain function name and (optionally) package from `string`,
    # e.g. "pkg::foo" -> pkg = "pkg", fn = "foo"; "pkg:::foo" -> same;
@@ -1262,6 +1271,15 @@ assign(x = ".rs.acCompletionTypes",
    # for the sentinel text "Arguments passed on to" as the first non-whitespace
    # TEXT node in the description. If it's not there, this is a regular `...`
    # argument and we have nothing to expand.
+   #
+   # NOTE: This implementation is tightly coupled to the specific Rd structure
+   # that roxygen2 generates for @inheritDotParams: the sentinel text, the
+   # \code node containing the target name, and the \describe block listing
+   # forwarded args. See:
+   # https://github.com/r-lib/roxygen2/blob/93b87787/R/rd-inherit.R#L281-L290
+   # If roxygen2 changes this structure, parsing will silently return no completions.
+   # TODO: work with roxygen2 to expose this information more directly
+   # (see r-lib/roxygen2#1808).
    #
    # Note: if multiple @inheritDotParams tags exist, only the first block is
    # used. Multiple @inheritDotParams on a single function is uncommon and

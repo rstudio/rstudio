@@ -41,14 +41,16 @@ fixture_rd_partial <- tools::parse_Rd(
    testthat::test_path("fixtures/wrapper-inheritDotParams-partial.Rd")
 )
 
-# These tests require the updated SessionRCompletions.R to be sourced in the
-# current session. If running inside a development RStudio build (not yet
-# restarted with the new code), source it manually first:
-#
-#   source("src/cpp/session/modules/SessionRCompletions.R")
-#   testthat::test_file("src/cpp/tests/testthat/test-completions-inherit-dot-params.R")
-#
-new_functions_loaded <- exists(".rs.parseInheritDotParamsFromRd", mode = "function")
+# testthat::with_mocked_bindings / local_mocked_bindings cannot mock functions
+# in the locked "tools:rstudio" environment, so we use a shared helper that
+# saves, replaces, and restores bindings via assign() + on.exit().
+with_rs_mock <- function(targetName, newValue, expr) {
+   rsEnv <- as.environment("tools:rstudio")
+   original <- get(targetName, envir = rsEnv)
+   on.exit(assign(targetName, original, envir = rsEnv), add = TRUE)
+   assign(targetName, newValue, envir = rsEnv)
+   force(expr)
+}
 
 
 # ---------------------------------------------------------------------------
@@ -56,13 +58,11 @@ new_functions_loaded <- exists(".rs.parseInheritDotParamsFromRd", mode = "functi
 # ---------------------------------------------------------------------------
 
 test_that("parseInheritDotParamsFromRd extracts targetName from fixture Rd", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
    expect_equal(result$targetName, "target")
 })
 
 test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
    expect_in("alpha", result$argNames)
    expect_in("beta",  result$argNames)
@@ -71,7 +71,6 @@ test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
 })
 
 test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd_partial)
    expect_in("alpha",       result$argNames)
    expect_in("beta",        result$argNames)
@@ -79,7 +78,6 @@ test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotParams", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    # base::mean Rd has ... but documented manually -- parse it directly
    mean_rd <- tryCatch(
       get(".getHelpFile", envir = asNamespace("utils"), mode = "function")(
@@ -92,7 +90,6 @@ test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotPa
 })
 
 test_that("parseInheritDotParamsFromRd returns empty argNames for empty \\describe block", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to \\code{target}\\describe{}}}"
    rd <- tools::parse_Rd(textConnection(rd_text))
    result <- .rs.parseInheritDotParamsFromRd(rd)
@@ -100,7 +97,6 @@ test_that("parseInheritDotParamsFromRd returns empty argNames for empty \\descri
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL when sentinel has no \\code node", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    # Sentinel text present but no \\code node following it
    rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to something\\describe{\\item{\\code{x}}{desc}}}}"
    rd <- tools::parse_Rd(textConnection(rd_text))
@@ -108,14 +104,12 @@ test_that("parseInheritDotParamsFromRd returns NULL when sentinel has no \\code 
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL when \\arguments section is missing", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    rd_text <- "\\name{f}\\title{A function}\\description{Does something.}"
    rd <- tools::parse_Rd(textConnection(rd_text))
    expect_null(.rs.parseInheritDotParamsFromRd(rd))
 })
 
 test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDotParams exist", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    # Two @inheritDotParams blocks: first targets 'target1' with arg 'alpha',
    # second targets 'target2' with arg 'beta'. Only the first block is used.
    rd_text <- paste0(
@@ -139,7 +133,6 @@ test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDo
 # ---------------------------------------------------------------------------
 
 test_that("parseInheritDotParamsFromHelp returns NULL for unknown function", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    expect_null(.rs.parseInheritDotParamsFromHelp("____no_such_fn____", NULL))
 })
 
@@ -160,7 +153,6 @@ test_that("getCompletionsInheritDotParams returns empty when fn has no ...", {
 })
 
 test_that("getCompletionsInheritDotParams returns empty for malformed string with multiple ::", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    result <- .rs.getCompletionsInheritDotParams(
       token       = "",
       string      = "a::b::c",
@@ -182,30 +174,15 @@ test_that("getCompletionsInheritDotParams returns empty for unknown function", {
    expect_length(result$results, 0L)
 })
 
-# For the orchestrator tests we need parseInheritDotParamsFromHelp to return
-# fixture data. Since mocking utils internals is not available outside pkgload,
-# we temporarily replace parseInheritDotParamsFromHelp with a stub that calls
-# parseInheritDotParamsFromRd on the fixture directly.
 with_fixture_completions <- function(expr) {
-   rsEnv <- as.environment("tools:rstudio")
-
-   # Stub parseInheritDotParamsFromHelp to return fixture Rd data.
-   original_help <- get(".rs.parseInheritDotParamsFromHelp", envir = rsEnv)
-   on.exit(
-      assign(".rs.parseInheritDotParamsFromHelp", original_help, envir = rsEnv),
-      add = TRUE
-   )
-   assign(
+   with_rs_mock(
       ".rs.parseInheritDotParamsFromHelp",
       function(fnName, pkgName) .rs.parseInheritDotParamsFromRd(fixture_rd),
-      envir = rsEnv
+      expr
    )
-
-   force(expr)
 }
 
 test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixture", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
@@ -220,7 +197,6 @@ test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixt
 })
 
 test_that("getCompletionsInheritDotParams excludes wrapper's own formals", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
@@ -238,7 +214,6 @@ test_that("getCompletionsInheritDotParams excludes wrapper's own formals", {
 })
 
 test_that("getCompletionsInheritDotParams excludes already-used args", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
@@ -255,7 +230,6 @@ test_that("getCompletionsInheritDotParams excludes already-used args", {
 })
 
 test_that("getCompletionsInheritDotParams backtick-quotes reserved word arg names", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
@@ -270,7 +244,6 @@ test_that("getCompletionsInheritDotParams backtick-quotes reserved word arg name
 })
 
 test_that("getCompletionsInheritDotParams filters by token prefix", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "al",
@@ -287,7 +260,6 @@ test_that("getCompletionsInheritDotParams filters by token prefix", {
 })
 
 test_that("getCompletionsInheritDotParams returns empty for function defined in global env", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    # A locally-defined function lives in R_GlobalEnv, not a package namespace.
    # The early exit should fire and return empty completions.
    local_fn <- local(function(x, ...) x, envir = globalenv())
@@ -302,7 +274,6 @@ test_that("getCompletionsInheritDotParams returns empty for function defined in 
 })
 
 test_that("getCompletionsInheritDotParams handles triple-colon pkg:::fn syntax", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       result <- .rs.getCompletionsInheritDotParams(
          token       = "",
@@ -316,7 +287,6 @@ test_that("getCompletionsInheritDotParams handles triple-colon pkg:::fn syntax",
 })
 
 test_that("getCompletionsInheritDotParams returns cached result on second call", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    with_fixture_completions({
       # Call twice with the same pkg::fn -- second call hits the cache.
       result1 <- .rs.getCompletionsInheritDotParams(
@@ -339,11 +309,50 @@ test_that("getCompletionsInheritDotParams returns cached result on second call",
 
 
 # ---------------------------------------------------------------------------
+# .rs.getCompletionsFunction  (end-to-end, no external packages)
+# ---------------------------------------------------------------------------
+
+with_mock_inherit_dot_params <- function(newValue, expr) {
+   with_rs_mock(".rs.getCompletionsInheritDotParams", newValue, expr)
+}
+
+test_that("getCompletionsFunction does not call getCompletionsInheritDotParams for primitives", {
+   # Primitives like list() have ... but cannot have @inheritDotParams docs.
+   # Verify the is.primitive() guard fires before getCompletionsInheritDotParams is reached.
+   expect_no_error(
+      with_mock_inherit_dot_params(
+         function(...) stop("should not be called for primitives"),
+         .rs.getCompletionsFunction(
+            token        = "",
+            string       = "list",
+            functionCall = quote(list()),
+            numCommas    = 0L,
+            envir        = globalenv()
+         )
+      )
+   )
+})
+
+test_that("getCompletionsFunction returns only own formals for non-primitive base fns without @inheritDotParams", {
+   # base::mean has ... but no @inheritDotParams — getCompletionsInheritDotParams
+   # is called but returns empty, so only mean's own formals are offered.
+   result <- .rs.getCompletionsFunction(
+      token        = "",
+      string       = "mean",
+      functionCall = quote(mean()),
+      numCommas    = 0L,
+      envir        = globalenv()
+   )
+   returned_names <- sub(" = $", "", result$results)
+   expect_setequal(returned_names, c("x", "..."))
+})
+
+
+# ---------------------------------------------------------------------------
 # .rs.getCompletionsFunction  (end-to-end, requires ggplot2)
 # ---------------------------------------------------------------------------
 
 test_that("getCompletionsFunction returns inherited dot args with empty token", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    skip_if_not_installed("ggplot2")
    result <- .rs.getCompletionsFunction(
       token        = "",
@@ -357,7 +366,6 @@ test_that("getCompletionsFunction returns inherited dot args with empty token", 
 })
 
 test_that("getCompletionsFunction returns inherited dot args with partial token", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    skip_if_not_installed("ggplot2")
    result <- .rs.getCompletionsFunction(
       token        = "br",
@@ -372,7 +380,6 @@ test_that("getCompletionsFunction returns inherited dot args with partial token"
 })
 
 test_that("getCompletionsFunction resolves package via environment when no :: used", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    skip_if_not_installed("ggplot2")
    # Use the function object from ggplot2 but pass a bare name as string --
    # exercises the environmentName(environment(object)) fallback path.
@@ -390,7 +397,6 @@ test_that("getCompletionsFunction resolves package via environment when no :: us
 })
 
 test_that("getCompletionsFunction handles triple-colon pkg:::fn syntax", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    skip_if_not_installed("ggplot2")
    result <- .rs.getCompletionsFunction(
       token        = "",
@@ -404,7 +410,6 @@ test_that("getCompletionsFunction handles triple-colon pkg:::fn syntax", {
 })
 
 test_that("getCompletionsFunction returns completions when token filters out ...", {
-   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
    skip_if_not_installed("ggplot2")
    # When token = "br", resolveFormals filters out "... = " from formals$formals,
    # so the hasDots fallback via formals(object) must be exercised.
