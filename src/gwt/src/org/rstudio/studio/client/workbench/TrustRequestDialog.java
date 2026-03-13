@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.InlineHTML;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -128,7 +127,8 @@ public class TrustRequestDialog extends ModalDialogBase
             // .RData is binary; only make text files clickable
             if (filename.equals(".RData"))
             {
-               InlineHTML code = new InlineHTML("<code>" + filename + "</code>");
+               InlineLabel code = new InlineLabel(filename);
+               code.getElement().getStyle().setProperty("fontFamily", "monospace");
                filesRow.add(code);
             }
             else

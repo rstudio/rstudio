@@ -924,7 +924,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
          else if (trustStatus == modules::trust::kTrustStatusUntrusted)
             error = modules::trust::revokeTrust(directory);
          else if (trustStatus == modules::trust::kTrustStatusDefault)
-            error = modules::trust::resetTrust();
+            error = modules::trust::resetTrust(directory);
 
          if (error)
             LOG_ERROR(error);
