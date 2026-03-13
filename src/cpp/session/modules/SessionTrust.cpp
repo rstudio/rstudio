@@ -330,7 +330,7 @@ Error grantTrustRpc(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return grantTrust(FilePath(directory));
+   return grantTrust(module_context::resolveAliasedPath(directory));
 }
 
 Error revokeTrustRpc(const json::JsonRpcRequest& request,
@@ -341,7 +341,7 @@ Error revokeTrustRpc(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return revokeTrust(FilePath(directory));
+   return revokeTrust(module_context::resolveAliasedPath(directory));
 }
 
 Error resetTrustRpc(const json::JsonRpcRequest& request,
@@ -352,7 +352,7 @@ Error resetTrustRpc(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   return resetTrust(FilePath(directory));
+   return resetTrust(module_context::resolveAliasedPath(directory));
 }
 
 SEXP rs_trustGrant(SEXP directorySEXP)
@@ -504,10 +504,16 @@ Error resetTrust()
 json::Object trustRequestData()
 {
    json::Object data;
-   if (s_trustStatus == TrustStatus::Unknown)
+   if (s_trustStatus == TrustStatus::Unknown ||
+       s_trustStatus == TrustStatus::Untrusted)
    {
       FilePath projectDir = projects::projectContext().directory();
       data["directory"] = module_context::createAliasedPath(projectDir);
+
+      std::string status = (s_trustStatus == TrustStatus::Unknown)
+         ? kTrustStatusUnknown
+         : kTrustStatusUntrusted;
+      data["status"] = status;
 
       json::Array riskyFiles;
       for (const std::string& filename : findRiskyFiles(projectDir))

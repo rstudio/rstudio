@@ -38,6 +38,10 @@ public class TrustRequestEvent extends GwtEvent<TrustRequestEvent.Handler>
          return this.directory;
       }-*/;
 
+      public final native String getStatus() /*-{
+         return this.status;
+      }-*/;
+
       public final native JsArrayString getRiskyFiles() /*-{
          return this.risky_files;
       }-*/;

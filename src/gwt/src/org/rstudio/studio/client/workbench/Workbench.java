@@ -322,6 +322,7 @@ public class Workbench implements BusyEvent.Handler,
 
       TrustRequestDialog dialog = new TrustRequestDialog(
          directory,
+         data.getStatus(),
          data.getRiskyFiles(),
          () ->
          {

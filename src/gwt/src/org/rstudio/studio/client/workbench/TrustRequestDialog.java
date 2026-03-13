@@ -40,15 +40,18 @@ import com.google.gwt.user.client.ui.Widget;
 public class TrustRequestDialog extends ModalDialogBase
 {
    public TrustRequestDialog(String directory,
+                             String status,
                              JsArrayString riskyFiles,
                              Operation trustOperation,
                              Operation dontTrustOperation)
    {
       super(Roles.getAlertdialogRole());
       directory_ = directory;
+      status_ = status;
       riskyFiles_ = riskyFiles;
       trustOperation_ = trustOperation;
       dontTrustOperation_ = dontTrustOperation;
+      isUntrusted_ = "untrusted".equals(status);
 
       setEscapeDisabled(false);
       setThemeAware(true);
@@ -87,14 +90,20 @@ public class TrustRequestDialog extends ModalDialogBase
       panel.setWidth("460px");
 
       // header
-      Label header = new Label(constants_.trustDialogHeader());
+      String headerText = isUntrusted_
+         ? constants_.trustDialogUntrustedHeader()
+         : constants_.trustDialogHeader();
+      Label header = new Label(headerText);
       header.getElement().getStyle().setFontSize(16, Unit.PX);
       header.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       header.getElement().getStyle().setMarginBottom(12, Unit.PX);
       panel.add(header);
 
       // description
-      HTML description = new HTML(constants_.trustDialogDescription());
+      String descriptionText = isUntrusted_
+         ? constants_.trustDialogUntrustedDescription()
+         : constants_.trustDialogDescription();
+      HTML description = new HTML(descriptionText);
       description.getElement().getStyle().setMarginBottom(12, Unit.PX);
       panel.add(description);
 
@@ -134,7 +143,7 @@ public class TrustRequestDialog extends ModalDialogBase
             else
             {
                Anchor link = new Anchor(filename);
-               link.setHref("javascript:void(0)");
+               link.setHref("#");
                link.getElement().getStyle().setProperty("fontFamily", "monospace");
                link.addClickHandler(new ClickHandler()
                {
@@ -162,8 +171,11 @@ public class TrustRequestDialog extends ModalDialogBase
       // trust column
       FlowPanel trustColumn = new FlowPanel();
 
+      String trustButtonLabel = isUntrusted_
+         ? constants_.trustDialogGrantTrustButton()
+         : constants_.trustDialogTrustButton();
       ThemedButton trustButton = new ThemedButton(
-         constants_.trustDialogTrustButton(),
+         trustButtonLabel,
          new ClickHandler()
          {
             @Override
@@ -180,7 +192,10 @@ public class TrustRequestDialog extends ModalDialogBase
       trustButton.getElement().getStyle().setMarginBottom(4, Unit.PX);
       trustColumn.add(trustButton);
 
-      Label trustExplanation = new Label(constants_.trustDialogTrustExplanation());
+      String trustExplanationText = isUntrusted_
+         ? constants_.trustDialogGrantTrustExplanation()
+         : constants_.trustDialogTrustExplanation();
+      Label trustExplanation = new Label(trustExplanationText);
       trustExplanation.addStyleName("rstudio-trust-detail");
       trustExplanation.getElement().getStyle().setFontSize(11, Unit.PX);
       trustExplanation.getElement().getStyle().setPaddingLeft(2, Unit.PX);
@@ -193,15 +208,18 @@ public class TrustRequestDialog extends ModalDialogBase
       FlowPanel dontTrustColumn = new FlowPanel();
       dontTrustColumn.getElement().getStyle().setPaddingLeft(8, Unit.PX);
 
+      String dontTrustButtonLabel = isUntrusted_
+         ? constants_.trustDialogKeepRestrictedButton()
+         : constants_.trustDialogDontTrustButton();
       ThemedButton dontTrustButton = new ThemedButton(
-         constants_.trustDialogDontTrustButton(),
+         dontTrustButtonLabel,
          new ClickHandler()
          {
             @Override
             public void onClick(ClickEvent event)
             {
                closeDialog();
-               if (dontTrustOperation_ != null)
+               if (!isUntrusted_ && dontTrustOperation_ != null)
                   dontTrustOperation_.execute();
             }
          });
@@ -213,7 +231,10 @@ public class TrustRequestDialog extends ModalDialogBase
       dontTrustButton_ = dontTrustButton;
       dontTrustColumn.add(dontTrustButton);
 
-      Label dontTrustExplanation = new Label(constants_.trustDialogDontTrustExplanation());
+      String dontTrustExplanationText = isUntrusted_
+         ? constants_.trustDialogKeepRestrictedExplanation()
+         : constants_.trustDialogDontTrustExplanation();
+      Label dontTrustExplanation = new Label(dontTrustExplanationText);
       dontTrustExplanation.addStyleName("rstudio-trust-detail");
       dontTrustExplanation.getElement().getStyle().setFontSize(11, Unit.PX);
       dontTrustExplanation.getElement().getStyle().setPaddingLeft(2, Unit.PX);
@@ -252,6 +273,8 @@ public class TrustRequestDialog extends ModalDialogBase
    }
 
    private final String directory_;
+   private final String status_;
+   private final boolean isUntrusted_;
    private final JsArrayString riskyFiles_;
    private final Operation trustOperation_;
    private final Operation dontTrustOperation_;

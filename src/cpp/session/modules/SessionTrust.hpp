@@ -57,8 +57,9 @@ core::Error resetTrust(const core::FilePath& directory);
 core::Error resetTrust();
 
 // Returns trust request data for inclusion in session info.
-// If a trust prompt is needed, returns an object with "directory" and
-// "risky_files" fields. Otherwise returns an empty object.
+// If startup files are suppressed (unknown or untrusted), returns an
+// object with "directory", "status", and "risky_files" fields.
+// Otherwise returns an empty object.
 core::json::Object trustRequestData();
 
 // Module initialization (registers RPCs and client event handlers)
