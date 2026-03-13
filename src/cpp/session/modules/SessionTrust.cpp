@@ -15,6 +15,8 @@
 
 #include "SessionTrust.hpp"
 
+#include <algorithm>
+
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
@@ -61,7 +63,30 @@ FilePath trustFilePath()
    return core::system::xdg::userDataDir().completePath("trust.json");
 }
 
-Error readTrustFile(json::Array* pTrusted, json::Array* pUntrusted)
+std::vector<std::string> extractStringArray(const json::Object& obj,
+                                            const std::string& key)
+{
+   std::vector<std::string> result;
+   auto it = obj.find(key);
+   if (it == obj.end() || !json::isType<json::Array>((*it).getValue()))
+      return result;
+
+   for (const json::Value& val : (*it).getValue().getArray())
+   {
+      if (json::isType<std::string>(val))
+      {
+         result.push_back(val.getString());
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Ignoring non-string entry in trust.json key '" + key + "'");
+      }
+   }
+   return result;
+}
+
+Error readTrustFile(std::vector<std::string>* pTrusted,
+                    std::vector<std::string>* pUntrusted)
 {
    FilePath filePath = trustFilePath();
    if (!filePath.exists())
@@ -80,37 +105,34 @@ Error readTrustFile(json::Array* pTrusted, json::Array* pUntrusted)
       return Success();
 
    json::Object obj = value.getObject();
-
-   auto trusted = obj.find("trustedDirectories");
-   if (trusted != obj.end() && json::isType<json::Array>((*trusted).getValue()))
-      *pTrusted = (*trusted).getValue().getArray();
-
-   auto untrusted = obj.find("untrustedDirectories");
-   if (untrusted != obj.end() && json::isType<json::Array>((*untrusted).getValue()))
-      *pUntrusted = (*untrusted).getValue().getArray();
+   *pTrusted = extractStringArray(obj, "trustedDirectories");
+   *pUntrusted = extractStringArray(obj, "untrustedDirectories");
 
    return Success();
 }
 
-Error writeTrustFile(const json::Array& trusted, const json::Array& untrusted)
+Error writeTrustFile(const std::vector<std::string>& trusted,
+                     const std::vector<std::string>& untrusted)
 {
+   json::Array trustedArray, untrustedArray;
+   for (const std::string& dir : trusted)
+      trustedArray.push_back(dir);
+   for (const std::string& dir : untrusted)
+      untrustedArray.push_back(dir);
+
    json::Object obj;
-   obj["trustedDirectories"] = trusted;
-   obj["untrustedDirectories"] = untrusted;
+   obj["trustedDirectories"] = trustedArray;
+   obj["untrustedDirectories"] = untrustedArray;
 
    std::ostringstream os;
    obj.writeFormatted(os);
    return writeStringToFile(trustFilePath(), os.str());
 }
 
-bool isInDirectoryList(const std::string& path, const json::Array& dirs)
+bool isInDirectoryList(const std::string& path,
+                       const std::vector<std::string>& dirs)
 {
-   for (const json::Value& val : dirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() == path)
-         return true;
-   }
-   return false;
+   return std::find(dirs.begin(), dirs.end(), path) != dirs.end();
 }
 
 // Resolves a directory against the trusted and untrusted lists.
@@ -118,8 +140,8 @@ bool isInDirectoryList(const std::string& path, const json::Array& dirs)
 // checking at each level for a match. The closest ancestor wins,
 // with untrusted taking priority at any given level.
 std::string resolveTrustStatus(const FilePath& dir,
-                               const json::Array& trustedDirs,
-                               const json::Array& untrustedDirs)
+                               const std::vector<std::string>& trustedDirs,
+                               const std::vector<std::string>& untrustedDirs)
 {
    FilePath current(dir.getCanonicalPath());
    while (!current.isEmpty())
@@ -228,31 +250,18 @@ Error grantTrust(const FilePath& directory)
 {
    std::string directoryPath = directory.getCanonicalPath();
 
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
       LOG_ERROR(error);
 
    // Remove from untrusted list if present
-   json::Array filteredUntrusted;
-   for (const json::Value& val : untrustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() != directoryPath)
-         filteredUntrusted.push_back(val);
-   }
-   untrustedDirs = filteredUntrusted;
+   untrustedDirs.erase(
+      std::remove(untrustedDirs.begin(), untrustedDirs.end(), directoryPath),
+      untrustedDirs.end());
 
    // Add to trusted list if not already present
-   bool found = false;
-   for (const json::Value& val : trustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() == directoryPath)
-      {
-         found = true;
-         break;
-      }
-   }
-   if (!found)
+   if (!isInDirectoryList(directoryPath, trustedDirs))
       trustedDirs.push_back(directoryPath);
 
    return writeTrustFile(trustedDirs, untrustedDirs);
@@ -262,31 +271,18 @@ Error revokeTrust(const FilePath& directory)
 {
    std::string directoryPath = directory.getCanonicalPath();
 
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
       LOG_ERROR(error);
 
    // Remove from trusted list if present
-   json::Array filteredTrusted;
-   for (const json::Value& val : trustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() != directoryPath)
-         filteredTrusted.push_back(val);
-   }
-   trustedDirs = filteredTrusted;
+   trustedDirs.erase(
+      std::remove(trustedDirs.begin(), trustedDirs.end(), directoryPath),
+      trustedDirs.end());
 
    // Add to untrusted list if not already present
-   bool found = false;
-   for (const json::Value& val : untrustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() == directoryPath)
-      {
-         found = true;
-         break;
-      }
-   }
-   if (!found)
+   if (!isInDirectoryList(directoryPath, untrustedDirs))
       untrustedDirs.push_back(directoryPath);
 
    return writeTrustFile(trustedDirs, untrustedDirs);
@@ -296,26 +292,20 @@ Error resetTrust(const FilePath& directory)
 {
    std::string directoryPath = directory.getCanonicalPath();
 
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
       LOG_ERROR(error);
 
-   json::Array filteredTrusted;
-   for (const json::Value& val : trustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() != directoryPath)
-         filteredTrusted.push_back(val);
-   }
+   trustedDirs.erase(
+      std::remove(trustedDirs.begin(), trustedDirs.end(), directoryPath),
+      trustedDirs.end());
 
-   json::Array filteredUntrusted;
-   for (const json::Value& val : untrustedDirs)
-   {
-      if (json::isType<std::string>(val) && val.getString() != directoryPath)
-         filteredUntrusted.push_back(val);
-   }
+   untrustedDirs.erase(
+      std::remove(untrustedDirs.begin(), untrustedDirs.end(), directoryPath),
+      untrustedDirs.end());
 
-   return writeTrustFile(filteredTrusted, filteredUntrusted);
+   return writeTrustFile(trustedDirs, untrustedDirs);
 }
 
 namespace {
@@ -385,7 +375,7 @@ SEXP rs_trustStatus(SEXP directorySEXP)
    std::string directory = r::sexp::asString(directorySEXP);
    FilePath dir(directory);
 
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
    {
@@ -440,7 +430,7 @@ void initializeTrustState()
    }
 
    // Read trust.json and check
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
    {
@@ -474,7 +464,7 @@ std::string projectTrustStatus()
 {
    FilePath projectDir = projects::projectContext().directory();
 
-   json::Array trustedDirs, untrustedDirs;
+   std::vector<std::string> trustedDirs, untrustedDirs;
    Error error = readTrustFile(&trustedDirs, &untrustedDirs);
    if (error)
    {
