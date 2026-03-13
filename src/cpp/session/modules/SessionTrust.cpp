@@ -459,7 +459,7 @@ bool shouldSuppressWorkspaceRestore()
           s_trustStatus == TrustStatus::Unknown;
 }
 
-std::string explicitTrustSetting()
+std::string projectTrustStatus()
 {
    FilePath projectDir = projects::projectContext().directory();
 

@@ -623,7 +623,7 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["assistant_options"] = projectAssistantOptionsJson();
    json::Object localPrefs = prefs::readLocalProjectPrefs();
    optionsJson["local_prefs"] = localPrefs;
-   optionsJson["trust_status"] = modules::trust::explicitTrustSetting();
+   optionsJson["trust_status"] = modules::trust::projectTrustStatus();
 
    pResponse->setResult(optionsJson);
    return Success();
