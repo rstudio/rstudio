@@ -91,6 +91,48 @@ test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotPa
    expect_null(.rs.parseInheritDotParamsFromRd(mean_rd))
 })
 
+test_that("parseInheritDotParamsFromRd returns empty argNames for empty \\describe block", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to \\code{target}\\describe{}}}"
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_length(result$argNames, 0L)
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL when sentinel has no \\code node", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   # Sentinel text present but no \\code node following it
+   rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to something\\describe{\\item{\\code{x}}{desc}}}}"
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL when \\arguments section is missing", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   rd_text <- "\\name{f}\\title{A function}\\description{Does something.}"
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDotParams exist", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   # Two @inheritDotParams blocks: first targets 'target1' with arg 'alpha',
+   # second targets 'target2' with arg 'beta'. Only the first block is used.
+   rd_text <- paste0(
+      "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
+      "\\arguments{",
+      "\\item{...}{Arguments passed on to \\code{target1}\\describe{\\item{\\code{alpha}}{desc}}}",
+      "\\item{...}{Arguments passed on to \\code{target2}\\describe{\\item{\\code{beta}}{desc}}}",
+      "}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_false(is.null(result))
+   expect_equal(result$targetName, "target1")
+   expect_in("alpha", result$argNames)
+   expect_false("beta" %in% result$argNames)
+})
+
 
 # ---------------------------------------------------------------------------
 # .rs.parseInheritDotParamsFromHelp  (help-db lookup layer)
@@ -113,6 +155,18 @@ test_that("getCompletionsInheritDotParams returns empty when fn has no ...", {
       object      = function(x, y) NULL,
       matchedCall = make_matched_call(),
       ownFormals  = c("x", "y")
+   )
+   expect_length(result$results, 0L)
+})
+
+test_that("getCompletionsInheritDotParams returns empty for malformed string with multiple ::", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   result <- .rs.getCompletionsInheritDotParams(
+      token       = "",
+      string      = "a::b::c",
+      object      = make_wrapper_fn(c("x", "...")),
+      ownFormals  = c("x = ", "... = "),
+      matchedCall = make_matched_call()
    )
    expect_length(result$results, 0L)
 })
@@ -160,7 +214,7 @@ test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixt
          ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
-      expect_gt(length(result$results), 0L)
+      expect_length(result$results, 4L)
       expect_all_equal(result$type, .rs.acCompletionTypes$ARGUMENT)
    })
 })
@@ -231,6 +285,58 @@ test_that("getCompletionsInheritDotParams filters by token prefix", {
       expect_disjoint("gamma", returned_names)
    })
 })
+
+test_that("getCompletionsInheritDotParams returns empty for function defined in global env", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   # A locally-defined function lives in R_GlobalEnv, not a package namespace.
+   # The early exit should fire and return empty completions.
+   local_fn <- local(function(x, ...) x, envir = globalenv())
+   result <- .rs.getCompletionsInheritDotParams(
+      token       = "",
+      string      = "local_fn",   # no :: prefix, so package resolved from env
+      object      = local_fn,
+      ownFormals  = c("x = ", "... = "),
+      matchedCall = make_matched_call()
+   )
+   expect_length(result$results, 0L)
+})
+
+test_that("getCompletionsInheritDotParams handles triple-colon pkg:::fn syntax", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   with_fixture_completions({
+      result <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg:::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      expect_gt(length(result$results), 0L)
+   })
+})
+
+test_that("getCompletionsInheritDotParams returns cached result on second call", {
+   skip_if(!new_functions_loaded, "Source SessionRCompletions.R first")
+   with_fixture_completions({
+      # Call twice with the same pkg::fn -- second call hits the cache.
+      result1 <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      result2 <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      expect_equal(result1$results, result2$results)
+   })
+})
+
 
 # ---------------------------------------------------------------------------
 # .rs.getCompletionsFunction  (end-to-end, requires ggplot2)
