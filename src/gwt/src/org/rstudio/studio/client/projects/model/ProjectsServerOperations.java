@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -51,20 +51,20 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                         String packageDirectory,
                         JsArrayString sourceFiles,
                         boolean usingRcpp,
-                        ServerRequestCallback<RResult<Void>> callback);
+                        ServerRequestCallback<RResult<VoidResponse>> callback);
    
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);
    
    void writeProjectOptions(RProjectOptions options,
-                            ServerRequestCallback<Void> callback);
+                            ServerRequestCallback<VoidResponse> callback);
    
    void writeProjectConfig(RProjectConfig config,
-                           ServerRequestCallback<Void> callback);
+                           ServerRequestCallback<VoidResponse> callback);
    
    void writeProjectVcsOptions(RProjectVcsOptions options,
-                               ServerRequestCallback<Void> callback);
+                               ServerRequestCallback<VoidResponse> callback);
    
-   void analyzeProject(ServerRequestCallback<Void> callback);
+   void analyzeProject(ServerRequestCallback<VoidResponse> callback);
    
    void getProjectSharedUsers(
          ServerRequestCallback<JsArray<ProjectUserRole>> callback);
@@ -83,15 +83,15 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void setCurrentlyEditing(String path,
          String id,
-         ServerRequestCallback<Void> callback);
+         ServerRequestCallback<VoidResponse> callback);
    
    void reportCollabDisconnected(String path, 
          String id, 
-         ServerRequestCallback<Void> callback);
+         ServerRequestCallback<VoidResponse> callback);
    
    void getProjectUser(String sessionId, 
          ServerRequestCallback<ProjectUser> callback);
    
    void setFollowingUser(String sessionId,
-         ServerRequestCallback<Void> callback);
+         ServerRequestCallback<VoidResponse> callback);
 }

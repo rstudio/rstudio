@@ -16,8 +16,8 @@ package org.rstudio.studio.client.workbench.model;
 
 import java.util.ArrayList;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -30,24 +30,24 @@ public interface WorkbenchListsServerOperations
    
    void listSetContents(String listName,
                         ArrayList<String> list,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    void listPrependItem(String listName,
                         String value,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    void listAppendItem(String listName,
                        String value,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
    
    void listRemoveItem(String listName,
                        String value,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
 
    void listUpdateItemExtraData(String listName,
                                 String itemWithExtraData,
-                                ServerRequestCallback<Void> requestCallback);
+                                ServerRequestCallback<VoidResponse> requestCallback);
  
    void listClear(String listName,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<VoidResponse> requestCallback);
 }

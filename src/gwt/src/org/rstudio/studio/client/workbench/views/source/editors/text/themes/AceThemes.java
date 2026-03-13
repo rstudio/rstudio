@@ -30,7 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
@@ -219,10 +219,10 @@ public class AceThemes
       else
       {
          themeServerOperations_.removeTheme(
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   themes_.remove(themeName);
                   afterOperation.execute();

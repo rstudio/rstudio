@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
@@ -144,7 +144,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
       final FileSystemItem newFolder = FileSystemItem.createDir(newPath);
       server_.createFolder(
             newFolder,
-            new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+            new ServerRequestCallback<org.rstudio.studio.client.server.VoidResponse>()
             {
                @Override
                public void onError(ServerError error)
@@ -153,7 +153,7 @@ public class RemoteFileSystemContext extends PosixFileSystemContext
                }
 
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   if (baseDir == workingDir_)
                   {

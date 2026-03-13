@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -54,35 +54,35 @@ public interface FilesServerOperations
    // create file with contents
    void createFile(FileSystemItem file,
                    String contents,
-                   ServerRequestCallback<Void> requestCallback);
+                   ServerRequestCallback<VoidResponse> requestCallback);
    
    // create a folder
    void createFolder(FileSystemItem folder,
-                     ServerRequestCallback<Void> requestCallback);
+                     ServerRequestCallback<VoidResponse> requestCallback);
 
    // delete files
    void deleteFiles(ArrayList<FileSystemItem> files,
-                    ServerRequestCallback<Void> requestCallback);
+                    ServerRequestCallback<VoidResponse> requestCallback);
 
    // copy file
    void copyFile(FileSystemItem sourceFile,
                  FileSystemItem targetFile,
                  boolean overwrite,
-                 ServerRequestCallback<Void> requestCallback);
+                 ServerRequestCallback<VoidResponse> requestCallback);
 
    // move files
    void moveFiles(ArrayList<FileSystemItem> files,
                   FileSystemItem targetDirectory,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<VoidResponse> requestCallback);
 
    // rename file
    void renameFile(FileSystemItem file,
                    FileSystemItem targetFile,
-                   ServerRequestCallback<Void> serverRequestCallback);
+                   ServerRequestCallback<VoidResponse> serverRequestCallback);
    
    // touch file (create empty file)
    void touchFile(FileSystemItem newFile,
-                  ServerRequestCallback<Void> requestCallback);
+                  ServerRequestCallback<VoidResponse> requestCallback);
 
 
    String getFileUrl(FileSystemItem file);
@@ -91,7 +91,7 @@ public interface FilesServerOperations
 
    void completeUpload(FileUploadToken token,
                        boolean commit,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
 
    String getFileExportUrl(String name,
                            FileSystemItem file);

@@ -35,7 +35,7 @@ import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -321,10 +321,10 @@ public class PublishingPreferencesPane extends PreferencesPane
    private void onConfirmDisconnect(final RSConnectAccount account)
    {
       server_.removeRSConnectAccount(account.getName(),
-            account.getServer(), new ServerRequestCallback<Void>()
+            account.getServer(), new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             accountList_.refreshAccountList();
          }

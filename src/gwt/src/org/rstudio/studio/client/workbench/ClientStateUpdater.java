@@ -21,7 +21,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 import org.rstudio.studio.client.workbench.events.SaveClientStateEvent;
@@ -133,7 +133,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
                state.getTemporaryData(),
                state.getPersistentData(),
                state.getProjectPersistentData(),
-               new ServerRequestCallback<Void>() {
+               new ServerRequestCallback<VoidResponse>() {
                   @Override
                   public void onError(ServerError error)
                   {
@@ -141,7 +141,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
                   }
 
                   @Override
-                  public void onResponseReceived(Void response)
+                  public void onResponseReceived(VoidResponse response)
                   {
                      onComplete(shouldSchedulePassive);
                   }

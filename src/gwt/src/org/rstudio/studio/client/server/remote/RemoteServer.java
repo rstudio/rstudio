@@ -150,7 +150,7 @@ import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
@@ -437,7 +437,7 @@ public class RemoteServer implements Server
 
    public void log(int logEntryType,
                    String logEntry,
-                   ServerRequestCallback<Void> requestCallback)
+                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(logEntryType));
@@ -446,7 +446,7 @@ public class RemoteServer implements Server
    }
 
    public void logException(ClientException e,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
@@ -539,7 +539,7 @@ public class RemoteServer implements Server
    }-*/;
 
    public void suspendSession(boolean force,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, SUSPEND_SESSION, force, requestCallback);
    }
@@ -547,7 +547,7 @@ public class RemoteServer implements Server
 
    public void handleUnsavedChangesCompleted(
                             boolean handled,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   HANDLE_UNSAVED_CHANGES_COMPLETED,
@@ -588,12 +588,12 @@ public class RemoteServer implements Server
    }
 
    public void suspendForRestart(SuspendOptions options,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, SUSPEND_FOR_RESTART, options, requestCallback);
    }
 
-   public void ping(ServerRequestCallback<Void> requestCallback)
+   public void ping(ServerRequestCallback<VoidResponse> requestCallback)
    {
       if (launchParameters_ == null)
       {
@@ -612,7 +612,7 @@ public class RemoteServer implements Server
 
 
    public void setWorkbenchMetrics(WorkbenchMetrics metrics,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequestNoCredRefresh(RPC_SCOPE,
                                SET_WORKBENCH_METRICS,
@@ -622,7 +622,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setUserPrefs(JavaScriptObject userPrefs,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   SET_USER_PREFS,
@@ -632,7 +632,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setUserState(JavaScriptObject userState,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   SET_USER_STATE,
@@ -641,7 +641,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void editPreferences(ServerRequestCallback<Void> requestCallback)
+   public void editPreferences(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   "edit_user_prefs",
@@ -649,7 +649,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void viewPreferences(ServerRequestCallback<Void> requestCallback)
+   public void viewPreferences(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   "view_all_prefs",
@@ -667,7 +667,7 @@ public class RemoteServer implements Server
    public void updateClientState(JavaScriptObject temporary,
                                  JavaScriptObject persistent,
                                  JavaScriptObject projectPersistent,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(temporary));
@@ -680,34 +680,34 @@ public class RemoteServer implements Server
    }
 
    public void userPromptCompleted(int response,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, USER_PROMPT_COMPLETED, response, requestCallback);
    }
 
-   public void adminNotificationAcknowledged(String id, ServerRequestCallback<Void> requestCallback)
+   public void adminNotificationAcknowledged(String id, ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, ADMIN_NOTIFICATION_ACKNOWLEDGED, id, requestCallback);
    }
 
-   public void grantTrust(String directory, ServerRequestCallback<Void> requestCallback)
+   public void grantTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, GRANT_TRUST, directory, requestCallback);
    }
 
-   public void revokeTrust(String directory, ServerRequestCallback<Void> requestCallback)
+   public void revokeTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, REVOKE_TRUST, directory, requestCallback);
    }
 
-   public void resetTrust(String directory, ServerRequestCallback<Void> requestCallback)
+   public void resetTrust(String directory, ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, RESET_TRUST, directory, requestCallback);
    }
 
    @Override
    public void rstudioApiResponse(JavaScriptObject response,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
    }
@@ -764,7 +764,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDocFocused(String documentId,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
@@ -775,7 +775,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDidShowCompletion(AssistantCompletion completion,
-                                          ServerRequestCallback<Void> requestCallback)
+                                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completion)
@@ -826,7 +826,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantDidAcceptCompletion(AssistantCompletionCommand completionCommand,
-                                            ServerRequestCallback<Void> requestCallback)
+                                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completionCommand)
@@ -838,7 +838,7 @@ public class RemoteServer implements Server
    @Override
    public void assistantDidAcceptPartialCompletion(AssistantCompletion completion,
                                                    int acceptedLength,
-                                                   ServerRequestCallback<Void> requestCallback)
+                                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(completion)
@@ -874,7 +874,7 @@ public class RemoteServer implements Server
 
    @Override
    public void adaptToLanguage(String language,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(language));
@@ -883,7 +883,7 @@ public class RemoteServer implements Server
 
    @Override
    public void executeCode(String code,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0,  new JSONString(code));
@@ -964,7 +964,7 @@ public class RemoteServer implements Server
    public void consoleInput(String consoleInput,
                             String consoleId,
                             int flags,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(consoleInput)
@@ -975,27 +975,27 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
-   public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
+   public void resetConsoleActions(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
    }
 
    public void processStart(String handle,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PROCESS_START, handle, requestCallback);
    }
 
    @Override
    public void processInterrupt(String handle,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PROCESS_INTERRUPT, handle, requestCallback);
    }
 
    @Override
    public void processReap(String handle,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PROCESS_REAP, handle, requestCallback);
    }
@@ -1003,7 +1003,7 @@ public class RemoteServer implements Server
    @Override
    public void processWriteStdin(String handle,
                                  ShellInput input,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
@@ -1015,7 +1015,7 @@ public class RemoteServer implements Server
    public void processSetShellSize(String handle,
                                    int width,
                                    int height,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
@@ -1038,7 +1038,7 @@ public class RemoteServer implements Server
    @Override
    public void processSetTitle(String handle,
                                String title,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handle));
@@ -1049,7 +1049,7 @@ public class RemoteServer implements Server
    @Override
    public void processEraseBuffer(String handle,
                                   boolean lastLineOnly,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
@@ -1081,7 +1081,7 @@ public class RemoteServer implements Server
 
    @Override
    public void processUseRpc(String handle,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
@@ -1090,7 +1090,7 @@ public class RemoteServer implements Server
 
    @Override
    public void processInterruptChild(String handle,
-                                     ServerRequestCallback<Void> requestCallback)
+                                     ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
@@ -1108,7 +1108,7 @@ public class RemoteServer implements Server
 
    @Override
    public void processNotifyVisible(String handle,
-                                    ServerRequestCallback<Void> requestCallback)
+                                    ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
@@ -1121,7 +1121,7 @@ public class RemoteServer implements Server
    }
 
    public void abort(String nextProj,
-                     ServerRequestCallback<Void> requestCallback)
+                     ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(nextProj)));
@@ -1145,7 +1145,7 @@ public class RemoteServer implements Server
                   String docPath,
                   int line,
                   int column,
-                  ServerRequestCallback<Void> requestCallback)
+                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docPath));
@@ -1186,7 +1186,7 @@ public class RemoteServer implements Server
                                    boolean docDirty,
                                    int line,
                                    int column,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
@@ -1238,7 +1238,7 @@ public class RemoteServer implements Server
    }
 
    public void executeUserCommand(String functionName,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
 
@@ -1251,7 +1251,7 @@ public class RemoteServer implements Server
    }
 
    public void saveSnippets(JsArray<SnippetData> snippets,
-                            ServerRequestCallback<Void> callback)
+                            ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, "save_snippets", snippets, callback);
    }
@@ -1407,7 +1407,7 @@ public class RemoteServer implements Server
    }
 
    public void getHelpAtCursor(String line, int cursorPos,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(line));
@@ -1419,7 +1419,7 @@ public class RemoteServer implements Server
    }
 
    public void removeAllObjects(boolean includeHidden,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   REMOVE_ALL_OBJECTS,
@@ -1429,7 +1429,7 @@ public class RemoteServer implements Server
 
    @Override
    public void removeObjects(List<String> objectNames,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONUtils.toJSONStringArray(objectNames));
@@ -1492,19 +1492,19 @@ public class RemoteServer implements Server
    }
 
    public void editCompleted(String text,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, EDIT_COMPLETED, text, requestCallback);
    }
 
    public void chooseFileCompleted(String file,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CHOOSE_FILE_COMPLETED, file, requestCallback);
    }
 
    public void openFileDialogCompleted(String selectedPath,
-                                       ServerRequestCallback<Void> requestCallback)
+                                       ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(selectedPath)
@@ -1573,7 +1573,7 @@ public class RemoteServer implements Server
    }
 
    public void initDefaultUserLibrary(
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, INIT_DEFAULT_USER_LIBRARY, requestCallback);
    }
@@ -1591,7 +1591,7 @@ public class RemoteServer implements Server
    }
 
    public void ignoreNextLoadedPackageCheck(
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, IGNORE_NEXT_LOADED_PACKAGE_CHECK, requestCallback);
    }
@@ -1639,7 +1639,7 @@ public class RemoteServer implements Server
    }
 
    public void setCRANMirror(CRANMirror mirror,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, SET_CRAN_MIRROR, mirror, requestCallback);
    }
@@ -1865,7 +1865,7 @@ public class RemoteServer implements Server
 
    public void createFile(FileSystemItem file,
                           String contents,
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(file.getPath())
@@ -1876,7 +1876,7 @@ public class RemoteServer implements Server
    }
    
    public void createFolder(FileSystemItem folder,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   CREATE_FOLDER,
@@ -1885,7 +1885,7 @@ public class RemoteServer implements Server
    }
 
    public void deleteFiles(ArrayList<FileSystemItem> files,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       JSONArray pathArray = new JSONArray();
@@ -1899,7 +1899,7 @@ public class RemoteServer implements Server
    public void copyFile(FileSystemItem sourceFile,
                         FileSystemItem targetFile,
                         boolean overwrite,
-                        ServerRequestCallback<Void> requestCallback)
+                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(sourceFile.getPath()));
@@ -1912,7 +1912,7 @@ public class RemoteServer implements Server
 
    public void moveFiles(ArrayList<FileSystemItem> files,
                          FileSystemItem targetDirectory,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
 
@@ -1928,7 +1928,7 @@ public class RemoteServer implements Server
 
    public void renameFile(FileSystemItem file,
                           FileSystemItem targetFile,
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(file.getPath()));
@@ -1938,7 +1938,7 @@ public class RemoteServer implements Server
    }
  
    public void touchFile(FileSystemItem newFile, 
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONString(newFile.getPath()));
@@ -2003,7 +2003,7 @@ public class RemoteServer implements Server
 
    public void completeUpload(FileUploadToken token,
                               boolean commit,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray paramArray = new JSONArray();
       paramArray.set(0, new JSONObject(token));
@@ -2106,27 +2106,27 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_PLOT_TEMPDIR, requestCallback);
    }
 
-   public void nextPlot(ServerRequestCallback<Void> requestCallback)
+   public void nextPlot(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, NEXT_PLOT, requestCallback);
    }
 
-   public void previousPlot(ServerRequestCallback<Void> requestCallback)
+   public void previousPlot(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PREVIOUS_PLOT, requestCallback);
    }
 
-   public void removePlot(ServerRequestCallback<Void> requestCallback)
+   public void removePlot(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, REMOVE_PLOT, requestCallback);
    }
 
-   public void clearPlots(ServerRequestCallback<Void> requestCallback)
+   public void clearPlots(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLEAR_PLOTS, requestCallback);
    }
 
-   public void refreshPlot(ServerRequestCallback<Void> requestCallback)
+   public void refreshPlot(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, REFRESH_PLOT, requestCallback);
    }
@@ -2168,7 +2168,7 @@ public class RemoteServer implements Server
    public void copyPlotToClipboardMetafile(
                               int width,
                               int height,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(width));
@@ -2183,7 +2183,7 @@ public class RemoteServer implements Server
    public void copyPlotToCocoaPasteboard(
                                  int width,
                                  int height,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(width));
@@ -2211,13 +2211,13 @@ public class RemoteServer implements Server
    }
 
    public void locatorCompleted(Point point,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, LOCATOR_COMPLETED, point, requestCallback);
    }
 
    public void setManipulatorValues(JSONObject values,
-                                    ServerRequestCallback<Void> requestCallback)
+                                    ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, values);
@@ -2227,7 +2227,7 @@ public class RemoteServer implements Server
    public void manipulatorPlotClicked(
                                  int x,
                                  int y,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(x));
@@ -2277,14 +2277,14 @@ public class RemoteServer implements Server
    }
 
    public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
-                                         ServerRequestCallback<Void> requestCallback)
+                                         ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, GET_EDITOR_CONTEXT_COMPLETED, data, requestCallback);
    }
 
    public void setSourceDocumentDirty(String docId,
          boolean dirty,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
@@ -2329,7 +2329,7 @@ public class RemoteServer implements Server
    @Override
    public void setSessionLabel(
              String hostPageUrl,
-             ServerRequestCallback<Void> callback)
+             ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, SET_SESSION_LABEL, hostPageUrl, callback);
    }
@@ -2337,7 +2337,7 @@ public class RemoteServer implements Server
    @Override
    public void deleteSessionDir(
              String sessionId,
-             ServerRequestCallback<Void> callback)
+             ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, DELETE_SESSION_DIR, sessionId, callback);
    }
@@ -2415,7 +2415,7 @@ public class RemoteServer implements Server
 
    public void executeProjectTemplate(String pkgName,
                                       String pkgBinding,
-                                      ServerRequestCallback<Void> requestCallback)
+                                      ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(pkgName));
@@ -2427,7 +2427,7 @@ public class RemoteServer implements Server
                                String packageDirectory,
                                JsArrayString sourceFiles,
                                boolean usingRcpp,
-                               ServerRequestCallback<RResult<Void>> requestCallback)
+                               ServerRequestCallback<RResult<VoidResponse>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
@@ -2444,19 +2444,19 @@ public class RemoteServer implements Server
    }
 
    public void writeProjectOptions(RProjectOptions options,
-                                   ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
 
-   public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<Void> callback)
+   public void writeProjectConfig(RProjectConfig config, ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_CONFIG, config, callback);
    }
 
 
    public void writeProjectVcsOptions(RProjectVcsOptions options,
-                                      ServerRequestCallback<Void> callback)
+                                      ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_VCS_OPTIONS, options, callback);
    }
@@ -2587,18 +2587,18 @@ public class RemoteServer implements Server
    }
 
    public void ignoreExternalEdit(String id,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, IGNORE_EXTERNAL_EDIT, id, requestCallback);
    }
 
    public void closeDocument(String id,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLOSE_DOCUMENT, id, requestCallback);
    }
 
-   public void closeAllDocuments(ServerRequestCallback<Void> requestCallback)
+   public void closeAllDocuments(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLOSE_ALL_DOCUMENTS, requestCallback);
    }
@@ -2652,7 +2652,7 @@ public class RemoteServer implements Server
    }
 
    public void explorerEndInspect(String handleId,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(handleId));
@@ -2672,7 +2672,7 @@ public class RemoteServer implements Server
 
    public void setSourceDocumentOnSave(String id,
                                        boolean shouldSourceOnSave,
-                                       ServerRequestCallback<Void> requestCallback)
+                                       ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
@@ -2684,7 +2684,7 @@ public class RemoteServer implements Server
    }
 
    public void setDocOrder(List<String> ids,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
 
@@ -2721,7 +2721,7 @@ public class RemoteServer implements Server
    public void saveActiveDocument(String contents,
                                   boolean sweave,
                                   String rnwWeave,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
       JSONArray params = new JSONArray();
@@ -2736,7 +2736,7 @@ public class RemoteServer implements Server
    }
 
    public void requestDocumentSaveCompleted(boolean isSuccessfulSave,
-                                            ServerRequestCallback<Void> requestCallback)
+                                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(isSuccessfulSave));
@@ -2747,7 +2747,7 @@ public class RemoteServer implements Server
    }
 
    public void requestDocumentCloseCompleted(boolean isSuccessfulClose,
-                                            ServerRequestCallback<Void> requestCallback)
+                                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(isSuccessfulClose));
@@ -2760,7 +2760,7 @@ public class RemoteServer implements Server
    public void modifyDocumentProperties(
          String id,
          HashMap<String, String> properties,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       eventBus_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.FILE_SAVE));
 
@@ -2810,13 +2810,13 @@ public class RemoteServer implements Server
    }
 
    public void removeContentUrl(String contentUrl,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, REMOVE_CONTENT_URL, contentUrl, requestCallback);
    }
 
    public void removeCachedData(String cacheKey,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, REMOVE_CACHED_DATA, cacheKey, requestCallback);
    }
@@ -2925,7 +2925,7 @@ public class RemoteServer implements Server
    }
 
    public void removeHistoryItems(JsArrayNumber itemIndexes,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   REMOVE_HISTORY_ITEMS,
@@ -2934,7 +2934,7 @@ public class RemoteServer implements Server
    }
 
 
-   public void clearHistory(ServerRequestCallback<Void> requestCallback)
+   public void clearHistory(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLEAR_HISTORY, requestCallback);
    }
@@ -2987,7 +2987,7 @@ public class RemoteServer implements Server
    }
 
    public void gitAdd(ArrayList<String> paths,
-                      ServerRequestCallback<Void> requestCallback)
+                      ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -2997,7 +2997,7 @@ public class RemoteServer implements Server
    }
 
    public void gitRemove(ArrayList<String> paths,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -3007,7 +3007,7 @@ public class RemoteServer implements Server
    }
 
    public void gitDiscard(ArrayList<String> paths,
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -3017,7 +3017,7 @@ public class RemoteServer implements Server
    }
 
    public void gitRevert(ArrayList<String> paths,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -3027,7 +3027,7 @@ public class RemoteServer implements Server
    }
 
    public void gitStage(ArrayList<String> paths,
-                        ServerRequestCallback<Void> requestCallback)
+                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -3037,7 +3037,7 @@ public class RemoteServer implements Server
    }
 
    public void gitUnstage(ArrayList<String> paths,
-                          ServerRequestCallback<Void> requestCallback)
+                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
@@ -3196,7 +3196,7 @@ public class RemoteServer implements Server
 
    @Override
    public void askpassCompleted(String value, boolean remember,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, value == null ? JSONNull.getInstance()
@@ -3232,7 +3232,7 @@ public class RemoteServer implements Server
 
    @Override
    public void gitInitRepo(String directory,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_INIT_REPO, directory, requestCallback);
    }
@@ -3287,7 +3287,7 @@ public class RemoteServer implements Server
    public void gitApplyPatch(String patch,
                              PatchMode mode,
                              String sourceEncoding,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(patch));
@@ -3354,7 +3354,7 @@ public class RemoteServer implements Server
    public void gitExportFile(String rev,
                              String filename,
                              String targetPath,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(rev));
@@ -3380,7 +3380,7 @@ public class RemoteServer implements Server
    @Override
    public void listSetContents(String listName,
                                ArrayList<String> list,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(listName));
@@ -3392,7 +3392,7 @@ public class RemoteServer implements Server
    @Override
    public void listPrependItem(String listName,
                                String value,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   LIST_PREPEND_ITEM,
@@ -3404,7 +3404,7 @@ public class RemoteServer implements Server
    @Override
    public void listAppendItem(String listName,
                               String value,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   LIST_APPEND_ITEM,
@@ -3416,7 +3416,7 @@ public class RemoteServer implements Server
    @Override
    public void listRemoveItem(String listName,
                               String value,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   LIST_REMOVE_ITEM,
@@ -3428,7 +3428,7 @@ public class RemoteServer implements Server
    @Override
    public void listUpdateItemExtraData(String listName,
                                        String itemWithExtraData,
-                                       ServerRequestCallback<Void> requestCallback)
+                                       ServerRequestCallback<VoidResponse> requestCallback)
    {
        sendRequest(RPC_SCOPE,
                   LIST_UPDATE_EXTRA_TEXT,
@@ -3439,7 +3439,7 @@ public class RemoteServer implements Server
 
    @Override
    public void listClear(String listName,
-                         ServerRequestCallback<Void> requestCallback)
+                         ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, LIST_CLEAR, listName, requestCallback);
    }
@@ -4424,7 +4424,7 @@ public class RemoteServer implements Server
    public void svnApplyPatch(String path,
                              String patch,
                              String sourceEncoding,
-                             ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -4508,37 +4508,37 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void viewerStopped(ServerRequestCallback<Void> requestCallback)
+   public void viewerStopped(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_stopped", requestCallback);
    }
 
    @Override
-   public void viewerBack(ServerRequestCallback<Void> requestCallback)
+   public void viewerBack(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_back", requestCallback);
    }
 
    @Override
-   public void viewerForward(ServerRequestCallback<Void> requestCallback)
+   public void viewerForward(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_forward", requestCallback);
    }
 
    @Override
-   public void viewerCurrent(ServerRequestCallback<Void> requestCallback)
+   public void viewerCurrent(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_current", requestCallback);
    }
 
    @Override
-   public void viewerClearCurrent(ServerRequestCallback<Void> requestCallback)
+   public void viewerClearCurrent(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_clear_current", requestCallback);
    }
 
    @Override
-   public void viewerClearAll(ServerRequestCallback<Void> requestCallback)
+   public void viewerClearAll(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "viewer_clear_all", requestCallback);
    }
@@ -4556,7 +4556,7 @@ public class RemoteServer implements Server
 
    @Override
    public void viewerSaveAsWebPage(String targetPath,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             "viewer_save_as_web_page",
@@ -4600,7 +4600,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PREVIEW_HTML, params, callback);
    }
 
-   public void terminatePreviewHTML(ServerRequestCallback<Void> callback)
+   public void terminatePreviewHTML(ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, TERMINATE_PREVIEW_HTML, callback);
    }
@@ -4636,7 +4636,7 @@ public class RemoteServer implements Server
    }
 
    public void rpubsTerminateUpload(String contextId,
-                                    ServerRequestCallback<Void> requestCallback)
+                                    ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   RPUBS_TERMINATE_UPLOAD,
@@ -4647,14 +4647,14 @@ public class RemoteServer implements Server
    @Override
    public void setPresentationSlideIndex(
                                  int index,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, SET_PRESENTATION_SLIDE_INDEX, index, requestCallback);
    }
 
    @Override
    public void setWorkingDirectory(String path,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   SET_WORKING_DIRECTORY,
@@ -4665,7 +4665,7 @@ public class RemoteServer implements Server
    @Override
    public void createStandalonePresentation(
                               String targetFile,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   CREATE_STANDALONE_PRESENTATION,
@@ -4695,7 +4695,7 @@ public class RemoteServer implements Server
    @Override
    public void presentationExecuteCode(
                                  String code,
-                                 ServerRequestCallback<Void> requestCallback)
+                                 ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PRESENTATION_EXECUTE_CODE, code, requestCallback);
    }
@@ -4703,20 +4703,20 @@ public class RemoteServer implements Server
    @Override
    public void createNewPresentation(
                         String filePath,
-                        ServerRequestCallback<Void> requestCallback)
+                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CREATE_NEW_PRESENTATION, filePath, requestCallback);
    }
 
    @Override
    public void showPresentationPane(String filePath,
-                                    ServerRequestCallback<Void> requestCallback)
+                                    ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, SHOW_PRESENTATION_PANE, filePath, requestCallback);
    }
 
    @Override
-   public void closePresentationPane(ServerRequestCallback<Void> requestCallback)
+   public void closePresentationPane(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLOSE_PRESENTATION_PANE, requestCallback);
    }
@@ -4724,7 +4724,7 @@ public class RemoteServer implements Server
    @Override
    public void tutorialQuizResponse(
                            int slideIndex, int answer, boolean correct,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(slideIndex));
@@ -4737,7 +4737,7 @@ public class RemoteServer implements Server
    public void tutorialStarted(String tutorialName,
                                String tutorialPackage,
                                String tutorialUrl,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(tutorialName)
@@ -4750,7 +4750,7 @@ public class RemoteServer implements Server
 
    @Override
    public void tutorialStop(String tutorialUrl,
-                            ServerRequestCallback<Void> requestCallback)
+                            ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(tutorialUrl)
@@ -4799,7 +4799,7 @@ public class RemoteServer implements Server
 
    @Override
    public void clearPresentationCache(
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLEAR_PRESENTATION_CACHE, requestCallback);
    }
@@ -4830,7 +4830,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TERMINATE_COMPILE_PDF, requestCallback);
    }
 
-   public void compilePdfClosed(ServerRequestCallback<Void> requestCallback)
+   public void compilePdfClosed(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, COMPILE_PDF_CLOSED, requestCallback);
    }
@@ -4951,13 +4951,13 @@ public class RemoteServer implements Server
 
    @Override
    public void stopFind(String findOperationHandle,
-                        ServerRequestCallback<Void> requestCallback)
+                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, STOP_FIND, findOperationHandle, requestCallback);
    }
 
    @Override
-   public void clearFindResults(ServerRequestCallback<Void> requestCallback)
+   public void clearFindResults(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "clear_find_results", requestCallback);
    }
@@ -5028,7 +5028,7 @@ public class RemoteServer implements Server
 
    @Override
    public void stopReplace(String findOperationHandle,
-                           ServerRequestCallback<Void> requestCallback)
+                           ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, STOP_REPLACE, findOperationHandle, requestCallback);
    }
@@ -5087,7 +5087,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setContextDepth(int newContextDepth,
-                               ServerRequestCallback<Void> requestCallback)
+                               ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   SET_CONTEXT_DEPTH,
@@ -5097,7 +5097,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setEnvironment(String environmentName,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
 
       JSONArray params = new JSONArray();
@@ -5110,7 +5110,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setEnvironmentFrame(int frame,
-                                   ServerRequestCallback<Void> requestCallback)
+                                   ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(frame));
@@ -5153,7 +5153,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void requeryContext(ServerRequestCallback<Void> requestCallback)
+   public void requeryContext(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   REQUERY_CONTEXT,
@@ -5175,7 +5175,7 @@ public class RemoteServer implements Server
 
    @Override
    public void environmentSetLanguage(String language,
-                                      ServerRequestCallback<Void> requestCallback)
+                                      ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(language)
@@ -5189,7 +5189,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setEnvironmentMonitoring(boolean monitoring,
-                                        ServerRequestCallback<Void> requestCallback)
+                                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(monitoring));
@@ -5250,7 +5250,7 @@ public class RemoteServer implements Server
          String fileName,
          String packageName,
          ArrayList<String> steps,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray breakSteps = new JSONArray();
       for (int idx = 0; idx < steps.size(); idx++)
@@ -5308,7 +5308,7 @@ public class RemoteServer implements Server
 
    public void setErrorManagementType(
          String type,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(type));
@@ -5321,7 +5321,7 @@ public class RemoteServer implements Server
 
    @Override
    public void updateBreakpoints(ArrayList<Breakpoint> breakpoints,
-         boolean set, boolean arm, ServerRequestCallback<Void> requestCallback)
+         boolean set, boolean arm, ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray bps = new JSONArray();
       for (int i = 0; i < breakpoints.size(); i++)
@@ -5340,7 +5340,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void removeAllBreakpoints(ServerRequestCallback<Void> requestCallback)
+   public void removeAllBreakpoints(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             REMOVE_ALL_BREAKPOINTS,
@@ -5392,13 +5392,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void prepareForAddin(ServerRequestCallback<Void> requestCallback)
+   public void prepareForAddin(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, PREPARE_FOR_ADDIN, requestCallback);
    }
 
    @Override
-   public void executeRAddinNonInteractively(String commandId, ServerRequestCallback<Void> requestCallback)
+   public void executeRAddinNonInteractively(String commandId, ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(commandId));
@@ -5415,7 +5415,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setShinyViewerType(String viewerType,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(viewerType));
@@ -5483,7 +5483,7 @@ public class RemoteServer implements Server
 
    @Override
    public void removeRSConnectAccount(String accountName, String server,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
@@ -5496,7 +5496,7 @@ public class RemoteServer implements Server
 
    @Override
    public void connectRSConnectAccount(String command,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(command));
@@ -5554,7 +5554,7 @@ public class RemoteServer implements Server
    @Override
    public void forgetRSConnectDeployments(String sourceFile,
                                           String outputFile,
-                                          ServerRequestCallback<Void> requestCallback)
+                                          ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(sourceFile)
@@ -5645,7 +5645,7 @@ public class RemoteServer implements Server
    @Override
    public void registerUserToken(String serverName, String accountName, int userId,
                 RSConnectPreAuthToken token,
-                ServerRequestCallback<Void> requestCallback)
+                ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(serverName));
@@ -5798,7 +5798,7 @@ public class RemoteServer implements Server
 
    @Override
    public void terminateRenderRmd(boolean normal,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONBoolean.getInstance(normal));
@@ -5971,7 +5971,7 @@ public class RemoteServer implements Server
 
    @Override
    public void cleanReplayNotebookChunkPlots(String docId, String chunkId,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
@@ -5999,7 +5999,7 @@ public class RemoteServer implements Server
    }
 
    public void executeNotebookChunks(NotebookDocQueue queue,
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(queue));
@@ -6008,7 +6008,7 @@ public class RemoteServer implements Server
    }
 
    public void updateNotebookExecQueue(NotebookQueueUnit unit, int op,
-         String beforeChunkId, ServerRequestCallback<Void> requestCallback)
+         String beforeChunkId, ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(unit));
@@ -6021,7 +6021,7 @@ public class RemoteServer implements Server
    @Override
    public void interruptChunk(String docId,
                               String chunkId,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
@@ -6134,7 +6134,7 @@ public class RemoteServer implements Server
    @Override
    public void packratBootstrap(String dir,
                                 boolean enter,
-                                ServerRequestCallback<Void> requestCallback)
+                                ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
@@ -6162,7 +6162,7 @@ public class RemoteServer implements Server
 
    @Override
    public void renvInit(String projDir,
-                        ServerRequestCallback<Void> requestCallback)
+                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(projDir)
@@ -6183,20 +6183,20 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
+   public void markersTabClosed(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
    }
 
    @Override
    public void updateActiveMarkerSet(String set,
-                                     ServerRequestCallback<Void> callback)
+                                     ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, "update_active_marker_set", set, callback);
    }
 
    @Override
-   public void clearActiveMarkerSet(ServerRequestCallback<Void> requestCallback)
+   public void clearActiveMarkerSet(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "clear_active_marker_set", requestCallback);
    }
@@ -6219,7 +6219,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void analyzeProject(ServerRequestCallback<Void> requestCallback)
+   public void analyzeProject(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, ANALYZE_PROJECT, requestCallback);
    }
@@ -6316,7 +6316,7 @@ public class RemoteServer implements Server
    @Override
    public void setCurrentlyEditing(String path,
          String id,
-         ServerRequestCallback<Void> callback)
+         ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -6326,7 +6326,7 @@ public class RemoteServer implements Server
 
    @Override
    public void reportCollabDisconnected(String path, String id,
-         ServerRequestCallback<Void> callback)
+         ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -6345,7 +6345,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setFollowingUser(String sessionId,
-         ServerRequestCallback<Void> callback)
+         ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(sessionId));
@@ -6407,7 +6407,7 @@ public class RemoteServer implements Server
 
    @Override
    public void previewDataImportClean(DataImportOptions dataImportOptions,
-                                      ServerRequestCallback<Void> requestCallback)
+                                      ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(dataImportOptions));
@@ -6415,7 +6415,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void previewDataImportAsyncAbort(ServerRequestCallback<Void> requestCallback)
+   public void previewDataImportAsyncAbort(ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       sendRequest(RPC_SCOPE, PREVIEW_DATA_IMPORT_ASYNC_ABORT, params, requestCallback);
@@ -6461,7 +6461,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CPP_PROJECT_STYLE, params, requestCallback);
    }
 
-   public void cppSourceFile(String path, ServerRequestCallback<Void> requestCallback) 
+   public void cppSourceFile(String path, ServerRequestCallback<VoidResponse> requestCallback) 
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
@@ -6469,13 +6469,13 @@ public class RemoteServer implements Server
    }
 
    public void removeConnection(ConnectionId id,
-                                ServerRequestCallback<Void> callback)
+                                ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, REMOVE_CONNECTION, id, callback);
    }
 
    public void connectionDisconnect(ConnectionId connectionId,
-                                    ServerRequestCallback<Void> callback)
+                                    ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, CONNECTION_DISCONNECT, connectionId, callback);
    }
@@ -6483,7 +6483,7 @@ public class RemoteServer implements Server
    @Override
    public void connectionExecuteAction(ConnectionId connection,
                             String action,
-                            ServerRequestCallback<Void> callback)
+                            ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connection));
@@ -6518,7 +6518,7 @@ public class RemoteServer implements Server
    @Override
    public void connectionPreviewObject(ConnectionId connectionId,
                                        ConnectionObjectSpecifier object,
-                                       ServerRequestCallback<Void> callback)
+                                       ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connectionId));
@@ -6553,7 +6553,7 @@ public class RemoteServer implements Server
    @Override
    public void launchEmbeddedShinyConnectionUI(String packageName,
                                                String connectionName,
-                                               ServerRequestCallback<RResult<Void>> callback)
+                                               ServerRequestCallback<RResult<VoidResponse>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
@@ -6564,7 +6564,7 @@ public class RemoteServer implements Server
    @Override
    public void showDialogCompleted(String prompt,
                                    boolean ok,
-                                   ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, prompt == null ? JSONNull.getInstance() : new JSONString(prompt));
@@ -6573,7 +6573,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void stopShinyApp(String id, ServerRequestCallback<Void> callback)
+   public void stopShinyApp(String id, ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
@@ -6582,7 +6582,7 @@ public class RemoteServer implements Server
 
    @Override
    public void connectionAddPackage(String packageName,
-                                    ServerRequestCallback<Void> callback)
+                                    ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
@@ -6593,7 +6593,7 @@ public class RemoteServer implements Server
    public void askSecretCompleted(String value,
                                   boolean remember,
                                   boolean changed,
-                                  ServerRequestCallback<Void> requestCallback)
+                                  ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, value == null ? JSONNull.getInstance()
@@ -6655,7 +6655,7 @@ public class RemoteServer implements Server
 
    @Override
    public void executeJobAction(String id, String action,
-                                ServerRequestCallback<Void> callback)
+                                ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(id));
@@ -6673,7 +6673,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void clearBackgroundJobs(ServerRequestCallback<Void> callback)
+   public void clearBackgroundJobs(ServerRequestCallback<VoidResponse> callback)
    {
       sendRequest(RPC_SCOPE, "clear_background_jobs", callback);
    }
@@ -6752,7 +6752,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void removeTheme(ServerRequestCallback<Void> callback, String themeName)
+   public void removeTheme(ServerRequestCallback<VoidResponse> callback, String themeName)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(themeName));
@@ -7007,7 +7007,7 @@ public class RemoteServer implements Server
 
    @Override
    public void recordCommandExecution(String commandId,
-                                   ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<VoidResponse> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(commandId)));
@@ -7016,7 +7016,7 @@ public class RemoteServer implements Server
 
    @Override
    public void assistantRegisterOpenFiles(ArrayList<String> filePaths,
-                                        ServerRequestCallback<Void> requestCallback)
+                                        ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray jsonPaths = JSONUtils.toJSONStringArray(filePaths);
       JSONArray params = new JSONArray();
@@ -7026,7 +7026,7 @@ public class RemoteServer implements Server
    };
 
    @Override
-   public void assistantNotifyInstalled(ServerRequestCallback<Void> requestCallback)
+   public void assistantNotifyInstalled(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "assistant_notify_installed", requestCallback);
    };
@@ -7068,7 +7068,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback)
+   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);
    }
@@ -7080,14 +7080,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback)
+   public void chatDocFocused(String documentId, ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_doc_focused", documentId, requestCallback);
    }
 
    @Override
    public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
-                              ServerRequestCallback<Void> requestCallback)
+                              ServerRequestCallback<VoidResponse> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(documentId));
@@ -7096,7 +7096,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void chatNotifyUILoaded(ServerRequestCallback<Void> requestCallback)
+   public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_notify_ui_loaded", requestCallback);
    }

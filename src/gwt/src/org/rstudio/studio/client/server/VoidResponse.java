@@ -20,13 +20,13 @@ import com.google.gwt.core.client.JavaScriptObject;
 // Type returned to ServerRequestCallback::onResponseReceived when 
 // the remote method conceptually has a "void" return type
 
-public class Void extends JavaScriptObject
+public class VoidResponse extends JavaScriptObject
 {
-   public static final native Void create() /*-{
+   public static final native VoidResponse create() /*-{
       return new Object();
    }-*/;
    
-   protected Void()
+   protected VoidResponse()
    {
    }
 }

@@ -52,7 +52,7 @@ import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.events.EditEvent;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -277,7 +277,7 @@ public class AceEditor implements DocDisplay
       private final Anchor end_;
    }
 
-   private class AceEditorChangeTracker extends EventBasedChangeTracker<Void>
+   private class AceEditorChangeTracker extends EventBasedChangeTracker<VoidResponse>
    {
       private AceEditorChangeTracker()
       {
@@ -3524,7 +3524,7 @@ public class AceEditor implements DocDisplay
    }
 
    public HandlerRegistration addValueChangeHandler(
-         ValueChangeHandler<Void> handler)
+         ValueChangeHandler<VoidResponse> handler)
    {
       return handlers_.addHandler(ValueChangeEvent.getType(), handler);
    }

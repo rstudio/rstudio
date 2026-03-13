@@ -14,8 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
 import com.google.gwt.core.client.JsArray;
@@ -32,7 +32,7 @@ public interface CppServerOperations extends BuildServerOperations
                 String docPath,
                 int line,
                 int column,
-                ServerRequestCallback<Void> requestCallback);
+                ServerRequestCallback<VoidResponse> requestCallback);
    
    void getCppCompletions(
                 String line,
@@ -52,6 +52,6 @@ public interface CppServerOperations extends BuildServerOperations
                 
    void cppSourceFile(
                 String path, 
-                ServerRequestCallback<Void> requestCallback);         
+                ServerRequestCallback<VoidResponse> requestCallback);         
 
 }

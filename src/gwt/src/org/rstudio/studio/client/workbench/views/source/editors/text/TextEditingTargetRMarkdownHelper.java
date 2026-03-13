@@ -63,7 +63,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -1004,10 +1004,10 @@ public class TextEditingTargetRMarkdownHelper
    {
       ArrayList<FileSystemItem> oldFiles = new ArrayList<>();
       oldFiles.add(oldFile);
-      fileServer_.deleteFiles(oldFiles, new ServerRequestCallback<Void>()
+      fileServer_.deleteFiles(oldFiles, new ServerRequestCallback<VoidResponse>()
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                createDraftFromTemplate(template, target);
             }

@@ -36,7 +36,7 @@ import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectAssistantPr
 import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -136,9 +136,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
 
       server_.writeProjectOptions(
           options,
-          new ServerRequestCallback<Void>() {
+          new ServerRequestCallback<VoidResponse>() {
              @Override
-             public void onResponseReceived(Void response)
+             public void onResponseReceived(VoidResponse response)
              {
                 indicator.onCompleted();
 

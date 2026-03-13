@@ -17,8 +17,8 @@ package org.rstudio.studio.client.common.compilepdf.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 
 public interface CompilePdfServerOperations
 {
@@ -39,7 +39,7 @@ public interface CompilePdfServerOperations
    void terminateCompilePdf(ServerRequestCallback<Boolean> requestCallback);
    
    // notify the server that the compile pdf tab was closed
-   void compilePdfClosed(ServerRequestCallback<Void> requestCallback);
+   void compilePdfClosed(ServerRequestCallback<VoidResponse> requestCallback);
    
    // get a file url (used for showing in external browser)
    String getFileUrl(FileSystemItem file);

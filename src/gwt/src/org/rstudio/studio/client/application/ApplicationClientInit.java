@@ -14,19 +14,19 @@
  */
 package org.rstudio.studio.client.application;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SessionInitOptions;
 import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
 
 public class ApplicationClientInit implements RTimeoutOptions.RTimeoutObserver
 {
@@ -133,10 +133,10 @@ public class ApplicationClientInit implements RTimeoutOptions.RTimeoutObserver
    public void onTerminate()
    {
       // call interrupt then call this method back on success
-      server_.abort(null, new ServerRequestCallback<Void>() {
+      server_.abort(null, new ServerRequestCallback<VoidResponse>() {
 
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             // reload the application
             reloadWithDelay(1000);
@@ -163,10 +163,10 @@ public class ApplicationClientInit implements RTimeoutOptions.RTimeoutObserver
       }
 
       // abort the pending launch
-      server_.abort(null, new ServerRequestCallback<Void>()
+      server_.abort(null, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             // re-attempt the launch with the new options
             final SessionInitOptions options = SessionInitOptions.create(

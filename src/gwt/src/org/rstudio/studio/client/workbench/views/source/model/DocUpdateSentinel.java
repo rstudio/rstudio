@@ -37,7 +37,7 @@ import org.rstudio.studio.client.common.ValueChangeHandlerManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerErrorCause;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -66,7 +66,7 @@ import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.inject.Inject;
 
 public class DocUpdateSentinel
-      implements ValueChangeHandler<Void>,
+      implements ValueChangeHandler<VoidResponse>,
       FoldChangeEvent.Handler
 {
    private interface SaveCompleteCommand
@@ -754,7 +754,7 @@ public class DocUpdateSentinel
       server_.setSourceDocumentOnSave(
             sourceDoc_.getId(),
             shouldSourceOnSave,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
                public void onError(ServerError error)
@@ -765,7 +765,7 @@ public class DocUpdateSentinel
                }
 
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   sourceDoc_.setSourceOnSave(shouldSourceOnSave);
 
@@ -834,7 +834,7 @@ public class DocUpdateSentinel
       server_.modifyDocumentProperties(
             sourceDoc_.getId(),
             properties,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
                public void onError(ServerError error)
@@ -845,7 +845,7 @@ public class DocUpdateSentinel
                }
 
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   applyProperties(sourceDoc_.getProperties(), properties);
                   if (progress != null)
@@ -862,7 +862,7 @@ public class DocUpdateSentinel
       server.modifyDocumentProperties(
             document.getId(),
             properties,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
             {
                @Override
                public void onError(ServerError error)
@@ -873,7 +873,7 @@ public class DocUpdateSentinel
                }
 
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   if (progress != null)
                      progress.onCompleted();
@@ -928,7 +928,7 @@ public class DocUpdateSentinel
       }
    }
 
-   public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
+   public void onValueChange(ValueChangeEvent<VoidResponse> voidValueChangeEvent)
    {
       nudgeAutosave();
    }

@@ -15,14 +15,14 @@
 package org.rstudio.studio.client.workbench.views.output.markers.model;
 
 import org.rstudio.studio.client.server.*;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 public interface MarkersServerOperations
 {
    void updateActiveMarkerSet(String set,
-                              ServerRequestCallback<Void> requestCallback);
+                              ServerRequestCallback<VoidResponse> requestCallback);
    
-   void clearActiveMarkerSet(ServerRequestCallback<Void> requestCallback);
+   void clearActiveMarkerSet(ServerRequestCallback<VoidResponse> requestCallback);
    
-   void markersTabClosed(ServerRequestCallback<Void> requestCallback);
+   void markersTabClosed(ServerRequestCallback<VoidResponse> requestCallback);
 }
