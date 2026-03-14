@@ -164,7 +164,8 @@ pipeline {
 
     stage('Test') {
       environment {
-        PATH = "${env.HOME}/opt/bin:${env.PATH}"
+        PATH   = "${env.HOME}/opt/bin:${env.PATH}"
+        LC_ALL = "en_US.UTF-8"
       }
       steps {
         dir("package/osx/build/src/cpp") {

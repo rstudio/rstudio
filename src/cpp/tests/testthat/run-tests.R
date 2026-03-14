@@ -25,6 +25,11 @@ runTests <- function(testDir = NULL, outputDir = NULL, filter = NULL) {
    info <- as.list(Sys.info())
    str(info)
    writeLines("")
+   
+   # print locale information
+   writeLines("# Locale ----")
+   writeLines(Sys.getlocale())
+   writeLines("")
 
    # print library paths
    writeLines("# Library paths ----")
