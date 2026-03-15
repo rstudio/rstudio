@@ -1,25 +1,6 @@
 # BRAT Test Framework - How to Author Tests
 
-BRAT (Built-in RStudio Automated Tests) is a comprehensive testing framework for automating RStudio IDE functionality. This guide explains how to write effective BRAT tests.
-
-## Table of Contents
-
-1. [Test Framework Architecture](#test-framework-architecture)
-2. [Basic Test Structure](#basic-test-structure)
-3. [The Remote Object API](#the-remote-object-api)
-4. [Common Test Patterns](#common-test-patterns)
-5. [Test Markers](#test-markers)
-6. [Helper Functions](#helper-functions)
-7. [Best Practices](#best-practices)
-
-## Test Framework Architecture
-
-BRAT tests use a Chrome DevTools Protocol (CDP) based automation system that allows programmatic control of RStudio's UI. The framework consists of:
-
-- **Test Runner**: Uses the `testthat` R testing framework
-- **Remote Object**: A connection to RStudio that provides automation methods
-- **Session Modules**: R code in `/src/cpp/session/modules/automation/` that implements the automation API
-- **Test Files**: Located in `/src/cpp/tests/automation/testthat/test-automation-*.R`
+BRAT (Built-in RStudio Automated Tests) uses CDP (Chrome DevTools Protocol) to automate and test RStudio's UI. Tests are written in R using `testthat`, with a `remote` object that provides methods for controlling the IDE.
 
 ## Basic Test Structure
 
@@ -42,13 +23,12 @@ withr::defer(.rs.automation.deleteRemote())
 ### The `.rs.test()` Function
 
 Use `.rs.test()` instead of `testthat::test_that()`. This wrapper:
-- Automatically resets the RStudio session before each test
-- Handles test markers for selective execution
-- Provides better error reporting
+- Filters tests by markers (see [Test Markers](#test-markers))
+- Calls `session.reset()` before each test to clear popups, console, and close documents
 
 ## The Remote Object API
 
-The `remote` object is your primary interface for controlling RStudio. It provides namespaced methods for different aspects of automation:
+The `remote` object is your primary interface for controlling RStudio. It provides namespaced methods for different aspects of automation.
 
 ### Console Operations (`remote$console.*`)
 
@@ -74,7 +54,7 @@ output <- remote$console.getOutput(n = 10)  # Last 10 lines
 ### Editor Operations (`remote$editor.*`)
 
 ```r
-# Open a temporary file with specific contents
+# Open a temporary file, execute callback, then auto-close and clear console
 contents <- "# My R script\nx <- 1:10\nplot(x)"
 remote$editor.executeWithContents(".R", contents, function(editor) {
    # editor object provides ACE editor methods
@@ -82,12 +62,20 @@ remote$editor.executeWithContents(".R", contents, function(editor) {
    editor$insert("\ny <- x^2")
    value <- editor$getValue()
 })
+# NOTE: executeWithContents has on.exit cleanup that closes the document
+# and sends Ctrl+L to clear the console. No manual cleanup needed.
 
-# Common editor methods within executeWithContents:
-# - editor$getValue() - get full document content
-# - editor$gotoLine(n) - move to line n
-# - editor$insert(text) - insert text at cursor
-# - editor$selectAll() - select all text
+# Open a temporary file without a callback (caller must close manually)
+remote$editor.openWithContents(".R", contents)
+
+# Open an existing file by path
+remote$editor.openDocument("/path/to/file.R")
+
+# Close the active document
+remote$editor.closeDocument()
+
+# Get the active ACE editor JavaScript object
+editor <- remote$editor.getInstance()
 ```
 
 ### DOM Manipulation (`remote$dom.*`)
@@ -103,10 +91,13 @@ exists <- remote$dom.elementExists(".my-class")
 nodeId <- remote$dom.querySelector("#unique-id")
 nodeIds <- remote$dom.querySelectorAll(".multiple-items")
 
-# Click an element
+# Click an element — supports selector, nodeId, or objectId
 remote$dom.clickElement(selector = "#button-id")
-# Or by nodeId
 remote$dom.clickElement(nodeId = nodeId)
+remote$dom.clickElement(objectId = objId,
+                        verticalOffset = 10L,
+                        horizontalOffset = 0L,
+                        button = "left")
 
 # Check/uncheck checkboxes
 remote$dom.setChecked("#my-checkbox", checked = TRUE)
@@ -114,7 +105,8 @@ remote$dom.setChecked("#my-checkbox", checked = TRUE)
 # Insert text into an input field
 remote$dom.insertText("#search-box", "search term")
 
-# Check if element is checked
+# Check if element is checked — accepts CSS selector string or numeric nodeId
+isChecked <- remote$dom.isChecked("#my-checkbox")
 isChecked <- remote$dom.isChecked(nodeId)
 ```
 
@@ -148,6 +140,11 @@ remote$keyboard.insertText("Hello", "<Tab>", "World", "<Enter>")
 # <Ctrl + A>, <Ctrl + C>, <Ctrl + V>
 # <Shift + Tab>, <Alt + Enter>
 # Arrow keys: <Up>, <Down>, <Left>, <Right>
+
+# Execute a keyboard shortcut directly (platform-aware modifier handling)
+# "Cmd" maps to Meta on macOS, Ctrl elsewhere
+remote$keyboard.executeShortcut("Ctrl + L")
+remote$keyboard.executeShortcut("Cmd + Shift + P")
 ```
 
 ### Command Execution (`remote$commands.*`)
@@ -158,8 +155,8 @@ remote$commands.execute("saveSourceDoc")
 remote$commands.execute("buildAll")
 remote$commands.execute("restartR")
 
-# Commands are defined in:
-# src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml
+# Can also pass command objects directly
+remote$commands.execute(.rs.appCommands$sourceActiveDocument)
 ```
 
 ### Completions (`remote$completions.*`)
@@ -177,11 +174,45 @@ completions <- remote$completions.request("rnorm(")
 ### Session Management (`remote$session.*`)
 
 ```r
-# Reset the session (called automatically by .rs.test())
+# Reset the session state (clears popups, console, closes documents)
+# Called automatically by .rs.test() before each test
 remote$session.reset()
+
+# Restart the R session (full restart, waits for session to be ready)
+remote$session.restart()
 
 # Quit the session
 remote$session.quit()
+```
+
+### Modal Dialogs (`remote$modals.*`)
+
+```r
+# Click a modal dialog button by name (e.g. "ok", "cancel")
+# Constructs selector #rstudio_dlg_{buttonName}
+remote$modals.click("ok")
+remote$modals.click("cancel")
+```
+
+### Project Operations (`remote$project.*`)
+
+```r
+# Create and open a new project (generates random name if NULL)
+remote$project.create(projectName = "myproject", type = "default")
+remote$project.create(type = "package")
+
+# Close the current project
+remote$project.close()
+
+# Get the project toolbar label text
+label <- remote$project.getLabel()
+```
+
+### Package Utilities (`remote$package.*`)
+
+```r
+# Check if an R package is installed
+remote$package.isInstalled("dplyr")
 ```
 
 ### File Operations (`remote$files.*`)
@@ -206,69 +237,6 @@ remote$console.executeExpr({
 # Clear preferences (reset to default)
 remote$console.executeExpr({
    .rs.uiPrefs$stripTrailingWhitespace$clear()
-})
-```
-
-## Common Test Patterns
-
-### Testing Console Output
-
-```r
-.rs.test("console displays errors correctly", {
-   remote$console.clear()
-
-   remote$console.executeExpr({
-      stop("This is an error")
-   })
-
-   output <- remote$console.getOutput()
-   expect_contains(output, "Error: This is an error")
-})
-```
-
-### Testing Editor Features
-
-```r
-.rs.test("auto-indentation works correctly", {
-   contents <- "if (TRUE) {"
-
-   remote$editor.executeWithContents(".R", contents, function(editor) {
-      editor$gotoLine(1)
-      editor$navigateLineEnd()
-      remote$keyboard.insertText("<Enter>")
-
-      # Check that cursor is indented
-      position <- editor$getCursorPosition()
-      expect_equal(position$column, 3)  # Expecting 3-space indent
-   })
-})
-```
-
-### Testing UI Elements
-
-```r
-.rs.test("build pane shows compilation errors", {
-   # Trigger a build
-   remote$commands.execute("buildAll")
-
-   # Wait for build pane to appear
-   remote$dom.waitForElement("#rstudio_build_tab")
-
-   # Check for error markers
-   errorElements <- remote$js.querySelectorAll(".build-error")
-   expect_true(errorElements$length > 0)
-})
-```
-
-### Testing Keyboard Shortcuts
-
-```r
-.rs.test("Ctrl+Enter executes current line", {
-   remote$console.clear()
-   remote$keyboard.insertText("print('hello')", "<Ctrl + Enter>")
-
-   output <- remote$console.getOutput()
-   expect_contains(output, "[1] \"hello\"")
 })
 ```
 
@@ -335,7 +303,7 @@ cleaned <- .rs.trimWhitespace("  text with spaces  ")
 
 ### `expect_contains()`
 
-Custom expectation for checking if a value contains a substring:
+Standard `testthat` expectation (>= 3.1.0) for checking if a value contains a substring:
 
 ```r
 output <- remote$console.getOutput()
@@ -344,9 +312,7 @@ expect_contains(output, "expected text")
 
 ## Best Practices
 
-### 1. Always Clean Up
-
-Use `withr::defer()` to ensure cleanup happens even if tests fail:
+### Clean Up with `withr::defer()`
 
 ```r
 self <- remote <- .rs.automation.newRemote()
@@ -357,109 +323,75 @@ tempDir <- remote$files.createDirectory()
 withr::defer(remote$files.remove(tempDir))
 ```
 
-### 2. Use Explicit Waits
-
-Don't rely on `Sys.sleep()` alone. Wait for specific conditions:
+### Use Explicit Waits, Not `Sys.sleep()`
 
 ```r
 # Good: Wait for specific element
 remote$dom.waitForElement("#results-panel")
 
-# Good: Wait for console to be ready
+# Good: Wait for condition
 .rs.waitUntil("console ready", function() {
    !grepl("rstudio-console-busy",
           remote$js.querySelector("#rstudio_console_input")$className)
 })
-
-# Avoid: Arbitrary sleep
-Sys.sleep(2)  # Don't know if 2 seconds is enough
 ```
 
-### 3. Test One Thing at a Time
-
-Each test should focus on a single feature or behavior:
-
-```r
-# Good: Focused test
-.rs.test("Tab key triggers completion", {
-   remote$keyboard.insertText("rn", "<Tab>")
-   # Check completion popup appears
-})
-
-# Avoid: Testing multiple unrelated things
-.rs.test("console works", {
-   # Tests completion, execution, AND error handling in one test
-})
-```
-
-### 4. Use Descriptive Test Names
-
-Test names should clearly describe what is being tested:
-
-```r
-# Good
-.rs.test("auto-save triggers when switching tabs", { })
-
-# Avoid
-.rs.test("test save feature", { })
-```
-
-### 5. Reset State When Needed
-
-While `.rs.test()` resets the session, you may need to clear specific state:
-
-```r
-.rs.test("console history navigation", {
-   remote$console.clear()  # Start with clean console
-
-   # Your test...
-})
-```
-
-### 6. Handle Asynchronous Operations
-
-Many RStudio operations are asynchronous. Always wait for them to complete:
-
-```r
-.rs.test("document saves successfully", {
-   remote$editor.executeWithContents(".R", "x <- 1", function(editor) {
-      remote$commands.execute("saveSourceDoc")
-
-      # Wait for save to complete
-      .rs.waitUntil("document saved", function() {
-         !grepl("unsaved-indicator",
-                remote$js.querySelector(".tab-title")$className)
-      })
-   })
-})
-```
-
-### 7. Use `executeExpr` for Complex R Code
-
-For multi-line R code or code with complex quoting, use `executeExpr`:
+### Use `executeExpr` Over String Concatenation
 
 ```r
 # Good: Clean and readable
 remote$console.executeExpr({
-   data <- data.frame(
-      x = 1:10,
-      y = rnorm(10)
-   )
+   data <- data.frame(x = 1:10, y = rnorm(10))
    plot(data$x, data$y)
 })
 
 # Avoid: String concatenation
-remote$console.execute(paste0(
-   "data <- data.frame(",
-   "x = 1:10, ",
-   "y = rnorm(10)",
-   ")"
-))
+remote$console.execute(paste0("data <- data.frame(", "x = 1:10, ", "y = rnorm(10)", ")"))
+```
+
+### Satellite Windows (`remote$satellites.*`)
+
+Satellite windows (pop-out chat, source windows) are separate CDP targets. The `satellites.*` methods handle target switching so existing `dom.*`, `js.*`, and `keyboard.*` methods work against the switched-to window.
+
+```r
+# List all satellite windows (excludes main RStudio window)
+satellites <- remote$satellites.list()
+
+# Check if a satellite is open by its window title
+remote$satellites.isOpen("Posit Assistant")
+
+# Wait for a satellite to appear (polls with retries)
+remote$satellites.waitForOpen("Posit Assistant")
+
+# Switch CDP context to a satellite — all subsequent commands target it
+remote$satellites.switchTo("Posit Assistant")
+nodeId <- remote$dom.waitForElement("#rstudio_container")
+
+# Switch back to the main RStudio window
+remote$satellites.switchToMain()
+
+# Convenience: run a callback in satellite context, auto-switch back
+remote$satellites.execute("Posit Assistant", function() {
+   remote$dom.clickElement("#some_button")
+})
+```
+
+**Important:** `js.querySelector()` blocks until the element appears — it cannot detect element absence. Use `dom.elementExists()` when checking that an element is gone or a window's DOM has changed:
+
+```r
+# Correct: check element absence
+.rs.waitUntil("sidebar is hidden", function() {
+   !remote$dom.elementExists("#rstudio_Sidebar_pane")
+})
+
+# Wrong: js.querySelector will time out waiting for a missing element
+.rs.waitUntil("sidebar is hidden", function() {
+   el <- remote$js.querySelector("#rstudio_Sidebar_pane")  # blocks!
+   is.null(el)
+})
 ```
 
 ## Debugging Tests
-
-### Check What's Visible
 
 When tests fail unexpectedly, inspect the current state:
 
@@ -472,36 +404,6 @@ print(output)
 exists <- remote$dom.elementExists("#expected-element")
 print(paste("Element exists:", exists))
 
-# Get full page HTML (useful for debugging)
+# Get full page HTML
 html <- remote$js.eval("document.documentElement.outerHTML")
 ```
-
-### Use Interactive Mode
-
-Run tests interactively to debug:
-
-```r
-# In R console
-source("testthat.R")
-setwd("testthat")
-source("test-automation-console.R")
-# Now you can inspect the remote object and run test code line by line
-```
-
-## Additional Resources
-
-- Test files: `/src/cpp/tests/automation/testthat/test-automation-*.R`
-- Automation modules: `/src/cpp/session/modules/automation/`
-- RStudio commands: `/src/gwt/src/org/rstudio/studio/client/workbench/commands/Commands.cmd.xml`
-- Running tests: See `README.md` in this directory
-
-## Contributing New Tests
-
-When adding new tests:
-
-1. Name your test file `test-automation-<feature>.R`
-2. Group related tests in the same file
-3. Use markers for tests that are experimental or WIP
-4. Ensure tests are independent and can run in any order
-5. Document any special setup requirements in comments
-6. Test both success and failure cases when applicable

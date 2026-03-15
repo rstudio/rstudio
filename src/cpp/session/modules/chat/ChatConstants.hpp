@@ -34,6 +34,7 @@ extern const char* const kClientDirPath;
 extern const char* const kServerScriptPath;
 extern const char* const kIndexFileName;
 extern const char* const kCspConfigPath;
+extern const char* const kProtocolVersionFileName;
 
 // Sentinel value: no backend port is assigned
 constexpr int kChatBackendPortNone = -1;

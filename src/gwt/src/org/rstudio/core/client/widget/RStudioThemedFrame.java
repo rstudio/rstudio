@@ -133,7 +133,7 @@ public class RStudioThemedFrame extends RStudioFrame
 
    /**
     * Sets a custom action to be executed when the frame loads.
-    * This action will be executed INSTEAD of the default theming behavior.
+    * This action will be executed BEFORE the default theming behavior.
     * The action is cleared after execution (one-shot).
     * Pass null to clear any pending action.
     *
@@ -237,15 +237,43 @@ public class RStudioThemedFrame extends RStudioFrame
          }
          catch (Exception e)
          {
-            // Cross-origin iframe - can't inject, skip silently
+            // Expected for cross-origin iframes; log unexpected errors
+            if (!(e instanceof com.google.gwt.core.client.JavaScriptException))
+            {
+               Debug.logWarning("Unexpected error accessing iframe document: " +
+                  e.getClass().getName() + " - " + e.getMessage());
+            }
             return;
          }
 
          if (document == null)
             return;
 
-         // Extract colors (cache is managed inside ThemeColorExtractor)
+         // Extract colors (cache is managed inside ThemeColorExtractor).
+         // Returns null when the ace theme is not yet loaded (e.g. satellite
+         // window still initializing). Schedule a one-shot deferred retry
+         // because ThemeColorsComputedEvent is not a CrossWindowEvent and
+         // won't fire in satellite windows.
          Map<String, String> colors = ThemeColorExtractor.extractEssentialColors();
+         if (colors == null)
+         {
+            if (!themeRetryScheduled_)
+            {
+               themeRetryScheduled_ = true;
+               com.google.gwt.user.client.Timer retryTimer =
+                  new com.google.gwt.user.client.Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        themeRetryScheduled_ = false;
+                        injectThemeVariables();
+                     }
+                  };
+               retryTimer.schedule(500);
+            }
+            return;
+         }
 
          // Get iframe's html element
          Element htmlElement = document.getDocumentElement();
@@ -273,6 +301,32 @@ public class RStudioThemedFrame extends RStudioFrame
                                         String value)
    /*-{
       htmlElement.style.setProperty(property, value);
+   }-*/;
+
+   /**
+    * Writes HTML content directly into the frame's document via
+    * doc.open()/write()/close(). Logs errors instead of swallowing them.
+    */
+   public native void setFrameContent(String html) /*-{
+      var self = this;
+      try {
+         var doc = self.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+         doc.open();
+         doc.write(html);
+         doc.close();
+      } catch (e) {
+         @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+            "Failed to write content to frame: " + e.message);
+         try {
+            var doc = self.@org.rstudio.core.client.widget.RStudioFrame::getWindow()().document;
+            doc.open();
+            doc.write("<html><body><p>Error loading content.</p></body></html>");
+            doc.close();
+         } catch (e2) {
+            @org.rstudio.core.client.Debug::log(Ljava/lang/String;)(
+               "Failed to write fallback content to frame: " + e2.message);
+         }
+      }
    }-*/;
 
    private static final native boolean isEligibleForCustomStyles(Document document)
@@ -322,4 +376,7 @@ public class RStudioThemedFrame extends RStudioFrame
 
    // Pending action to execute on next frame load (one-shot)
    private Runnable pendingLoadAction_ = null;
+
+   // Guards against multiple concurrent theme retry timers
+   private boolean themeRetryScheduled_ = false;
 }

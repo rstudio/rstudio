@@ -63,4 +63,11 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
     String chatUnsupportedProtocolMessage();
     String chatManifestUnavailableMessage();
     String chatReadlineWaiting();
+
+    // Chat satellite window
+    String chatSatelliteWindowTitle();
+    String chatReturnToMainButton();
+    String chatPoppedOutMessage();
+    String chatBringToFrontButton();
+    String chatReturnHereButton();
 }
