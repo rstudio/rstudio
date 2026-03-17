@@ -313,9 +313,12 @@ public class ChatPresenter extends BasePresenter
          onChatProviderChanged();
       });
 
-      // Listen for project options changes (project-level setting)
+      // Listen for project options changes (project-level setting).
+      // Explicitly update PaiUtil's cache before reading the provider so
+      // we don't depend on EventBus handler registration order.
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
+         paiUtil_.updateProjectOptions(event.getData().getAssistantOptions());
          onChatProviderChanged();
       });
 
