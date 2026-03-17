@@ -292,6 +292,19 @@ Waits for a condition to become true:
 })
 ```
 
+Signature: `.rs.waitUntil(reason, predicate, swallowErrors = FALSE, retryCount = 30L, waitTimeSecs = 1)`
+
+- `retryCount` — number of attempts before timing out (default 30)
+- `waitTimeSecs` — seconds between attempts (default 1)
+- Total timeout = `retryCount * waitTimeSecs` seconds (default 30s)
+
+```r
+# Wait up to 60 seconds for a slow operation
+.rs.waitUntil("backend ready", function() {
+   remote$dom.elementExists("#backend-ready-indicator")
+}, retryCount = 60L)
+```
+
 ### `.rs.trimWhitespace()`
 
 Removes leading/trailing whitespace:
@@ -309,6 +322,10 @@ Standard `testthat` expectation (>= 3.1.0) for checking if a value contains a su
 output <- remote$console.getOutput()
 expect_contains(output, "expected text")
 ```
+
+## Test Environment
+
+BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit AI) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward with `withr::defer()`.
 
 ## Best Practices
 
