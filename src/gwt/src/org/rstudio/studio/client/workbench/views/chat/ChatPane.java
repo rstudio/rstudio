@@ -1166,7 +1166,8 @@ public class ChatPane
             safeCopyLabel + "</button>" +
             "</div>" +
             "<pre id='error-detail' style='margin: 0 0 12px 0; padding: 8px; " +
-            "background: var(--rstudio-chat-iframe-bg-secondary, #f5f5f5); " +
+            "background: var(--rstudio-editorWidget-background, #f4f8f9); " +
+            "color: var(--rstudio-editor-foreground, #333); " +
             "border-radius: 4px; font-size: 12px; " +
             "white-space: pre-wrap; word-break: break-word;'>" +
             safeError + "</pre>";
