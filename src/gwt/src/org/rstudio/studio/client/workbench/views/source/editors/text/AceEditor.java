@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
@@ -104,7 +105,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Search;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundTokenizerUpdateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -164,7 +164,6 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -422,71 +421,9 @@ public class AceEditor implements DocDisplay
       widget_.addAttachHandler(event ->
       {
          if (event.isAttached())
-         {
-            attachToWidget(widget_.getElement(), AceEditor.this);
-            registerEditorEventListeners();
-            setColorPreview(userPrefs_.colorPreview().getValue());
-
-            // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
-            if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
-               ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
-         }
+            attach();
          else
-            detachFromWidget(widget_.getElement());
-
-         if (!event.isAttached())
-         {
-            for (HandlerRegistration handler : editorEventListeners_)
-               if (handler != null)
-                  handler.removeHandler();
-            editorEventListeners_.clear();
-
-            for (HandlerRegistration handler : keyboardHandlers_)
-               if (handler != null)
-                  handler.removeHandler();
-            keyboardHandlers_.clear();
-
-            if (completionManager_ != null)
-            {
-               completionManager_.detach();
-               completionManager_ = null;
-            }
-
-            if (mixins_ != null)
-            {
-               mixins_.detach();
-            }
-
-            if (bgLinkHighlighter_ != null)
-            {
-               bgLinkHighlighter_.detach();
-            }
-
-            if (bgChunkHighlighter_ != null)
-            {
-               bgChunkHighlighter_.detach();
-            }
-
-            if (diagnosticsBgPopup_ != null)
-            {
-               diagnosticsBgPopup_.detach();
-            }
-
-            if (backgroundTokenizer_ != null)
-            {
-               backgroundTokenizer_.detach();
-            }
-
-            if (monitor_ != null)
-            {
-               monitor_.detach();
-            }
-
-            if (s_lastFocusedEditor == AceEditor.this)
-            {
-               s_lastFocusedEditor = null;
-            }
-         }
+            detach();
       });
 
       widget_.addFocusHandler((FocusEvent event) ->
@@ -504,6 +441,101 @@ public class AceEditor implements DocDisplay
       // the GWT widget hierarchy (e.g. Visual mode code chunks) can still
       // receive events. See https://github.com/rstudio/rstudio/issues/17007
       registerEditorEventListeners();
+   }
+
+   public void attach()
+   {
+      if (isAttached_)
+         return;
+      isAttached_ = true;
+
+      widget_.attach();
+
+      attachToWidget(widget_.getElement(), AceEditor.this);
+      registerEditorEventListeners();
+      setColorPreview(userPrefs_.colorPreview().getValue());
+
+      // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
+      if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
+         ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
+
+      // re-attach subsystems
+      if (completionManager_ != null)
+         completionManager_.attach();
+
+      if (mixins_ != null)
+         mixins_.attach();
+
+      if (bgLinkHighlighter_ != null)
+         bgLinkHighlighter_.attach();
+
+      if (bgChunkHighlighter_ != null)
+         bgChunkHighlighter_.attach();
+
+      if (diagnosticsBgPopup_ != null)
+         diagnosticsBgPopup_.attach();
+
+      if (backgroundTokenizer_ != null)
+         backgroundTokenizer_.attach();
+
+      if (scopes_ != null)
+         scopes_.attach();
+
+      if (monitor_ != null)
+         monitor_.attach();
+
+      // restore keyboard handlers (only after file type has been set)
+      if (fileType_ != null)
+         updateKeyboardHandlers();
+   }
+
+   public void detach()
+   {
+      if (!isAttached_)
+         return;
+      isAttached_ = false;
+
+      detachFromWidget(widget_.getElement());
+
+      for (HandlerRegistration handler : editorEventListeners_)
+         if (handler != null)
+            handler.removeHandler();
+      editorEventListeners_.clear();
+
+      for (HandlerRegistration handler : keyboardHandlers_)
+         if (handler != null)
+            handler.removeHandler();
+      keyboardHandlers_.clear();
+
+      // detach subsystems (keep references for re-attach)
+      if (completionManager_ != null)
+         completionManager_.detach();
+
+      if (mixins_ != null)
+         mixins_.detach();
+
+      if (bgLinkHighlighter_ != null)
+         bgLinkHighlighter_.detach();
+
+      if (bgChunkHighlighter_ != null)
+         bgChunkHighlighter_.detach();
+
+      if (diagnosticsBgPopup_ != null)
+         diagnosticsBgPopup_.detach();
+
+      if (backgroundTokenizer_ != null)
+         backgroundTokenizer_.detach();
+
+      if (monitor_ != null)
+         monitor_.detach();
+
+      if (scopes_ != null)
+         scopes_.detach();
+
+      if (s_lastFocusedEditor == AceEditor.this)
+         s_lastFocusedEditor = null;
+
+      widget_.detach();
    }
 
    private void registerEditorEventListeners()
@@ -1006,6 +1038,18 @@ public class AceEditor implements DocDisplay
 
       completionManager_ = completionManager;
       scopes_ = scopeTreeManager;
+
+      // if the editor is already attached, attach the new subsystems
+      // immediately (otherwise they'll be attached when AceEditor.attach()
+      // is called via the widget lifecycle)
+      if (isAttached_)
+      {
+         if (completionManager_ != null)
+            completionManager_.attach();
+
+         if (scopes_ != null)
+            scopes_.attach();
+      }
 
       updateKeyboardHandlers();
       syncCompletionPrefs();
@@ -2826,11 +2870,6 @@ public class AceEditor implements DocDisplay
    public HandlerRegistration addSaveCompletedHandler(SaveFileEvent.Handler handler)
    {
       return handlers_.addHandler(SaveFileEvent.TYPE, handler);
-   }
-
-   public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
-   {
-      return widget_.addAttachHandler(handler);
    }
 
    public HandlerRegistration addLoadHandler(LoadHandler handler)
@@ -4919,6 +4958,21 @@ public class AceEditor implements DocDisplay
          return row < row_;
       }
 
+      public void attach()
+      {
+         if (documentChangedHandler_ != null)
+            documentChangedHandler_.removeHandler();
+
+         documentChangedHandler_ = editor_.addDocumentChangedHandler(event ->
+         {
+            if (editor_.hasCodeModelScopeTree())
+            {
+               row_ = event.getEvent().getRange().getStart().getRow();
+               timer_.schedule(DELAY_MS);
+            }
+         });
+      }
+
       public void detach()
       {
          timer_.cancel();
@@ -5003,6 +5057,7 @@ public class AceEditor implements DocDisplay
    private Commands commands_;
    private EventBus events_;
    private TextFileType fileType_;
+   private boolean isAttached_ = false;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;

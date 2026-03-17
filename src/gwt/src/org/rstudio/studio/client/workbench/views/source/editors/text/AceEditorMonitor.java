@@ -17,43 +17,24 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 
 public class AceEditorMonitor
 {
    public AceEditorMonitor(AceEditor editor)
    {
       editor_ = editor;
-      init();
    }
-   
-   private void init()
+
+   public void attach()
    {
-      attachHandler_ = editor_.addAttachHandler((AttachEvent event) ->
-      {
-         if (event.isAttached())
-         {
-            beginMonitoring();
-         }
-         else
-         {
-            endMonitoring();
-         }
-      });
+      beginMonitoring();
    }
 
    public void detach()
    {
       endMonitoring();
-
-      if (attachHandler_ != null)
-      {
-         attachHandler_.removeHandler();
-         attachHandler_ = null;
-      }
    }
-   
+
    private boolean monitor()
    {
       if (!monitoring_ || editor_ == null)
@@ -69,25 +50,23 @@ public class AceEditorMonitor
       editor_.getWidget().syncScrollSpeed();
       return true;
    }
-   
+
    private void beginMonitoring()
    {
       if (monitoring_)
          return;
-      
+
       monitoring_ = true;
       Scheduler.get().scheduleFixedDelay(this::monitor, 1000);
    }
-   
+
    private void endMonitoring()
    {
       monitoring_ = false;
-      editor_ = null;
    }
- 
-   private AceEditor editor_;
+
+   private final AceEditor editor_;
    private boolean monitoring_ = false;
    private double devicePixelRatio_ = 0.0;
-   private HandlerRegistration attachHandler_;
 
 }
