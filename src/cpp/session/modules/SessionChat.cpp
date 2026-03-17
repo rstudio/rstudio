@@ -4191,9 +4191,16 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
 
    // Download manifest
@@ -5026,7 +5033,11 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    // Check if a forced recheck was requested (e.g. user clicked Retry)
    bool forceRecheck = false;
    if (request.params.getSize() > 0)
-      json::readParam(request.params, 0, &forceRecheck);
+   {
+      Error error = json::readParam(request.params, 0, &forceRecheck);
+      if (error)
+         return error;
+   }
 
    // Perform on-demand update check if state hasn't been populated yet,
    // or if the caller explicitly requested a recheck.

@@ -1156,7 +1156,9 @@ public class ChatPane
             constants_.chatCopiedError());
          errorDetail =
             "<div style='text-align: center; margin: 12px 0 4px 0;'>" +
-            "<button id='copy-error-btn' style='padding: 4px 12px; " +
+            "<button id='copy-error-btn' data-copy-label='" +
+            safeCopyLabel + "' data-copied-label='" +
+            safeCopiedLabel + "' style='padding: 4px 12px; " +
             "font-size: 12px; cursor: pointer; border: 1px solid " +
             "var(--rstudio-panel-border, #ccc); border-radius: 3px; " +
             "background: var(--rstudio-editorWidget-background, #fff); " +
@@ -1172,11 +1174,13 @@ public class ChatPane
             "document.getElementById('copy-error-btn')" +
             ".addEventListener('click', function() {" +
             "  var text = document.getElementById('error-detail').textContent;" +
+            "  var btn = document.getElementById('copy-error-btn');" +
             "  navigator.clipboard.writeText(text).then(function() {" +
-            "    var btn = document.getElementById('copy-error-btn');" +
-            "    btn.textContent = '" + safeCopiedLabel + "';" +
-            "    setTimeout(function() { btn.textContent = '" +
-               safeCopyLabel + "'; }, 2000);" +
+            "    btn.textContent = btn.dataset.copiedLabel;" +
+            "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
+            "  }).catch(function() {" +
+            "    btn.textContent = 'Copy failed';" +
+            "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
             "  });" +
             "});";
       }
