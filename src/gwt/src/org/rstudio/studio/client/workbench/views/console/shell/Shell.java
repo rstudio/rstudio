@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.console.ConsoleCommandSuggestor;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
@@ -145,7 +146,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                 ErrorManager errorManager,
                 DependencyManager dependencyManager,
                 ConsoleEditorProvider editorProvider,
-                ConsoleLanguageTracker languageTracker)
+                ConsoleLanguageTracker languageTracker,
+                ConsoleCommandSuggestor commandSuggestor)
    {
       super();
 
@@ -166,6 +168,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       languageTracker_ = languageTracker;
 
       editorProvider.setConsoleEditor(input_);
+      commandSuggestor.setConsoleDisplay((DocDisplay) input_);
 
       configureLiveAnnouncements();
 
@@ -444,17 +447,22 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void processCommandEntry()
    {
-      processCommandEntry(view_.processCommandEntry(), true);
+      processCommandEntry(view_.processCommandEntry(), true, "");
    }
 
    private void processCommandEntry(String commandText, boolean echo)
+   {
+      processCommandEntry(commandText, echo, "");
+   }
+
+   private void processCommandEntry(String commandText, boolean echo, String consoleId)
    {
       // add to console history
       if (addToHistory_ && commandText.length() > 0)
          eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event
-      eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
+      eventBus_.fireEvent(new ConsoleInputEvent(commandText, consoleId, echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
@@ -506,7 +514,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
             if (event.shouldExecute())
             {
                String commandText = event.shouldEcho() ? view_.processCommandEntry() : event.getCode();
-               processCommandEntry(commandText, event.shouldEcho());
+               String sourceDocId = event.getSourceDocumentId();
+               processCommandEntry(commandText, event.shouldEcho(), sourceDocId != null ? sourceDocId : "");
                display.setText(previousInput);
             }
 
