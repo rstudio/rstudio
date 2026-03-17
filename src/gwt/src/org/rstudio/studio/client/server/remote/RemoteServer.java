@@ -7053,6 +7053,16 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void chatCheckForUpdates(boolean forceRecheck,
+                                   ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(forceRecheck)
+            .get();
+      sendRequest(RPC_SCOPE, "chat_check_for_updates", params, requestCallback);
+   }
+
+   @Override
    public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, "chat_install_update", requestCallback);

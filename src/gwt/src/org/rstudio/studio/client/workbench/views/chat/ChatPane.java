@@ -640,9 +640,10 @@ public class ChatPane
    }
 
    @Override
-   public void showManifestUnavailable()
+   public void showManifestUnavailable(String errorMessage)
    {
-      showMessage(constants_.chatManifestUnavailableMessage());
+      String html = generateManifestUnavailableHTML(errorMessage);
+      updateFrameContent(html);
    }
 
    @Override
@@ -989,6 +990,9 @@ public class ChatPane
          else if (event.data === 'return-chat-to-main') {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleReturnToMainRequest()();
          }
+         else if (event.data === 'retry-manifest') {
+            self.@org.rstudio.studio.client.workbench.views.chat.ChatPane::handleRetryManifestRequest()();
+         }
       });
    }-*/;
 
@@ -1002,6 +1006,14 @@ public class ChatPane
       if (observer_ != null)
       {
          observer_.onRestartBackend();
+      }
+   }
+
+   private void handleRetryManifestRequest()
+   {
+      if (observer_ != null)
+      {
+         observer_.onRetryManifest();
       }
    }
 
@@ -1090,10 +1102,9 @@ public class ChatPane
    }
 
    @Override
-   public String getManifestUnavailableHTML()
+   public String getManifestUnavailableHTML(String errorMessage)
    {
-      return generateMessageHTML(
-         constants_.chatManifestUnavailableMessage());
+      return generateManifestUnavailableHTML(errorMessage);
    }
 
    @Override
@@ -1123,6 +1134,66 @@ public class ChatPane
          "document.getElementById('restart-btn').addEventListener('click', function() {" +
          "  window.parent.postMessage('restart-backend', '*');" +
          "});";
+
+      return wrapInThemedHtml(body, script, true, true, null);
+   }
+
+   private String generateManifestUnavailableHTML(String errorMessage)
+   {
+      String safeTitle = SafeHtmlUtils.htmlEscape(
+         constants_.chatManifestUnavailableTitle());
+      String safeMessage = SafeHtmlUtils.htmlEscape(
+         constants_.chatManifestUnavailableMessage());
+
+      String errorDetail = "";
+      String copyScript = "";
+      if (errorMessage != null && !errorMessage.isEmpty())
+      {
+         String safeError = SafeHtmlUtils.htmlEscape(errorMessage);
+         String safeCopyLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopyError());
+         String safeCopiedLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopiedError());
+         errorDetail =
+            "<div style='text-align: center; margin: 12px 0 4px 0;'>" +
+            "<button id='copy-error-btn' style='padding: 4px 12px; " +
+            "font-size: 12px; cursor: pointer; border: 1px solid " +
+            "var(--rstudio-panel-border, #ccc); border-radius: 3px; " +
+            "background: var(--rstudio-editorWidget-background, #fff); " +
+            "color: var(--rstudio-editor-foreground, #333);'>" +
+            safeCopyLabel + "</button>" +
+            "</div>" +
+            "<pre id='error-detail' style='margin: 0 0 12px 0; padding: 8px; " +
+            "background: var(--rstudio-chat-iframe-bg-secondary, #f5f5f5); " +
+            "border-radius: 4px; font-size: 12px; " +
+            "white-space: pre-wrap; word-break: break-word;'>" +
+            safeError + "</pre>";
+         copyScript =
+            "document.getElementById('copy-error-btn')" +
+            ".addEventListener('click', function() {" +
+            "  var text = document.getElementById('error-detail').textContent;" +
+            "  navigator.clipboard.writeText(text).then(function() {" +
+            "    var btn = document.getElementById('copy-error-btn');" +
+            "    btn.textContent = '" + safeCopiedLabel + "';" +
+            "    setTimeout(function() { btn.textContent = '" +
+               safeCopyLabel + "'; }, 2000);" +
+            "  });" +
+            "});";
+      }
+
+      String body =
+         "<h2>" + safeTitle + "</h2>" +
+         "<p>" + safeMessage + "</p>" +
+         errorDetail +
+         "<button id='retry-manifest-btn' class='chatIframeButton'>" +
+         constants_.chatRetry() + "</button>";
+
+      String script =
+         "document.getElementById('retry-manifest-btn')" +
+         ".addEventListener('click', function() {" +
+         "  window.parent.postMessage('retry-manifest', '*');" +
+         "});" +
+         copyScript;
 
       return wrapInThemedHtml(body, script, true, true, null);
    }

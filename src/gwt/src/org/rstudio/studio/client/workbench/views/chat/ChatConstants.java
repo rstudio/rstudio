@@ -61,7 +61,10 @@ public interface ChatConstants extends com.google.gwt.i18n.client.Messages {
         String currentVersion, String newVersion);
     String chatUnsupportedVersionNoUpdateMessage(String currentVersion);
     String chatUnsupportedProtocolMessage();
+    String chatManifestUnavailableTitle();
     String chatManifestUnavailableMessage();
+    String chatCopyError();
+    String chatCopiedError();
     String chatReadlineWaiting();
 
     // Chat satellite window
