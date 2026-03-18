@@ -41,6 +41,9 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
 public class NewQuartoProjectPage extends NewDirectoryPage
 {
    public NewQuartoProjectPage(String projectType,
@@ -179,21 +182,26 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          manageControls();
       });
       
-      // popuplate kernel list from caps
-      quartoCaps_ = input.getContext().getQuartoCapabilities();
-      JsArray<QuartoJupyterKernel> kernels = quartoCaps_ == null ?
-              JsArray.createArray().cast() : quartoCaps_.jupyterKernels();
-      
-      String[] kernelNames = new String[kernels.length()];
-      String[] kernelDisplayNames = new String[kernels.length()];
-      for (int i=0; i<kernels.length(); i++)
-      {
-         QuartoJupyterKernel kernel = kernels.get(i);
-         kernelNames[i] = kernel.getName();
-         kernelDisplayNames[i] = kernel.getDisplayName();
-      }
-      kernelSelect_.setChoices(kernelDisplayNames, kernelNames);
-      kernelSelect_.setValue(lastOptions_.getKernel());
+      // fetch capabilities asynchronously to avoid blocking the dialog
+      RStudioGinjector.INSTANCE.getServer().quartoCapabilities(
+         new ServerRequestCallback<QuartoCapabilities>()
+         {
+            @Override
+            public void onResponseReceived(QuartoCapabilities caps)
+            {
+               quartoCaps_ = caps;
+               populateKernels();
+               manageControls();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               // leave defaults in place if capabilities fetch fails
+               populateKernels();
+               manageControls();
+            }
+         });
    
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
       chkUseCondaenv_.setValue(canUseCondaenv() && !StringUtil.isNullOrEmpty(lastOptions_.getCondaenv()));
@@ -205,6 +213,23 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
    }
    
+   private void populateKernels()
+   {
+      JsArray<QuartoJupyterKernel> kernels = quartoCaps_ == null ?
+              JsArray.createArray().cast() : quartoCaps_.jupyterKernels();
+
+      String[] kernelNames = new String[kernels.length()];
+      String[] kernelDisplayNames = new String[kernels.length()];
+      for (int i = 0; i < kernels.length(); i++)
+      {
+         QuartoJupyterKernel kernel = kernels.get(i);
+         kernelNames[i] = kernel.getName();
+         kernelDisplayNames[i] = kernel.getDisplayName();
+      }
+      kernelSelect_.setChoices(kernelDisplayNames, kernelNames);
+      kernelSelect_.setValue(lastOptions_.getKernel());
+   }
+
    private void manageControls()
    {
       boolean isKnitr =  engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_KNITR);

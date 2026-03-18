@@ -24,7 +24,6 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
-#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
 
@@ -243,7 +242,6 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
-   contextJson["quarto_capabilities"] = quarto::quartoCapabilities();
    contextJson["working_directory"] = module_context::createAliasedPath(
          r::session::utils::safeCurrentPath());
 
