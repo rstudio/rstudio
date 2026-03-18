@@ -19,7 +19,7 @@ import java.util.List;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -52,14 +52,14 @@ public interface PackagesServerOperations extends PackratServerOperations
    void getPackageInstallContext(
          ServerRequestCallback<PackageInstallContext> requestCallback);
    
-   void initDefaultUserLibrary(ServerRequestCallback<Void> requestCallback);
+   void initDefaultUserLibrary(ServerRequestCallback<VoidResponse> requestCallback);
    
    void loadedPackageUpdatesRequired(
                             List<String> packages,
                             ServerRequestCallback<Boolean> requestCallback);
    
    void ignoreNextLoadedPackageCheck(
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
    
    void getPackageNewsUrl(
                         String packageName,

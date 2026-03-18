@@ -1154,11 +1154,14 @@ public class ChatPane
             constants_.chatCopyError());
          String safeCopiedLabel = SafeHtmlUtils.htmlEscape(
             constants_.chatCopiedError());
+         String safeFailedLabel = SafeHtmlUtils.htmlEscape(
+            constants_.chatCopyFailed());
          errorDetail =
             "<div style='text-align: center; margin: 12px 0 4px 0;'>" +
             "<button id='copy-error-btn' data-copy-label='" +
             safeCopyLabel + "' data-copied-label='" +
-            safeCopiedLabel + "' style='padding: 4px 12px; " +
+            safeCopiedLabel + "' data-failed-label='" +
+            safeFailedLabel + "' style='padding: 4px 12px; " +
             "font-size: 12px; cursor: pointer; border: 1px solid " +
             "var(--rstudio-panel-border, #ccc); border-radius: 3px; " +
             "background: var(--rstudio-editorWidget-background, #fff); " +
@@ -1180,7 +1183,7 @@ public class ChatPane
             "    btn.textContent = btn.dataset.copiedLabel;" +
             "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
             "  }).catch(function() {" +
-            "    btn.textContent = 'Copy failed';" +
+            "    btn.textContent = btn.dataset.failedLabel;" +
             "    setTimeout(function() { btn.textContent = btn.dataset.copyLabel; }, 2000);" +
             "  });" +
             "});";
@@ -1196,6 +1199,7 @@ public class ChatPane
       String script =
          "document.getElementById('retry-manifest-btn')" +
          ".addEventListener('click', function() {" +
+         "  this.disabled = true;" +
          "  window.parent.postMessage('retry-manifest', '*');" +
          "});" +
          copyScript;

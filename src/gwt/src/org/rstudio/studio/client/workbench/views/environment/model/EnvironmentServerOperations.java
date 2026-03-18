@@ -16,20 +16,20 @@ package org.rstudio.studio.client.workbench.views.environment.model;
 
 import java.util.List;
 
-import com.google.gwt.core.client.JsArray;
-
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
+
+import com.google.gwt.core.client.JsArray;
 
 public interface EnvironmentServerOperations
 {
    void listEnvironment(ServerRequestCallback<JsArray<RObject> > callback);
 
    void removeAllObjects(boolean includeHidden,
-                         ServerRequestCallback<Void> requestCallback);
+                         ServerRequestCallback<VoidResponse> requestCallback);
 
    void removeObjects(List<String> objectNames, 
-                      ServerRequestCallback<Void> requestCallback);
+                      ServerRequestCallback<VoidResponse> requestCallback);
 
    void downloadDataFile(String dataFileURL,
                          ServerRequestCallback<DownloadInfo> requestCallback);
@@ -49,13 +49,13 @@ public interface EnvironmentServerOperations
            ServerRequestCallback<DataPreviewResult> requestCallback);
 
    void setContextDepth(int newContextDepth,
-                        ServerRequestCallback<Void> requestCallback);   
+                        ServerRequestCallback<VoidResponse> requestCallback);   
    
    void setEnvironment(String environmentName,
-                       ServerRequestCallback<Void> requestCallback);
+                       ServerRequestCallback<VoidResponse> requestCallback);
    
    void setEnvironmentFrame(int frame, 
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
 
    void getEnvironmentNames(
               String language,
@@ -67,16 +67,16 @@ public interface EnvironmentServerOperations
               ServerRequestCallback<EnvironmentContextData> requestCallback);
    
    void setEnvironmentMonitoring(boolean monitoring,
-              ServerRequestCallback<Void> requestCallback);
+              ServerRequestCallback<VoidResponse> requestCallback);
 
    void getObjectContents(
               String objectName,
               ServerRequestCallback<ObjectContents> requestCallback);
    
-   void requeryContext(ServerRequestCallback<Void> requestCallback);
+   void requeryContext(ServerRequestCallback<VoidResponse> requestCallback);
    
    void environmentSetLanguage(String language,
-                               ServerRequestCallback<Void> requestCallback);
+                               ServerRequestCallback<VoidResponse> requestCallback);
    
    void isFunctionMasked(String functionName,
                          String packageName,

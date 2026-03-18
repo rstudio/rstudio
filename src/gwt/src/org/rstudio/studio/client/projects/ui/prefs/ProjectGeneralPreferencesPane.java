@@ -100,9 +100,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       alwaysSaveHistory_ = new YesNoAskDefault(false);
       grid.setWidget(2, 0, new FormLabel(constants_.alwaysSaveHistoryText(), alwaysSaveHistory_));
       grid.setWidget(2, 1, alwaysSaveHistory_);
-      
+
       container.add(grid);
-      
+
       container.add(headerLabel(constants_.miscellaneousTitle()));
 
       // disable execute .Rprofile
@@ -182,6 +182,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
          scratchPath_.setText(config.getScratchPath());
       
       initialConfig_ = config;
+
    }
 
    @Override
@@ -214,7 +215,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       {
          needsRestart = true;
       }
-      
+
       return new RestartRequirement(needsRestart, needsRestart, needsRestart);
    }
 

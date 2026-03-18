@@ -35,7 +35,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
@@ -314,10 +314,10 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
       }
       indicator.onProgress(constants_.connectingAccount());
       server_.connectRSConnectAccount(cmd,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             onConnected.execute(AccountConnectResult.Successful);
          }
@@ -345,10 +345,10 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
 
       server_.registerUserToken(serverInfo.getName(),
             result.getAccountNickname(),
-            user.getId(), token, new ServerRequestCallback<Void>()
+            user.getId(), token, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void result)
+         public void onResponseReceived(VoidResponse result)
          {
             onConnected.execute(AccountConnectResult.Successful);
          }

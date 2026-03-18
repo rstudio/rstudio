@@ -17,7 +17,7 @@
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.exportplot.clipboard.ExportPlotClipboard;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
@@ -38,10 +38,10 @@ public class PlotsPaneClipboard implements ExportPlotClipboard
       server_.copyPlotToClipboardMetafile(
             width,
             height,
-            new SimpleRequestCallback<Void>() 
+            new SimpleRequestCallback<VoidResponse>() 
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   onCompleted.execute();
                }
@@ -58,10 +58,10 @@ public class PlotsPaneClipboard implements ExportPlotClipboard
       server_.copyPlotToCocoaPasteboard(
             width,
             height,
-            new SimpleRequestCallback<Void>() 
+            new SimpleRequestCallback<VoidResponse>() 
             {
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   onCompleted.execute();
                }

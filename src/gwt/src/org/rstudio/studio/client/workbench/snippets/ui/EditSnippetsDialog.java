@@ -20,8 +20,6 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
@@ -37,7 +35,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
@@ -50,6 +48,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.NativeEvent;
@@ -142,9 +142,9 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       docDisplay_ = new AceEditor();
       docDisplay_.setUseSoftTabs(false);
       docDisplay_.setTabSize(uiPrefs_.numSpacesForTab().getValue());
-      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>() {
+      docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>() {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             editorDirty_ = true;
          }

@@ -4158,6 +4158,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Copy RStudio Version") // $NON-NLS-1$
     String copyRStudioVersionLabel();
     
+    // showTrustRequestDialog
+    @DefaultStringValue("Show Trust Dialog") // $NON-NLS-1$
+    String showTrustRequestDialogLabel();
+    
     // popOutChat
     @DefaultStringValue("Show Posit Assistant in Separate Window") // $NON-NLS-1$
     String popOutChatLabel();

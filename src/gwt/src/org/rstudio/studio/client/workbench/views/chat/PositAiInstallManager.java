@@ -17,7 +17,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.assistant.server.AssistantServerOperations;
 import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperations;
@@ -233,10 +233,10 @@ public class PositAiInstallManager
    {
       callback.onInstallStarted();
 
-      chatServer_.chatInstallUpdate(new ServerRequestCallback<Void>()
+      chatServer_.chatInstallUpdate(new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void result)
+         public void onResponseReceived(VoidResponse result)
          {
             // Start polling for update status
             pollUpdateStatus(callback, 0);

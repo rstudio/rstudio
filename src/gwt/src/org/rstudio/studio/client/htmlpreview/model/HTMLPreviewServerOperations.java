@@ -16,8 +16,8 @@ package org.rstudio.studio.client.htmlpreview.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 
 public interface HTMLPreviewServerOperations extends RPubsServerOperations
@@ -25,7 +25,7 @@ public interface HTMLPreviewServerOperations extends RPubsServerOperations
    void previewHTML(HTMLPreviewParams params, 
                     ServerRequestCallback<Boolean> requestCallback);
 
-   void terminatePreviewHTML(ServerRequestCallback<Void> requestCallback);
+   void terminatePreviewHTML(ServerRequestCallback<VoidResponse> requestCallback);
 
    void getHTMLCapabilities(ServerRequestCallback<HTMLCapabilities> callback);
 
@@ -33,7 +33,7 @@ public interface HTMLPreviewServerOperations extends RPubsServerOperations
    void copyFile(FileSystemItem sourceFile, 
                  FileSystemItem targetFile,
                  boolean overwrite, 
-                 ServerRequestCallback<Void> requestCallback);
+                 ServerRequestCallback<VoidResponse> requestCallback);
 
    String getApplicationURL(String pathName);
    String getFileUrl(FileSystemItem file);

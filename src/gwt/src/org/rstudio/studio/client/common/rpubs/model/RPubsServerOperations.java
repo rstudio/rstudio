@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.common.rpubs.model;
 
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public interface RPubsServerOperations
@@ -31,5 +31,5 @@ public interface RPubsServerOperations
                     ServerRequestCallback<Boolean> requestCallback);
    
    void rpubsTerminateUpload(String contextId,
-                             ServerRequestCallback<Void> requestCallback);
+                             ServerRequestCallback<VoidResponse> requestCallback);
 }

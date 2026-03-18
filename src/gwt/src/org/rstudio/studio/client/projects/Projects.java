@@ -69,7 +69,7 @@ import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -495,7 +495,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                      session_.getSessionInfo().getUserPrefs(),
                      new VoidServerRequestCallback(indicator) {
                         @Override
-                        public void onResponseReceived(Void response)
+                        public void onResponseReceived(VoidResponse response)
                         {
                            continuation.execute();
                         }
@@ -649,11 +649,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
                      packageDirectory,
                      newProject.getNewPackageOptions().getCodeFiles(),
                      newProject.getNewPackageOptions().getUsingRcpp(),
-                     new ServerRequestCallback<RResult<Void>>()
+                     new ServerRequestCallback<RResult<VoidResponse>>()
                      {
 
                         @Override
-                        public void onResponseReceived(RResult<Void> response)
+                        public void onResponseReceived(RResult<VoidResponse> response)
                         {
                            if (response.failed())
                            {
@@ -1103,10 +1103,10 @@ public class Projects implements OpenProjectFileEvent.Handler,
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Lint");
       indicator.onProgress(constants_.onShowDiagnosticsProject());
-      projServer_.analyzeProject(new ServerRequestCallback<Void>()
+      projServer_.analyzeProject(new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void response)
+         public void onResponseReceived(VoidResponse response)
          {
             indicator.onCompleted();
          }

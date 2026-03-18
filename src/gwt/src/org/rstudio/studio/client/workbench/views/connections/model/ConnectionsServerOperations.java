@@ -17,21 +17,21 @@ package org.rstudio.studio.client.workbench.views.connections.model;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.remote.RResult;
 
 import com.google.gwt.core.client.JsArray;
 
 public interface ConnectionsServerOperations extends CryptoServerOperations
 {
-   void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
+   void removeConnection(ConnectionId id, ServerRequestCallback<VoidResponse> callback);
  
    void connectionDisconnect(ConnectionId connectionId, 
-                             ServerRequestCallback<Void> callback);
+                             ServerRequestCallback<VoidResponse> callback);
    
    void connectionExecuteAction(ConnectionId connectionId, 
                                 String action,
-                                ServerRequestCallback<Void> callback);
+                                ServerRequestCallback<VoidResponse> callback);
    
    void connectionListObjects(ConnectionId connectionId,
                               ConnectionObjectSpecifier object,
@@ -43,20 +43,20 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    
    void connectionPreviewObject(ConnectionId connectionId,
                                 ConnectionObjectSpecifier object,
-                                ServerRequestCallback<Void> callback);
+                                ServerRequestCallback<VoidResponse> callback);
    
    void getNewConnectionContext(
             ServerRequestCallback<NewConnectionContext> callback);
 
    void launchEmbeddedShinyConnectionUI(String packageName,
                                         String connectionName,
-                                        ServerRequestCallback<RResult<Void>> serverRequestCallback);
+                                        ServerRequestCallback<RResult<VoidResponse>> serverRequestCallback);
 
    void connectionTest(String code, 
                        ServerRequestCallback<String> callback);
 
    void connectionAddPackage(String packageName, 
-                             ServerRequestCallback<Void> callback);
+                             ServerRequestCallback<VoidResponse> callback);
 
    void installOdbcDriver(String name,
                           String installationPath,

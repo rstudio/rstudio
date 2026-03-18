@@ -49,7 +49,7 @@ import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -326,9 +326,9 @@ public class Presentation extends BasePresenter
                {
                   indicator.onProgress(constants_.clearingKnitrCaption());
                   server_.clearPresentationCache(
-                        new ServerRequestCallback<Void>() {
+                        new ServerRequestCallback<VoidResponse>() {
                            @Override
-                           public void onResponseReceived(Void response)
+                           public void onResponseReceived(VoidResponse response)
                            {
                               indicator.onCompleted();
                               refreshPresentation();
@@ -397,9 +397,9 @@ public class Presentation extends BasePresenter
             0,
             constants_.closingPresentationProgressMessage()).getIndicator();
       
-      server_.closePresentationPane(new ServerRequestCallback<Void>(){
+      server_.closePresentationPane(new ServerRequestCallback<VoidResponse>(){
          @Override
-         public void onResponseReceived(Void resp)
+         public void onResponseReceived(VoidResponse resp)
          {
             reloadWorkbench();
          }

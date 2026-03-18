@@ -12,12 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.chat.server;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -38,15 +38,14 @@ public interface ChatServerOperations
    public void chatGetBackendStatus(ServerRequestCallback<JsObject> requestCallback);
    public void chatGetVersion(ServerRequestCallback<String> requestCallback);
 
-   public void chatCheckForUpdates(ServerRequestCallback<JsObject> requestCallback);
    public void chatCheckForUpdates(boolean forceRecheck,
                                    ServerRequestCallback<JsObject> requestCallback);
-   public void chatInstallUpdate(ServerRequestCallback<Void> requestCallback);
+   public void chatInstallUpdate(ServerRequestCallback<VoidResponse> requestCallback);
    public void chatGetUpdateStatus(ServerRequestCallback<JsObject> requestCallback);
 
-   public void chatDocFocused(String documentId, ServerRequestCallback<Void> requestCallback);
+   public void chatDocFocused(String documentId, ServerRequestCallback<VoidResponse> requestCallback);
    public void chatDocFocused(String documentId, JsArray<JavaScriptObject> selections,
-                              ServerRequestCallback<Void> requestCallback);
+                              ServerRequestCallback<VoidResponse> requestCallback);
 
-   public void chatNotifyUILoaded(ServerRequestCallback<Void> requestCallback);
+   public void chatNotifyUILoaded(ServerRequestCallback<VoidResponse> requestCallback);
 }

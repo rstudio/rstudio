@@ -15,11 +15,11 @@
 package org.rstudio.studio.client.workbench.views.choosefile.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 public interface ChooseFileServerOperations extends FilesServerOperations
 {
    void chooseFileCompleted(String file, 
-                            ServerRequestCallback<Void> requestCallback);
+                            ServerRequestCallback<VoidResponse> requestCallback);
 }

@@ -100,4 +100,12 @@ public class RProjectOptions extends JavaScriptObject
    public native final JsObject getLocalProjectPrefs() /*-{
       return this.local_prefs || {};
    }-*/;
+
+   public native final String getTrustStatus() /*-{
+      return this.trust_status || "default";
+   }-*/;
+
+   public native final void setTrustStatus(String status) /*-{
+      this.trust_status = status;
+   }-*/;
 }

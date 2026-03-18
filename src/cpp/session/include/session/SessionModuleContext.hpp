@@ -154,6 +154,10 @@ std::string rLocalHelpPort();
 // get current libpaths
 std::vector<core::FilePath> getLibPaths();
 
+// would the workspace (.RData) be restored for the current session?
+// follows the fallback chain: session option > project setting > user pref
+bool restoreWorkspaceEnabled();
+
 // is the packages pane disabled
 bool disablePackages();
 

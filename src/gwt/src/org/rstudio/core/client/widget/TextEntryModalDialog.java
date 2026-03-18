@@ -44,6 +44,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
                                Operation cancelOperation)
    {
       super(title, Roles.getDialogRole(), okOperation, cancelOperation);
+      setThemeAware(true);
       type_ = type;
       selectionIndex_ = selectionIndex;
       selectionLength_ = selectionLength;

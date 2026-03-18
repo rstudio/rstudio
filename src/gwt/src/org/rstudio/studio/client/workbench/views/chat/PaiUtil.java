@@ -42,8 +42,18 @@ public class PaiUtil
       // Listen for project options changes to keep cache updated
       events.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
-         projectOptions_ = event.getData().getAssistantOptions();
+         updateProjectOptions(event.getData().getAssistantOptions());
       });
+   }
+
+   /**
+    * Updates the cached project options. Call this before reading the
+    * configured provider when handling ProjectOptionsChangedEvent, to
+    * avoid depending on EventBus handler registration order.
+    */
+   public void updateProjectOptions(RProjectAssistantOptions options)
+   {
+      projectOptions_ = options;
    }
 
    /**

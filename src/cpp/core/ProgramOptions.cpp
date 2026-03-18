@@ -148,6 +148,10 @@ bool parseConfigFile(variables_map& vm,
 
       try
       {
+#ifdef RSTUDIO_DEVELOPMENT_BUILD
+         std::cerr << "-- Reading config file: " << configFile << std::endl;
+#endif
+
          // parse config file
          store(parse_config_file(*pIfs, optionsDescription.configFile, allowUnregisteredConfigOptions), vm);
          notify(vm);

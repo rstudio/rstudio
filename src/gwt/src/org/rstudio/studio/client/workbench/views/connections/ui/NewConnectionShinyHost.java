@@ -31,7 +31,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -88,9 +88,9 @@ public class NewConnectionShinyHost extends Composite
    private void terminateShinyApp(final Operation operation)
    {
       shinyServer_.stopShinyApp(ShinyApplicationParams.ID_FOREGROUND,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<VoidResponse>()
       {
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             operation.execute();
          }
@@ -139,10 +139,10 @@ public class NewConnectionShinyHost extends Composite
          public void execute()
          {
             // initialize miniUI
-            server_.launchEmbeddedShinyConnectionUI(info.getPackage(), info.getName(), new ServerRequestCallback<RResult<Void>>()
+            server_.launchEmbeddedShinyConnectionUI(info.getPackage(), info.getName(), new ServerRequestCallback<RResult<VoidResponse>>()
             {
                @Override
-               public void onResponseReceived(RResult<Void> response)
+               public void onResponseReceived(RResult<VoidResponse> response)
                {
                   if (response.failed()) {
                      showError(response.errorMessage());

@@ -25,7 +25,7 @@ import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -134,10 +134,10 @@ public class LintManager
       };
 
       // Background linting
-      releaseOnDismiss.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      releaseOnDismiss.add(docDisplay_.addValueChangeHandler(new ValueChangeHandler<VoidResponse>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onValueChange(ValueChangeEvent<VoidResponse> event)
          {
             if (!userPrefs_.backgroundDiagnostics().getValue())
                return;

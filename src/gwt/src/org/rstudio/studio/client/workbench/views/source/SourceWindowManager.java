@@ -56,7 +56,7 @@ import org.rstudio.studio.client.events.SaveDocumentEvent;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.MainWindowObject;
@@ -1300,10 +1300,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
 
       // update the doc window ID on the server
       server_.modifyDocumentProperties(docId,
-             props, new ServerRequestCallback<Void>()
+             props, new ServerRequestCallback<VoidResponse>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(VoidResponse v)
                {
                   if (onComplete != null)
                      onComplete.execute();

@@ -16,7 +16,6 @@
 
 package org.rstudio.studio.client.common.debugging;
 
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -26,6 +25,7 @@ import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.server.QuietServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -123,7 +123,7 @@ public class ErrorManager
 
    public void setDebugSessionHandlerType(
          String type,
-         final ServerRequestCallback<Void> callback)
+         final ServerRequestCallback<VoidResponse> callback)
    {
       if (StringUtil.equals(type, errorManagerState_.getErrorHandlerType()))
       {
@@ -133,10 +133,10 @@ public class ErrorManager
          return;
       }
 
-      setErrorManagementType(type, new ServerRequestCallback<Void>()
+      setErrorManagementType(type, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             previousHandlerType_ = errorManagerState_.getErrorHandlerType();
             debugHandlerState_ = DebugHandlerState.Pending;
@@ -169,7 +169,7 @@ public class ErrorManager
 
    private void setErrorManagementType(
          String type,
-         ServerRequestCallback<Void> callback)
+         ServerRequestCallback<VoidResponse> callback)
    {
       server_.setErrorManagementType(type, callback);
    }

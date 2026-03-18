@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.chat;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -157,6 +158,7 @@ public class ChatPresenter extends BasePresenter
       paiUtil_ = paiUtil;
       prefs_ = prefs;
       installManager_ = new PositAiInstallManager();
+      lastEffectiveChatProvider_ = paiUtil_.getConfiguredChatProvider();
       satelliteManager_ = satelliteManager;
       paneManager_ = paneManager;
 
@@ -191,6 +193,8 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onRetryManifest()
          {
+            if (initializing_)
+               return;
             initializing_ = true;
             checkForUpdates(true);
          }
@@ -319,9 +323,12 @@ public class ChatPresenter extends BasePresenter
          onChatProviderChanged();
       });
 
-      // Listen for project options changes (project-level setting)
+      // Listen for project options changes (project-level setting).
+      // Explicitly update PaiUtil's cache before reading the provider so
+      // we don't depend on EventBus handler registration order.
       events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
       {
+         paiUtil_.updateProjectOptions(event.getData().getAssistantOptions());
          onChatProviderChanged();
       });
 
@@ -441,6 +448,8 @@ public class ChatPresenter extends BasePresenter
             commands_.showAssistantOptions().execute();
             break;
          case "retry-manifest":
+            if (initializing_)
+               break;
             initializing_ = true;
             checkForUpdates(true);
             break;
@@ -657,6 +666,11 @@ public class ChatPresenter extends BasePresenter
     */
    private void onChatProviderChanged()
    {
+      String currentProvider = paiUtil_.getConfiguredChatProvider();
+      if (StringUtil.equals(currentProvider, lastEffectiveChatProvider_))
+         return;
+      lastEffectiveChatProvider_ = currentProvider;
+
       if (paiUtil_.isChatProviderPosit())
       {
          // Prevent concurrent initialization
@@ -1117,6 +1131,9 @@ public class ChatPresenter extends BasePresenter
 
    // Guard against concurrent initialization (multiple polling loops)
    private boolean initializing_ = false;
+
+   // Last effective chat provider, used to suppress spurious change events
+   private String lastEffectiveChatProvider_;
 
    // Satellite pop-out state
    private boolean windowsClosing_ = false;
