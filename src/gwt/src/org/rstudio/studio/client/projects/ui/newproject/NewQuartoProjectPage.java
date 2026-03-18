@@ -21,6 +21,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -199,6 +200,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       if (quartoCaps_ != null)
          return;
 
+      // Cancel any in-flight request from a previous activation
+      if (capabilitiesCallback_ != null)
+         capabilitiesCallback_.cancel();
+      if (capabilitiesTimeout_ != null)
+         capabilitiesTimeout_.cancel();
+
       indicator.onProgress(constants_.loadingCapabilitiesLabel());
 
       capabilitiesCallback_ = new ServerRequestCallback<QuartoCapabilities>()
@@ -222,6 +229,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             capabilitiesTimeout_.cancel();
             if (!cancelled())
             {
+               Debug.logError(error);
                indicator.onProgress(null);
                populateKernels();
                manageControls();
@@ -322,7 +330,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private HorizontalPanel venvPanel_;
    private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
-   private QuartoCapabilities quartoCaps_ = null;
+   private static QuartoCapabilities quartoCaps_ = null;
    private ServerRequestCallback<QuartoCapabilities> capabilitiesCallback_;
    private Timer capabilitiesTimeout_;
 
