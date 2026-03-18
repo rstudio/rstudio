@@ -148,20 +148,13 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
    auto rhs = pOutput->cend();
 
    // Skip over an 'In addition: ' prefix, if there is one.
-   // Track where the group should start (at the "In addition:" prefix,
-   // or at the warning prefix if there is no "In addition:").
-   std::string::difference_type groupStart = 0;
    if (regex_utils::search(lhs, rhs, match, reInAdditionPrefix()))
    {
-      groupStart = match.position();
       offset = match.position() + match.length();
    }
 
    if (regex_utils::search(lhs + offset, rhs, match, reWarningPrefix()))
    {
-      if (offset == 0)
-         groupStart = match.position();
-
       // Check for a match in one of our capturing groups.
       for (int i = 1; i < (int) match.size(); i++)
       {
@@ -178,7 +171,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
 
       // Insert our group markers at the match position, so that any
       // preceding text in the output is not included in the group.
-      pOutput->insert(groupStart, kAnsiEscapeGroupStartWarning);
+      pOutput->insert(offset + match.position(), kAnsiEscapeGroupStartWarning);
       pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)
