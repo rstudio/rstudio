@@ -60,6 +60,12 @@ withr::defer(.rs.automation.deleteRemote())
       "document.querySelector('#rstudio_Sidebar_pane iframe')._bratReloadCount")
    expect_equal(reloadCount, 0L,
                 info = "Chat iframe should not reload when options dismissed without changes")
+
+   # Close the sidebar to restore default layout
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
 })
 
 .rs.test("Posit Assistant pane survives R session restart", {
