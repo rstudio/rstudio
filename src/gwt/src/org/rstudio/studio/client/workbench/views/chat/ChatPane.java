@@ -288,6 +288,13 @@ public class ChatPane
       currentContent_ = html;
       currentUrl_ = null;
 
+      // Remove suspended overlay if present — new content needs to be
+      // visible and interactive (e.g., error messages with retry buttons).
+      if (suspendedOverlay_.getParent() == mainPanel_)
+      {
+         mainPanel_.remove(suspendedOverlay_);
+      }
+
       // Force a complete iframe reload by navigating to about:blank first
       // This kills the existing JavaScript context (stops WebSocket reconnection attempts)
 
