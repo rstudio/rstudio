@@ -515,6 +515,8 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      wrapWithPanel("assistant_prefs");
    }
 
    private VerticalPanel createNonePanel()

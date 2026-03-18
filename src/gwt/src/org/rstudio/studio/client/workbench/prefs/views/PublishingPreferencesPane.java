@@ -239,6 +239,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(spacedBefore(new HelpLink(constants_.helpLinkTroubleshooting(),
             "troubleshooting_deployments")));
 
+      wrapWithPanel("publishing_prefs");
+
       server_.hasOrphanedAccounts(new ServerRequestCallback<Double>()
       {
          @Override

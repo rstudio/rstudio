@@ -87,6 +87,8 @@ public class SweavePreferencesPane extends PreferencesPane
             constants_.alwaysEnableRnwConcordanceLabel(),
             prefs_.alwaysEnableRnwConcordance(),
             false /*defaultSpaces*/)));
+
+      wrapWithPanel("sweave_prefs");
    }
 
    private class PdfPreviewSelectWidget extends SelectWidget

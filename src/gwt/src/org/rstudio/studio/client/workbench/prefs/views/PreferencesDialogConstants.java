@@ -25,6 +25,7 @@ public class PreferencesDialogConstants
    public static final int PANEL_CONTAINER_WIDTH  = 640;
    public static final int PANEL_CONTAINER_HEIGHT = 580;
    public static final int SECTION_CHOOSER_WIDTH = 132;
+   public static final int SECTION_CHOOSER_PADDING = 10;
    public static final int PANE_CONTAINER_WIDTH = PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH;
 
    // Width of the panel container when the section chooser is not shown, e.g.
@@ -44,5 +45,26 @@ public class PreferencesDialogConstants
    public static final String panelContainerWidthNoChooser()
    {
       return PANEL_CONTAINER_WIDTH_NO_CHOOSER + "px";
+   }
+
+   // Project preferences dialog dimensions
+   public static final int PROJECT_PANEL_CONTAINER_WIDTH  = 555;
+   public static final int PROJECT_PANEL_CONTAINER_HEIGHT = 445;
+   public static final int PROJECT_PANEL_CONTAINER_WIDTH_NO_CHOOSER =
+         PROJECT_PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH + SECTION_CHOOSER_PADDING;
+
+   public static final String projectPanelContainerWidth()
+   {
+      return PROJECT_PANEL_CONTAINER_WIDTH + "px";
+   }
+
+   public static final String projectPanelContainerHeight()
+   {
+      return PROJECT_PANEL_CONTAINER_HEIGHT + "px";
+   }
+
+   public static final String projectPanelContainerWidthNoChooser()
+   {
+      return PROJECT_PANEL_CONTAINER_WIDTH_NO_CHOOSER + "px";
    }
 }

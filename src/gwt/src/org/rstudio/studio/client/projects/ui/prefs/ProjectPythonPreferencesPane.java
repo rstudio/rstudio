@@ -16,7 +16,9 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
+import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.views.PythonDialogResources;
@@ -33,6 +35,8 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
                                        PythonServerOperations server)
    {
       super("380px", constants_.useDefaultText(), true);
+
+      wrapWithPanel("project_python_prefs");
    }
 
    @Override
@@ -54,6 +58,16 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
          config.setPythonPath(interpreter.getPath());
       });
    }
+   @Override
+   public void setTabPanelSize(DialogTabLayoutPanel panel)
+   {
+      int width = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_WIDTH
+            - PreferencesDialogConstants.SECTION_CHOOSER_PADDING;
+      int height = PreferencesDialogConstants.PROJECT_PANEL_CONTAINER_HEIGHT;
+      panel.setSize(width + "px", height + "px");
+   }
+
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

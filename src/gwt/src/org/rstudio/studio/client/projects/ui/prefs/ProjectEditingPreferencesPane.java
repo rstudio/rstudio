@@ -147,6 +147,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
 
       add(encoding_);
 
+      wrapWithPanel("project_editing_prefs");
    }
 
    @Override

@@ -167,6 +167,7 @@ public interface ThemeStyles extends CssResource
    String notResizable();
 
    String dialogTabPanel();
+   String dialogTabPanelNoTabs();
 
    String handCursor();
 

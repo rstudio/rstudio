@@ -57,6 +57,8 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       });
       projectPrefsPanel_.add(editProjectSettings);
       add(projectPrefsPanel_);
+
+      wrapWithPanel("python_prefs");
    }
 
    @Override
