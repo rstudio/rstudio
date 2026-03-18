@@ -29,6 +29,7 @@ import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
@@ -46,6 +47,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -136,16 +138,22 @@ public abstract class ModalDialogBase extends DialogBox
       if (themeAware)
       {
          addStyleName("rstudio-theme-aware-dialog");
-
-         Element container = Document.get().getElementById("rstudio_container");
-         if (container != null && container.hasClassName("rstudio-themes-dark"))
-            addStyleName("rstudio-themes-dark");
+         syncDarkThemeClass();
       }
       else
       {
          removeStyleName("rstudio-theme-aware-dialog");
          removeStyleName("rstudio-themes-dark");
       }
+   }
+
+   private void syncDarkThemeClass()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      if (container != null && container.hasClassName("rstudio-themes-dark"))
+         addStyleName("rstudio-themes-dark");
+      else
+         removeStyleName("rstudio-themes-dark");
    }
 
    protected void hideButtons()
@@ -183,8 +191,16 @@ public abstract class ModalDialogBase extends DialogBox
       {
       }
 
-      if (!themeAware_)
+      if (themeAware_)
+      {
+         themeChangedReg_ = RStudioGinjector.INSTANCE.getEventBus().addHandler(
+            EditorThemeChangedEvent.TYPE,
+            event -> syncDarkThemeClass());
+      }
+      else
+      {
          RStudioThemes.disableDarkMenus();
+      }
    }
 
    @Override
@@ -195,6 +211,12 @@ public abstract class ModalDialogBase extends DialogBox
       shortcutDisableHandle_ = null;
 
       ModalDialogTracker.onHide(this);
+
+      if (themeChangedReg_ != null)
+      {
+         themeChangedReg_.removeHandler();
+         themeChangedReg_ = null;
+      }
 
       if (!themeAware_)
          RStudioThemes.enableDarkMenus();
@@ -897,6 +919,7 @@ public abstract class ModalDialogBase extends DialogBox
 
    private boolean escapeDisabled_ = false;
    private boolean themeAware_ = false;
+   private HandlerRegistration themeChangedReg_;
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
