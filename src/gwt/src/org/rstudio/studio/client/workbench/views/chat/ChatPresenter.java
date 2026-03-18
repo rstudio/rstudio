@@ -290,13 +290,21 @@ public class ChatPresenter extends BasePresenter
 
                // Any pre-suspend initialization is stale — the server process
                // restarted, so all in-flight RPCs are dead. Reset the guard.
+               boolean wasInitializing = initializing_;
                initializing_ = false;
 
-               // If the chat UI was never successfully loaded, there's nothing
-               // to resume. Normal initialization (via onPaneReady or user
-               // interaction) will handle first-time startup.
                if (cachedUrl_ == null)
                {
+                  // If startup was in progress pre-suspend (URL not cached
+                  // yet), the generation bump killed the old poll chain.
+                  // Re-trigger full initialization so the user isn't stuck
+                  // on a "Starting..." screen. If chat was never started
+                  // (e.g. sidebar hidden), wasInitializing is false and
+                  // normal onPaneReady initialization handles first startup.
+                  if (wasInitializing)
+                  {
+                     initializeChat();
+                  }
                   return;
                }
 
