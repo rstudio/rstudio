@@ -171,7 +171,7 @@ void annotateWarning(std::string* pOutput, bool allowGroupAll)
 
       // Insert our group markers at the match position, so that any
       // preceding text in the output is not included in the group.
-      pOutput->insert(offset + match.position(), kAnsiEscapeGroupStartWarning);
+      pOutput->insert(match.position() + offset, kAnsiEscapeGroupStartWarning);
       pOutput->append(kAnsiEscapeGroupEnd);
    }
    else if (allowGroupAll)
