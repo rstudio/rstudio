@@ -1,4 +1,9 @@
 @external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
 .smallButton {
    display: block;
@@ -51,6 +56,16 @@ button.smallButton:active > table:first-child {
 .rstudio-themes-dark button.smallButton > table:first-child {
    border-color: rgb(45,60,75);
    background: rgb(145,154,161);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.smallButton > table:first-child {
+   background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   box-shadow: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog button.smallButton:active > table:first-child {
+   background: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-dark .buttonContent {

@@ -66,6 +66,7 @@
 @external rstudio-theme-aware-dialog;
 @external rstudio-lock-keyhole;
 @external rstudio-trust-detail;
+@external rstudio-HyperlinkLabel;
 
 @external rstudio-animating;
 
@@ -98,6 +99,7 @@
 
 @eval THEME_DARK_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkControlBackground;
 @eval THEME_DARK_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.darkControlBorder;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
 @eval THEME_DEFAULT_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBodyBackground;
 @eval THEME_DARKGREY_BODY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBodyBackground;
@@ -2184,6 +2186,10 @@ input[type="checkbox"]:checked:before {
    padding-bottom: 6px;
 }
 
+.dialogTabPanelNoTabs .gwt-TabLayoutPanelContent {
+   padding-top: 14px;
+}
+
 .dialogTabPanel .gwt-TabLayoutPanelTab:first-child {
    -webkit-border-top-left-radius: 4px;
    -webkit-border-bottom-left-radius: 4px;
@@ -2487,11 +2493,17 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="text"],
-.rstudio-themes-dark.rstudio-theme-aware-dialog textarea,
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="number"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog textarea {
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog select,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-ListBox {
-   background: THEME_DARK_CONTROL_BACKGROUND;
-   border-color: THEME_DARK_CONTROL_BORDER;
+   background: THEME_DARKGREY_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
    color: #eee;
 }
 
@@ -2500,14 +2512,14 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child {
-   background: THEME_DARKGREY_INACTIVE;
+   background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
    box-shadow: none;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button:active > table:first-child {
-   background: THEME_DARKGREY_MOST_INACTIVE;
+   background: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog button[disabled] .buttonContent {
@@ -2532,6 +2544,25 @@ input[type="checkbox"]:checked:before {
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-trust-detail {
    color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelTab {
+   background: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelTab-selected {
+   background: THEME_DARKGREY_INACTIVE;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialogTabPanel .gwt-TabLayoutPanelContentContainer {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .rstudio-HyperlinkLabel {
+   color: #6cb4ee;
 }
 
 .rstheme_minimizedWindowObject .left {

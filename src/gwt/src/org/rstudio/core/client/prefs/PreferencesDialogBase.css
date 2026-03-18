@@ -1,4 +1,10 @@
 @external gwt-CheckBox, gwt-RadioButton, gwt-Label;
+@external rstudio-themes-dark, rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 
 .preferencesDialog .gwt-CheckBox,
 .preferencesDialog .gwt-RadioButton {
@@ -98,4 +104,15 @@
 
 .extraSpacedBefore {
 	margin-top: 12px;
+}
+
+/* Dark theme ---- */
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .sectionChooser {
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .activeSection {
+   background: THEME_DARKGREY_INACTIVE;
 }
