@@ -21,6 +21,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
@@ -36,6 +37,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -126,7 +128,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       kernelSelect_.getElement().addClassName(
             NewProjectResources.INSTANCE.styles().quartoEngineSelect());
       panel.add(kernelSelect_);
-      
+
       addWidget(panel);
    
    }
@@ -161,11 +163,11 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
    }
    
-   @Override 
+   @Override
    protected void initialize(NewProjectInput input)
    {
       super.initialize(input);
-      
+
       // set type
       if (fixedProjectType_ != null)
       {
@@ -175,44 +177,74 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       {
          projectTypeSelect_.setValue(lastOptions_.getType());
       }
-      
+
       // set engine
       engineSelect_.setValue(lastOptions_.getEngine());
       engineSelect_.addChangeHandler((event) -> {
          manageControls();
       });
-      
-      // fetch capabilities asynchronously to avoid blocking the dialog
-      RStudioGinjector.INSTANCE.getServer().quartoCapabilities(
-         new ServerRequestCallback<QuartoCapabilities>()
-         {
-            @Override
-            public void onResponseReceived(QuartoCapabilities caps)
-            {
-               quartoCaps_ = caps;
-               populateKernels();
-               manageControls();
-            }
 
-            @Override
-            public void onError(ServerError error)
-            {
-               // leave defaults in place if capabilities fetch fails
-               populateKernels();
-               manageControls();
-            }
-         });
-   
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
       chkUseCondaenv_.setValue(canUseCondaenv() && !StringUtil.isNullOrEmpty(lastOptions_.getCondaenv()));
       txtVenvPackages_.setValue(lastOptions_.getPackages());
-      
+
       chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
-      
+
       manageControls();
-      
    }
-   
+
+   @Override
+   public void onActivate(ProgressIndicator indicator)
+   {
+      if (quartoCaps_ != null)
+         return;
+
+      indicator.onProgress(constants_.loadingCapabilitiesLabel());
+
+      capabilitiesCallback_ = new ServerRequestCallback<QuartoCapabilities>()
+      {
+         @Override
+         public void onResponseReceived(QuartoCapabilities caps)
+         {
+            capabilitiesTimeout_.cancel();
+            if (!cancelled())
+            {
+               quartoCaps_ = caps;
+               indicator.onProgress(null);
+               populateKernels();
+               manageControls();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            capabilitiesTimeout_.cancel();
+            if (!cancelled())
+            {
+               indicator.onProgress(null);
+               populateKernels();
+               manageControls();
+            }
+         }
+      };
+
+      capabilitiesTimeout_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            capabilitiesCallback_.cancel();
+            indicator.onProgress(null);
+            populateKernels();
+            manageControls();
+         }
+      };
+      capabilitiesTimeout_.schedule(CAPABILITIES_TIMEOUT_MS);
+
+      RStudioGinjector.INSTANCE.getServer().quartoCapabilities(capabilitiesCallback_);
+   }
+
    private void populateKernels()
    {
       JsArray<QuartoJupyterKernel> kernels = quartoCaps_ == null ?
@@ -291,8 +323,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
    private QuartoCapabilities quartoCaps_ = null;
+   private ServerRequestCallback<QuartoCapabilities> capabilitiesCallback_;
+   private Timer capabilitiesTimeout_;
 
-   
+   private static final int CAPABILITIES_TIMEOUT_MS = 30000;
+
+
    private class ClientStateValue extends JSObjectStateValue
    {
       public ClientStateValue()
