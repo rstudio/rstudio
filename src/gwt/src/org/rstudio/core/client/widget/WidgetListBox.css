@@ -52,3 +52,23 @@
    color: #737373;
    text-align: center;
 }
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .scrollPanel
+{
+   background-color: rgb(57, 67, 75);
+   border-color: rgb(12, 31, 48);
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .selectedItem
+{
+   background-color: rgba(255, 255, 255, 0.15);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .emptyMessage
+{
+   color: #999;
+}
