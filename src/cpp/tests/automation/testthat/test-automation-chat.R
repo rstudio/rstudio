@@ -10,6 +10,16 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("Chat pane does not refresh when Global Options dismissed without changes", {
    skip_on_ci()
 
+   # Ensure sidebar is closed on exit, even if the test fails
+   withr::defer({
+      if (remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+         remote$commands.execute("toggleSidebar")
+         .rs.waitUntil("sidebar hidden", function() {
+            !remote$dom.elementExists("#rstudio_Sidebar_pane")
+         })
+      }
+   })
+
    # Ensure the sidebar is visible so the chat pane is showing
    if (!remote$dom.elementExists("#rstudio_Sidebar_pane")) {
       remote$commands.execute("toggleSidebar")
@@ -60,16 +70,20 @@ withr::defer(.rs.automation.deleteRemote())
       "document.querySelector('#rstudio_Sidebar_pane iframe')._bratReloadCount")
    expect_equal(reloadCount, 0L,
                 info = "Chat iframe should not reload when options dismissed without changes")
-
-   # Close the sidebar to restore default layout
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar hidden", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
 })
 
 .rs.test("Posit Assistant pane survives R session restart", {
    skip_on_ci()
+
+   # Ensure sidebar is closed on exit, even if the test fails
+   withr::defer({
+      if (remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+         remote$commands.execute("toggleSidebar")
+         .rs.waitUntil("sidebar hidden", function() {
+            !remote$dom.elementExists("#rstudio_Sidebar_pane")
+         })
+      }
+   })
 
    # 1. Show the sidebar
    if (!remote$dom.elementExists("#rstudio_Sidebar_pane")) {
@@ -134,10 +148,4 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(is.null(button))
    expect_equal(button$innerText, "Install Posit AI")
    expect_false(button$disabled)
-
-   # 6. Close the sidebar
-   remote$commands.execute("toggleSidebar")
-   .rs.waitUntil("sidebar hidden", function() {
-      !remote$dom.elementExists("#rstudio_Sidebar_pane")
-   })
 })
