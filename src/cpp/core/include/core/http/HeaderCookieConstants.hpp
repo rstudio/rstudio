@@ -35,6 +35,8 @@ constexpr const char* kOldCSRFTokenHeader = "X-CSRF-Token";
 // =================================================================================================
 
 // Header Constants ================================================================================
+constexpr const char* kCSRFBypassHeader = "X-RS-CSRF-Bypass";
+constexpr const char* kCSRFBypassSigHeader = "X-RS-CSRF-Bypass-Sig";
 constexpr const char* kCSRFTokenHeader = "X-RS-CSRF-Token";
 constexpr const char* kPostbackExitCodeHeader = "X-Postback-ExitCode";
 constexpr const char* kRStudioRpcCookieHeader = "X-RS-Session-Server-RPC-Cookie";

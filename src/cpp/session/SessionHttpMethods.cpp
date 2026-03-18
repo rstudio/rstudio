@@ -136,11 +136,32 @@ bool parseAndValidateJsonRpcConnection(
    if (options().programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
-      LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
-            "mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
-            std::string(kCSRFTokenHeader) + " header");
-      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
-      return false;
+      // CSRF validation failed - check for a signed server bypass header.
+      // Server-originated requests (session reaper, workbench API) may not have
+      // browser CSRF tokens but carry a signed bypass header instead.
+      std::string bypassInfo;
+      bool bypassed = false;
+#ifdef RSTUDIO_SERVER
+      if (options().verifySignatures() && !options().signingKey().empty())
+      {
+         Error bypassError = server_core::sessions::verifyCSRFBypass(
+             options().signingKey(), ptrConnection->request(), &bypassInfo);
+         if (!bypassError)
+         {
+            bypassed = true;
+            LOG_DEBUG_MESSAGE("CSRF bypassed for '" + ptrConnection->request().uri() +
+                              "' by signed server request (" + bypassInfo + ")");
+         }
+      }
+#endif
+      if (!bypassed)
+      {
+         LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
+               "mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
+               std::string(kCSRFTokenHeader) + " header");
+         ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+         return false;
+      }
    }
 
    // check for invalid client id - must match, unless it's rserver using quit session from the homepage (no client id in that case)
