@@ -9,3 +9,13 @@
    overflow: hidden;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .checkBoxList
+{
+   background-color: rgb(57, 67, 75);
+   border-color: rgb(12, 31, 48);
+   color: #eee;
+}
+
