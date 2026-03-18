@@ -723,14 +723,6 @@ public class UserStateAccessor extends Prefs
    {
       protected PositAssistant() {} 
 
-      public final native String getLastUpdateCheck() /*-{
-         return this && this.lastUpdateCheck || "";
-      }-*/;
-
-      public final native String getRstudioVersionChecked() /*-{
-         return this && this.rstudioVersionChecked || "";
-      }-*/;
-
    }
 
    public void syncPrefs(String layer, JsObject source)

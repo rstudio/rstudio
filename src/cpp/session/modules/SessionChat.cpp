@@ -3357,113 +3357,6 @@ struct UpdateState
 UpdateState s_updateState;
 boost::mutex s_updateStateMutex;
 
-// Check if we should skip the update check due to throttling
-// Returns true if we should skip (recently checked with same RStudio version)
-//
-// NOTE: During development this delay is causing confusion. For now we will record
-// the update check time but skip the throttling so updates are checked every time.
-bool shouldSkipUpdateCheck()
-{
-   json::Object positAssistantState = prefs::userState().positAssistant();
-
-   // Check if RStudio version has changed since last check
-   auto versionIt = positAssistantState.find(kPositAssistantRstudioVersionChecked);
-   if (versionIt == positAssistantState.end())
-   {
-      DLOG("No previous RStudio version recorded, will check for updates");
-      return false;
-   }
-
-   std::string lastVersion = (*versionIt).getValue().getString();
-   if (lastVersion.empty() || lastVersion != std::string(RSTUDIO_VERSION))
-   {
-      DLOG("RStudio version changed ({} -> {}), will check for updates",
-           lastVersion, RSTUDIO_VERSION);
-      return false;
-   }
-
-   // Check timestamp of last update check
-   auto timestampIt = positAssistantState.find(kPositAssistantLastUpdateCheck);
-   if (timestampIt == positAssistantState.end())
-   {
-      DLOG("No previous update check timestamp, will check for updates");
-      return false;
-   }
-
-   std::string lastCheckStr = (*timestampIt).getValue().getString();
-   if (lastCheckStr.empty())
-   {
-      DLOG("Empty update check timestamp, will check for updates");
-      return false;
-   }
-
-   return false;  // Temporarily disable throttling during development
-
-   // FUTURE: Re-enable throttling after testing
-   // Parse the timestamp and check if an hour has passed
-   // try
-   // {
-   //    boost::posix_time::ptime lastCheck =
-   //       boost::posix_time::from_iso_string(lastCheckStr);
-   //    boost::posix_time::ptime now =
-   //       boost::posix_time::second_clock::universal_time();
-
-   //    boost::posix_time::time_duration elapsed = now - lastCheck;
-
-   //    // Handle clock skew: if elapsed time is negative, the stored timestamp
-   //    // is in the future. Don't skip in this case.
-   //    if (elapsed.is_negative())
-   //    {
-   //       DLOG("Update check timestamp is in the future (clock skew?), will check for updates");
-   //       return false;
-   //    }
-
-   //    // Skip if less than 10 minutes has passed
-   //    if (elapsed.total_seconds() < 600)
-   //    {
-   //       DLOG("Update check throttled: only {} minutes since last check",
-   //            elapsed.total_seconds() / 60);
-   //       return true;
-   //    }
-
-   //    DLOG("Over 10 minutes since last update check, will check for updates");
-   //    return false;
-   // }
-   // catch (const std::exception& e)
-   // {
-   //    WLOG("Failed to parse update check timestamp '{}': {}",
-   //         lastCheckStr, e.what());
-   //    return false;
-   // }
-}
-
-// Save the update check state (timestamp and RStudio version)
-void saveUpdateCheckState()
-{
-   json::Object positAssistantState = prefs::userState().positAssistant();
-
-   // Store current UTC time as ISO string
-   boost::posix_time::ptime now =
-      boost::posix_time::second_clock::universal_time();
-   positAssistantState[kPositAssistantLastUpdateCheck] =
-      boost::posix_time::to_iso_string(now);
-
-   // Store current RStudio version
-   positAssistantState[kPositAssistantRstudioVersionChecked] =
-      std::string(RSTUDIO_VERSION);
-
-   Error error = prefs::userState().setPositAssistant(positAssistantState);
-   if (error)
-   {
-      WLOG("Failed to save update check state: {}", error.getMessage());
-   }
-   else
-   {
-      DLOG("Saved update check state: timestamp={}, version={}",
-           boost::posix_time::to_iso_string(now), RSTUDIO_VERSION);
-   }
-}
-
 // Validate that a URL uses HTTPS protocol
 bool isHttpsUrl(const std::string& url)
 {
@@ -4173,6 +4066,7 @@ void doUpdateCheck()
       s_updateState.unsupportedInstalledVersion = false;
       s_updateState.unsupportedProtocol = false;
       s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
 
    // Download manifest
@@ -4184,6 +4078,7 @@ void doUpdateCheck()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return;
@@ -4200,6 +4095,7 @@ void doUpdateCheck()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return;
@@ -4295,24 +4191,17 @@ Error checkForUpdatesOnStartup()
       installedVersion = "0.0.0";
    }
 
+   // Reset blocking flags from any previous check before starting fresh
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
-
-   // Check if we should skip due to throttling
-   // Skip check if:
-   // - Posit Assistant IS installed (version != "0.0.0")
-   // - AND RStudio version hasn't changed
-   // - AND less than 10 minutes since last check
-   if (installedVersion != "0.0.0" && shouldSkipUpdateCheck())
-   {
-      DLOG("Update check skipped: throttled (checked within last 10 minutes)");
-      return Success();
-   }
-
-   // Record that we attempted an update check (prevents hammering server on failures)
-   saveUpdateCheckState();
 
    // Download manifest
    json::Object manifest;
@@ -4323,6 +4212,7 @@ Error checkForUpdatesOnStartup()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return Success();
@@ -4332,6 +4222,7 @@ Error checkForUpdatesOnStartup()
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
       s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
    }
 
    // Check for unsupported versions/protocols
@@ -4345,6 +4236,7 @@ Error checkForUpdatesOnStartup()
       {
          boost::mutex::scoped_lock lock(s_updateStateMutex);
          s_updateState.manifestUnavailable = true;
+         s_updateState.errorMessage = error.getMessage();
       }
       assistant::stopAgentForUpdate();
       return Success();
@@ -5138,15 +5030,25 @@ Error chatGetVersion(const json::JsonRpcRequest& request,
 Error chatCheckForUpdates(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   // Perform on-demand update check if state hasn't been populated yet.
+   // Check if a forced recheck was requested (e.g. user clicked Retry)
+   bool forceRecheck = false;
+   if (request.params.getSize() > 0)
+   {
+      Error error = json::readParam(request.params, 0, &forceRecheck);
+      if (error)
+         return error;
+   }
+
+   // Perform on-demand update check if state hasn't been populated yet,
+   // or if the caller explicitly requested a recheck.
    // This happens when user selects Posit AI in Preferences before the pref is saved.
    // We allow the check regardless of isPositAiWanted() since checking for available
    // updates doesn't require the preference - only actual installation does.
    {
       boost::mutex::scoped_lock lock(s_updateStateMutex);
-      if (s_updateState.currentVersion.empty())
+      if (s_updateState.currentVersion.empty() || forceRecheck)
       {
-         DLOG("Update state not populated, performing on-demand check");
+         DLOG("Update state not populated or recheck forced, performing on-demand check");
          lock.unlock();
          doUpdateCheck();
       }
@@ -5161,6 +5063,7 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
    result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
    result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
    result["manifestUnavailable"] = s_updateState.manifestUnavailable;
+   result["errorMessage"] = s_updateState.errorMessage;
    result["currentVersion"] = s_updateState.currentVersion;
    result["newVersion"] = s_updateState.newVersion;
    result["downloadUrl"] = s_updateState.downloadUrl;

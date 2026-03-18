@@ -200,7 +200,7 @@ public class ChatSatelliteWindow extends SatelliteWindow
 
          var recognized = [
             'install-now', 'remind-later', 'restart-backend',
-            'open-global-options'
+            'open-global-options', 'retry-manifest'
          ];
          if (recognized.indexOf(event.data) !== -1) {
             self.@org.rstudio.studio.client.workbench.views.chat.ChatSatelliteWindow::onIframeAction(Ljava/lang/String;)(event.data);

@@ -78,6 +78,7 @@ public class ChatPresenter extends BasePresenter
       {
          void onPaneReady();
          void onRestartBackend();
+         void onRetryManifest();
          void onActivateChat();
          void onReturnChatToMain();
       }
@@ -108,7 +109,7 @@ public class ChatPresenter extends BasePresenter
       void showUnsupportedVersionUpgradeRequired(String currentVersion, String newVersion);
       void showUnsupportedVersionNoUpdate(String currentVersion);
       void showUnsupportedProtocol();
-      void showManifestUnavailable();
+      void showManifestUnavailable(String errorMessage);
       void showReadlineNotification();
       void hideReadlineNotification();
       void updateCachedUrl(String url);
@@ -124,7 +125,7 @@ public class ChatPresenter extends BasePresenter
          String currentVersion, String newVersion);
       String getUnsupportedVersionNoUpdateHTML(String currentVersion);
       String getUnsupportedProtocolHTML();
-      String getManifestUnavailableHTML();
+      String getManifestUnavailableHTML(String errorMessage);
       String getErrorHTML(String errorMessage);
    }
 
@@ -187,6 +188,15 @@ public class ChatPresenter extends BasePresenter
          public void onRestartBackend()
          {
             restartBackend();
+         }
+
+         @Override
+         public void onRetryManifest()
+         {
+            if (initializing_)
+               return;
+            initializing_ = true;
+            checkForUpdates(true);
          }
 
          @Override
@@ -436,6 +446,12 @@ public class ChatPresenter extends BasePresenter
             break;
          case "open-global-options":
             commands_.showAssistantOptions().execute();
+            break;
+         case "retry-manifest":
+            if (initializing_)
+               break;
+            initializing_ = true;
+            checkForUpdates(true);
             break;
          default:
             Debug.log("Unrecognized chat satellite action: " + action);
@@ -762,7 +778,12 @@ public class ChatPresenter extends BasePresenter
 
    private void checkForUpdates()
    {
-      installManager_.checkForUpdates(new PositAiInstallManager.UpdateCheckCallback()
+      checkForUpdates(false);
+   }
+
+   private void checkForUpdates(boolean forceRecheck)
+   {
+      installManager_.checkForUpdates(forceRecheck, new PositAiInstallManager.UpdateCheckCallback()
       {
          @Override
          public void onNoUpdateAvailable()
@@ -829,11 +850,11 @@ public class ChatPresenter extends BasePresenter
          }
 
          @Override
-         public void onManifestUnavailable()
+         public void onManifestUnavailable(String errorMessage)
          {
             showInDisplayOrSatellite(
-               display_.getManifestUnavailableHTML(),
-               () -> display_.showManifestUnavailable());
+               display_.getManifestUnavailableHTML(errorMessage),
+               () -> display_.showManifestUnavailable(errorMessage));
          }
 
          @Override

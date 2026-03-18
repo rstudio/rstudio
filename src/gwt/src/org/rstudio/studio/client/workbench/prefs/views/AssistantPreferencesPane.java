@@ -930,7 +930,7 @@ public class AssistantPreferencesPane extends PreferencesPane
          }
 
          @Override
-         public void onManifestUnavailable()
+         public void onManifestUnavailable(String errorMessage)
          {
             // Manifest unavailable - can't verify compatibility
             globalDisplay_.showErrorMessage(

@@ -85,7 +85,7 @@ public class PositAiInstallManager
        * Called when the manifest could not be downloaded (network error, missing file, etc.)
        * and Posit AI cannot verify compatibility.
        */
-      void onManifestUnavailable();
+      void onManifestUnavailable(String errorMessage);
 
       /**
        * Called when the update check failed (e.g., network error).
@@ -148,7 +148,13 @@ public class PositAiInstallManager
     */
    public void checkForUpdates(UpdateCheckCallback callback)
    {
-      chatServer_.chatCheckForUpdates(new ServerRequestCallback<JsObject>()
+      checkForUpdates(false, callback);
+   }
+
+   public void checkForUpdates(boolean forceRecheck,
+                                UpdateCheckCallback callback)
+   {
+      chatServer_.chatCheckForUpdates(forceRecheck, new ServerRequestCallback<JsObject>()
       {
          @Override
          public void onResponseReceived(JsObject result)
@@ -156,7 +162,9 @@ public class PositAiInstallManager
             boolean manifestUnavailable = result.getBoolean("manifestUnavailable");
             if (manifestUnavailable)
             {
-               callback.onManifestUnavailable();
+               String errorMessage = result.getString("errorMessage");
+               callback.onManifestUnavailable(
+                  errorMessage != null ? errorMessage : "");
                return;
             }
 
