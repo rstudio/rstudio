@@ -268,6 +268,7 @@ public class ChatPresenter extends BasePresenter
             int action = event.getAction().getType();
             if (action == SessionSerializationAction.SUSPEND_SESSION)
             {
+               backendPollGeneration_++; // invalidate existing poll callbacks
                display_.hideReadlineNotification();
                if (poppedOut_)
                {
@@ -275,12 +276,26 @@ public class ChatPresenter extends BasePresenter
                   // suspend overlay via SessionSerializationEvent forwarding
                   updateSavedGeometry();
                }
-               display_.showSuspendedMessage();
+               // Only dim the chat UI if it was actually loaded and running.
+               // If chat was never initialized (e.g., sidebar hidden at startup),
+               // there's nothing meaningful to dim.
+               if (cachedUrl_ != null)
+               {
+                  display_.showSuspendedMessage();
+               }
             }
             else if (action == SessionSerializationAction.RESUME_SESSION)
             {
-               // Prevent concurrent initialization
-               if (initializing_)
+               backendPollGeneration_++; // new lifecycle generation
+
+               // Any pre-suspend initialization is stale — the server process
+               // restarted, so all in-flight RPCs are dead. Reset the guard.
+               initializing_ = false;
+
+               // If the chat UI was never successfully loaded, there's nothing
+               // to resume. Normal initialization (via onPaneReady or user
+               // interaction) will handle first-time startup.
+               if (cachedUrl_ == null)
                {
                   return;
                }
@@ -292,10 +307,8 @@ public class ChatPresenter extends BasePresenter
                   return;
                }
 
-               // Backend will be restarted by onResume() handler in SessionChat.cpp
-               // Just need to wait for it to become available
                initializing_ = true;
-               pollForBackendUrl(0);
+               pollForBackendUrl();
             }
          }
       });
@@ -932,11 +945,14 @@ public class ChatPresenter extends BasePresenter
 
    private void pollForBackendUrl()
    {
-      pollForBackendUrl(0);
+      pollForBackendUrl(0, backendPollGeneration_);
    }
 
-   private void pollForBackendUrl(final int attemptCount)
+   private void pollForBackendUrl(final int attemptCount, final int pollGen)
    {
+      if (pollGen != backendPollGeneration_)
+         return; // stale callback from prior lifecycle
+
       if (attemptCount > 30) // 30 seconds timeout
       {
          showErrorMessage(constants_.chatBackendStartTimeout());
@@ -948,6 +964,9 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onResponseReceived(JsObject response)
          {
+            if (pollGen != backendPollGeneration_)
+               return; // stale callback from prior lifecycle
+
             String status = response.getString("status");
 
             if (status.equals("ready"))
@@ -970,7 +989,7 @@ public class ChatPresenter extends BasePresenter
                   @Override
                   public boolean execute()
                   {
-                     pollForBackendUrl(attemptCount + 1);
+                     pollForBackendUrl(attemptCount + 1, pollGen);
                      return false;
                   }
                }, 1000);
@@ -980,6 +999,9 @@ public class ChatPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
+            if (pollGen != backendPollGeneration_)
+               return; // stale callback from prior lifecycle
+
             showErrorMessage(
                constants_.chatBackendStatusCheckFailed(error.getMessage()));
          }
@@ -1005,7 +1027,7 @@ public class ChatPresenter extends BasePresenter
             if (response.getBoolean("success"))
             {
                // Backend started - begin polling for URL
-               pollForBackendUrl(0);
+               pollForBackendUrl();
             }
             else
             {
@@ -1131,6 +1153,9 @@ public class ChatPresenter extends BasePresenter
 
    // Guard against concurrent initialization (multiple polling loops)
    private boolean initializing_ = false;
+
+   // Monotonic counter invalidating stale pollForBackendUrl callbacks
+   private int backendPollGeneration_ = 0;
 
    // Last effective chat provider, used to suppress spurious change events
    private String lastEffectiveChatProvider_;
