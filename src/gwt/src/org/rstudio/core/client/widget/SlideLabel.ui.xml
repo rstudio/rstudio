@@ -9,33 +9,22 @@
 
    <g:HTMLPanel ui:field="curtain_" styleName="{res.style.curtain}">
       <div style="position: absolute;
-                  bottom: 0; left: 0; right: 0; height: 360px;
+                  bottom: 0; left: 0; right: 0;
                   vertical-align: bottom">
-         <table ui:field="border_" class="border" border="0" cellpadding="0" cellspacing="0" align="center" height="100%">
-            <tr>
-               <td class="{res.style.W}"/>
-               <td class="{res.style.C}" valign="bottom">
-                  <table ui:field="innerTable_" cellpadding="0" cellspacing="0" border="0">
-                     <tr>
-                        <td valign="middle"><img class="{res.style.progress}" ui:field="progress_" width="14" height="14" /></td>
-                        <td valign="middle">
-                           <div class="{res.style.content}" ui:field="content_" />
-                        </td>
-                        <td class="{res.style.cancelColumn}">
-                           <rs:SmallButton styleName="{res.style.cancelButton}" ui:field="cancel_" text="Cancel"><ui:attribute
-                                   name="text" key="cancelText"/> </rs:SmallButton>
-                        </td>
-                     </tr>
-                  </table>
-               </td>
-               <td class="{res.style.E}"/>
-            </tr>
-            <tr>
-               <td class="{res.style.SW}"/>
-               <td class="{res.style.S}"/>
-               <td class="{res.style.SE}"/>
-            </tr>
-         </table>
+         <div ui:field="container_" class="{res.style.container}">
+            <table ui:field="innerTable_" cellpadding="0" cellspacing="0" border="0">
+               <tr>
+                  <td valign="middle"><div class="{res.style.progress}" ui:field="progress_" /></td>
+                  <td valign="middle">
+                     <div class="{res.style.content}" ui:field="content_" />
+                  </td>
+                  <td class="{res.style.cancelColumn}">
+                     <rs:SmallButton styleName="{res.style.cancelButton}" ui:field="cancel_" text="Cancel"><ui:attribute
+                             name="text" key="cancelText"/> </rs:SmallButton>
+                  </td>
+               </tr>
+            </table>
+         </div>
       </div>
    </g:HTMLPanel>
 

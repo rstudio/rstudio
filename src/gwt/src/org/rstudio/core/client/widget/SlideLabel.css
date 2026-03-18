@@ -1,10 +1,5 @@
-@url SLIDELABELBOTTOM slideLabelBottom;
-@url SLIDELABELBOTTOMLEFT slideLabelBottomLeft;
-@url SLIDELABELBOTTOMRIGHT slideLabelBottomRight;
-@url SLIDELABELFILL slideLabelFill;
-@url SLIDELABELLEFT slideLabelLeft;
-@url SLIDELABELRIGHT slideLabelRight;
-
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .curtain {
    overflow-y: hidden;
@@ -12,48 +7,64 @@
    position: relative;
    z-index: 1000;
 }
+
+.container {
+   background: #f3f4f4;
+   border: 1px solid #c0c0c0;
+   border-top: none;
+   border-radius: 0 0 6px 6px;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+   padding: 8px 14px;
+   margin: 0 auto 12px;
+   display: table;
+}
+
 .content {
    max-width: 500px;
    display: inline-block;
 }
-.progress {
-   margin-right: 8px;
+
+@-webkit-keyframes slideLabel-spin {
+   to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
 }
-.border {
+@keyframes slideLabel-spin {
+   to { -webkit-transform: rotate(360deg); transform: rotate(360deg); }
 }
 
-.W {
-   background: SLIDELABELLEFT repeat-y top right;
-   width: 18px;
-}
-.C {
-   background: SLIDELABELFILL repeat;
-}
-.E {
-   background: SLIDELABELRIGHT repeat-y top left;
-   width: 18px;
-}
-.SW {
-   background: SLIDELABELBOTTOMLEFT no-repeat top right;
-   width: 18px;
-   height: 18px;
-}
-.S {
-   background: SLIDELABELBOTTOM repeat-x top center;
-   height: 18px;
-}
-.SE {
-   background: SLIDELABELBOTTOMRIGHT no-repeat top left;
-   width: 18px;
-   height: 18px;
+.progress {
+   width: 14px;
+   height: 14px;
+   margin-right: 8px;
+   border: 2px solid #c0c0c0;
+   border-top-color: #666;
+   border-radius: 50%;
+   -webkit-animation: slideLabel-spin 0.8s linear infinite;
+   animation: slideLabel-spin 0.8s linear infinite;
 }
 
 .cancelColumn {
    padding-left: 6px;
 }
+
 .cancelButton {
    margin-top: 1px;
    border: 0px;
    padding: 0px;
    background: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .container {
+   background: rgb(57, 67, 75);
+   border-color: rgb(12, 31, 48);
+   color: #eee;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .content {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .progress {
+   border-color: rgba(255, 255, 255, 0.2);
+   border-top-color: #ccc;
 }
