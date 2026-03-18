@@ -38,7 +38,8 @@ public class CodeSearchDialog extends ModalDialogBase
       
       setGlassEnabled(false);
       setAutoHideEnabled(true);
-      
+      setThemeAware(true);
+
       setText(constants_.fileFunctionLabel());
       
       pCodeSearch_ = pCodeSearch;

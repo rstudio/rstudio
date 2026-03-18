@@ -145,18 +145,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description external("external");
    options_description git("git");
    options_description user("user");
-   options_description pai("pai");
    options_description copilot("copilot");
+   options_description pai("pai");
+   options_description trust("trust");
    options_description misc("misc");
-   
+
    std::string saveActionDefault;
    int sameSite;
    std::string sessionPortRange;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&automation, &tests, &script, &verify, &version, &program, &log, &docs, &www,
-                      &session, &allow, &r, &limits, &external, &git, &user, &pai, &copilot, &misc,
-                      &saveActionDefault, &sameSite, &sessionPortRange);
+                      &session, &allow, &r, &limits, &external, &git, &user, &copilot, &pai, &trust,
+                      &misc, &saveActionDefault, &sameSite, &sessionPortRange);
 
    addOverlayOptions(&misc);
 
@@ -178,6 +179,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(user);
    optionsDesc.commandLine.add(pai);
    optionsDesc.commandLine.add(copilot);
+   optionsDesc.commandLine.add(trust);
    optionsDesc.commandLine.add(misc);
 
    // define groups included in config-file processing
@@ -194,6 +196,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.configFile.add(user);
    optionsDesc.configFile.add(pai);
    optionsDesc.configFile.add(copilot);
+   optionsDesc.configFile.add(trust);
    optionsDesc.configFile.add(misc);
 
    // read configuration

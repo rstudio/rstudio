@@ -16,7 +16,7 @@ package org.rstudio.studio.client.workbench.views.output.find.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -35,9 +35,9 @@ public interface FindInFilesServerOperations
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
-                 ServerRequestCallback<Void> requestCallback);
+                 ServerRequestCallback<VoidResponse> requestCallback);
 
-   void clearFindResults(ServerRequestCallback<Void> requestCallback);
+   void clearFindResults(ServerRequestCallback<VoidResponse> requestCallback);
 
    void previewReplace(String handle,
                        String searchString,
@@ -67,5 +67,5 @@ public interface FindInFilesServerOperations
                         ServerRequestCallback<String> requestCallback);
 
    void stopReplace(String handle,
-                    ServerRequestCallback<Void> requestCallback);
+                    ServerRequestCallback<VoidResponse> requestCallback);
 }

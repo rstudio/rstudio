@@ -16,7 +16,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -24,13 +24,13 @@ import com.google.gwt.core.client.JsArrayString;
 public interface RSConnectServerOperations extends QuartoServerOperations
 {
    void removeRSConnectAccount(String accountName, String server,
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<VoidResponse> requestCallback);
 
    void getRSConnectAccountList(
                ServerRequestCallback<JsArray<RSConnectAccount>> requestCallback);
 
    void connectRSConnectAccount(String command, 
-               ServerRequestCallback<Void> requestCallback);
+               ServerRequestCallback<VoidResponse> requestCallback);
 
    void getRSConnectAppList(String accountName, String server,
                ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
@@ -43,7 +43,7 @@ public interface RSConnectServerOperations extends QuartoServerOperations
    
    void forgetRSConnectDeployments(String sourceFile,
                                    String outputFile,
-                                   ServerRequestCallback<Void> requestCallback);
+                                   ServerRequestCallback<VoidResponse> requestCallback);
    
    void getDeploymentFiles(String target, 
                boolean asMultipleRmd,
@@ -73,7 +73,7 @@ public interface RSConnectServerOperations extends QuartoServerOperations
    
    void registerUserToken(String serverName, String accountName, int userId, 
                 RSConnectPreAuthToken token, 
-                ServerRequestCallback<Void> requestCallback);
+                ServerRequestCallback<VoidResponse> requestCallback);
    
    void getLintResults(String target, 
                 ServerRequestCallback<RSConnectLintResults> resultCallback);

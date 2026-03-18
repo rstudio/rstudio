@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.plots.model;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
 import com.google.gwt.json.client.JSONObject;
@@ -36,24 +36,24 @@ public interface PlotsServerOperations
    
    void getPlotTempdir(ServerRequestCallback<String> requestCallback);
    
-   void nextPlot(ServerRequestCallback<Void> requestCallback);
-   void previousPlot(ServerRequestCallback<Void> requestCallback);
+   void nextPlot(ServerRequestCallback<VoidResponse> requestCallback);
+   void previousPlot(ServerRequestCallback<VoidResponse> requestCallback);
    
-   void removePlot(ServerRequestCallback<Void> requestCallback);
+   void removePlot(ServerRequestCallback<VoidResponse> requestCallback);
    
-   void clearPlots(ServerRequestCallback<Void> requestCallback);
+   void clearPlots(ServerRequestCallback<VoidResponse> requestCallback);
       
-   void refreshPlot(ServerRequestCallback<Void> requestCallback);
+   void refreshPlot(ServerRequestCallback<VoidResponse> requestCallback);
    
    void setManipulatorValues(JSONObject values,
-                             ServerRequestCallback<Void> requestCallback);
+                             ServerRequestCallback<VoidResponse> requestCallback);
    
    void manipulatorPlotClicked(int x, 
                                int y, 
-                               ServerRequestCallback<Void> requestCallback);
+                               ServerRequestCallback<VoidResponse> requestCallback);
    
    void locatorCompleted(Point point, 
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<VoidResponse> requestCallback);
 
    void getUniqueSavePlotStem(String directory,
                               ServerRequestCallback<String> requestCallback);
@@ -81,11 +81,11 @@ public interface PlotsServerOperations
    void copyPlotToClipboardMetafile(
                                  int width, 
                                  int height,
-                                 ServerRequestCallback<Void> requestCallback);
+                                 ServerRequestCallback<VoidResponse> requestCallback);
    
    void copyPlotToCocoaPasteboard(int width, 
                                   int height,
-                                  ServerRequestCallback<Void> requestCallback);
+                                  ServerRequestCallback<VoidResponse> requestCallback);
    
    void plotsCreateRPubsHtml(String title, 
                              String comment,

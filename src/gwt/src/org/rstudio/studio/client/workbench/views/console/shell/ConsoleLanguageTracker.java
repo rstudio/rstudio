@@ -23,7 +23,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -89,10 +89,10 @@ public class ConsoleLanguageTracker
       {
          server_.adaptToLanguage(
                language,
-               new ServerRequestCallback<Void>()
+               new ServerRequestCallback<VoidResponse>()
                {
                   @Override
-                  public void onResponseReceived(Void response)
+                  public void onResponseReceived(VoidResponse response)
                   {
                      language_ = language;
                      

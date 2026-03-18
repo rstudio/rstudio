@@ -9,7 +9,7 @@ import org.rstudio.core.client.CsvWriter;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.studio.client.common.spelling.RealtimeSpellChecker;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -31,10 +31,10 @@ public abstract class SpellingContext implements RealtimeSpellChecker.Context
       new CheckSpelling(spellChecker(), spellingDoc,
                         new SpellingDialog(),
                         new InitialProgressDialog(1000),
-                        new ResultCallback<Void, Exception>()
+                        new ResultCallback<VoidResponse, Exception>()
                         {
                            @Override
-                           public void onSuccess(Void result)
+                           public void onSuccess(VoidResponse result)
                            {
                               isSpellChecking_ = false;
                            }

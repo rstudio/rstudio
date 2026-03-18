@@ -17,13 +17,13 @@ package org.rstudio.studio.client.common.debugging;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.JsArray;
-
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
+
+import com.google.gwt.core.client.JsArray;
 
 public interface DebuggingServerOperations
 {
@@ -39,7 +39,7 @@ public interface DebuggingServerOperations
          String fileName,
          String packageName,
          ArrayList<String> steps,
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    public void getFunctionState(
          String functionName,
@@ -49,14 +49,14 @@ public interface DebuggingServerOperations
    
    public void setErrorManagementType(
          String type,
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
    
    public void updateBreakpoints(
          ArrayList<Breakpoint> breakpoints,
          boolean set, 
          boolean arm, 
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
 
    public void removeAllBreakpoints(
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<VoidResponse> requestCallback);
 }

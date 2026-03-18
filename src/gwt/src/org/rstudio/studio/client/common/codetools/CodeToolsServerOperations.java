@@ -17,7 +17,7 @@ package org.rstudio.studio.client.common.codetools;
 import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionContext;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContextData;
@@ -57,7 +57,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void getHelpAtCursor(
          String line, int cursorPos,
-         ServerRequestCallback<org.rstudio.studio.client.server.Void> callback);
+         ServerRequestCallback<org.rstudio.studio.client.server.VoidResponse> callback);
    
    void getArgs(String name,
                 String source,
@@ -68,7 +68,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String chunkText,
          ServerRequestCallback<JsObject> callback);
    
-   void executeUserCommand(String name, ServerRequestCallback<Void> callback);
+   void executeUserCommand(String name, ServerRequestCallback<VoidResponse> callback);
    
    void markdownGetCompletions(
          int completionType,

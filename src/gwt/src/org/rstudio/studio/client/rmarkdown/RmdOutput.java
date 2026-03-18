@@ -54,7 +54,7 @@ import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -506,10 +506,10 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // there is a Shiny doc running; we'll need to terminate it before
          // we can render this document
          outputFrame_.closeOutputFrame(false);
-         server_.terminateRenderRmd(true, new ServerRequestCallback<Void>()
+         server_.terminateRenderRmd(true, new ServerRequestCallback<VoidResponse>()
          {
             @Override
-            public void onResponseReceived(Void v)
+            public void onResponseReceived(VoidResponse v)
             {
                onRenderCompleted_ = renderOperation;
                shinyDoc_ = null;

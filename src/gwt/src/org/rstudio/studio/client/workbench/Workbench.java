@@ -33,6 +33,8 @@ import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
+import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -74,6 +77,7 @@ import org.rstudio.studio.client.workbench.events.ShowMessageEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.events.ShowWarningBarEvent;
+import org.rstudio.studio.client.workbench.events.TrustRequestEvent;
 import org.rstudio.studio.client.workbench.events.UpdateWindowTitleEvent;
 import org.rstudio.studio.client.workbench.events.UserPromptEvent;
 import org.rstudio.studio.client.workbench.events.WorkbenchLoadedEvent;
@@ -249,6 +253,14 @@ public class Workbench implements BusyEvent.Handler,
       {
          Desktop.getFrame().setAutohideMenubar(pPrefs_.get().autohideMenubar().getValue());
       }
+
+      // check for pending trust request
+      TrustRequestEvent.Data trustData =
+         session_.getSessionInfo().getTrustRequest();
+      if (trustData != null && trustData.getDirectory() != null)
+      {
+         showTrustRequestDialog(trustData);
+      }
    }
 
    public void onTutorialLaunch(final TutorialLaunchEvent event)
@@ -291,6 +303,68 @@ public class Workbench implements BusyEvent.Handler,
       globalDisplay_.showMessage(showMessage.getType(),
                                  showMessage.getCaption(),
                                  showMessage.getMessage());
+   }
+
+   @Handler
+   void onShowTrustRequestDialog()
+   {
+      TrustRequestEvent.Data trustData =
+         session_.getSessionInfo().getTrustRequest();
+      if (trustData != null && trustData.getDirectory() != null)
+      {
+         showTrustRequestDialog(trustData);
+      }
+   }
+
+   private void showTrustRequestDialog(TrustRequestEvent.Data data)
+   {
+      String directory = data.getDirectory();
+
+      TrustRequestDialog dialog = new TrustRequestDialog(
+         directory,
+         data.getStatus(),
+         data.getRiskyFiles(),
+         () ->
+         {
+            server_.grantTrust(directory, new ServerRequestCallback<VoidResponse>()
+            {
+               @Override
+               public void onResponseReceived(VoidResponse response)
+               {
+                  eventBus_.fireEvent(new SuspendAndRestartEvent(
+                     SuspendOptions.createSaveAll(false)));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage(
+                     constants_.progressErrorCaption(),
+                     error.getUserMessage());
+               }
+            });
+         },
+         () ->
+         {
+            server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
+            {
+               // The toolbar lock icon already indicates restricted mode;
+               // no additional feedback needed here.
+               @Override
+               public void onResponseReceived(VoidResponse response)
+               {
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage(
+                     constants_.progressErrorCaption(),
+                     error.getUserMessage());
+               }
+            });
+         });
+      dialog.showModal();
    }
 
    @Override

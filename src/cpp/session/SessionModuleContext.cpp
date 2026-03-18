@@ -1500,6 +1500,34 @@ std::vector<FilePath> getLibPaths()
    return libPaths;
 }
 
+bool restoreWorkspaceEnabled()
+{
+   // session-level override (e.g. from rsession.conf or command line)
+   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
+      return false;
+   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
+      return true;
+
+   // project-level setting
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      switch (projContext.config().restoreWorkspace)
+      {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         break;
+      }
+   }
+
+   // fall back to user pref or environment file override
+   return prefs::userPrefs().loadWorkspace() ||
+          !options().initialEnvironmentFileOverride().isEmpty();
+}
+
 bool disablePackages()
 {
    return !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();

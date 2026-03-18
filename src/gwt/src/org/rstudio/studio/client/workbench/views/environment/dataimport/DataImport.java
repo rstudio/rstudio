@@ -33,7 +33,7 @@ import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -552,10 +552,10 @@ public class DataImport extends Composite
                   progressIndicator_.clearProgress();
                   cleanPreviewResources();
                   
-                  server_.previewDataImportAsyncAbort(new ServerRequestCallback<Void>()
+                  server_.previewDataImportAsyncAbort(new ServerRequestCallback<VoidResponse>()
                   {
                      @Override
-                     public void onResponseReceived(Void empty)
+                     public void onResponseReceived(VoidResponse empty)
                      {
                      }
                      

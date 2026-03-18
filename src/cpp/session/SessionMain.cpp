@@ -159,6 +159,7 @@
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
+#include "modules/SessionTrust.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
@@ -750,6 +751,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lsp::initialize)
       (modules::assistant::initialize)
       (modules::chat::initialize)
+      (modules::trust::initialize)
       (modules::automation::initialize)
       (modules::air::initialize)
 
@@ -1700,31 +1702,7 @@ SA_TYPE saveWorkspaceOption()
 
 bool restoreWorkspaceOption()
 {
-   // check options for session-specific override
-   if (options().rRestoreWorkspace() == kRestoreWorkspaceNo)
-      return false;
-   else if (options().rRestoreWorkspace() == kRestoreWorkspaceYes)
-      return true;
-
-   // allow project override
-   const projects::ProjectContext& projContext = projects::projectContext();
-   if (projContext.hasProject())
-   {
-      switch(projContext.config().restoreWorkspace)
-      {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-      }
-   }
-
-   // no project override
-   return prefs::userPrefs().loadWorkspace() ||
-          !rsession::options().initialEnvironmentFileOverride().isEmpty();
+   return module_context::restoreWorkspaceEnabled();
 }
 
 bool alwaysSaveHistoryOption()
@@ -2520,6 +2498,9 @@ int main(int argc, char * const argv[])
       // persist the value to the session state as soon as possible
       module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
 
+      // initialize directory trust state before R initialization
+      modules::trust::initializeTrustState();
+
       // start http connection listener
       error = waitWithTimeout(
             http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
@@ -2677,6 +2658,18 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+
+      // apply trust overrides for untrusted or unknown directories
+      if (modules::trust::shouldSuppressStartupFiles())
+      {
+         rOptions.disableRProfileOnStart = true;
+         core::system::setenv("R_ENVIRON_USER", "");
+      }
+
+      if (modules::trust::shouldSuppressWorkspaceRestore())
+      {
+         rOptions.restoreWorkspace = false;
+      }
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;

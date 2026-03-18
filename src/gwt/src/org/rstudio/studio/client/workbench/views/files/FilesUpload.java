@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -27,11 +23,16 @@ import org.rstudio.studio.client.application.events.FileUploadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
 
 public class FilesUpload
 {
@@ -137,9 +138,9 @@ public class FilesUpload
 
             server_.completeUpload(token, 
                   commit, 
-                  new ServerRequestCallback<Void>() {    
+                  new ServerRequestCallback<VoidResponse>() {    
                @Override
-               public void onResponseReceived(Void response)
+               public void onResponseReceived(VoidResponse response)
                {
                   dismissProgress.execute();
 

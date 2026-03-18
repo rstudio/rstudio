@@ -37,7 +37,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
@@ -199,10 +199,10 @@ public class RenderRmdOutputPresenter extends BusyPresenter
 
    private void terminateRenderRmd()
    {
-      server_.terminateRenderRmd(false, new ServerRequestCallback<Void>()
+      server_.terminateRenderRmd(false, new ServerRequestCallback<VoidResponse>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(VoidResponse v)
          {
             setIsBusy(false);
          }

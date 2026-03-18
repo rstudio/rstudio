@@ -28,7 +28,7 @@ import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
@@ -133,10 +133,10 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       // save changes
       server_.setUserPrefs(
          rPrefs.getUserLayer(),
-         new SimpleRequestCallback<Void>() {
+         new SimpleRequestCallback<VoidResponse>() {
 
             @Override
-            public void onResponseReceived(Void response)
+            public void onResponseReceived(VoidResponse response)
             {
                // write accompanying state changes
                state_.writeState();

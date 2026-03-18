@@ -48,6 +48,7 @@
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
+#include "modules/SessionTrust.hpp"
 
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
@@ -256,7 +257,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["restore_workspace"] = options.rRestoreWorkspace();
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
-   
+
+   sessionInfo["startup_files_suppressed"] =
+      modules::trust::shouldSuppressStartupFiles();
+   sessionInfo["trust_request"] = modules::trust::trustRequestData();
+
    sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
 

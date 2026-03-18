@@ -222,6 +222,35 @@ Error writeStringToFile(const FilePath& filePath,
    }
 }
 
+Error writeStringToFileAtomic(const FilePath& filePath,
+                              const std::string& str,
+                              string_utils::LineEnding lineEnding)
+{
+   // generate a unique temporary file in the same directory
+   FilePath tmpFile;
+   Error error = FilePath::uniqueFilePath(filePath.getParent().getAbsolutePath(), tmpFile);
+   if (error)
+      return error;
+
+   // write to the temporary file
+   error = writeStringToFile(tmpFile, str, lineEnding);
+   if (error)
+   {
+      tmpFile.removeIfExists();
+      return error;
+   }
+
+   // atomically rename into place
+   error = tmpFile.move(filePath, FilePath::MoveDirect);
+   if (error)
+   {
+      tmpFile.removeIfExists();
+      return error;
+   }
+
+   return Success();
+}
+
 Error readStringFromFile(const FilePath& filePath,
                          std::string* pStr,
                          string_utils::LineEnding lineEnding,
