@@ -606,6 +606,26 @@ TEST_F(PosixTestsRequiresPrivilege, DISABLED_PermanentlyDropPrivChecksGroupMembe
    EXPECT_EQ(egid, testGroup.groupId);
 }
 
+TEST(PosixTests, ResolveBindAddressPassthroughForSpecificAddress)
+{
+   EXPECT_EQ(resolveBindAddress("127.0.0.1"), "127.0.0.1");
+   EXPECT_EQ(resolveBindAddress("192.168.1.1"), "192.168.1.1");
+   EXPECT_EQ(resolveBindAddress("::1"), "::1");
+   EXPECT_EQ(resolveBindAddress(""), "");
+}
+
+TEST(PosixTests, ResolveBindAddressIPv4Wildcard)
+{
+   std::string result = resolveBindAddress("0.0.0.0");
+   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+}
+
+TEST(PosixTests, ResolveBindAddressIPv6Wildcard)
+{
+   std::string result = resolveBindAddress("::");
+   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+}
+
 TEST(PosixTests, ParseOsReleaseQuoted)
 {
    std::string content = R"(
