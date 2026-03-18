@@ -4161,7 +4161,7 @@ public interface CmdConstants extends Constants {
     // showTrustRequestDialog
     @DefaultStringValue("Show Trust Dialog") // $NON-NLS-1$
     String showTrustRequestDialogLabel();
-  
+    
     // popOutChat
     @DefaultStringValue("Show Posit Assistant in Separate Window") // $NON-NLS-1$
     String popOutChatLabel();
