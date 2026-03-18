@@ -607,6 +607,26 @@ VERSION_CODENAME="rhel9"
       expect_equal(info.osVersion, "9.5");
       expect_equal(info.osVersionCodename, "rhel9");
    }
+
+   test_that("resolveBindAddress passes through specific addresses")
+   {
+      expect_equal(resolveBindAddress("127.0.0.1"), std::string("127.0.0.1"));
+      expect_equal(resolveBindAddress("192.168.1.1"), std::string("192.168.1.1"));
+      expect_equal(resolveBindAddress("::1"), std::string("::1"));
+      expect_equal(resolveBindAddress(""), std::string(""));
+   }
+
+   test_that("resolveBindAddress handles IPv4 wildcard")
+   {
+      std::string result = resolveBindAddress("0.0.0.0");
+      expect_true(result == "0.0.0.0" || result == "::");
+   }
+
+   test_that("resolveBindAddress handles IPv6 wildcard")
+   {
+      std::string result = resolveBindAddress("::");
+      expect_true(result == "::" || result == "0.0.0.0");
+   }
 }
 
 } // end namespace tests

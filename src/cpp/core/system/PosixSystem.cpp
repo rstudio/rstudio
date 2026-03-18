@@ -66,6 +66,7 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
+#include <boost/asio/ip/address.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/bind/bind.hpp>
@@ -2083,6 +2084,64 @@ Error ipAddresses(std::vector<posix::IpAddress>* pAddresses,
     return posix::getIpAddresses(*pAddresses, includeIPv6);
 }
 
+std::string resolveBindAddress(const std::string& address)
+{
+   std::vector<posix::IpAddress> addrs;
+   Error error = ipAddresses(&addrs, true);
+   if (error)
+      return address;
+
+   if (address == "0.0.0.0")
+   {
+      bool hasNonLocalIpv4 = false;
+      bool hasNonLocalIpv6 = false;
+      bool hasIpv4 = false;
+      bool hasIpv6 = false;
+
+      for (const posix::IpAddress& ip : addrs)
+      {
+         auto addr = boost::asio::ip::make_address(ip.Address);
+         if (addr.is_v4())
+         {
+            hasIpv4 = true;
+            if (!addr.is_loopback())
+               hasNonLocalIpv4 = true;
+         }
+         else if (addr.is_v6())
+         {
+            hasIpv6 = true;
+            if (!addr.is_loopback() && ip.Address.find("%") == std::string::npos)
+               hasNonLocalIpv6 = true;
+         }
+      }
+
+      if ((!hasNonLocalIpv4 && hasNonLocalIpv6) ||
+          (!hasIpv4 && hasIpv6))
+      {
+         return "::";
+      }
+   }
+   else if (address == "::")
+   {
+      bool hasIpv6 = false;
+      for (const posix::IpAddress& ip : addrs)
+      {
+         auto addr = boost::asio::ip::make_address(ip.Address);
+         if (addr.is_v6())
+         {
+            hasIpv6 = true;
+            break;
+         }
+      }
+
+      if (!hasIpv6)
+      {
+         return "0.0.0.0";
+      }
+   }
+
+   return address;
+}
 
 Error restrictCoreDumps()
 {
