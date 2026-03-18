@@ -78,9 +78,16 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.waitUntil("chat iframe exists", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane iframe")
    })
-   Sys.sleep(1)
 
-   # 2. Confirm iframe shows "Posit AI Not Installed"
+   # 2. Wait for iframe to render "Posit AI Not Installed" heading
+   .rs.waitUntil("iframe h2 shows expected text", function() {
+      text <- remote$js.eval("
+         var f = document.querySelector('#rstudio_Sidebar_pane iframe');
+         var h2 = f && f.contentWindow && f.contentWindow.document.querySelector('h2');
+         h2 ? h2.innerText : '';
+      ")
+      identical(text, "Posit AI Not Installed")
+   })
    iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
    h2 <- iframe$contentWindow$document$querySelector("h2")
    expect_equal(h2$innerText, "Posit AI Not Installed")
@@ -103,13 +110,28 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.waitUntil("chat iframe exists", function() {
       remote$dom.elementExists("#rstudio_Sidebar_pane iframe")
    })
-   Sys.sleep(1)
 
+   # Wait for iframe content to fully render after restart
+   .rs.waitUntil("iframe h2 shows expected text after restart", function() {
+      text <- remote$js.eval("
+         var f = document.querySelector('#rstudio_Sidebar_pane iframe');
+         var h2 = f && f.contentWindow && f.contentWindow.document.querySelector('h2');
+         h2 ? h2.innerText : '';
+      ")
+      identical(text, "Posit AI Not Installed")
+   })
    iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
    h2 <- iframe$contentWindow$document$querySelector("h2")
    expect_equal(h2$innerText, "Posit AI Not Installed")
 
-   # Verify "Install Posit AI" button exists and is enabled
+   # Wait for install button to appear, then verify
+   .rs.waitUntil("install button rendered", function() {
+      remote$js.eval("
+         var f = document.querySelector('#rstudio_Sidebar_pane iframe');
+         var btn = f && f.contentWindow && f.contentWindow.document.querySelector('#install-btn');
+         !!(btn && btn.innerText);
+      ")
+   })
    button <- iframe$contentWindow$document$querySelector("#install-btn")
    expect_false(is.null(button))
    expect_equal(button$innerText, "Install Posit AI")
