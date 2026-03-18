@@ -106,7 +106,7 @@ public class CodePreferencesPane extends PreferencesPane
       editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), constants_.editorScrollMultiplierDesc(),
               1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
               prefs_.editorScrollMultiplier())));
-      editorScrollMultiplier_.setWidth("38px");
+      editorScrollMultiplier_.setWidth("60px");
 
       delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
          (Prefs.EnumValue) prefs_.surroundSelection(),
