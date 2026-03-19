@@ -47,8 +47,19 @@
    # Reset the session before running this test.
    .rs.automation.remoteInstance$session.reset()
    
+   # Wrap code in local() so that withr::defer() and on.exit() inside
+   # the test body are scoped to the individual test, not the file.
+   # Without this, deferred cleanup only runs after all tests in the
+   # file complete.
+   #
+   # We build the full test_that() call with bquote and eval it in the
+   # caller's frame so that test_that's substitute() captures
+   # local({...}) directly, not an eval() wrapper.
+   expr <- substitute(code)
+   wrapped <- bquote(local(.(expr)))
+
    # Now, run the test.
-   testthat::test_that(desc, code)
+   eval(bquote(testthat::test_that(.(desc), .(wrapped))), parent.frame())
 })
 
 .rs.addFunction("automation.newRemote", function(mode = NULL)
