@@ -1448,6 +1448,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String globalThemeDescription();
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   @DefaultStringValue("Use dark theme modal dialogs")
+   String useDarkThemeModalDialogsTitle();
+   @DefaultStringValue("Whether modal dialogs should use dark styling when a dark editor theme is active.")
+   String useDarkThemeModalDialogsDescription();
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    @DefaultStringValue("Ignore whitespace in VCS diffs")

@@ -2247,6 +2247,19 @@ core::Error UserPrefValues::setGlobalTheme(std::string val)
 }
 
 /**
+ * Whether modal dialogs should use dark styling when a dark editor theme is active.
+ */
+bool UserPrefValues::useDarkThemeModalDialogs()
+{
+   return readPref<bool>("use_dark_theme_modal_dialogs");
+}
+
+core::Error UserPrefValues::setUseDarkThemeModalDialogs(bool val)
+{
+   return writePref("use_dark_theme_modal_dialogs", val);
+}
+
+/**
  * Whether to ignore whitespace when generating diffs of version controlled files.
  */
 bool UserPrefValues::gitDiffIgnoreWhitespace()
@@ -3902,6 +3915,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kLatexPreviewOnCursorIdle,
       kWrapTabNavigation,
       kGlobalTheme,
+      kUseDarkThemeModalDialogs,
       kGitDiffIgnoreWhitespace,
       kGitSignedCommits,
       kConsoleDoubleClickSelect,

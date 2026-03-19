@@ -308,6 +308,7 @@ namespace prefs {
 #define kGlobalTheme "global_theme"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
+#define kUseDarkThemeModalDialogs "use_dark_theme_modal_dialogs"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
@@ -1521,6 +1522,12 @@ public:
     */
    std::string globalTheme();
    core::Error setGlobalTheme(std::string val);
+
+   /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   bool useDarkThemeModalDialogs();
+   core::Error setUseDarkThemeModalDialogs(bool val);
 
    /**
     * Whether to ignore whitespace when generating diffs of version controlled files.

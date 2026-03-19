@@ -1196,6 +1196,12 @@
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
+        "use_dark_theme_modal_dialogs": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use dark theme modal dialogs",
+            "description": "Whether modal dialogs should use dark styling when a dark editor theme is active."
+        },
         "git_diff_ignore_whitespace": {
             "type": "boolean",
             "default": false,
