@@ -21,6 +21,8 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
@@ -36,10 +38,14 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
+
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class NewQuartoProjectPage extends NewDirectoryPage
 {
@@ -123,7 +129,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       kernelSelect_.getElement().addClassName(
             NewProjectResources.INSTANCE.styles().quartoEngineSelect());
       panel.add(kernelSelect_);
-      
+
       addWidget(panel);
    
    }
@@ -158,11 +164,11 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
    }
    
-   @Override 
+   @Override
    protected void initialize(NewProjectInput input)
    {
       super.initialize(input);
-      
+
       // set type
       if (fixedProjectType_ != null)
       {
@@ -172,21 +178,94 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       {
          projectTypeSelect_.setValue(lastOptions_.getType());
       }
-      
+
       // set engine
       engineSelect_.setValue(lastOptions_.getEngine());
       engineSelect_.addChangeHandler((event) -> {
          manageControls();
       });
-      
-      // popuplate kernel list from caps
-      quartoCaps_ = input.getContext().getQuartoCapabilities();
+
+      chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
+      chkUseCondaenv_.setValue(canUseCondaenv() && !StringUtil.isNullOrEmpty(lastOptions_.getCondaenv()));
+      txtVenvPackages_.setValue(lastOptions_.getPackages());
+
+      chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
+
+      manageControls();
+   }
+
+   @Override
+   public void onActivate(ProgressIndicator indicator)
+   {
+      if (quartoCaps_ != null)
+      {
+         populateKernels();
+         manageControls();
+         return;
+      }
+
+      // Cancel any in-flight request from a previous activation
+      if (capabilitiesCallback_ != null)
+         capabilitiesCallback_.cancel();
+      if (capabilitiesTimeout_ != null)
+         capabilitiesTimeout_.cancel();
+
+      indicator.onProgress(constants_.loadingCapabilitiesLabel());
+
+      capabilitiesCallback_ = new ServerRequestCallback<QuartoCapabilities>()
+      {
+         @Override
+         public void onResponseReceived(QuartoCapabilities caps)
+         {
+            capabilitiesTimeout_.cancel();
+            if (!cancelled())
+            {
+               quartoCaps_ = caps;
+               indicator.onProgress(null);
+               populateKernels();
+               manageControls();
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            capabilitiesTimeout_.cancel();
+            if (!cancelled())
+            {
+               Debug.logError(error);
+               indicator.onProgress(null);
+               populateKernels();
+               manageControls();
+            }
+         }
+      };
+
+      capabilitiesTimeout_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            Debug.log("Quarto capabilities request timed out");
+            capabilitiesCallback_.cancel();
+            indicator.onProgress(null);
+            populateKernels();
+            manageControls();
+         }
+      };
+      capabilitiesTimeout_.schedule(CAPABILITIES_TIMEOUT_MS);
+
+      RStudioGinjector.INSTANCE.getServer().quartoCapabilities(capabilitiesCallback_);
+   }
+
+   private void populateKernels()
+   {
       JsArray<QuartoJupyterKernel> kernels = quartoCaps_ == null ?
               JsArray.createArray().cast() : quartoCaps_.jupyterKernels();
-      
+
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];
-      for (int i=0; i<kernels.length(); i++)
+      for (int i = 0; i < kernels.length(); i++)
       {
          QuartoJupyterKernel kernel = kernels.get(i);
          kernelNames[i] = kernel.getName();
@@ -194,17 +273,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       }
       kernelSelect_.setChoices(kernelDisplayNames, kernelNames);
       kernelSelect_.setValue(lastOptions_.getKernel());
-   
-      chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
-      chkUseCondaenv_.setValue(canUseCondaenv() && !StringUtil.isNullOrEmpty(lastOptions_.getCondaenv()));
-      txtVenvPackages_.setValue(lastOptions_.getPackages());
-      
-      chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
-      
-      manageControls();
-      
    }
-   
+
    private void manageControls()
    {
       boolean isKnitr =  engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_KNITR);
@@ -252,6 +322,11 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    protected void onUnload()
    {
       super.onUnload();
+      if (capabilitiesCallback_ != null)
+         capabilitiesCallback_.cancel();
+      if (capabilitiesTimeout_ != null)
+         capabilitiesTimeout_.cancel();
+      quartoCaps_ = null;
       session_.persistClientState();
    }
    
@@ -265,9 +340,14 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private HorizontalPanel venvPanel_;
    private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
-   private QuartoCapabilities quartoCaps_ = null;
+   // Static: fetched once and shared across all Quarto project page instances
+   private static QuartoCapabilities quartoCaps_ = null;
+   private static ServerRequestCallback<QuartoCapabilities> capabilitiesCallback_;
+   private static Timer capabilitiesTimeout_;
 
-   
+   private static final int CAPABILITIES_TIMEOUT_MS = 30000;
+
+
    private class ClientStateValue extends JSObjectStateValue
    {
       public ClientStateValue()
