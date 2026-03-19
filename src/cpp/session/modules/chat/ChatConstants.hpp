@@ -80,6 +80,7 @@ constexpr int kMaxRestartAttempts = 1;
 // Assembles a server-mode WebSocket path from its components. Each component
 // is normalized (trailing slashes removed, leading slash ensured on
 // portmappedPath) and the default root path "/" is treated as empty.
+// Appends the fixed "/ai-chat" endpoint suffix.
 std::string assembleWebSocketPath(
    const std::string& rootPath,
    const std::string& sessionUrl,

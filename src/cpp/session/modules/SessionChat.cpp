@@ -4444,9 +4444,14 @@ std::string buildWebSocketUrl(int port)
       std::string portmappedPath = url_ports::mapUrlPorts(localhostUrl);
 
       // Assemble the full WebSocket path from:
-      // - rootPath: subpath prefix from www-root-path (e.g., "/rstudio")
+      // - rootPath: subpath prefix from session-root-path option
+      //   (set by the server from www-root-path, e.g., "/rstudio")
       // - sessionUrl: Workbench session prefix (e.g., "/s/{id}"), empty in OSS
       // - portmappedPath: scrambled port path (e.g., "/p/58fab3e4")
+      // All three prefixes are needed so the browser sends the port-token
+      // cookie with the WebSocket upgrade request. The cookie is scoped to
+      // the session path; without the correct prefix the browser omits it
+      // and port descrambling fails on the server.
       std::string rootPath = options().rootPath();
       std::string sessionUrl = core::system::getenv(kSessionUrlEnvVar);
       std::string wsPath = chat_constants::assembleWebSocketPath(
