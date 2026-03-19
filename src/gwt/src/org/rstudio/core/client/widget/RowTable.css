@@ -34,6 +34,15 @@
    color: #eee;
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-thumb {
+   background: rgb(78, 92, 104);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-track,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-corner {
+   background: rgb(47, 57, 65);
+}
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
    filter: brightness(90%) saturate(90%);
 }
