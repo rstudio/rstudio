@@ -114,5 +114,5 @@
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .activeSection {
-   background: THEME_DARKGREY_INACTIVE;
+   background: THEME_DARKGREY_BACKGROUND;
 }
