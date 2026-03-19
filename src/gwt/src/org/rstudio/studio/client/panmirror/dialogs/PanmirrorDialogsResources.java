@@ -37,6 +37,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String imageDialogTab();
       String imageDialogTabs();
       String linkDialogTabs();
+      String codeBlockDialogTabs();
       String hrefSelect();
       String popup();
       String linkLabel();

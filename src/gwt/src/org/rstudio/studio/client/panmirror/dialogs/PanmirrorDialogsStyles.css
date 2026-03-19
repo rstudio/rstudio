@@ -104,6 +104,11 @@
    height: 280px;
 }
 
+.codeBlockDialogTabs {
+   width: 380px;
+   height: 320px;
+}
+
 .imageDialogTab {
   width: 400px;
 }
@@ -115,12 +120,12 @@
 
 .insertTabsetDialogTabs {
    width: 380px;
-   height: 295px;
+   height: 335px;
 }
 
 .divDialogTabs {
    width: 380px;
-   height: 280px;
+   height: 320px;
 }
 
 
@@ -191,6 +196,12 @@
 
 .disabled label {
    color: rgba(0, 0, 0, 0.6);
+}
+
+.rstudio-themes-dark .dialog .infoLabel,
+.rstudio-themes-dark .dialog .inlineInfoLabel,
+.rstudio-themes-dark .dialog .heightAuto {
+   color: #aaa;
 }
 
 

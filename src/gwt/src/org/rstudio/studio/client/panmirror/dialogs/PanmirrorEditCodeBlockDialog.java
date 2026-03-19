@@ -81,7 +81,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       if (attributes)
       {
          DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.codeBlockText());
-         tabPanel.addStyleName(RES.styles().linkDialogTabs());
+         tabPanel.addStyleName(RES.styles().codeBlockDialogTabs());
          tabPanel.add(langTab, constants_.languageFormLabel(), langTab.getBasePanelId());
          tabPanel.add(attributesTab, constants_.attributesText(), attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
