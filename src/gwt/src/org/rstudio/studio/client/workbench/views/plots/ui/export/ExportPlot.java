@@ -34,10 +34,11 @@ public class ExportPlot
                                OperationWithInput<ExportPlotOptions> onClose)
    {
       new SavePlotAsImageDialog(
-         new PlotsPaneSaveAsImageOperation(globalDisplay, server), 
+         globalDisplay,
+         new PlotsPaneSaveAsImageOperation(globalDisplay, server),
          new PlotsPanePreviewer(server),
-         context, 
-         options, 
+         context,
+         options,
          onClose).showModal();
    }
    
