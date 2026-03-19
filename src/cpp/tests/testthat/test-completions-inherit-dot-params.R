@@ -231,6 +231,12 @@ test_that("parseInheritDotParamsFromRd returns NULL when \\link pkg prefix is em
    expect_null(.rs.parseInheritDotParamsFromRd(rd))
 })
 
+test_that("parseInheritDotParamsFromRd returns NULL when \\link text has too many separators", {
+   # "a::b::c" splits into 3 parts -- not a valid namespace expression
+   rd <- make_inherit_rd(link_text = "a::b::c")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
 test_that("parseInheritDotParamsFromRd extracts targetPkg from triple-colon link text", {
    # :{2,3} split handles pkg:::fn defensively, even though roxygen2 currently
    # produces a parse error for @inheritDotParams pkg:::fn
