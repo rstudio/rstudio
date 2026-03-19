@@ -268,10 +268,6 @@ button.browse:focus {
    color: #eee;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .columnIcon img {
-   filter: brightness(80%);
-}
-
 .rstudio-themes-dark.rstudio-theme-aware-dialog .columnSize,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .columnDate {
    color: #aaa;

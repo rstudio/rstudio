@@ -34,6 +34,10 @@
    color: #eee;
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
+   filter: brightness(90%) saturate(90%);
+}
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog .selected {
    background-color: rgba(255, 255, 255, 0.1);
 }
