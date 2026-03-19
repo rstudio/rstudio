@@ -289,9 +289,14 @@ where `<scope>` is one of `core`, `rserver`, `rsession`, or `r`.
     cd src/gwt && ant unittest
 
 
-### Desktop (Electron) Tests
+### Desktop (Electron) Verification
 
-    cd src/node/desktop && npm test
+    cd src/node/desktop && npm test          # Unit tests
+    cd src/node/desktop && npm run lint      # ESLint
+    cd src/node/desktop && npm run typecheck # TypeScript type checking (tsc --noEmit)
+
+Run all three before committing changes to `src/node/desktop/`. Note that `npm run lint` only runs
+ESLint — it does not catch type errors that the webpack build will reject.
 
 
 ## Code Style

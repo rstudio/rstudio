@@ -20,6 +20,15 @@ import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { appState, getEventBus } from './app-state';
 
+/**
+ * Roles that remain enabled on the disabled modal menu.
+ * Used by setMainMenuEnabled() to build the disabled copy and by
+ * updateLiveMenuItem() to allow re-enabling these items mid-modal.
+ */
+const MODAL_ENABLED_ROLES = new Set([
+  'cut', 'copy', 'paste', 'hide', 'hideOthers', 'unhide', 'selectAll',
+]);
+
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
 }
@@ -102,7 +111,7 @@ export class MenuCallback extends EventEmitter {
       this.emit(MenuCallback.MENUBAR_COMPLETED, this.mainMenu);
     });
 
-    // for all events that modify commands, their templates must also be modified!
+    // for all events that modify commands, their templates must also be modified
 
     ipcMain.on('menu_set_command_visible', (_event, commandId: string, visible: boolean) => {
       this.setCommandVisibility(commandId, visible);
@@ -238,46 +247,74 @@ export class MenuCallback extends EventEmitter {
 
   setCommandEnabled(id: string, newEnablement: boolean) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.enabled != newEnablement) {
-        template.enabled = newEnablement;
-        this.debounceUpdateMenuShort();
-      }
       template.enabled = newEnablement;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'enabled', newEnablement);
+      }
     }
   }
 
   setCommandChecked(id: string, newChecked: boolean) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.checked != newChecked) {
-        template.checked = newChecked;
-        this.debounceUpdateMenuShort();
-      }
       template.checked = newChecked;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'checked', newChecked);
+      }
     }
   }
 
   setCommandLabel(id: string, newLabel: string) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.label != newLabel) {
-        template.label = newLabel;
-        this.debounceUpdateMenuShort();
-      }
       template.label = newLabel;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'label', newLabel);
+      }
+    }
+  }
+
+  /**
+   * Updates a writable property on the live MenuItem, avoiding a full menu rebuild.
+   *
+   * When a modal is open, this.mainMenu is a temporary disabled copy. We suppress
+   * enabled=true on it only for non-permitted items (to prevent re-enabling
+   * modal-disabled commands). Modal-permitted roles (cut, copy, paste, etc.) may be
+   * freely re-enabled since the modal logic intentionally keeps them active.
+   * checked and label are always applied to both menus.
+   * savedMenu (the pre-modal menu restored on close) always receives updates.
+   */
+  private updateLiveMenuItem(
+    id: string,
+    property: 'enabled' | 'checked' | 'label',
+    value: boolean | string,
+  ) {
+    const menuItem = this.mainMenu.getMenuItemById(id);
+    if (menuItem) {
+      const isModalReEnable = this.savedMenu && property === 'enabled' && value === true;
+      const isModalPermitted = MODAL_ENABLED_ROLES.has(menuItem.role ?? '');
+      if (!isModalReEnable || isModalPermitted) {
+        this.applyMenuItemProperty(menuItem, property, value);
+      }
+    }
+    if (this.savedMenu) {
+      const savedMenuItem = this.savedMenu.getMenuItemById(id);
+      if (savedMenuItem) {
+        this.applyMenuItemProperty(savedMenuItem, property, value);
+      }
+    }
+  }
+
+  private applyMenuItemProperty(
+    item: Electron.MenuItem,
+    property: 'enabled' | 'checked' | 'label',
+    value: boolean | string,
+  ) {
+    if (property === 'enabled' || property === 'checked') {
+      item[property] = value as boolean;
+    } else {
+      item[property] = value as string;
     }
   }
 
@@ -508,10 +545,7 @@ export class MenuCallback extends EventEmitter {
         const disabledMenu = Menu.buildFromTemplate(this.recursiveCopy(this.mainMenuTemplate));
         disabledMenu.items.forEach((item) => {
           item.submenu?.items.forEach((subItem) => {
-            // keep some commands enabled
-            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(
-              subItem.role ?? '',
-            );
+            subItem.enabled = MODAL_ENABLED_ROLES.has(subItem.role ?? '');
           });
         });
         setApplicationMenu(disabledMenu);
