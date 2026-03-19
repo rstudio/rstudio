@@ -153,30 +153,36 @@ public abstract class ModalDialogBase extends DialogBox
       Element captionEl = getCaption().asWidget().getElement();
       captionEl.getStyle().setPosition(Style.Position.RELATIVE);
 
-      elemental2.dom.HTMLButtonElement btn =
-         (elemental2.dom.HTMLButtonElement) DomGlobal.document.createElement("button");
-      btn.textContent = "\u263E";
-      btn.title = "Toggle dark theme";
-      btn.style.position = "absolute";
-      btn.style.right = "4px";
-      btn.style.top = "50%";
-      btn.style.transform = "translateY(-50%)";
-      btn.style.background = "transparent";
-      btn.style.border = "none";
-      btn.style.cursor = "pointer";
-      btn.style.fontSize = "14px";
-      btn.style.padding = "2px 6px";
-      btn.style.opacity = "0.6";
-      btn.style.color = "inherit";
-      btn.className = ALLOW_ENTER_KEY_CLASS;
+      Element btn = Document.get().createButtonElement().cast();
+      btn.setInnerHTML("&#x263E;");
+      btn.setTitle("Toggle dark theme");
+      btn.setClassName(ALLOW_ENTER_KEY_CLASS);
+      Style s = btn.getStyle();
+      s.setPosition(Style.Position.ABSOLUTE);
+      s.setRight(4, Unit.PX);
+      s.setTop(50, Unit.PCT);
+      s.setProperty("transform", "translateY(-50%)");
+      s.setProperty("background", "transparent");
+      s.setProperty("border", "none");
+      s.setProperty("cursor", "pointer");
+      s.setFontSize(14, Unit.PX);
+      s.setPadding(2, Unit.PX);
+      s.setProperty("paddingLeft", "6px");
+      s.setProperty("paddingRight", "6px");
+      s.setOpacity(0.6);
+      s.setColor("inherit");
 
-      btn.addEventListener("click", e ->
+      Event.sinkEvents(btn, Event.ONCLICK);
+      Event.setEventListener(btn, event ->
       {
-         e.stopPropagation();
-         if (getStyleName().contains("rstudio-themes-dark"))
-            removeStyleName("rstudio-themes-dark");
-         else
-            addStyleName("rstudio-themes-dark");
+         if (Event.ONCLICK == event.getTypeInt())
+         {
+            event.stopPropagation();
+            if (getStyleName().contains("rstudio-themes-dark"))
+               removeStyleName("rstudio-themes-dark");
+            else
+               addStyleName("rstudio-themes-dark");
+         }
       });
 
       captionEl.appendChild(btn);
