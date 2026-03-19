@@ -317,7 +317,8 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 
 .gwt-DialogBox input[type=text] {
    border: 1px solid #999;
-   height: 22px;
+   height: 25px;
+   padding: 4px 6px;
 }
 .gwt-DialogBox .search input[type=text] {
    border: none;

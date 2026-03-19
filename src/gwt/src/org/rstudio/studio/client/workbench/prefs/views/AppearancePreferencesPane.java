@@ -86,7 +86,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       public NumericInput(Integer min, Integer max, Integer step)
       {
          super(min, max, step);
-         setWidth("40px");
+         setWidth("48px");
          getElement().addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
       }
    }
