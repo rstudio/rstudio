@@ -110,9 +110,12 @@
 @external rstudio-themes-dark;
 @external rstudio-theme-aware-dialog;
 
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog .imagePreview {
-   border-color: rgb(78, 92, 104);
-   background-color: rgb(47, 57, 65);
+   border-color: THEME_DARKGREY_BACKGROUND;
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .savePdfPaperSizeX {

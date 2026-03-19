@@ -199,6 +199,9 @@ public class DirectoryContentsWidget extends Composite
    {
       if (show)
       {
+         // Disable interaction with stale contents while navigating.
+         table_.getElement().getStyle().setProperty("pointerEvents", "none");
+
          // Delay switching to the progress panel. If content arrives
          // before the timer fires, we skip the progress view entirely,
          // avoiding a visual flash on fast navigations.
@@ -207,6 +210,7 @@ public class DirectoryContentsWidget extends Composite
       else
       {
          progressTimer_.cancel();
+         table_.getElement().getStyle().clearProperty("pointerEvents");
          table_.draw(data_);
          progressPanel_.setWidget(table_);
       }

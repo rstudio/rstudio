@@ -31,6 +31,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
@@ -149,7 +150,8 @@ public abstract class ModalDialogBase extends DialogBox
       {
          addStyleName("rstudio-theme-aware-dialog");
          syncDarkThemeClass();
-         addThemeToggleButton();
+         if (SuperDevMode.isActive())
+            addThemeToggleButton();
       }
       else
       {
@@ -160,6 +162,10 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void addThemeToggleButton()
    {
+      if (themeToggleAdded_)
+         return;
+      themeToggleAdded_ = true;
+
       Element captionEl = getCaption().asWidget().getElement();
       captionEl.getStyle().setPosition(Style.Position.RELATIVE);
 
@@ -198,6 +204,9 @@ public abstract class ModalDialogBase extends DialogBox
       captionEl.appendChild(btn);
    }
 
+   // NOTE: userPrefs_ is guaranteed non-null here. GIN injection is synchronous
+   // and completes during the ModalDialogBase constructor, before any subclass
+   // calls setThemeAware() or the EditorThemeChangedEvent handler is registered.
    private void syncDarkThemeClass()
    {
       boolean useDark = userPrefs_.useDarkThemeModalDialogs().getValue();
@@ -545,6 +554,11 @@ public abstract class ModalDialogBase extends DialogBox
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
    {
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
+   }
+
+   protected void setBottomPanelPaddingRight(int px)
+   {
+      bottomPanel_.getElement().getStyle().setPaddingRight(px, Unit.PX);
    }
 
    protected void addAnchorWidget(Widget widget)
@@ -972,13 +986,14 @@ public abstract class ModalDialogBase extends DialogBox
 
    private boolean escapeDisabled_ = false;
    private boolean themeAware_ = false;
+   private boolean themeToggleAdded_ = false;
    private HandlerRegistration themeChangedReg_;
    private UserPrefs userPrefs_;
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
    private HorizontalPanel anchorPanel_;
-   protected final HorizontalPanel bottomPanel_;
+   private final HorizontalPanel bottomPanel_;
    private final HorizontalPanel buttonPanel_;
    private final HorizontalPanel leftButtonPanel_;
    private ThemedButton okButton_;

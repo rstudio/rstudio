@@ -67,7 +67,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       targetDirectory_ = targetDirectory;
 
       setThemeAware(true);
-      bottomPanel_.getElement().getStyle().setPaddingRight(8, Unit.PX);
+      setBottomPanelPaddingRight(8);
    }
    
    @Override

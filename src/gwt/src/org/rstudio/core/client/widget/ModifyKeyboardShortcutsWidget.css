@@ -1,6 +1,11 @@
 @external rstudio-themes-dark;
 @external rstudio-theme-aware-dialog;
 
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+
 @def MODIFIED_COLOUR #cdefcd;
 @def CUSTOM_COLOUR #EFF;
 
@@ -125,24 +130,24 @@ fieldset.showChoice {
 /* Dark theme overrides */
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget {
-   background: rgb(57, 67, 75);
-   border-color: rgb(12, 31, 48);
+   background: THEME_DARKGREY_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
    color: #eee;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridHeader {
-   background-color: rgb(47, 57, 65);
-   border-bottom-color: rgb(12, 31, 48);
-   border-right-color: rgb(12, 31, 48);
+   background-color: THEME_DARKGREY_MOST_INACTIVE;
+   border-bottom-color: THEME_DARKGREY_BORDER;
+   border-right-color: THEME_DARKGREY_BORDER;
    color: #ccc;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell {
-   border-bottom-color: rgb(47, 57, 65) !important;
+   border-bottom-color: THEME_DARKGREY_MOST_INACTIVE !important;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell:first-child {
-   border-left-color: rgb(57, 67, 75);
+   border-left-color: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridKeyboardSelectedRowCell:first-child,
@@ -153,7 +158,7 @@ fieldset.showChoice {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .shortcutInput {
-   border-color: rgb(78, 92, 104);
+   border-color: THEME_DARKGREY_BACKGROUND;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .modifiedRow {

@@ -1913,7 +1913,7 @@ td.environmentDataFrameCol {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .EditDialog {
-   border-color: rgb(12, 31, 48);
+   border-color: THEME_DARKGREY_BORDER;
 }
 
 .showFile {

@@ -1,5 +1,10 @@
 @charset "UTF-8";
 
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+
 .panel {
    border: 1px solid rgb(208, 210, 212);
    background-color: white;
@@ -29,18 +34,18 @@
 @external rstudio-theme-aware-dialog;
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .panel {
-   background-color: rgb(57, 67, 75);
-   border-color: rgb(12, 31, 48);
+   background-color: THEME_DARKGREY_INACTIVE;
+   border-color: THEME_DARKGREY_BORDER;
    color: #eee;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-thumb {
-   background: rgb(78, 92, 104);
+   background: THEME_DARKGREY_BACKGROUND;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-track,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-corner {
-   background: rgb(47, 57, 65);
+   background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
