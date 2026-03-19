@@ -273,7 +273,7 @@ button.browse:focus {
    color: #aaa;
 }
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-DialogBox .breadcrumbFrame {
+.rstudio-themes-dark.rstudio-theme-aware-dialog.gwt-DialogBox .breadcrumbFrame {
    border-color: THEME_DARKGREY_BORDER;
 }
 
