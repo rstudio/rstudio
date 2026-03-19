@@ -54,16 +54,16 @@ withr::defer(.rs.automation.deleteRemote())
 {
    envFile <- file.path(tempdir(), ".env")
    writeLines("SECRET=abc", envFile)
+   withr::defer(unlink(envFile))
    .rs.guardrails.expectError(readLines(!!envFile))
-   unlink(envFile)
 })
 
 .rs.test("reading .Renviron files is denied",
 {
    envFile <- file.path(tempdir(), ".Renviron")
    writeLines("SECRET=abc", envFile)
+   withr::defer(unlink(envFile))
    .rs.guardrails.expectError(readLines(!!envFile))
-   unlink(envFile)
 })
 
 .rs.test("reading SSH private keys is denied",
@@ -77,8 +77,8 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.executeExpr({
       writeLines("# profile", !!rprofile)
    })
+   withr::defer(remote$console.executeExpr({ unlink(!!rprofile) }))
    .rs.guardrails.expectError(readLines(!!rprofile))
-   remote$console.executeExpr({ unlink(!!rprofile) })
 })
 
 .rs.test("reading .env.local variant is denied",
@@ -87,8 +87,8 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.executeExpr({
       writeLines("SECRET=abc", !!envFile)
    })
+   withr::defer(remote$console.executeExpr({ unlink(!!envFile) }))
    .rs.guardrails.expectError(readLines(!!envFile))
-   remote$console.executeExpr({ unlink(!!envFile) })
 })
 
 .rs.test("reading SSH public key is allowed",
@@ -97,8 +97,8 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.executeExpr({
       writeLines("ssh-rsa AAAA...", !!pubKey)
    })
+   withr::defer(remote$console.executeExpr({ unlink(!!pubKey) }))
    .rs.guardrails.expectSuccess(readLines(!!pubKey))
-   remote$console.executeExpr({ unlink(!!pubKey) })
 })
 
 .rs.test("reading normal files is allowed",
@@ -148,8 +148,8 @@ withr::defer(.rs.automation.deleteRemote())
 {
    path <- tempfile("test-file-", tmpdir = dirname(tempdir()))
    file.create(path)
+   withr::defer(unlink(path))
    .rs.guardrails.expectError(unlink(!!path))
-   unlink(path)
 })
 
 .rs.test("file.copy to denied path is denied",
@@ -158,9 +158,9 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.executeExpr({
       writeLines("hello", !!src)
    })
+   withr::defer(remote$console.executeExpr({ unlink(!!src) }))
    dest <- file.path(dirname(tempdir()), "guardrail-copy-dest.txt")
    .rs.guardrails.expectError(file.copy(!!src, !!dest))
-   remote$console.executeExpr({ unlink(!!src) })
 })
 
 .rs.test("file.rename to denied path is denied",
@@ -169,9 +169,9 @@ withr::defer(.rs.automation.deleteRemote())
    remote$console.executeExpr({
       writeLines("hello", !!src)
    })
+   withr::defer(remote$console.executeExpr({ unlink(!!src) }))
    dest <- file.path(dirname(tempdir()), "guardrail-rename-dest.txt")
    .rs.guardrails.expectError(file.rename(!!src, !!dest))
-   remote$console.executeExpr({ unlink(!!src) })
 })
 
 
@@ -197,6 +197,7 @@ withr::defer(.rs.automation.deleteRemote())
 .rs.test("read denial error includes action, path, and reason",
 {
    remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
    remote$console.clear()
    remote$console.execute("readLines('~/.aws/credentials')")
    output <- paste(remote$console.getOutput(), collapse = "\n")
@@ -205,30 +206,29 @@ withr::defer(.rs.automation.deleteRemote())
    expect_match(output, "Path:")
    expect_match(output, "Reason:")
    expect_match(output, "secret keys or credentials")
-   remote$console.executeExpr({ .rs.chat.restoreBindings() })
 })
 
 .rs.test("edit denial error includes reason for path outside allowed locations",
 {
    path <- file.path(dirname(tempdir()), "not-in-project.txt")
    remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
    remote$console.clear()
    remote$console.execute(paste0("writeLines('x', '", path, "')"))
    output <- paste(remote$console.getOutput(), collapse = "\n")
    expect_match(output, "One or more agent file operations were blocked")
    expect_match(output, "not within the project")
-   remote$console.executeExpr({ .rs.chat.restoreBindings() })
 })
 
 .rs.test("edit denial on .ssh path includes credentials reason",
 {
    remote$console.executeExpr({ .rs.chat.injectBindings() })
+   withr::defer(remote$console.executeExpr({ .rs.chat.restoreBindings() }))
    remote$console.clear()
    remote$console.execute("writeLines('x', '~/.ssh/test')")
    output <- paste(remote$console.getOutput(), collapse = "\n")
    expect_match(output, "One or more agent file operations were blocked")
    expect_match(output, "secret keys or credentials")
-   remote$console.executeExpr({ .rs.chat.restoreBindings() })
 })
 
 
