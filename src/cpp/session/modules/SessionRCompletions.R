@@ -1230,8 +1230,9 @@ assign(x = ".rs.acCompletionTypes",
 # @inheritDotParams. This is the pure Rd-logic layer, separated from help
 # database lookup so it can be called directly in tests with a fixture Rd.
 #
-# Returns a list with fields `targetName` (character scalar) and `argNames`
-# (character vector), or NULL if the @inheritDotParams pattern is not found.
+# Returns a list with fields `targetName` (character scalar), `targetPkg`
+# (character scalar or NULL), and `argNames` (character vector), or NULL if
+# the @inheritDotParams pattern is not found.
 .rs.addFunction("parseInheritDotParamsFromRd", function(rd)
 {
    rdTag   <- function(x) attr(x, "Rd_tag")
@@ -1273,7 +1274,11 @@ assign(x = ".rs.acCompletionTypes",
    # Find the first non-whitespace TEXT node — the sentinel "Arguments passed on to".
    # The \code node immediately following it contains the target function name.
    inheritDotParamsText <- "Arguments passed on to"
-   i <- Position(function(n) identical(rdTag(n), "TEXT") && nzchar(nodeText(n)), dotsNode, nomatch = NULL)
+   i <- Position(
+      function(n) identical(rdTag(n), "TEXT") && nzchar(nodeText(n)),
+      dotsNode,
+      nomatch = NULL
+   )
    # Exit if the expected format from @inheritDotParams is not found -- e.g. with a regular `...` argument.
    if (is.null(i) ||
        !startsWith(nodeText(dotsNode[[i]]), inheritDotParamsText) ||
@@ -1282,15 +1287,17 @@ assign(x = ".rs.acCompletionTypes",
       return(NULL)
 
    # The \code node immediately following the sentinel TEXT contains the
-   # target function name. roxygen2 generates exactly two forms:
-   #   1. Same-package:    \code{\link[=fn]{fn}}       -> nodeText = "fn"
+   # target function name. roxygen2's resolve_qualified_link generates:
+   #   1. Same-package:    \code{\link[=fn]{fn}}          -> nodeText = "fn"
    #   2. Cross-package:   \code{\link[pkg:topic]{pkg::fn}} -> nodeText = "pkg::fn"
    linkNode <- Find(function(n) identical(rdTag(n), "\\link"), dotsNode[[i + 1L]])
    if (is.null(linkNode))
       return(NULL)
-   parts      <- strsplit(nodeText(linkNode), ":{2,3}", perl = TRUE)[[1]]
+   parts <- strsplit(nodeText(linkNode), ":{2,3}", perl = TRUE)[[1]]
+   if (!length(parts) || !nzchar(parts[[length(parts)]]))
+      return(NULL)
    targetName <- parts[[length(parts)]]
-   targetPkg  <- if (length(parts) == 2L) parts[[1]] else NULL
+   targetPkg  <- if (length(parts) == 2L && nzchar(parts[[1L]])) parts[[1L]] else NULL
 
    descNode <- Find(function(n) identical(rdTag(n), "\\describe"), dotsNode)
    if (is.null(descNode))
