@@ -1061,7 +1061,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final static int GRID_CELL_PADDING = 6;
    private final static int MAX_COLUMN_WIDTH = 50 + GRID_CELL_PADDING + GRID_CELL_SPACING;
 
-   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 355;
+   private final static int TABLE_HEIGHT = PreferencesDialogConstants.PANEL_CONTAINER_HEIGHT - 375;
    private final static int TABLE_WIDTH = PreferencesDialogConstants.PANE_CONTAINER_WIDTH - 8;
    private final static int SCROLL_PANEL_HEIGHT = TABLE_HEIGHT - 40;
 
