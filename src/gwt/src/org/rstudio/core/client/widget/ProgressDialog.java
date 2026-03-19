@@ -77,6 +77,7 @@ public abstract class ProgressDialog extends ModalDialogBase
    public ProgressDialog(String title, DialogRole role, Object param)
    {
       super(role);
+      setThemeAware(true);
       addStyleName(resources_.styles().progressDialog());
 
       operationStarted_ = false;

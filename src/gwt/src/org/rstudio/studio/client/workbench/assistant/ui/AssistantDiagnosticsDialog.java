@@ -39,6 +39,7 @@ public class AssistantDiagnosticsDialog extends ModalDialogBase
    public AssistantDiagnosticsDialog(String markdownContent, String assistantName)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setSize("560px", "460px");
 
       markdownContent_ = markdownContent;

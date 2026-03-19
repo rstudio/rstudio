@@ -14,7 +14,7 @@
          <div ui:field="container_" class="{res.style.container}">
             <table ui:field="innerTable_" cellpadding="0" cellspacing="0" border="0">
                <tr>
-                  <td valign="middle"><div class="{res.style.progress}" ui:field="progress_" /></td>
+                  <td valign="middle" style="padding-right: 8px"><rs:Spinner ui:field="progress_" /></td>
                   <td valign="middle">
                      <div class="{res.style.content}" ui:field="content_" />
                   </td>

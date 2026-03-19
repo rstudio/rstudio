@@ -61,7 +61,6 @@ public class SlideLabel extends Composite
    {
       String curtain();
       String container();
-      String progress();
       String content();
       String cancelColumn();
       String cancelButton();
@@ -129,7 +128,7 @@ public class SlideLabel extends Composite
       initWidget(uiBinder.createAndBindUi(this));
             
       if (!showProgressSpinner)
-         progress_.getStyle().setDisplay(Style.Display.NONE);
+         progress_.setVisible(false);
       curtain_.setHeight("0px");
 
       setCancelVisible(false);
@@ -313,7 +312,7 @@ public class SlideLabel extends Composite
    @UiField
    DivElement content_;
    @UiField
-   DivElement progress_;
+   Spinner progress_;
    @UiField
    SmallButton cancel_;
    @UiField
