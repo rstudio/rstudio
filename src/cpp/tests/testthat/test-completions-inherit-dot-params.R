@@ -52,6 +52,40 @@ with_rs_mock <- function(targetName, newValue, expr) {
    force(expr)
 }
 
+# Builds a minimal synthetic Rd object with the structure that roxygen2 generates
+# for @inheritDotParams. Individual fields can be overridden to exercise specific
+# guards in parseInheritDotParamsFromRd without needing to construct valid Rd text.
+make_inherit_rd <- function(
+   arg_name   = "...",
+   sentinel   = "Arguments passed on to ",
+   code_tag   = "\\code",
+   link_text  = "target",
+   link_tag   = "\\link",
+   with_link  = TRUE,
+   with_describe = TRUE,
+   describe_items = list()
+) {
+   mk <- function(tag, ...) {
+      node <- list(...)
+      attr(node, "Rd_tag") <- tag
+      node
+   }
+
+   linkNode   <- mk(link_tag, link_text)
+   codeNode   <- if (with_link) mk(code_tag, linkNode) else mk(code_tag, link_text)
+   textNode   <- mk("TEXT", sentinel)
+   descItems  <- lapply(describe_items, function(nm) {
+      mk("\\item", mk("\\code", nm), mk("TEXT", "desc"))
+   })
+   descNode   <- if (with_describe) do.call(mk, c(list("\\describe"), descItems)) else NULL
+   dotsDesc   <- if (!is.null(descNode)) mk("RCODE", textNode, codeNode, descNode)
+                 else                    mk("RCODE", textNode, codeNode)
+   nameNode   <- mk("TEXT", arg_name)
+   dotsItem   <- mk("\\item", nameNode, dotsDesc)
+   argsNode   <- mk("\\arguments", dotsItem)
+   mk("Rd", argsNode)
+}
+
 
 # ---------------------------------------------------------------------------
 # .rs.parseInheritDotParamsFromRd  (pure Rd logic, no help-db lookup)
@@ -60,14 +94,47 @@ with_rs_mock <- function(targetName, newValue, expr) {
 test_that("parseInheritDotParamsFromRd extracts targetName from fixture Rd", {
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
    expect_equal(result$targetName, "target")
+   expect_null(result$targetPkg)
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL targetPkg for same-package [=fn] link form", {
+   # Form 1: same-package -- \link[=fn]{fn}, no package prefix
+   rd_text <- paste0(
+      "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[=target]{target}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_null(result$targetPkg)
+   expect_equal(result$targetName, "target")
+})
+
+test_that("parseInheritDotParamsFromRd extracts targetPkg from cross-package [pkg:topic] link form", {
+   # Form 2: cross-package -- \link[pkg:topic]{pkg::fn}
+   # roxygen2 generates: dest <- gsub("::", ":", src) when src contains "::"
+   rd_text <- paste0(
+      "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[dplyr:slice_min]{dplyr::slice_min}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_equal(result$targetPkg,  "dplyr")
+   expect_equal(result$targetName, "slice_min")
 })
 
 test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
+   # Standard args
    expect_in("alpha", result$argNames)
    expect_in("beta",  result$argNames)
    expect_in("gamma", result$argNames)
+   # Reserved word -- requires backtick-quoting when deparsed
    expect_in("if",    result$argNames)
+   # Comma-separated args from a single \item{\code{n,prop}}{} entry
+   expect_in("n",     result$argNames)
+   expect_in("prop",  result$argNames)
 })
 
 test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
@@ -89,34 +156,14 @@ test_that("parseInheritDotParamsFromRd returns NULL for Rd with no @inheritDotPa
    expect_null(.rs.parseInheritDotParamsFromRd(mean_rd))
 })
 
-test_that("parseInheritDotParamsFromRd returns empty argNames for empty \\describe block", {
-   rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to \\code{target}\\describe{}}}"
-   rd <- tools::parse_Rd(textConnection(rd_text))
-   result <- .rs.parseInheritDotParamsFromRd(rd)
-   expect_length(result$argNames, 0L)
-})
-
-test_that("parseInheritDotParamsFromRd returns NULL when sentinel has no \\code node", {
-   # Sentinel text present but no \\code node following it
-   rd_text <- "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n\\arguments{\\item{...}{Arguments passed on to something\\describe{\\item{\\code{x}}{desc}}}}"
-   rd <- tools::parse_Rd(textConnection(rd_text))
-   expect_null(.rs.parseInheritDotParamsFromRd(rd))
-})
-
-test_that("parseInheritDotParamsFromRd returns NULL when \\arguments section is missing", {
-   rd_text <- "\\name{f}\\title{A function}\\description{Does something.}"
-   rd <- tools::parse_Rd(textConnection(rd_text))
-   expect_null(.rs.parseInheritDotParamsFromRd(rd))
-})
-
 test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDotParams exist", {
    # Two @inheritDotParams blocks: first targets 'target1' with arg 'alpha',
    # second targets 'target2' with arg 'beta'. Only the first block is used.
    rd_text <- paste0(
       "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
       "\\arguments{",
-      "\\item{...}{Arguments passed on to \\code{target1}\\describe{\\item{\\code{alpha}}{desc}}}",
-      "\\item{...}{Arguments passed on to \\code{target2}\\describe{\\item{\\code{beta}}{desc}}}",
+      "\\item{...}{Arguments passed on to \\code{\\link[=target1]{target1}}\\describe{\\item{\\code{alpha}}{desc}}}",
+      "\\item{...}{Arguments passed on to \\code{\\link[=target2]{target2}}\\describe{\\item{\\code{beta}}{desc}}}",
       "}"
    )
    rd <- tools::parse_Rd(textConnection(rd_text))
@@ -127,6 +174,92 @@ test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDo
    expect_false("beta" %in% result$argNames)
 })
 
+# ---------------------------------------------------------------------------
+# .rs.parseInheritDotParamsFromRd -- Rd not matching @inheritDotParams structure
+#
+# Steps through the expected structure in guard order. Valid Rd that deviates
+# from the roxygen2-generated format returns NULL at the relevant guard.
+# ---------------------------------------------------------------------------
+
+# Guard 1: Find \arguments
+test_that("parseInheritDotParamsFromRd returns NULL when \\arguments section is absent", {
+   rd_no_args <- list(); attr(rd_no_args, "Rd_tag") <- "Rd"
+   expect_null(.rs.parseInheritDotParamsFromRd(rd_no_args))
+})
+
+# Guard 2: Find \item with ... name
+test_that("parseInheritDotParamsFromRd returns NULL when no ... item is found", {
+   rd <- make_inherit_rd(arg_name = "x")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+# Guard 3: sentinel TEXT must be present and start with "Arguments passed on to"
+test_that("parseInheritDotParamsFromRd returns NULL when sentinel text is absent", {
+   rd <- make_inherit_rd(sentinel = "Something else entirely")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL when sentinel text does not start the TEXT node", {
+   rd <- make_inherit_rd(sentinel = "Note: Arguments passed on to ")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+# Guard 4: \code node must follow the sentinel
+test_that("parseInheritDotParamsFromRd returns NULL when \\code node is absent", {
+   # e.g. \code{target} replaced with a different tag
+   rd <- make_inherit_rd(code_tag = "\\text")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+# Guard 5: Find \link inside \code
+test_that("parseInheritDotParamsFromRd returns NULL when \\link node is absent", {
+   # e.g. \code{target} without a \link node
+   rd <- make_inherit_rd(with_link = FALSE)
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+# Guard 6: \link node text must be non-empty and of the form "pkg::fn" or "fn"
+test_that("parseInheritDotParamsFromRd returns NULL when \\link node text is empty", {
+   rd <- make_inherit_rd(link_text = "")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL when \\link pkg prefix is empty", {
+   # "::fn" is not a valid R namespace expression -- return NULL rather than
+   # silently treating it as a same-package reference.
+   rd <- make_inherit_rd(link_text = "::fn")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL when \\link text has too many separators", {
+   # "a::b::c" splits into 3 parts -- not a valid namespace expression
+   rd <- make_inherit_rd(link_text = "a::b::c")
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+test_that("parseInheritDotParamsFromRd extracts targetPkg from triple-colon link text", {
+   # :{2,3} split handles pkg:::fn defensively, even though roxygen2 currently
+   # produces a parse error for @inheritDotParams pkg:::fn
+   rd <- make_inherit_rd(link_text = "pkg:::fn")
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_equal(result$targetPkg,  "pkg")
+   expect_equal(result$targetName, "fn")
+})
+
+# Guard 7: Find \describe
+test_that("parseInheritDotParamsFromRd returns NULL when \\describe node is absent", {
+   rd <- make_inherit_rd(with_describe = FALSE)
+   expect_null(.rs.parseInheritDotParamsFromRd(rd))
+})
+
+# Guard 8: Filter \item nodes with length >= 1. An empty \describe is a valid
+# (if degenerate) @inheritDotParams -- the pattern matched, but no args were
+# forwarded -- so the function returns a list with empty argNames, not NULL.
+test_that("parseInheritDotParamsFromRd returns empty argNames for empty \\describe block", {
+   rd <- make_inherit_rd(describe_items = list())
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_length(result$argNames, 0L)
+})
 
 # ---------------------------------------------------------------------------
 # .rs.parseInheritDotParamsFromHelp  (help-db lookup layer)
@@ -191,9 +324,52 @@ test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixt
          ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
-      expect_length(result$results, 4L)
+      expect_length(result$results, 6L)
       expect_all_equal(result$type, .rs.acCompletionTypes$ARGUMENT)
+      # Verify comma-separated args are split correctly
+      expect_in("n = ",    result$results)
+      expect_in("prop = ", result$results)
    })
+})
+
+test_that("getCompletionsInheritDotParams uses target package from \\link for completionSource", {
+   with_fixture_completions({
+      result <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      # Fixture uses [=target]{target} (same-package), so completionSource
+      # falls back to pkgName.
+      expect_all_equal(result$packages, "pkg::target")
+   })
+})
+
+test_that("getCompletionsInheritDotParams uses targetPkg over pkgName for cross-package \\link", {
+   # Cross-package [pkg:topic]{pkg::fn} link -- targetPkg should be preferred
+   # over pkgName (the wrapper's package), fixing the masking / cross-package case.
+   rd_text <- paste0(
+      "\\name{wrapper}\\title{W}\\description{D}\\usage{wrapper(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[otherpkg:target]{otherpkg::target}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   with_rs_mock(
+      ".rs.parseInheritDotParamsFromHelp",
+      function(fnName, pkgName) .rs.parseInheritDotParamsFromRd(rd),
+      {
+         result <- .rs.getCompletionsInheritDotParams(
+            token       = "",
+            string      = "otherpkg::wrapper",
+            object      = make_wrapper_fn(c("...")),
+            ownFormals  = c("... = "),
+            matchedCall = make_matched_call()
+         )
+         expect_all_equal(result$packages, "otherpkg::target")
+      }
+   )
 })
 
 test_that("getCompletionsInheritDotParams excludes wrapper's own formals", {
