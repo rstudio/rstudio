@@ -30,11 +30,13 @@
 }
 
 .filenamePanel {
-   width: 494px;
+   width: 100%;
+   box-sizing: border-box;
+   padding: 4px;
 }
 
 .filenameLabel {
-   margin-right: 3px;
+   margin-right: 8px;
 }
 
 .filename {
