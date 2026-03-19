@@ -71,7 +71,7 @@ std::string assembleWebSocketPath(
    std::string mapped = portmappedPath;
    if (!mapped.empty() && mapped[0] != '/')
       mapped = "/" + mapped;
-   if (mapped.length() > 1 && mapped.back() == '/')
+   if (!mapped.empty() && mapped.back() == '/')
       mapped.pop_back();
 
    return root + session + mapped + "/ai-chat";

@@ -95,6 +95,14 @@ TEST(AssembleWebSocketPath, IPv6PortmappedPath)
       "/p6/58fab3e4/ai-chat");
 }
 
+TEST(AssembleWebSocketPath, PortmappedPathIsJustSlash)
+{
+   // Degenerate case: "/" should collapse to empty, not produce "//ai-chat"
+   EXPECT_EQ(
+      assembleWebSocketPath("/", "", "/"),
+      "/ai-chat");
+}
+
 TEST(AssembleWebSocketPath, DeepRootPath)
 {
    EXPECT_EQ(
