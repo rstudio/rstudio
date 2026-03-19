@@ -14,21 +14,8 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.TableCellElement;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Point;
@@ -44,8 +31,21 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Composite;
 
 public class DirectoryContentsWidget extends Composite
    implements HasSelectionHandlers<FileSystemItem>,
@@ -195,17 +195,18 @@ public class DirectoryContentsWidget extends Composite
       return table_.getSelectedItem();
    }
 
-   // This API is a bit oddly named. It's called with 'true' to indicate
-   // that we're almost ready to show content, and later with 'false'
-   // after the content is ready to be shown.
    public void showProgress(boolean show)
    {
       if (show)
       {
-         progressPanel_.showProgress(300);
+         // Delay switching to the progress panel. If content arrives
+         // before the timer fires, we skip the progress view entirely,
+         // avoiding a visual flash on fast navigations.
+         progressTimer_.schedule(PROGRESS_DELAY_MS);
       }
       else
       {
+         progressTimer_.cancel();
          table_.draw(data_);
          progressPanel_.setWidget(table_);
       }
@@ -286,8 +287,19 @@ public class DirectoryContentsWidget extends Composite
    private final List<FileSystemItem> data_;
    private final RowTable<FileSystemItem> table_;
    private final SimplePanelWithProgress progressPanel_;
-   
+
+   private final Timer progressTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         clearContents();
+         progressPanel_.showProgress(0);
+      }
+   };
+
    private FileSystemItem parentDirectory_;
-   
+
+   private static final int PROGRESS_DELAY_MS = 1000;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
