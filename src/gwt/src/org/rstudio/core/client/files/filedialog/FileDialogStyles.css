@@ -255,6 +255,8 @@ button.browse:focus {
 /* Dark theme ---- */
 
 @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
 @eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .filename {
@@ -296,4 +298,8 @@ button.browse:focus {
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb .fadeWrapper {
    display: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .contents {
+   scrollbar-color: THEME_DARKGREY_BACKGROUND THEME_DARKGREY_MOST_INACTIVE;
 }

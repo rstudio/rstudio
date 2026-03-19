@@ -39,15 +39,7 @@
    background-color: THEME_DARKGREY_INACTIVE;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
-}
-
-.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-thumb {
-   background: THEME_DARKGREY_BACKGROUND;
-}
-
-.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-track,
-.rstudio-themes-dark.rstudio-theme-aware-dialog .panel::-webkit-scrollbar-corner {
-   background: THEME_DARKGREY_MOST_INACTIVE;
+   scrollbar-color: THEME_DARKGREY_BACKGROUND THEME_DARKGREY_MOST_INACTIVE;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .row img {
