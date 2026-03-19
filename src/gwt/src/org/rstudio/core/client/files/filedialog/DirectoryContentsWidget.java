@@ -170,22 +170,12 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public ProgressPanel createProgressPanel(Widget image, int offset)
          {
-            ProgressPanel panel = new ProgressPanel(image, offset)
-            {
-               @Override
-               public boolean isDark()
-               {
-                  return false;
-               }
-            };
-            
-            panel.getElement().getStyle().setBackgroundColor("white");
-            panel.getElement().getStyle().setBorderWidth(1, Unit.PX);
+            ProgressPanel panel = new ProgressPanel(image, offset);
             panel.getElement().getStyle().setProperty("border", "1px solid rgb(208, 210, 212)");
             return panel;
          }
       };
-            
+
       progressPanel_.getElement().getStyle().setBorderWidth(1, Unit.PX);
       progressPanel_.getElement().getStyle().setBorderColor("rgb(208, 210, 212)");
       progressPanel_.setHeight("300px");

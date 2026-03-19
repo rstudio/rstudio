@@ -2737,6 +2737,10 @@ input[type="checkbox"]:checked:before {
 
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog .progressPanel {
+   background-color: THEME_DARKGREY_INACTIVE;
+}
+
 .consoleClearButton {
 
 }
