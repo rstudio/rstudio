@@ -117,7 +117,6 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       // view after save
       viewAfterSaveCheckBox_ = new CheckBox(constants_.viewPlotAfterSavingLabel());
       viewAfterSaveCheckBox_.setValue(options.getViewAfterSave());
-      addLeftWidget(viewAfterSaveCheckBox_);
 
       ThemedButton previewButton =  new ThemedButton(constants_.previewTitle(),
                                                      new ClickHandler() {
@@ -151,7 +150,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    {
       ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
 
-      LayoutGrid grid = new LayoutGrid(3, 2);
+      LayoutGrid grid = new LayoutGrid(4, 2);
       grid.addStyleName(styles.savePdfMainWidget());
 
       // paper size
@@ -185,6 +184,9 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       chkCairoPdf_.setValue(haveCairoPdf && options_.getCairoPdf());
       if (haveCairoPdf)
          grid.setWidget(2, 1, chkCairoPdf_);
+
+      // view after save
+      grid.setWidget(3, 1, viewAfterSaveCheckBox_);
 
       // set default value
       if (options_.getPortrait())
