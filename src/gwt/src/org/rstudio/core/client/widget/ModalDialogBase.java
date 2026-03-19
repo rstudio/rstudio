@@ -200,8 +200,7 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void syncDarkThemeClass()
    {
-      boolean useDark = userPrefs_ != null &&
-         userPrefs_.useDarkThemeModalDialogs().getValue();
+      boolean useDark = userPrefs_.useDarkThemeModalDialogs().getValue();
 
       Element container = Document.get().getElementById("rstudio_container");
       if (useDark && container != null && container.hasClassName("rstudio-themes-dark"))
