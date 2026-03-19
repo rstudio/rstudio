@@ -4,6 +4,7 @@
     outline-offset: -1px !important;
 }
 
-.search input:focus-visible {
+.search input:focus-visible,
+table[role="listbox"]:focus-visible {
     outline: none !important;
 }
