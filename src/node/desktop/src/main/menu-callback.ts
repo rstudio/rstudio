@@ -20,6 +20,15 @@ import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { appState, getEventBus } from './app-state';
 
+/**
+ * Roles that remain enabled on the disabled modal menu.
+ * Used by setMainMenuEnabled() to build the disabled copy and by
+ * updateLiveMenuItem() to allow re-enabling these items mid-modal.
+ */
+const MODAL_ENABLED_ROLES = new Set([
+  'cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll',
+]);
+
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
 }
@@ -269,10 +278,10 @@ export class MenuCallback extends EventEmitter {
   /**
    * Updates a writable property on the live MenuItem, avoiding a full menu rebuild.
    *
-   * When a modal is open, this.mainMenu is a temporary disabled copy. We only
-   * skip enabled=true on it (to prevent re-enabling modal-disabled items).
-   * Disabling (enabled=false) is always safe and must go through so that
-   * whitelisted items (cut, copy, paste, etc.) can still be disabled mid-modal.
+   * When a modal is open, this.mainMenu is a temporary disabled copy. We suppress
+   * enabled=true on it only for non-whitelisted items (to prevent re-enabling
+   * modal-disabled commands). Whitelisted roles (cut, copy, paste, etc.) may be
+   * freely re-enabled since the modal logic intentionally keeps them active.
    * checked and label are always applied to both menus.
    * savedMenu (the pre-modal menu restored on close) always receives updates.
    */
@@ -281,10 +290,11 @@ export class MenuCallback extends EventEmitter {
     property: 'enabled' | 'checked' | 'label',
     value: boolean | string,
   ) {
-    const skipMainMenu = this.savedMenu && property === 'enabled' && value === true;
-    if (!skipMainMenu) {
-      const menuItem = this.mainMenu.getMenuItemById(id);
-      if (menuItem) {
+    const menuItem = this.mainMenu.getMenuItemById(id);
+    if (menuItem) {
+      const isModalReEnable = this.savedMenu && property === 'enabled' && value === true;
+      const isWhitelisted = MODAL_ENABLED_ROLES.has(menuItem.role ?? '');
+      if (!isModalReEnable || isWhitelisted) {
         (menuItem as Record<string, unknown>)[property] = value;
       }
     }
@@ -523,10 +533,7 @@ export class MenuCallback extends EventEmitter {
         const disabledMenu = Menu.buildFromTemplate(this.recursiveCopy(this.mainMenuTemplate));
         disabledMenu.items.forEach((item) => {
           item.submenu?.items.forEach((subItem) => {
-            // keep some commands enabled
-            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(
-              subItem.role ?? '',
-            );
+            subItem.enabled = MODAL_ENABLED_ROLES.has(subItem.role ?? '');
           });
         });
         setApplicationMenu(disabledMenu);
