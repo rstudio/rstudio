@@ -367,6 +367,42 @@ describe('MenuCallback', () => {
     assert.strictEqual(item!.label, 'Updated During Modal', 'label should reflect change made during modal');
   });
 
+  it('does not re-enable commands on the disabled menu during a modal', () => {
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.addCommand('guarded_cmd', 'Guarded', '', 'Cmd+G', false, false, true);
+    callback.updateMenus();
+
+    // Verify the command starts enabled
+    assert.isTrue(callback.mainMenu.getMenuItemById('guarded_cmd')?.enabled);
+
+    // Enter modal state — builds a disabled copy of the menu
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('guarded_cmd')?.enabled,
+      'expected command to be disabled by modal',
+    );
+
+    // Backend fires setCommandEnabled(true) while modal is open
+    callback.setCommandEnabled('guarded_cmd', true);
+
+    // The visible (disabled) menu must NOT have the command re-enabled
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('guarded_cmd')?.enabled,
+      'command must stay disabled on the modal menu',
+    );
+
+    // Close modal — restores savedMenu which should have the update
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+    assert.isTrue(
+      callback.mainMenu.getMenuItemById('guarded_cmd')?.enabled,
+      'command should be enabled after modal closes',
+    );
+  });
+
   it('can disable and enable application menu', () => {
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
