@@ -367,6 +367,37 @@ describe('MenuCallback', () => {
     assert.strictEqual(item!.label, 'Updated During Modal', 'label should reflect change made during modal');
   });
 
+  it('applies checked and label changes to the visible disabled menu during a modal', () => {
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.addCommand('live_cmd', 'Original', '', '', true, false, true);
+    callback.updateMenus();
+
+    // Enter modal state
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+
+    // Update checked and label while modal is open
+    callback.setCommandChecked('live_cmd', true);
+    callback.setCommandLabel('live_cmd', 'Changed During Modal');
+
+    // Visible disabled menu should reflect checked and label immediately
+    const visibleItem = callback.mainMenu.getMenuItemById('live_cmd');
+    assert.isNotNull(visibleItem, 'expected live_cmd on visible menu');
+    assert.isTrue(visibleItem!.checked, 'checked should update on visible disabled menu');
+    assert.strictEqual(visibleItem!.label, 'Changed During Modal', 'label should update on visible disabled menu');
+
+    // Close modal — restored menu should also have the updates
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+
+    const restoredItem = callback.mainMenu.getMenuItemById('live_cmd');
+    assert.isNotNull(restoredItem, 'expected live_cmd on restored menu');
+    assert.isTrue(restoredItem!.checked, 'checked should persist after modal closes');
+    assert.strictEqual(restoredItem!.label, 'Changed During Modal', 'label should persist after modal closes');
+  });
+
   it('does not re-enable commands on the disabled menu during a modal', () => {
     callback.beginMain();
     callback.menuBegin('&Edit');
