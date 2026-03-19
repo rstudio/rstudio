@@ -1910,6 +1910,10 @@ td.environmentDataFrameCol {
    background-color: white;
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog .EditDialog {
+   border-color: rgb(12, 31, 48);
+}
+
 .showFile {
    font-size: 12px;
    padding-left: 5px;

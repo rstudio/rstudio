@@ -71,6 +71,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    public EditSnippetsDialog()
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setText(constants_.editSnippetsText());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
