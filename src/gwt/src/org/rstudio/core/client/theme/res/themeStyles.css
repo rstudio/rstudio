@@ -235,6 +235,7 @@ body.windows iframe {
 
 select {
    font-size: 12px;
+   background-color: white;
 }
 
 input[type="radio"] + label {
@@ -2739,6 +2740,10 @@ input[type="checkbox"]:checked:before {
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .progressPanel {
    background-color: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .progressPanel canvas {
+   filter: invert(1);
 }
 
 .consoleClearButton {

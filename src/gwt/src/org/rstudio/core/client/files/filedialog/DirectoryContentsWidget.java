@@ -18,7 +18,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -32,7 +31,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -40,7 +38,6 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
-import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.RowTable;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -166,28 +163,7 @@ public class DirectoryContentsWidget extends Composite
          }
       });
       
-      progressPanel_ = new SimplePanelWithProgress()
-      {
-         @Override
-         public ProgressPanel createProgressPanel(Widget image, int offset)
-         {
-            ProgressPanel panel = new ProgressPanel(image, offset)
-            {
-               @Override
-               public boolean isDark()
-               {
-                  return DomUtils.findParentElement(
-                     getElement(), false,
-                     el -> el.hasClassName("rstudio-themes-dark")) != null;
-               }
-            };
-            panel.getElement().getStyle().setProperty("border", "1px solid rgb(208, 210, 212)");
-            return panel;
-         }
-      };
-
-      progressPanel_.getElement().getStyle().setBorderWidth(1, Unit.PX);
-      progressPanel_.getElement().getStyle().setBorderColor("rgb(208, 210, 212)");
+      progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setHeight("300px");
       progressPanel_.setWidget(null);
       initWidget(progressPanel_);
