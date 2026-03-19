@@ -2498,6 +2498,7 @@ input[type="checkbox"]:checked:before {
    background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
+   color-scheme: dark;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog select,
