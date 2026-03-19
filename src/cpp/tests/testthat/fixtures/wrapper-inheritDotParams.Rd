@@ -16,6 +16,7 @@
 \item{\code{beta}}{Description of beta.}
 \item{\code{gamma}}{Description of gamma.}
 \item{\code{if}}{An argument with a reserved word name requiring backtick-quoting.}
+\item{\code{n,prop}}{Comma-separated args sharing a description.}
 }
 }
 }

@@ -60,14 +60,47 @@ with_rs_mock <- function(targetName, newValue, expr) {
 test_that("parseInheritDotParamsFromRd extracts targetName from fixture Rd", {
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
    expect_equal(result$targetName, "target")
+   expect_null(result$targetPkg)
+})
+
+test_that("parseInheritDotParamsFromRd returns NULL targetPkg for same-package [=fn] link form", {
+   # Form 1: same-package -- \link[=fn]{fn}, no package prefix
+   rd_text <- paste0(
+      "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[=target]{target}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_null(result$targetPkg)
+   expect_equal(result$targetName, "target")
+})
+
+test_that("parseInheritDotParamsFromRd extracts targetPkg from cross-package [pkg:topic] link form", {
+   # Form 2: cross-package -- \link[pkg:topic]{pkg::fn}
+   # roxygen2 generates: dest <- gsub("::", ":", src) when src contains "::"
+   rd_text <- paste0(
+      "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[dplyr:slice_min]{dplyr::slice_min}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   result <- .rs.parseInheritDotParamsFromRd(rd)
+   expect_equal(result$targetPkg,  "dplyr")
+   expect_equal(result$targetName, "slice_min")
 })
 
 test_that("parseInheritDotParamsFromRd extracts argNames from fixture Rd", {
    result <- .rs.parseInheritDotParamsFromRd(fixture_rd)
+   # Standard args
    expect_in("alpha", result$argNames)
    expect_in("beta",  result$argNames)
    expect_in("gamma", result$argNames)
+   # Reserved word -- requires backtick-quoting when deparsed
    expect_in("if",    result$argNames)
+   # Comma-separated args from a single \item{\code{n,prop}}{} entry
+   expect_in("n",     result$argNames)
+   expect_in("prop",  result$argNames)
 })
 
 test_that("parseInheritDotParamsFromRd respects partial @inheritDotParams", {
@@ -115,8 +148,8 @@ test_that("parseInheritDotParamsFromRd uses first block when multiple @inheritDo
    rd_text <- paste0(
       "\\name{f}\\title{F}\\description{D}\\usage{f(...)}\n",
       "\\arguments{",
-      "\\item{...}{Arguments passed on to \\code{target1}\\describe{\\item{\\code{alpha}}{desc}}}",
-      "\\item{...}{Arguments passed on to \\code{target2}\\describe{\\item{\\code{beta}}{desc}}}",
+      "\\item{...}{Arguments passed on to \\code{\\link[=target1]{target1}}\\describe{\\item{\\code{alpha}}{desc}}}",
+      "\\item{...}{Arguments passed on to \\code{\\link[=target2]{target2}}\\describe{\\item{\\code{beta}}{desc}}}",
       "}"
    )
    rd <- tools::parse_Rd(textConnection(rd_text))
@@ -191,9 +224,49 @@ test_that("getCompletionsInheritDotParams returns ARGUMENT completions from fixt
          ownFormals  = c("x = ", "... = "),
          matchedCall = make_matched_call()
       )
-      expect_length(result$results, 4L)
+      expect_length(result$results, 6L)
       expect_all_equal(result$type, .rs.acCompletionTypes$ARGUMENT)
    })
+})
+
+test_that("getCompletionsInheritDotParams uses target package from \\link for completionSource", {
+   with_fixture_completions({
+      result <- .rs.getCompletionsInheritDotParams(
+         token       = "",
+         string      = "pkg::wrapper",
+         object      = make_wrapper_fn(c("x", "...")),
+         ownFormals  = c("x = ", "... = "),
+         matchedCall = make_matched_call()
+      )
+      # Fixture uses [=target]{target} (same-package), so completionSource
+      # falls back to pkgName.
+      expect_all_equal(result$packages, "pkg::target")
+   })
+})
+
+test_that("getCompletionsInheritDotParams uses targetPkg over pkgName for cross-package \\link", {
+   # Cross-package [pkg:topic]{pkg::fn} link -- targetPkg should be preferred
+   # over pkgName (the wrapper's package), fixing the masking / cross-package case.
+   rd_text <- paste0(
+      "\\name{wrapper}\\title{W}\\description{D}\\usage{wrapper(...)}\n",
+      "\\arguments{\\item{...}{Arguments passed on to \\code{\\link[otherpkg:target]{otherpkg::target}}",
+      "\\describe{\\item{\\code{x}}{desc}}}}"
+   )
+   rd <- tools::parse_Rd(textConnection(rd_text))
+   with_rs_mock(
+      ".rs.parseInheritDotParamsFromHelp",
+      function(fnName, pkgName) .rs.parseInheritDotParamsFromRd(rd),
+      {
+         result <- .rs.getCompletionsInheritDotParams(
+            token       = "",
+            string      = "otherpkg::wrapper",
+            object      = make_wrapper_fn(c("...")),
+            ownFormals  = c("... = "),
+            matchedCall = make_matched_call()
+         )
+         expect_all_equal(result$packages, "otherpkg::target")
+      }
+   )
 })
 
 test_that("getCompletionsInheritDotParams excludes wrapper's own formals", {
