@@ -234,7 +234,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             if (!cancelled())
             {
                Debug.logError(error);
-               indicator.onProgress(constants_.loadingCapabilitiesErrorLabel());
+               indicator.onProgress(null);
                populateKernels();
                manageControls();
             }
@@ -246,8 +246,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          @Override
          public void run()
          {
+            Debug.log("Quarto capabilities request timed out");
             capabilitiesCallback_.cancel();
-            indicator.onProgress(constants_.loadingCapabilitiesErrorLabel());
+            indicator.onProgress(null);
             populateKernels();
             manageControls();
          }
@@ -325,6 +326,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          capabilitiesCallback_.cancel();
       if (capabilitiesTimeout_ != null)
          capabilitiesTimeout_.cancel();
+      quartoCaps_ = null;
       session_.persistClientState();
    }
    
