@@ -2502,7 +2502,7 @@ input[type="checkbox"]:checked:before {
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog select,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-ListBox {
-   background: THEME_DARKGREY_BACKGROUND;
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
 }
@@ -2512,7 +2512,7 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog button.gwt-Button > table:first-child {
-   background: THEME_DARKGREY_BACKGROUND;
+   background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
    box-shadow: none;
