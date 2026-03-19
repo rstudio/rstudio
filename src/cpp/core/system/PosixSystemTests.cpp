@@ -28,6 +28,15 @@ namespace core {
 namespace system {
 
 OSInfo parseOsReleaseContent(const std::string&);
+
+namespace detail {
+
+std::string resolveBindAddressForAddresses(
+      const std::string& address,
+      const std::vector<posix::IpAddress>& addrs);
+
+} // namespace detail
+
 namespace tests {
 
 #ifdef __linux__
@@ -52,6 +61,15 @@ static std::string getNoGroupName()
 }
 
 #endif
+
+static posix::IpAddress ipAddress(const std::string& name,
+                                  const std::string& address)
+{
+   posix::IpAddress ip;
+   ip.Name = name;
+   ip.Address = address;
+   return ip;
+}
 
 test_context("PosixSystemTests")
 {
@@ -606,6 +624,87 @@ VERSION_CODENAME="rhel9"
       expect_equal(info.osId, "rhel");
       expect_equal(info.osVersion, "9.5");
       expect_equal(info.osVersionCodename, "rhel9");
+   }
+
+   test_that("resolveBindAddress passes through specific addresses")
+   {
+      expect_equal(resolveBindAddress("127.0.0.1"), std::string("127.0.0.1"));
+      expect_equal(resolveBindAddress("192.168.1.1"), std::string("192.168.1.1"));
+      expect_equal(resolveBindAddress("::1"), std::string("::1"));
+      expect_equal(resolveBindAddress(""), std::string(""));
+   }
+
+   test_that("resolveBindAddress handles IPv4 wildcard")
+   {
+      std::string result = resolveBindAddress("0.0.0.0");
+      expect_true(result == "0.0.0.0" || result == "::");
+   }
+
+   test_that("resolveBindAddress handles IPv6 wildcard")
+   {
+      std::string result = resolveBindAddress("::");
+      expect_true(result == "::" || result == "0.0.0.0");
+   }
+
+   test_that("resolveBindAddressForAddresses prefers IPv6 when only IPv6 available")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "::1"),
+         ipAddress("eth0", "2001:db8::10")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
+   }
+
+   test_that("resolveBindAddressForAddresses keeps IPv4 on dual-stack hosts")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "127.0.0.1"),
+         ipAddress("eth0", "192.168.1.10"),
+         ipAddress("eth0", "2001:db8::10")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+   }
+
+   test_that("resolveBindAddressForAddresses ignores scoped IPv6 for IPv4 wildcard")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "127.0.0.1"),
+         ipAddress("eth0", "fe80::1%eth0")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+   }
+
+   test_that("resolveBindAddressForAddresses ignores link-local IPv6 for IPv4 wildcard")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "127.0.0.1"),
+         ipAddress("eth0", "fe80::1")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+   }
+
+   test_that("resolveBindAddressForAddresses skips unparseable addresses")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("bad0", "not-an-address"),
+         ipAddress("eth0", "2001:db8::10")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
+   }
+
+   test_that("resolveBindAddressForAddresses falls back to IPv4 without IPv6")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "127.0.0.1"),
+         ipAddress("eth0", "192.168.1.10")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("::", addrs), std::string("0.0.0.0"));
    }
 }
 
