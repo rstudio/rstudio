@@ -2083,7 +2083,10 @@ input[type="checkbox"] {
    vertical-align: middle;
 }
 
-.rstudio-themes-dark input[type="checkbox"] {
+.rstudio-themes-dark input[type="checkbox"],
+.macintosh .rstudio-themes-dark input[type="checkbox"],
+.linux .rstudio-themes-dark input[type="checkbox"],
+.windows-highdpi .rstudio-themes-dark input[type="checkbox"] {
    background: #d3d8dc;
    border-color: rgb(45,60,75);
 }
