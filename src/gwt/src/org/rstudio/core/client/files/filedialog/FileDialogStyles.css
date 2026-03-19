@@ -257,11 +257,11 @@ button.browse:focus {
 @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
 @eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
 
-.rstudio-themes-dark.rstudio-theme-aware-dialog .contents,
 .rstudio-themes-dark.rstudio-theme-aware-dialog .filename {
    background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
+   color-scheme: dark;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog .filenameLabel {
