@@ -212,6 +212,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
 
 
+   // NOTE: this pane uses a custom layout (pane layout grid) and
+   // intentionally does not call wrapWithPanel().
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,

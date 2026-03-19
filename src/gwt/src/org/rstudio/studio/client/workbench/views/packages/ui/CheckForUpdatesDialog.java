@@ -167,8 +167,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                   @Override
                   public void onError(ServerError error)
                   {
-                     indicator_.clearProgress();
-                     Debug.logError(error);
+                     indicator_.onError(error.getMessage());
                   }
                });
       });

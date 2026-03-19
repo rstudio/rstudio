@@ -91,6 +91,8 @@ public class AppearancePreferencesPane extends PreferencesPane
       }
    }
 
+   // NOTE: this pane uses a custom layout (left panel + theme preview) and
+   // intentionally does not call wrapWithPanel().
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,

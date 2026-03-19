@@ -286,8 +286,15 @@ public class DirectoryContentsWidget extends Composite
    {
       table_.setFocus(focus);
    }
-   
-   
+
+   @Override
+   protected void onDetach()
+   {
+      super.onDetach();
+      progressTimer_.cancel();
+   }
+
+
    private final List<FileSystemItem> data_;
    private final RowTable<FileSystemItem> table_;
    private final SimplePanelWithProgress progressPanel_;
