@@ -2,7 +2,7 @@
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
-@external rstudio-themes-dark;
+@external rstudio-themes-dark, rstudio-theme-aware-dialog;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external editor_dark, ace_editor_theme;
 @external windows
@@ -250,4 +250,50 @@ button.browse:focus {
 
 .rstudio-themes-alternate .breadcrumb .fadeWrapper {
    background: linear-gradient(to right, THEME_ALTERNATE_BACKGROUND, THEME_ALTERNATE_BACKGROUND_TRANSPARENT);
+}
+
+/* Dark theme support for theme-aware file dialogs */
+
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .contents,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .filename {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .filenameLabel {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .columnSize,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .columnDate {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .gwt-DialogBox .breadcrumbFrame {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb {
+   background-color: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb table.path .rstudio-HyperlinkLabel {
+   color: rgb(191, 211, 232);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb table.path span {
+   color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .browse {
+   color: #eee;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb .fadeWrapper {
+   background: linear-gradient(to right, THEME_DARKGREY_INACTIVE, rgba(57, 67, 75, 0));
 }

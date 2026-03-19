@@ -23,3 +23,14 @@
 .active .selected {
    background-color: rgb(214, 233, 247);
 }
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .selected {
+   background-color: rgba(255, 255, 255, 0.1);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .active .selected {
+   background-color: rgba(255, 255, 255, 0.2);
+}
