@@ -76,33 +76,27 @@ public class ExportPlotSizeEditor extends Composite
       // main widget
       VerticalPanel verticalPanel = new VerticalPanel();
            
-      // if we have an extra widget then enclose it within a horizontal
-      // panel with it on the left and the options on the right
+      // top panel contains extra widget (if any) and size options in a
+      // single column layout
       HorizontalPanel topPanel = new HorizontalPanel();
       CellPanel optionsPanel = null;
       HorizontalPanel widthAndHeightPanel = null;
       if (extraWidget != null)
       {
-         topPanel.setWidth("100%");
-         
-         topPanel.add(extraWidget);
-         topPanel.setCellHorizontalAlignment(extraWidget, 
-                                             HasHorizontalAlignment.ALIGN_LEFT);
-         
-         optionsPanel = new VerticalPanel();
-         optionsPanel.setStylePrimaryName(
-                                    resources.styles().verticalSizeOptions());
-         optionsPanel.setSpacing(0);
-         topPanel.add(optionsPanel);
-         topPanel.setCellHorizontalAlignment(
-                                       optionsPanel,
-                                       HasHorizontalAlignment.ALIGN_RIGHT);
-         
+         VerticalPanel columnPanel = new VerticalPanel();
+         columnPanel.add(extraWidget);
+
          widthAndHeightPanel = new HorizontalPanel();
-         widthAndHeightPanel.setStylePrimaryName(
+         widthAndHeightPanel.addStyleName(
                                     resources.styles().widthAndHeightEntry());
          configureHorizontalOptionsPanel(widthAndHeightPanel);
-         optionsPanel.add(widthAndHeightPanel);
+         columnPanel.add(widthAndHeightPanel);
+
+         optionsPanel = columnPanel;
+         optionsPanel.addStyleName(
+                                    resources.styles().verticalSizeOptions());
+
+         topPanel.add(columnPanel);
       }
       else
       {
@@ -110,7 +104,7 @@ public class ExportPlotSizeEditor extends Composite
          optionsPanel.setStylePrimaryName(
                                  resources.styles().horizontalSizeOptions());
          widthAndHeightPanel = topPanel;
-         configureHorizontalOptionsPanel(topPanel);  
+         configureHorizontalOptionsPanel(topPanel);
       }
           
       // image width
@@ -183,24 +177,24 @@ public class ExportPlotSizeEditor extends Composite
       keepRatioCheckBox_.addStyleName(resources.styles().maintainAspectRatioCheckBox());
       keepRatioCheckBox_.setValue(keepRatio);
       keepRatioCheckBox_.setText(constants_.maintainAspectRatioText());
-      optionsPanel.add(keepRatioCheckBox_);
+      widthAndHeightPanel.add(keepRatioCheckBox_);
       
-      // image and sizer in layout panel (create now so we can call
-      // setSize in update button click handler)
-      previewPanel_ = new LayoutPanel(); 
-     
-      
+      // image and sizer in layout panel
+      previewPanel_ = new LayoutPanel();
+      previewPanel_.getElement().getStyle().setMarginTop(8, Unit.PX);
+      previewPanel_.getElement().getStyle().setMarginBottom(8, Unit.PX);
+
       // update button
-      ThemedButton updateButton = new ThemedButton(constants_.updatePreviewTitle(),
+      updateButton_ = new ThemedButton(constants_.updatePreviewTitle(),
                                                     new ClickHandler(){
-         public void onClick(ClickEvent event) 
+         public void onClick(ClickEvent event)
          {
             updatePreview();
          }
       });
-      updateButton.setStylePrimaryName(
+      updateButton_.addStyleName(
                                  resources.styles().updateImageSizeButton());
-      optionsPanel.add(updateButton);
+      optionsPanel.add(updateButton_);
 
       // add top panel
       verticalPanel.add(topPanel);
@@ -382,8 +376,13 @@ public class ExportPlotSizeEditor extends Composite
    {
       gripper_.setVisible(visible);
    }
+
+   public void setUpdateButtonVisible(boolean visible)
+   {
+      updateButton_.setVisible(visible);
+   }
    
-   private void updatePreview()
+   public void updatePreview()
    {
       setPreviewPanelSize(getImageWidth(), getImageHeight());         
       previewer_.updatePreview(getImageWidth(), getImageHeight());
@@ -483,7 +482,7 @@ public class ExportPlotSizeEditor extends Composite
    private TextBox createImageSizeTextBox()
    {
       TextBox textBox = new TextBox();
-      textBox.setStylePrimaryName(
+      textBox.addStyleName(
             ExportPlotResources.INSTANCE.styles().imageSizeTextBox());
       return textBox;
    }
@@ -510,6 +509,7 @@ public class ExportPlotSizeEditor extends Composite
    
    private final ExportPlotPreviewer previewer_;
    private final ResizeGripper gripper_;
+   private final ThemedButton updateButton_;
    private final TextBox widthTextBox_;
    private final TextBox heightTextBox_;
    private final CheckBox keepRatioCheckBox_;

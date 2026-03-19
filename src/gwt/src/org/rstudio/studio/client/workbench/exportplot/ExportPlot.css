@@ -7,24 +7,6 @@
    width: 170px;
 }
 
-.fileNameLabel {
-  margin-top: -3px;
-}
-
-.fileNameTextBox {
-   margin-top: -5px;
-   width: 250px;
-}
-
-.directoryButton {
-  margin-left: -2px;
-}
-
-.directoryTextBox {
-   margin-top: -2px;
-   width: 250px;
-   background: #f3f4f4;
-}
 
 .imageOptionLabel {
    margin-right: 5px;
@@ -32,7 +14,7 @@
 
 .imageSizeTextBox {
    text-align: left;
-   width: 35px;
+   width: 55px;
 }
 
 .imagePreview {
@@ -64,15 +46,15 @@
 }
 
 .verticalSizeOptions .widthAndHeightEntry {
+   margin-top: 6px;
    margin-bottom: 4px;
 }
 
 .verticalSizeOptions .maintainAspectRatioCheckBox {
-   margin-left: -3px;
+   padding-left: 4px;
 }
 
 .verticalSizeOptions .updateImageSizeButton {
-   margin-left: -2px;
    margin-top: 6px;
    margin-bottom: 4px;
 }
@@ -98,6 +80,7 @@
 .savePdfMainWidget {
    width: 360px;
    margin-bottom: 15px;
+   border-spacing: 0 6px;
 }
 
 .savePdfMainWidget fieldset {
@@ -113,32 +96,6 @@
    margin-right: 10px;
 }
 
-.savePdfSizeLabel {
-   color: gray;
-}
-
-.savePdfFileNameLabel {
-   margin-top: 0px;
-}
-
-
-.savePdfDirectoryTextBox, .savePdfFileNameTextBox {
-   margin-left: 10px;
-   width: 280px;
-}
-
-.savePdfDirectoryTextBox {
-   background: #f3f4f4;
-}
-
-.savePdfViewAfterCheckbox {
-   margin-left: 7px;
-}
-
-.savePdfViewAfterCheckbox input[type=checkbox] {
-   margin-top: 7px;
-}
-
 .savePdfPaperSizeTextBox {
    width: 40px;
 }
@@ -148,4 +105,16 @@
    margin-left: 5px;
    margin-right: 5px;
    color: #6F6F6F;
+}
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .imagePreview {
+   border-color: rgb(78, 92, 104);
+   background-color: rgb(47, 57, 65);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .savePdfPaperSizeX {
+   color: #aaa;
 }

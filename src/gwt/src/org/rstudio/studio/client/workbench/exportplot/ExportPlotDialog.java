@@ -29,6 +29,7 @@ public class ExportPlotDialog extends ModalDialogBase
                            ExportPlotPreviewer previewer)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       options_ = options;
       previewer_ = previewer;
    }
