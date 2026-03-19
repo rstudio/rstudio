@@ -10,6 +10,7 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
+    "typecheck": "tsc --noEmit",
     "package": "npm ci && electron-forge package",
     "start": "electron-forge start -- --no-sandbox",
     "debug": "electron-forge start --inspect-electron",
