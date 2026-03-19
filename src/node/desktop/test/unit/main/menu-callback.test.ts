@@ -434,6 +434,38 @@ describe('MenuCallback', () => {
     );
   });
 
+  it('can disable a whitelisted item on the modal menu', () => {
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.updateMenus();
+
+    // Enter modal state — cutDummy has role 'cut' so it stays enabled
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+    assert.isTrue(
+      callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
+      'cut should be whitelisted-enabled on modal menu',
+    );
+
+    // Backend disables the whitelisted item while modal is open
+    callback.setCommandEnabled('cutDummy', false);
+
+    // Disabling must go through to the visible modal menu
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
+      'cut should be disabled on modal menu after setCommandEnabled(false)',
+    );
+
+    // Close modal — restored menu should also reflect the disabled state
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
+      'cut should stay disabled after modal closes',
+    );
+  });
+
   it('can disable and enable application menu', () => {
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 

@@ -269,9 +269,11 @@ export class MenuCallback extends EventEmitter {
   /**
    * Updates a writable property on the live MenuItem, avoiding a full menu rebuild.
    *
-   * When a modal is open, this.mainMenu is a temporary disabled copy.
-   * We skip `enabled` updates on it to preserve the modal's disabled state,
-   * but still apply `checked` and `label` so the visible menu stays current.
+   * When a modal is open, this.mainMenu is a temporary disabled copy. We only
+   * skip enabled=true on it (to prevent re-enabling modal-disabled items).
+   * Disabling (enabled=false) is always safe and must go through so that
+   * whitelisted items (cut, copy, paste, etc.) can still be disabled mid-modal.
+   * checked and label are always applied to both menus.
    * savedMenu (the pre-modal menu restored on close) always receives updates.
    */
   private updateLiveMenuItem(
@@ -279,7 +281,7 @@ export class MenuCallback extends EventEmitter {
     property: 'enabled' | 'checked' | 'label',
     value: boolean | string,
   ) {
-    const skipMainMenu = this.savedMenu && property === 'enabled';
+    const skipMainMenu = this.savedMenu && property === 'enabled' && value === true;
     if (!skipMainMenu) {
       const menuItem = this.mainMenu.getMenuItemById(id);
       if (menuItem) {
