@@ -26,7 +26,7 @@ import { appState, getEventBus } from './app-state';
  * updateLiveMenuItem() to allow re-enabling these items mid-modal.
  */
 const MODAL_ENABLED_ROLES = new Set([
-  'cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll',
+  'cut', 'copy', 'paste', 'hide', 'hideOthers', 'unhide', 'selectAll',
 ]);
 
 function menuIdFromLabel(label: string): string {

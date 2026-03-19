@@ -502,6 +502,39 @@ describe('MenuCallback', () => {
     );
   });
 
+  it('does not re-enable redo on the modal menu (no role assigned)', () => {
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.addCommand('redoDummy', 'Redo', '', '', false, false, true);
+    callback.updateMenus();
+
+    // Enter modal state — redoDummy has no role so it gets disabled
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('redoDummy')?.enabled,
+      'redo should be disabled on modal menu (not whitelisted)',
+    );
+
+    // Backend tries to re-enable redo while modal is open
+    callback.setCommandEnabled('redoDummy', true);
+
+    // Re-enable must be suppressed — redo has no whitelisted role
+    assert.isFalse(
+      callback.mainMenu.getMenuItemById('redoDummy')?.enabled,
+      'redo must stay disabled on modal menu',
+    );
+
+    // Close modal — restored menu should have the enabled state
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+    assert.isTrue(
+      callback.mainMenu.getMenuItemById('redoDummy')?.enabled,
+      'redo should be enabled after modal closes',
+    );
+  });
+
   it('can disable and enable application menu', () => {
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
