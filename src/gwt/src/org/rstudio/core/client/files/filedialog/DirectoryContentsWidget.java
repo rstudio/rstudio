@@ -292,6 +292,7 @@ public class DirectoryContentsWidget extends Composite
    {
       super.onDetach();
       progressTimer_.cancel();
+      table_.getElement().getStyle().clearProperty("pointerEvents");
    }
 
 
