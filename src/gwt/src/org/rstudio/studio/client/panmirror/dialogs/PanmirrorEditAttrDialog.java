@@ -46,6 +46,7 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
          // cancel returns null
          operation.execute(null);
       });
+      setThemeAware(true);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
        
       editAttr_.setAttr(attr, idHint);

@@ -44,7 +44,8 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
          // cancel returns null
          operation.execute(null);
       });
-   
+      setThemeAware(true);
+
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       configureNumeric(rows_);

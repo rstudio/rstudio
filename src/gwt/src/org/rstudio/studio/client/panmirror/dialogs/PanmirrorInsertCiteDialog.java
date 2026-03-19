@@ -94,6 +94,7 @@ public class PanmirrorInsertCiteDialog extends ModalDialog<PanmirrorInsertCiteRe
       super(title(citeProps.doi, citeProps.provider), Roles.getDialogRole(), operation, () -> {
          operation.execute(null);
       });
+      setThemeAware(true);
 
       RStudioGinjector.INSTANCE.injectMembers(this);
       mainWidget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
