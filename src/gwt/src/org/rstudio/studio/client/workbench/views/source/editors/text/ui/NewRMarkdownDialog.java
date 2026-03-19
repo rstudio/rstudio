@@ -178,6 +178,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          OperationWithInput<Result> operation)
    {
       super(constants_.newRMarkdown(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);

@@ -1,5 +1,8 @@
 @CHARSET "UTF-8";
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
 .image {
    margin-right: 12px;
 }
@@ -14,4 +17,8 @@
 
 .apiNameTextBox {
    width: 250px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .invalidAPIName {
+   background-color: rgb(90, 50, 50);
 }
