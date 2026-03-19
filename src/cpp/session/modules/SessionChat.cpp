@@ -4443,34 +4443,14 @@ std::string buildWebSocketUrl(int port)
       // Transform to portmapped path (returns relative path like "p/58fab3e4" or "/p/58fab3e4")
       std::string portmappedPath = url_ports::mapUrlPorts(localhostUrl);
 
-      // Ensure portmapped path starts with /
-      if (!portmappedPath.empty() && portmappedPath[0] != '/')
-         portmappedPath = "/" + portmappedPath;
-
-      // Remove trailing slash from portmapped path if present
-      if (!portmappedPath.empty() && portmappedPath[portmappedPath.length() - 1] == '/')
-         portmappedPath = portmappedPath.substr(0, portmappedPath.length() - 1);
-
-      // Prepend session URL prefix (e.g., "/s/{session-id}") so the browser
-      // sends the port-token cookie with the WebSocket upgrade request. The
-      // cookie is scoped to the session path in Workbench; without the prefix,
-      // the browser won't include it and port descrambling fails.
-      // In open-source (single-session) mode, RS_SESSION_URL is empty.
-      std::string sessionUrl = core::system::getenv(kSessionUrlEnvVar);
-      if (!sessionUrl.empty() && sessionUrl.back() == '/')
-         sessionUrl.pop_back();
-
-      // Prepend root path when behind a subpath reverse proxy (e.g., "/rstudio").
-      // Without this, the browser sends the WebSocket request to "/p/{hash}/..."
-      // which bypasses the proxy's location block and omits cookies scoped to
-      // the subpath, causing auth failures.
+      // Assemble the full WebSocket path from:
+      // - rootPath: subpath prefix from www-root-path (e.g., "/rstudio")
+      // - sessionUrl: Workbench session prefix (e.g., "/s/{id}"), empty in OSS
+      // - portmappedPath: scrambled port path (e.g., "/p/58fab3e4")
       std::string rootPath = options().rootPath();
-      if (rootPath == kRequestDefaultRootPath)
-         rootPath.clear();
-      if (!rootPath.empty() && rootPath.back() == '/')
-         rootPath.pop_back();
-
-      std::string wsPath = rootPath + sessionUrl + portmappedPath + "/ai-chat";
+      std::string sessionUrl = core::system::getenv(kSessionUrlEnvVar);
+      std::string wsPath = chat_constants::assembleWebSocketPath(
+         rootPath, sessionUrl, portmappedPath);
       DLOG("Server WebSocket path: {}", wsPath);
       return wsPath;
    }

@@ -73,6 +73,18 @@ const std::vector<std::string>& rstudioCapabilities();
 // ============================================================================
 constexpr int kMaxRestartAttempts = 1;
 
+// ============================================================================
+// WebSocket URL assembly
+// ============================================================================
+
+// Assembles a server-mode WebSocket path from its components. Each component
+// is normalized (trailing slashes removed, leading slash ensured on
+// portmappedPath) and the default root path "/" is treated as empty.
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath);
+
 } // namespace constants
 } // namespace chat
 } // namespace modules
