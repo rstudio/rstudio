@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -170,7 +171,16 @@ public class DirectoryContentsWidget extends Composite
          @Override
          public ProgressPanel createProgressPanel(Widget image, int offset)
          {
-            ProgressPanel panel = new ProgressPanel(image, offset);
+            ProgressPanel panel = new ProgressPanel(image, offset)
+            {
+               @Override
+               public boolean isDark()
+               {
+                  return DomUtils.findParentElement(
+                     getElement(), false,
+                     el -> el.hasClassName("rstudio-themes-dark")) != null;
+               }
+            };
             panel.getElement().getStyle().setProperty("border", "1px solid rgb(208, 210, 212)");
             return panel;
          }
