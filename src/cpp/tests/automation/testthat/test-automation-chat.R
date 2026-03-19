@@ -60,4 +60,84 @@ withr::defer(.rs.automation.deleteRemote())
       "document.querySelector('#rstudio_Sidebar_pane iframe')._bratReloadCount")
    expect_equal(reloadCount, 0L,
                 info = "Chat iframe should not reload when options dismissed without changes")
+
+   # Close the sidebar to restore default layout
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+})
+
+.rs.test("Posit Assistant pane survives R session restart", {
+   skip_on_ci()
+
+   # 1. Show the sidebar
+   if (!remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+      remote$commands.execute("toggleSidebar")
+      .rs.waitUntil("sidebar visible", function() {
+         remote$dom.elementExists("#rstudio_Sidebar_pane")
+      })
+   }
+
+   # Activate the chat tab and wait for iframe
+   remote$commands.execute("activateChat")
+   .rs.waitUntil("chat iframe exists", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane iframe")
+   })
+
+   # 2. Wait for iframe to render "Posit AI Not Installed" heading
+   .rs.waitUntil("iframe h2 shows expected text", function() {
+      iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
+      h2 <- iframe$contentWindow$document$querySelector("h2")
+      identical(h2$innerText, "Posit AI Not Installed")
+   }, swallowErrors = TRUE)
+   iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
+   h2 <- iframe$contentWindow$document$querySelector("h2")
+   expect_equal(h2$innerText, "Posit AI Not Installed")
+
+   # 3. Hide the sidebar
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # 4. Restart the R session
+   remote$session.restart()
+
+   # 5. Show sidebar again, verify content survived restart
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar visible", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   remote$commands.execute("activateChat")
+   .rs.waitUntil("chat iframe exists", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane iframe")
+   })
+
+   # Wait for iframe content to fully render after restart
+   .rs.waitUntil("iframe h2 shows expected text after restart", function() {
+      iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
+      h2 <- iframe$contentWindow$document$querySelector("h2")
+      identical(h2$innerText, "Posit AI Not Installed")
+   }, swallowErrors = TRUE)
+   iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
+   h2 <- iframe$contentWindow$document$querySelector("h2")
+   expect_equal(h2$innerText, "Posit AI Not Installed")
+
+   # Wait for install button to appear, then verify
+   .rs.waitUntil("install button rendered", function() {
+      iframe <- remote$js.querySelector("#rstudio_Sidebar_pane iframe")
+      btn <- iframe$contentWindow$document$querySelector("#install-btn")
+      !is.null(btn) && nzchar(btn$innerText)
+   }, swallowErrors = TRUE)
+   button <- iframe$contentWindow$document$querySelector("#install-btn")
+   expect_false(is.null(button))
+   expect_equal(button$innerText, "Install Posit AI")
+   expect_false(button$disabled)
+
+   # Close the sidebar to restore default layout
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
 })

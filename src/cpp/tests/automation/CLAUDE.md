@@ -325,19 +325,45 @@ expect_contains(output, "expected text")
 
 ## Test Environment
 
-BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit AI) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward with `withr::defer()`.
+BRAT tests run against an RStudio instance with default state: no user settings, no custom preferences, and no optional components (e.g. Posit AI) installed. Do not assume any non-default configuration exists. If your test requires a specific setting, set it explicitly within the test and clean it up afterward.
 
 ## Best Practices
 
-### Clean Up with `withr::defer()`
+### Test Cleanup
+
+**Important scoping caveat:** `withr::defer()` called inside a `.rs.test()` code block is scoped to the **test file**, not the individual test. Deferred actions only run after all tests in the file complete, not between tests. This means `withr::defer()` is **not suitable for per-test UI cleanup** (e.g. closing a sidebar, dismissing a dialog).
+
+**File-level cleanup** — use `withr::defer()` at the top of the file for resources that should be cleaned up when the file finishes:
 
 ```r
 self <- remote <- .rs.automation.newRemote()
 withr::defer(.rs.automation.deleteRemote())
 
-# Create temporary files/directories with cleanup
+# File-level temporary directory
 tempDir <- remote$files.createDirectory()
 withr::defer(remote$files.remove(tempDir))
+```
+
+**Per-test UI state cleanup** — restore UI state explicitly at the end of the test body. Each test should also guard against inheriting unexpected state from a prior test:
+
+```r
+.rs.test("example with sidebar", {
+   # Guard: handle sidebar being in either state on entry
+   if (!remote$dom.elementExists("#rstudio_Sidebar_pane")) {
+      remote$commands.execute("toggleSidebar")
+      .rs.waitUntil("sidebar visible", function() {
+         remote$dom.elementExists("#rstudio_Sidebar_pane")
+      })
+   }
+
+   # ... test logic ...
+
+   # Restore default layout at end of test
+   remote$commands.execute("toggleSidebar")
+   .rs.waitUntil("sidebar hidden", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+})
 ```
 
 ### Use Explicit Waits, Not `Sys.sleep()`
