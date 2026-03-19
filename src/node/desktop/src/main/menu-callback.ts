@@ -111,7 +111,7 @@ export class MenuCallback extends EventEmitter {
       this.emit(MenuCallback.MENUBAR_COMPLETED, this.mainMenu);
     });
 
-    // for all events that modify commands, their templates must also be modified!
+    // for all events that modify commands, their templates must also be modified
 
     ipcMain.on('menu_set_command_visible', (_event, commandId: string, visible: boolean) => {
       this.setCommandVisibility(commandId, visible);
