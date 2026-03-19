@@ -2498,7 +2498,24 @@ input[type="checkbox"]:checked:before {
    background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
    color: #eee;
-   color-scheme: dark;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="number"]::-webkit-inner-spin-button {
+   -webkit-appearance: none;
+   appearance: none;
+   width: 16px;
+   height: 100%;
+   cursor: pointer;
+   background: THEME_DARKGREY_INACTIVE;
+   border-left: 1px solid THEME_DARKGREY_BORDER;
+   background-image:
+      linear-gradient(45deg, transparent 40%, #ccc 40%, #ccc 60%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, #ccc 40%, #ccc 60%, transparent 60%),
+      linear-gradient(45deg, transparent 40%, #ccc 40%, #ccc 60%, transparent 60%),
+      linear-gradient(-45deg, transparent 40%, #ccc 40%, #ccc 60%, transparent 60%);
+   background-size: 5px 5px, 5px 5px, 5px 5px, 5px 5px;
+   background-position: 3px 25%, 8px 25%, 8px 75%, 3px 75%;
+   background-repeat: no-repeat;
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog select,
