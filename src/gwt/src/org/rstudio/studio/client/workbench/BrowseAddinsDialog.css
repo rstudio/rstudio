@@ -1,3 +1,5 @@
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .dataGridCell {
    border: none;
@@ -20,4 +22,30 @@
 .filterLabel {
    float: left;
    padding-right: 4px;
+   line-height: 19px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget {
+   background: rgb(57, 67, 75);
+   border-color: rgb(12, 31, 48);
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridHeader {
+   background-color: rgb(47, 57, 65);
+   border-bottom-color: rgb(12, 31, 48);
+   border-right-color: rgb(12, 31, 48);
+   color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridCell {
+   border-bottom-color: rgb(47, 57, 65);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget .dataGridSelectedRow {
+   background: rgb(47, 57, 65);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dataGridWidget:focus .dataGridSelectedRow {
+   background: rgb(70, 100, 140);
 }

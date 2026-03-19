@@ -27,12 +27,16 @@
       }
 
       .pattern label {
+         display: inline-block;
          padding-bottom: 2px;
       }
 
       .example {
+         display: inline-block;
          font-style: italic;
-         padding-top: 2px;
+         font-size: smaller;
+         padding-top: 4px;
+         padding-left: 4px;
       }
 
       .presetFilePatterns {
