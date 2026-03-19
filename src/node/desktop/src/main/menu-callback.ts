@@ -280,7 +280,7 @@ export class MenuCallback extends EventEmitter {
    *
    * When a modal is open, this.mainMenu is a temporary disabled copy. We suppress
    * enabled=true on it only for non-permitted items (to prevent re-enabling
-   * modal-disabled commands). Whitelisted roles (cut, copy, paste, etc.) may be
+   * modal-disabled commands). Modal-permitted roles (cut, copy, paste, etc.) may be
    * freely re-enabled since the modal logic intentionally keeps them active.
    * checked and label are always applied to both menus.
    * savedMenu (the pre-modal menu restored on close) always receives updates.
@@ -293,8 +293,8 @@ export class MenuCallback extends EventEmitter {
     const menuItem = this.mainMenu.getMenuItemById(id);
     if (menuItem) {
       const isModalReEnable = this.savedMenu && property === 'enabled' && value === true;
-      const isWhitelisted = MODAL_ENABLED_ROLES.has(menuItem.role ?? '');
-      if (!isModalReEnable || isWhitelisted) {
+      const isModalPermitted = MODAL_ENABLED_ROLES.has(menuItem.role ?? '');
+      if (!isModalReEnable || isModalPermitted) {
         (menuItem as Record<string, unknown>)[property] = value;
       }
     }
