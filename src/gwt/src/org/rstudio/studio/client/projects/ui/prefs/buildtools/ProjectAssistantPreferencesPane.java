@@ -403,6 +403,8 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      wrapWithPanel("project_assistant_prefs");
    }
 
    private VerticalPanel createDefaultPanel()

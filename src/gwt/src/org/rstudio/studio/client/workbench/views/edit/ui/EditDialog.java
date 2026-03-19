@@ -57,6 +57,7 @@ public class EditDialog extends ModalDialogBase
                      final ProgressOperationWithInput<String> operation)
    {
       super(role);
+      setThemeAware(true);
       editor_ = new AceEditor();
       setText(caption);
       editor_.setTextInputAriaLabel(caption);

@@ -58,6 +58,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
          Operation cancelOperation)
    {
       super(caption, role, checkOperation, cancelOperation);
+      setThemeAware(true);
       actionsDS_ = actionsDS;
       
       setOkButtonCaption(okCaption);

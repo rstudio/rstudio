@@ -35,18 +35,32 @@ public class DialogTabLayoutPanel extends TabLayoutPanel
 {
    public DialogTabLayoutPanel(String tabListLabel)
    {
-      super(14, Unit.PX, tabListLabel);
+      this(tabListLabel, true);
+   }
+
+   public DialogTabLayoutPanel(String tabListLabel, boolean showTabs)
+   {
+      super(showTabs ? 14 : 0, Unit.PX, tabListLabel);
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles.dialogTabPanel());
 
-      // we need to center the tabs and overlay them on the top edge of the
-      // content; to do this, it is necessary to nuke a couple of the inline
-      // styles used by the default GWT tab panel.
       Element tabOuter = (Element) getElement().getChild(1);
-      tabOuter.getStyle().setOverflow(Overflow.VISIBLE);
-      Element tabInner = (Element) tabOuter.getFirstChild();
-      tabInner.getStyle().clearWidth();
+
+      if (showTabs)
+      {
+         // we need to center the tabs and overlay them on the top edge of the
+         // content; to do this, it is necessary to nuke a couple of the inline
+         // styles used by the default GWT tab panel.
+         tabOuter.getStyle().setOverflow(Overflow.VISIBLE);
+         Element tabInner = (Element) tabOuter.getFirstChild();
+         tabInner.getStyle().clearWidth();
+      }
+      else
+      {
+         tabOuter.getStyle().setProperty("display", "none");
+         addStyleName(styles.dialogTabPanelNoTabs());
+      }
 
       // if the tab panel is the first focusable control in dialog we must keep the
       // selected Tab marked as first when selection changes

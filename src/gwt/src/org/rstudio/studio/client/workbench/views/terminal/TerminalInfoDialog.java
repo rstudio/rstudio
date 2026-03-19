@@ -39,6 +39,7 @@ public class TerminalInfoDialog extends ModalDialogBase
    public TerminalInfoDialog(String globalInfo, final TerminalSession session)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText(constants_.terminalDiagnosticsText());

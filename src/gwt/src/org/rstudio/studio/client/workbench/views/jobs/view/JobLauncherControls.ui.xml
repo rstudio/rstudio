@@ -21,6 +21,11 @@
       .check {
          display: block;
       }
+
+      .outer label {
+         display: inline-block;
+         padding-bottom: 2px;
+      }
    </ui:style>
    <g:VerticalPanel styleName="{style.outer}" width="350px">
       <g:Label styleName="{style.header}" text="Script Paths"><ui:attribute name="text" key="scriptPathsText"/></g:Label>
@@ -30,11 +35,9 @@
       <g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" 
                   text="Run job with copy of global environment" 
                   ui:field="importEnv_"><ui:attribute name="text" key="runJobText"/></g:CheckBox>
-      <g:HorizontalPanel>
-         <rw:InlineFormLabel forId="{ElementIds.getJobLauncherEnvironment}" text="Copy job results: "><ui:attribute
-                 name="text" key="copyJobText"/></rw:InlineFormLabel>
-         <rw:FormListBox elementId="{ElementIds.getJobLauncherEnvironment}"
-                         styleName="{style.check} {style.spaced}" ui:field="exportEnv_"/>
-      </g:HorizontalPanel>
+      <rw:InlineFormLabel forId="{ElementIds.getJobLauncherEnvironment}" text="Copy job results: "><ui:attribute
+              name="text" key="copyJobText"/></rw:InlineFormLabel>
+      <rw:FormListBox elementId="{ElementIds.getJobLauncherEnvironment}"
+                      addStyleNames="{style.check} {style.spaced}" ui:field="exportEnv_"/>
    </g:VerticalPanel>
 </ui:UiBinder>

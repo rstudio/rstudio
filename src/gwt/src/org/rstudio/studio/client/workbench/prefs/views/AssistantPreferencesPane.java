@@ -25,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
-import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -76,9 +75,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
+import org.rstudio.core.client.widget.Spinner;
+
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -177,7 +177,7 @@ public class AssistantPreferencesPane extends PreferencesPane
       lblAssistantStatus_ = new Label();
       lblAssistantStatus_.addStyleName(RES.styles().assistantStatusLabel());
 
-      imgRefreshSpinner_ = new Image(CoreResources.INSTANCE.progress_gray());
+      imgRefreshSpinner_ = new Spinner();
       imgRefreshSpinner_.addStyleName(RES.styles().refreshSpinner());
       imgRefreshSpinner_.setVisible(false);
 
@@ -515,6 +515,8 @@ public class AssistantPreferencesPane extends PreferencesPane
 
       selAssistant_.addChangeHandler(assistantChangedHandler);
       assistantChangedHandler.onChange(null); // Initialize
+
+      wrapWithPanel("assistant_prefs");
    }
 
    private VerticalPanel createNonePanel()
@@ -1346,7 +1348,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistant_;
    private final SimplePanel assistantDetailsPanel_;
    private final Label lblAssistantStatus_;
-   private final Image imgRefreshSpinner_;
+   private final Spinner imgRefreshSpinner_;
    private final CheckBox cbAssistantShowMessages_;
    private final CheckBox cbAssistantNesEnabled_;
    private final CheckBox cbAssistantNesCollapse_;

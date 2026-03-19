@@ -86,11 +86,13 @@ public class AppearancePreferencesPane extends PreferencesPane
       public NumericInput(Integer min, Integer max, Integer step)
       {
          super(min, max, step);
-         setWidth("40px");
+         setWidth("48px");
          getElement().addClassName(ModalDialogBase.ALLOW_ENTER_KEY_CLASS);
       }
    }
 
+   // NOTE: this pane uses a custom layout (left panel + theme preview) and
+   // intentionally does not call wrapWithPanel().
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
                                     UserPrefs userPrefs,

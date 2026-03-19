@@ -58,6 +58,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                             boolean isPublished)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText(constants_.publishToRPubs());
       title_ = title;

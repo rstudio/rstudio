@@ -54,6 +54,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          final OperationWithInput<CompileNotebookOptions> operation)
    {
       super(constants_.compileNotebookOptionsDialogCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
 

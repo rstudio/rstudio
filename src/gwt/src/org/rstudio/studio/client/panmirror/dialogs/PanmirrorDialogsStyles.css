@@ -1,4 +1,4 @@
-@external gwt-Label, gwt-TextBox, gwt-RadioButton, suggestPopupMiddleCenter, rstudio-themes-dark, rstudio-ImageButton;
+@external gwt-Label, gwt-TextBox, gwt-RadioButton, suggestPopupMiddleCenter, rstudio-themes-dark, rstudio-theme-aware-dialog, rstudio-ImageButton;
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
@@ -15,7 +15,8 @@
 
 .dialog label,
 .dialog .gwt-Label {
-   margin-bottom: 4px;
+   display: inline-block;
+   padding-bottom: 4px;
 }
 
 .dialog .horizontalLabel {
@@ -104,6 +105,11 @@
    height: 280px;
 }
 
+.codeBlockDialogTabs {
+   width: 380px;
+   height: 320px;
+}
+
 .imageDialogTab {
   width: 400px;
 }
@@ -115,12 +121,12 @@
 
 .insertTabsetDialogTabs {
    width: 380px;
-   height: 295px;
+   height: 335px;
 }
 
 .divDialogTabs {
    width: 380px;
-   height: 280px;
+   height: 320px;
 }
 
 
@@ -191,6 +197,12 @@
 
 .disabled label {
    color: rgba(0, 0, 0, 0.6);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialog .infoLabel,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialog .inlineInfoLabel,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .dialog .heightAuto {
+   color: #aaa;
 }
 
 

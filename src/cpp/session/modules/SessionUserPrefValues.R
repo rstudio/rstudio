@@ -1604,6 +1604,16 @@
    clear = function() { .rs.clearUserPref("global_theme") }
 )
 
+# Use dark theme modal dialogs
+#
+# Whether modal dialogs should use dark styling when a dark editor theme is
+# active.
+.rs.uiPrefs$useDarkThemeModalDialogs <- list(
+   get = function() { .rs.getUserPref("use_dark_theme_modal_dialogs") },
+   set = function(value) { .rs.setUserPref("use_dark_theme_modal_dialogs", value) },
+   clear = function() { .rs.clearUserPref("use_dark_theme_modal_dialogs") }
+)
+
 # Ignore whitespace in VCS diffs
 #
 # Whether to ignore whitespace when generating diffs of version controlled files.

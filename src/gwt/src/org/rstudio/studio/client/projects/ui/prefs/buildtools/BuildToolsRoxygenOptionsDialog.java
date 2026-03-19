@@ -41,6 +41,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
                OperationWithInput<BuildToolsRoxygenOptions> operation)
    {
       super(constants_.roxygenOptionsCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       chkRocletRd_.setValue(options.getRocletRd());

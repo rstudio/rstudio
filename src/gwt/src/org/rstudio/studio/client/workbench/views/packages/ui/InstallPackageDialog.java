@@ -70,7 +70,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            OperationWithInput<PackageInstallRequest> operation)
 {
       super(constants_.installPackagesCaption(), Roles.getDialogRole(), operation);
-      
+      setThemeAware(true);
+
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
       server_ = server;
@@ -133,7 +134,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       
       // source type
       packageSourceListBox_ = new ListBox();
-      packageSourceListBox_.setStylePrimaryName(RESOURCES.styles().packageSourceListBox());
+      packageSourceListBox_.addStyleName(RESOURCES.styles().packageSourceListBox());
       packageSourceListBox_.addStyleName(RESOURCES.styles().extraBottomPad());
       JsArrayString repos = installContext_.selectedRepositoryNames();
       if (repos.length() == 1)

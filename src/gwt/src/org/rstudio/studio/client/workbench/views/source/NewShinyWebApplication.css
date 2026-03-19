@@ -1,6 +1,8 @@
 @CHARSET "UTF-8";
 
 @external gwt-TextBox;
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .image {
    margin-right: 12px;
@@ -29,4 +31,12 @@
    border: none;
    margin: 0;
    padding: 0;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .image {
+   background: radial-gradient(circle at center, black 68px, transparent 68px);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .invalidAppName {
+   background-color: rgb(90, 50, 50);
 }

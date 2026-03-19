@@ -166,6 +166,8 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
         nudgeRight(helpLink);
         add(helpLink);
+
+      wrapWithPanel("project_packrat_prefs");
    }
 
    private void manageUI(boolean packified)

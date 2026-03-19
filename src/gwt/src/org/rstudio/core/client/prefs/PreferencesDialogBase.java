@@ -77,6 +77,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
 
       addStyleName(res.styles().preferencesDialog());
+      setThemeAware(true);
 
       for (final PreferencesDialogPaneBase<T> pane : panes_)
       {

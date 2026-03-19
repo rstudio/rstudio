@@ -18,6 +18,18 @@
       .formatPanel {
          margin-top: 10px;
       }
+
+      .formatPanel label {
+         display: inline-block;
+         padding-bottom: 2px;
+      }
+
+      @external rstudio-themes-dark;
+      @external rstudio-theme-aware-dialog;
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .dialog a {
+         color: #abc;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">
@@ -37,7 +49,7 @@
             <widget:FormLabel ui:field="lblFormat_" text="Report output format:"><ui:attribute name="text" key="lblFormat"/></widget:FormLabel>
          </g:HorizontalPanel>
          <g:ListBox ui:field="listFormat_"
-                    styleName="{style.format}">
+                    addStyleNames="{style.format}">
             <g:item value="html_document">HTML</g:item>
             <g:item value="pdf_document">PDF</g:item>
             <g:item value="word_document">MS Word</g:item>

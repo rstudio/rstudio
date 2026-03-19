@@ -50,6 +50,7 @@ public class AssistantSignInDialog extends ModalDialogBase
                                 String assistantName)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       setText(constants_.assistantSignInDialogTitle(assistantName));
 
       ui_ = uiBinder.createAndBindUi(this);

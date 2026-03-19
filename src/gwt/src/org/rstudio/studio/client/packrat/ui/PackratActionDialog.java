@@ -29,6 +29,7 @@ public class PackratActionDialog extends ModalDialog<Void>
          final OperationWithInput<Void> operation)
    {
       super("Packrat " + packratAction, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       setOkButtonCaption(packratAction);
       contents_ = new PackratActionDialogContents(packratAction, actions);
       setWidth("500px");

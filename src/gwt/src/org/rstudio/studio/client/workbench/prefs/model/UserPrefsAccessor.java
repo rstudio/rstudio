@@ -215,6 +215,7 @@ public class UserPrefsAccessor extends Prefs
    public static final String LATEX_PREVIEW_ON_CURSOR_IDLE = "latex_preview_on_cursor_idle";
    public static final String WRAP_TAB_NAVIGATION = "wrap_tab_navigation";
    public static final String GLOBAL_THEME = "global_theme";
+   public static final String USE_DARK_THEME_MODAL_DIALOGS = "use_dark_theme_modal_dialogs";
    public static final String GIT_DIFF_IGNORE_WHITESPACE = "git_diff_ignore_whitespace";
    public static final String GIT_SIGNED_COMMITS = "git_signed_commits";
    public static final String CONSOLE_DOUBLE_CLICK_SELECT = "console_double_click_select";
@@ -2779,6 +2780,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 
    /**
+    * Whether modal dialogs should use dark styling when a dark editor theme is active.
+    */
+   public PrefValue<Boolean> useDarkThemeModalDialogs()
+   {
+      return bool(
+         "use_dark_theme_modal_dialogs",
+         _constants.useDarkThemeModalDialogsTitle(), 
+         _constants.useDarkThemeModalDialogsDescription(), 
+         true);
+   }
+
+   /**
     * Whether to ignore whitespace when generating diffs of version controlled files.
     */
    public PrefValue<Boolean> gitDiffIgnoreWhitespace()
@@ -4755,6 +4768,8 @@ public class UserPrefsAccessor extends Prefs
          wrapTabNavigation().setValue(layer, source.getBool("wrap_tab_navigation"));
       if (source.hasKey("global_theme"))
          globalTheme().setValue(layer, source.getString("global_theme"));
+      if (source.hasKey("use_dark_theme_modal_dialogs"))
+         useDarkThemeModalDialogs().setValue(layer, source.getBool("use_dark_theme_modal_dialogs"));
       if (source.hasKey("git_diff_ignore_whitespace"))
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
       if (source.hasKey("git_signed_commits"))
@@ -5158,6 +5173,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(latexPreviewOnCursorIdle());
       prefs.add(wrapTabNavigation());
       prefs.add(globalTheme());
+      prefs.add(useDarkThemeModalDialogs());
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(gitSignedCommits());
       prefs.add(consoleDoubleClickSelect());

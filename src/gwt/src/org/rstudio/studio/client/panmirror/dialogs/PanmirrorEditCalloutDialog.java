@@ -52,7 +52,8 @@ public class PanmirrorEditCalloutDialog extends ModalDialog<PanmirrorCalloutEdit
          // cancel returns null
          operation.execute(null);
       });
-      
+      setThemeAware(true);
+
       if (removeEnabled)
       {
          ThemedButton removeAttributesButton = new ThemedButton(constants_.unwrapDivTitle());

@@ -58,6 +58,7 @@ public class RequestLogVisualization extends Composite
                             OperationWithInput<String> operation)
       {
          super(caption, Roles.getDialogRole(), operation);
+         setThemeAware(true);
          textArea_ = new TextArea();
          textArea_.setSize("400px", "300px");
          textArea_.setText(initialValue);

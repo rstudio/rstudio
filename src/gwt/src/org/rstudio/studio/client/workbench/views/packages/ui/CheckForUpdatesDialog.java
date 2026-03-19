@@ -18,9 +18,6 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.cellview.ImageButtonColumn;
-import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -34,9 +31,16 @@ import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 
+import com.google.gwt.cell.client.AbstractCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.inject.Inject;
 
@@ -47,6 +51,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                                 Operation cancelOperation)
    {
       super(constants_.updatePackagesCaption(), constants_.installUpdatesCaption(), Roles.getDialogRole(), updatesDS, checkOperation, cancelOperation);
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       indicator_ = addProgressIndicator();
@@ -99,37 +104,74 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       table.addColumn(availableColumn, constants_.availableHeader());
       table.setColumnWidth(availableColumn, 28, Unit.PCT);
 
-      ImageButtonColumn<PendingAction> newsColumn =
-            new ImageButtonColumn<>(
-                  new ImageResource2x(ThemeResources.INSTANCE.newsButton2x()),
-                  new OperationWithInput<PendingAction>() {
-                     
-                     public void execute(PendingAction action)
+      Column<PendingAction, PendingAction> newsColumn =
+            new Column<PendingAction, PendingAction>(
+                  new AbstractCell<PendingAction>(BrowserEvents.CLICK, BrowserEvents.KEYDOWN)
+                  {
+                     @Override
+                     public void render(Context context, PendingAction value, SafeHtmlBuilder sb)
                      {
-                        indicator_.onProgress(constants_.openingNewsProgressMessage());
-                        server_.getPackageNewsUrl(
-                              action.getActionInfo().getPackageName(),
-                              action.getActionInfo().getLibPath(),
-                              new ServerRequestCallback<String>()
-                              {
-                                 @Override
-                                 public void onResponseReceived(String response)
-                                 {
-                                    indicator_.clearProgress();
-                                    navigateToUrl(response);
-                                 }
-
-                                 @Override
-                                 public void onError(ServerError error)
-                                 {
-                                    indicator_.clearProgress();
-                                    Debug.logError(error);
-                                 }
-                              });
-
+                        if (value != null)
+                        {
+                           sb.appendHtmlConstant(
+                              "<span title=\"" + constants_.showPackageNewsTitle() + "\" " +
+                              "style=\"cursor: pointer; display: inline-block; vertical-align: middle;\">" +
+                              "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"18\" viewBox=\"0 -960 960 960\" " +
+                              "width=\"18\" fill=\"currentColor\">" +
+                              "<path d=\"M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h440l200 200v440" +
+                              "q0 33-23.5 56.5T760-120H200Zm0-80h560v-400H600v-160H200v560Zm80-80h400v-80H280v80Zm0-320" +
+                              "h200v-80H280v80Zm0 160h400v-80H280v80Zm-80-320v160-160 560-560Z\"/>" +
+                              "</svg></span>");
+                        }
                      }
-                  },
-                  constants_.showPackageNewsTitle());
+
+                     @Override
+                     protected void onEnterKeyDown(Context context, Element parent,
+                           PendingAction value, NativeEvent event, ValueUpdater<PendingAction> updater)
+                     {
+                        if (updater != null)
+                           updater.update(value);
+                     }
+
+                     @Override
+                     public void onBrowserEvent(Context context, Element parent,
+                           PendingAction value, NativeEvent event, ValueUpdater<PendingAction> updater)
+                     {
+                        super.onBrowserEvent(context, parent, value, event, updater);
+                        if (BrowserEvents.CLICK.equals(event.getType()) && updater != null)
+                           updater.update(value);
+                     }
+                  })
+            {
+               @Override
+               public PendingAction getValue(PendingAction object)
+               {
+                  return object;
+               }
+            };
+
+      newsColumn.setFieldUpdater((index, object, value) -> {
+         indicator_.onProgress(constants_.openingNewsProgressMessage());
+         server_.getPackageNewsUrl(
+               object.getActionInfo().getPackageName(),
+               object.getActionInfo().getLibPath(),
+               new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String response)
+                  {
+                     indicator_.clearProgress();
+                     navigateToUrl(response);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     indicator_.onError(error.getMessage());
+                  }
+               });
+      });
+
       table.addColumn(newsColumn, constants_.newsHeader());
       table.setColumnWidth(newsColumn, 16, Unit.PCT);
    }

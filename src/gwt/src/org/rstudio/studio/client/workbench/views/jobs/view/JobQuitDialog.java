@@ -33,6 +33,7 @@ public class JobQuitDialog extends ModalDialog<Boolean>
                         Operation cancelOperation)
    {
       super(constants_.terminateRunningJobsCaption(), Roles.getAlertdialogRole(), onConfirmed, cancelOperation);
+      setThemeAware(true);
       running_ = runningJobs;
       setOkButtonCaption(constants_.terminateJobsCaption());
    }

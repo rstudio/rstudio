@@ -189,6 +189,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
                                  OperationWithInput<Result> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setOkButtonCaption(constants_.create());

@@ -13,8 +13,11 @@
 }
 
 .refreshSpinner {
-	margin-right: 6px;
+	margin-right: 8px;
 }
+
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .keyboardShortcut {
 	background-color: rgba(0, 0, 0, 0.03);
@@ -22,4 +25,9 @@
 	border-radius: 3px;
 	padding: 2px 6px;
 	text-align: right;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .keyboardShortcut {
+	background-color: rgba(255, 255, 255, 0.1);
+	border-color: black;
 }

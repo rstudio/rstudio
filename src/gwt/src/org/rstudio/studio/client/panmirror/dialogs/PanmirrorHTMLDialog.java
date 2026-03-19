@@ -60,6 +60,7 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
       super(title, Roles.getDialogRole(), operation, () -> {
          operation.execute(false);
       });
+      setThemeAware(true);
 
       if (okText != null)
          setOkButtonCaption(okText);

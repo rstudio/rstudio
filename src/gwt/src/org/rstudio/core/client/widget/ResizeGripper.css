@@ -2,3 +2,9 @@
 .resizeGripper {
    cursor: move;
 }
+
+@external rstudio-themes-dark;
+
+.rstudio-themes-dark .resizeGripper img {
+   filter: invert(0.25);
+}

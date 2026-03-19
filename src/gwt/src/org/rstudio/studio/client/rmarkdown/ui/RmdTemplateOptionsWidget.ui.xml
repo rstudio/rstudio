@@ -107,6 +107,36 @@
    .optionsTabs .gwt-TabLayoutPanelTabs {
       margin-top: 16px;
    }
+
+   @external rstudio-themes-dark;
+   @external rstudio-theme-aware-dialog;
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .formatPanel {
+      background-color: rgb(47, 57, 65);
+   }
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .notesLabel {
+      color: #aaa;
+   }
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .root .gwt-TabLayoutPanelTab {
+      background: rgb(57, 67, 75);
+      border-color: rgb(78, 92, 104);
+      color: #ccc;
+   }
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .root .gwt-TabLayoutPanelTab-selected {
+      background: rgb(70, 100, 140);
+      color: #fff;
+   }
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .root .gwt-TabLayoutPanelContentContainer {
+      border-color: rgb(78, 92, 104);
+   }
+
+   .rstudio-themes-dark.rstudio-theme-aware-dialog .root .gwt-TabLayoutPanelTab:first-child {
+      border-left-color: rgb(78, 92, 104);
+   }
    </ui:style>
    <g:HeaderPanel styleName="{style.root}">
       <g:FlowPanel styleName="{style.formatPanel}">

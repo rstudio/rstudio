@@ -50,6 +50,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
    public NewRdDialog(OperationWithInput<Result> operation)
    {
       super(constants_.newRDocumentationFile(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
    }

@@ -50,8 +50,8 @@ public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
       languageWidget_ = new SpellingLanguageSelectWidget(spellingService, true);
       
       add(languageWidget_);
-      
-   
+
+      wrapWithPanel("project_spelling_prefs");
    }
 
    @Override

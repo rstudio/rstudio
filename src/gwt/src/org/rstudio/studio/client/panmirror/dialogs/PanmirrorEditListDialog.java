@@ -53,7 +53,8 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
          // cancel returns null
          operation.execute(null);
       });
-   
+      setThemeAware(true);
+
       capabilities_ = capabilities;
       
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);

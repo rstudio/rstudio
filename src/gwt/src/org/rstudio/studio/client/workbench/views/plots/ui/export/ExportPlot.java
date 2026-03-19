@@ -33,13 +33,13 @@ public class ExportPlot
                                ExportPlotOptions options,
                                OperationWithInput<ExportPlotOptions> onClose)
    {
-      new SavePlotAsImageDialog(globalDisplay,
-                                new PlotsPaneSaveAsImageOperation(globalDisplay,
-                                                                  server), 
-                                new PlotsPanePreviewer(server),
-                                context, 
-                                options, 
-                                onClose).showModal();
+      new SavePlotAsImageDialog(
+         globalDisplay,
+         new PlotsPaneSaveAsImageOperation(globalDisplay, server),
+         new PlotsPanePreviewer(server),
+         context,
+         options,
+         onClose).showModal();
    }
    
    public void savePlotAsPdf(GlobalDisplay globalDisplay,

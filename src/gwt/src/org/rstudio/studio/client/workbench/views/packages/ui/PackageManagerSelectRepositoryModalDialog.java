@@ -62,6 +62,7 @@ public class PackageManagerSelectRepositoryModalDialog extends ModalDialog<Packa
       OperationWithInput<PackageManagerRepository> onSelected)
    {
       super("Select Repository", Roles.getDialogRole(), onSelected);
+      setThemeAware(true);
       ppmRepos_ = ppmRepos;
 
       panel_ = new FlowPanel();

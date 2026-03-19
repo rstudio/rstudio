@@ -107,6 +107,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
                            ProgressOperationWithInput<FileSystemItem> operation)
    {
       super(role);
+      setThemeAware(true);
       context_ = context;
       operation_ = operation;
       context_.setCallbacks(this);

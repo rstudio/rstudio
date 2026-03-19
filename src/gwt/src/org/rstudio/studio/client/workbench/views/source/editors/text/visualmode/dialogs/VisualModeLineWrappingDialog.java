@@ -72,12 +72,11 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
       Operation onCancel)
    {
       super(constants_.lineWrapping(),
-            Roles.getDialogRole(), 
-            onConfirm, 
+            Roles.getDialogRole(),
+            onConfirm,
             onCancel);
-   
-      
-      
+      setThemeAware(true);
+
       mainWidget_ = new VerticalPanel();
      
       mainWidget_.addStyleName(RES.styles().confirmLineWrappingDialog());

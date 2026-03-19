@@ -2,7 +2,7 @@
 @external gwt-DialogBox;
 @external gwt-MenuItem-selected;
 @external breadcrumb, breadcrumb-filepane;
-@external rstudio-themes-dark;
+@external rstudio-themes-dark, rstudio-theme-aware-dialog;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external editor_dark, ace_editor_theme;
 @external windows
@@ -30,16 +30,17 @@
 }
 
 .filenamePanel {
-   width: 494px;
 }
 
 .filenameLabel {
-   margin-right: 3px;
+   margin-right: 8px;
 }
 
 .filename {
    background-color: white;
    width: 100%;
+   box-sizing: border-box;
+   padding: 4px;
    outline: none;
    height: 22px;
    font-size: 12px;
@@ -250,4 +251,56 @@ button.browse:focus {
 
 .rstudio-themes-alternate .breadcrumb .fadeWrapper {
    background: linear-gradient(to right, THEME_ALTERNATE_BACKGROUND, THEME_ALTERNATE_BACKGROUND_TRANSPARENT);
+}
+
+/* Dark theme ---- */
+
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+@eval THEME_DARK_DIALOG_CONTROL_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkDialogControlBackground;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .filename {
+   background-color: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
+   border-color: THEME_DARKGREY_BORDER;
+   color: #eee;
+   color-scheme: dark;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .filenameLabel {
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .columnSize,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .columnDate {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog.gwt-DialogBox .breadcrumbFrame {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb {
+   background-color: transparent;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb table.path .rstudio-HyperlinkLabel {
+   color: rgb(191, 211, 232);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb table.path span {
+   color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .browse {
+   color: #eee;
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .breadcrumb .fadeWrapper {
+   display: none;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .contents {
+   scrollbar-color: THEME_DARKGREY_BACKGROUND THEME_DARKGREY_MOST_INACTIVE;
 }

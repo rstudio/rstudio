@@ -100,9 +100,11 @@ public class TextEntryModalDialog extends ModalDialog<String>
    protected Widget createMainWidget()
    {
       VerticalPanel verticalPanel = new VerticalPanel();
-      verticalPanel.setSpacing(6);
       verticalPanel.setWidth(width_ + "px");
+      captionLabel_.getElement().getStyle().setMarginBottom(6, Unit.PX);
+      captionLabel_.getElement().getStyle().setProperty("display", "inlineBlock");
       verticalPanel.add(captionLabel_);
+      textBox_.getElement().getStyle().setMarginBottom(6, Unit.PX);
       verticalPanel.add(textBox_);
       verticalPanel.add(extraOption_);
       if (extraOption_.isVisible())

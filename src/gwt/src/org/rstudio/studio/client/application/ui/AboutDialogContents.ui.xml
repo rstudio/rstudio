@@ -134,6 +134,17 @@
          transform: rotate(-45deg);
          background-color: #d47066;
       }
+      @external rstudio-themes-dark;
+      @external rstudio-theme-aware-dialog;
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .buildNumber {
+         color: #aaa;
+      }
+
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .buildInfo,
+      .rstudio-themes-dark.rstudio-theme-aware-dialog .userAgent {
+         color: #aaa;
+      }
    </ui:style>
    <g:HTMLPanel styleName="{style.dialogWrapper}">
       <g:HTMLPanel ui:field="preReleaseRibbon" styleName="{style.preReleaseRibbon}">

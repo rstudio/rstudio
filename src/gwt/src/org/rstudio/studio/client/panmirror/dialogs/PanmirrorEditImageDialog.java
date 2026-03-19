@@ -65,7 +65,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          // cancel returns null
          operation.execute(null);
       });
-      
+      setThemeAware(true);
+
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       // natural width, height, and containerWidth (will be null if this

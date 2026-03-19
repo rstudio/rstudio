@@ -42,6 +42,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                               final Operation failedOperation)
    {
       super(new FormPanel(), role);
+      setThemeAware(true);
       setText(title);
       
       final FormPanel formPanel = (FormPanel)getContainerPanel();

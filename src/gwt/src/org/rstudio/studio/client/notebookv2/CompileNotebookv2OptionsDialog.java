@@ -47,6 +47,7 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
          final OperationWithInput<CompileNotebookv2Options> operation)
    {
       super(constants_.compileNotebookV2OptionsDialogCaption(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       style.ensureInjected();
       

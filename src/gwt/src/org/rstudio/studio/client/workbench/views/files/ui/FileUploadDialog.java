@@ -14,18 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Hidden;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcError;
@@ -40,6 +28,20 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Hidden;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
 {
@@ -59,9 +61,13 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
             beginOperation,
             completedOperation,
             failedOperation);
+
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       targetDirectory_ = targetDirectory;
+
+      setThemeAware(true);
+      setBottomPanelPaddingRight(8);
    }
    
    @Override

@@ -40,6 +40,7 @@ public class PanmirrorEditMathDialog extends ModalDialog<String>
          // cancel returns null
          operation.execute(null);
       });
+      setThemeAware(true);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       id_.setText(id.isEmpty() ? id : "#" + id);
       DomUtils.disableSpellcheck(id_);;

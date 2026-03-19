@@ -62,6 +62,7 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
                              MirrorsServerOperations mirrorOperations)
    {
       super(constants_.chooseMirrorDialogMessage(), Roles.getDialogRole(), inputOperation);
+      setThemeAware(true);
       globalDisplay_ = globalDisplay;
       mirrorSource_ = mirrorSource;
       mirrorOperations_ = mirrorOperations;

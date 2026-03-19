@@ -49,7 +49,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       VerticalPanel container = new VerticalPanel();
       
-      String textboxWidth = "100%";
+      String textboxWidth = "95%";
       projectName_ = new TextBox();
       ElementIds.assignElementId(projectName_.getElement(), ElementIds.PROJ_DISPLAY_NAME);
       DomUtils.disableSpellcheck(projectName_);
@@ -120,6 +120,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
       
       add(container);
+
+      wrapWithPanel("project_general_prefs");
    }
 
    @Override

@@ -47,6 +47,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          // cancel returns null
          operation.execute(null);
       });
+      setThemeAware(true);
 
       // create lang (defer parent until we determine whether we support attributes)
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
@@ -80,7 +81,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       if (attributes)
       {
          DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.codeBlockText());
-         tabPanel.addStyleName(RES.styles().linkDialogTabs());
+         tabPanel.addStyleName(RES.styles().codeBlockDialogTabs());
          tabPanel.add(langTab, constants_.languageFormLabel(), langTab.getBasePanelId());
          tabPanel.add(attributesTab, constants_.attributesText(), attributesTab.getBasePanelId());
          tabPanel.selectTab(0);

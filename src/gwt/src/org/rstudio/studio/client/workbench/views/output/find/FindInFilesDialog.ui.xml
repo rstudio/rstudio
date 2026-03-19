@@ -18,11 +18,25 @@
       }
 
       .pattern .gwt-TextBox, .filePattern {
-         width: 375px;
+         width: 100%;
+         box-sizing: border-box;
+      }
+
+      .pattern {
+         padding-bottom: 2px;
+      }
+
+      .pattern label {
+         display: inline-block;
+         padding-bottom: 2px;
       }
 
       .example {
-         color: #696969;
+         display: inline-block;
+         font-style: italic;
+         font-size: smaller;
+         padding-top: 4px;
+         padding-left: 4px;
       }
 
       .presetFilePatterns {

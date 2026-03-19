@@ -52,6 +52,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
          // cancel returns null
          operation.execute(null);
       });
+      setThemeAware(true);
 
       initialLink_ = link;
 

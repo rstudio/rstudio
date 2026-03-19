@@ -31,7 +31,10 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
@@ -46,6 +49,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -58,6 +62,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 import elemental2.dom.DomGlobal;
 
@@ -127,8 +132,16 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
+   @Inject
+   private void initialize(UserPrefs userPrefs)
+   {
+      userPrefs_ = userPrefs;
+   }
+
    protected void setThemeAware(boolean themeAware)
    {
       themeAware_ = themeAware;
@@ -136,16 +149,70 @@ public abstract class ModalDialogBase extends DialogBox
       if (themeAware)
       {
          addStyleName("rstudio-theme-aware-dialog");
-
-         Element container = Document.get().getElementById("rstudio_container");
-         if (container != null && container.hasClassName("rstudio-themes-dark"))
-            addStyleName("rstudio-themes-dark");
+         syncDarkThemeClass();
+         if (SuperDevMode.isActive())
+            addThemeToggleButton();
       }
       else
       {
          removeStyleName("rstudio-theme-aware-dialog");
          removeStyleName("rstudio-themes-dark");
       }
+   }
+
+   private void addThemeToggleButton()
+   {
+      if (themeToggleAdded_)
+         return;
+      themeToggleAdded_ = true;
+
+      Element captionEl = getCaption().asWidget().getElement();
+      captionEl.getStyle().setPosition(Style.Position.RELATIVE);
+
+      Element btn = Document.get().createButtonElement().cast();
+      btn.setInnerHTML("&#x263E;");
+      btn.setTitle("Toggle dark theme");
+      btn.setClassName(ALLOW_ENTER_KEY_CLASS);
+      Style s = btn.getStyle();
+      s.setPosition(Style.Position.ABSOLUTE);
+      s.setRight(4, Unit.PX);
+      s.setTop(50, Unit.PCT);
+      s.setProperty("transform", "translateY(-50%)");
+      s.setProperty("background", "transparent");
+      s.setProperty("border", "none");
+      s.setProperty("cursor", "pointer");
+      s.setFontSize(14, Unit.PX);
+      s.setPadding(2, Unit.PX);
+      s.setProperty("paddingLeft", "6px");
+      s.setProperty("paddingRight", "6px");
+      s.setOpacity(0.6);
+      s.setColor("inherit");
+
+      Event.sinkEvents(btn, Event.ONCLICK);
+      Event.setEventListener(btn, event ->
+      {
+         if (Event.ONCLICK == event.getTypeInt())
+         {
+            event.stopPropagation();
+            if (getStyleName().contains("rstudio-themes-dark"))
+               removeStyleName("rstudio-themes-dark");
+            else
+               addStyleName("rstudio-themes-dark");
+         }
+      });
+
+      captionEl.appendChild(btn);
+   }
+
+   private void syncDarkThemeClass()
+   {
+      boolean useDark = userPrefs_ != null && userPrefs_.useDarkThemeModalDialogs().getValue();
+
+      Element container = Document.get().getElementById("rstudio_container");
+      if (useDark && container != null && container.hasClassName("rstudio-themes-dark"))
+         addStyleName("rstudio-themes-dark");
+      else
+         removeStyleName("rstudio-themes-dark");
    }
 
    protected void hideButtons()
@@ -183,8 +250,16 @@ public abstract class ModalDialogBase extends DialogBox
       {
       }
 
-      if (!themeAware_)
+      if (themeAware_)
+      {
+         themeChangedReg_ = RStudioGinjector.INSTANCE.getEventBus().addHandler(
+            EditorThemeChangedEvent.TYPE,
+            event -> syncDarkThemeClass());
+      }
+      else
+      {
          RStudioThemes.disableDarkMenus();
+      }
    }
 
    @Override
@@ -195,6 +270,12 @@ public abstract class ModalDialogBase extends DialogBox
       shortcutDisableHandle_ = null;
 
       ModalDialogTracker.onHide(this);
+
+      if (themeChangedReg_ != null)
+      {
+         themeChangedReg_.removeHandler();
+         themeChangedReg_ = null;
+      }
 
       if (!themeAware_)
          RStudioThemes.enableDarkMenus();
@@ -470,6 +551,11 @@ public abstract class ModalDialogBase extends DialogBox
    protected void setButtonAlignment(HorizontalAlignmentConstant alignment)
    {
       bottomPanel_.setCellHorizontalAlignment(buttonPanel_, alignment);
+   }
+
+   protected void setBottomPanelPaddingRight(int px)
+   {
+      bottomPanel_.getElement().getStyle().setPaddingRight(px, Unit.PX);
    }
 
    protected void addAnchorWidget(Widget widget)
@@ -897,6 +983,9 @@ public abstract class ModalDialogBase extends DialogBox
 
    private boolean escapeDisabled_ = false;
    private boolean themeAware_ = false;
+   private boolean themeToggleAdded_ = false;
+   private HandlerRegistration themeChangedReg_;
+   private UserPrefs userPrefs_;
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
