@@ -238,46 +238,52 @@ export class MenuCallback extends EventEmitter {
 
   setCommandEnabled(id: string, newEnablement: boolean) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.enabled != newEnablement) {
-        template.enabled = newEnablement;
-        this.debounceUpdateMenuShort();
-      }
       template.enabled = newEnablement;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'enabled', newEnablement);
+      }
     }
   }
 
   setCommandChecked(id: string, newChecked: boolean) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.checked != newChecked) {
-        template.checked = newChecked;
-        this.debounceUpdateMenuShort();
-      }
       template.checked = newChecked;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'checked', newChecked);
+      }
     }
   }
 
   setCommandLabel(id: string, newLabel: string) {
     const template = this.menuItemTemplates.get(id);
-
     if (template) {
-      // Menu only need to be updated in this case if it has been built already
-      // For increased speed, only if the current template
-      // differs from the new state
-      if (this.isMenuSet && template.label != newLabel) {
-        template.label = newLabel;
-        this.debounceUpdateMenuShort();
-      }
       template.label = newLabel;
+      if (this.isMenuSet) {
+        this.updateLiveMenuItem(id, 'label', newLabel);
+      }
+    }
+  }
+
+  /**
+   * Updates a writable property on the live MenuItem in both the current menu
+   * and the saved menu (if a modal is open), avoiding a full menu rebuild.
+   */
+  private updateLiveMenuItem(
+    id: string,
+    property: 'enabled' | 'checked' | 'label',
+    value: boolean | string,
+  ) {
+    const menuItem = this.mainMenu.getMenuItemById(id);
+    if (menuItem) {
+      (menuItem as Record<string, unknown>)[property] = value;
+    }
+    if (this.savedMenu) {
+      const savedMenuItem = this.savedMenu.getMenuItemById(id);
+      if (savedMenuItem) {
+        (savedMenuItem as Record<string, unknown>)[property] = value;
+      }
     }
   }
 

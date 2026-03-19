@@ -16,6 +16,7 @@
 import { assert } from 'chai';
 import { ipcMain, MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
+import sinon from 'sinon';
 import { MenuCallback } from '../../../src/main/menu-callback';
 import { appState, clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
@@ -254,6 +255,116 @@ describe('MenuCallback', () => {
     callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+Shift+G');
+  });
+
+  it('does not rebuild menu for enabled change', () => {
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.addCommand('test_cmd', 'Test', '', '', false, false, true);
+    callback.updateMenus();
+
+    const clock = sinon.useFakeTimers();
+    const updateMenusSpy = sinon.spy(callback, 'updateMenus');
+    try {
+      callback.setCommandEnabled('test_cmd', false);
+      clock.tick(100);
+
+      assert.isTrue(updateMenusSpy.notCalled, 'updateMenus should not be called for enabled change');
+      assert.isFalse(callback.mainMenu.getMenuItemById('test_cmd')?.enabled, 'live MenuItem should be disabled');
+      assert.isFalse(callback.getMenuItemById('test_cmd')?.enabled, 'template should be updated');
+    } finally {
+      clock.restore();
+      updateMenusSpy.restore();
+    }
+  });
+
+  it('does not rebuild menu for checked change', () => {
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.addCommand('check_cmd', 'Checkable', '', '', true, false, true);
+    callback.updateMenus();
+
+    const clock = sinon.useFakeTimers();
+    const updateMenusSpy = sinon.spy(callback, 'updateMenus');
+    try {
+      callback.setCommandChecked('check_cmd', true);
+      clock.tick(100);
+
+      assert.isTrue(updateMenusSpy.notCalled, 'updateMenus should not be called for checked change');
+      assert.isTrue(callback.mainMenu.getMenuItemById('check_cmd')?.checked, 'live MenuItem should be checked');
+      assert.isTrue(callback.getMenuItemById('check_cmd')?.checked, 'template should be updated');
+    } finally {
+      clock.restore();
+      updateMenusSpy.restore();
+    }
+  });
+
+  it('does not rebuild menu for label change', () => {
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.addCommand('label_cmd', 'Old Label', '', '', false, false, true);
+    callback.updateMenus();
+
+    const clock = sinon.useFakeTimers();
+    const updateMenusSpy = sinon.spy(callback, 'updateMenus');
+    try {
+      callback.setCommandLabel('label_cmd', 'New Label');
+      clock.tick(100);
+
+      assert.isTrue(updateMenusSpy.notCalled, 'updateMenus should not be called for label change');
+      assert.strictEqual(callback.mainMenu.getMenuItemById('label_cmd')?.label, 'New Label');
+      assert.strictEqual(callback.getMenuItemById('label_cmd')?.label, 'New Label');
+    } finally {
+      clock.restore();
+      updateMenusSpy.restore();
+    }
+  });
+
+  it('still rebuilds menu for visibility change', () => {
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.addCommand('vis_cmd', 'Visible', '', '', false, false, true);
+    callback.updateMenus();
+
+    const clock = sinon.useFakeTimers();
+    const updateMenusSpy = sinon.spy(callback, 'updateMenus');
+    try {
+      callback.setCommandVisibility('vis_cmd', false);
+      clock.tick(100);
+
+      assert.isTrue(updateMenusSpy.calledOnce, 'updateMenus should be called for visibility change');
+    } finally {
+      clock.restore();
+      updateMenusSpy.restore();
+    }
+  });
+
+  it('preserves in-place changes through modal state', () => {
+    callback.beginMain();
+    callback.menuBegin('&Edit');
+    callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
+    callback.addCommand('modal_cmd', 'Modal Test', '', '', true, false, true);
+    callback.updateMenus();
+
+    // Enter modal state
+    appState().modalTracker.setNumGwtModalsShowing(1);
+    callback.setMainMenuEnabled(false);
+
+    // Make in-place changes while modal is open
+    callback.setCommandEnabled('modal_cmd', false);
+    callback.setCommandChecked('modal_cmd', true);
+    callback.setCommandLabel('modal_cmd', 'Updated During Modal');
+
+    // Exit modal state — restores savedMenu
+    appState().modalTracker.setNumGwtModalsShowing(0);
+    callback.setMainMenuEnabled(true);
+
+    // Verify restored menu reflects changes made during modal
+    const item = callback.mainMenu.getMenuItemById('modal_cmd');
+    assert.isNotNull(item, 'expected modal_cmd to exist in restored menu');
+    assert.isFalse(item!.enabled, 'enabled should reflect change made during modal');
+    assert.isTrue(item!.checked, 'checked should reflect change made during modal');
+    assert.strictEqual(item!.label, 'Updated During Modal', 'label should reflect change made during modal');
   });
 
   it('can disable and enable application menu', () => {
