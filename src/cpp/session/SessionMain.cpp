@@ -2496,7 +2496,7 @@ int main(int argc, char * const argv[])
       // it is created with the default value of ~, so if our session options
       // have specified that a different directory should be used, we should
       // persist the value to the session state as soon as possible
-      module_context::activeSession().setWorkingDir(workingDir.getAbsolutePath());
+      module_context::activeSession().setWorkingDir(module_context::createAliasedPath(workingDir));
 
       // initialize directory trust state before R initialization
       modules::trust::initializeTrustState();
