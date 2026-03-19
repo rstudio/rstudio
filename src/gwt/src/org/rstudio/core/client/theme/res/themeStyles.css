@@ -2517,6 +2517,11 @@ input[type="checkbox"]:checked:before {
    color: #eee;
 }
 
+.rstudio-themes-dark.rstudio-theme-aware-dialog select:focus option:checked {
+   background: THEME_DARKGREY_BODY_BACKGROUND;
+   color: #eee;
+}
+
 .rstudio-themes-dark.rstudio-theme-aware-dialog .search input[type="text"] {
    background: transparent;
 }
