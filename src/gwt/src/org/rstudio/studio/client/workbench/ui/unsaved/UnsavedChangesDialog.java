@@ -97,6 +97,7 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
             Roles.getAlertdialogRole(),
             saveOperation,
             onCancelled != null ? (Operation) () -> onCancelled.execute() : null);
+      setThemeAware(true);
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
 

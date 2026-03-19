@@ -26,3 +26,15 @@
    background-color: white;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .targetPath {
+   color: #aaa;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .targetScrollPanel {
+   background-color: rgb(47, 57, 65);
+   border-color: rgb(78, 92, 104);
+}
+

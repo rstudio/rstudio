@@ -36,6 +36,7 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
    public RMarkdownNoParamsDialog()
    {
       super(Roles.getAlertdialogRole());
+      setThemeAware(true);
       setText(constants_.noParametersDefined());
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       

@@ -35,7 +35,8 @@ public class RenvActionDialog extends ModalDialog<Void>
             action + " " + constant_.libraryCaption(),
             Roles.getDialogRole(),
             operation);
-      
+      setThemeAware(true);
+
       widget_ = new RenvActionDialogContents(action, actions);
       
       setOkButtonCaption(StringUtil.capitalize(action));

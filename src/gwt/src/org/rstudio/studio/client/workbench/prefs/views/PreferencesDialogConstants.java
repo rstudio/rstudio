@@ -23,7 +23,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 public class PreferencesDialogConstants
 {
    public static final int PANEL_CONTAINER_WIDTH  = 640;
-   public static final int PANEL_CONTAINER_HEIGHT = 580;
+   public static final int PANEL_CONTAINER_HEIGHT = 600;
    public static final int SECTION_CHOOSER_WIDTH = 132;
    public static final int SECTION_CHOOSER_PADDING = 10;
    public static final int PANE_CONTAINER_WIDTH = PANEL_CONTAINER_WIDTH - SECTION_CHOOSER_WIDTH;

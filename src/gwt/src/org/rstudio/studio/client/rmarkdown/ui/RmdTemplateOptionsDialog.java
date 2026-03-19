@@ -55,6 +55,7 @@ public class RmdTemplateOptionsDialog
               onSaved,
               onCancelled
       );
+      setThemeAware(true);
       setWidth("425px");
       setHeight("430px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);

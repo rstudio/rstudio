@@ -36,6 +36,7 @@
 @external editor_light, editor_dark;
 @external gwt-TextBox-readonly;
 @external gwt-TextBox;
+@external gwt-PasswordTextBox;
 @external gwt-ListBox;
 
 /* These are exposed to allow users to customize RStudio further with their rsthemes. */
@@ -2017,7 +2018,7 @@ td.environmentDataFrameCol {
 .textBoxWithButton input[type=text] {
    position: relative;
    top: 1px;
-   height: 21px;
+   height: 25px;
    border: 1px solid #999;
 }
 
@@ -2509,6 +2510,7 @@ input[type="checkbox"]:checked:before {
 }
 
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="text"],
+.rstudio-themes-dark.rstudio-theme-aware-dialog input[type="password"],
 .rstudio-themes-dark.rstudio-theme-aware-dialog input[type="number"],
 .rstudio-themes-dark.rstudio-theme-aware-dialog textarea {
    background: THEME_DARK_DIALOG_CONTROL_BACKGROUND;
@@ -3116,20 +3118,21 @@ body .rstudio-themes-alternate {
    background: #75AADB;
 }
 
-.gwt-TextBox, .gwt-ListBox {
+.gwt-TextBox, .gwt-PasswordTextBox, .gwt-ListBox {
 	border-radius: 4px;
 	border-width: 1px;
 	border-color: rgb(133, 133, 133);
 	border-style: solid;
 	font-size: 12px;
-	padding-left: 4px;
-	padding-right: 4px;
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 .gwt-ListBox {
 	min-height: 20px;
+	padding: 4px 6px;
 }
 
-.gwt-TextBox {
+.gwt-TextBox, .gwt-PasswordTextBox {
 	min-height: 16px;
 }

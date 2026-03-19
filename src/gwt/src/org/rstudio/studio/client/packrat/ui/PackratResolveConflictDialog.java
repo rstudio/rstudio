@@ -50,7 +50,8 @@ public class PackratResolveConflictDialog
                OperationWithInput<PackratConflictResolution> onResolved)
    {
       super(constants_.packratResolveConflictDialogCaption(), Roles.getDialogRole(), onResolved);
-      
+      setThemeAware(true);
+
       setOkButtonCaption(constants_.okButtonCaption());
          
       // main widget

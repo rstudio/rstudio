@@ -146,6 +146,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          }
       });
 
+      setThemeAware(true);
       rsaSshKeyPath_ = FileSystemItem.createDir(rsaSshKeyPath);
       setOkButtonCaption(constants_.setOkButtonCaption());
 

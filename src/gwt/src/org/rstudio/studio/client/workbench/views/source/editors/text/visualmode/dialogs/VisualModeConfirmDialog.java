@@ -39,6 +39,7 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
             Roles.getDialogRole(),
             onConfirm,
             onCancel);
+      setThemeAware(true);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       mainWidget_.addStyleName(VisualModeDialogsResources.INSTANCE.styles().confirmDialog());

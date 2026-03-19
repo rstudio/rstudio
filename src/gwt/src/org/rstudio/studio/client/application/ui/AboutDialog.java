@@ -43,6 +43,7 @@ public class AboutDialog extends ModalDialogBase
    public AboutDialog(ProductInfo info)
    {
       super(Roles.getDialogRole());
+      setThemeAware(true);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText(constants_.title(editionInfo_.editionName()));

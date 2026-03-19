@@ -97,7 +97,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                              final OperationWithInput<AddRemoteDialog.Input> onAddRemote)
    {
       super(caption, Roles.getDialogRole(), onCreateBranch);
-      
+      setThemeAware(true);
+
       setOkButtonCaption(constants_.createCapitalized());
       enableOkButton(false);
       

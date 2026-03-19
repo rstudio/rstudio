@@ -21,6 +21,15 @@
    height: 17px;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .textbox {
+   background-color: rgb(47, 57, 65);
+   border-color: rgb(78, 92, 104);
+   color: #eee;
+}
+
 .wrapper {
    max-height: 400px;
    overflow-y: scroll;
