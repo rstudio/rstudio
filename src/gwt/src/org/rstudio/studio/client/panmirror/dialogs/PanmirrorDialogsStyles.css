@@ -15,7 +15,8 @@
 
 .dialog label,
 .dialog .gwt-Label {
-   margin-bottom: 4px;
+   display: inline-block;
+   padding-bottom: 4px;
 }
 
 .dialog .horizontalLabel {
