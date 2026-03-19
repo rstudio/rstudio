@@ -1937,15 +1937,15 @@ td.environmentDataFrameCol {
 
 .fileUploadPanel {
    width: 350px;
+   padding-left: 7px;
+   padding-right: 7px;
 }
 
 .fileUploadPanel .fileUploadLabel {
-   margin-left: 7px;
    margin-top: 6px;
 }
 
 .fileUploadPanel .fileUploadField {
-   margin-left: 7px;
    margin-top: 4px;
    margin-bottom: 8px;
 }
@@ -1954,6 +1954,14 @@ td.environmentDataFrameCol {
    border: 1px solid #BBB;
    padding: 5px;
    font-size: 11px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .fileUploadPanel .fileUploadTipLabel {
+   border-color: THEME_DARKGREY_BORDER;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .fileUploadPanel input[type="file"] {
+   color-scheme: dark;
 }
 
 .fileList {

@@ -978,7 +978,7 @@ public abstract class ModalDialogBase extends DialogBox
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
    private HorizontalPanel anchorPanel_;
-   private final HorizontalPanel bottomPanel_;
+   protected final HorizontalPanel bottomPanel_;
    private final HorizontalPanel buttonPanel_;
    private final HorizontalPanel leftButtonPanel_;
    private ThemedButton okButton_;
