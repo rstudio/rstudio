@@ -29,10 +29,11 @@ import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
@@ -60,6 +61,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 import elemental2.dom.DomGlobal;
 
@@ -129,8 +131,16 @@ public abstract class ModalDialogBase extends DialogBox
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
-   
+
+   @Inject
+   private void initialize(UserPrefs userPrefs)
+   {
+      userPrefs_ = userPrefs;
+   }
+
    protected void setThemeAware(boolean themeAware)
    {
       themeAware_ = themeAware;
@@ -190,17 +200,8 @@ public abstract class ModalDialogBase extends DialogBox
 
    private void syncDarkThemeClass()
    {
-      boolean useDark = false;
-      try
-      {
-         useDark = RStudioGinjector.INSTANCE.getUserPrefs()
-            .useDarkThemeModalDialogs().getValue();
-      }
-      catch (Exception e)
-      {
-         // prefs may not be available yet during early initialization
-         useDark = true;
-      }
+      boolean useDark = userPrefs_ != null &&
+         userPrefs_.useDarkThemeModalDialogs().getValue();
 
       Element container = Document.get().getElementById("rstudio_container");
       if (useDark && container != null && container.hasClassName("rstudio-themes-dark"))
@@ -973,6 +974,7 @@ public abstract class ModalDialogBase extends DialogBox
    private boolean escapeDisabled_ = false;
    private boolean themeAware_ = false;
    private HandlerRegistration themeChangedReg_;
+   private UserPrefs userPrefs_;
    private boolean enterDisabled_ = false;
    private final SimplePanel containerPanel_;
    private final VerticalPanel mainPanel_;
