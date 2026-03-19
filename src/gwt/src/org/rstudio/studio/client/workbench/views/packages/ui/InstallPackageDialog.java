@@ -70,7 +70,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            OperationWithInput<PackageInstallRequest> operation)
 {
       super(constants_.installPackagesCaption(), Roles.getDialogRole(), operation);
-      
+      setThemeAware(true);
+
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
       server_ = server;

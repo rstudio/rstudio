@@ -2,6 +2,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 @external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .cellTableCell input[type=checkbox] {
    margin-top: 0;
@@ -31,4 +32,35 @@
    margin-left: 5px;
    font-size: 12px;
 }
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableWidget {
+   background-color: rgb(57, 67, 75);
+   color: #eee;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableHeader {
+   background-color: rgb(47, 57, 65);
+   border-bottom-color: rgb(12, 31, 48);
+   border-right-color: rgb(12, 31, 48);
+   border-top-color: rgb(47, 57, 65);
+   border-left-color: rgb(47, 57, 65);
+   color: #ccc;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRow {
+   background: rgb(57, 67, 75);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRowCell {
+   border-color: rgb(57, 67, 75);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRow {
+   background-color: rgb(52, 62, 70);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRowCell {
+   border-color: rgb(52, 62, 70);
+}
+
 

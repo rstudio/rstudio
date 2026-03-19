@@ -1,4 +1,5 @@
-
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
 
 .mainWidget {
    height: 300px;
@@ -12,4 +13,9 @@
 
 .explanatoryText {
    margin-bottom: 15px;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .mainWidget {
+   background-color: rgb(57, 67, 75);
+   border-color: rgb(12, 31, 48);
 }
