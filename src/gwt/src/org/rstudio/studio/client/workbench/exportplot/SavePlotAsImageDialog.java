@@ -23,7 +23,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
@@ -38,7 +37,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class SavePlotAsImageDialog extends ExportPlotDialog
 {
    public SavePlotAsImageDialog(
-                           GlobalDisplay globalDisplay,
                            SavePlotAsImageOperation saveOperation,
                            ExportPlotPreviewer previewer,
                            SavePlotAsImageContext context,
@@ -49,7 +47,6 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
 
       setText(constants_.savePlotAsImageText());
 
-      globalDisplay_ = globalDisplay;
       saveOperation_ = saveOperation;
       context_ = context;
       progressIndicator_ = addProgressIndicator();
@@ -181,7 +178,6 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
          });
    }
 
-   private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progressIndicator_;
    private final SavePlotAsImageOperation saveOperation_;
    private final SavePlotAsImageContext context_;

@@ -16,7 +16,6 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 
 import com.google.gwt.user.client.ui.CheckBox;
@@ -97,18 +96,6 @@ public class TextEntryModalDialog extends ModalDialog<String>
       }
    }
      
-   @Override
-   protected void onLoad()
-   {
-      super.onLoad();
-      Element contentEl = getElement().getElementsByTagName("td").getItem(1);
-      if (contentEl != null && contentEl.getClassName().contains("dialogContent"))
-      {
-         contentEl.getStyle().setPaddingLeft(14, Unit.PX);
-         contentEl.getStyle().setPaddingRight(14, Unit.PX);
-      }
-   }
-
    @Override
    protected Widget createMainWidget()
    {

@@ -204,12 +204,9 @@ public abstract class ModalDialogBase extends DialogBox
       captionEl.appendChild(btn);
    }
 
-   // NOTE: userPrefs_ is guaranteed non-null here. GIN injection is synchronous
-   // and completes during the ModalDialogBase constructor, before any subclass
-   // calls setThemeAware() or the EditorThemeChangedEvent handler is registered.
    private void syncDarkThemeClass()
    {
-      boolean useDark = userPrefs_.useDarkThemeModalDialogs().getValue();
+      boolean useDark = userPrefs_ != null && userPrefs_.useDarkThemeModalDialogs().getValue();
 
       Element container = Document.get().getElementById("rstudio_container");
       if (useDark && container != null && container.hasClassName("rstudio-themes-dark"))

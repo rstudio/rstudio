@@ -36,6 +36,7 @@ public class Spinner extends Widget
    public Spinner()
    {
       setElement(Document.get().createDivElement());
+      getElement().setAttribute("aria-hidden", "true");
       addStyleName(RES.styles().spinner());
    }
 

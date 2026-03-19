@@ -2492,6 +2492,11 @@ input[type="checkbox"]:checked:before {
    padding-right: 10px;
 }
 
+.rstudio-theme-aware-dialog td.dialogContent {
+   padding-left: 14px;
+   padding-right: 14px;
+}
+
 /* Dark theme support for opt-in dialogs.
    rstudio-themes-dark is added directly to the dialog element by setThemeAware(),
    since GWT popups live outside #rstudio_container in the DOM. */
