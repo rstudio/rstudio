@@ -225,6 +225,8 @@ test_that("parseInheritDotParamsFromRd returns NULL when \\link node text is emp
 })
 
 test_that("parseInheritDotParamsFromRd returns NULL when \\link pkg prefix is empty", {
+   # "::fn" is not a valid R namespace expression -- return NULL rather than
+   # silently treating it as a same-package reference.
    rd <- make_inherit_rd(link_text = "::fn")
    expect_null(.rs.parseInheritDotParamsFromRd(rd))
 })

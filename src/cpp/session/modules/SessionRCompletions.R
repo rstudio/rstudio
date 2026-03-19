@@ -1294,10 +1294,15 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(linkNode))
       return(NULL)
    parts <- strsplit(nodeText(linkNode), ":{2,3}", perl = TRUE)[[1]]
-   if (!length(parts) || !nzchar(parts[[length(parts)]]))
+   # Valid forms are "fn" (1 part) or "pkg::fn" (2 parts). Anything else --
+   # empty text, empty fn name, empty pkg prefix, or too many separators -- is
+   # not a recognised namespace expression and we return NULL.
+   if (length(parts) == 0L || length(parts) > 2L || !nzchar(parts[[length(parts)]]))
       return(NULL)
    targetName <- parts[[length(parts)]]
-   targetPkg  <- if (length(parts) == 2L && nzchar(parts[[1L]])) parts[[1L]] else NULL
+   if (length(parts) == 2L && !nzchar(parts[[1L]]))
+      return(NULL)
+   targetPkg  <- if (length(parts) == 2L) parts[[1L]] else NULL
 
    descNode <- Find(function(n) identical(rdTag(n), "\\describe"), dotsNode)
    if (is.null(descNode))
