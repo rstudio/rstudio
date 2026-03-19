@@ -169,6 +169,14 @@
             "defaultValue": false,
             "isHidden": true,
             "description": "Whether or not to reuse last used bound ports when restarting a Launcher session."
+         },
+         {
+            "name": {"constant": "kDisableNewCSRFChecks", "value": "disable-new-csrf-checks"},
+            "memberName": "disableNewCSRFChecks_",
+            "type": "bool",
+            "defaultValue": false,
+            "isHidden": true,
+            "description": "Certain rpc calls were missing checks for the CSRF token to prevent misuse of these api in a context with lax SameSite cookie policies. Use this option temporarily to override these new checks if you have integrations that rely on the old behavior."
          }
       ],
       "session": [

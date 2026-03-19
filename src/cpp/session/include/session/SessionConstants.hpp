@@ -87,6 +87,7 @@
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
 #define kWwwResusePorts                   "www-reuse-ports"
+#define kDisableNewCSRFChecks             "disable-new-csrf-checks"
 #define kSessionSslCertOption             "cert"
 #define kSessionSslCertKeyOption          "cert-key"
 #define kTerminalPortOption               "terminal-port"

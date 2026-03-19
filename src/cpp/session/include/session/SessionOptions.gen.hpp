@@ -135,7 +135,10 @@ protected:
       "Indicates whether or not to verify signatures on incoming requests. This is generally only used with Launcher sessions.")
       (kWwwResusePorts,
       value<bool>(&wwwReusePorts_)->default_value(false),
-      "Whether or not to reuse last used bound ports when restarting a Launcher session.");
+      "Whether or not to reuse last used bound ports when restarting a Launcher session.")
+      (kDisableNewCSRFChecks,
+      value<bool>(&disableNewCSRFChecks_)->default_value(false),
+      "Certain rpc calls were missing checks for the CSRF token to prevent misuse of these api in a context with lax SameSite cookie policies. Use this option temporarily to override these new checks if you have integrations that rely on the old behavior.");
 
    pSession->add_options()
       ("session-connections-block-suspend",
@@ -525,6 +528,7 @@ public:
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
    bool wwwReusePorts() const { return wwwReusePorts_; }
+   bool disableNewCSRFChecks() const { return disableNewCSRFChecks_; }
    bool sessionConnectionsBlockSuspend() const { return sessionConnectionsBlockSuspend_; }
    bool sessionExternalPointersBlockSuspend() const { return sessionExternalPointersBlockSuspend_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
@@ -657,6 +661,7 @@ protected:
    bool standalone_;
    bool verifySignatures_;
    bool wwwReusePorts_;
+   bool disableNewCSRFChecks_;
    bool sessionConnectionsBlockSuspend_;
    bool sessionExternalPointersBlockSuspend_;
    int timeoutMinutes_;

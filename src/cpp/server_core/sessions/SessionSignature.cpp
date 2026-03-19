@@ -14,6 +14,7 @@
  */
 
 #include <shared_core/Error.hpp>
+#include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -213,8 +214,56 @@ Error verifyRequestSignature(const std::string& rsaPublicKey,
    return Success();
 }
 
+Error signCSRFBypass(const std::string& rsaPrivateKey,
+                     http::Request& request)
+{
+   std::string bypassInfo = request.headerValue(kCSRFBypassHeader);
+   if (bypassInfo.empty())
+      return Success();
+
+   std::string signature;
+   Error error = crypto::rsaSign(bypassInfo, rsaPrivateKey, &signature);
+   if (error)
+      return error;
+
+   std::vector<unsigned char> signatureData(signature.begin(), signature.end());
+   std::string signatureHeader;
+   error = crypto::base64Encode(signatureData, signatureHeader);
+   if (error)
+      return error;
+
+   request.setHeader(kCSRFBypassSigHeader, signatureHeader);
+   return Success();
+}
+
+Error verifyCSRFBypass(const std::string& rsaPublicKey,
+                       const http::Request& request,
+                       std::string* pBypassInfo)
+{
+   std::string bypassInfo = request.headerValue(kCSRFBypassHeader);
+   std::string bypassSig = request.headerValue(kCSRFBypassSigHeader);
+   if (bypassInfo.empty() || bypassSig.empty())
+   {
+      return systemError(boost::system::errc::permission_denied,
+                         "Missing CSRF bypass headers",
+                         ERROR_LOCATION);
+   }
+
+   std::vector<unsigned char> decoded;
+   Error error = crypto::base64Decode(bypassSig, decoded);
+   if (error)
+      return error;
+
+   std::string decodedSignature(decoded.begin(), decoded.end());
+   error = crypto::rsaVerify(bypassInfo, decodedSignature, rsaPublicKey);
+   if (error)
+      return error;
+
+   *pBypassInfo = bypassInfo;
+   return Success();
+}
+
 } // namespace sessions
 } // namespace server_core
 } // namespace rstudio
-
 
