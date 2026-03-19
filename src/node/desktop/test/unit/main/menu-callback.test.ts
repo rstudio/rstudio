@@ -434,7 +434,7 @@ describe('MenuCallback', () => {
     );
   });
 
-  it('can disable a whitelisted item on the modal menu', () => {
+  it('can disable a modal-permitted item on the modal menu', () => {
     callback.beginMain();
     callback.menuBegin('&Edit');
     callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
@@ -445,10 +445,10 @@ describe('MenuCallback', () => {
     callback.setMainMenuEnabled(false);
     assert.isTrue(
       callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
-      'cut should be whitelisted-enabled on modal menu',
+      'cut should be permitted-enabled on modal menu',
     );
 
-    // Backend disables the whitelisted item while modal is open
+    // Backend disables the modal-permitted item while modal is open
     callback.setCommandEnabled('cutDummy', false);
 
     // Disabling must go through to the visible modal menu
@@ -466,7 +466,7 @@ describe('MenuCallback', () => {
     );
   });
 
-  it('can disable then re-enable a whitelisted item during a modal', () => {
+  it('can disable then re-enable a modal-permitted item during a modal', () => {
     callback.beginMain();
     callback.menuBegin('&Edit');
     callback.addCommand('cutDummy', 'Cut', '', 'Cmd+C', false, false, true);
@@ -477,10 +477,10 @@ describe('MenuCallback', () => {
     callback.setMainMenuEnabled(false);
     assert.isTrue(
       callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
-      'cut should be whitelisted-enabled on modal menu',
+      'cut should be permitted-enabled on modal menu',
     );
 
-    // Backend disables then re-enables the whitelisted item
+    // Backend disables then re-enables the modal-permitted item
     callback.setCommandEnabled('cutDummy', false);
     assert.isFalse(
       callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
@@ -490,7 +490,7 @@ describe('MenuCallback', () => {
     callback.setCommandEnabled('cutDummy', true);
     assert.isTrue(
       callback.mainMenu.getMenuItemById('cutDummy')?.enabled,
-      'whitelisted cut must be re-enabled on the modal menu',
+      'permitted cut must be re-enabled on the modal menu',
     );
 
     // Close modal — restored menu should also reflect the re-enabled state
@@ -514,13 +514,13 @@ describe('MenuCallback', () => {
     callback.setMainMenuEnabled(false);
     assert.isFalse(
       callback.mainMenu.getMenuItemById('redoDummy')?.enabled,
-      'redo should be disabled on modal menu (not whitelisted)',
+      'redo should be disabled on modal menu (not modal-permitted)',
     );
 
     // Backend tries to re-enable redo while modal is open
     callback.setCommandEnabled('redoDummy', true);
 
-    // Re-enable must be suppressed — redo has no whitelisted role
+    // Re-enable must be suppressed — redo has no modal-permitted role
     assert.isFalse(
       callback.mainMenu.getMenuItemById('redoDummy')?.enabled,
       'redo must stay disabled on modal menu',

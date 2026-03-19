@@ -279,7 +279,7 @@ export class MenuCallback extends EventEmitter {
    * Updates a writable property on the live MenuItem, avoiding a full menu rebuild.
    *
    * When a modal is open, this.mainMenu is a temporary disabled copy. We suppress
-   * enabled=true on it only for non-whitelisted items (to prevent re-enabling
+   * enabled=true on it only for non-permitted items (to prevent re-enabling
    * modal-disabled commands). Whitelisted roles (cut, copy, paste, etc.) may be
    * freely re-enabled since the modal logic intentionally keeps them active.
    * checked and label are always applied to both menus.
