@@ -50,6 +50,33 @@ const std::vector<std::string>& rstudioCapabilities()
    return s_capabilities;
 }
 
+std::string assembleWebSocketPath(
+   const std::string& rootPath,
+   const std::string& sessionUrl,
+   const std::string& portmappedPath)
+{
+   // Normalize root path: "/" (default) becomes empty
+   std::string root = rootPath;
+   if (root == "/")
+      root.clear();
+   if (!root.empty() && root.back() == '/')
+      root.pop_back();
+
+   // Normalize session URL: strip trailing slash
+   std::string session = sessionUrl;
+   if (!session.empty() && session.back() == '/')
+      session.pop_back();
+
+   // Normalize portmapped path: ensure leading slash, strip trailing slash
+   std::string mapped = portmappedPath;
+   if (!mapped.empty() && mapped[0] != '/')
+      mapped = "/" + mapped;
+   if (!mapped.empty() && mapped.back() == '/')
+      mapped.pop_back();
+
+   return root + session + mapped + "/ai-chat";
+}
+
 } // namespace constants
 } // namespace chat
 } // namespace modules
