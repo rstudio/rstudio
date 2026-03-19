@@ -295,14 +295,26 @@ export class MenuCallback extends EventEmitter {
       const isModalReEnable = this.savedMenu && property === 'enabled' && value === true;
       const isModalPermitted = MODAL_ENABLED_ROLES.has(menuItem.role ?? '');
       if (!isModalReEnable || isModalPermitted) {
-        (menuItem as Record<string, unknown>)[property] = value;
+        this.applyMenuItemProperty(menuItem, property, value);
       }
     }
     if (this.savedMenu) {
       const savedMenuItem = this.savedMenu.getMenuItemById(id);
       if (savedMenuItem) {
-        (savedMenuItem as Record<string, unknown>)[property] = value;
+        this.applyMenuItemProperty(savedMenuItem, property, value);
       }
+    }
+  }
+
+  private applyMenuItemProperty(
+    item: Electron.MenuItem,
+    property: 'enabled' | 'checked' | 'label',
+    value: boolean | string,
+  ) {
+    if (property === 'enabled' || property === 'checked') {
+      item[property] = value as boolean;
+    } else {
+      item[property] = value as string;
     }
   }
 
