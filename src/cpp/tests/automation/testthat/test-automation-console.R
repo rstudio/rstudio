@@ -156,6 +156,7 @@ withr::defer(.rs.automation.deleteRemote())
       message("M1"); cat("O1\r"); message("M2")
    })
    
+   consoleOutputEl <- remote$js.querySelector("#rstudio_console_output")
    spanOutputs <- list()
    spanEls <- consoleOutputEl$querySelectorAll("span")
    for (i in seq_len(spanEls$length))
