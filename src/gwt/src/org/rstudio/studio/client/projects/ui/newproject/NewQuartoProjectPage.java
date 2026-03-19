@@ -198,7 +198,11 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    public void onActivate(ProgressIndicator indicator)
    {
       if (quartoCaps_ != null)
+      {
+         populateKernels();
+         manageControls();
          return;
+      }
 
       // Cancel any in-flight request from a previous activation
       if (capabilitiesCallback_ != null)
@@ -230,7 +234,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             if (!cancelled())
             {
                Debug.logError(error);
-               indicator.onProgress(null);
+               indicator.onProgress(constants_.loadingCapabilitiesErrorLabel());
                populateKernels();
                manageControls();
             }
@@ -243,7 +247,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          public void run()
          {
             capabilitiesCallback_.cancel();
-            indicator.onProgress(null);
+            indicator.onProgress(constants_.loadingCapabilitiesErrorLabel());
             populateKernels();
             manageControls();
          }
@@ -317,6 +321,10 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    protected void onUnload()
    {
       super.onUnload();
+      if (capabilitiesCallback_ != null)
+         capabilitiesCallback_.cancel();
+      if (capabilitiesTimeout_ != null)
+         capabilitiesTimeout_.cancel();
       session_.persistClientState();
    }
    
@@ -330,9 +338,10 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private HorizontalPanel venvPanel_;
    private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
+   // Static: fetched once and shared across all Quarto project page instances
    private static QuartoCapabilities quartoCaps_ = null;
-   private ServerRequestCallback<QuartoCapabilities> capabilitiesCallback_;
-   private Timer capabilitiesTimeout_;
+   private static ServerRequestCallback<QuartoCapabilities> capabilitiesCallback_;
+   private static Timer capabilitiesTimeout_;
 
    private static final int CAPABILITIES_TIMEOUT_MS = 30000;
 
