@@ -15,6 +15,7 @@
 .table {
    border-collapse: collapse;
    table-layout: fixed;
+   outline: none;
 }
 
 .row td > * {
