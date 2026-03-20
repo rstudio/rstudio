@@ -1047,9 +1047,11 @@ bool restore(const FilePath& statePath,
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    
-   // restore options
+   // restore options (but only if the R version is compatible, as restoring
+   // options can trigger loading of package namespaces, which may load
+   // native code compiled against an incompatible version of R)
    FilePath optionsPath = statePath.completePath(kOptionsFile);
-   if (optionsPath.exists())
+   if (s_isCompatibleSessionState && optionsPath.exists())
    {
       error = r::options::restoreOptions(optionsPath);
       if (error)
