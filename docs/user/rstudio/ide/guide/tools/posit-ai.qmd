@@ -16,7 +16,7 @@ date-meta: 2026-02-25
 With Workbench, a system administrator must first enable Posit AI. To enable it, add the following line:
 
 ```         
-allow-posit-assistant=1
+allow-posit-ai=1
 ```
 
 to `/etc/rstudio/rsession.conf`.
