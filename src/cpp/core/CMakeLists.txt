@@ -37,6 +37,7 @@ set(CORE_SOURCE_FILES
    FileUtils.cpp
    GitGraph.cpp
    HtmlUtils.cpp
+   Jwt.cpp
    Log.cpp
    LogOptions.cpp
    OneShotCommand.cpp

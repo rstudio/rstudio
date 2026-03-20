@@ -34,7 +34,11 @@ Error encode(const FilePath& inputFile, std::string* pOutput);
 Error decode(const char* pData, std::size_t n, std::string* pOutput);
 Error decode(const std::string& input, std::string* pOutput);
 
-         
+// Base64url encoding/decoding (RFC 4648 §5).
+// Uses - instead of +, _ instead of /, and omits padding.
+Error encodeUrl(const std::string& input, std::string* pOutput);
+Error decodeUrl(const std::string& input, std::string* pOutput);
+
 } // namespace base64
 } // namespace core
 } // namespace rstudio
