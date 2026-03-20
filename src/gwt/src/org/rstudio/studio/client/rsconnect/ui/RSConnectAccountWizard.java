@@ -39,15 +39,16 @@ public class RSConnectAccountWizard
          RSConnectServerOperations server,
          GlobalDisplay display,
          boolean forFirstAccount,
-         boolean showCloudPage,
+         boolean showShinyAppsPage,
+         boolean showConnectCloudPage,
          boolean isConnectEnabled,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super(constants_.connectAccount(), constants_.connectAccount(), Roles.getDialogRole(),
-            new NewRSConnectAccountInput(server, display), 
-            forFirstAccount ? 
-               createIntroPage(showCloudPage, isConnectEnabled) :
-               createSelectorPage(showCloudPage, isConnectEnabled),
+            new NewRSConnectAccountInput(server, display),
+            forFirstAccount ?
+               createIntroPage(showShinyAppsPage, showConnectCloudPage, isConnectEnabled) :
+               createSelectorPage(showShinyAppsPage, showConnectCloudPage, isConnectEnabled),
             operation);
       initAuthPage(getFirstPage());
    }
@@ -84,44 +85,59 @@ public class RSConnectAccountWizard
    
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createIntroPage(
-                                     boolean showCloudPage,
+                                     boolean showShinyAppsPage,
+                                     boolean showConnectCloudPage,
                                      boolean isConnectEnabled)
    {
       return new NewRSConnectAccountPage(constants_.connectPublishingAccount(),
             constants_.pickAnAccount(), constants_.connectPublishingAccount(),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIcon2x()),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIconLarge2x()),
-            createSelectorPage(showCloudPage, isConnectEnabled));
+            createSelectorPage(showShinyAppsPage, showConnectCloudPage, isConnectEnabled));
    }
-   
+
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createSelectorPage(
-                                     boolean showCloudPage,
+                                     boolean showShinyAppsPage,
+                                     boolean showConnectCloudPage,
                                      boolean isConnectEnabled)
    {
-      if (showCloudPage)
+      ArrayList<WizardPage<NewRSConnectAccountInput,
+                           NewRSConnectAccountResult>> pages =
+            createPages(showShinyAppsPage, showConnectCloudPage, isConnectEnabled);
+
+      if (pages.size() == 1)
+      {
+         return pages.get(0);
+      }
+      else if (pages.size() > 1)
       {
          return new WizardNavigationPage<>(
                   constants_.chooseAccountType(),
                   constants_.chooseAccountType(),
                   constants_.connectAccount(),
-                  null, 
-                  null, 
-                  createPages(isConnectEnabled));
+                  null,
+                  null,
+                  pages);
       }
       return new NewRSConnectLocalPage();
    }
-   
+
    protected static ArrayList<WizardPage<NewRSConnectAccountInput,
                                          NewRSConnectAccountResult>> createPages(
+                                            boolean showShinyAppsPage,
+                                            boolean showConnectCloudPage,
                                             boolean isConnectEnabled)
    {
-      ArrayList<WizardPage<NewRSConnectAccountInput, 
+      ArrayList<WizardPage<NewRSConnectAccountInput,
                            NewRSConnectAccountResult>> pages = new ArrayList<>();
 
-      pages.add(new NewRSConnectCloudPage());
       if (isConnectEnabled)
          pages.add(new NewRSConnectLocalPage());
+      if (showConnectCloudPage)
+         pages.add(new NewRSConnectCloudConnectPage());
+      if (showShinyAppsPage)
+         pages.add(new NewRSConnectCloudPage());
       return pages;
    }
 
