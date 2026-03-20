@@ -29,6 +29,7 @@ import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.workbench.TrustPresenter;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -37,7 +38,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
@@ -46,13 +46,15 @@ public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands,
                         Provider<CodeSearch> pCodeSearch,
-                        UserPrefs userPrefs)
+                        UserPrefs userPrefs,
+                        TrustPresenter trustPresenter)
    {
       super(constants_.mainLabel());
 
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
       userPrefs_ = userPrefs;
+      trustPresenter_ = trustPresenter;
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
 
@@ -256,26 +258,9 @@ public class GlobalToolbar extends Toolbar
       // Keep button in sync with Sidebar location and visibility
       userPrefs_.panes().addValueChangeHandler(evt -> updateSidebarToggleButton());
 
-      // restricted mode indicator (shown when startup files were suppressed
-      // due to an untrusted or unverified project)
-      if (sessionInfo.getStartupFilesSuppressed())
-      {
-         String lockSvg =
-            "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' " +
-            "viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
-            "stroke-linecap='round' stroke-linejoin='round'>" +
-            "<path d='M7 9V7a5 5 0 0 1 10 0v2' stroke-width='2.5'/>" +
-            "<rect x='4' y='9' width='16' height='14' rx='3' ry='3' " +
-                 "fill='currentColor' stroke='none'/>" +
-            "</svg>";
-         HTML lockIcon = new HTML(lockSvg);
-         lockIcon.setTitle(constants_.restrictedModeTitle());
-         lockIcon.addStyleName(
-               ThemeResources.INSTANCE.themeStyles().restrictedModeIcon());
-         lockIcon.addClickHandler(event ->
-               commands_.showTrustRequestDialog().execute());
-         addRightWidget(lockIcon);
-      }
+      // restricted mode indicator (managed by TrustPresenter)
+      trustPresenter_.initializeForSession(sessionInfo);
+      addRightWidget(trustPresenter_.getRestrictedModeIcon());
 
       // project popup menu
       if (sessionInfo.getAllowFullUI())
@@ -334,6 +319,7 @@ public class GlobalToolbar extends Toolbar
    }
 
    private final Commands commands_;
+   private final TrustPresenter trustPresenter_;
    private final ToolbarPopupMenu newMenu_;
    private final ToolbarMenuButton newButton_;
    private final Provider<CodeSearch> pCodeSearch_;

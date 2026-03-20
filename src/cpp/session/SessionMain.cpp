@@ -951,6 +951,9 @@ void rSessionInitHook(bool newSession)
    dataJson["ppm_metadata_column_label"] = getPpmMetadataColumnLabel();
    dataJson["ppm_repository_url"] = ppmRepoUrl;
 
+   dataJson["startup_files_suppressed"] =
+      modules::trust::shouldSuppressStartupFiles();
+
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
    module_context::enqueClientEvent(event);
