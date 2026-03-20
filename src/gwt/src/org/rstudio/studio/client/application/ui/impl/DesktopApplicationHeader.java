@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.TrustPresenter;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
@@ -96,7 +97,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                           Provider<UserPrefs> pUIPrefs,
                           ErrorManager errorManager,
                           GlobalDisplay globalDisplay,
-                          ApplicationQuit appQuit)
+                          ApplicationQuit appQuit,
+                          TrustPresenter trustPresenter)
    {
       commands_ = commands;
       session_ = session;
@@ -172,7 +174,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
       });
 
-      toolbar_ = new GlobalToolbar(commands, pCodeSearch, pUIPrefs_.get());
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch, pUIPrefs_.get(), trustPresenter);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
    }

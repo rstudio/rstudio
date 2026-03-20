@@ -46,6 +46,7 @@ import org.rstudio.studio.client.application.ui.impl.header.HeaderPanel;
 import org.rstudio.studio.client.application.ui.impl.header.MenubarPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
+import org.rstudio.studio.client.workbench.TrustPresenter;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -95,7 +96,8 @@ public class WebApplicationHeader extends Composite
                   final ThemeResources themeResources,
                   final Session session,
                   Provider<CodeSearch> pCodeSearch,
-                  UserPrefs userPrefs)
+                  UserPrefs userPrefs,
+                  TrustPresenter trustPresenter)
    {
       commands_ = commands;
       eventBus_ = eventBus;
@@ -225,7 +227,7 @@ public class WebApplicationHeader extends Composite
       });
 
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, pCodeSearch, userPrefs);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch, userPrefs, trustPresenter);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
 
