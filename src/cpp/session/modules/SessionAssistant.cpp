@@ -98,7 +98,8 @@ bool isPositAssistantAllowedByAdmin()
 {
    return
       session::options().allowPositAi() &&
-      session::options().positAssistantEnabled();
+      session::options().positAssistantEnabled() &&
+      core::system::getenv("RSTUDIO_DISABLE_POSIT_AI").empty();
 }
 
 struct AssistantRequest
