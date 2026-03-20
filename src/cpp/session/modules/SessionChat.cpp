@@ -194,7 +194,9 @@ bool peerHasCapability(const std::string& method)
 // 2. The posit-assistant-enabled session option
 bool isPaiEnabled()
 {
-   return options().allowPositAi() && options().positAssistantEnabled();
+   return options().allowPositAi() &&
+          options().positAssistantEnabled() &&
+          core::system::getenv("RSTUDIO_DISABLE_POSIT_AI").empty();
 }
 
 // Returns true if the user has selected Posit AI as their assistant (for code completions)
