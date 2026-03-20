@@ -229,11 +229,20 @@ These sections describe how to build RStudio from the command line.
 
 ### Frontend
 
-To build the front-end, you can use:
+To quickly verify that Java changes compile correctly:
 
     cd src/gwt && ant javac
 
-This will be necessary if you've modified any scripts in the `src/gwt` directory. Note that if you modify any JavaScript components, e.g. in `src/gwt/acesupport`, you will also need to run:
+This only runs the Java compiler — it does NOT produce runnable JavaScript.
+
+To produce runnable code (GWT transpile to JavaScript, draft/debug mode):
+
+    cd src/gwt && ant draft
+
+Use `ant draft` after making changes you need to test in the browser. Use `ant javac` as a fast
+check when iterating on Java code.
+
+If you modify JavaScript components (e.g. in `src/gwt/acesupport`), also run:
 
     cd src/gwt && ant acesupport
 
@@ -396,6 +405,18 @@ And then the constructor should have the form:
     }
 
 possibly with other injected parameters.
+
+
+## NEWS.md
+
+When fixing a bug or adding a new feature, add an entry to the appropriate section (`### New`,
+`### Fixed`, etc.) of `NEWS.md`. Follow the existing format:
+
+    - ([#NNNN](https://github.com/rstudio/rstudio/issues/NNNN)): Brief description of the change
+
+Exceptions — do NOT add a NEWS.md entry for:
+- Fixes to unreleased features still under active development
+- Fixes to bugs introduced since the last release (i.e., bugs no official-release user has encountered)
 
 
 ## Pull Requests
