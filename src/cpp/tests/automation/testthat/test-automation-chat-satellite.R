@@ -131,10 +131,12 @@ withr::defer(.rs.automation.deleteRemote())
    # With the WindowCloseMonitor fix, this should NOT call
    # returnChatToMain().
    #
-   # void(0) prevents window.open() from returning a Window object, which
-   # would cause a circular-reference error during JSON serialization.
+   # Wrap in an IIFE so js.eval receives undefined (not the Window object
+   # from window.open(), which causes circular-reference JSON errors).
    remote$js.eval(paste0(
-      "window.open('", satelliteUrl, "', '_rstudio_satellite_chat'); void(0)"))
+      "(function() { window.open('",
+      satelliteUrl,
+      "', '_rstudio_satellite_chat'); })()"))
 
    # Wait for the satellite to finish reloading (re-registers with
    # SatelliteManager, title is set again).
