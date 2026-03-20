@@ -391,7 +391,7 @@ void listEnvironment(SEXP env,
    // we don't actually return this list to the caller)
    Protect protect;
    SEXP envVarsSEXP;
-   protect.add(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
+   protect.add(envVarsSEXP = envNames(env, includeAll));
 
    // get variables
    std::vector<std::string> vars;
@@ -432,6 +432,14 @@ void listEnvironment(SEXP env,
    }
 }
 
+
+SEXP envNames(SEXP envSEXP, bool includeAll)
+{
+   return R_lsInternal3(
+      envSEXP,
+      includeAll ? (Rboolean) TRUE : (Rboolean) FALSE,
+      (Rboolean) FALSE);
+}
 
 void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
 {
@@ -511,7 +519,7 @@ bool hasActiveBindingImpl(const std::string& name,
    
    // list the bindings in this object
    SEXP bindingsSEXP;
-   protect.add(bindingsSEXP = R_lsInternal(varSEXP, TRUE));
+   protect.add(bindingsSEXP = envNames(varSEXP, true));
    
    // iterate over items and search for active bindings
    for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
@@ -1833,10 +1841,6 @@ bool maybePerformsNSE(SEXP functionSEXP)
             nsePrimitives());
 }
 
-// NOTE: Uses `R_lsInternal` which throws error if a non-environment is
-// passed; we therefore perform this validation ourselves before calling
-// `R_lsInternal`. This is primarily done to avoid the error being printed
-// out to the R console.
 SEXP objects(SEXP environment,
              bool allNames,
              Protect* pProtect)
@@ -1846,9 +1850,9 @@ SEXP objects(SEXP environment,
       LOG_ERROR_MESSAGE("'objects' called on non-environment");
       return R_NilValue;
    }
-   
+
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = R_lsInternal(environment, allNames ? TRUE : FALSE));
+   pProtect->add(resultSEXP = envNames(environment, allNames));
    return resultSEXP;
 }
 

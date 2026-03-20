@@ -80,6 +80,9 @@ void listEnvironment(SEXP env,
                      bool includeLastDotValue,
                      std::vector<Variable>* pVariables);
  
+// get names of bindings in an environment as a character SEXP
+SEXP envNames(SEXP envSEXP, bool includeAll = true);
+
 // find variables in environments and namespaces
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 SEXP findVar(const std::string& name, SEXP envSEXP);
@@ -98,6 +101,7 @@ bool setNames(SEXP sexp, const std::vector<std::string>& names);
 
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);
 bool hasActiveBinding(const std::string&, SEXP);
+bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP);
 bool isActiveBinding(const std::string&, SEXP);
 
 // function introspection

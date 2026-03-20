@@ -40,7 +40,18 @@
 //
 
 #define R_NO_REMAP
+
+#include <Rversion.h>
 #include <Rinternals.h>
+
+#include <r/RSxpInfo.hpp>
+
+// Compatibility shims for symbols removed in R 4.6.0
+#if R_VERSION >= R_Version(4, 6, 0)
+#define ENCLOS(x) R_ParentEnv(x)
+#define RDEBUG(x) (reinterpret_cast<rstudio::r::sxpinfo*>(x)->debug)
+#define SET_RDEBUG(x, v) (reinterpret_cast<rstudio::r::sxpinfo*>(x)->debug = (v))
+#endif
 
 // Hide macros that are always unsafe for us to use, because their
 // interface has changed between versions of R

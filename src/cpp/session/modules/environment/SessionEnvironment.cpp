@@ -216,28 +216,30 @@ bool isGlobalEnvironmentSerializable()
    bool allValuesSerializable = true;
    
    // Iterate over values in the global environment, and compute whether they can be serialized.
-   SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
-   R_xlen_t n = Rf_xlength(hashTableSEXP);
+   SEXP namesSEXP = r::sexp::envNames(R_GlobalEnv);
+   R_xlen_t n = Rf_xlength(namesSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
-      SEXP frameSEXP = VECTOR_ELT(hashTableSEXP, i);
-      for (; frameSEXP != R_NilValue; frameSEXP = CDR(frameSEXP))
+      SEXP symSEXP = Rf_installChar(STRING_ELT(namesSEXP, i));
+
+      // Skip active bindings to avoid triggering side effects.
+      if (r::sexp::isActiveBinding(symSEXP, R_GlobalEnv))
+         continue;
+
+      // Compute whether the value can be serialized.
+      // If we already have a cached value from a prior computation, use it.
+      //
+      // TODO: If an R environment is updated in-place with a value that
+      // makes it no longer serializable, we would fail to detect this.
+      // Is this okay? Or should we avoid caching results for environments?
+      SEXP valueSEXP = Rf_findVarInFrame(R_GlobalEnv, symSEXP);
+      if (valueSEXP != R_UnboundValue)
       {
-         // Compute whether the value can be serialized.
-         // If we already have a cached value from a prior computation, use it.
-         //
-         // TODO: If an R environment is updated in-place with a value that
-         // makes it no longer serializable, we would fail to detect this.
-         // Is this okay? Or should we avoid caching results for environments?
-         if (!r::internal::isImmediateBinding(frameSEXP))
-         {
-            SEXP valueSEXP = CAR(frameSEXP);
-            bool canBeSerialized = s_serializationCache.contains(valueSEXP)
-                  ? s_serializationCache.at(valueSEXP)
-                  : isSerializable(valueSEXP);
-            newCache[valueSEXP] = canBeSerialized;
-            allValuesSerializable = allValuesSerializable && canBeSerialized;
-         }
+         bool canBeSerialized = s_serializationCache.contains(valueSEXP)
+               ? s_serializationCache.at(valueSEXP)
+               : isSerializable(valueSEXP);
+         newCache[valueSEXP] = canBeSerialized;
+         allValuesSerializable = allValuesSerializable && canBeSerialized;
       }
    }
    
@@ -291,79 +293,22 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool frameBindingIsActive(SEXP binding) 
-{
-   static unsigned int ACTIVE_BINDING_MASK = (1<<15);
-   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
-}
-
-bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
-{
-   if (frameBindingIsActive(b))
-      return false;
-
-   // ->extra is only used for immediate bindings: this needs special care
-   // before we call CAR() because it might error with "bad binding access": 
-   // from Rinlinedfuns.h : 
-   // 
-   //     INLINE_FUN SEXP CAR(SEXP e)
-   //     {
-   //        if (BNDCELL_TAG(e))
-   //        error("bad binding access");
-   //        return CAR0(e);
-   //     }
-   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
-   if (typetag)
-   {
-      // it should not be set on 32-bits: unset it
-      if (sizeof(size_t) < sizeof(double))
-      {
-         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
-      }
-      else 
-      {
-         switch(typetag) {
-            case INTSXP:
-            case REALSXP: 
-            case LGLSXP:
-               // this is an immediate binding, R_expand_binding_value() would expand to a scalar
-               return false;
-            
-            default:
-               // otherwise (not sure this even hapens), ->extra should not be set: unset it
-               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
-         }
-      }
-   }
-   
-   // now safe to test the value in CAR()
-   return hasExternalPointer(CAR(b), nullPtr, visited);
-}
-
-bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
-{
-   while(frame != R_NilValue)
-   {
-      if (frameBindingHasExternalPointer(frame, nullPtr, visited))
-         return true;
-      
-      frame = CDR(frame);
-   }
-
-   return false;
-}
 
 bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
-   SEXP hash = HASHTAB(obj);
-   if (hash == R_NilValue)
-      return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
-   
-   R_xlen_t n = XLENGTH(hash);
+   SEXP namesSEXP = r::sexp::envNames(obj);
+   R_xlen_t n = Rf_xlength(namesSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
-      if (frameHasExternalPointer(VECTOR_ELT(hash, i), nullPtr, visited))
+      SEXP symSEXP = Rf_installChar(STRING_ELT(namesSEXP, i));
+      if (r::sexp::isActiveBinding(symSEXP, obj))
+         continue;
+      SEXP valueSEXP = Rf_findVarInFrame(obj, symSEXP);
+      if (valueSEXP != R_UnboundValue &&
+          hasExternalPointer(valueSEXP, nullPtr, visited))
+      {
          return true;
+      }
    }
    return false;
 }

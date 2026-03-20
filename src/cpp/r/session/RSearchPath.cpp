@@ -23,7 +23,6 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <gsl/gsl-lite.hpp>
 
 #include <boost/function.hpp>
@@ -209,67 +208,11 @@ Error saveGlobalEnvironment(const FilePath& statePath)
    return saveGlobalEnvironmentToFile(environmentFile);
 }
 
-bool isBasePackage(const std::string& name)
-{
-   static const auto basePackages = {
-      "package:methods",
-      "package:grDevices",
-      "package:graphics",
-      "package:stats",
-      "package:utils",
-   };
-   
-   auto index = std::find(basePackages.begin(), basePackages.end(), name);
-   return index != basePackages.end();
-}
-
 void repairSearchPath()
 {
-   // find the 'tools:rstudio' environment on the search path,
-   // save a reference to it, and remove it from the search list
-   //
-   // NOTE: we cannot use 'detach()' and 'attach()' to handle this, as attach
-   // will actually create and attach a _copy_ of the environment, which causes
-   // trouble if we need to add or modify the 'tools:rstudio' environment in
-   // the future
-   SEXP toolsSEXP = R_NilValue;
-   
-   SEXP thisSEXP = R_GlobalEnv;
-   while (thisSEXP != R_BaseEnv)
-   {
-      SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
-      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
-      if (TYPEOF(nameSEXP) != STRSXP)
-         continue;
-      
-      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
-      if (name != "tools:rstudio")
-         continue;
-      
-      toolsSEXP = thisSEXP;
-      SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
-   }
-   
-   thisSEXP = R_GlobalEnv;
-   while (thisSEXP != R_BaseEnv)
-   {
-      SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
-      SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
-      if (TYPEOF(nameSEXP) != STRSXP)
-         continue;
-      
-      std::string name = CHAR(STRING_ELT(nameSEXP, 0));
-      if (isBasePackage(name))
-      {
-         SET_ENCLOS(prevSEXP, toolsSEXP);
-         SET_ENCLOS(toolsSEXP, thisSEXP);
-         return;
-      }
-   }
+   Error error = r::exec::RFunction(".rs.repairSearchPath").call();
+   if (error)
+      LOG_ERROR(error);
 }
 
 Error restoreSearchPath(
