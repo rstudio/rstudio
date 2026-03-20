@@ -50,6 +50,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
@@ -403,7 +404,7 @@ FilePath::FilePath(const std::wstring& absolutePath)
 #endif
 
 FilePath::FilePath(const char* in_absolutePath) :
-   m_impl(in_absolutePath ? 
+   m_impl(in_absolutePath ?
             new Impl(fromString(in_absolutePath)) :
             new Impl())
 {
@@ -415,7 +416,7 @@ FilePath::FilePath(const char* in_absolutePath) :
 
 #ifdef _WIN32
 FilePath::FilePath(const wchar_t* in_absolutePath)
-   : m_impl(in_absolutePath ? 
+   : m_impl(in_absolutePath ?
          new Impl(in_absolutePath):
          new Impl())
 {
@@ -475,7 +476,7 @@ bool FilePath::isAliasedPath(const std::string& in_path)
 {
    if (in_path == homePathLeafAlias())
       return true;
-   
+
    if (boost::algorithm::starts_with(in_path, homePathAlias()))
       return true;
 
@@ -551,6 +552,22 @@ FilePath FilePath::resolveAliasedPath(const std::string& in_aliasedPath, const F
    {
       return FilePath::safeCurrentPath(in_userHomePath).completePath(in_aliasedPath);
    }
+}
+
+FilePath FilePath::resolveAliasedPath(
+   const std::string& in_aliasedPath,
+   const FilePath& in_userHomePath,
+   const std::string& in_userName)
+{
+   std::string resolved = in_aliasedPath;
+   if (resolved.find('$') != std::string::npos) {
+      std::string home = in_userHomePath.getAbsolutePath();
+      boost::algorithm::replace_all(resolved, "$USER", in_userName);
+      boost::algorithm::replace_all(resolved, "${USER}", in_userName);
+      boost::algorithm::replace_all(resolved, "$HOME", home);
+      boost::algorithm::replace_all(resolved, "${HOME}", home);
+   }
+   return resolveAliasedPath(resolved, in_userHomePath);
 }
 
 FilePath FilePath::safeCurrentPath(const FilePath& in_revertToPath)
@@ -879,11 +896,19 @@ Error FilePath::ensureDirectory() const
       return Success();
 }
 
-Error FilePath::ensureFile() const
+Error FilePath::ensureFile(bool ensureParentDirectory) const
 {
    // nothing to do if the file already exists
    if (exists())
       return Success();
+
+   // Ensure parent directory exists, if requested
+   if (ensureParentDirectory)
+   {
+      Error error = getParent().ensureDirectory();
+      if (error)
+         return error;
+   }
 
    // create output stream to ensure file creation
    std::shared_ptr<std::ostream> pStream;
@@ -1476,7 +1501,7 @@ Error FilePath::isWriteable(bool &out_writeable) const
 
 Error FilePath::isWriteable(bool &out_writeable) const
 {
-   // Testing a folder for writeability on Windows is ugly to do entirely via APIs. If it's a 
+   // Testing a folder for writeability on Windows is ugly to do entirely via APIs. If it's a
    // filesystem such as NTFS that supports ACLs, then need to check those, but that will fail
    // on other filesystems such as FAT32; ditto for some networked file systems.
    //
