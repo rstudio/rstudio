@@ -50,11 +50,6 @@
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
-static unsigned int ACTIVE_BINDING_MASK = 1 << 15;
-
-extern "C" {
-SEXP R_findVarLocInFrame(SEXP, SEXP);
-}
 
 
 namespace rstudio {
@@ -427,7 +422,7 @@ void listEnvironment(SEXP env,
       else
       {
          LOG_WARNING_MESSAGE(
-                  "Unexpected R_UnboundValue returned from R_lsInternal");
+                  "Unexpected R_UnboundValue for variable '" + var + "'");
       }
    }
 }
@@ -542,29 +537,25 @@ bool hasActiveBinding(const std::string& name, SEXP envirSEXP)
    return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
 }
 
-bool isActiveBindingImpl(SEXP bindingSEXP)
-{
-   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
-   r::sxpinfo* infoSEXP = reinterpret_cast<r::sxpinfo*>(bindingSEXP); 
-   return infoSEXP->gp & ACTIVE_BINDING_MASK;
-}
-
-// NOTE: We avoid using R_BindingIsActive() as this will throw an
-// R error for bindings which do not exist.
 bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 {
-   // Interestingly, for symbols in the base namespace, the active binding
-   // mask is set on the symbol itself, rather than the bound value.
-   if (envSEXP == R_BaseEnv || envSEXP == R_BaseNamespace)
-      return isActiveBindingImpl(nameSEXP);
-   
-   // NOTE: R_findVarLocInFrame, different from other methods,
-   // will explicitly return nullptr if there is no binding.
-   SEXP bindingSEXP = R_findVarLocInFrame(envSEXP, nameSEXP);
-   if (bindingSEXP == nullptr || bindingSEXP == R_NilValue)
-      return false;
-   
-   return isActiveBindingImpl(bindingSEXP);
+   struct Context
+   {
+      SEXP nameSEXP;
+      SEXP envSEXP;
+      bool result;
+   };
+
+   Context context = { nameSEXP, envSEXP, false };
+
+   auto callback = [](void* data)
+   {
+      auto* ctx = static_cast<Context*>(data);
+      ctx->result = R_BindingIsActive(ctx->nameSEXP, ctx->envSEXP);
+   };
+
+   R_ToplevelExec(callback, &context);
+   return context.result;
 }
 
 bool isActiveBinding(const std::string& name, SEXP envSEXP)

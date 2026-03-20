@@ -1676,6 +1676,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       {
          toolsEnv <- env
          parent.env(prev) <- parent.env(env)
+         break
       }
       prev <- env
       env <- parent.env(env)
