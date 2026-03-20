@@ -434,17 +434,22 @@ public class ChatPresenter extends BasePresenter
       if (!ChatSatellite.NAME.equals(event.getName()) || !poppedOut_)
          return;
 
-      // On Chrome, SatelliteManager.openSatellite() reloads the satellite
-      // window (via window.open with the same name) instead of reactivating
-      // it in-place. The old content's unload handler fires a spurious
+      // On Chrome, the satellite window is reloaded via window.open(url,
+      // name) (see WebWindowOpener.doOpenWindow) instead of reactivated
+      // in-place. The old content's unload handler fires a spurious
       // SatelliteClosedEvent even though the window is still open. Use
       // WindowCloseMonitor to poll the window and distinguish a real close
       // from a reload — the same pattern used by SourceWindowManager,
       // ShinyApplication, and PlumberAPI.
+      //
+      // The windowsClosing_ guard is still necessary: during Cmd+Q the
+      // satellite closes for real and the callback fires, but
+      // returnChatToMain() must be suppressed because the application is
+      // shutting down (LastChanceSaveEvent sets windowsClosing_ early in
+      // the quit flow).
       WindowCloseMonitor.monitorSatelliteClosure(
          ChatSatellite.NAME,
          () -> {
-            // Window is truly closed
             if (!windowsClosing_)
                returnChatToMain();
          },
