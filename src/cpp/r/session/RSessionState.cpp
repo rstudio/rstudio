@@ -979,23 +979,23 @@ bool validateRestoredRVersion(const FilePath& filePath)
    
    // assume we're okay if no file exists
    if (!filePath.exists())
-      return !!Success();
-   
+      return true;
+
    // read version from file
    std::string suspendedRVersion;
    error = core::readStringFromFile(
             filePath,
             &suspendedRVersion);
    if (error)
-      return !!error;
+      return false;
    suspendedRVersion = core::string_utils::trimWhitespace(suspendedRVersion);
    s_suspendedRVersion = suspendedRVersion;
-   
+
    // read active R version
    std::string activeRVersion;
    error = RFunction(".rs.rVersionString").call(&activeRVersion);
    if (error)
-      return !!error;
+      return false;
    activeRVersion = core::string_utils::trimWhitespace(activeRVersion);
    s_activeRVersion = activeRVersion;
    
