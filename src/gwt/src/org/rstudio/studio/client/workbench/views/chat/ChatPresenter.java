@@ -18,6 +18,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
@@ -433,14 +434,26 @@ public class ChatPresenter extends BasePresenter
       if (!ChatSatellite.NAME.equals(event.getName()) || !poppedOut_)
          return;
 
-      // When Cmd+Q is pressed from the satellite window, SatelliteClosedEvent
-      // arrives before LastChanceSaveEvent sets windowsClosing_. Deferring by
-      // one tick lets the quit flow's LastChanceSaveEvent fire first.
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         if (!windowsClosing_)
-            returnChatToMain();
-      });
+      // On Chrome, the satellite window is reloaded via window.open(url,
+      // name) (see WebWindowOpener.doOpenWindow) instead of reactivated
+      // in-place. The old content's unload handler fires a spurious
+      // SatelliteClosedEvent even though the window is still open. Use
+      // WindowCloseMonitor to poll the window and distinguish a real close
+      // from a reload — the same pattern used by SourceWindowManager,
+      // ShinyApplication, and PlumberAPI.
+      //
+      // The windowsClosing_ guard is still necessary: during Cmd+Q the
+      // satellite closes for real and the callback fires, but
+      // returnChatToMain() must be suppressed because the application is
+      // shutting down (LastChanceSaveEvent sets windowsClosing_ early in
+      // the quit flow).
+      WindowCloseMonitor.monitorSatelliteClosure(
+         ChatSatellite.NAME,
+         () -> {
+            if (!windowsClosing_)
+               returnChatToMain();
+         },
+         null);
    }
 
    @Override

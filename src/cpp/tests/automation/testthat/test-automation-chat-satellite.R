@@ -90,3 +90,77 @@ withr::defer(.rs.automation.deleteRemote())
    # Reset to default UI state.
    .rs.resetUILayout(remote)
 })
+
+# These tests exercise the Chrome-specific satellite reload and close
+# paths that use the browser's unload handler and WindowCloseMonitor.
+# Desktop/Electron uses its own close notification flow (closeSatellite
+# in satellite-window.ts), so these tests only apply to Server mode.
+
+.rs.test("satellite window reload does not return chat to main pane", {
+   skip_on_ci()
+
+   # Skip on Desktop — the Chrome reload path (window.open navigating an
+   # existing window) only applies to Server/browser mode.
+   isDesktop <- remote$js.eval(
+      "window.program_mode === 'desktop' || !!window.desktop")
+   skip_if(isTRUE(isDesktop), "Browser-specific test, not applicable to Desktop")
+
+   withr::defer(.rs.resetUILayout(remote))
+
+   # Pop out chat to satellite.
+   remote$commands.execute("activateChat")
+   remote$commands.execute("popOutChat")
+   remote$satellites.waitForOpen("Posit Assistant")
+
+   # Wait for the sidebar to hide (chat is the only sidebar tab, so
+   # popping out hides the sidebar entirely).
+   .rs.waitUntil("sidebar hidden after pop-out", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Capture the satellite's current URL for the reload.
+   remote$satellites.switchTo("Posit Assistant")
+   satelliteUrl <- remote$js.eval("window.location.href")
+   remote$satellites.switchToMain()
+
+   # Simulate the Chrome-specific reload path. On Chrome,
+   # SatelliteManager.openSatellite() reloads an already-open satellite
+   # via window.open(url, name) (see WebWindowOpener.doOpenWindow) instead
+   # of reactivating it in-place. The old content's unload handler fires a
+   # spurious SatelliteClosedEvent even though the window is still open.
+   # With the WindowCloseMonitor fix, this should NOT call
+   # returnChatToMain().
+   #
+   # Wrap in an IIFE so js.eval receives undefined (not the Window object
+   # from window.open(), which causes circular-reference JSON errors).
+   remote$js.eval(paste0(
+      "(function() { window.open('",
+      satelliteUrl,
+      "', '_rstudio_satellite_chat'); })()"))
+
+   # Wait for the satellite to finish reloading (re-registers with
+   # SatelliteManager, title is set again).
+   .rs.waitUntil("satellite finishes reload", function() {
+      remote$satellites.isOpen("Posit Assistant")
+   })
+
+   # Verify the satellite is still open.
+   expect_true(remote$satellites.isOpen("Posit Assistant"))
+
+   # Verify the sidebar is still hidden — if returnChatToMain() had been
+   # called incorrectly, it would re-show the sidebar with chat content.
+   expect_false(remote$dom.elementExists("#rstudio_Sidebar_pane"))
+
+   # Verify return-to-main still works after the reload.
+   remote$commands.execute("returnChatToMain")
+   .rs.waitUntil("satellite closes", function() {
+      !remote$satellites.isOpen("Posit Assistant")
+   })
+   expect_false(remote$satellites.isOpen("Posit Assistant"))
+
+   .rs.waitUntil("sidebar visible after return", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+   chatTab <- remote$dom.querySelector("#rstudio_workbench_tab_posit_assistant")
+   expect_true(chatTab > 0L)
+})
