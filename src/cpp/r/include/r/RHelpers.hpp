@@ -57,7 +57,9 @@ bool recursiveFindImpl(SEXP valueSEXP,
          return false;
 
       // Enumerate bindings via the public API.
-      SEXP namesSEXP = r::sexp::envNames(valueSEXP);
+      r::sexp::Protect protect;
+      SEXP namesSEXP;
+      protect.add(namesSEXP = r::sexp::envNames(valueSEXP));
       R_xlen_t n = Rf_xlength(namesSEXP);
       for (R_xlen_t i = 0; i < n; i++)
       {
@@ -139,8 +141,12 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
       },
       &context);
 
+   // If the traversal encountered an R error, treat it conservatively
+   // as "found" so callers err on the side of caution (e.g. isSerializable
+   // will treat the object as non-serializable rather than silently
+   // classifying it as safe).
    if (!success)
-      return false;
+      return true;
 
    return context.result;
 }

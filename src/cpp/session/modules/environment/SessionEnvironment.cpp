@@ -216,7 +216,9 @@ bool isGlobalEnvironmentSerializable()
    bool allValuesSerializable = true;
    
    // Iterate over values in the global environment, and compute whether they can be serialized.
-   SEXP namesSEXP = r::sexp::envNames(R_GlobalEnv);
+   r::sexp::Protect protect;
+   SEXP namesSEXP;
+   protect.add(namesSEXP = r::sexp::envNames(R_GlobalEnv));
    R_xlen_t n = Rf_xlength(namesSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
@@ -296,7 +298,9 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
 bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
-   SEXP namesSEXP = r::sexp::envNames(obj);
+   r::sexp::Protect protect;
+   SEXP namesSEXP;
+   protect.add(namesSEXP = r::sexp::envNames(obj));
    R_xlen_t n = Rf_xlength(namesSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
