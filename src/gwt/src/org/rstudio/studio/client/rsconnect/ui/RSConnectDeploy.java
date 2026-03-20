@@ -311,17 +311,25 @@ public class RSConnectDeploy extends Composite
       {
          addAccountAnchor_.setClickHandler(() ->
          {
-            boolean withCloudOption =
-                  contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
-
-            connector_.showAccountWizard(false, withCloudOption, (successful) ->
+            OperationWithInput<Boolean> onCompleted = (successful) ->
             {
                if (successful)
                {
                   accountList_.refreshAccountList();
                }
-            });
+            };
+
+            if (serverType_ != null)
+            {
+               connector_.showAccountWizard(false, serverType_, onCompleted);
+            }
+            else
+            {
+               boolean withCloudOption =
+                     contentType == RSConnect.CONTENT_TYPE_APP ||
+                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
+               connector_.showAccountWizard(false, withCloudOption, onCompleted);
+            }
          });
       }
       else
@@ -600,24 +608,29 @@ public class RSConnectDeploy extends Composite
       boolean connectCloudEnabled =
          serverType == ServerType.CONNECT_CLOUD || serverType == null;
 
+      boolean needsRefresh = false;
+
       if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
          accountList_.setShowConnectAccounts(rsConnectEnabled);
-         accountList_.refreshAccountList();
+         needsRefresh = true;
       }
 
       if (connectCloudEnabled != accountList_.getShowConnectCloudAccounts())
       {
          accountList_.setShowConnectCloudAccounts(connectCloudEnabled);
-         accountList_.refreshAccountList();
+         needsRefresh = true;
       }
 
       // we want to show ShinyApps.io accounts only for Shiny content
       if (source.isShiny() != accountList_.getShowShinyAppsAccounts())
       {
          accountList_.setShowShinyAppsAccounts(source.isShiny());
-         accountList_.refreshAccountList();
+         needsRefresh = true;
       }
+
+      if (needsRefresh)
+         accountList_.refreshAccountList();
       
       asStatic_ = asStatic;
 
