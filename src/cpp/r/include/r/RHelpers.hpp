@@ -130,16 +130,16 @@ bool recursiveFind(SEXP valueSEXP, F&& callback)
 
    Context context = { valueSEXP, &callback, {}, false };
 
-   Rboolean success = R_ToplevelExec(
-      [](void* data)
-      {
-         auto* ctx = static_cast<Context*>(data);
-         ctx->result = internal::recursiveFindImpl(
-            ctx->valueSEXP,
-            ctx->visitedEnvironments,
-            *ctx->callback);
-      },
-      &context);
+   auto toplevelCallback = [](void* data)
+   {
+      auto* ctx = static_cast<Context*>(data);
+      ctx->result = internal::recursiveFindImpl(
+         ctx->valueSEXP,
+         ctx->visitedEnvironments,
+         *ctx->callback);
+   };
+
+   Rboolean success = R_ToplevelExec(toplevelCallback, &context);
 
    // If the traversal encountered an R error, treat it conservatively
    // as "found" so callers err on the side of caution (e.g. isSerializable
