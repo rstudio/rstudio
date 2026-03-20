@@ -91,8 +91,19 @@ withr::defer(.rs.automation.deleteRemote())
    .rs.resetUILayout(remote)
 })
 
+# These tests exercise the Chrome-specific satellite reload and close
+# paths that use the browser's unload handler and WindowCloseMonitor.
+# Desktop/Electron uses its own close notification flow (closeSatellite
+# in satellite-window.ts), so these tests only apply to Server mode.
+
 .rs.test("satellite window reload does not return chat to main pane", {
    skip_on_ci()
+
+   # Skip on Desktop — the Chrome reload path (window.open navigating an
+   # existing window) only applies to Server/browser mode.
+   isDesktop <- remote$js.eval(
+      "window.program_mode === 'desktop' || !!window.desktop")
+   skip_if(isTRUE(isDesktop), "Browser-specific test, not applicable to Desktop")
 
    withr::defer(.rs.resetUILayout(remote))
 
@@ -119,8 +130,11 @@ withr::defer(.rs.automation.deleteRemote())
    # spurious SatelliteClosedEvent even though the window is still open.
    # With the WindowCloseMonitor fix, this should NOT call
    # returnChatToMain().
+   #
+   # void(0) prevents window.open() from returning a Window object, which
+   # would cause a circular-reference error during JSON serialization.
    remote$js.eval(paste0(
-      "window.open('", satelliteUrl, "', '_rstudio_satellite_chat')"))
+      "window.open('", satelliteUrl, "', '_rstudio_satellite_chat'); void(0)"))
 
    # Wait for the satellite to finish reloading (re-registers with
    # SatelliteManager, title is set again).
@@ -151,6 +165,13 @@ withr::defer(.rs.automation.deleteRemote())
 
 .rs.test("closing satellite window directly returns chat to main pane", {
    skip_on_ci()
+
+   # Skip on Desktop — Electron's close flow (closeSatellite in
+   # satellite-window.ts) doesn't use the browser unload handler, so
+   # window.close() from JS doesn't trigger SatelliteClosedEvent.
+   isDesktop <- remote$js.eval(
+      "window.program_mode === 'desktop' || !!window.desktop")
+   skip_if(isTRUE(isDesktop), "Browser-specific test, not applicable to Desktop")
 
    withr::defer(.rs.resetUILayout(remote))
 
