@@ -190,11 +190,11 @@ bool peerHasCapability(const std::string& method)
 // Feature availability helper
 // ============================================================================
 // Returns true if the Posit AI feature is enabled. This requires:
-// 1. The allow-posit-assistant admin option (always true in open-source, configurable in Pro)
+// 1. The allow-posit-ai admin option (always true in open-source, configurable in Pro)
 // 2. The posit-assistant-enabled session option
 bool isPaiEnabled()
 {
-   return options().allowPositAssistant() && options().positAssistantEnabled();
+   return options().allowPositAi() && options().positAssistantEnabled();
 }
 
 // Returns true if the user has selected Posit AI as their assistant (for code completions)

@@ -97,7 +97,7 @@ bool isCopilotAllowedByAdmin()
 bool isPositAssistantAllowedByAdmin()
 {
    return
-      session::options().allowPositAssistant() &&
+      session::options().allowPositAi() &&
       session::options().positAssistantEnabled();
 }
 

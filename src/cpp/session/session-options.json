@@ -594,11 +594,11 @@
             "description": "Indicates whether or not to allow use of Copilot-related features."
          },
          {
-            "name": "allow-posit-assistant",
+            "name": "allow-posit-ai",
             "type": "bool",
-            "memberName": "allowPositAssistant_",
+            "memberName": "allowPositAi_",
             "defaultValue": false,
-            "description": "Indicates whether or not to allow use of the Posit AI assistant feature."
+            "description": "Indicates whether or not to allow use of Posit AI features."
          }
       ],
       "r": [

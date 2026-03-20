@@ -63,7 +63,7 @@ public class PaiUtil
     */
    public boolean isPaiEnabled()
    {
-      return session_.getSessionInfo().getPositAssistantEnabled();
+      return session_.getSessionInfo().getPositAiEnabled();
    }
 
    /**
