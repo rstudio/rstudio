@@ -15,6 +15,10 @@
 
 #include <session/projects/SessionProjectsOverlay.hpp>
 
+#include <shared_core/Error.hpp>
+
+using namespace rstudio::core;
+
 namespace rstudio::session::projects::overlay {
 
 void onProjectConfigUpdate(const core::r_util::RProjectConfig&,
@@ -29,6 +33,11 @@ void onProjectStartup(const ProjectContext&,
 
 void onCreateProject(const core::FilePath&)
 {
+}
+
+core::Error ensureProjectIdForPath(const core::FilePath& directory)
+{
+   return Success();
 }
 
 } // namespace rstudio::session::projects::overlay

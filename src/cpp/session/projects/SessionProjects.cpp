@@ -293,6 +293,11 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
+   FilePath projectDir = projectFilePath.getParent();
+   error = overlay::ensureProjectIdForPath(projectDir);
+   if (error)
+      LOG_ERROR(error);
+
    // new shiny or quarto project
    if (!newShinyAppJson.isNull())
    {
