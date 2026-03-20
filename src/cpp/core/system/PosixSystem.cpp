@@ -2099,6 +2099,10 @@ std::string resolveBindAddressForAddresses(
       const std::string& address,
       const std::vector<posix::IpAddress>& addrs)
 {
+   std::string threadId = safe_convert::numberToString(boost::this_thread::get_id());
+   LOG_DEBUG_MESSAGE("[" + threadId + "] Resolving bind address '" + address + "' for " +
+                     std::to_string(addrs.size()) + " discovered interfaces: [" + 
+                     boost::algorithm::join(std::vector<std::string>(addrs.begin(), addrs.end()), ", ") + "]");
    if (address == "0.0.0.0")
    {
       bool hasNonLocalIpv4 = false;
@@ -2130,9 +2134,14 @@ std::string resolveBindAddressForAddresses(
          }
       }
 
+      LOG_DEBUG_MESSAGE("[" + threadId + "] Address '" + address + "' hasNonLocalIpv4=" + (hasNonLocalIpv4 ? "true" : "false") +
+                        " hasNonLocalIpv6=" + (hasNonLocalIpv6 ? "true" : "false") +
+                        " hasIpv4=" + (hasIpv4 ? "true" : "false") +
+                        " hasIpv6=" + (hasIpv6 ? "true" : "false"));
       if ((!hasNonLocalIpv4 && hasNonLocalIpv6) ||
           (!hasIpv4 && hasIpv6))
       {
+         LOG_DEBUG_MESSAGE("[" + threadId + "] Address '" + address + "' resolved to '::'");
          return "::";
       }
    }
@@ -2154,8 +2163,10 @@ std::string resolveBindAddressForAddresses(
          }
       }
 
+      LOG_DEBUG_MESSAGE("[" + threadId + "] Address '" + address + "' hasIpv6=" + (hasIpv6 ? "true" : "false"));
       if (!hasIpv6)
       {
+         LOG_DEBUG_MESSAGE("[" + threadId + "] Address '" + address + "' resolved to '0.0.0.0'");
          return "0.0.0.0";
       }
    }
@@ -2174,9 +2185,9 @@ std::string resolveBindAddress(const std::string& address)
    Error error = ipAddresses(&addrs, true);
    if (error)
    {
-      LOG_DEBUG_MESSAGE(
-            "Falling back to configured bind address '" + address +
-            "' because interface discovery failed: " + error.asString());
+      std::string threadId = safe_convert::numberToString(boost::this_thread::get_id());
+      LOG_DEBUG_MESSAGE("[" + threadId + "] Falling back to configured bind address '" + address +
+                        "' because interface discovery failed: " + error.asString());
       return address;
    }
 
