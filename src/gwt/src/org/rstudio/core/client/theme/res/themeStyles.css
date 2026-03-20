@@ -323,6 +323,7 @@ button, input[type="reset"], input[type="button"], input[type="submit"] {
 .gwt-DialogBox .search input[type=text] {
    border: none;
    height: 100%;
+   padding: 0;
 }
 
 iframe {
@@ -1835,6 +1836,7 @@ body.windows table.webGlobalToolbar {
    height: 100%;
    border: 0;
    margin: 0;
+   padding: 0;
    outline: none;
    font-size: 10px;
    background-color: transparent;
