@@ -118,6 +118,15 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          boolean suppressed = data.getBoolean("startup_files_suppressed");
          restrictedModeIcon_.setVisible(suppressed);
       }
+
+      if (data.hasKey("trust_request"))
+      {
+         TrustRequestEvent.Data trustData = data.getObject("trust_request").cast();
+         if (trustData != null && trustData.getDirectory() != null)
+         {
+            showTrustRequestDialog(trustData);
+         }
+      }
    }
 
    @Handler

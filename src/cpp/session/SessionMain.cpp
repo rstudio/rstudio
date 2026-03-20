@@ -953,6 +953,7 @@ void rSessionInitHook(bool newSession)
 
    dataJson["startup_files_suppressed"] =
       modules::trust::shouldSuppressStartupFiles();
+   dataJson["trust_request"] = modules::trust::trustRequestData();
 
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted, dataJson);
