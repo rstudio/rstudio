@@ -63,7 +63,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       eventBus.addHandler(WorkbenchLoadedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
 
-      // Create the restricted mode icon (hidden until session info is available)
+      // Initially hidden; shown when startup files are suppressed
       String lockSvg =
          "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' " +
          "viewBox='0 0 24 24' fill='none' stroke='currentColor' " +
@@ -82,8 +82,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    }
 
    /**
-    * Called by GlobalToolbar during completeInitialization to set
-    * the initial visibility of the restricted mode icon.
+    * Sets the initial visibility of the restricted mode icon based on
+    * whether startup files were suppressed.
     */
    public void initializeForSession(SessionInfo sessionInfo)
    {
@@ -150,7 +150,10 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    private void showTrustRequestDialog(TrustRequestEvent.Data data)
    {
       if (dialog_ != null)
+      {
+         dialog_.center();
          return;
+      }
 
       lastTrustStatus_ = data.getStatus();
       String directory = data.getDirectory();
@@ -161,7 +164,6 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          data.getRiskyFiles(),
          () ->
          {
-            dialog_ = null;
             server_.grantTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
@@ -183,7 +185,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          },
          () ->
          {
-            dialog_ = null;
+            // The toolbar lock icon already indicates restricted mode;
+            // no additional feedback needed here.
             server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
@@ -211,6 +214,9 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    private final GlobalDisplay globalDisplay_;
    private final HTML restrictedModeIcon_;
    private TrustRequestDialog dialog_;
+
+   // tracks last trust status to suppress re-showing dialog on restart
+   // with the same status
    private String lastTrustStatus_;
 
    private static final StudioClientApplicationConstants appConstants_ =
