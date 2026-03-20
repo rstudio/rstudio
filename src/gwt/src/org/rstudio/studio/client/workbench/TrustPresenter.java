@@ -105,7 +105,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          session_.getSessionInfo().getTrustRequest();
       if (trustData != null && trustData.getDirectory() != null)
       {
-         showTrustRequestDialog(trustData);
+         if (trustStatusChanged(trustData))
+            showTrustRequestDialog(trustData);
       }
    }
 
@@ -124,7 +125,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          TrustRequestEvent.Data trustData = data.getObject("trust_request").cast();
          if (trustData != null && trustData.getDirectory() != null)
          {
-            showTrustRequestDialog(trustData);
+            if (trustStatusChanged(trustData))
+               showTrustRequestDialog(trustData);
          }
       }
    }
@@ -140,16 +142,26 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
       }
    }
 
+   private boolean trustStatusChanged(TrustRequestEvent.Data data)
+   {
+      return lastTrustStatus_ == null || !lastTrustStatus_.equals(data.getStatus());
+   }
+
    private void showTrustRequestDialog(TrustRequestEvent.Data data)
    {
+      if (dialog_ != null)
+         return;
+
+      lastTrustStatus_ = data.getStatus();
       String directory = data.getDirectory();
 
-      TrustRequestDialog dialog = new TrustRequestDialog(
+      dialog_ = new TrustRequestDialog(
          directory,
          data.getStatus(),
          data.getRiskyFiles(),
          () ->
          {
+            dialog_ = null;
             server_.grantTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
@@ -171,6 +183,7 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
          },
          () ->
          {
+            dialog_ = null;
             server_.revokeTrust(directory, new ServerRequestCallback<VoidResponse>()
             {
                @Override
@@ -187,7 +200,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
                }
             });
          });
-      dialog.showModal();
+      dialog_.addCloseHandler(event -> dialog_ = null);
+      dialog_.showModal();
    }
 
    private final EventBus eventBus_;
@@ -196,6 +210,8 @@ public class TrustPresenter implements WorkbenchLoadedEvent.Handler,
    private final Server server_;
    private final GlobalDisplay globalDisplay_;
    private final HTML restrictedModeIcon_;
+   private TrustRequestDialog dialog_;
+   private String lastTrustStatus_;
 
    private static final StudioClientApplicationConstants appConstants_ =
       GWT.create(StudioClientApplicationConstants.class);
