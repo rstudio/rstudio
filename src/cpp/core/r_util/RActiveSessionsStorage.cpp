@@ -334,7 +334,7 @@ Error RpcActiveSessionsStorage::listSessionProperties(
       if (!(*itr).isObject())
          continue;
 
-      const json::Object& sessionObj = (*itr).getObject();
+      const json::Object sessionObj = (*itr).getObject();
       std::string id;
       error = json::readObject(sessionObj, kSessionStorageIdField, id);
       if (error)
@@ -346,7 +346,7 @@ Error RpcActiveSessionsStorage::listSessionProperties(
       std::map<std::string, std::string> props;
       for (auto memberIt = sessionObj.begin(); memberIt != sessionObj.end(); ++memberIt)
       {
-         const std::string& key = (*memberIt).getName();
+         const std::string key = (*memberIt).getName();
          if (key == kSessionStorageIdField)
             continue; // skip the id field itself
          if ((*memberIt).getValue().isString())
