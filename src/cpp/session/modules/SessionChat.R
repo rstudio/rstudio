@@ -23,6 +23,15 @@
    installed.packages(priority = "base", lib.loc = .Library)
 ))
 
+# Specific base-package functions that are allowed to access credential
+# files as part of their legitimate operation (e.g. reading ~/.netrc for
+# authentication). Stored by reference before any hooks are injected so
+# that identity comparison in isCalledFromPackageImpl is reliable.
+.rs.setVar("chat.safeFunctions", list(
+   utils::install.packages,
+   utils::download.packages
+))
+
 
 # Each hooked namespace gets its own environment within this container,
 # keyed by the namespace name. The per-namespace environment maps
@@ -233,9 +242,16 @@
 .rs.addFunction("chat.isCalledFromPackageImpl", function(fns)
 {
    basePkgs <- .rs.chat.basePackages
+   safeFns  <- .rs.chat.safeFunctions
 
    for (fn in fns)
    {
+      # Allow explicitly safe base-package functions (e.g. install.packages,
+      # download.packages) that legitimately access credential files.
+      for (safeFn in safeFns)
+         if (identical(fn, safeFn))
+            return(TRUE)
+
       envir <- environment(fn)
       if (is.null(envir))
          next
