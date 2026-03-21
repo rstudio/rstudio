@@ -444,27 +444,23 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    // reset passed vars
    pVariables->clear();
 
-   // extract the attributes and ensure we got a pairlist
-   SEXP attrs = ATTRIB(obj);
-   if (TYPEOF(attrs) != LISTSXP)
+   // get attributes as a named list
+   SEXP attrsSEXP;
+   pProtect->add(attrsSEXP = R_getAttributes(obj));
+   if (attrsSEXP == R_NilValue)
       return;
 
-   // extract the names from the pairlist
+   // extract the names
    std::vector<std::string> names;
-   r::sexp::getNames(attrs, &names);
-   
-   // loop over the attributes and fill in the variable vector
-   SEXP attr = R_NilValue;
-   SEXP nextAttr = R_NilValue;
-   size_t i = 0;
-   for (nextAttr = attrs; nextAttr != R_NilValue; attr = CAR(nextAttr), nextAttr = CDR(nextAttr)) 
-   {
-      pProtect->add(attr);
-      pVariables->push_back(std::make_pair(names.at(i), attr));
+   r::sexp::getNames(attrsSEXP, &names);
 
-      // sanity: break if we run out of names
-      if (++i >= names.size()) 
-         break;
+   // loop over the attributes and fill in the variable vector
+   R_xlen_t n = Rf_xlength(attrsSEXP);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      SEXP valueSEXP = VECTOR_ELT(attrsSEXP, i);
+      std::string name = (static_cast<size_t>(i) < names.size()) ? names[i] : "";
+      pVariables->push_back(std::make_pair(name, valueSEXP));
    }
 }
 
