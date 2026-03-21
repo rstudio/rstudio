@@ -236,44 +236,58 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
+   if (rsconnect::isPositConnectCloudServer(server))
+      return(list())
    .rs.scalarListFromFrame(rsconnect::applications(account = account, server = server))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app", function(id, account, server, hostUrl) {
-  
+
   # retrieve application associated with these parameters
-  app <- tryCatch(
-    rsconnect:::getAppById(id, account, server, hostUrl),
-    error = identity
-  )
-  
+  if (rsconnect::isPositConnectCloudServer(server)) {
+    app <- tryCatch(
+      .rs.rsconnect.getConnectCloudContent(id, account, server),
+      error = identity
+    )
+  } else {
+    app <- tryCatch(
+      rsconnect:::getAppById(id, account, server, hostUrl),
+      error = identity
+    )
+  }
+
   # check for and return errors
   if (inherits(app, "error")) {
     message <- paste(conditionMessage(app), collapse = "\n")
     return(list(app = NULL, error = .rs.scalar(message)))
   }
-  
+
   # if no such application is available, just return an empty list
   if (length(app) == 0L) {
     return(list(app = NULL, error = NULL))
   }
-  
+
   # infer the configuration URL for this application
-  app$config_url <- if (rsconnect:::isConnectServer(server)) {
+  app$config_url <- if (rsconnect::isPositConnectCloudServer(server)) {
+    paste(rsconnect:::connectCloudUrls()$ui, account, "content", app$id, sep = "/")
+  } else if (rsconnect:::isConnectServer(server)) {
     prefix <- sub("/__api__", "", hostUrl)
     paste(prefix, "connect/#/apps", app$id, sep = "/")
   } else {
     prefix <- "https://www.shinyapps.io/admin/#/applications"
     paste(prefix, app$id, sep = "/")
   }
-  
+
   # try and get environment variables for this deployment (if available)
-  app$envVars <- .rs.rsconnect.getApplicationEnvVars(
-    server  = server,
-    account = account,
-    guid    = app$guid
-  )
-  
+  # (not yet supported for Connect Cloud)
+  if (!rsconnect::isPositConnectCloudServer(server)) {
+    app$envVars <- .rs.rsconnect.getApplicationEnvVars(
+      server  = server,
+      account = account,
+      guid    = app$guid
+    )
+  }
+
   list(
     app = .rs.scalarListFromList(app),
     error = NULL
@@ -558,6 +572,13 @@
    eval(cmd, envir = globalenv())
 })
 
+# Connect a Posit Connect Cloud account via OAuth device flow.
+# NOTE: This blocks the R session while waiting for the user to authenticate
+# in the browser. RStudio will be unresponsive until auth completes or times out.
+.rs.addJsonRpcHandler("connect_cloud_user", function() {
+   rsconnect::connectCloudUser()
+})
+
 
 .rs.addFunction("getRmdPublishDetails", function(target, encoding) {
 
@@ -663,6 +684,13 @@
   list(name  = .rs.scalar(name),
        valid = .rs.scalar(valid),
        error = .rs.scalar(error))
+})
+
+.rs.addFunction("rsconnect.getConnectCloudContent", function(id, account, server)
+{
+  accountDetails <- rsconnect::accountInfo(account, server)
+  client <- rsconnect:::clientForAccount(accountDetails)
+  client$getContent(id)
 })
 
 .rs.addFunction("rsconnect.getApplicationEnvVars", function(server, account, guid)

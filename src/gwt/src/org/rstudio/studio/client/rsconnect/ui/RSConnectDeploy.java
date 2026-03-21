@@ -156,6 +156,7 @@ public class RSConnectDeploy extends Composite
 
    public enum ServerType {
       RSCONNECT,
+      CONNECT_CLOUD,
       RSPUBS,
       POSITCLOUD_DEPRECATED,
       SHINYAPPS
@@ -310,17 +311,25 @@ public class RSConnectDeploy extends Composite
       {
          addAccountAnchor_.setClickHandler(() ->
          {
-            boolean withCloudOption =
-                  contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
-            
-            connector_.showAccountWizard(false, withCloudOption, (successful) ->
+            OperationWithInput<Boolean> onCompleted = (successful) ->
             {
                if (successful)
                {
                   accountList_.refreshAccountList();
                }
-            });
+            };
+
+            if (serverType_ != null)
+            {
+               connector_.showAccountWizard(false, serverType_, onCompleted);
+            }
+            else
+            {
+               boolean withCloudOption =
+                     contentType == RSConnect.CONTENT_TYPE_APP ||
+                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE;
+               connector_.showAccountWizard(false, withCloudOption, onCompleted);
+            }
          });
       }
       else
@@ -490,10 +499,11 @@ public class RSConnectDeploy extends Composite
             }
             else
             {
-               // re-validate app name as different accounts have different 
+               // re-validate app name as different accounts have different
                // name restrictions
                appName_.validateAppName();
             }
+            updateEnvVarsUI();
          }
       });
    }
@@ -589,23 +599,38 @@ public class RSConnectDeploy extends Composite
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
+      serverType_ = serverType;
 
       boolean rsConnectEnabled =
          userState_.enableRsconnectPublishUi().getGlobalValue() &&
             (serverType == ServerType.RSCONNECT || serverType == null);
 
+      boolean connectCloudEnabled =
+         serverType == ServerType.CONNECT_CLOUD || serverType == null;
+
+      boolean needsRefresh = false;
+
       if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
          accountList_.setShowConnectAccounts(rsConnectEnabled);
-         accountList_.refreshAccountList();
+         needsRefresh = true;
+      }
+
+      if (connectCloudEnabled != accountList_.getShowConnectCloudAccounts())
+      {
+         accountList_.setShowConnectCloudAccounts(connectCloudEnabled);
+         needsRefresh = true;
       }
 
       // we want to show ShinyApps.io accounts only for Shiny content
       if (source.isShiny() != accountList_.getShowShinyAppsAccounts())
       {
          accountList_.setShowShinyAppsAccounts(source.isShiny());
-         accountList_.refreshAccountList();
+         needsRefresh = true;
       }
+
+      if (needsRefresh)
+         accountList_.refreshAccountList();
       
       asStatic_ = asStatic;
 
@@ -941,6 +966,7 @@ public class RSConnectDeploy extends Composite
             accountList_.setAccountList(serverList);
          }
          setPreviousInfo();
+         updateEnvVarsUI();
          return;
       }
 
@@ -954,21 +980,31 @@ public class RSConnectDeploy extends Composite
       // since none are currently connected
       if (numAccounts == 0 && !isRetry)
       {
-         connector_.showAccountWizard(accounts.length() == 0, 
-               source_.isShiny(),
-               new OperationWithInput<Boolean>() 
+         OperationWithInput<Boolean> onCompleted = new OperationWithInput<Boolean>()
          {
             @Override
             public void execute(Boolean input)
             {
                populateAccountList(indicator, true);
             }
-         });
+         };
+
+         if (serverType_ != null)
+         {
+            connector_.showAccountWizard(accounts.length() == 0,
+                  serverType_, onCompleted);
+         }
+         else
+         {
+            connector_.showAccountWizard(accounts.length() == 0,
+                  source_.isShiny(), onCompleted);
+         }
       }
       else
       {
          setPreviousInfo();
       }
+      updateEnvVarsUI();
    }
    
    private void populateAccountList(final ProgressIndicator indicator,
@@ -1455,6 +1491,22 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setTitle(error);
    }
    
+   private void updateEnvVarsUI()
+   {
+      RSConnectAccount account = getSelectedAccount();
+      boolean supportsEnvVars = account != null &&
+            !account.isConnectCloudAccount();
+      envVarsButton_.setVisible(supportsEnvVars);
+      if (!supportsEnvVars)
+      {
+         envVarsLabel_.setVisible(false);
+      }
+      else
+      {
+         updateEnvVarsLabel();
+      }
+   }
+
    private void updateEnvVarsLabel()
    {
       if (appEnvVars_.isEmpty())
@@ -1541,6 +1593,7 @@ public class RSConnectDeploy extends Composite
    private boolean asMultipleRmd_;
    private boolean asStatic_;
    private int contentType_;
+   private ServerType serverType_;
    private Command onDeployEnabled_;
    private Command onDeployDisabled_;
    private RSConnectDeploymentRecord fromPrevious_;

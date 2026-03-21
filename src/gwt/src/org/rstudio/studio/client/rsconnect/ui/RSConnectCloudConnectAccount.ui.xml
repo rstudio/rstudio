@@ -1,0 +1,18 @@
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
+   <g:HTMLPanel>
+     <g:HTML>
+         <p><ui:msg key="connectCloudDescriptionText">Posit Connect Cloud is a hosted service for publishing and sharing data applications and documents. A free plan is available.</ui:msg></p>
+         <p><ui:msg key="connectCloudInstructionText">Click <b>OK</b> to start the authentication process. A browser window will open where you can sign in or create an account. Your account will be connected automatically once authentication is complete.</ui:msg></p>
+     </g:HTML>
+     <g:HTML>
+        <small>
+            <ui:msg key="connectCloudSignupText">Need a Posit Connect Cloud account?</ui:msg>
+           <a href="https://connect.posit.cloud" target="_blank"><ui:msg key="connectCloudGetStartedText">Get started here.</ui:msg></a>
+        </small>
+     </g:HTML>
+   </g:HTMLPanel>
+</ui:UiBinder>

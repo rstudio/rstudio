@@ -47,11 +47,10 @@ public class RSConnectPublishWizard
       else if ((input.isWebsiteRmd() ||
                (!input.isMultiRmd() && !input.isExternalUIEnabled())))
       {
-         // a single doc, but it can't go to RPubs because
-         // the doc is a website or RPubs is disabled,
-         // so it has to go to Connect -- don't prompt the user for a destination
+         // only self-managed Connect is available (website or external
+         // publishing disabled), so skip the service selection page
          return new PublishReportSourcePage(constants_.publish(), constants_.publish(),
-               constants_.publishToRstudioConnect(),null, input,
+               constants_.publishToRstudioConnect(), null, input,
                false, true, ServerType.RSCONNECT);
       }
       else
