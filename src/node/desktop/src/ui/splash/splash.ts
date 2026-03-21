@@ -12,4 +12,3 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-// empty but required for plugin-webpack in forge.config.js

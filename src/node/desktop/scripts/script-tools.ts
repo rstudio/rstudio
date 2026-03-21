@@ -25,10 +25,10 @@ export function getProjectRootDir(): string {
 }
 
 /**
- * @returns Folder where webpack puts build output
+ * @returns Folder where Vite puts build output
  */
-export function getWebpackBuildOutputDir(): string {
-  return path.join(getProjectRootDir(), '.webpack');
+export function getViteBuildOutputDir(): string {
+  return path.join(getProjectRootDir(), '.vite');
 }
 
 /**

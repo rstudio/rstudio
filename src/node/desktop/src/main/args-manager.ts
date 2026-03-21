@@ -68,7 +68,7 @@ export const options: OptionList = {
   logConfFile: { arg: kNoArg, env: 'RS_LOG_CONF_FILE' },
 };
 
-// !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
+// !IMPORTANT: If some args should early exit the application, keep the exit logic here
 export class ArgsManager {
   unswitchedArgs: string[] = [];
 
