@@ -623,6 +623,87 @@ TEST_F(PosixTestsRequiresPrivilege, DISABLED_PermanentlyDropPrivChecksGroupMembe
    EXPECT_EQ(egid, testGroup.groupId);
 }
 
+TEST(PosixTests, ResolveBindAddressPassthroughForSpecificAddress)
+{
+   EXPECT_EQ(resolveBindAddress("127.0.0.1"), "127.0.0.1");
+   EXPECT_EQ(resolveBindAddress("192.168.1.1"), "192.168.1.1");
+   EXPECT_EQ(resolveBindAddress("::1"), "::1");
+   EXPECT_EQ(resolveBindAddress(""), "");
+}
+
+TEST(PosixTests, ResolveBindAddressIPv4Wildcard)
+{
+   std::string result = resolveBindAddress("0.0.0.0");
+   EXPECT_TRUE(result == "0.0.0.0" || result == "::");
+}
+
+TEST(PosixTests, ResolveBindAddressIPv6Wildcard)
+{
+   std::string result = resolveBindAddress("::");
+   EXPECT_TRUE(result == "::" || result == "0.0.0.0");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesPrefersIpv6WhenOnlyIpv6Available)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "::1"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), "::");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesKeepsIpv4OnDualStackHosts)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), "0.0.0.0");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesIgnoresScopedIpv6ForIpv4Wildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "fe80::1%eth0")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), "0.0.0.0");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesIgnoresLinkLocalIpv6ForIpv4Wildcard)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "fe80::1")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), "0.0.0.0");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesSkipsUnparseableAddresses)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("bad0", "not-an-address"),
+      ipAddress("eth0", "2001:db8::10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), "::");
+}
+
+TEST(PosixTests, ResolveBindAddressForAddressesFallsBackToIpv4WithoutIpv6)
+{
+   std::vector<posix::IpAddress> addrs = {
+      ipAddress("lo", "127.0.0.1"),
+      ipAddress("eth0", "192.168.1.10")
+   };
+
+   EXPECT_EQ(detail::resolveBindAddressForAddresses("::", addrs), "0.0.0.0");
+}
+
 TEST(PosixTests, ParseOsReleaseQuoted)
 {
    std::string content = R"(
