@@ -309,7 +309,24 @@ void onDetectChanges(module_context::ChangeSource source)
 
 SEXP rs_objectClass(SEXP objectSEXP)
 {
-   return Rf_getAttrib(objectSEXP, R_ClassSymbol);
+   SEXP attribSEXP = ATTRIB(objectSEXP);
+   if (attribSEXP == R_NilValue)
+      return R_NilValue;
+   
+   while (attribSEXP != R_NilValue)
+   {
+      SEXP tagSEXP = TAG(attribSEXP);
+      if (TYPEOF(tagSEXP) == SYMSXP)
+      {
+         const char* tag = CHAR(PRINTNAME(tagSEXP));
+         if (::strcmp(tag, "class") == 0)
+            return CAR(attribSEXP);
+      }
+      
+      attribSEXP = CDR(attribSEXP);
+   }
+   
+   return R_NilValue;
 }
 
 SEXP rs_objectAddress(SEXP objectSEXP)
@@ -323,7 +340,7 @@ SEXP rs_objectAddress(SEXP objectSEXP)
 
 SEXP rs_objectAttributes(SEXP objectSEXP)
 {
-   return R_getAttributes(objectSEXP);
+   return ATTRIB(objectSEXP);
 }
 
 SEXP rs_explorerCacheDir()
