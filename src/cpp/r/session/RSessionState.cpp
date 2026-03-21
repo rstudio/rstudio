@@ -979,23 +979,23 @@ bool validateRestoredRVersion(const FilePath& filePath)
    
    // assume we're okay if no file exists
    if (!filePath.exists())
-      return !!Success();
-   
+      return true;
+
    // read version from file
    std::string suspendedRVersion;
    error = core::readStringFromFile(
             filePath,
             &suspendedRVersion);
    if (error)
-      return !!error;
+      return false;
    suspendedRVersion = core::string_utils::trimWhitespace(suspendedRVersion);
    s_suspendedRVersion = suspendedRVersion;
-   
+
    // read active R version
    std::string activeRVersion;
    error = RFunction(".rs.rVersionString").call(&activeRVersion);
    if (error)
-      return !!error;
+      return false;
    activeRVersion = core::string_utils::trimWhitespace(activeRVersion);
    s_activeRVersion = activeRVersion;
    
@@ -1047,9 +1047,11 @@ bool restore(const FilePath& statePath,
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    
-   // restore options
+   // restore options (but only if the R version is compatible, as restoring
+   // options can trigger loading of package namespaces, which may load
+   // native code compiled against an incompatible version of R)
    FilePath optionsPath = statePath.completePath(kOptionsFile);
-   if (optionsPath.exists())
+   if (s_isCompatibleSessionState && optionsPath.exists())
    {
       error = r::options::restoreOptions(optionsPath);
       if (error)

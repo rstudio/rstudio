@@ -50,11 +50,6 @@
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
-static unsigned int ACTIVE_BINDING_MASK = 1 << 15;
-
-extern "C" {
-SEXP R_findVarLocInFrame(SEXP, SEXP);
-}
 
 
 namespace rstudio {
@@ -391,7 +386,7 @@ void listEnvironment(SEXP env,
    // we don't actually return this list to the caller)
    Protect protect;
    SEXP envVarsSEXP;
-   protect.add(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
+   protect.add(envVarsSEXP = listEnvironment(env, includeAll));
 
    // get variables
    std::vector<std::string> vars;
@@ -427,11 +422,19 @@ void listEnvironment(SEXP env,
       else
       {
          LOG_WARNING_MESSAGE(
-                  "Unexpected R_UnboundValue returned from R_lsInternal");
+                  "Unexpected R_UnboundValue for variable '" + var + "'");
       }
    }
 }
 
+
+SEXP listEnvironment(SEXP envSEXP, bool includeAll)
+{
+   return R_lsInternal3(
+      envSEXP,
+      includeAll ? (Rboolean) TRUE : (Rboolean) FALSE,
+      (Rboolean) FALSE);
+}
 
 void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
 {
@@ -511,7 +514,7 @@ bool hasActiveBindingImpl(const std::string& name,
    
    // list the bindings in this object
    SEXP bindingsSEXP;
-   protect.add(bindingsSEXP = R_lsInternal(varSEXP, TRUE));
+   protect.add(bindingsSEXP = listEnvironment(varSEXP, true));
    
    // iterate over items and search for active bindings
    for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
@@ -534,29 +537,25 @@ bool hasActiveBinding(const std::string& name, SEXP envirSEXP)
    return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
 }
 
-bool isActiveBindingImpl(SEXP bindingSEXP)
-{
-   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
-   r::sxpinfo* infoSEXP = reinterpret_cast<r::sxpinfo*>(bindingSEXP); 
-   return infoSEXP->gp & ACTIVE_BINDING_MASK;
-}
-
-// NOTE: We avoid using R_BindingIsActive() as this will throw an
-// R error for bindings which do not exist.
 bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 {
-   // Interestingly, for symbols in the base namespace, the active binding
-   // mask is set on the symbol itself, rather than the bound value.
-   if (envSEXP == R_BaseEnv || envSEXP == R_BaseNamespace)
-      return isActiveBindingImpl(nameSEXP);
-   
-   // NOTE: R_findVarLocInFrame, different from other methods,
-   // will explicitly return nullptr if there is no binding.
-   SEXP bindingSEXP = R_findVarLocInFrame(envSEXP, nameSEXP);
-   if (bindingSEXP == nullptr || bindingSEXP == R_NilValue)
-      return false;
-   
-   return isActiveBindingImpl(bindingSEXP);
+   struct Context
+   {
+      SEXP nameSEXP;
+      SEXP envSEXP;
+      bool result;
+   };
+
+   Context context = { nameSEXP, envSEXP, false };
+
+   auto callback = [](void* data)
+   {
+      auto* ctx = static_cast<Context*>(data);
+      ctx->result = R_BindingIsActive(ctx->nameSEXP, ctx->envSEXP);
+   };
+
+   R_ToplevelExec(callback, &context);
+   return context.result;
 }
 
 bool isActiveBinding(const std::string& name, SEXP envSEXP)
@@ -1833,10 +1832,6 @@ bool maybePerformsNSE(SEXP functionSEXP)
             nsePrimitives());
 }
 
-// NOTE: Uses `R_lsInternal` which throws error if a non-environment is
-// passed; we therefore perform this validation ourselves before calling
-// `R_lsInternal`. This is primarily done to avoid the error being printed
-// out to the R console.
 SEXP objects(SEXP environment,
              bool allNames,
              Protect* pProtect)
@@ -1846,9 +1841,9 @@ SEXP objects(SEXP environment,
       LOG_ERROR_MESSAGE("'objects' called on non-environment");
       return R_NilValue;
    }
-   
+
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = R_lsInternal(environment, allNames ? TRUE : FALSE));
+   pProtect->add(resultSEXP = listEnvironment(environment, allNames));
    return resultSEXP;
 }
 

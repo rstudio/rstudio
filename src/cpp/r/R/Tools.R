@@ -1644,6 +1644,66 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    )
 })
 
+.rs.addFunction("repairSearchPath", function()
+{
+   # Ensure 'tools:rstudio' is placed appropriately in the search list.
+   # We want all of the 'base' R packages to be visible to 'tools:rstudio',
+   # but packages attached by the user should _not_ be visible -- so we
+   # insert it after any user-defined packages, but before any base packages.
+   #
+   # NOTE: we cannot use 'detach()' and 'attach()' to handle this, as attach
+   # will actually create and attach a _copy_ of the environment, which causes
+   # trouble if we need to add or modify the 'tools:rstudio' environment in
+   # the future. Instead, we use 'parent.env<-' to rewire parent pointers
+   # directly.
+
+   basePackages <- c(
+      "package:methods",
+      "package:grDevices",
+      "package:graphics",
+      "package:stats",
+      "package:utils"
+   )
+
+   # First pass: find 'tools:rstudio' and unlink it from the search path.
+   toolsEnv <- NULL
+   prev <- globalenv()
+   env <- parent.env(prev)
+   while (!identical(env, baseenv()))
+   {
+      name <- environmentName(env)
+      if (identical(name, "tools:rstudio"))
+      {
+         toolsEnv <- env
+         parent.env(prev) <- parent.env(env)
+         break
+      }
+      prev <- env
+      env <- parent.env(env)
+   }
+
+   if (is.null(toolsEnv))
+      return(invisible())
+
+   # Second pass: re-insert 'tools:rstudio' just before the first base package.
+   prev <- globalenv()
+   env <- parent.env(prev)
+   while (!identical(env, baseenv()))
+   {
+      name <- environmentName(env)
+      if (name %in% basePackages)
+      {
+         parent.env(prev) <- toolsEnv
+         parent.env(toolsEnv) <- env
+         return(invisible())
+      }
+      prev <- env
+      env <- parent.env(env)
+   }
+
+   invisible()
+})
+
 .rs.addFunction("restoreSearchPathImpl", function(searchPathsFile,
                                                   packagePathsFile,
                                                   environmentDataDir)

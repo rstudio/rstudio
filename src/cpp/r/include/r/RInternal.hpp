@@ -40,7 +40,24 @@
 //
 
 #define R_NO_REMAP
+
+#include <Rversion.h>
 #include <Rinternals.h>
+
+#include <r/RSxpInfo.hpp>
+
+// Compatibility shims for symbols removed or deprecated in R 4.6.0
+#if R_VERSION >= R_Version(4, 6, 0)
+#define BODY(x) R_ClosureBody(x)
+#define CLOENV(x) R_ClosureEnv(x)
+#define ENCLOS(x) R_ParentEnv(x)
+#define FORMALS(x) R_ClosureFormals(x)
+#define Rf_findVar(sym, env) R_getVarEx((sym), (env), TRUE, R_UnboundValue)
+#define Rf_findVarInFrame(env, sym) R_getVarEx((sym), (env), FALSE, R_UnboundValue)
+#define Rf_findVarInFrame3(env, sym, inherits) R_getVarEx((sym), (env), (inherits), R_UnboundValue)
+#define RDEBUG(x) (reinterpret_cast<rstudio::r::sxpinfo*>(x)->debug)
+#define SET_RDEBUG(x, v) (reinterpret_cast<rstudio::r::sxpinfo*>(x)->debug = (v))
+#endif
 
 // Hide macros that are always unsafe for us to use, because their
 // interface has changed between versions of R
@@ -53,6 +70,10 @@
 #ifndef R_INTERNAL_FUNCTIONS
 
 // force compiler error if the client tries to call an R internal function
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmacro-redefined"
 #define Rf_asChar INTERNAL_R_FUNCTION
 #define Rf_coerceVector INTERNAL_R_FUNCTION
 #define Rf_PairToVectorList INTERNAL_R_FUNCTION
@@ -244,6 +265,17 @@
 #define Rf_ScalarRaw INTERNAL_R_FUNCTION
 #define Rf_ScalarReal INTERNAL_R_FUNCTION
 #define Rf_ScalarString INTERNAL_R_FUNCTION
+
+// Deprecated R API symbols -- guard against accidental use.
+// These have compat macros defined above (for R >= 4.6.0) or are
+// available from Rinternals.h (for R < 4.6.0), but should only be
+// used in files that opt into R_INTERNAL_FUNCTIONS.
+#define BODY INTERNAL_R_FUNCTION
+#define CLOENV INTERNAL_R_FUNCTION
+#define FORMALS INTERNAL_R_FUNCTION
+
+#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
 
 #endif // R_INTERNAL_FUNCTIONS
 
