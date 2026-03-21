@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -184,6 +185,30 @@ public class ChatSatelliteWindow extends SatelliteWindow
    public boolean supportsThemes()
    {
       return true;
+   }
+
+   @Override
+   public void onThemeChanged(ThemeChangedEvent event)
+   {
+      // Apply theme to satellite document (toolbar, etc.)
+      super.onThemeChanged(event);
+
+      // Clear color cache and re-inject variables into the chat iframe.
+      // This mirrors ChatPane's ThemeChangedEvent handler: calling
+      // injectThemeVariables() directly ensures CSS variables are updated
+      // regardless of the isEligibleForCustomStyles() check inside
+      // RStudioThemedFrame.addThemesStyle().
+      ThemeColorExtractor.clearCache();
+      if (frame_ != null)
+      {
+         frame_.injectThemeVariables();
+      }
+
+      // Update suspended overlay color for new theme
+      if (suspendedOverlay_ != null)
+      {
+         updateSuspendedOverlayStyle();
+      }
    }
 
    @Override
