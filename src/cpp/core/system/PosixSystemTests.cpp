@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <grp.h>
+#include <boost/asio/ip/address_v4.hpp>
 #include <tests/TestThat.hpp>
 
 namespace rstudio {
@@ -30,6 +31,8 @@ namespace system {
 OSInfo parseOsReleaseContent(const std::string&);
 
 namespace detail {
+
+bool isLinkLocalIpv4(const boost::asio::ip::address_v4& addr);
 
 std::string resolveBindAddressForAddresses(
       const std::string& address,
@@ -685,6 +688,45 @@ VERSION_CODENAME="rhel9"
       };
 
       expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("0.0.0.0"));
+   }
+
+   test_that("isLinkLocalIpv4 identifies link-local addresses")
+   {
+      expect_true(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.254.0.0")));
+      expect_true(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.254.0.1")));
+      expect_true(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.254.255.255")));
+      expect_true(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.254.1.100")));
+   }
+
+   test_that("isLinkLocalIpv4 rejects non-link-local addresses")
+   {
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("127.0.0.1")));
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("192.168.1.1")));
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("10.0.0.1")));
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.253.0.1")));
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("169.255.0.1")));
+      expect_false(detail::isLinkLocalIpv4(
+         boost::asio::ip::make_address_v4("0.0.0.0")));
+   }
+
+   test_that("resolveBindAddressForAddresses ignores link-local IPv4 for IPv4 wildcard")
+   {
+      std::vector<posix::IpAddress> addrs = {
+         ipAddress("lo", "127.0.0.1"),
+         ipAddress("eth0", "169.254.1.100"),
+         ipAddress("eth0", "2001:db8::10")
+      };
+
+      expect_equal(detail::resolveBindAddressForAddresses("0.0.0.0", addrs), std::string("::"));
    }
 
    test_that("resolveBindAddressForAddresses skips unparseable addresses")

@@ -2095,6 +2095,12 @@ std::string stripIpv6ScopeId(const std::string& address)
    return scopePos == std::string::npos ? address : address.substr(0, scopePos);
 }
 
+bool isLinkLocalIpv4(const boost::asio::ip::address_v4& addr)
+{
+   auto bytes = addr.to_bytes();
+   return bytes[0] == 169 && bytes[1] == 254;
+}
+
 std::string resolveBindAddressForAddresses(
       const std::string& address,
       const std::vector<posix::IpAddress>& addrs)
@@ -2122,7 +2128,7 @@ std::string resolveBindAddressForAddresses(
          if (addr.is_v4())
          {
             hasIpv4 = true;
-            if (!addr.is_loopback())
+            if (!addr.is_loopback() && !isLinkLocalIpv4(addr.to_v4()))
                hasNonLocalIpv4 = true;
          }
          else if (addr.is_v6())
