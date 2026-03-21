@@ -59,7 +59,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       // Enumerate bindings via the public API.
       r::sexp::Protect protect;
       SEXP namesSEXP;
-      protect.add(namesSEXP = r::sexp::envNames(valueSEXP));
+      protect.add(namesSEXP = r::sexp::listEnvironment(valueSEXP));
       R_xlen_t n = Rf_xlength(namesSEXP);
       for (R_xlen_t i = 0; i < n; i++)
       {

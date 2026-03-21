@@ -386,7 +386,7 @@ void listEnvironment(SEXP env,
    // we don't actually return this list to the caller)
    Protect protect;
    SEXP envVarsSEXP;
-   protect.add(envVarsSEXP = envNames(env, includeAll));
+   protect.add(envVarsSEXP = listEnvironment(env, includeAll));
 
    // get variables
    std::vector<std::string> vars;
@@ -428,7 +428,7 @@ void listEnvironment(SEXP env,
 }
 
 
-SEXP envNames(SEXP envSEXP, bool includeAll)
+SEXP listEnvironment(SEXP envSEXP, bool includeAll)
 {
    return R_lsInternal3(
       envSEXP,
@@ -514,7 +514,7 @@ bool hasActiveBindingImpl(const std::string& name,
    
    // list the bindings in this object
    SEXP bindingsSEXP;
-   protect.add(bindingsSEXP = envNames(varSEXP, true));
+   protect.add(bindingsSEXP = listEnvironment(varSEXP, true));
    
    // iterate over items and search for active bindings
    for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
@@ -1843,7 +1843,7 @@ SEXP objects(SEXP environment,
    }
 
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = envNames(environment, allNames));
+   pProtect->add(resultSEXP = listEnvironment(environment, allNames));
    return resultSEXP;
 }
 

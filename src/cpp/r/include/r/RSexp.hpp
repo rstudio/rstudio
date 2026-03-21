@@ -81,7 +81,7 @@ void listEnvironment(SEXP env,
                      std::vector<Variable>* pVariables);
  
 // get names of bindings in an environment as a character SEXP
-SEXP envNames(SEXP envSEXP, bool includeAll = true);
+SEXP listEnvironment(SEXP envSEXP, bool includeAll = true);
 
 // find variables in environments and namespaces
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
