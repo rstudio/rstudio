@@ -74,8 +74,17 @@ public abstract class SatelliteWindow extends Composite
       pEventBus.get().addHandler(SessionInitEvent.TYPE, (evt) ->
       {
          UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
-         userPrefs.editorTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
          userPrefs.globalTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+
+         // Use UserState.theme() as the authoritative trigger for editor
+         // theme changes rather than UserPrefs.editorTheme(). The
+         // preferences dialog dispatches UserPrefsChangedEvent before
+         // state_.writeState() completes (PreferencesDialog.doSaveChanges),
+         // so an editorTheme() binding would fire ThemeChangedEvent while
+         // UserState.theme() still holds the previous value, causing
+         // RStudioThemes.initializeThemes() to read stale state.
+         RStudioGinjector.INSTANCE.getUserState().theme().bind(
+            theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
       });
 
       // aria-live status announcements
