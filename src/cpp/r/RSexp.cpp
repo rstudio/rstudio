@@ -880,6 +880,18 @@ void setEnclos(SEXP object, SEXP value)
    rec->u.envsxp.enclos = reinterpret_cast<SEXPREC*>(value);
 }
 
+SEXP getFrame(SEXP object)
+{
+   SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
+   return reinterpret_cast<SEXP>(rec->u.envsxp.frame);
+}
+
+SEXP getHashtab(SEXP object)
+{
+   SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
+   return reinterpret_cast<SEXP>(rec->u.envsxp.hashtab);
+}
+
 } // namespace sxpinfo
 
 bool isAltrep(SEXP object)

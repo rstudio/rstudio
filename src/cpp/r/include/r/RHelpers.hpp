@@ -81,7 +81,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       // A hashed environment contains a VECSXP of 'frame's.
       // An unhashed environment contains a single 'frame'.
       // A 'frame' here is just a pairlist (LISTSXP).
-      SEXP hashTableSEXP = HASHTAB(valueSEXP);
+      SEXP hashTableSEXP = r::sexp::sxpinfo::getHashtab(valueSEXP);
       if (hashTableSEXP != R_NilValue)
       {
          R_xlen_t numCells = Rf_xlength(hashTableSEXP);
@@ -94,7 +94,7 @@ bool recursiveFindImpl(SEXP valueSEXP,
       }
       else
       {
-         SEXP frameSEXP = FRAME(valueSEXP);
+         SEXP frameSEXP = r::sexp::sxpinfo::getFrame(valueSEXP);
          if (recursiveFindFrame(frameSEXP, visitedEnvironments, std::forward<F>(callback)))
             return true;
       }

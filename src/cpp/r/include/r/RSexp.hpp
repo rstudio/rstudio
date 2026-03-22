@@ -475,6 +475,9 @@ unsigned int getGp(SEXP object);
 SEXP getEnclos(SEXP object);
 void setEnclos(SEXP object, SEXP value);
 
+SEXP getFrame(SEXP object);
+SEXP getHashtab(SEXP object);
+
 } // namespace sxpinfo
 
 void printValue(SEXP object);

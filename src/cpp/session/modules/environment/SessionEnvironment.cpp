@@ -215,7 +215,7 @@ bool isGlobalEnvironmentSerializable()
    bool allValuesSerializable = true;
    
    // Iterate over values in the global environment, and compute whether they can be serialized.
-   SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
+   SEXP hashTableSEXP = r::sexp::sxpinfo::getHashtab(R_GlobalEnv);
    R_xlen_t n = Rf_xlength(hashTableSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
@@ -354,9 +354,9 @@ bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 
 bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
-   SEXP hash = HASHTAB(obj);
+   SEXP hash = r::sexp::sxpinfo::getHashtab(obj);
    if (hash == R_NilValue)
-      return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
+      return frameHasExternalPointer(r::sexp::sxpinfo::getFrame(obj), nullPtr, visited);
    
    R_xlen_t n = XLENGTH(hash);
    for (R_xlen_t i = 0; i < n; i++)
@@ -2016,9 +2016,9 @@ double obj_size_tree(SEXP x,
    case ENVSXP:
       size += sizeof_node;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::sxpinfo::getFrame(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(R_ParentEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(HASHTAB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::sxpinfo::getHashtab(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    // Functions
