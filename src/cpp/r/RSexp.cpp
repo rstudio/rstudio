@@ -49,11 +49,6 @@
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
-static unsigned int ACTIVE_BINDING_MASK = 1 << 15;
-
-extern "C" {
-SEXP R_findVarLocInFrame(SEXP, SEXP);
-}
 
 // These structure definitions mirror the internal R structures from Rinternals.h.
 // The sxpinfo_struct bit fields moved in R 3.5 in order to support ALTREP objects,
@@ -622,36 +617,28 @@ bool hasActiveBinding(const std::string& name, SEXP envirSEXP)
    return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
 }
 
-bool isActiveBindingImpl(SEXP bindingSEXP)
-{
-   return sxpinfo::getGp(bindingSEXP) & ACTIVE_BINDING_MASK;
-}
-
-// NOTE: We avoid using R_BindingIsActive() as this will throw an
-// R error for bindings which do not exist.
+// R_BindingIsActive() throws an R error for bindings that don't exist,
+// so we wrap it with R_ToplevelExec to guard against that.
 bool isActiveBinding(SEXP nameSEXP, SEXP envSEXP)
 {
-   // Interestingly, for symbols in the base namespace, the active binding
-   // mask is set on the symbol itself, rather than the bound value.
-   if (envSEXP == R_BaseEnv || envSEXP == R_BaseNamespace)
-      return isActiveBindingImpl(nameSEXP);
-   
-   // NOTE: R_findVarLocInFrame, different from other methods,
-   // will explicitly return nullptr if there is no binding.
-   SEXP bindingSEXP = R_findVarLocInFrame(envSEXP, nameSEXP);
-   if (bindingSEXP == nullptr || bindingSEXP == R_NilValue)
-      return false;
-   
-   return isActiveBindingImpl(bindingSEXP);
+   struct Context {
+      SEXP nameSEXP;
+      SEXP envSEXP;
+      Rboolean result;
+   };
+
+   Context context = { nameSEXP, envSEXP, FALSE };
+   auto callback = +[](void* data) {
+      Context* ctx = static_cast<Context*>(data);
+      ctx->result = R_BindingIsActive(ctx->nameSEXP, ctx->envSEXP);
+   };
+
+   Rboolean success = R_ToplevelExec(callback, &context);
+   return success && context.result;
 }
 
 bool isActiveBinding(const std::string& name, SEXP envSEXP)
 {
-   // R_BindingIsActive throws error on .Last.value check; avoid that and
-   // just assume that it's not an active binding (and hence is okay to eval)
-   if (name == ".Last.value")
-      return false;
-   
    SEXP nameSEXP = Rf_install(name.c_str());
    return isActiveBinding(nameSEXP, envSEXP);
 }
