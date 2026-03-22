@@ -477,13 +477,13 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       }
       case CLOSXP:
       {
-         if (hasExternalPointer(FORMALS(obj), nullPtr, visited))
+         if (hasExternalPointer(R_ClosureFormals(obj), nullPtr, visited))
             return true;
 
-         if (hasExternalPointer(BODY(obj), nullPtr, visited))
+         if (hasExternalPointer(R_ClosureBody(obj), nullPtr, visited))
             return true;
 
-         if (hasExternalPointer(CLOENV(obj), nullPtr, visited))
+         if (hasExternalPointer(R_ClosureEnv(obj), nullPtr, visited))
             return true;
       }
       default:
@@ -926,7 +926,7 @@ Error setEnvironmentName(int contextDepth,
             break;
          }
          // Proceed to the parent of the environment
-         env = ENCLOS(env);
+         env = R_ParentEnv(env);
       }
       if (error || env == R_EmptyEnv)
       {
@@ -1140,7 +1140,7 @@ json::Object commonEnvironmentStateData(
             
             std::string envLocation;
             error = r::exec::RFunction(".rs.environmentName")
-                  .addParam(ENCLOS(context.cloenv()))
+                  .addParam(R_ParentEnv(context.cloenv()))
                   .call(&envLocation);
             
             if (error)
@@ -2018,7 +2018,7 @@ double obj_size_tree(SEXP x,
       size += sizeof_node;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(ENCLOS(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(R_ParentEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(HASHTAB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
@@ -2026,9 +2026,9 @@ double obj_size_tree(SEXP x,
    case CLOSXP:
       size += sizeof_node;
       size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(FORMALS(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(BODY(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(CLOENV(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(R_ClosureFormals(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(R_ClosureBody(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(R_ClosureEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    case PROMSXP:
@@ -2111,7 +2111,7 @@ SEXP rs_objectSize(SEXP objectSEXP,
 
 SEXP rs_functionBody(SEXP functionSEXP)
 {
-   return BODY(functionSEXP);
+   return R_ClosureBody(functionSEXP);
 }
 
 Error initialize()

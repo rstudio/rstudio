@@ -126,9 +126,9 @@ Error save(const FilePath& statePath)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
    
-   for (SEXP envSEXP = ENCLOS(R_GlobalEnv);
+   for (SEXP envSEXP = R_ParentEnv(R_GlobalEnv);
         envSEXP != R_BaseEnv;
-        envSEXP = ENCLOS(envSEXP))
+        envSEXP = R_ParentEnv(envSEXP))
    {
       // screen out UserDefinedDatabase elements (attempting to persist
       // a UserDefinedDatabase caused mischief in at least one case (e.g. see
@@ -238,26 +238,26 @@ void repairSearchPath()
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
+      thisSEXP = R_ParentEnv(thisSEXP);
+
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;
-      
+
       std::string name = CHAR(STRING_ELT(nameSEXP, 0));
       if (name != "tools:rstudio")
          continue;
-      
+
       toolsSEXP = thisSEXP;
-      SET_ENCLOS(prevSEXP, ENCLOS(thisSEXP));
+      SET_ENCLOS(prevSEXP, R_ParentEnv(thisSEXP));
    }
    
    thisSEXP = R_GlobalEnv;
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = ENCLOS(thisSEXP);
-      
+      thisSEXP = R_ParentEnv(thisSEXP);
+
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
          continue;

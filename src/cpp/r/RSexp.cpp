@@ -120,7 +120,7 @@ private:
    
    static FunctionEnvironmentPair pair(SEXP object)
    {
-      return std::make_pair(object, CLOENV(object));
+      return std::make_pair(object, R_ClosureEnv(object));
    }
 
    std::map<FunctionEnvironmentPair, FunctionSymbolUsage> database_;
@@ -256,7 +256,7 @@ SEXP asEnvironment(std::string name)
    if (name.find(":") == std::string::npos)
       name = "package:" + name;
    
-   SEXP envSEXP = ENCLOS(R_GlobalEnv);
+   SEXP envSEXP = R_ParentEnv(R_GlobalEnv);
    while (envSEXP != R_EmptyEnv)
    {
       SEXP nameSEXP = Rf_getAttrib(envSEXP, R_NameSymbol);
@@ -265,7 +265,7 @@ SEXP asEnvironment(std::string name)
       {
          return envSEXP;
       }
-      envSEXP = ENCLOS(envSEXP);
+      envSEXP = R_ParentEnv(envSEXP);
    }
    
    LOG_ERROR_MESSAGE("No environment named '" + name + "' on search path");
@@ -675,7 +675,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
          }
       }
       
-      env = ENCLOS(env);
+      env = R_ParentEnv(env);
    }
    
    return R_UnboundValue;
@@ -2046,7 +2046,7 @@ core::Error extractFunctionInfo(
    if (Rf_isPrimitive(functionSEXP))
       return Success();
    
-   SEXP formals = FORMALS(functionSEXP);
+   SEXP formals = R_ClosureFormals(functionSEXP);
    
    // NOTE: 'as.character' has different behaviour for pairlist of calls vs.
    // a call itself; we desire the behaviour associated with pairlists of
@@ -2106,7 +2106,7 @@ std::string environmentName(SEXP envSEXP)
       return "base";
    
    if (Rf_isFunction(envSEXP))
-      envSEXP = CLOENV(envSEXP);
+      envSEXP = R_ClosureEnv(envSEXP);
    
    if (TYPEOF(envSEXP) != ENVSXP)
       return "<unknown>";

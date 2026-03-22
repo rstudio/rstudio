@@ -79,6 +79,14 @@ wait
 grep -oE '@(apifun|eapifun|apivar|eapivar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" \
   | sed 's/@[a-z]* //' | sort -u > "$TMPDIR/public_api.txt"
 
+# Treat symbols exported by the graphics engine/device headers as public API
+for gfx_header in "$R_INCLUDE/R_ext/GraphicsEngine.h" "$R_INCLUDE/R_ext/GraphicsDevice.h"; do
+  if [ -f "$gfx_header" ]; then
+    grep -oE '\b(R_|Rf_|GE)[A-Za-z_][A-Za-z0-9_]*' "$gfx_header" 2>/dev/null
+  fi
+done | sort -u >> "$TMPDIR/public_api.txt"
+sort -u -o "$TMPDIR/public_api.txt" "$TMPDIR/public_api.txt"
+
 grep -oE '@(embfun|embvar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" \
   | sed 's/@[a-z]* //' | sort -u > "$TMPDIR/embed_api.txt"
 
