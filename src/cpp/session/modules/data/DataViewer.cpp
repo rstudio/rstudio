@@ -1095,8 +1095,9 @@ void onDetectChanges(module_context::ChangeSource source)
       bool typeChanged = false;
       if (observedSEXP != nullptr)
       {
-         SEXP oldClass = Rf_getAttrib(observedSEXP, R_ClassSymbol);
-         SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
+         static SEXP s_class = Rf_install("class");
+         SEXP oldClass = Rf_getAttrib(observedSEXP, s_class);
+         SEXP newClass = Rf_getAttrib(sexp, s_class);
          typeChanged = !R_compute_identical(oldClass, newClass, 0);
       }
 
