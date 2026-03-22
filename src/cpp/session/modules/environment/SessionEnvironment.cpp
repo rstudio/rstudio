@@ -456,22 +456,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       }
       case PROMSXP: 
       {
-         SEXP value = PRVALUE(obj);
-         if (value != R_UnboundValue)
-         {
-            if (hasExternalPointer(value, nullPtr, visited))
-               return true;
-         }
-         else 
-         {
-            if (hasExternalPointer(PRCODE(obj), nullPtr, visited))
-               return true;
-
-            if (hasExternalPointer(PRENV(obj), nullPtr, visited))
-               return true;
-
-            return false;
-         }
+         // Skip promises
          break;
       }
       case CLOSXP:
