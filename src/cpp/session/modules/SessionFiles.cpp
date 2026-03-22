@@ -1781,12 +1781,15 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
    r::sexp::Protect protect;
    SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
 
-   SEXP sortedSEXP;
+   SEXP sortedSEXP = R_NilValue;
    Error error = r::exec::RFunction("base:::sort", resultSEXP).call(&sortedSEXP, &protect);
    if (error)
+   {
       LOG_ERROR(error);
+      return resultSEXP;
+   }
 
-   return sortedSEXP ? sortedSEXP : resultSEXP;
+   return sortedSEXP;
 }
 
 void validatePath(SEXP pathSEXP)
