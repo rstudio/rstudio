@@ -75,7 +75,9 @@ typedef std::pair<std::string,SEXP> Variable;
 // The caller must make sure that `env` is protected for 
 // as long as the SEXPs in pVariables are used, because 
 // they are not protected
-void listEnvironment(SEXP env, 
+SEXP listEnvironment(SEXP env, bool allNames);
+
+void listEnvironment(SEXP env,
                      bool includeAll,
                      bool includeLastDotValue,
                      std::vector<Variable>* pVariables);
