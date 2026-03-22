@@ -345,13 +345,6 @@ SEXP rs_utf8ToSystem(SEXP stringSEXP)
    return r::sexp::create(asNative, &protect);
 }
 
-SEXP rs_promiseCode(SEXP promiseSEXP)
-{
-   return TYPEOF(promiseSEXP) == PROMSXP
-         ? PRCODE(promiseSEXP)
-         : R_NilValue;
-}
-
 SEXP rs_getSessionOverlayOption(SEXP keySEXP)
 {
    std::string key = r::sexp::asString(keySEXP);
@@ -380,7 +373,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess);
    RS_REGISTER_CALL_METHOD(rs_systemToUtf8);
    RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
-   RS_REGISTER_CALL_METHOD(rs_promiseCode);
    RS_REGISTER_CALL_METHOD(rs_getSessionOverlayOption);
    RS_REGISTER_CALL_METHOD(rs_userDataDir);
 
