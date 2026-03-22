@@ -19,7 +19,6 @@
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
-#include <r/RSxpInfo.hpp>
 #include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
@@ -67,22 +66,12 @@ bool isUnevaluatedPromise (SEXP var)
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
 }
 
-bool isAltrepImpl(SEXP var)
+bool isAltrep(SEXP var)
 {
-   // Reject nulls
    if (var == nullptr || var == R_NilValue)
       return false;
 
-   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
-   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(var);
-
-   // Select the bit referring to the ALTREP flag
-   return info.alt;
-}
-
-bool isAltrep(SEXP var)
-{
-   return isAltrepImpl(var);
+   return r::sexp::isAltrep(var);
 }
 
 bool hasAltrepImpl(SEXP var, std::set<SEXP>& visited, unsigned maxDepth)

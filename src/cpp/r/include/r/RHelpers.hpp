@@ -22,7 +22,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
 
-#include <r/RSxpInfo.hpp>
+#include <r/RSexp.hpp>
 
 namespace rstudio {
 namespace r {
@@ -31,8 +31,7 @@ namespace internal {
 
 inline bool isImmediateBinding(SEXP frameSEXP)
 {
-   r::sxpinfo* info = reinterpret_cast<r::sxpinfo*>(frameSEXP);
-   return info->extra != 0;
+   return r::sexp::sxpinfo::isImmediateBinding(frameSEXP);
 }
 
 template <typename F>

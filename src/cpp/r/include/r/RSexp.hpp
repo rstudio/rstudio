@@ -462,6 +462,21 @@ private:
    Protect* pProtect_;
 };
 
+namespace sxpinfo {
+
+int getDebug(SEXP object);
+void setDebug(SEXP object, int value);
+
+bool isImmediateBinding(SEXP object);
+unsigned int getExtra(SEXP object);
+void setExtra(SEXP object, unsigned int value);
+unsigned int getGp(SEXP object);
+
+SEXP getEnclos(SEXP object);
+void setEnclos(SEXP object, SEXP value);
+
+} // namespace sxpinfo
+
 void printValue(SEXP object);
 bool inherits(SEXP object, const char* S3Class);
 bool maybePerformsNSE(SEXP functionSEXP);

@@ -39,7 +39,6 @@
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
-#include <r/RSxpInfo.hpp>
 #include <r/RUtil.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
@@ -56,10 +55,96 @@ extern "C" {
 SEXP R_findVarLocInFrame(SEXP, SEXP);
 }
 
+// These structure definitions mirror the internal R structures from Rinternals.h.
+// The sxpinfo_struct bit fields moved in R 3.5 in order to support ALTREP objects,
+// so these definitions are only accurate for R >= 3.5.
+extern "C" {
+
+struct sxpinfo_struct
+{
+   unsigned int type  :  5;
+   unsigned int scalar:  1;
+   unsigned int obj   :  1;
+   unsigned int alt   :  1;
+   unsigned int gp    : 16;
+   unsigned int mark  :  1;
+   unsigned int debug :  1;
+   unsigned int trace :  1;
+   unsigned int spare :  1;
+   unsigned int gcgen :  1;
+   unsigned int gccls :  3;
+   unsigned int named : 16;
+   unsigned int extra : 32 - 16;
+};
+
+struct vecsxp_struct 
+{
+    R_xlen_t	length;
+    R_xlen_t	truelength;
+};
+
+struct primsxp_struct
+{
+    int offset;
+};
+
+struct symsxp_struct
+{
+    struct SEXPREC *pname;
+    struct SEXPREC *value;
+    struct SEXPREC *internal;
+};
+
+struct listsxp_struct
+{
+    struct SEXPREC *carval;
+    struct SEXPREC *cdrval;
+    struct SEXPREC *tagval;
+};
+
+struct envsxp_struct
+{
+    struct SEXPREC *frame;
+    struct SEXPREC *enclos;
+    struct SEXPREC *hashtab;
+};
+
+struct closxp_struct
+{
+    struct SEXPREC *formals;
+    struct SEXPREC *body;
+    struct SEXPREC *env;
+};
+
+struct promsxp_struct
+{
+    struct SEXPREC *value;
+    struct SEXPREC *expr;
+    struct SEXPREC *env;
+};
+
+typedef struct SEXPREC
+{
+   struct sxpinfo_struct sxpinfo;
+   struct SEXPREC* attrib;
+   struct SEXPREC* gengc_next_node;
+   struct SEXPREC* gengc_prev_node;
+   union
+   {
+      struct primsxp_struct primsxp;
+      struct symsxp_struct symsxp;
+      struct listsxp_struct listsxp;
+      struct envsxp_struct envsxp;
+      struct closxp_struct closxp;
+      struct promsxp_struct promsxp;
+   } u;
+} SEXPREC;
+
+} // extern "C"
 
 namespace rstudio {
 namespace r {
-   
+
 using namespace exec;
    
 namespace sexp {
@@ -541,9 +626,7 @@ bool hasActiveBinding(const std::string& name, SEXP envirSEXP)
 
 bool isActiveBindingImpl(SEXP bindingSEXP)
 {
-   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
-   r::sxpinfo* infoSEXP = reinterpret_cast<r::sxpinfo*>(bindingSEXP); 
-   return infoSEXP->gp & ACTIVE_BINDING_MASK;
+   return sxpinfo::getGp(bindingSEXP) & ACTIVE_BINDING_MASK;
 }
 
 // NOTE: We avoid using R_BindingIsActive() as this will throw an
@@ -747,9 +830,61 @@ bool isUserDefinedDatabase(SEXP object)
    return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
 }
 
+namespace sxpinfo {
+
+int getDebug(SEXP object)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   return info.debug;
+}
+
+void setDebug(SEXP object, int value)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   info.debug = value;
+}
+
+bool isImmediateBinding(SEXP object)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   return info.extra != 0;
+}
+
+unsigned int getExtra(SEXP object)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   return info.extra;
+}
+
+void setExtra(SEXP object, unsigned int value)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   info.extra = value;
+}
+
+unsigned int getGp(SEXP object)
+{
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
+   return info.gp;
+}
+
+SEXP getEnclos(SEXP object)
+{
+   SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
+   return reinterpret_cast<SEXP>(rec->u.envsxp.enclos);
+}
+
+void setEnclos(SEXP object, SEXP value)
+{
+   SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
+   rec->u.envsxp.enclos = reinterpret_cast<SEXPREC*>(value);
+}
+
+} // namespace sxpinfo
+
 bool isAltrep(SEXP object)
 {
-   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(object);
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
    return info.alt;
 }
 

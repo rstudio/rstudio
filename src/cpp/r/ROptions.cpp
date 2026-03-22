@@ -115,7 +115,7 @@ SEXP getOption(const std::string& name)
 SEXP setErrorOption(SEXP value)
 {
    SEXP errorTag = Rf_install("error");
-   SEXP option = SYMVALUE(Rf_install(".Options"));
+   SEXP option = Rf_findVar(Rf_install(".Options"), R_BaseEnv);
    while (option != R_NilValue)
    {
       // are we removing the option?

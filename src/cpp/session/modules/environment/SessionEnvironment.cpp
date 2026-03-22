@@ -36,7 +36,6 @@
 #include <r/RJson.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
-#include <r/RSxpInfo.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 
@@ -294,7 +293,7 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 bool frameBindingIsActive(SEXP binding) 
 {
    static unsigned int ACTIVE_BINDING_MASK = (1<<15);
-   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
+   return r::sexp::sxpinfo::getGp(binding) & ACTIVE_BINDING_MASK;
 }
 
 bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
@@ -312,13 +311,13 @@ bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visite
    //        error("bad binding access");
    //        return CAR0(e);
    //     }
-   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
+   unsigned int typetag = r::sexp::sxpinfo::getExtra(b);
    if (typetag)
    {
       // it should not be set on 32-bits: unset it
       if (sizeof(size_t) < sizeof(double))
       {
-         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+         r::sexp::sxpinfo::setExtra(b, 0);
       }
       else 
       {
@@ -331,7 +330,7 @@ bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visite
             
             default:
                // otherwise (not sure this even hapens), ->extra should not be set: unset it
-               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+               r::sexp::sxpinfo::setExtra(b, 0);
          }
       }
    }

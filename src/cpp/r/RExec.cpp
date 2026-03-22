@@ -669,12 +669,12 @@ DisableDebugScope::DisableDebugScope(SEXP env)
       return;
    
    // check to see whether there's a debug flag set on this environment
-   rdebug_ = RDEBUG(env);
+   rdebug_ = r::sexp::sxpinfo::getDebug(env);
 
    // if there is, turn it off and save the old flag for restoration
-   if (rdebug_ != 0) 
+   if (rdebug_ != 0)
    {
-      SET_RDEBUG(env, 0);
+      r::sexp::sxpinfo::setDebug(env, 0);
       env_ = env;
    } 
 }
@@ -685,7 +685,7 @@ DisableDebugScope::~DisableDebugScope()
    // evaluation, restore debugging
    if (env_ != nullptr && !atTopLevelContext()) 
    {
-      SET_RDEBUG(env_, rdebug_);
+      r::sexp::sxpinfo::setDebug(env_, rdebug_);
    }
 }
 

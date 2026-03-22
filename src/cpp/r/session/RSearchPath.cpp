@@ -249,7 +249,7 @@ void repairSearchPath()
          continue;
 
       toolsSEXP = thisSEXP;
-      SET_ENCLOS(prevSEXP, R_ParentEnv(thisSEXP));
+      r::sexp::sxpinfo::setEnclos(prevSEXP, R_ParentEnv(thisSEXP));
    }
    
    thisSEXP = R_GlobalEnv;
@@ -265,8 +265,8 @@ void repairSearchPath()
       std::string name = CHAR(STRING_ELT(nameSEXP, 0));
       if (isBasePackage(name))
       {
-         SET_ENCLOS(prevSEXP, toolsSEXP);
-         SET_ENCLOS(toolsSEXP, thisSEXP);
+         r::sexp::sxpinfo::setEnclos(prevSEXP, toolsSEXP);
+         r::sexp::sxpinfo::setEnclos(toolsSEXP, thisSEXP);
          return;
       }
    }
