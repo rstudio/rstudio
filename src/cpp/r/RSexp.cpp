@@ -532,7 +532,7 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
    pVariables->clear();
 
    // extract the attributes and ensure we got a pairlist
-   SEXP attrs = ATTRIB(obj);
+   SEXP attrs = sxpinfo::getAttrib(obj);
    if (TYPEOF(attrs) != LISTSXP)
       return;
 
@@ -890,6 +890,12 @@ SEXP getHashtab(SEXP object)
 {
    SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
    return reinterpret_cast<SEXP>(rec->u.envsxp.hashtab);
+}
+
+SEXP getAttrib(SEXP object)
+{
+   SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);
+   return reinterpret_cast<SEXP>(rec->attrib);
 }
 
 } // namespace sxpinfo

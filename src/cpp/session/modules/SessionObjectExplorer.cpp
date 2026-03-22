@@ -309,7 +309,7 @@ void onDetectChanges(module_context::ChangeSource source)
 
 SEXP rs_objectClass(SEXP objectSEXP)
 {
-   SEXP attribSEXP = ATTRIB(objectSEXP);
+   SEXP attribSEXP = r::sexp::sxpinfo::getAttrib(objectSEXP);
    if (attribSEXP == R_NilValue)
       return R_NilValue;
    
@@ -340,7 +340,7 @@ SEXP rs_objectAddress(SEXP objectSEXP)
 
 SEXP rs_objectAttributes(SEXP objectSEXP)
 {
-   return ATTRIB(objectSEXP);
+   return r::sexp::sxpinfo::getAttrib(objectSEXP);
 }
 
 SEXP rs_explorerCacheDir()

@@ -474,6 +474,7 @@ unsigned int getGp(SEXP object);
 
 SEXP getEnclos(SEXP object);
 void setEnclos(SEXP object, SEXP value);
+SEXP getAttrib(SEXP object);
 SEXP getFrame(SEXP object);
 SEXP getHashtab(SEXP object);
 
