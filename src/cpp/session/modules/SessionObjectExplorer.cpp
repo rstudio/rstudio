@@ -338,11 +338,6 @@ SEXP rs_objectAddress(SEXP objectSEXP)
    return r::sexp::create(ss.str(), &protect);
 }
 
-SEXP rs_objectAttributes(SEXP objectSEXP)
-{
-   return r::sexp::sxpinfo::getAttrib(objectSEXP);
-}
-
 SEXP rs_explorerCacheDir()
 {
    r::sexp::Protect protect;
@@ -365,7 +360,6 @@ core::Error initialize()
    
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
-   RS_REGISTER_CALL_METHOD(rs_objectAttributes, 1);
    RS_REGISTER_CALL_METHOD(rs_explorerCacheDir, 0);
    
    ExecBlock initBlock;
