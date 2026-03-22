@@ -999,8 +999,11 @@ table.header > tbody > tr > td {
    background-size: 14px 14px;
    filter: brightness(0.4);
 }
+.rstudio-themes-dark .windowframe .close {
+   filter: invert(100%) brightness(100%);
+}
 .rstudio-themes-dark .windowframe .close:hover {
-   filter: brightness(1.50);
+   filter: invert(100%) brightness(150%);
 }
 .windowframe-exclusive .close {
    display: none;
