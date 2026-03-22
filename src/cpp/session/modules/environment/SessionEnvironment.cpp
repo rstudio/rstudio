@@ -1852,7 +1852,7 @@ bool is_namespace(SEXP envSEXP)
       return true;
 
    static SEXP nsSymSEXP = Rf_install(".__NAMESPACE__.");
-   SEXP nsSEXP = Rf_findVarInFrame(envSEXP, nsSymSEXP);
+   SEXP nsSEXP = r::sexp::findVarInFrame(envSEXP, nsSymSEXP);
    return nsSEXP != R_UnboundValue;
 }
 

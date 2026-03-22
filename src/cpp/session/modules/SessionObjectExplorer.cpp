@@ -226,7 +226,7 @@ void onDetectChanges(module_context::ChangeSource source)
    for (const std::string& id: cached)
    {
       SEXP s = Rf_install(id.c_str());
-      SEXP entry = Rf_findVarInFrame(envCache, s);
+      SEXP entry = r::sexp::findVarInFrame(envCache, s);
 
       // basic safety check on entry: make sure it's a 
       // list of 5 elements
@@ -246,7 +246,7 @@ void onDetectChanges(module_context::ChangeSource source)
          continue;
 
       SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
-      SEXP newObject = Rf_findVarInFrame(envir, symbol);
+      SEXP newObject = r::sexp::findVarInFrame(envir, symbol);
 
       // no object of that name, don't update
       if (newObject == R_UnboundValue)

@@ -89,7 +89,7 @@ SEXP getOptionCell(const std::string& name)
 
    // keep reference to R options list
    static SEXP optionsSEXP =
-         Rf_findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
+         r::sexp::findVarInFrame(R_BaseNamespace, Rf_install(".Options"));
    
    // we search through the options list directly and return
    // the underlying value to avoid duplicating the underlying

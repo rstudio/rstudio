@@ -1022,7 +1022,7 @@ SEXP lookupCustomHandler(const std::string& uri)
       // we only proceed if .httpd.handlers.env really exists
       if (TYPEOF(s_customHandlersEnv) == ENVSXP)
       {
-         SEXP cl = Rf_findVarInFrame3(s_customHandlersEnv, Rf_install(handler.c_str()), TRUE);
+         SEXP cl = r::sexp::findVarInFrame(s_customHandlersEnv, Rf_install(handler.c_str()));
          if (cl != R_UnboundValue && TYPEOF(cl) == CLOSXP) // need a closure
             return cl;
       }

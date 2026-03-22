@@ -82,6 +82,9 @@ void listEnvironment(SEXP env,
                      bool includeLastDotValue,
                      std::vector<Variable>* pVariables);
  
+// find a variable in a single environment frame (no inheritance)
+SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
+
 // find variables in environments and namespaces
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 SEXP findVar(const std::string& name, SEXP envSEXP);

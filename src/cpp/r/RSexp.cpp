@@ -339,7 +339,8 @@ SEXP asEnvironment(std::string name)
    SEXP envSEXP = sxpinfo::getEnclos(R_GlobalEnv);
    while (envSEXP != R_EmptyEnv)
    {
-      SEXP nameSEXP = Rf_getAttrib(envSEXP, R_NameSymbol);
+      static SEXP s_name = Rf_install("name");
+      SEXP nameSEXP = Rf_getAttrib(envSEXP, s_name);
       if (TYPEOF(nameSEXP) == STRSXP &&
           name == CHAR(STRING_ELT(nameSEXP, 0)))
       {
@@ -574,7 +575,7 @@ bool hasActiveBindingImpl(const std::string& name,
    
    // resolve the object (discover in that frame)
    SEXP nameSEXP = Rf_install(name.c_str());
-   SEXP varSEXP = Rf_findVarInFrame(envirSEXP, nameSEXP);
+   SEXP varSEXP = findVarInFrame(envirSEXP, nameSEXP);
    
    // check for special values
    if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
@@ -660,6 +661,15 @@ SEXP functionBody(SEXP functionSEXP)
    return bodySEXP;
 }
 
+SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
+{
+#if R_VERSION >= R_Version(4, 5, 0)
+   return R_getVarEx(nameSEXP, envSEXP, FALSE, R_UnboundValue);
+#else
+   return Rf_findVarInFrame(envSEXP, nameSEXP);
+#endif
+}
+
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
 #ifndef RSTUDIO_PACKAGE_BUILD
@@ -735,7 +745,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       
       // Otherwise, just perform a simple search through
       // the current frame.
-      SEXP resultSEXP = Rf_findVarInFrame(env, nameSEXP);
+      SEXP resultSEXP = findVarInFrame(env, nameSEXP);
       if (resultSEXP != R_UnboundValue)
       {
          if (Rf_isFunction(resultSEXP))
