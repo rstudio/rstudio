@@ -814,7 +814,7 @@ bool isPrimitiveEnvironment(SEXP object)
 
 bool isUserDefinedDatabase(SEXP object)
 {
-   return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
+   return Rf_inherits(object, "UserDefinedDatabase");
 }
 
 namespace sxpinfo {
