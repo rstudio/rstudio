@@ -61,9 +61,11 @@ json::Value descriptionOfVar(SEXP var)
 } // anonymous namespace
 
 // a variable is an unevaluated promise if its promise value is still unbound
-bool isUnevaluatedPromise (SEXP var)
+bool isUnevaluatedPromise(SEXP var)
 {
-   return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
+   return
+      TYPEOF(var) == PROMSXP &&
+      PRVALUE(var) == R_UnboundValue;
 }
 
 bool isAltrep(SEXP var)
