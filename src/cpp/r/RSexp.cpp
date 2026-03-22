@@ -489,7 +489,7 @@ void listEnvironment(SEXP env,
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      SEXP lastValueSEXP = Rf_findVar(Rf_install(".Last.value"), env);
+      SEXP lastValueSEXP = findVar(Rf_install(".Last.value"), env);
       if (lastValueSEXP != R_UnboundValue)
          vars.push_back(".Last.value");
    }
@@ -498,11 +498,11 @@ void listEnvironment(SEXP env,
    for (const std::string& var : vars)
    {
       SEXP varSEXP = R_NilValue;
-      // Merely calling Rf_findVar on an active binding will fire the binding.
+      // Merely calling findVar on an active binding will fire the binding.
       // Don't try to get the SEXP for the variable in this case; leave the
       // value as nil.
       if (!isActiveBinding(var, env))
-         varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
+         varSEXP = findVar(Rf_install(var.c_str()), env);
 
       if (varSEXP != R_UnboundValue) // should never be unbound
       {
@@ -677,7 +677,11 @@ SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
       ELOGF("binding '{}' is an active binding", CHAR(PRINTNAME(nameSEXP)));
 #endif
       
+#if R_VERSION >= R_Version(4, 5, 0)
+   return R_getVarEx(nameSEXP, envSEXP, TRUE, R_UnboundValue);
+#else
    return Rf_findVar(nameSEXP, envSEXP);
+#endif
 }
 
 SEXP findVar(const std::string& name, SEXP envSEXP)
