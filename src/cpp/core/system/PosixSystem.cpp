@@ -2106,9 +2106,12 @@ std::string resolveBindAddressForAddresses(
       const std::vector<posix::IpAddress>& addrs)
 {
    std::string threadId = safe_convert::numberToString(boost::this_thread::get_id());
+   std::vector<std::string> addrStrings;
+   for (const auto& ip : addrs)
+      addrStrings.push_back(ip.Name + "=" + ip.Address);
    LOG_DEBUG_MESSAGE("[" + threadId + "] Resolving bind address '" + address + "' for " +
-                     std::to_string(addrs.size()) + " discovered interfaces: [" + 
-                     boost::algorithm::join(std::vector<std::string>(addrs.begin(), addrs.end()), ", ") + "]");
+                     std::to_string(addrs.size()) + " discovered interfaces: [" +
+                     boost::algorithm::join(addrStrings, ", ") + "]");
    if (address == "0.0.0.0")
    {
       bool hasNonLocalIpv4 = false;
