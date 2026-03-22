@@ -48,7 +48,6 @@
 # define R_ClosureFormals(x) FORMALS(x)
 # define R_ClosureBody(x)    BODY(x)
 # define R_ClosureEnv(x)     CLOENV(x)
-# define R_ParentEnv(x)      ENCLOS(x)
 #endif
 
 // Hide macros that are always unsafe for us to use, because their
