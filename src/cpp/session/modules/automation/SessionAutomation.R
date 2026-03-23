@@ -73,8 +73,8 @@
    available <- available.packages()[, "Version"]
 
    outdated <- vapply(packages, function(pkg) {
-      ours   <- package_version(.rs.nullCoalesce(installed[pkg], "0.0.0"))
-      theirs <- package_version(.rs.nullCoalesce(available[pkg], "0.0.0"))
+      ours   <- package_version(if (is.na(installed[pkg])) "0.0.0" else installed[pkg])
+      theirs <- package_version(if (is.na(available[pkg])) "0.0.0" else available[pkg])
       ours < theirs
    }, logical(1))
 
