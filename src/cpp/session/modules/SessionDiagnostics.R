@@ -75,7 +75,7 @@
 
 .rs.addFunction("lintRFile", function(filePath)
 {
-   .Call("rs_lintRFile", filePath)
+   .Call("rs_lintRFile", filePath, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("showLintMarkers", function(lint, filePath)
