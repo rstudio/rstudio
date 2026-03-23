@@ -1641,6 +1641,48 @@ double obj_size_tree(SEXP x,
                      SEXP base_env,
                      int sizeof_node,
                      int sizeof_vector,
+                     int depth);
+
+#if R_VERSION >= R_Version(4, 6, 0)
+
+struct ObjSizeAttribData
+{
+   double size;
+   SEXP base_env;
+   int sizeof_node;
+   int sizeof_vector;
+   int depth;
+};
+
+SEXP obj_size_attrib_callback(SEXP tag, SEXP value, void* data)
+{
+   auto* ctx = static_cast<ObjSizeAttribData*>(data);
+   ctx->size += obj_size_tree(tag, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
+   ctx->size += obj_size_tree(value, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
+   return R_NilValue;
+}
+
+#endif
+
+double obj_size_attrib(SEXP x,
+                       SEXP base_env,
+                       int sizeof_node,
+                       int sizeof_vector,
+                       int depth)
+{
+#if R_VERSION >= R_Version(4, 6, 0)
+   ObjSizeAttribData ctx = { 0.0, base_env, sizeof_node, sizeof_vector, depth };
+   R_mapAttrib(x, obj_size_attrib_callback, &ctx);
+   return ctx.size;
+#else
+   return obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth);
+#endif
+}
+
+double obj_size_tree(SEXP x,
+                     SEXP base_env,
+                     int sizeof_node,
+                     int sizeof_vector,
                      int depth)
 {
    // Rcout << "\n" << std::string(depth * 2, ' ');
@@ -1678,32 +1720,31 @@ double obj_size_tree(SEXP x,
    // Simple vectors
    case LGLSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    case INTSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
       break;
 
    case REALSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(double));
       break;
 
    case CPLXSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(Rcomplex));
       break;
 
    case RAWSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), 1);
       break;
 
@@ -1714,7 +1755,7 @@ double obj_size_tree(SEXP x,
       std::set<SEXP> visited;
 
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); i++)
       {
@@ -1738,7 +1779,7 @@ double obj_size_tree(SEXP x,
    case EXPRSXP:
    case WEAKREFSXP:
       size += sizeof_vector;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); ++i)
       {
@@ -1773,7 +1814,7 @@ double obj_size_tree(SEXP x,
       for (; is_linked_list(x); x = CDR(x))
       {
          size += sizeof_node;
-         size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+         size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
          size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
 
          if (!r::internal::isImmediateBinding(x))
@@ -1784,7 +1825,7 @@ double obj_size_tree(SEXP x,
    case BCODESXP:
       size += sizeof_node;
       size += sizeof_node;  // ?
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -1793,7 +1834,7 @@ double obj_size_tree(SEXP x,
    // Environments
    case ENVSXP:
       size += sizeof_node;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(r::sexp::sxpinfo::getFrame(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(r::sexp::sxpinfo::getEnclos(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(r::sexp::sxpinfo::getHashtab(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -1802,7 +1843,7 @@ double obj_size_tree(SEXP x,
    // Functions
    case CLOSXP:
       size += sizeof_node;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(R_ClosureFormals(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(R_ClosureBody(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(R_ClosureEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -1817,7 +1858,7 @@ double obj_size_tree(SEXP x,
 
    case EXTPTRSXP:
       size += sizeof_node;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += sizeof(void*); // the actual pointer; lives in the CAR of the node
       size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -1825,7 +1866,7 @@ double obj_size_tree(SEXP x,
 
    case S4SXP:
       size += sizeof_node;
-      size += obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
