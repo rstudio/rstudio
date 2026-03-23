@@ -403,21 +403,10 @@ SEXP findNamespace(const std::string& name)
    // case 4071: namespace look up executes R code that can trip the debugger
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   // Use R_ToplevelExec to catch errors from R_FindNamespace,
-   // which throws if the namespace is not found.
-   struct Context {
-      SEXP nameSEXP;
-      SEXP resultSEXP;
-   };
-
-   Context context = { Rf_install(name.c_str()), R_UnboundValue };
-   auto callback = +[](void* data) {
-      Context* ctx = static_cast<Context*>(data);
-      ctx->resultSEXP = R_FindNamespace(ctx->nameSEXP);
-   };
-
-   Rboolean success = R_ToplevelExec(callback, &context);
-   return success ? context.resultSEXP : R_UnboundValue;
+   // Look up the namespace in the registry directly, rather than using
+   // R_FindNamespace which throws an error if the namespace isn't found.
+   SEXP nameSEXP = Rf_install(name.c_str());
+   return Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
 }
    
 Error asPrimitiveEnvironment(SEXP envirSEXP,
