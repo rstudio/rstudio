@@ -227,6 +227,54 @@
    
 })
 
+.rs.addFunction("automation.initializeX11", function(envVars)
+{
+   # Ensure DISPLAY is set. Only override if not already present.
+   if (is.null(envVars[["DISPLAY"]]) || !nzchar(envVars[["DISPLAY"]]))
+   {
+      displays <- list.files("/tmp/.X11-unix")
+      if (length(displays))
+      {
+         display <- chartr("X", ":", displays[[1L]])
+         envVars[["DISPLAY"]] <- display
+      }
+   }
+
+   # Ensure XAUTHORITY is set for X11 authentication.
+   if (is.null(envVars[["XAUTHORITY"]]) || !nzchar(envVars[["XAUTHORITY"]]))
+   {
+      xauth <- Sys.getenv("XAUTHORITY", unset = "")
+
+      # If not in environment, search common locations
+      if (!nzchar(xauth))
+      {
+         # Check ~/.Xauthority
+         homeXauth <- path.expand("~/.Xauthority")
+         if (file.exists(homeXauth))
+         {
+            xauth <- homeXauth
+         }
+         else
+         {
+            # Check for Mutter/Xwayland auth files (GNOME on Wayland)
+            uid <- system("id -u", intern = TRUE)
+            runUserDir <- file.path("/run/user", uid)
+            if (dir.exists(runUserDir))
+            {
+               mutterFiles <- list.files(runUserDir, pattern = "mutter-Xwaylandauth", full.names = TRUE, all.files = TRUE)
+               if (length(mutterFiles) > 0)
+                  xauth <- mutterFiles[[1L]]
+            }
+         }
+      }
+
+      if (nzchar(xauth) && file.exists(xauth))
+         envVars[["XAUTHORITY"]] <- xauth
+   }
+
+   envVars
+})
+
 .rs.addFunction("automation.applicationPathServer", function()
 {
    # Hard-coded path for macOS.
@@ -236,7 +284,7 @@
    # Hard-coded path for Windows.
    if (.rs.platform.isWindows)
       return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
-   
+
    # Otherwise, look for compatible browsers on the PATH.
    browsers <- c("chromium-browser", "chromium", "google-chrome")
    for (browser in browsers)
@@ -480,7 +528,7 @@
       # recommended flags for automation in Docker environments
       if (.rs.platform.isLinux) c(
          "--disable-dev-shm-usage",
-         "--renderer-process-limit=1"
+         "--no-sandbox"
       ),
 
       if (mode == "desktop") c(
@@ -498,26 +546,26 @@
 
    )
    
-   # On Linux, try to make sure we're using an existing display.
+   # On Linux, ensure DISPLAY and XAUTHORITY are set for X11 access.
    if (.rs.platform.isLinux)
-   {
-      displays <- list.files("/tmp/.X11-unix")
-      if (length(displays))
-      {
-         display <- chartr("X", ":", displays[[1L]])
-         envVars[["DISPLAY"]] <- display
-      }
-   }
-   
+      envVars <- .rs.automation.initializeX11(envVars)
+
+   # Convert envVars to named character vector for processx
+   # Remove NULL entries and convert to character
+   envVars <- envVars[!vapply(envVars, is.null, logical(1))]
+   envVarsVec <- unlist(lapply(envVars, as.character))
+
    # Start up RStudio (or Chrome in "server" mode).
-   process <- withr::with_envvar(envVars, {
-      .rs.alog('
-         Launching new automation host.
-         - appPath: %s
-         - args:    %s
-      ', appPath, paste(args, collapse = " "))
-      processx::process$new(appPath, args, stdout = "|", stderr = "|")
-   })
+   .rs.alog('
+      Launching new automation host.
+      - appPath: %s
+      - args:    %s
+      - DISPLAY: %s
+      - XAUTHORITY: %s
+   ', appPath, paste(args, collapse = " "),
+      envVarsVec["DISPLAY"], envVarsVec["XAUTHORITY"])
+
+   process <- processx::process$new(appPath, args, env = envVarsVec, stdout = "|", stderr = "|")
    
    .rs.alog("Waiting for application to start.")
    while (TRUE)
@@ -527,12 +575,23 @@
       if (status %in% c("running", "sleeping"))
          break
       
-      # Check for an unexpected exit.  
+      # Check for an unexpected exit.
       status <- process$get_exit_status()
       if (!is.null(status))
       {
+         # Capture stderr/stdout to help diagnose the failure
+         stderr <- process$read_error()
+         stdout <- process$read_output()
+
          fmt <- "RStudio agent exited unexpectedly [error code %i]"
-         stop(sprintf(fmt, status))
+         msg <- sprintf(fmt, status)
+
+         if (nzchar(stderr))
+            msg <- paste0(msg, "\nstderr: ", stderr)
+         if (nzchar(stdout))
+            msg <- paste0(msg, "\nstdout: ", stdout)
+
+         stop(msg)
       }
       
       Sys.sleep(0.1)
@@ -540,9 +599,25 @@
    
    # Start pinging the Chromium HTTP server.
    response <- NULL
+   processExited <- FALSE
    .rs.alog("Waiting for Chromium debug server to start.")
    .rs.waitUntil("Chromium debug server available", function()
    {
+      # Check if the browser process exited (common with snap wrapper scripts)
+      if (!processExited && !process$is_alive())
+      {
+         processExited <<- TRUE
+         exitStatus <- process$get_exit_status()
+         stderr <- process$read_error()
+         stdout <- process$read_output()
+
+         .rs.alog("Browser launcher process exited (exit code: %s)", exitStatus)
+         if (nzchar(stderr))
+            .rs.alog("stderr: %s", stderr)
+         if (nzchar(stdout))
+            .rs.alog("stdout: %s", stdout)
+      }
+
       response <<- .rs.tryCatch(.rs.automation.httrGet(jsonVersionUrl))
       !inherits(response, "error")
    })
