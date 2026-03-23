@@ -281,6 +281,50 @@ SEXP rs_isAltrep(SEXP obj)
    return r::sexp::create(isAltrep(obj), &protect);
 }
 
+// Check the package providing an ALTREP class definition.
+//
+// For an ALTREP object, the class information is stored as a TAG on the
+// associated object. The attributes of that class contain metadata about
+// the ALTREP class, where the second entry is the name of the package
+// providing the class definition, as a symbol.
+//
+// https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
+std::string altrepClassPackage(SEXP objectSEXP)
+{
+   SEXP altrepClassSEXP = TAG(objectSEXP);
+   if (altrepClassSEXP == R_NilValue)
+      return {};
+
+   r::sexp::Protect protect;
+   SEXP altrepAttribSEXP = R_NilValue;
+   Error error = r::exec::RFunction("base::attributes")
+      .addParam(altrepClassSEXP)
+      .call(&altrepAttribSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return {};
+   }
+
+   error = r::exec::RFunction("base::as.pairlist")
+      .addParam(altrepAttribSEXP)
+      .call(&altrepAttribSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return {};
+   }
+
+   if (TYPEOF(altrepAttribSEXP) != LISTSXP || r::sexp::length(altrepAttribSEXP) < 2)
+      return {};
+
+   SEXP packageSEXP = CADR(altrepAttribSEXP);
+   if (TYPEOF(packageSEXP) != SYMSXP)
+      return {};
+
+   return CHAR(PRINTNAME(packageSEXP));
+}
+
 SEXP rs_dim(SEXP objectSEXP)
 {
    // For 'data.frame' objects, check the 'row.names' attribute
@@ -289,10 +333,10 @@ SEXP rs_dim(SEXP objectSEXP)
       // default values for rows, columns
       int numRows = -1;
       int numCols = r::sexp::length(objectSEXP);
-      
+
       SEXP rowNamesInfoSEXP = R_NilValue;
       r::sexp::Protect protect;
-   
+
       Error error = r::exec::RFunction("base:::.row_names_info")
             .addParam(objectSEXP)
             .addParam(0)
@@ -302,7 +346,7 @@ SEXP rs_dim(SEXP objectSEXP)
          LOG_ERROR(error);
          return R_NilValue;
       }
-      
+
       // Avoid materializing certain ALTREP representations.
       //
       // https://github.com/rstudio/rstudio/issues/13907
@@ -310,23 +354,8 @@ SEXP rs_dim(SEXP objectSEXP)
       bool canComputeRows = true;
       if (isAltrep(rowNamesInfoSEXP))
       {
-         // This code makes use of some internal details about ALTREP class metadata.
-         // In particular, for an ALTREP object, the class information is stored as
-         // a raw vector as a TAG on the associated object. The attributes of that
-         // class give some metadata information about the ALTREP class.
-         //
-         // https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
-         //
-         // The second entry in the table is the name of the package providing the
-         // ALTREP class definition, as a symbol.
-         SEXP altrepClassSEXP = TAG(rowNamesInfoSEXP);
-         SEXP altrepAttribSEXP = r::sexp::sxpinfo::getAttrib(altrepClassSEXP);
-         if (TYPEOF(altrepAttribSEXP) == LISTSXP && r::sexp::length(altrepAttribSEXP) >= 2)
-         {
-            SEXP packageSEXP = CADR(altrepAttribSEXP);
-            if (packageSEXP == Rf_install("duckdb"))
-               canComputeRows = false;
-         }
+         if (altrepClassPackage(rowNamesInfoSEXP) == "duckdb")
+            canComputeRows = false;
       }
       
       // Detect compact row names.
