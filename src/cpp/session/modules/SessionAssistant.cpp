@@ -441,7 +441,7 @@ FilePath paiLanguageServerPath()
    }
    
    if (RS_ONCE())
-      WLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
+      DLOG("Posit AI Language Server not found in '{}'.", languageServerDir.getAbsolutePath());
    return FilePath();
 }
 
