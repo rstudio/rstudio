@@ -489,7 +489,7 @@ void listEnvironment(SEXP env,
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      SEXP lastValueSEXP = findVar(Rf_install(".Last.value"), env);
+      SEXP lastValueSEXP = Rf_findVarInFrame(env, Rf_install(".Last.value"));
       if (lastValueSEXP != R_UnboundValue)
          vars.push_back(".Last.value");
    }
@@ -498,11 +498,12 @@ void listEnvironment(SEXP env,
    for (const std::string& var : vars)
    {
       SEXP varSEXP = R_NilValue;
-      // Merely calling findVar on an active binding will fire the binding.
-      // Don't try to get the SEXP for the variable in this case; leave the
-      // value as nil.
+      // Use Rf_findVarInFrame here (not findVar / R_getVarEx) because:
+      // 1. Active bindings must not be triggered (handled by the guard below)
+      // 2. Promises must not be forced -- we need the raw promise SEXP so the
+      //    caller can detect unevaluated promises and display them as such
       if (!isActiveBinding(var, env))
-         varSEXP = findVar(Rf_install(var.c_str()), env);
+         varSEXP = Rf_findVarInFrame(env, Rf_install(var.c_str()));
 
       if (varSEXP != R_UnboundValue) // should never be unbound
       {
