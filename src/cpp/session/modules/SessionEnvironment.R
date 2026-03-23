@@ -710,7 +710,7 @@
    {
       val <- .rs.describeCall(obj)
    }
-   else if (!hasNullPtr)
+   else
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
