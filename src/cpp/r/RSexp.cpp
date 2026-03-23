@@ -542,8 +542,9 @@ bool hasActiveBindingImpl(const std::string& name,
       return true;
    
    // resolve the object (discover in that frame)
+   // Use Rf_findVarInFrame to avoid forcing promises.
    SEXP nameSEXP = Rf_install(name.c_str());
-   SEXP varSEXP = findVarInFrame(envirSEXP, nameSEXP);
+   SEXP varSEXP = Rf_findVarInFrame(envirSEXP, nameSEXP);
    
    // check for special values
    if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
