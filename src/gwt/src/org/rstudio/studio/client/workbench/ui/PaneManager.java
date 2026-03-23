@@ -2427,7 +2427,7 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      // For sidebar, show maximize (for zoom) and close buttons; other tabsets show maximize and minimize
       boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
       boolean showMaximizeButton = true;  // All tabsets get maximize button
       boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button

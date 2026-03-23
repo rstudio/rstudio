@@ -10,6 +10,7 @@
 - ([#3780](https://github.com/rstudio/rstudio/issues/3780)): On RStudio Desktop, the Files pane dropdown menu has a new option to control if deleted files go to Trash/Recycle Bin or are permanently deleted
 - ([#16903](https://github.com/rstudio/rstudio/issues/16903)): Changed the default location of the Sidebar pane to be on the left side of the window
 - ([#16942](https://github.com/rstudio/rstudio/issues/16942)): Enforce a minimum width for the Sidebar pane
+- ([#17269](https://github.com/rstudio/rstudio/issues/17269)): Added a close button to the Sidebar pane toolbar for quickly hiding the sidebar
 - ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
 - ([#16069](https://github.com/rstudio/rstudio/issues/16069)): Function auto-completion will now include arguments inherited via @inheritDotParams.
 
