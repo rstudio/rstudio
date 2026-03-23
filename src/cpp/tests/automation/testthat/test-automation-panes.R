@@ -181,6 +181,34 @@ withr::defer(.rs.automation.deleteRemote())
    expect_false(sidebarExists, "rstudio_Sidebar_pane should NOT exist after toggling sidebar off")
 })
 
+.rs.test("Sidebar can be hidden by clicking the close button", {
+   skip_on_ci()
+
+   # Show the sidebar
+   remote$commands.execute("toggleSidebar")
+
+   .rs.waitUntil("sidebar created", function() {
+      remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   # Verify the sidebar and close button are visible
+   expect_true(remote$dom.elementExists("#rstudio_Sidebar_pane"))
+   closeBtn <- remote$dom.waitForElement(".rstudio_panel_close_btn_sidebar")
+
+   # Click the close button
+   remote$dom.clickElement(nodeId = closeBtn)
+
+   # Wait for the sidebar to be removed
+   .rs.waitUntil("sidebar removed", function() {
+      !remote$dom.elementExists("#rstudio_Sidebar_pane")
+   })
+
+   expect_false(
+      remote$dom.elementExists("#rstudio_Sidebar_pane"),
+      "Sidebar should be hidden after clicking close button"
+   )
+})
+
 .rs.test("Sidebar can be moved left and right with toggleSidebarLocation command", {
    # skipping to cut down run times on CI
    skip_on_ci()
