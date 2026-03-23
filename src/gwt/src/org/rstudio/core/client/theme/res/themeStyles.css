@@ -169,6 +169,7 @@
 @url RESTORE restore2x;
 @url RESTORESELECTED restoreSelected2x;
 @url MINIMIZE minimize2x;
+@url CLOSEPANE closePane2x;
 @url MINIMIZESELECTED minimizeSelected2x;
 @url PODMINIMIZEDLEFT podMinimizedLeft;
 @url PODMINIMIZEDRIGHT podMinimizedRight;
@@ -985,6 +986,26 @@ table.header > tbody > tr > td {
 }
 
 .windowframe-exclusive .minimize {
+   display: none;
+}
+
+.windowframe .close {
+   background-image: CLOSEPANE;
+   z-index: 50;
+   background-size: 14px 14px;
+}
+.windowframe .close:hover {
+   background-image: CLOSEPANE;
+   background-size: 14px 14px;
+   filter: brightness(0.4);
+}
+.rstudio-themes-dark .windowframe .close {
+   filter: invert(100%) brightness(100%);
+}
+.rstudio-themes-dark .windowframe .close:hover {
+   filter: invert(100%) brightness(150%);
+}
+.windowframe-exclusive .close {
    display: none;
 }
 
@@ -3008,6 +3029,7 @@ body .rstudio-themes-alternate {
 
 .rstudio-themes-alternate .windowframe .minimize,
 .rstudio-themes-alternate .windowframe .maximize,
+.rstudio-themes-alternate .windowframe .close,
 .rstudio-themes-alternate .windowframe-maximized .maximize,
 .rstudio-themes-alternate .windowframe-exclusive .maximize,
 .rstudio-themes-alternate .minimizedWindow .minimize,
@@ -3017,6 +3039,7 @@ body .rstudio-themes-alternate {
 
 .rstudio-themes-alternate .windowframe .minimize:hover,
 .rstudio-themes-alternate .windowframe .maximize:hover,
+.rstudio-themes-alternate .windowframe .close:hover,
 .rstudio-themes-alternate .windowframe-maximized .maximize:hover,
 .rstudio-themes-alternate .windowframe-exclusive .maximize:hover,
 .rstudio-themes-alternate .minimizedWindow .minimize:hover,

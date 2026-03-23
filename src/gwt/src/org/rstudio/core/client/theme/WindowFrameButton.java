@@ -32,7 +32,7 @@ import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.DoubleClickState;
 
 /**
- * Minimize/maximize/restore buttons in logical windows (the 4 quadrants)
+ * Minimize/maximize/restore/close buttons in logical windows
  */
 public class WindowFrameButton extends FocusWidget
                                implements CanSetControlId

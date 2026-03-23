@@ -67,6 +67,13 @@ public class WindowFrame extends Composite
 
    public WindowFrame(String name, String accessibleName, boolean showMaximizeButton, boolean showMinimizeButton)
    {
+      this(name, accessibleName, showMaximizeButton, showMinimizeButton, false);
+   }
+
+   public WindowFrame(String name, String accessibleName,
+                      boolean showMaximizeButton, boolean showMinimizeButton,
+                      boolean showCloseButton)
+   {
       name_ = name;
 
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -82,6 +89,10 @@ public class WindowFrame extends Composite
       minimizeButton_.setClassId(ClassIds.PANEL_MIN_BTN, name);
       minimizeButton_.setStylePrimaryName(styles.minimize());
       minimizeButton_.setClickHandler(() -> minimize());
+
+      closeButton_ = new WindowFrameButton(accessibleName, WindowState.HIDE);
+      closeButton_.setClassId(ClassIds.PANEL_CLOSE_BTN, name);
+      closeButton_.setStylePrimaryName(styles.close());
 
       frame_ = new LayoutPanel();
       frame_.getElement().setId(ElementIds.getUniqueElementId(name + "_pane"));
@@ -101,6 +112,11 @@ public class WindowFrame extends Composite
                14, Style.Unit.PX);
       }
 
+      // When a close button is shown, shift maximize left to make room
+      int maximizeRightOffset = showCloseButton
+            ? RIGHT_SHADOW_WIDTH + 25
+            : RIGHT_SHADOW_WIDTH + 7;
+
       if (showMaximizeButton)
       {
          frame_.add(maximizeButton_);
@@ -108,6 +124,17 @@ public class WindowFrame extends Composite
                                    TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
                                    14, Style.Unit.PX);
          frame_.setWidgetRightWidth(maximizeButton_,
+                                    maximizeRightOffset, Style.Unit.PX,
+                                    14, Style.Unit.PX);
+      }
+
+      if (showCloseButton)
+      {
+         frame_.add(closeButton_);
+         frame_.setWidgetTopHeight(closeButton_,
+                                   TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+                                   14, Style.Unit.PX);
+         frame_.setWidgetRightWidth(closeButton_,
                                     RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
                                     14, Style.Unit.PX);
       }
@@ -126,6 +153,11 @@ public class WindowFrame extends Composite
    public void setMaximizeClickHandler(Command handler)
    {
       maximizeButton_.setClickHandler(handler);
+   }
+
+   public void setCloseClickHandler(Command handler)
+   {
+      closeButton_.setClickHandler(handler);
    }
 
    @Inject
@@ -418,6 +450,7 @@ public class WindowFrame extends Composite
    private final LayoutPanel frame_;
    private final WindowFrameButton maximizeButton_;
    private final WindowFrameButton minimizeButton_;
+   private final WindowFrameButton closeButton_;
    private Widget main_;
    private Widget header_;
    private Widget fill_;
