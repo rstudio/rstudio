@@ -1657,6 +1657,7 @@ struct ObjSizeAttribData
 SEXP obj_size_attrib_callback(SEXP tag, SEXP value, void* data)
 {
    auto* ctx = static_cast<ObjSizeAttribData*>(data);
+   ctx->size += ctx->sizeof_node;
    ctx->size += obj_size_tree(tag, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
    ctx->size += obj_size_tree(value, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
    return R_NilValue;
