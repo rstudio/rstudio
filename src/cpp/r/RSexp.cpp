@@ -641,11 +641,6 @@ SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP)
 
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-#ifndef RSTUDIO_PACKAGE_BUILD
-   if (isActiveBinding(nameSEXP, envSEXP))
-      ELOGF("binding '{}' is an active binding", CHAR(PRINTNAME(nameSEXP)));
-#endif
-      
 #if R_VERSION >= R_Version(4, 5, 0)
    return R_getVarEx(nameSEXP, envSEXP, TRUE, R_UnboundValue);
 #else
