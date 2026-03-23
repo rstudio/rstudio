@@ -935,9 +935,9 @@ Error getGridData(const http::Request& request,
       {
          // if the data is a promise (happens for built-in data), the value is
          // what we're looking for
-         if (TYPEOF(dataSEXP) == PROMSXP) 
+         if (TYPEOF(dataSEXP) == PROMSXP)
          {
-            dataSEXP = PRVALUE(dataSEXP);
+            dataSEXP = Rf_eval(dataSEXP, R_BaseEnv);
          }
          if (show == "cols")
          {
