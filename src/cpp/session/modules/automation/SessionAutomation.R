@@ -284,31 +284,14 @@
    # Hard-coded path for Windows.
    if (.rs.platform.isWindows)
       return("C:/Program Files (x86)/Google/Chrome/Application/chrome.exe")
-   
 
    # Otherwise, look for compatible browsers on the PATH.
-   # Prefer google-chrome over chromium-browser, since chromium-browser
-   # is often a wrapper script that doesn't work well with processx.
-   browsers <- c(
-      "google-chrome",
-      "/snap/bin/chromium",
-      "chromium",
-      "chromium-browser"
-   )
-
+   browsers <- c("chromium-browser", "chromium", "google-chrome")
    for (browser in browsers)
    {
-      # Handle both PATH lookup and absolute paths
-      exe <- if (startsWith(browser, "/")) browser else Sys.which(browser)
-      if (!nzchar(exe) || !file.exists(exe))
-         next
-
-      # Skip wrapper scripts - they cause process tracking issues
-      fileType <- system2("file", c("-b", exe), stdout = TRUE)
-      if (grepl("shell script", fileType, ignore.case = TRUE))
-         next
-
-      return(exe)
+      exe <- Sys.which(browser)
+      if (nzchar(exe))
+         return(exe)
    }
    
    msg <- paste(
