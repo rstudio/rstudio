@@ -41,14 +41,14 @@ test_that("packages can be installed", {
    if (!identical(.Platform$pkgType, "source"))
    {
       withr::local_options(repos = c(CRAN = "https://cloud.R-project.org"))
-      info <- download.packages("rlang", destdir = tempdir(), type = "binary")
+      info <- download.packages("rlang", destdir = tempdir(), type = "binary", quiet = TRUE)
       expect_install(info[1, 2], repos = NULL, type = "binary")
    }
 
    if (!.rs.platform.isWindows)
    {
       withr::local_options(repos = c(CRAN = "https://cloud.R-project.org"))
-      info <- download.packages("rlang", destdir = tempdir(), type = "source")
+      info <- download.packages("rlang", destdir = tempdir(), type = "source", quiet = TRUE)
       expect_install(info[1, 2], repos = NULL, type = "source")
    }
    
