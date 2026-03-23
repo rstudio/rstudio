@@ -1643,41 +1643,13 @@ double obj_size_tree(SEXP x,
                      int sizeof_vector,
                      int depth);
 
-#if R_VERSION >= R_Version(4, 6, 0)
-
-struct ObjSizeAttribData
-{
-   double size;
-   SEXP base_env;
-   int sizeof_node;
-   int sizeof_vector;
-   int depth;
-};
-
-SEXP obj_size_attrib_callback(SEXP tag, SEXP value, void* data)
-{
-   auto* ctx = static_cast<ObjSizeAttribData*>(data);
-   ctx->size += ctx->sizeof_node;
-   ctx->size += obj_size_tree(tag, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
-   ctx->size += obj_size_tree(value, ctx->base_env, ctx->sizeof_node, ctx->sizeof_vector, ctx->depth);
-   return R_NilValue;
-}
-
-#endif
-
 double obj_size_attrib(SEXP x,
                        SEXP base_env,
                        int sizeof_node,
                        int sizeof_vector,
                        int depth)
 {
-#if R_VERSION >= R_Version(4, 6, 0)
-   ObjSizeAttribData ctx = { 0.0, base_env, sizeof_node, sizeof_vector, depth };
-   R_mapAttrib(x, obj_size_attrib_callback, &ctx);
-   return ctx.size;
-#else
    return obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth);
-#endif
 }
 
 double obj_size_tree(SEXP x,
