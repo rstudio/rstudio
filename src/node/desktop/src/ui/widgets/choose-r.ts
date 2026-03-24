@@ -28,9 +28,7 @@ import { normalize } from 'path';
 import { kWindowsRExe } from '../utils';
 import { appState } from '../../main/app-state';
 import { loadRWebsite } from '../../main/utils';
-
-declare const CHOOSE_R_WEBPACK_ENTRY: string;
-declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
+import { getRendererUrl, getPreloadPath } from '../../main/vite-urls';
 
 function checkValid(data: CallbackData) {
   const binaryPath = data.binaryPath;
@@ -68,7 +66,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   private rInstalls: string[];
 
   constructor(rInstalls: string[], parentWindow: BrowserWindow | null = null) {
-    super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY, parentWindow);
+    super(getRendererUrl('src/ui/widgets/choose-r/ui.html'), getPreloadPath('choose-r-preload.js'), parentWindow);
 
     this.rInstalls = rInstalls;
 

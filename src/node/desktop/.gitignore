@@ -130,8 +130,8 @@ temp/
 # electron-packager output
 package/
 
-# Webpack
-.webpack/
+# Vite
+.vite/
 
 # Electron-Forge
 out/

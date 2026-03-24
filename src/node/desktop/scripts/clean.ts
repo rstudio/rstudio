@@ -15,10 +15,10 @@
 
 import fs from 'fs';
 
-import { getWebpackBuildOutputDir, getForgePackageOutputDir } from './script-tools';
+import { getViteBuildOutputDir, getForgePackageOutputDir } from './script-tools';
 
 try {
-  fs.rmSync(getWebpackBuildOutputDir(), { recursive: true, force: true });
+  fs.rmSync(getViteBuildOutputDir(), { recursive: true, force: true });
   fs.rmSync(getForgePackageOutputDir(), { recursive: true, force: true });
   process.exit(0);
 } catch (error) {
