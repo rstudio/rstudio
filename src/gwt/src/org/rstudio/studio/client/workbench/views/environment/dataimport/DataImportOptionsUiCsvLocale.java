@@ -56,6 +56,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       DataImportOptionsCsvLocale locale)
    {
       super(constants_.configureLocale(), Roles.getDialogRole(), operation);
+      setThemeAware(true);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
 

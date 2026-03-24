@@ -10,6 +10,11 @@
     <ui:with field="res" type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources"/>
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
+        @external rstudio-themes-dark;
+        @external rstudio-theme-aware-dialog;
+        @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+        @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+
         .flexPanel {
             display: -ms-flexbox;
             display: -webkit-flex;
@@ -142,6 +147,15 @@
 
             margin-right: 5px;
             margin-left: 5px;
+        }
+
+        .rstudio-themes-dark.rstudio-theme-aware-dialog .gridViewerFrame {
+            border-color: THEME_DARKGREY_BORDER;
+            background-color: THEME_DARKGREY_INACTIVE;
+        }
+        .rstudio-themes-dark.rstudio-theme-aware-dialog .codeTextArea {
+            border-color: THEME_DARKGREY_BORDER;
+            background-color: THEME_DARKGREY_INACTIVE;
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.flexPanel}">
