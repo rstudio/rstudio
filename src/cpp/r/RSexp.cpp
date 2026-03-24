@@ -563,19 +563,17 @@ bool hasActiveBindingImpl(const std::string& name,
    if (error)
       return false;
    
-   // check for active binding
-   if (isActiveBinding(name, envirSEXP))
+   // check binding type
+   BindingType bt = getBindingType(name, envirSEXP);
+   if (bt == BindingType::ActiveBinding)
       return true;
-   
-   // resolve the object (discover in that frame)
-   // Use Rf_findVarInFrame to avoid forcing promises.
-   SEXP nameSEXP = Rf_install(name.c_str());
-   SEXP varSEXP = Rf_findVarInFrame(envirSEXP, nameSEXP);
-   
-   // check for special values
-   if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
+
+   // only normal (evaluated) bindings can hold environments to recurse into
+   if (bt != BindingType::Normal)
       return false;
-   
+
+   SEXP varSEXP = getBindingIdentity(name, envirSEXP, bt);
+
    // ensure we're working with a primitive R environment
    if (!isEnvironment(varSEXP))
       return false;
