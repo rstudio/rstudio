@@ -62,6 +62,8 @@ import org.rstudio.studio.client.workbench.views.chat.server.ChatServerOperation
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -1131,6 +1133,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    @Override
    public ImageResource getIcon()
    {
+      if (useDarkDialogTheme())
+         return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistantDark2x());
       return new ImageResource2x(PreferencesDialogBaseResources.INSTANCE.iconAssistant2x());
    }
 
@@ -1382,7 +1386,15 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final ChatServerOperations chatServer_;
    private final PositAiInstallManager installManager_;
    
+   private boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return prefs_.useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    private static final UserPrefsAccessorConstants prefsConstants_ = GWT.create(UserPrefsAccessorConstants.class);
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
-   
+
 }
