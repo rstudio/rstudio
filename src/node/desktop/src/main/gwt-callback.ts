@@ -1151,7 +1151,8 @@ export class GwtCallback extends EventEmitter {
         })
           .toString()
           .trim();
-      } catch {
+      } catch (e) {
+        logger().logDebug(`Failed to query R version from ${rBinPath}: ${e}`);
         return;
       }
 

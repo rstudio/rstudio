@@ -167,9 +167,12 @@ json::Value varToJson(const std::string& name, SEXP env)
 
    // Classify the binding to determine how to inspect it
    r::sexp::BindingType bt = r::sexp::getBindingType(name, env);
-   bool hasActiveBind = (bt != r::sexp::BindingType::ActiveBinding)
-      ? r::sexp::hasActiveBinding(name, env)
-      : true;
+
+   // only normal bindings can hold environments with nested active bindings;
+   // skip the recursive check for other types to avoid a redundant
+   // getBindingType call inside hasActiveBinding
+   bool hasActiveBind = (bt == r::sexp::BindingType::ActiveBinding)
+      || (bt == r::sexp::BindingType::Normal && r::sexp::hasActiveBinding(name, env));
 
    if (bt == r::sexp::BindingType::Unbound ||
        bt == r::sexp::BindingType::Missing ||

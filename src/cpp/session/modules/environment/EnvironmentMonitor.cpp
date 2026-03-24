@@ -187,6 +187,8 @@ void EnvironmentMonitor::checkForChanges()
          }
          else
          {
+            // safe: R binding names are unique per environment, so the
+            // name-only comparator is consistent with operator< here
             std::set_difference(lastEnv_.begin(), lastEnv_.end(),
                                 currentEnv.begin(), currentEnv.end(),
                                 std::back_inserter(removedVars),

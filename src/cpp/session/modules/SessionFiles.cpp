@@ -1782,7 +1782,7 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
    SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
 
    SEXP sortedSEXP = R_NilValue;
-   Error error = r::exec::RFunction("base:::sort", resultSEXP).call(&sortedSEXP, &protect);
+   Error error = r::exec::RFunction("base::sort", resultSEXP).call(&sortedSEXP, &protect);
    if (error)
    {
       LOG_ERROR(error);
