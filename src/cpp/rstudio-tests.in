@@ -202,10 +202,10 @@ if has-scope "core"; then
    # Run only the tests that don't require root 
    runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN}" 
    
-   # Invoke the *DropPrivTests separately because they must run as root 
-   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs 
-   # Skip these tests in CI for MacOS builds 
-   if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then 
+   # Invoke the *DropPrivTests separately because they must run as root
+   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs
+   # Only run these when already running as root (skip on local dev machines to avoid sudo prompts)
+   if [ "$(id -u)" = "0" ]; then
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesPrimaryGroup' --gtest_also_run_disabled_tests"
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivUsesAlternateGroup' --gtest_also_run_disabled_tests"
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} --gtest_filter='PosixTestsRequiresPrivilege.DISABLED_PermanentlyDropPrivChecksGroupMembership' --gtest_also_run_disabled_tests"
