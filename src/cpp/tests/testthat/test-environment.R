@@ -129,7 +129,7 @@ test_that("missing arguments can be described", {
    
    # simulate a missing value argument
    delayedAssign("x", quote(expr = ))
-   desc <- .rs.describeObject(environment(), "x")
+   desc <- .rs.describeObject("x", environment())
    expect_identical(desc$name, .rs.scalar("x"))
    
 })

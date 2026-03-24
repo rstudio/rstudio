@@ -202,8 +202,8 @@ json::Value varToJson(const std::string& name, SEXP env)
       json::Value val;
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(".rs.describeObject")
-         .addParam(env)
          .addParam(name)
+         .addParam(env)
          .call(&description, &protect);
       if (error)
       {

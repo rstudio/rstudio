@@ -682,7 +682,7 @@
       val1
 })
 
-.rs.addFunction("describeObject", function(env, objName)
+.rs.addFunction("describeObject", function(objName, env)
 {
    obj <- get(objName, env)
 
