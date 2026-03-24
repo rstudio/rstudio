@@ -927,56 +927,63 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
       // already protected by the environment itself. rProtect is available
       // for any intermediate R operations.
       Protect rProtect;
-      std::vector<Variable> vars;
+      std::vector<std::string> names;
 
       // List ALL variables (including hidden) to get accurate total count
       listEnvironment(R_GlobalEnv,
                       true,   // includeAll - get everything first
                       false,  // includeLastDotValue - we'll filter manually
-                      &vars);
+                      &names);
 
-      totalVariableCount = vars.size();
+      totalVariableCount = names.size();
 
       // Smart filtering: exclude functions and hidden variables
-      std::vector<Variable> filteredVars;
-      filteredVars.reserve(vars.size());
+      std::vector<std::string> filteredNames;
+      filteredNames.reserve(names.size());
 
-      for (const Variable& var : vars)
+      for (const std::string& name : names)
       {
-         const std::string& name = var.first;
-         SEXP varSEXP = var.second;
-
          // Skip hidden variables (starting with '.')
          if (!name.empty() && name[0] == '.')
             continue;
 
          // Skip functions (CLOSXP = user functions, SPECIALSXP/BUILTINSXP = built-ins)
-         int objType = TYPEOF(varSEXP);
-         if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
-            continue;
+         // Note: findVarInFrame forces promises on R >= 4.5.0, which is fine
+         // here since we need the actual value type for filtering
+         if (!isActiveBinding(name, R_GlobalEnv))
+         {
+            SEXP varSEXP = findVarInFrame(R_GlobalEnv, Rf_install(name.c_str()));
+            int objType = TYPEOF(varSEXP);
+            if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
+               continue;
+         }
 
-         filteredVars.push_back(var);
+         filteredNames.push_back(name);
       }
 
       // OPTIMIZATION: Extract sizes WITHOUT full JSON conversion
       // This is much faster than calling varToJson() on all variables
       struct VarWithSize {
-         Variable var;
+         std::string name;
          int64_t size;
       };
 
       std::vector<VarWithSize> varsWithSize;
-      varsWithSize.reserve(filteredVars.size());
+      varsWithSize.reserve(filteredNames.size());
 
-      for (const Variable& var : filteredVars)
+      for (const std::string& name : filteredNames)
       {
          // Use .rs.estimatedObjectSize() which is optimized for:
          // - ALTREP objects (doesn't materialize)
          // - Large objects (returns estimate quickly)
          // - Edge cases (null pointers, etc.)
+         SEXP varSEXP = R_NilValue;
+         if (!isActiveBinding(name, R_GlobalEnv))
+            varSEXP = findVarInFrame(R_GlobalEnv, Rf_install(name.c_str()));
+
          SEXP sizeSEXP;
          Error error = r::exec::RFunction(".rs.estimatedObjectSize")
-            .addParam(var.second)
+            .addParam(varSEXP)
             .call(&sizeSEXP, &rProtect);
 
          int64_t size = 0;
@@ -999,7 +1006,7 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
             }
          }
 
-         varsWithSize.push_back(VarWithSize{var, size});
+         varsWithSize.push_back(VarWithSize{name, size});
       }
 
       // Sort by size (largest first)
@@ -1019,13 +1026,13 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
 
       for (size_t i = 0; i < numToInclude; i++)
       {
-         json::Value jsonVal = environment::varToJson(R_GlobalEnv, varsWithSize[i].var);
+         json::Value jsonVal = environment::varToJson(varsWithSize[i].name, R_GlobalEnv);
 
          // Skip variables that fail conversion (though this is rare)
          if (jsonVal.isNull() || !jsonVal.isObject())
          {
             DLOG("Failed to convert variable '{}' to JSON, skipping",
-                 varsWithSize[i].var.first);
+                 varsWithSize[i].name);
             continue;
          }
 
@@ -1034,12 +1041,12 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
          json::Object varObj = jsonVal.getObject();
          json::Object simplifiedVar;
 
-         // Extract name (required) - fallback to variable name from pair if missing
+         // Extract name (required)
          std::string name;
          if (varObj.hasMember("name") && varObj["name"].isString())
             name = varObj["name"].getString();
          else
-            name = varsWithSize[i].var.first;
+            name = varsWithSize[i].name;
          simplifiedVar["name"] = name;
 
          // Extract type (required) - fallback to "unknown" if missing
@@ -1080,12 +1087,12 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
       }
 
       // Log filtering results
-      if (filteredVars.size() > MAX_VARIABLES)
+      if (filteredNames.size() > MAX_VARIABLES)
       {
          DLOG("Variable context: showing {} of {} variables (filtered from {} total)",
-              variablesArray.getSize(), filteredVars.size(), totalVariableCount);
+              variablesArray.getSize(), filteredNames.size(), totalVariableCount);
       }
-      else if (filteredVars.size() < totalVariableCount)
+      else if (filteredNames.size() < totalVariableCount)
       {
          DLOG("Variable context: showing {} variables (filtered from {} total)",
               variablesArray.getSize(), totalVariableCount);
@@ -1544,15 +1551,13 @@ void executeCodeImpl(boost::shared_ptr<core::system::ProcessOperations> pOps,
          //   - A condition object (inherits "interrupt" or "error")
          //   - A list with $value and $visible (successful evaluation)
          //
-         // IMPORTANT: Wrap the expression in quote() to prevent R from evaluating it
-         // during argument passing. Without this, R evaluates exprSEXP before passing
-         // it to the function, which breaks visibility detection (all results become visible).
+         // IMPORTANT: Use addQuotedParam to prevent R from evaluating the
+         // expression during argument passing. Without this, R evaluates exprSEXP
+         // before passing it to the function, which breaks visibility detection
+         // (all results become visible).
          // https://github.com/rstudio/rstudio/issues/17044
-         SEXP quotedExpr = Rf_lang2(Rf_install("quote"), exprSEXP);
-         protect.add(quotedExpr);
-
          Error callError = r::exec::RFunction(".rs.chat.safeEval")
-            .addParam(quotedExpr)
+            .addQuotedParam(exprSEXP)
             .call(&evalResultSEXP, &protect);
 
          // This should only fail if there's a problem calling the wrapper itself

@@ -157,6 +157,10 @@ public:
       addParam(std::string(), paramSEXP);
       return *this;
    }
+
+   // wraps paramSEXP in quote() to prevent evaluation during argument passing
+   RFunction& addQuotedParam(SEXP paramSEXP);
+   RFunction& addQuotedParam(const std::string& name, SEXP paramSEXP);
    
    template <typename T>
    RFunction& addParam(const T& param)

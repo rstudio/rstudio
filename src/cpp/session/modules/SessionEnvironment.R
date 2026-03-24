@@ -216,13 +216,18 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
-# used to create description for promises
+# used to create description for promises (legacy path for R < 4.6.0)
 .rs.addFunction("promiseDescription", function(obj)
 {
    # NOTE: substitute() returns the expression associated with a promise,
    # without forcing it to be evaluated
    expr <- substitute(obj)
+   .rs.promiseExprDescription(expr)
+})
 
+# describe a promise from its pre-extracted expression
+.rs.addFunction("promiseExprDescription", function(expr)
+{
    # if this appears to be a call to 'lazyLoadDBfetch()', that implies
    # this is lazy-loaded data (typically associated with an R package).
    # handle those up front

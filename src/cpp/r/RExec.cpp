@@ -410,7 +410,20 @@ RFunction::RFunction(SEXP functionSEXP)
 RFunction::~RFunction()
 {
 }
-   
+
+RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
+{
+   return addQuotedParam(std::string(), paramSEXP);
+}
+
+RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
+{
+   SEXP quotedSEXP = Rf_lang2(Rf_install("quote"), paramSEXP);
+   preserver_.add(quotedSEXP);
+   params_.push_back(Param(name, quotedSEXP));
+   return *this;
+}
+
 void RFunction::commonInit(const std::string& functionName)
 {
    // refresh source if necessary (no-op in production)

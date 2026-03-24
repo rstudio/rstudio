@@ -452,57 +452,94 @@ SEXP listEnvironment(SEXP env, bool allNames)
 void listEnvironment(SEXP env,
                      bool includeAll,
                      bool includeLastDotValue,
-                     std::vector<Variable>* pVariables)
+                     std::vector<std::string>* pNames)
 {
    if (!ASSERT_MAIN_THREAD())
       return;
 
-   // reset passed vars
-   pVariables->clear();
-   
-   // get the list of environment vars (protect locally because we 
-   // we don't actually return this list to the caller)
+   pNames->clear();
+
    Protect protect;
    SEXP envVarsSEXP;
    protect.add(envVarsSEXP = listEnvironment(env, includeAll));
 
-   // get variables
-   std::vector<std::string> vars;
-   Error error = r::sexp::extract(envVarsSEXP, &vars);
+   Error error = r::sexp::extract(envVarsSEXP, pNames);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
-   
+
    // add in .Last.value if it exists
    if (!includeAll && includeLastDotValue)
    {
-      SEXP lastValueSEXP = Rf_findVarInFrame(env, Rf_install(".Last.value"));
+      SEXP lastValueSEXP = findVarInFrame(env, Rf_install(".Last.value"));
       if (lastValueSEXP != R_UnboundValue)
-         vars.push_back(".Last.value");
+         pNames->push_back(".Last.value");
+   }
+}
+
+BindingType getBindingType(const std::string& name, SEXP env)
+{
+   if (isActiveBinding(name, env))
+      return BindingType::ActiveBinding;
+
+#if R_VERSION >= R_Version(4, 6, 0)
+   SEXP sym = Rf_install(name.c_str());
+   R_BindingType_t bt = R_GetBindingType(sym, env);
+   switch (bt)
+   {
+   case R_BindingTypeDelayed:
+      return BindingType::Promise;
+   case R_BindingTypeMissing:
+      return BindingType::Missing;
+   case R_BindingTypeUnbound:
+      return BindingType::Unbound;
+   default:
+      return BindingType::Normal;
+   }
+#else
+   SEXP sym = Rf_install(name.c_str());
+   SEXP val = Rf_findVarInFrame(env, sym);
+   if (val == R_UnboundValue)
+      return BindingType::Unbound;
+   if (val == R_MissingArg)
+      return BindingType::Missing;
+   if (TYPEOF(val) == PROMSXP && PRVALUE(val) == R_UnboundValue)
+      return BindingType::Promise;
+   return BindingType::Normal;
+#endif
+}
+
+SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type)
+{
+   SEXP sym = Rf_install(name.c_str());
+
+   switch (type)
+   {
+   case BindingType::Normal:
+   {
+      // value is already evaluated; safe to retrieve via public API
+#if R_VERSION >= R_Version(4, 5, 0)
+      return R_getVarEx(sym, env, FALSE, R_UnboundValue);
+#else
+      return Rf_findVarInFrame(env, sym);
+#endif
    }
 
-   // populate pVariables
-   for (const std::string& var : vars)
+   case BindingType::Promise:
    {
-      SEXP varSEXP = R_NilValue;
-      // Use Rf_findVarInFrame here (not findVar / R_getVarEx) because:
-      // 1. Active bindings must not be triggered (handled by the guard below)
-      // 2. Promises must not be forced -- we need the raw promise SEXP so the
-      //    caller can detect unevaluated promises and display them as such
-      if (!isActiveBinding(var, env))
-         varSEXP = Rf_findVarInFrame(env, Rf_install(var.c_str()));
+      // unevaluated promise; return the expression without forcing
+#if R_VERSION >= R_Version(4, 6, 0)
+      return R_DelayedBindingExpression(sym, env);
+#else
+      SEXP promiseSEXP = Rf_findVarInFrame(env, sym);
+      return PRCODE(promiseSEXP);
+#endif
+   }
 
-      if (varSEXP != R_UnboundValue) // should never be unbound
-      {
-         pVariables->push_back(std::make_pair(var, varSEXP));
-      }
-      else
-      {
-         LOG_WARNING_MESSAGE(
-                  "Unexpected R_UnboundValue returned from listEnvironment");
-      }
+   default:
+      return R_NilValue;
    }
 }
 

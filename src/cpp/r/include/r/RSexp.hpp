@@ -67,20 +67,31 @@ SEXP asNamespace(const std::string& name);
 // promises
 SEXP forcePromise(SEXP objectSEXP);
    
-// variables within an environment
-typedef std::pair<std::string,SEXP> Variable;
+// binding classification
+enum class BindingType
+{
+   Normal,
+   Promise,
+   ActiveBinding,
+   Unbound,
+   Missing
+};
 
-// fills pVariables with Variable from the environment
-// 
-// The caller must make sure that `env` is protected for 
-// as long as the SEXPs in pVariables are used, because 
-// they are not protected
+BindingType getBindingType(const std::string& name, SEXP env);
+
+// returns an opaque SEXP for change detection (never dereferenced for internals):
+// - Normal/Forced bindings: the value itself (via R_getVarEx / findVarInFrame)
+// - Delayed promises: the promise expression (via R_DelayedBindingExpression)
+// - Active/Missing/Unbound: R_NilValue
+SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type);
+
+// variables within an environment
 SEXP listEnvironment(SEXP env, bool allNames);
 
 void listEnvironment(SEXP env,
                      bool includeAll,
                      bool includeLastDotValue,
-                     std::vector<Variable>* pVariables);
+                     std::vector<std::string>* pNames);
  
 // find a variable in a single environment frame (no inheritance)
 SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);

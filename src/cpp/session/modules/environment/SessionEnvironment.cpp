@@ -629,8 +629,7 @@ json::Array callFramesAsJson(
 json::Array environmentListAsJson()
 {
     using namespace rstudio::r::sexp;
-    Protect rProtect;
-    std::vector<Variable> vars;
+    std::vector<std::string> names;
     json::Array listJson;
 
     if (s_pEnvironmentMonitor->hasEnvironment())
@@ -639,13 +638,13 @@ json::Array environmentListAsJson()
        listEnvironment(env,
                        false,
                        prefs::userPrefs().showLastDotValue(),
-                       &vars);
+                       &names);
 
        // get object details and transform to json
-       std::transform(vars.begin(),
-                      vars.end(),
+       std::transform(names.begin(),
+                      names.end(),
                       std::back_inserter(listJson),
-                      boost::bind(varToJson, env, _1));
+                      boost::bind(varToJson, _1, env));
     }
 
     return listJson;
