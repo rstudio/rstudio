@@ -289,32 +289,17 @@ SEXP rs_isAltrep(SEXP obj)
 // providing the class definition, as a symbol.
 //
 // https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
+//
+// TODO: There is no public R API for querying ALTREP class metadata.
+// We use sxpinfo::getAttrib() to access the raw attribute pairlist
+// directly. Replace this once a public API becomes available.
 std::string altrepClassPackage(SEXP objectSEXP)
 {
    SEXP altrepClassSEXP = TAG(objectSEXP);
    if (altrepClassSEXP == R_NilValue)
       return {};
 
-   r::sexp::Protect protect;
-   SEXP altrepAttribSEXP = R_NilValue;
-   Error error = r::exec::RFunction("base::attributes")
-      .addParam(altrepClassSEXP)
-      .call(&altrepAttribSEXP, &protect);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return {};
-   }
-
-   error = r::exec::RFunction("base::as.pairlist")
-      .addParam(altrepAttribSEXP)
-      .call(&altrepAttribSEXP, &protect);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return {};
-   }
-
+   SEXP altrepAttribSEXP = r::sexp::sxpinfo::getAttrib(altrepClassSEXP);
    if (TYPEOF(altrepAttribSEXP) != LISTSXP || r::sexp::length(altrepAttribSEXP) < 2)
       return {};
 

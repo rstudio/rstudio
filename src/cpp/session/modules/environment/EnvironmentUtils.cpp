@@ -62,6 +62,11 @@ json::Value descriptionOfVar(const std::string& name, SEXP env)
          .addParam(R_MissingArg)
          .call(&value);
    }
+   else if (bt == r::sexp::BindingType::ActiveBinding ||
+            bt == r::sexp::BindingType::Unbound)
+   {
+      return json::Value(UNKNOWN_VALUE);
+   }
    else
    {
       // for evaluated bindings, retrieve the value via the public API

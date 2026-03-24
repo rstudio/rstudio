@@ -141,19 +141,22 @@ void EnvironmentMonitor::checkForChanges()
    // get the set of variable names in the current environment
    listEnv(&currentNames);
 
-   // re-sort into canonical (C locale) order for set_difference
-   std::sort(currentNames.begin(), currentNames.end());
-
    // build snapshots with opaque SEXP pointers for change detection
    SEXP monitoredEnv = getMonitoredEnvironment();
    snapshotBindings(monitoredEnv, currentNames, &currentEnv);
 
-   // collect unevaluated promises
+   // sort into canonical order for set_difference;
+   // operator< compares (name, type, token) so both the name-only
+   // removal diff and the full-tuple addition diff are well-defined
+   std::sort(currentEnv.begin(), currentEnv.end());
+
+   // collect unevaluated promises (sorted for set_difference below)
    for (const auto& name : currentNames)
    {
       if (isUnevaluatedPromise(name, monitoredEnv))
          currentPromises.push_back(name);
    }
+   std::sort(currentPromises.begin(), currentPromises.end());
 
    bool refreshEnqueued = false;
    if (!initialized_)

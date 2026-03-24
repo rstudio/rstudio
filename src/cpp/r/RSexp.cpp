@@ -72,12 +72,6 @@ struct sxpinfo_struct
    unsigned int extra : 32 - 16;
 };
 
-struct vecsxp_struct 
-{
-    R_xlen_t	length;
-    R_xlen_t	truelength;
-};
-
 struct primsxp_struct
 {
     int offset;
@@ -134,6 +128,8 @@ typedef struct SEXPREC
       struct promsxp_struct promsxp;
    } u;
 } SEXPREC;
+
+SEXP R_findVarLocInFrame(SEXP, SEXP);
 
 } // extern "C"
 
@@ -490,14 +486,13 @@ void listEnvironment(SEXP env,
 
 BindingType getBindingType(const std::string& name, SEXP env)
 {
-   if (isActiveBinding(name, env))
-      return BindingType::ActiveBinding;
-
 #if R_VERSION >= R_Version(4, 6, 0)
    SEXP sym = Rf_install(name.c_str());
    R_BindingType_t bt = R_GetBindingType(sym, env);
    switch (bt)
    {
+   case R_BindingTypeActive:
+      return BindingType::ActiveBinding;
    case R_BindingTypeDelayed:
       return BindingType::Promise;
    case R_BindingTypeMissing:
@@ -508,14 +503,31 @@ BindingType getBindingType(const std::string& name, SEXP env)
       return BindingType::Normal;
    }
 #else
+   // Use R_findVarLocInFrame to get the binding cell directly.
+   // This lets us classify the binding from a single lookup:
+   // active bindings via gp bits, immediate bindings via extra,
+   // and promise/missing via CAR().
+   static constexpr unsigned int ACTIVE_BINDING_MASK = 1 << 15;
    SEXP sym = Rf_install(name.c_str());
-   SEXP val = Rf_findVarInFrame(env, sym);
-   if (val == R_UnboundValue)
+   SEXP loc = R_findVarLocInFrame(env, sym);
+   if (loc == nullptr || loc == R_NilValue)
       return BindingType::Unbound;
+
+   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(loc);
+   if (info.gp & ACTIVE_BINDING_MASK)
+      return BindingType::ActiveBinding;
+
+   // immediate bindings (scalar int/real/lgl) are always normal
+   if (sxpinfo::isImmediateBinding(loc))
+      return BindingType::Normal;
+
+   SEXP val = CAR(loc);
    if (val == R_MissingArg)
       return BindingType::Missing;
+
    if (TYPEOF(val) == PROMSXP && PRVALUE(val) == R_UnboundValue)
       return BindingType::Promise;
+
    return BindingType::Normal;
 #endif
 }

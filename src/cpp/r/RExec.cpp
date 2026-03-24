@@ -418,7 +418,8 @@ RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
 
 RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
 {
-   SEXP quotedSEXP = Rf_lang2(Rf_install("quote"), paramSEXP);
+   static SEXP s_quote = Rf_install("quote");
+   SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
    preserver_.add(quotedSEXP);
    params_.push_back(Param(name, quotedSEXP));
    return *this;
