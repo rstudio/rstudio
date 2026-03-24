@@ -30,7 +30,6 @@ void R_RestoreGlobalEnvFromFile(const char *, Rboolean);
 void R_SaveGlobalEnvToFile(const char *);
 void R_Suicide(const char *);
 char *R_HomeDir(void);
-void Rf_jump_to_toplevel(void);
 void Rf_onintr(void);
 #define R_ClearerrConsole void
 void R_FlushConsole();
