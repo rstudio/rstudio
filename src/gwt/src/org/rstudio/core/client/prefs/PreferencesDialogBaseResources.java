@@ -69,5 +69,8 @@ public interface PreferencesDialogBaseResources extends ClientBundle
    @Source("iconAssistant_2x.png")
    ImageResource iconAssistant2x();
 
+   @Source("iconAssistantDark_2x.png")
+   ImageResource iconAssistantDark2x();
+
    static PreferencesDialogBaseResources INSTANCE = (PreferencesDialogBaseResources)GWT.create(PreferencesDialogBaseResources.class);
 }
