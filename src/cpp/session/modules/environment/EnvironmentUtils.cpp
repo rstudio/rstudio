@@ -56,6 +56,12 @@ json::Value descriptionOfVar(const std::string& name, SEXP env)
          .addQuotedParam(exprSEXP)
          .call(&value);
    }
+   else if (bt == r::sexp::BindingType::Missing)
+   {
+      error = r::exec::RFunction(".rs.valueDescription")
+         .addParam(R_MissingArg)
+         .call(&value);
+   }
    else
    {
       // for evaluated bindings, retrieve the value via the public API

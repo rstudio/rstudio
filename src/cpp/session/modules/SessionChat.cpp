@@ -947,16 +947,22 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
          if (!name.empty() && name[0] == '.')
             continue;
 
-         // Skip functions (CLOSXP = user functions, SPECIALSXP/BUILTINSXP = built-ins)
-         // Note: findVarInFrame forces promises on R >= 4.5.0, which is fine
-         // here since we need the actual value type for filtering
-         if (!isActiveBinding(name, R_GlobalEnv))
+         // Skip promises, active bindings, and functions; use getBindingType
+         // to avoid forcing promises or triggering active bindings
+         BindingType bt = getBindingType(name, R_GlobalEnv);
+         if (bt == BindingType::Promise ||
+             bt == BindingType::ActiveBinding ||
+             bt == BindingType::Missing ||
+             bt == BindingType::Unbound)
          {
-            SEXP varSEXP = findVarInFrame(R_GlobalEnv, Rf_install(name.c_str()));
-            int objType = TYPEOF(varSEXP);
-            if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
-               continue;
+            continue;
          }
+
+         // For normal bindings, skip functions
+         SEXP varSEXP = getBindingIdentity(name, R_GlobalEnv, bt);
+         int objType = TYPEOF(varSEXP);
+         if (objType == CLOSXP || objType == SPECIALSXP || objType == BUILTINSXP)
+            continue;
 
          filteredNames.push_back(name);
       }
@@ -977,9 +983,8 @@ void handleGetDetailedContext(core::system::ProcessOperations& ops,
          // - ALTREP objects (doesn't materialize)
          // - Large objects (returns estimate quickly)
          // - Edge cases (null pointers, etc.)
-         SEXP varSEXP = R_NilValue;
-         if (!isActiveBinding(name, R_GlobalEnv))
-            varSEXP = findVarInFrame(R_GlobalEnv, Rf_install(name.c_str()));
+         // filteredNames only contains Normal bindings, so this is safe
+         SEXP varSEXP = getBindingIdentity(name, R_GlobalEnv, BindingType::Normal);
 
          SEXP sizeSEXP;
          Error error = r::exec::RFunction(".rs.estimatedObjectSize")
