@@ -23,13 +23,19 @@
    installed.packages(priority = "base", lib.loc = .Library)
 ))
 
-# Specific base-package functions that are allowed to access credential
-# files as part of their legitimate operation (e.g. reading ~/.netrc for
-# authentication). Stored by reference before any hooks are injected so
-# that identity comparison in isCalledFromPackageImpl is reliable.
+# Specific functions from base/recommended packages that are allowed to
+# access credential files as part of their legitimate operation (e.g.
+# reading ~/.netrc for HTTP authentication). These are captured before
+# hook injection so that if they were ever added to the hook list in the
+# future, the safe list would still hold the original pre-hook closures.
+#
+# An explicit allowlist is needed because these functions live in packages
+# (like 'utils') that are in the basePkgs set, and therefore excluded
+# from the usual trusted-caller namespace check.
 .rs.setVar("chat.safeFunctions", list(
    utils::install.packages,
-   utils::download.packages
+   utils::download.packages,
+   utils::available.packages
 ))
 
 
@@ -225,32 +231,40 @@
    .Call("rs_chatNormalizePath", path.expand(path), PACKAGE = "(embedding)")
 })
 
-#' Check whether a list of functions contains one from a non-base package.
+#' Check whether a list of functions contains a trusted caller.
 #'
 #' Given a list of functions (typically extracted from the call stack),
 #' returns `TRUE` if any function's environment is a non-base, non-recommended
-#' package namespace. When such a function is found, the call is considered
-#' "trusted" -- package code legitimately accessing files should not be
-#' blocked by the credential-path deny list.
+#' package namespace, or if any function matches the `chat.safeFunctions`
+#' allowlist. When either condition is met, the call is considered "trusted" --
+#' package code legitimately accessing files should not be blocked by the
+#' credential-path deny list.
 #'
-#' Base packages are excluded because they are
-#' general-purpose utilities that the agent could call directly to
-#' launder file access (e.g. `base::readLines("~/.aws/credentials")`).
+#' Base packages are excluded because they are general-purpose utilities that
+#' the agent could call directly to launder file access (e.g.
+#' `base::readLines("~/.aws/credentials")`). Specific functions from these
+#' excluded packages (e.g. `utils::install.packages`) that legitimately need
+#' credential access are granted trust via the `chat.safeFunctions` allowlist.
 #'
 #' @param fns A list of functions to check.
-#' @return `TRUE` if a non-base package namespace is found.
-.rs.addFunction("chat.isCalledFromPackageImpl", function(fns)
+#' @return `TRUE` if a trusted caller is found (either a non-base package
+#'   namespace or an explicitly safe function).
+.rs.addFunction("chat.hasTrustedCallerImpl", function(fns)
 {
    basePkgs <- .rs.chat.basePackages
    safeFns  <- .rs.chat.safeFunctions
 
    for (fn in fns)
    {
-      # Allow explicitly safe base-package functions (e.g. install.packages,
-      # download.packages) that legitimately access credential files.
+      # Allow explicitly safe functions from base/recommended packages
+      # (e.g. install.packages) that legitimately access credential files.
+      # These are checked before the basePkgs guard below because their
+      # namespace would otherwise cause them to be skipped.
       for (safeFn in safeFns)
+      {
          if (identical(fn, safeFn))
             return(TRUE)
+      }
 
       envir <- environment(fn)
       if (is.null(envir))
@@ -269,16 +283,16 @@
    FALSE
 })
 
-#' Check whether the current call originates from a non-base package.
+#' Check whether the current call has a trusted caller.
 #'
 #' Collects the functions on the call stack and delegates to
-#' `.rs.chat.isCalledFromPackageImpl()`.
+#' `.rs.chat.hasTrustedCallerImpl()`.
 #'
-#' @return `TRUE` if a non-base package namespace is on the call stack.
-.rs.addFunction("chat.isCalledFromPackage", function()
+#' @return `TRUE` if a trusted caller is on the call stack.
+.rs.addFunction("chat.hasTrustedCaller", function()
 {
    fns <- .Call("rs_chatCallStackFunctions", PACKAGE = "(embedding)")
-   .rs.chat.isCalledFromPackageImpl(fns)
+   .rs.chat.hasTrustedCallerImpl(fns)
 })
 
 #' Check whether reading the given paths is allowed.
@@ -428,7 +442,7 @@
 
 .rs.addFunction("chat.validateFileRead", function(action, path)
 {
-   trusted <- .rs.chat.isCalledFromPackage()
+   trusted <- .rs.chat.hasTrustedCaller()
    reasons <- .rs.chat.isFileReadAllowed(path, trusted = trusted)
    denied <- nzchar(reasons)
    if (!any(denied))

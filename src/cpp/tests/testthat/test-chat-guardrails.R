@@ -230,34 +230,49 @@ test_that("isFileReadAllowed allows credential files when trusted", {
 
 })
 
-# -- isCalledFromPackageImpl ---------------------------------------------------
+# -- hasTrustedCallerImpl ----------------------------------------------------
 
-test_that("isCalledFromPackageImpl returns FALSE for empty stack", {
+test_that("hasTrustedCallerImpl returns TRUE for safe functions", {
 
-   expect_false(.rs.chat.isCalledFromPackageImpl(list()))
+   expect_true(.rs.chat.hasTrustedCallerImpl(list(utils::install.packages)))
+   expect_true(.rs.chat.hasTrustedCallerImpl(list(utils::download.packages)))
+   expect_true(.rs.chat.hasTrustedCallerImpl(list(utils::available.packages)))
 
 })
 
-test_that("isCalledFromPackageImpl returns FALSE when agent calls base functions directly", {
+test_that("hasTrustedCallerImpl rejects non-safe utils functions", {
+
+   expect_false(.rs.chat.hasTrustedCallerImpl(list(utils::str)))
+   expect_false(.rs.chat.hasTrustedCallerImpl(list(utils::read.table)))
+
+})
+
+test_that("hasTrustedCallerImpl returns FALSE for empty stack", {
+
+   expect_false(.rs.chat.hasTrustedCallerImpl(list()))
+
+})
+
+test_that("hasTrustedCallerImpl returns FALSE when agent calls base functions directly", {
 
    # Simulates: agent calls readLines("~/.aws/credentials")
    fns <- list(base::readLines)
-   expect_false(.rs.chat.isCalledFromPackageImpl(fns))
+   expect_false(.rs.chat.hasTrustedCallerImpl(fns))
 
 })
 
-test_that("isCalledFromPackageImpl returns FALSE for primitive / NULL-env functions", {
+test_that("hasTrustedCallerImpl returns FALSE for primitive / NULL-env functions", {
 
    fns <- list(base::`+`, base::`[`)
-   expect_false(.rs.chat.isCalledFromPackageImpl(fns))
+   expect_false(.rs.chat.hasTrustedCallerImpl(fns))
 
 })
 
-test_that("isCalledFromPackageImpl returns TRUE when package code reads a file", {
+test_that("hasTrustedCallerImpl returns TRUE when package code reads a file", {
 
    # Simulates: devtools::document() -> ... -> base::readLines()
    skip_if_not_installed("devtools")
    fns <- list(devtools::document, base::readLines)
-   expect_true(.rs.chat.isCalledFromPackageImpl(fns))
+   expect_true(.rs.chat.hasTrustedCallerImpl(fns))
 
 })
