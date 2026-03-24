@@ -845,24 +845,6 @@ bool isImmediateBinding(SEXP object)
    return info.extra != 0;
 }
 
-unsigned int getExtra(SEXP object)
-{
-   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
-   return info.extra;
-}
-
-void setExtra(SEXP object, unsigned int value)
-{
-   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
-   info.extra = value;
-}
-
-unsigned int getGp(SEXP object)
-{
-   sxpinfo_struct& info = *reinterpret_cast<sxpinfo_struct*>(object);
-   return info.gp;
-}
-
 SEXP getEnclos(SEXP object)
 {
    SEXPREC* rec = reinterpret_cast<SEXPREC*>(object);

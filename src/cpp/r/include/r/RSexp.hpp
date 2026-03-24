@@ -482,9 +482,6 @@ int getDebug(SEXP object);
 void setDebug(SEXP object, int value);
 
 bool isImmediateBinding(SEXP object);
-unsigned int getExtra(SEXP object);
-void setExtra(SEXP object, unsigned int value);
-unsigned int getGp(SEXP object);
 
 SEXP getEnclos(SEXP object);
 void setEnclos(SEXP object, SEXP value);
