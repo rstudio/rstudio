@@ -117,6 +117,10 @@ if(UNIX)
          add_definitions(-fstack-protector-strong)
       endif()
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -Wl,-z,relro,-z,now")
+
+      # export all symbols to the dynamic symbol table so that libSegFault
+      # (and glibc's backtrace()) can produce symbolic stack traces on crash
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
    endif()
 
    # other useful gcc diagnostics

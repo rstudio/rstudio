@@ -455,7 +455,7 @@ macro(add_stripped_executable _target)
          # strip debug info
          add_custom_command(TARGET ${_target} POST_BUILD
                             COMMAND objcopy --only-keep-debug ${_target} ${_target}.debug
-                            COMMAND objcopy --strip-debug --strip-unneeded ${_target}
+                            COMMAND objcopy --strip-debug ${_target}
                             COMMAND objcopy --add-gnu-debuglink=${_target}.debug ${_target}
                             COMMENT "Stripping ${_target}")
       elseif(APPLE)
