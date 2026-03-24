@@ -1648,7 +1648,29 @@ double obj_size_attrib(SEXP x,
                        int sizeof_vector,
                        int depth)
 {
+#if R_VERSION >= R_Version(4, 6, 0)
+   struct AttribSizeData {
+      SEXP base_env;
+      int sizeof_node;
+      int sizeof_vector;
+      int depth;
+      double size;
+   };
+
+   AttribSizeData data = { base_env, sizeof_node, sizeof_vector, depth, 0.0 };
+
+   R_mapAttrib(x, [](SEXP tag, SEXP value, void* ctx) -> SEXP {
+      auto* d = static_cast<AttribSizeData*>(ctx);
+      d->size += obj_size_tree(tag, d->base_env, d->sizeof_node, d->sizeof_vector, d->depth);
+      d->size += obj_size_tree(value, d->base_env, d->sizeof_node, d->sizeof_vector, d->depth);
+      d->size += d->sizeof_node; // the pairlist node itself
+      return R_NilValue;
+   }, &data);
+
+   return data.size;
+#else
    return obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth);
+#endif
 }
 
 double obj_size_tree(SEXP x,
