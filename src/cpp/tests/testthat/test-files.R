@@ -100,9 +100,9 @@ test_that("our list.files, list.dirs hooks function as expected", {
    dir.create("hasEmptyDir")
    dir.create("hasEmptyDir/empty")
    
-   dir.create("~/RStudioTestDirectory")
+   dir.create("~/RStudioTestDirectory", showWarnings = FALSE)
    file.create("~/RStudioTestDirectory/file")
-   dir.create("~/RStudioTestDirectory/dir")
+   dir.create("~/RStudioTestDirectory/dir", showWarnings = FALSE)
    file.create("~/RStudioTestDirectory/dir/file2")
    on.exit(unlink("~/RStudioTestDirectory", recursive = TRUE), add = TRUE)
    
@@ -141,9 +141,12 @@ test_that("our list.files, list.dirs hooks function as expected", {
       no.. = list(FALSE, TRUE)
    )
    
-   crossed <- purrr::cross(arglist)
+   grid <- do.call(expand.grid, lapply(arglist, seq_along))
+   crossed <- lapply(seq_len(nrow(grid)), function(i) {
+      Map(function(lst, j) lst[[j]], arglist, grid[i, ])
+   })
    for (i in seq_along(crossed)) {
-      
+
       args <- crossed[[i]]
       lhs <- do.call(list.files, args)
       rhs <- do.call(.rs.listFiles, args)
@@ -161,9 +164,12 @@ test_that("our list.files, list.dirs hooks function as expected", {
       recursive = list(FALSE, TRUE)
    )
    
-   crossed <- purrr::cross(arglist)
+   grid <- do.call(expand.grid, lapply(arglist, seq_along))
+   crossed <- lapply(seq_len(nrow(grid)), function(i) {
+      Map(function(lst, j) lst[[j]], arglist, grid[i, ])
+   })
    for (i in seq_along(crossed)) {
-      
+
       args <- crossed[[i]]
       lhs <- do.call(list.dirs, args)
       rhs <- do.call(.rs.listDirs, args)
