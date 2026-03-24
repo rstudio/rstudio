@@ -2427,18 +2427,19 @@ public class PaneManager
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
    {
-      // For sidebar, show maximize button only (for zoom); other tabsets show both buttons
+      // For sidebar, show maximize (for zoom) and close buttons; other tabsets show maximize and minimize
       boolean isSidebar = StringUtil.equals(persisterName, UserPrefsAccessor.Panes.QUADRANTS_SIDEBAR);
       boolean showMaximizeButton = true;  // All tabsets get maximize button
       boolean showMinimizeButton = !isSidebar;  // Sidebar doesn't get minimize button
-      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton);
+      final WindowFrame frame = new WindowFrame(persisterName, persisterName, showMaximizeButton, showMinimizeButton, isSidebar);
       final MinimizedModuleTabLayoutPanel minimized = new MinimizedModuleTabLayoutPanel(persisterName);
       final LogicalWindow logicalWindow = new LogicalWindow(frame, minimized);
 
-      // Wire sidebar maximize button to layoutZoomSidebar command
+      // Wire sidebar button handlers
       if (isSidebar)
       {
          frame.setMaximizeClickHandler(() -> commands_.layoutZoomSidebar().execute());
+         frame.setCloseClickHandler(() -> setSidebarPref(false));
       }
 
       // Only pass commands to sidebar for the empty state feature

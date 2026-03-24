@@ -93,6 +93,7 @@ public interface ThemeStyles extends CssResource
 
    String maximize();
    String minimize();
+   String close();
 
    String left();
    String right();
