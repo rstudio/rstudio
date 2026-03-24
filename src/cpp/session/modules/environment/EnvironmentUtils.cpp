@@ -171,14 +171,15 @@ json::Value varToJson(const std::string& name, SEXP env)
    // only normal bindings can hold environments with nested active bindings;
    // skip the recursive check for other types to avoid a redundant
    // getBindingType call inside hasActiveBinding
-   bool hasActiveBind = (bt == r::sexp::BindingType::ActiveBinding)
-      || (bt == r::sexp::BindingType::Normal && r::sexp::hasActiveBinding(name, env));
+   bool hasActiveBinding =
+      (bt == r::sexp::BindingType::ActiveBinding) ||
+      (bt == r::sexp::BindingType::Normal && r::sexp::hasActiveBinding(name, env));
 
    if (bt == r::sexp::BindingType::Unbound ||
        bt == r::sexp::BindingType::Missing ||
        bt == r::sexp::BindingType::Promise ||
        bt == r::sexp::BindingType::ActiveBinding ||
-       hasActiveBind)
+       hasActiveBinding)
    {
       varJson["name"] = name;
       if (bt == r::sexp::BindingType::Promise)
@@ -191,7 +192,7 @@ json::Value varToJson(const std::string& name, SEXP env)
          varJson["type"] = std::string("active binding");
          varJson["value"] = std::string("<Active binding>");
       }
-      else if (hasActiveBind)
+      else if (hasActiveBinding)
       {
          varJson["type"] = std::string("object containing active binding");
          varJson["value"] = std::string("<Object containing active binding>");
@@ -209,6 +210,7 @@ json::Value varToJson(const std::string& name, SEXP env)
       varJson["size"] = 0;
       varJson["contents_deferred"] = false;
    }
+
    // For all other value types, construct the definition normally.
    else
    {

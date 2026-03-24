@@ -49,6 +49,7 @@ RUN dnf install -y \
     libpng-devel \
     libtiff-devel \
     libtool \
+    libwebp-devel \
     libuuid-devel \
     llvm-devel \
     lsof \

@@ -44,6 +44,7 @@ RUN yum install -y \
     libjpeg-turbo-devel \
     libpng-devel \
     libtiff-devel \
+    libwebp-devel \
     lsof \
     make \
     ninja-build \
