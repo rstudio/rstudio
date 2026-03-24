@@ -36,7 +36,6 @@
 #include <r/RJson.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
-#include <r/RSxpInfo.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 
@@ -216,7 +215,7 @@ bool isGlobalEnvironmentSerializable()
    bool allValuesSerializable = true;
    
    // Iterate over values in the global environment, and compute whether they can be serialized.
-   SEXP hashTableSEXP = HASHTAB(R_GlobalEnv);
+   SEXP hashTableSEXP = r::sexp::sxpinfo::getHashtab(R_GlobalEnv);
    R_xlen_t n = Rf_xlength(hashTableSEXP);
    for (R_xlen_t i = 0; i < n; i++)
    {
@@ -267,257 +266,6 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
-
-bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
-{
-   if (hasExternalPointer(CAR(list), nullPtr, visited))
-      return true;
-
-   if (hasExternalPointer(CDR(list), nullPtr, visited))
-      return true;
-
-   return false;
-}
-
-bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   R_xlen_t n = XLENGTH(obj);
-   for (R_xlen_t i = 0; i < n; i++)
-   {
-      if (hasExternalPointer(VECTOR_ELT(obj, i), nullPtr, visited))
-         return true;
-   }
-   return false;
-}
-
-bool frameBindingIsActive(SEXP binding) 
-{
-   static unsigned int ACTIVE_BINDING_MASK = (1<<15);
-   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
-}
-
-bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
-{
-   if (frameBindingIsActive(b))
-      return false;
-
-   // ->extra is only used for immediate bindings: this needs special care
-   // before we call CAR() because it might error with "bad binding access": 
-   // from Rinlinedfuns.h : 
-   // 
-   //     INLINE_FUN SEXP CAR(SEXP e)
-   //     {
-   //        if (BNDCELL_TAG(e))
-   //        error("bad binding access");
-   //        return CAR0(e);
-   //     }
-   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
-   if (typetag)
-   {
-      // it should not be set on 32-bits: unset it
-      if (sizeof(size_t) < sizeof(double))
-      {
-         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
-      }
-      else 
-      {
-         switch(typetag) {
-            case INTSXP:
-            case REALSXP: 
-            case LGLSXP:
-               // this is an immediate binding, R_expand_binding_value() would expand to a scalar
-               return false;
-            
-            default:
-               // otherwise (not sure this even hapens), ->extra should not be set: unset it
-               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
-         }
-      }
-   }
-   
-   // now safe to test the value in CAR()
-   return hasExternalPointer(CAR(b), nullPtr, visited);
-}
-
-bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
-{
-   while(frame != R_NilValue)
-   {
-      if (frameBindingHasExternalPointer(frame, nullPtr, visited))
-         return true;
-      
-      frame = CDR(frame);
-   }
-
-   return false;
-}
-
-bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   SEXP hash = HASHTAB(obj);
-   if (hash == R_NilValue)
-      return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
-   
-   R_xlen_t n = XLENGTH(hash);
-   for (R_xlen_t i = 0; i < n; i++)
-   {
-      if (frameHasExternalPointer(VECTOR_ELT(hash, i), nullPtr, visited))
-         return true;
-   }
-   return false;
-}
-
-bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   SEXP key = r::sexp::getWeakRefKey(obj);
-   if (key != R_NilValue)
-   {
-      if (hasExternalPointer(key, nullPtr, visited))
-         return true;
-
-      // only consider the value if the key is not NULL
-      if (hasExternalPointer(r::sexp::getWeakRefValue(obj), nullPtr, visited))
-         return true;
-   }
-
-   return false;
-}
-
-bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   if (hasExternalPointer(CAR(obj), nullPtr, visited))
-      return true;
-
-   if (hasExternalPointer(CDR(obj), nullPtr, visited))
-      return true;
-
-   return false;
-}
-
-bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   if (obj == nullptr || obj == R_NilValue || visited.count(obj))
-      return false;
-
-   // mark SEXP as visited
-   visited.insert(obj);
-
-   // check if this is an external pointer
-   if (r::sexp::isExternalPointer(obj)) 
-   {
-      // NOTE: this includes UserDefinedDatabase, aka 
-      //       external pointers to R_ObjectTable
-
-      // when nullPtr is true, only return true for null pointer xp
-      // otherwise only return true for non null pointer xp
-      if (nullPtr == (r::sexp::getExternalPtrAddr(obj) == nullptr))
-         return true;
-
-      if (hasExternalPointer(r::sexp::getExternalPtrProtected(obj), nullPtr, visited))
-         return true;
-
-      if (hasExternalPointer(r::sexp::getExternalPtrTag(obj), nullPtr, visited))
-         return true;
-   }
-
-   switch(TYPEOF(obj))
-   {
-      case SYMSXP: 
-         return false;
-
-      case ENVSXP: 
-      {
-         if (envHasExternalPointer(obj, nullPtr, visited))
-            return true;
-         break;
-      }
-      case VECSXP:
-      case EXPRSXP:
-      {
-         if (listHasExternalPointer(obj, nullPtr, visited))
-            return true;
-         break;
-      }
-         
-      case LISTSXP:
-      case LANGSXP:
-      {
-         if (pairlistHasExternalPointer(obj, nullPtr, visited))
-            return true;
-         break;
-      }
-         
-      case WEAKREFSXP:
-      {
-         if (weakrefHasExternalPointer(obj, nullPtr, visited))
-            return true;
-
-         break;
-      }
-      case PROMSXP: 
-      {
-         SEXP value = PRVALUE(obj);
-         if (value != R_UnboundValue)
-         {
-            if (hasExternalPointer(value, nullPtr, visited))
-               return true;
-         }
-         else 
-         {
-            if (hasExternalPointer(PRCODE(obj), nullPtr, visited))
-               return true;
-
-            if (hasExternalPointer(PRENV(obj), nullPtr, visited))
-               return true;
-
-            return false;
-         }
-         break;
-      }
-      case CLOSXP:
-      {
-         if (hasExternalPointer(FORMALS(obj), nullPtr, visited))
-            return true;
-
-         if (hasExternalPointer(BODY(obj), nullPtr, visited))
-            return true;
-
-         if (hasExternalPointer(CLOENV(obj), nullPtr, visited))
-            return true;
-      }
-      default:
-         break;
-   }
-   
-   // altrep objects use ATTRIB() to hold class info, so no need
-   // to check ATTRIB() on them, but altrepHasExternalPointer() 
-   // checks for their data1 and data2, aka CAR() and CDR()
-   if (isAltrep(obj))
-      return altrepHasExternalPointer(obj, nullPtr, visited);
-      
-   // check attributes, this includes slots for S4 objects
-   if (hasExternalPointer(ATTRIB(obj), nullPtr, visited))
-      return true;
-
-   return false;
-}
-
-bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
-                    bool nullPtr)  // whether to look for NULL pointers
-{
-   std::set<SEXP> visited;
-   return hasExternalPointer(obj, nullPtr, visited);
-}
-
-SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
-{
-   r::sexp::Protect protect;
-   
-   bool nullPtr = r::sexp::asLogical(nullSEXP);
-   return r::sexp::create(hasExternalPtr(objSEXP, nullPtr), &protect);
-}
-
 // Does an object contain an ALTREP anywhere? ALTREP (alternative representation) objects often
 // require special treatment.
 SEXP rs_hasAltrep(SEXP obj)
@@ -533,6 +281,35 @@ SEXP rs_isAltrep(SEXP obj)
    return r::sexp::create(isAltrep(obj), &protect);
 }
 
+// Check the package providing an ALTREP class definition.
+//
+// For an ALTREP object, the class information is stored as a TAG on the
+// associated object. The attributes of that class contain metadata about
+// the ALTREP class, where the second entry is the name of the package
+// providing the class definition, as a symbol.
+//
+// https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
+//
+// TODO: There is no public R API for querying ALTREP class metadata.
+// We use sxpinfo::getAttrib() to access the raw attribute pairlist
+// directly. Replace this once a public API becomes available.
+std::string altrepClassPackage(SEXP objectSEXP)
+{
+   SEXP altrepClassSEXP = TAG(objectSEXP);
+   if (altrepClassSEXP == R_NilValue)
+      return {};
+
+   SEXP altrepAttribSEXP = r::sexp::sxpinfo::getAttrib(altrepClassSEXP);
+   if (TYPEOF(altrepAttribSEXP) != LISTSXP || r::sexp::length(altrepAttribSEXP) < 2)
+      return {};
+
+   SEXP packageSEXP = CADR(altrepAttribSEXP);
+   if (TYPEOF(packageSEXP) != SYMSXP)
+      return {};
+
+   return CHAR(PRINTNAME(packageSEXP));
+}
+
 SEXP rs_dim(SEXP objectSEXP)
 {
    // For 'data.frame' objects, check the 'row.names' attribute
@@ -541,10 +318,10 @@ SEXP rs_dim(SEXP objectSEXP)
       // default values for rows, columns
       int numRows = -1;
       int numCols = r::sexp::length(objectSEXP);
-      
+
       SEXP rowNamesInfoSEXP = R_NilValue;
       r::sexp::Protect protect;
-   
+
       Error error = r::exec::RFunction("base:::.row_names_info")
             .addParam(objectSEXP)
             .addParam(0)
@@ -554,7 +331,7 @@ SEXP rs_dim(SEXP objectSEXP)
          LOG_ERROR(error);
          return R_NilValue;
       }
-      
+
       // Avoid materializing certain ALTREP representations.
       //
       // https://github.com/rstudio/rstudio/issues/13907
@@ -562,23 +339,8 @@ SEXP rs_dim(SEXP objectSEXP)
       bool canComputeRows = true;
       if (isAltrep(rowNamesInfoSEXP))
       {
-         // This code makes use of some internal details about ALTREP class metadata.
-         // In particular, for an ALTREP object, the class information is stored as
-         // a raw vector as a TAG on the associated object. The attributes of that
-         // class give some metadata information about the ALTREP class.
-         //
-         // https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
-         //
-         // The second entry in the table is the name of the package providing the
-         // ALTREP class definition, as a symbol.
-         SEXP altrepClassSEXP = TAG(rowNamesInfoSEXP);
-         SEXP altrepAttribSEXP = ATTRIB(altrepClassSEXP);
-         if (TYPEOF(altrepAttribSEXP) == LISTSXP && r::sexp::length(altrepAttribSEXP) >= 2)
-         {
-            SEXP packageSEXP = CADR(altrepAttribSEXP);
-            if (packageSEXP == Rf_install("duckdb"))
-               canComputeRows = false;
-         }
+         if (altrepClassPackage(rowNamesInfoSEXP) == "duckdb")
+            canComputeRows = false;
       }
       
       // Detect compact row names.
@@ -852,8 +614,7 @@ json::Array callFramesAsJson(
 json::Array environmentListAsJson()
 {
     using namespace rstudio::r::sexp;
-    Protect rProtect;
-    std::vector<Variable> vars;
+    std::vector<std::string> names;
     json::Array listJson;
 
     if (s_pEnvironmentMonitor->hasEnvironment())
@@ -862,13 +623,13 @@ json::Array environmentListAsJson()
        listEnvironment(env,
                        false,
                        prefs::userPrefs().showLastDotValue(),
-                       &vars);
+                       &names);
 
        // get object details and transform to json
-       std::transform(vars.begin(),
-                      vars.end(),
+       std::transform(names.begin(),
+                      names.end(),
                       std::back_inserter(listJson),
-                      boost::bind(varToJson, env, _1));
+                      boost::bind(varToJson, _1, env));
     }
 
     return listJson;
@@ -926,7 +687,7 @@ Error setEnvironmentName(int contextDepth,
             break;
          }
          // Proceed to the parent of the environment
-         env = ENCLOS(env);
+         env = r::sexp::getParentEnv(env);
       }
       if (error || env == R_EmptyEnv)
       {
@@ -1140,7 +901,7 @@ json::Object commonEnvironmentStateData(
             
             std::string envLocation;
             error = r::exec::RFunction(".rs.environmentName")
-                  .addParam(ENCLOS(context.cloenv()))
+                  .addParam(r::sexp::getParentEnv(context.cloenv()))
                   .call(&envLocation);
             
             if (error)
@@ -1853,12 +1614,27 @@ bool is_namespace(SEXP envSEXP)
       return true;
 
    static SEXP nsSymSEXP = Rf_install(".__NAMESPACE__.");
-   SEXP nsSEXP = Rf_findVarInFrame(envSEXP, nsSymSEXP);
+   SEXP nsSEXP = r::sexp::findVarInFrame(envSEXP, nsSymSEXP);
    return nsSEXP != R_UnboundValue;
 }
 
 // R equivalent
 // https://github.com/wch/r-source/blob/master/src/library/utils/src/size.c#L41
+
+double obj_size_tree(SEXP x,
+                     SEXP base_env,
+                     int sizeof_node,
+                     int sizeof_vector,
+                     int depth);
+
+double obj_size_attrib(SEXP x,
+                       SEXP base_env,
+                       int sizeof_node,
+                       int sizeof_vector,
+                       int depth)
+{
+   return obj_size_tree(r::sexp::sxpinfo::getAttrib(x), base_env, sizeof_node, sizeof_vector, depth);
+}
 
 double obj_size_tree(SEXP x,
                      SEXP base_env,
@@ -1901,32 +1677,31 @@ double obj_size_tree(SEXP x,
    // Simple vectors
    case LGLSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    case INTSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(int));
       break;
 
    case REALSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(double));
       break;
 
    case CPLXSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(Rcomplex));
       break;
 
    case RAWSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), 1);
       break;
 
@@ -1937,7 +1712,7 @@ double obj_size_tree(SEXP x,
       std::set<SEXP> visited;
 
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); i++)
       {
@@ -1961,7 +1736,7 @@ double obj_size_tree(SEXP x,
    case EXPRSXP:
    case WEAKREFSXP:
       size += sizeof_vector;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += v_size(XLENGTH(x), sizeof(SEXP));
       for (R_xlen_t i = 0; i < XLENGTH(x); ++i)
       {
@@ -1996,7 +1771,7 @@ double obj_size_tree(SEXP x,
       for (; is_linked_list(x); x = CDR(x))
       {
          size += sizeof_node;
-         size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+         size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
          size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
 
          if (!r::internal::isImmediateBinding(x))
@@ -2007,7 +1782,7 @@ double obj_size_tree(SEXP x,
    case BCODESXP:
       size += sizeof_node;
       size += sizeof_node;  // ?
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(CAR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -2016,19 +1791,19 @@ double obj_size_tree(SEXP x,
    // Environments
    case ENVSXP:
       size += sizeof_node;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(FRAME(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(ENCLOS(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(HASHTAB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::sxpinfo::getFrame(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::getParentEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::sxpinfo::getHashtab(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    // Functions
    case CLOSXP:
       size += sizeof_node;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(FORMALS(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      size += obj_size_tree(BODY(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(CLOENV(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(R_ClosureFormals(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_tree(R_ClosureBody(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(R_ClosureEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
    case PROMSXP:
@@ -2040,7 +1815,7 @@ double obj_size_tree(SEXP x,
 
    case EXTPTRSXP:
       size += sizeof_node;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       size += sizeof(void*); // the actual pointer; lives in the CAR of the node
       size += obj_size_tree(CDR(x), base_env, sizeof_node, sizeof_vector, depth + 1);
@@ -2048,7 +1823,7 @@ double obj_size_tree(SEXP x,
 
    case S4SXP:
       size += sizeof_node;
-      size += obj_size_tree(ATTRIB(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       size += obj_size_tree(TAG(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
@@ -2111,7 +1886,7 @@ SEXP rs_objectSize(SEXP objectSEXP,
 
 SEXP rs_functionBody(SEXP functionSEXP)
 {
-   return BODY(functionSEXP);
+   return R_ClosureBody(functionSEXP);
 }
 
 Error initialize()
@@ -2145,7 +1920,6 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_isBrowserActive);
    RS_REGISTER_CALL_METHOD(rs_jumpToFunction);
-   RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
    RS_REGISTER_CALL_METHOD(rs_dim);

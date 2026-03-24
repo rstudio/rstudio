@@ -104,8 +104,9 @@ bool extractError(SEXP object, json::JsonRpcResponse* pResponse)
 {
    if (r::sexp::isList(object))
    {
+      static SEXP s_class = Rf_install("class");
       std::vector<std::string> classes;
-      r::sexp::fillVectorString(r::sexp::getAttrib(object, R_ClassSymbol), &classes);
+      r::sexp::fillVectorString(r::sexp::getAttrib(object, s_class), &classes);
       if (std::find(classes.begin(), classes.end(), "error") != classes.end())
       {
          std::string errorMessage;

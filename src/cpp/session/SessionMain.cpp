@@ -85,6 +85,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
+#include <r/RVersion.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
@@ -590,6 +591,23 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          LOG_ERROR(error);
    }
 #endif
+
+   // check if R version exceeds the maximum supported version
+   {
+      Version rVersion = rstudio::r::version();
+      Version maxVersion(RSTUDIO_R_VERSION_MAXIMUM);
+      if (rVersion > maxVersion)
+      {
+         std::string rVersionStr = rVersion;
+         std::string maxVersionStr = maxVersion;
+         LOG_WARNING_MESSAGE(
+            "R version " + rVersionStr +
+            " is newer than the maximum version of R tested with this "
+            "version of RStudio (" + maxVersionStr + "). "
+            "If you experience issues, please try updating RStudio to "
+            "a newer version.");
+      }
+   }
 
    // execute core initialization functions
    using boost::bind;

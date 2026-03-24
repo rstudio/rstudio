@@ -935,9 +935,9 @@ Error getGridData(const http::Request& request,
       {
          // if the data is a promise (happens for built-in data), the value is
          // what we're looking for
-         if (TYPEOF(dataSEXP) == PROMSXP) 
+         if (TYPEOF(dataSEXP) == PROMSXP)
          {
-            dataSEXP = PRVALUE(dataSEXP);
+            dataSEXP = r::sexp::forcePromise(dataSEXP);
          }
          if (show == "cols")
          {
@@ -1095,8 +1095,9 @@ void onDetectChanges(module_context::ChangeSource source)
       bool typeChanged = false;
       if (observedSEXP != nullptr)
       {
-         SEXP oldClass = Rf_getAttrib(observedSEXP, R_ClassSymbol);
-         SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
+         static SEXP s_class = Rf_install("class");
+         SEXP oldClass = Rf_getAttrib(observedSEXP, s_class);
+         SEXP newClass = Rf_getAttrib(sexp, s_class);
          typeChanged = !R_compute_identical(oldClass, newClass, 0);
       }
 

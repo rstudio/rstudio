@@ -139,7 +139,7 @@ SA_TYPE saveAsk()
    }
    catch(JumpToTopException)
    {
-      Rf_jump_to_toplevel();
+      Rf_onintr();
    }
 
    // keep compiler happy
@@ -697,7 +697,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
       if (saveact == SA_SAVEASK) 
       {
          if (imageIsDirty() || !utils::alwaysSaveHistory())
-            saveact = saveAsk(); // can Rf_jump_to_toplevel()
+            saveact = saveAsk(); // can Rf_onintr()
          else
             saveact = SA_NOSAVE; // auto-resolve to no save when not dirty
       }

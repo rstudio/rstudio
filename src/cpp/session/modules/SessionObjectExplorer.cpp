@@ -226,7 +226,7 @@ void onDetectChanges(module_context::ChangeSource source)
    for (const std::string& id: cached)
    {
       SEXP s = Rf_install(id.c_str());
-      SEXP entry = Rf_findVarInFrame(envCache, s);
+      SEXP entry = r::sexp::findVarInFrame(envCache, s);
 
       // basic safety check on entry: make sure it's a 
       // list of 5 elements
@@ -246,7 +246,7 @@ void onDetectChanges(module_context::ChangeSource source)
          continue;
 
       SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
-      SEXP newObject = Rf_findVarInFrame(envir, symbol);
+      SEXP newObject = r::sexp::findVarInFrame(envir, symbol);
 
       // no object of that name, don't update
       if (newObject == R_UnboundValue)
@@ -309,47 +309,8 @@ void onDetectChanges(module_context::ChangeSource source)
 
 SEXP rs_objectClass(SEXP objectSEXP)
 {
-   SEXP attribSEXP = ATTRIB(objectSEXP);
-   if (attribSEXP == R_NilValue)
-      return R_NilValue;
-   
-   while (attribSEXP != R_NilValue)
-   {
-      SEXP tagSEXP = TAG(attribSEXP);
-      if (TYPEOF(tagSEXP) == SYMSXP)
-      {
-         const char* tag = CHAR(PRINTNAME(tagSEXP));
-         if (::strcmp(tag, "class") == 0)
-            return CAR(attribSEXP);
-      }
-      
-      attribSEXP = CDR(attribSEXP);
-   }
-   
-   return R_NilValue;
-}
-
-SEXP rs_getRefCount(SEXP nameSEXP, SEXP envirSEXP)
-{
-   SEXP objectSEXP = ::Rf_findVarInFrame(envirSEXP, nameSEXP);
-   if (objectSEXP == R_UnboundValue)
-      return R_NilValue;
-   objectSEXP = r::sexp::forcePromise(objectSEXP);
-      
-   r::sexp::Protect protect;
-   return r::sexp::create(NAMED(objectSEXP), &protect);
-}
-
-SEXP rs_setRefCount(SEXP nameSEXP, SEXP envirSEXP, SEXP countSEXP)
-{
-   SEXP objectSEXP = ::Rf_findVarInFrame(envirSEXP, nameSEXP);
-   if (objectSEXP == R_UnboundValue)
-      return R_NilValue;
-   objectSEXP = r::sexp::forcePromise(objectSEXP);
-   
-   int count = r::sexp::asInteger(countSEXP);
-   SET_NAMED(objectSEXP, count);
-   return countSEXP;
+   static SEXP s_class = Rf_install("class");
+   return Rf_getAttrib(objectSEXP, s_class);
 }
 
 SEXP rs_objectAddress(SEXP objectSEXP)
@@ -359,11 +320,6 @@ SEXP rs_objectAddress(SEXP objectSEXP)
    
    r::sexp::Protect protect;
    return r::sexp::create(ss.str(), &protect);
-}
-
-SEXP rs_objectAttributes(SEXP objectSEXP)
-{
-   return ATTRIB(objectSEXP);
 }
 
 SEXP rs_explorerCacheDir()
@@ -386,11 +342,8 @@ core::Error initialize()
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    
-   RS_REGISTER_CALL_METHOD(rs_getRefCount, 2);
-   RS_REGISTER_CALL_METHOD(rs_setRefCount, 3);
    RS_REGISTER_CALL_METHOD(rs_objectAddress, 1);
    RS_REGISTER_CALL_METHOD(rs_objectClass, 1);
-   RS_REGISTER_CALL_METHOD(rs_objectAttributes, 1);
    RS_REGISTER_CALL_METHOD(rs_explorerCacheDir, 0);
    
    ExecBlock initBlock;

@@ -13,7 +13,7 @@
  *
  */
 
-import { exec, execSync } from 'child_process';
+import { exec, execFileSync, execSync } from 'child_process';
 import {
   app,
   nativeTheme,
@@ -59,6 +59,7 @@ import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
+import { buildInfo } from './build-info';
 import { detectRosetta } from './detect-rosetta';
 import { showPersistentSplashScreen } from './splash-screen';
 
@@ -1089,6 +1090,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
       if (varName === 'launch_failed') {
         this.addMacOSVersionError();
+        this.addRVersionTooNewError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
     });
@@ -1128,6 +1130,73 @@ export class GwtCallback extends EventEmitter {
         }
         this.errorPageData.set('process_error', versionError);
       }
+    }
+  }
+
+  addRVersionTooNewError(): void {
+    try {
+      const rHome = getenv('R_HOME');
+      if (!rHome) {
+        return;
+      }
+
+      // Try to query the R version from the R installation
+      const rBinPath =
+        process.platform === 'win32' ? path.join(rHome, 'bin', 'R.exe') : path.join(rHome, 'bin', 'R');
+
+      let rVersionStr: string;
+      try {
+        rVersionStr = execFileSync(rBinPath, ['--vanilla', '-s', '-e', 'cat(format(getRversion()))'], {
+          timeout: 5000,
+        })
+          .toString()
+          .trim();
+      } catch (e) {
+        logger().logDebug(`Failed to query R version from ${rBinPath}: ${e}`);
+        return;
+      }
+
+      // Parse version components
+      const parts = rVersionStr.split('.');
+      if (parts.length < 2) {
+        return;
+      }
+
+      const rMajor = parseInt(parts[0]);
+      const rMinor = parseInt(parts[1]);
+      const rPatch = parts.length >= 3 ? parseInt(parts[2]) : 0;
+
+      if (isNaN(rMajor) || isNaN(rMinor) || isNaN(rPatch)) {
+        return;
+      }
+
+      // Compare against maximum supported version
+      const info = buildInfo();
+      const maxMajor = info.RSTUDIO_R_MAJOR_VERSION_MAXIMUM;
+      const maxMinor = info.RSTUDIO_R_MINOR_VERSION_MAXIMUM;
+      const maxPatch = info.RSTUDIO_R_PATCH_VERSION_MAXIMUM;
+
+      const rVersionExceedsMax =
+        rMajor > maxMajor ||
+        (rMajor === maxMajor && rMinor > maxMinor) ||
+        (rMajor === maxMajor && rMinor === maxMinor && rPatch > maxPatch);
+
+      if (rVersionExceedsMax) {
+        const maxVersionStr = `${maxMajor}.${maxMinor}.${maxPatch}`;
+        const versionWarning =
+          `The version of R you are using (R ${rVersionStr}) is newer than the maximum ` +
+          `version of R supported by this version of RStudio (R ${maxVersionStr}). ` +
+          `A newer version of RStudio may be required to use R ${rVersionStr}.`;
+
+        const existing = this.errorPageData.get('launch_failed') ?? '';
+        if (existing && !existing.includes('No error available')) {
+          this.errorPageData.set('launch_failed', versionWarning + '\n\n' + existing);
+        } else {
+          this.errorPageData.set('launch_failed', versionWarning);
+        }
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
     }
   }
 

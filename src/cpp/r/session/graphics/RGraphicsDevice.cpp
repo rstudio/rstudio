@@ -923,7 +923,7 @@ int getHeight()
 
 DeviceType activeDeviceType()
 {
-   SEXP devicesSEXP = Rf_findVar(Rf_install(".Devices"), R_BaseEnv);
+   SEXP devicesSEXP = r::sexp::findVar(Rf_install(".Devices"), R_BaseEnv);
    if (TYPEOF(devicesSEXP) != LISTSXP)
       return DeviceTypeUnknown;
 

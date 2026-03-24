@@ -410,7 +410,21 @@ RFunction::RFunction(SEXP functionSEXP)
 RFunction::~RFunction()
 {
 }
-   
+
+RFunction& RFunction::addQuotedParam(SEXP paramSEXP)
+{
+   return addQuotedParam(std::string(), paramSEXP);
+}
+
+RFunction& RFunction::addQuotedParam(const std::string& name, SEXP paramSEXP)
+{
+   static SEXP s_quote = Rf_install("quote");
+   SEXP quotedSEXP = Rf_lang2(s_quote, paramSEXP);
+   preserver_.add(quotedSEXP);
+   params_.push_back(Param(name, quotedSEXP));
+   return *this;
+}
+
 void RFunction::commonInit(const std::string& functionName)
 {
    // refresh source if necessary (no-op in production)
@@ -669,12 +683,12 @@ DisableDebugScope::DisableDebugScope(SEXP env)
       return;
    
    // check to see whether there's a debug flag set on this environment
-   rdebug_ = RDEBUG(env);
+   rdebug_ = r::sexp::sxpinfo::getDebug(env);
 
    // if there is, turn it off and save the old flag for restoration
-   if (rdebug_ != 0) 
+   if (rdebug_ != 0)
    {
-      SET_RDEBUG(env, 0);
+      r::sexp::sxpinfo::setDebug(env, 0);
       env_ = env;
    } 
 }
@@ -685,7 +699,7 @@ DisableDebugScope::~DisableDebugScope()
    // evaluation, restore debugging
    if (env_ != nullptr && !atTopLevelContext()) 
    {
-      SET_RDEBUG(env_, rdebug_);
+      r::sexp::sxpinfo::setDebug(env_, rdebug_);
    }
 }
 

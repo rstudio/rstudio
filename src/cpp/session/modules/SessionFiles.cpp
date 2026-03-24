@@ -87,9 +87,6 @@ using namespace rstudio::core;
 using namespace http;
 using namespace http::util;
 
-extern "C" {
-void Rf_sortVector(SEXP s, Rboolean decreasing);
-}
 
 namespace rstudio {
 namespace session {
@@ -1783,8 +1780,16 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
    // return to R
    r::sexp::Protect protect;
    SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
-   Rf_sortVector(resultSEXP, (Rboolean) 0);
-   return resultSEXP;
+
+   SEXP sortedSEXP = R_NilValue;
+   Error error = r::exec::RFunction("base::sort", resultSEXP).call(&sortedSEXP, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return resultSEXP;
+   }
+
+   return sortedSEXP;
 }
 
 void validatePath(SEXP pathSEXP)

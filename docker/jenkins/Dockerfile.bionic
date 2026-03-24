@@ -49,6 +49,7 @@ RUN apt-get update && \
     libssh2-1-dev \
     libtiff5-dev\
     libtool \
+    libwebp-dev \
     libxml2-dev \
     libxslt1-dev \
     lsof \

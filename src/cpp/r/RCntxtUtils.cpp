@@ -100,9 +100,9 @@ RCntxt getFunctionContext(const int depth,
    
    if (pEnvironment)
    {
-      *pEnvironment = (foundDepth == 0 || foundContext.isNull()) ?
-         R_GlobalEnv : 
-         foundContext.cloenv();
+      *pEnvironment = (foundDepth == 0 || foundContext.isNull())
+      ? R_GlobalEnv
+      : foundContext.cloenv();
    }
    
    return foundContext;

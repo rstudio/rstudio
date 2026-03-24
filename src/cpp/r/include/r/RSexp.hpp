@@ -63,23 +63,40 @@ SEXP asEnvironment(std::string name);
 core::Error asPrimitiveEnvironment(SEXP envirSEXP, SEXP* pTargetSEXP, Protect* pProtect);
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
+SEXP getParentEnv(SEXP envSEXP);
 
 // promises
 SEXP forcePromise(SEXP objectSEXP);
    
-// variables within an environment
-typedef std::pair<std::string,SEXP> Variable;
+// binding classification
+enum class BindingType
+{
+   Normal,
+   Promise,
+   ActiveBinding,
+   Unbound,
+   Missing
+};
 
-// fills pVariables with Variable from the environment
-// 
-// The caller must make sure that `env` is protected for 
-// as long as the SEXPs in pVariables are used, because 
-// they are not protected
-void listEnvironment(SEXP env, 
+BindingType getBindingType(const std::string& name, SEXP env);
+
+// returns an opaque SEXP for change detection (never dereferenced for internals):
+// - Normal/Forced bindings: the value itself (via R_getVarEx / findVarInFrame)
+// - Delayed promises: the promise expression (via R_DelayedBindingExpression)
+// - Active/Missing/Unbound: R_NilValue
+SEXP getBindingIdentity(const std::string& name, SEXP env, BindingType type);
+
+// variables within an environment
+SEXP listEnvironment(SEXP env, bool allNames);
+
+void listEnvironment(SEXP env,
                      bool includeAll,
                      bool includeLastDotValue,
-                     std::vector<Variable>* pVariables);
+                     std::vector<std::string>* pNames);
  
+// find a variable in a single environment frame (no inheritance)
+SEXP findVarInFrame(SEXP envSEXP, SEXP nameSEXP);
+
 // find variables in environments and namespaces
 SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
 SEXP findVar(const std::string& name, SEXP envSEXP);
@@ -132,7 +149,6 @@ bool fillSetString(SEXP object, std::set<std::string>* pSet);
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
-void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables);
 
 // weak/external pointers and finalizers
 bool isExternalPointer(SEXP object);
@@ -459,6 +475,22 @@ private:
    std::vector<std::string> names_;
    Protect* pProtect_;
 };
+
+// TODO: Remove these usages once suitable APIs are available.
+namespace sxpinfo {
+
+int getDebug(SEXP object);
+void setDebug(SEXP object, int value);
+
+bool isImmediateBinding(SEXP object);
+
+SEXP getEnclos(SEXP object);
+void setEnclos(SEXP object, SEXP value);
+SEXP getAttrib(SEXP object);
+SEXP getFrame(SEXP object);
+SEXP getHashtab(SEXP object);
+
+} // namespace sxpinfo
 
 void printValue(SEXP object);
 bool inherits(SEXP object, const char* S3Class);

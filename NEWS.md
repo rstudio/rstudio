@@ -1,6 +1,8 @@
 ## RStudio 2026.04.0 "Globemaster Allium" Release Notes
 
 ### New
+- Support for the upcoming R 4.6.0 release.
+- Modal dialogs (Global Options, Project Options, etc.) now support dark theme styling when a dark editor theme is active, controlled by the new `use_dark_theme_modal_dialogs` preference
 - ([#10296](https://github.com/rstudio/rstudio/issues/10296)): Modal dialogs (Global Options, Project Options, etc.) now support dark theme styling when a dark editor theme is active, controlled by the new `use_dark_theme_modal_dialogs` preference
 - ([#17070](https://github.com/rstudio/rstudio/issues/17070)): Added support for the ANSI Erase in Line (EL / CSI K) escape sequence in the console, improving rendering of progress bars and status updates from CLI tools
 - ([#16657](https://github.com/rstudio/rstudio/issues/16657)): Added color preview support for YAML files, highlighting hex colors and named R colors

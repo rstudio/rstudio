@@ -37,6 +37,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libpng-devel  \
     libtiff-devel  \
     libtool \
+    libwebp-devel \
     libuuid-devel \
     libxml2-devel \
     lsof \

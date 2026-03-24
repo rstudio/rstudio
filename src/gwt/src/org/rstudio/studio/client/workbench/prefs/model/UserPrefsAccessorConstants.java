@@ -2098,11 +2098,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String pythonProjectEnvironmentAutomaticActivateDescription();
 
    /**
-    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
     */
    @DefaultStringValue("Check values in the Environment pane for null external pointers")
    String checkNullExternalPointersTitle();
-   @DefaultStringValue("When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.")
+   @DefaultStringValue("(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.")
    String checkNullExternalPointersDescription();
 
    /**

@@ -3287,7 +3287,7 @@ core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool va
 }
 
 /**
- * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ * (Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.
  */
 bool UserPrefValues::checkNullExternalPointers()
 {

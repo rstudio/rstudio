@@ -486,7 +486,7 @@ options(help_type = "html")
    if (is.null(data))
       return(NULL)
    
-   described <- .rs.describeObject(data, name)
+   described <- .rs.describeObject(name, data)
    description <- described$description
    type <- described$type
    size <- described$length

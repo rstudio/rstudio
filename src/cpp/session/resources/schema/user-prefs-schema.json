@@ -1734,7 +1734,7 @@
             "default": true
         },
         "check_null_external_pointers": {
-            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "description": "(Deprecated) When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further. This preference is no longer used.",
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false

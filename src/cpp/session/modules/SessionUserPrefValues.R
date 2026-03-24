@@ -2341,9 +2341,9 @@
 
 # Check values in the Environment pane for null external pointers
 #
-# When enabled, RStudio will detect R objects containing null external pointers
-# when building the Environment pane, and avoid introspecting their contents
-# further.
+# (Deprecated) When enabled, RStudio will detect R objects containing null
+# external pointers when building the Environment pane, and avoid introspecting
+# their contents further. This preference is no longer used.
 .rs.uiPrefs$checkNullExternalPointers <- list(
    get = function() { .rs.getUserPref("check_null_external_pointers") },
    set = function(value) { .rs.setUserPref("check_null_external_pointers", value) },

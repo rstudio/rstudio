@@ -41,6 +41,14 @@
 
 #define R_NO_REMAP
 #include <Rinternals.h>
+#include <Rversion.h>
+
+// Compatibility defines for API functions introduced in R 4.5.0
+#if R_VERSION < R_Version(4, 5, 0)
+# define R_ClosureFormals(x) FORMALS(x)
+# define R_ClosureBody(x)    BODY(x)
+# define R_ClosureEnv(x)     CLOENV(x)
+#endif
 
 // Hide macros that are always unsafe for us to use, because their
 // interface has changed between versions of R

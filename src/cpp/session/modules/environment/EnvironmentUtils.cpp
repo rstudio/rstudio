@@ -19,7 +19,6 @@
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
-#include <r/RSxpInfo.hpp>
 #include <r/RVersionInfo.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileUtils.hpp>
@@ -40,49 +39,64 @@ namespace {
 // of a variable
 const char UNKNOWN_VALUE[] = "<unknown>";
 
-json::Value descriptionOfVar(SEXP var)
+json::Value descriptionOfVar(const std::string& name, SEXP env)
 {
+   r::sexp::BindingType bt = r::sexp::getBindingType(name, env);
+
    std::string value;
-   Error error = r::exec::RFunction(
-            isUnevaluatedPromise(var) ?
-                  ".rs.promiseDescription" :
-                  ".rs.valueDescription",
-               var).call(&value);
-   if (error)
+   Error error;
+
+   if (bt == r::sexp::BindingType::Promise)
    {
-      LOG_ERROR(error);
-      return json::Value(); // return null
+      // getBindingIdentity returns the promise expression on all R versions
+      // (via R_DelayedBindingExpression on R >= 4.6.0, PRCODE on older R);
+      // quote it to prevent evaluation during argument passing
+      SEXP exprSEXP = r::sexp::getBindingIdentity(name, env, bt);
+      error = r::exec::RFunction(".rs.promiseExprDescription")
+         .addQuotedParam(exprSEXP)
+         .call(&value);
+   }
+   else if (bt == r::sexp::BindingType::Missing)
+   {
+      error = r::exec::RFunction(".rs.valueDescription")
+         .addParam(R_MissingArg)
+         .call(&value);
+   }
+   else if (bt == r::sexp::BindingType::ActiveBinding ||
+            bt == r::sexp::BindingType::Unbound)
+   {
+      return json::Value(UNKNOWN_VALUE);
    }
    else
    {
-      return json::Value(value);
+      // for evaluated bindings, retrieve the value via the public API
+      SEXP varSEXP = r::sexp::getBindingIdentity(name, env, bt);
+      error = r::exec::RFunction(".rs.valueDescription")
+         .addParam(varSEXP)
+         .call(&value);
    }
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value();
+   }
+   return json::Value(value);
 }
 
 } // anonymous namespace
 
-// a variable is an unevaluated promise if its promise value is still unbound
-bool isUnevaluatedPromise (SEXP var)
+bool isUnevaluatedPromise(const std::string& name, SEXP env)
 {
-   return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
-}
-
-bool isAltrepImpl(SEXP var)
-{
-   // Reject nulls
-   if (var == nullptr || var == R_NilValue)
-      return false;
-
-   // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
-   r::sxpinfo& info = *reinterpret_cast<r::sxpinfo*>(var);
-
-   // Select the bit referring to the ALTREP flag
-   return info.alt;
+   return r::sexp::getBindingType(name, env) == r::sexp::BindingType::Promise;
 }
 
 bool isAltrep(SEXP var)
 {
-   return isAltrepImpl(var);
+   if (var == nullptr || var == R_NilValue)
+      return false;
+
+   return r::sexp::isAltrep(var);
 }
 
 bool hasAltrepImpl(SEXP var, std::set<SEXP>& visited, unsigned maxDepth)
@@ -147,32 +161,33 @@ json::Value languageVarToJson(SEXP env, std::string objectName)
    }
 }
 
-json::Value varToJson(SEXP env, const r::sexp::Variable& var)
+json::Value varToJson(const std::string& name, SEXP env)
 {
    json::Object varJson;
-   SEXP varSEXP = var.second;
 
-   // We can get a value from almost any object type from R, but there are
-   // a few cases in which attempting to inspect the object will lead to
-   // undesirable behavior. For these special value types, construct the
-   // object definition manually.
-   bool isActiveBinding = r::sexp::isActiveBinding(var.first, env);
-   bool hasActiveBinding = isActiveBinding
-         ? true
-         : r::sexp::hasActiveBinding(var.first, env);
-   
-   if ((varSEXP == R_UnboundValue) ||
-       (varSEXP == R_MissingArg) ||
-       isUnevaluatedPromise(varSEXP) ||
+   // Classify the binding to determine how to inspect it
+   r::sexp::BindingType bt = r::sexp::getBindingType(name, env);
+
+   // only normal bindings can hold environments with nested active bindings;
+   // skip the recursive check for other types to avoid a redundant
+   // getBindingType call inside hasActiveBinding
+   bool hasActiveBinding =
+      (bt == r::sexp::BindingType::ActiveBinding) ||
+      (bt == r::sexp::BindingType::Normal && r::sexp::hasActiveBinding(name, env));
+
+   if (bt == r::sexp::BindingType::Unbound ||
+       bt == r::sexp::BindingType::Missing ||
+       bt == r::sexp::BindingType::Promise ||
+       bt == r::sexp::BindingType::ActiveBinding ||
        hasActiveBinding)
    {
-      varJson["name"] = var.first;
-      if (isUnevaluatedPromise(varSEXP))
+      varJson["name"] = name;
+      if (bt == r::sexp::BindingType::Promise)
       {
          varJson["type"] = std::string("promise");
-         varJson["value"] = descriptionOfVar(varSEXP);
+         varJson["value"] = descriptionOfVar(name, env);
       }
-      else if (isActiveBinding)
+      else if (bt == r::sexp::BindingType::ActiveBinding)
       {
          varJson["type"] = std::string("active binding");
          varJson["value"] = std::string("<Active binding>");
@@ -185,8 +200,8 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       else
       {
          varJson["type"] = std::string("unknown");
-         varJson["value"] =  (varSEXP == R_MissingArg) ?
-                                 descriptionOfVar(varSEXP) :
+         varJson["value"] = (bt == r::sexp::BindingType::Missing) ?
+                                 descriptionOfVar(name, env) :
                                  json::Value(UNKNOWN_VALUE);
       }
       varJson["description"] = std::string("");
@@ -195,6 +210,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       varJson["size"] = 0;
       varJson["contents_deferred"] = false;
    }
+
    // For all other value types, construct the definition normally.
    else
    {
@@ -202,8 +218,8 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       json::Value val;
       r::sexp::Protect protect;
       Error error = r::exec::RFunction(".rs.describeObject")
+         .addParam(name)
          .addParam(env)
-         .addParam(var.first)
          .call(&description, &protect);
       if (error)
       {
@@ -219,7 +235,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       }
    }
 
-   return std::move(varJson);
+   return varJson;
 }
 
 bool functionDiffersFromSource(

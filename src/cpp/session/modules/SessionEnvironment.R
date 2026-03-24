@@ -216,13 +216,18 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
-# used to create description for promises
+# used to create description for promises (legacy path for R < 4.6.0)
 .rs.addFunction("promiseDescription", function(obj)
 {
    # NOTE: substitute() returns the expression associated with a promise,
    # without forcing it to be evaluated
    expr <- substitute(obj)
+   .rs.promiseExprDescription(expr)
+})
 
+# describe a promise from its pre-extracted expression
+.rs.addFunction("promiseExprDescription", function(expr)
+{
    # if this appears to be a call to 'lazyLoadDBfetch()', that implies
    # this is lazy-loaded data (typically associated with an R package).
    # handle those up front
@@ -677,12 +682,7 @@
       val1
 })
 
-.rs.addFunction("hasExternalPointer", function(object, nullPtr = FALSE)
-{
-   .Call("rs_hasExternalPointer", object, nullPtr, PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("describeObject", function(env, objName)
+.rs.addFunction("describeObject", function(objName, env)
 {
    obj <- get(objName, env)
 
@@ -693,39 +693,13 @@
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
 
-   # NOTE (kevin): we previously screened R objects for null pointers here,
-   # as we had seen in the distant past that attempting to introspect such
-   # objects would cause an R session crash. that no longer appears to be
-   # the case so we now no longer perform this check here.
-   #
-   # https://github.com/rstudio/rstudio/issues/4741
-   # https://github.com/rstudio/rstudio/issues/5546
-   #
-   # however, just in case some users are still effected, we allow users to
-   # opt-in to checking for null pointers if required.
-   checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
-   hasNullPtr <- if (identical(checkNullPtr, TRUE))
-      .rs.hasExternalPointer(obj, TRUE)
-   else
-      FALSE
+   val <- "(unknown)"
+   desc <- ""
 
-   if (hasNullPtr)
-   {
-      val <- "<Object with null pointer>"
-      desc <- "An R object containing a null external pointer"
-      size <- 0
-      len <- 0
-   }
-   else
-   {
-      val <- "(unknown)"
-      desc <- ""
-
-      # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
-      # an attempt is made to compute their metrics exactly; avoid computing the size for these
-      size <- .rs.estimatedObjectSize(obj)
-      len <- length(obj)
-   }
+   # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
+   # an attempt is made to compute their metrics exactly; avoid computing the size for these
+   size <- .rs.estimatedObjectSize(obj)
+   len <- length(obj)
 
    class <- .rs.getSingleClass(obj)
    contents <- list()
@@ -741,7 +715,7 @@
    {
       val <- .rs.describeCall(obj)
    }
-   else if (!hasNullPtr)
+   else
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
