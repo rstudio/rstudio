@@ -30,6 +30,7 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -91,6 +92,7 @@ public class NewPackagePage extends NewDirectoryPage
             txtProjectName_.setFocus(true);
          }
       });
+      listProjectType_.getElement().getStyle().setMarginRight(6, Unit.PX);
       panel.add(listProjectType_);
    }
 

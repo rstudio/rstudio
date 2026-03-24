@@ -4,6 +4,12 @@
     ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
     ui:generateLocales="default">
     <ui:style type='org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportColTypesMenu.DataImportColTypesMenuCss'>
+    @external rstudio-themes-dark;
+    @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+    @eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+    @eval THEME_DARKGREY_MOST_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyMostInactiveBackground;
+    @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+
     .important {
         font-weight: bold;
     }
@@ -46,6 +52,22 @@
     }
     .errorMessage {
         padding: 10px;
+    }
+
+    .rstudio-themes-dark .mainPanel {
+        background-color: THEME_DARKGREY_BACKGROUND;
+        border-color: THEME_DARKGREY_BORDER;
+        color: #eee;
+    }
+    .rstudio-themes-dark .sectionPanel {
+        border-bottom-color: THEME_DARKGREY_BORDER;
+    }
+    .rstudio-themes-dark .entrySelected {
+        background-color: THEME_DARKGREY_MOST_INACTIVE;
+    }
+    .rstudio-themes-dark .entry:hover,
+    .rstudio-themes-dark .entrySelected:hover {
+        background-color: THEME_DARKGREY_INACTIVE;
     }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">

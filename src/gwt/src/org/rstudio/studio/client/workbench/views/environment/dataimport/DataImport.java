@@ -48,6 +48,9 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.dom.client.BodyElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
@@ -104,7 +107,8 @@ public class DataImport extends Composite
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
       
-      gridViewer_ = new GridViewerFrame(constants_.dataPreview());
+      gridViewer_ = new GridViewerFrame(constants_.dataPreview(), true);
+      gridViewer_.addLoadHandler(event -> syncGridViewerTheme());
       copyButton_ = makeCopyButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
@@ -466,6 +470,7 @@ public class DataImport extends Composite
                columnTypesMenu_.setWidth("200px");
             }
             
+            syncPopupDarkTheme(columnTypesMenu_.getElement());
             columnTypesMenu_.show();
          }
       };
@@ -726,5 +731,55 @@ public class DataImport extends Composite
    
    public HelpLink getHelpLink() {
       return dataImportOptionsUi_.getHelpLink();
+   }
+
+   private void syncPopupDarkTheme(Element popupElement)
+   {
+      String darkClass = "rstudio-themes-dark";
+      Element el = getElement();
+      while (el != null)
+      {
+         if (el.hasClassName(darkClass))
+         {
+            popupElement.addClassName(darkClass);
+            return;
+         }
+         el = el.getParentElement();
+      }
+      popupElement.removeClassName(darkClass);
+   }
+
+   private boolean isOwningDialogDark()
+   {
+      Element el = getElement();
+      while (el != null)
+      {
+         if (el.hasClassName("rstudio-themes-dark"))
+            return true;
+         el = el.getParentElement();
+      }
+      return false;
+   }
+
+   private void syncGridViewerTheme()
+   {
+      if (gridViewer_.getWindow() == null)
+         return;
+      Document doc = gridViewer_.getWindow().getDocument();
+      if (doc == null)
+         return;
+      BodyElement body = doc.getBody();
+      if (body == null)
+         return;
+
+      if (!isOwningDialogDark())
+      {
+         body.removeClassName("rstudio-themes-dark");
+         body.removeClassName("rstudio-themes-dark-grey");
+         body.removeClassName("rstudio-themes-dark-menus");
+         body.removeClassName("ace_editor_theme");
+         body.removeClassName("editor_dark");
+         body.addClassName("editor_light");
+      }
    }
 }
