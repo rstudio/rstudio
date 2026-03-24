@@ -13,7 +13,7 @@
  *
  */
 
-import { exec, execSync } from 'child_process';
+import { exec, execFileSync, execSync } from 'child_process';
 import {
   app,
   nativeTheme,
@@ -1146,7 +1146,7 @@ export class GwtCallback extends EventEmitter {
 
       let rVersionStr: string;
       try {
-        rVersionStr = execSync(`"${rBinPath}" --vanilla -s -e "cat(format(getRversion()))"`, {
+        rVersionStr = execFileSync(rBinPath, ['--vanilla', '-s', '-e', 'cat(format(getRversion()))'], {
           timeout: 5000,
         })
           .toString()
@@ -1175,10 +1175,12 @@ export class GwtCallback extends EventEmitter {
       const maxMinor = info.RSTUDIO_R_MINOR_VERSION_MAXIMUM;
       const maxPatch = info.RSTUDIO_R_PATCH_VERSION_MAXIMUM;
 
-      const rVersionNum = rMajor * 10000 + rMinor * 100 + rPatch;
-      const maxVersionNum = maxMajor * 10000 + maxMinor * 100 + maxPatch;
+      const rVersionExceedsMax =
+        rMajor > maxMajor ||
+        (rMajor === maxMajor && rMinor > maxMinor) ||
+        (rMajor === maxMajor && rMinor === maxMinor && rPatch > maxPatch);
 
-      if (rVersionNum > maxVersionNum) {
+      if (rVersionExceedsMax) {
         const maxVersionStr = `${maxMajor}.${maxMinor}.${maxPatch}`;
         const versionWarning =
           `The version of R you are using (R ${rVersionStr}) is newer than the maximum ` +
