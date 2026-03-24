@@ -33,11 +33,25 @@ make_matched_call <- function(named_args = character()) {
    ))
 }
 
-fixture_rd <- tools::parse_Rd(
+has_system_rd_macros <- file.exists(
+   file.path(R.home("share"), "Rd", "macros", "system.Rd")
+)
+
+test_that <- function(desc, code) {
+   if (!has_system_rd_macros) {
+      testthat::test_that(desc, testthat::skip("system.Rd macros file not available"))
+      return(invisible(NULL))
+   }
+   call <- sys.call()
+   call[[1L]] <- quote(testthat::test_that)
+   eval(call, envir = parent.frame())
+}
+
+fixture_rd <- if (has_system_rd_macros) tools::parse_Rd(
    testthat::test_path("fixtures/wrapper-inheritDotParams.Rd")
 )
 
-fixture_rd_partial <- tools::parse_Rd(
+fixture_rd_partial <- if (has_system_rd_macros) tools::parse_Rd(
    testthat::test_path("fixtures/wrapper-inheritDotParams-partial.Rd")
 )
 
