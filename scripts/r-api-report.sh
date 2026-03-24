@@ -69,16 +69,26 @@ R_HEADERS=(
 )
 
 mkdir -p "$R_INCLUDE/R_ext"
+CURL_PIDS=()
 for header in "${R_HEADERS[@]}"; do
-  if ! curl -sfL "$R_SVN_BASE/src/include/$header" -o "$R_INCLUDE/$header"; then
-    echo "Error: failed to download header: $header" >&2
-    exit 1
+  curl -sfL "$R_SVN_BASE/src/include/$header" -o "$R_INCLUDE/$header" &
+  CURL_PIDS+=($!)
+done
+
+CURL_FAILED=0
+for pid in "${CURL_PIDS[@]}"; do
+  if ! wait "$pid"; then
+    CURL_FAILED=1
   fi
 done
+if [ "$CURL_FAILED" -ne 0 ]; then
+  echo "Error: one or more header downloads failed" >&2
+  exit 1
+fi
 
 # Step 1: Extract API symbols from R-exts.texi ----
 
-grep -oE '@(apifun|eapifun|apivar|eapivar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" \
+{ grep -oE '@(apifun|eapifun|apivar|eapivar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" || true; } \
   | sed 's/@[a-z]* //' | sort -u > "$TMPDIR/public_api.txt"
 
 # Treat symbols exported by the graphics engine/device headers as public API
@@ -89,10 +99,10 @@ for gfx_header in "$R_INCLUDE/R_ext/GraphicsEngine.h" "$R_INCLUDE/R_ext/Graphics
 done | sort -u >> "$TMPDIR/public_api.txt"
 sort -u -o "$TMPDIR/public_api.txt" "$TMPDIR/public_api.txt"
 
-grep -oE '@(embfun|embvar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" \
+{ grep -oE '@(embfun|embvar) [A-Za-z_][A-Za-z0-9_]*' "$TEXI" || true; } \
   | sed 's/@[a-z]* //' | sort -u > "$TMPDIR/embed_api.txt"
 
-grep -oE '@forfun [A-Za-z_][A-Za-z0-9_]*' "$TEXI" \
+{ grep -oE '@forfun [A-Za-z_][A-Za-z0-9_]*' "$TEXI" || true; } \
   | sed 's/@forfun //' | sort -u > "$TMPDIR/former_api.txt"
 
 # Embedding-related symbols that are documented in the embedding chapter
@@ -114,12 +124,12 @@ sort -u -o "$TMPDIR/embed_api.txt" "$TMPDIR/embed_api.txt"
 EXCLUDE="--exclude=RInternal.hpp"
 
 # Rf_* and R_* identifiers
-grep -rohE "$EXCLUDE" '\bRf_[a-zA-Z_][a-zA-Z0-9_]*' "$RSTUDIO_CPP" 2>/dev/null | sort -u > "$TMPDIR/rf_calls.txt"
-grep -rohE "$EXCLUDE" '\bR_[a-zA-Z][a-zA-Z0-9_]*' "$RSTUDIO_CPP" 2>/dev/null | sort -u > "$TMPDIR/r_calls.txt"
+{ grep -rohE "$EXCLUDE" '\bRf_[a-zA-Z_][a-zA-Z0-9_]*' "$RSTUDIO_CPP" 2>/dev/null || true; } | sort -u > "$TMPDIR/rf_calls.txt"
+{ grep -rohE "$EXCLUDE" '\bR_[a-zA-Z][a-zA-Z0-9_]*' "$RSTUDIO_CPP" 2>/dev/null || true; } | sort -u > "$TMPDIR/r_calls.txt"
 
 # R macros (uppercase identifiers from Rinternals.h)
 R_MACROS='ALTREP|ATTRIB|BODY|CAAR|CADR|CADDR|CADDDR|CAD4R|CAD5R|CAR|CDAR|CDDDR|CDDR|CDR|CHAR|CLEAR_ATTRIB|CLOENV|COMPLEX|COMPLEX_ELT|DATAPTR|DATAPTR_OR_NULL|DATAPTR_RO|DUPLICATE_ATTRIB|ENCLOS|FORMALS|FRAME|HASHTAB|INTEGER|INTEGER_ELT|INTERNAL|IS_SCALAR|IS_SIMPLE_SCALAR|LENGTH|LEVELS|LOGICAL|LOGICAL_ELT|MARK_NOT_MUTABLE|MISSING|NAMED|OBJECT|PRCODE|PRENV|PRINTNAME|PROTECT|PROTECT_WITH_INDEX|PRVALUE|RAW|RAW_ELT|REAL|REAL_ELT|REAL_RO|INTEGER_RO|LOGICAL_RO|COMPLEX_RO|RAW_RO|SETCAR|SETCDR|SETCADR|SETCADDR|SETCADDDR|SETCAD4R|SETLEVELS|SET_ATTRIB|SET_COMPLEX_ELT|SET_INTEGER_ELT|SET_LOGICAL_ELT|SET_MISSING|SET_NAMED|SET_RAW_ELT|SET_REAL_ELT|SET_S4_OBJECT|SET_STRING_ELT|SET_TAG|SET_TYPEOF|SET_VECTOR_ELT|SHALLOW_DUPLICATE_ATTRIB|STRING_ELT|SYMVALUE|TAG|TYPEOF|UNPROTECT|VECTOR_ELT|XLENGTH'
-grep -rohE "$EXCLUDE" "\b($R_MACROS)[[:space:]]*\(" "$RSTUDIO_CPP" 2>/dev/null | sed -E 's/[[:space:]]*\($//' | sort -u > "$TMPDIR/macros.txt"
+{ grep -rohE "$EXCLUDE" "\b($R_MACROS)[[:space:]]*\(" "$RSTUDIO_CPP" 2>/dev/null || true; } | sed -E 's/[[:space:]]*\($//' | sort -u > "$TMPDIR/macros.txt"
 
 # Combine all symbols
 cat "$TMPDIR/rf_calls.txt" "$TMPDIR/r_calls.txt" "$TMPDIR/macros.txt" | sort -u > "$TMPDIR/all_symbols_raw.txt"
