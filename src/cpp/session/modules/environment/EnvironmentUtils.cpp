@@ -235,7 +235,7 @@ json::Value varToJson(const std::string& name, SEXP env)
       }
    }
 
-   return std::move(varJson);
+   return varJson;
 }
 
 bool functionDiffersFromSource(

@@ -937,7 +937,7 @@ Error getGridData(const http::Request& request,
          // what we're looking for
          if (TYPEOF(dataSEXP) == PROMSXP)
          {
-            dataSEXP = Rf_eval(dataSEXP, R_BaseEnv);
+            dataSEXP = r::sexp::forcePromise(dataSEXP);
          }
          if (show == "cols")
          {
