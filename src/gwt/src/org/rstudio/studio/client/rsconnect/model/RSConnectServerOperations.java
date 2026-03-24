@@ -88,4 +88,6 @@ public interface RSConnectServerOperations extends QuartoServerOperations
    
    void generateAppName(String title, String appPath, String accountName,
                 ServerRequestCallback<RSConnectAppName> resultCallback);
+
+   void connectCloudUser(ServerRequestCallback<VoidResponse> requestCallback);
 }

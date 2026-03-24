@@ -13,6 +13,7 @@
 - ([#17269](https://github.com/rstudio/rstudio/issues/17269)): Added a close button to the Sidebar pane toolbar for quickly hiding the sidebar
 - ([#17000](https://github.com/rstudio/rstudio/issues/17000)): Always show .positai folder in Files pane even when set to hide hidden files
 - ([#16069](https://github.com/rstudio/rstudio/issues/16069)): Function auto-completion will now include arguments inherited via @inheritDotParams.
+- ([#16530](https://github.com/rstudio/rstudio/issues/16530)): Added Posit Connect Cloud as a publishing target
 
 ### Fixed
 - ([#17005](https://github.com/rstudio/rstudio/issues/17005)): Fixed an issue where the Packages pane was empty when non-PPM repositories were configured alongside PPM repositories and certain packages were installed

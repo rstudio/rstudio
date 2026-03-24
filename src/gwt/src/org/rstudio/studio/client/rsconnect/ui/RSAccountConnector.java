@@ -110,6 +110,25 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
       }
    }
 
+   public void showAccountWizard(
+         boolean forFirstAccount,
+         RSConnectDeploy.ServerType serverType,
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      if (serverType == RSConnectDeploy.ServerType.CONNECT_CLOUD)
+      {
+         showAccountTypeWizard(forFirstAccount, false, true, false, onCompleted);
+      }
+      else if (serverType == RSConnectDeploy.ServerType.RSCONNECT)
+      {
+         showAccountTypeWizard(forFirstAccount, false, false, true, onCompleted);
+      }
+      else
+      {
+         showAccountWizard(forFirstAccount, false, onCompleted);
+      }
+   }
+
    public void showReconnectWizard(
          final RSConnectAccount account,
          final OperationWithInput<Boolean> onCompleted)
@@ -215,6 +234,23 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
+      boolean showExternalPublish =
+            SessionUtils.showExternalPublishUi(session_, pUserState_.get());
+      showAccountTypeWizard(
+            forFirstAccount,
+            withCloudOption && showExternalPublish,
+            showExternalPublish,
+            pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
+            onCompleted);
+   }
+
+   private void showAccountTypeWizard(
+         boolean forFirstAccount,
+         boolean showShinyAppsPage,
+         boolean showConnectCloudPage,
+         boolean isConnectEnabled,
+         final OperationWithInput<Boolean> onCompleted)
+   {
       // ignore if wizard is already up
       if (showingWizard_)
          return;
@@ -223,9 +259,9 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             server_,
             display_,
             forFirstAccount,
-            withCloudOption &&
-               SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
-            pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
+            showShinyAppsPage,
+            showConnectCloudPage,
+            isConnectEnabled,
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
@@ -292,6 +328,10 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
       {
          connectCloudAccount(result, indicator, onConnected);
       }
+      else if (result.getAccountType() == AccountType.RSConnectCloudConnectAccount)
+      {
+         connectCloudConnectAccount(result, indicator, onConnected);
+      }
       else
       {
          connectLocalAccount(result, indicator, onConnected);
@@ -327,6 +367,31 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          {
             display_.showErrorMessage(constants_.errorConnectingAccount(),
                   constants_.errorAccountMessage(cmd));
+            onConnected.execute(AccountConnectResult.Failed);
+         }
+      });
+   }
+
+   private void connectCloudConnectAccount(
+         final NewRSConnectAccountResult result,
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
+   {
+      indicator.onProgress(constants_.connectingConnectCloudAccount());
+      server_.connectCloudUser(
+            new ServerRequestCallback<VoidResponse>()
+      {
+         @Override
+         public void onResponseReceived(VoidResponse v)
+         {
+            onConnected.execute(AccountConnectResult.Successful);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage(constants_.errorConnectingAccount(),
+                  error.getMessage());
             onConnected.execute(AccountConnectResult.Failed);
          }
       });

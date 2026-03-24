@@ -19,6 +19,7 @@ public class NewRSConnectAccountResult
    public enum AccountType
    {
       RSConnectCloudAccount,
+      RSConnectCloudConnectAccount,
       RSConnectLocalAccount
    }
    
@@ -26,6 +27,11 @@ public class NewRSConnectAccountResult
    {
       type_ = AccountType.RSConnectCloudAccount;
       cloudSecret_ = cloudSecret;
+   }
+
+   public NewRSConnectAccountResult(AccountType type)
+   {
+      type_ = type;
    }
    
    public NewRSConnectAccountResult(String serverName, String serverUrl, 

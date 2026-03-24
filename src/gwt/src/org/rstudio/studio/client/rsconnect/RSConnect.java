@@ -1321,6 +1321,7 @@ public class RSConnect implements SessionInitEvent.Handler,
    private boolean dirStateDirty_ = false;
 
    public final static String SHINY_APPS_SERVICE_NAME = "ShinyApps.io";
+   public final static String CONNECT_CLOUD_SERVICE_NAME = "connect.posit.cloud";
 
    // No/unknown content type
    public final static int CONTENT_TYPE_NONE           = 0;

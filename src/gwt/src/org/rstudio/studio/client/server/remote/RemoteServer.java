@@ -5750,6 +5750,12 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void connectCloudUser(ServerRequestCallback<VoidResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "connect_cloud_user", requestCallback);
+   }
+
+   @Override
    public void getRMarkdownContext(
                   ServerRequestCallback<RMarkdownContext> requestCallback)
    {
