@@ -126,9 +126,9 @@ Error save(const FilePath& statePath)
    std::vector<std::string> searchPathElements;
    searchPathElements.push_back(".GlobalEnv");
    
-   for (SEXP envSEXP = r::sexp::sxpinfo::getEnclos(R_GlobalEnv);
+   for (SEXP envSEXP = r::sexp::getParentEnv(R_GlobalEnv);
         envSEXP != R_BaseEnv;
-        envSEXP = r::sexp::sxpinfo::getEnclos(envSEXP))
+        envSEXP = r::sexp::getParentEnv(envSEXP))
    {
       // screen out UserDefinedDatabase elements (attempting to persist
       // a UserDefinedDatabase caused mischief in at least one case (e.g. see
@@ -238,7 +238,7 @@ void repairSearchPath()
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = r::sexp::sxpinfo::getEnclos(thisSEXP);
+      thisSEXP = r::sexp::getParentEnv(thisSEXP);
 
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)
@@ -249,14 +249,14 @@ void repairSearchPath()
          continue;
 
       toolsSEXP = thisSEXP;
-      r::sexp::sxpinfo::setEnclos(prevSEXP, r::sexp::sxpinfo::getEnclos(thisSEXP));
+      r::sexp::sxpinfo::setEnclos(prevSEXP, r::sexp::getParentEnv(thisSEXP));
    }
    
    thisSEXP = R_GlobalEnv;
    while (thisSEXP != R_BaseEnv)
    {
       SEXP prevSEXP = thisSEXP;
-      thisSEXP = r::sexp::sxpinfo::getEnclos(thisSEXP);
+      thisSEXP = r::sexp::getParentEnv(thisSEXP);
 
       SEXP nameSEXP = r::sexp::getAttrib(thisSEXP, "name");
       if (TYPEOF(nameSEXP) != STRSXP)

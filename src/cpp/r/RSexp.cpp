@@ -336,7 +336,7 @@ SEXP asEnvironment(std::string name)
    if (name.find(":") == std::string::npos)
       name = "package:" + name;
    
-   SEXP envSEXP = sxpinfo::getEnclos(R_GlobalEnv);
+   SEXP envSEXP = getParentEnv(R_GlobalEnv);
    while (envSEXP != R_EmptyEnv)
    {
       static SEXP s_name = Rf_install("name");
@@ -346,7 +346,7 @@ SEXP asEnvironment(std::string name)
       {
          return envSEXP;
       }
-      envSEXP = sxpinfo::getEnclos(envSEXP);
+      envSEXP = getParentEnv(envSEXP);
    }
    
    LOG_ERROR_MESSAGE("No environment named '" + name + "' on search path");
@@ -409,6 +409,15 @@ SEXP findNamespace(const std::string& name)
    return findVarInFrame(R_NamespaceRegistry, nameSEXP);
 }
    
+SEXP getParentEnv(SEXP envSEXP)
+{
+#if R_VERSION >= R_Version(4, 5, 0)
+   return R_ParentEnv(envSEXP);
+#else
+   return getParentEnv(envSEXP);
+#endif
+}
+
 Error asPrimitiveEnvironment(SEXP envirSEXP,
                              SEXP* pTargetSEXP,
                              Protect* pProtect)
@@ -749,7 +758,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
          }
       }
       
-      env = sxpinfo::getEnclos(env);
+      env = getParentEnv(env);
    }
    
    return R_UnboundValue;

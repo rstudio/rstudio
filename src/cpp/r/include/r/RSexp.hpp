@@ -63,6 +63,7 @@ SEXP asEnvironment(std::string name);
 core::Error asPrimitiveEnvironment(SEXP envirSEXP, SEXP* pTargetSEXP, Protect* pProtect);
 SEXP findNamespace(const std::string& name);
 SEXP asNamespace(const std::string& name);
+SEXP getParentEnv(SEXP envSEXP);
 
 // promises
 SEXP forcePromise(SEXP objectSEXP);

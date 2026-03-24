@@ -702,7 +702,7 @@ Error setEnvironmentName(int contextDepth,
             break;
          }
          // Proceed to the parent of the environment
-         env = r::sexp::sxpinfo::getEnclos(env);
+         env = r::sexp::getParentEnv(env);
       }
       if (error || env == R_EmptyEnv)
       {
@@ -916,7 +916,7 @@ json::Object commonEnvironmentStateData(
             
             std::string envLocation;
             error = r::exec::RFunction(".rs.environmentName")
-                  .addParam(r::sexp::sxpinfo::getEnclos(context.cloenv()))
+                  .addParam(r::sexp::getParentEnv(context.cloenv()))
                   .call(&envLocation);
             
             if (error)
@@ -1808,7 +1808,7 @@ double obj_size_tree(SEXP x,
       size += sizeof_node;
       size += obj_size_attrib(x, base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(r::sexp::sxpinfo::getFrame(x), base_env, sizeof_node, sizeof_vector, depth + 1);
-      // size += obj_size_tree(r::sexp::sxpinfo::getEnclos(x), base_env, sizeof_node, sizeof_vector, depth + 1);
+      // size += obj_size_tree(r::sexp::getParentEnv(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       // size += obj_size_tree(r::sexp::sxpinfo::getHashtab(x), base_env, sizeof_node, sizeof_vector, depth + 1);
       break;
 
