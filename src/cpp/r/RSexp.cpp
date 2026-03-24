@@ -406,7 +406,7 @@ SEXP findNamespace(const std::string& name)
    // Look up the namespace in the registry directly, rather than using
    // R_FindNamespace which throws an error if the namespace isn't found.
    SEXP nameSEXP = Rf_install(name.c_str());
-   return Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
+   return findVarInFrame(R_NamespaceRegistry, nameSEXP);
 }
    
 Error asPrimitiveEnvironment(SEXP envirSEXP,
@@ -572,9 +572,8 @@ bool hasActiveBindingImpl(const std::string& name,
    if (bt != BindingType::Normal)
       return false;
 
-   SEXP varSEXP = getBindingIdentity(name, envirSEXP, bt);
-
    // ensure we're working with a primitive R environment
+   SEXP varSEXP = getBindingIdentity(name, envirSEXP, bt);
    if (!isEnvironment(varSEXP))
       return false;
    
