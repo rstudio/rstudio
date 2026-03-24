@@ -476,6 +476,7 @@ private:
    Protect* pProtect_;
 };
 
+// TODO: Remove these usages once suitable APIs are available.
 namespace sxpinfo {
 
 int getDebug(SEXP object);
