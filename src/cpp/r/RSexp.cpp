@@ -414,7 +414,7 @@ SEXP getParentEnv(SEXP envSEXP)
 #if R_VERSION >= R_Version(4, 5, 0)
    return R_ParentEnv(envSEXP);
 #else
-   return getParentEnv(envSEXP);
+   return sxpinfo::getEnclos(envSEXP);
 #endif
 }
 
