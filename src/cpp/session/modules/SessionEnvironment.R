@@ -1047,46 +1047,20 @@
 # Returns list(depth, env) where depth is the inner→outer depth and
 # env is the function's closure environment, or list(0, globalenv()) if
 # no matching context was found.
-.rs.addFunction("getFunctionContext", function(depth = 0L)
+#
+# @param depth When 0, find the function context associated with the
+#   active browser. When > 0, find the function context at the given
+#   inner-to-outer depth.
+# @param browserEnv The browser context's closure environment, read
+#   fresh from the context stack by C++. Passed explicitly because
+#   browserText() / do_sysbrowser are unreliable when called via
+#   R_tryEval (R_ToplevelExec resets R_ToplevelContext, hiding the
+#   browser context). NULL when not browsing.
+.rs.addFunction("getFunctionContext", function(depth = 0L, browserEnv = NULL)
 {
    nframe <- sys.nframe() - 1L  # skip our own frame
    if (nframe < 1L)
       return(list(depth = 0L, env = globalenv()))
-
-   # Determine the browser's environment. We try two sources:
-   # 1. The C++ tracked s_browserEnv (handles promise forcing)
-   # 2. Walk sys.frames looking for a debugged function
-   browserEnv <- .Call("rs_getBrowserEnv", PACKAGE = "(embedding)")
-
-   if (is.null(browserEnv) || identical(browserEnv, globalenv()))
-   {
-      # s_browserEnv wasn't set yet (first entry into debug), try
-      # to detect it from the call stack
-      isBrowsing <- tryCatch(
-         { browserText(1L); TRUE },
-         error = function(e) FALSE
-      )
-
-      if (isBrowsing)
-      {
-         # First try isdebugged() (works for debug(), not debugonce())
-         for (j in rev(seq_len(nframe)))
-         {
-            if (isdebugged(sys.function(j)))
-            {
-               browserEnv <- sys.frame(j)
-               break
-            }
-         }
-
-         # If isdebugged() didn't match (e.g. debugonce() clears the flag),
-         # use the innermost frame's environment as the browser target
-         if (is.null(browserEnv) || identical(browserEnv, globalenv()))
-         {
-            browserEnv <- sys.frame(nframe)
-         }
-      }
-   }
 
    foundDepth <- 0L
    foundEnv <- globalenv()

@@ -912,7 +912,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = R_GlobalEnv;
-   r::context::getFunctionContext(requestedDepth, nullptr, &env);
+   r::context::getFunctionContext(requestedDepth, s_browserActive, nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1065,7 +1065,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    else
    {
       // Find the function context associated with the browser
-      r::context::getFunctionContext(0, &depth, &environmentTop);
+      r::context::getFunctionContext(0, s_browserActive, &depth, &environmentTop);
       s_browserEnv = environmentTop;
    }
    
@@ -1432,11 +1432,12 @@ json::Value environmentStateAsJson()
       return pythonEnvironmentStateData(s_monitoredPythonModule);
    
    int contextDepth = 0;
-   r::context::getFunctionContext(0, &contextDepth, nullptr);
+   bool browsing = r::context::inActiveBrowseContext();
+   r::context::getFunctionContext(0, browsing, &contextDepth, nullptr);
 
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
-   if (!r::context::inActiveBrowseContext())
+   if (!browsing)
       contextDepth = 0;
    
    return commonEnvironmentStateData(

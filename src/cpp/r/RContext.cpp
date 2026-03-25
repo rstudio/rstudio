@@ -14,12 +14,16 @@
  */
 
 #include <r/RContext.hpp>
+#include <r/RExec.hpp>
 #include <r/RInterface.hpp>
+#include <r/RSexp.hpp>
 
 #include <setjmp.h>
 
 #define R_NO_REMAP
 #include <Rinternals.h>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -91,6 +95,14 @@ bool hasBrowserContext()
    return false;
 }
 
+SEXP browserContextEnv()
+{
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+      if (ctx->callflag & CTXT_BROWSER)
+         return ctx->cloenv;
+   return R_NilValue;
+}
+
 bool inActiveBrowseContext()
 {
    bool foundBrowser = false;
@@ -107,49 +119,27 @@ bool inActiveBrowseContext()
    return false;
 }
 
-bool getFunctionContext(int depth, int* pDepth, SEXP* pEnv)
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv)
 {
-   int currentDepth = 0;
-   int foundDepth = 0;
-   SEXP foundEnv = nullptr;
+   // Call the R-side implementation which uses sys.frame() / sys.nframe()
+   // rather than walking the RCNTXT stack directly.
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.getFunctionContext")
+      .addParam(depth)
+      .addParam(browsing ? browserContextEnv() : R_NilValue)
+      .call(&resultSEXP, &protect);
 
-   // Find the browser context's cloenv (for depth == 0 mode)
-   SEXP browseEnv = nullptr;
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if ((ctx->callflag & CTXT_BROWSER) && browseEnv == nullptr)
-      {
-         browseEnv = ctx->cloenv;
-         break;
-      }
-   }
+   if (error)
+      return false;
 
-   // Walk the context stack looking for function contexts
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if (ctx->callflag & CTXT_FUNCTION)
-      {
-         currentDepth++;
-
-         if (depth == 0 && browseEnv != nullptr && ctx->cloenv == browseEnv)
-         {
-            foundDepth = currentDepth;
-            foundEnv = ctx->cloenv;
-            // continue -- we want the outermost match
-         }
-         else if (depth > 0 && currentDepth >= depth)
-         {
-            foundDepth = currentDepth;
-            foundEnv = ctx->cloenv;
-            break;
-         }
-      }
-   }
+   int foundDepth = r::sexp::asInteger(VECTOR_ELT(resultSEXP, 0));
+   SEXP foundEnv = VECTOR_ELT(resultSEXP, 1);
 
    if (pDepth)
       *pDepth = foundDepth;
    if (pEnv)
-      *pEnv = foundEnv ? foundEnv : R_NilValue;
+      *pEnv = foundEnv;
 
    return foundDepth > 0;
 }
@@ -163,7 +153,7 @@ bool inDebugHiddenContext()
          // If we find a debugger internal function before any user function,
          // hide it from the user callstack.
          SEXP hideFlag = Rf_getAttrib(ctx->callfun, Rf_install("hideFromDebugger"));
-         if (TYPEOF(hideFlag) != NILSXP && Rf_asLogical(hideFlag))
+         if (TYPEOF(hideFlag) != NILSXP && Rf_asLogical(hideFlag) == TRUE)
             return true;
 
          // If we find a function with source refs (user code), don't hide

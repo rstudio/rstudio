@@ -37,6 +37,10 @@ bool hasFunctionContext();
 // Returns true when a browser context exists anywhere on the stack.
 bool hasBrowserContext();
 
+// Returns the closure environment of the first browser context on the stack,
+// or R_NilValue if there is no browser context.
+SEXP browserContextEnv();
+
 // Returns true when we are in a "browse" debugging state: a browser context
 // AND at least one function context exist on the stack. This distinguishes
 // interactive debugging from browsing at the top level.
@@ -46,13 +50,14 @@ bool inActiveBrowseContext();
 //
 // When depth == 0 (BROWSER_FUNCTION): finds the outermost function context
 // whose cloenv matches the browser context's cloenv. Sets *pDepth to the
-// inner-to-outer depth and *pEnv to the closure environment.
+// inner-to-outer depth and *pEnv to the closure environment. The browser
+// context's environment is read from the context stack when `browsing` is true.
 //
 // When depth > 0: finds the function context at the given inner-to-outer
 // depth. Sets *pEnv to its closure environment.
 //
 // Returns false if no matching context was found.
-bool getFunctionContext(int depth, int* pDepth, SEXP* pEnv);
+bool getFunctionContext(int depth, bool browsing, int* pDepth, SEXP* pEnv);
 
 // Check if the topmost function on the stack is a debugger-internal
 // function (has the "hideFromDebugger" attribute).
