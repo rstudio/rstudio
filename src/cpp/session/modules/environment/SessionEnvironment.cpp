@@ -438,11 +438,17 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
       lineDebugStateSEXP = r::sexp::create(builder, &protect);
    }
 
-   // Call .rs.callFrames(targetDepth, lineDebugState)
+   // Get the current srcref for the innermost context (set by R's evaluator
+   // during debug stepping). This is not accessible from R's sys.*() functions,
+   // so we pass it in.
+   SEXP currentSrcref = R_GetCurrentSrcref(NA_INTEGER);
+
+   // Call .rs.callFrames(targetDepth, lineDebugState, currentSrcref)
    SEXP resultSEXP = R_NilValue;
    Error error = r::exec::RFunction(".rs.callFrames")
          .addParam(depth)
          .addParam(lineDebugStateSEXP)
+         .addParam(currentSrcref)
          .call(&resultSEXP, &protect);
 
    if (error)

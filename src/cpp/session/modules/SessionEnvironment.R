@@ -1115,7 +1115,8 @@
 #   - src_context_callfun: the source context's callfun at targetDepth (or NULL)
 #   - src_context_call: the source context's call at targetDepth (or NULL)
 .rs.addFunction("callFrames", function(targetDepth = 0L,
-                                       lineDebugState = NULL)
+                                       lineDebugState = NULL,
+                                       currentSrcref = NULL)
 {
    # Exclude our own frame(s) from the stack. When called from C++ via
    # r::exec::RFunction, our frame is at sys.nframe(). We want only the
@@ -1199,20 +1200,30 @@
       if (is.null(shinyLabel)) shinyLabel <- ""
 
       # Source reference resolution:
-      # First check if there's a mapped srcref from the envSrcrefMap (i.e.,
-      # where this function was called from in its caller's source).
-      envKey <- format(cloenv)
-      mapped <- envSrcrefMap[[envKey]]
-      if (!is.null(mapped))
+      # For the innermost frame (contextDepth == 1), use the runtime srcref
+      # passed from C++ (R_GetCurrentSrcref), which reflects the evaluator's
+      # current position inside the function. For outer frames, use the
+      # envSrcrefMap which maps each frame's env to the srcref of the call
+      # made from that frame (set by the next-inner frame's call srcref).
+      if (contextDepth == 1L && .rs.isValidSrcref(currentSrcref))
       {
-         srcContext <- mapped
+         srcContext <- list(srcref = currentSrcref, callfun = callfun, call = call)
       }
       else
       {
-         # Fall back to the srcref on this context's own call
-         callSrcref <- attr(call, "srcref", exact = TRUE)
-         resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
-         srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+         envKey <- format(cloenv)
+         mapped <- envSrcrefMap[[envKey]]
+         if (!is.null(mapped))
+         {
+            srcContext <- mapped
+         }
+         else
+         {
+            # Fall back to the srcref on this context's own call
+            callSrcref <- attr(call, "srcref", exact = TRUE)
+            resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
+            srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+         }
       }
 
       srcref <- srcContext$srcref
