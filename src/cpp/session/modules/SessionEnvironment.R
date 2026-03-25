@@ -1038,6 +1038,107 @@
    .rs.objectSize(x)
 })
 
+# Find the function context for the browser, or at a given depth.
+#
+# When depth == 0 (BROWSER_FUNCTION), finds the outermost function whose
+# execution environment matches the browser's environment (from C++).
+# When depth > 0, finds the function at the given depth (inner→outer numbering).
+#
+# Returns list(depth, env) where depth is the inner→outer depth and
+# env is the function's closure environment, or list(0, globalenv()) if
+# no matching context was found.
+.rs.addFunction("getFunctionContext", function(depth = 0L)
+{
+   nframe <- sys.nframe() - 1L  # skip our own frame
+   if (nframe < 1L)
+      return(list(depth = 0L, env = globalenv()))
+
+   # Determine the browser's environment. We try two sources:
+   # 1. The C++ tracked s_browserEnv (handles promise forcing)
+   # 2. Walk sys.frames looking for a debugged function
+   browserEnv <- .Call("rs_getBrowserEnv", PACKAGE = "(embedding)")
+
+   if (is.null(browserEnv) || identical(browserEnv, globalenv()))
+   {
+      # s_browserEnv wasn't set yet (first entry into debug), try
+      # to detect it from the call stack
+      isBrowsing <- tryCatch(
+         { browserText(1L); TRUE },
+         error = function(e) FALSE
+      )
+
+      if (isBrowsing)
+      {
+         for (j in rev(seq_len(nframe)))
+         {
+            if (isdebugged(sys.function(j)))
+            {
+               browserEnv <- sys.frame(j)
+               break
+            }
+         }
+      }
+   }
+
+   foundDepth <- 0L
+   foundEnv <- globalenv()
+
+   # Iterate inner-to-outer (matching C++ RCNTXT convention)
+   contextDepth <- 0L
+   for (i in rev(seq_len(nframe)))
+   {
+      contextDepth <- contextDepth + 1L
+      cloenv <- sys.frame(i)
+
+      if (depth == 0L)
+      {
+         # BROWSER_FUNCTION mode: find the outermost function whose
+         # environment matches the browser's environment
+         if (!is.null(browserEnv) && identical(cloenv, browserEnv))
+         {
+            foundDepth <- contextDepth
+            foundEnv <- cloenv
+            # keep going -- we want the outermost match
+         }
+      }
+      else if (contextDepth >= depth)
+      {
+         foundDepth <- contextDepth
+         foundEnv <- cloenv
+         break
+      }
+   }
+
+   list(depth = foundDepth, env = foundEnv)
+})
+
+# Check if the topmost function on the call stack has the hideFromDebugger
+# attribute, indicating it's a debugger-internal function.
+.rs.addFunction("inDebugHiddenContext", function()
+{
+   nframe <- sys.nframe() - 1L  # skip our own frame
+   if (nframe < 1L)
+      return(FALSE)
+
+   # Walk inner-to-outer looking for the first function context
+   for (i in rev(seq_len(nframe)))
+   {
+      fn <- sys.function(i)
+
+      # If we find a debugger internal function before any user function,
+      # hide it from the user callstack.
+      if (isTRUE(attr(fn, "hideFromDebugger", exact = TRUE)))
+         return(TRUE)
+
+      # If we find a function with source refs (user code), don't hide
+      origFn <- .rs.originalFunction(fn)
+      if (!is.null(attr(origFn, "srcref", exact = TRUE)))
+         return(FALSE)
+   }
+
+   FALSE
+})
+
 # Helper: get the "original" function, unwrapping S4 trace wrappers
 .rs.addFunction("originalFunction", function(fn)
 {
@@ -1136,9 +1237,11 @@
    # -- Phase 1: collect srcref-to-environment mapping --
    # For each frame i with a valid srcref, map it to the parent frame's
    # environment. This tells us "where in the parent's code was frame i called?"
+   # We iterate inner-to-outer so the first-match-wins policy selects the
+   # innermost (most current/specific) srcref, matching the old C++ behavior.
    envSrcrefMap <- new.env(parent = emptyenv())
 
-   for (i in seq_len(nframe))
+   for (i in rev(seq_len(nframe)))
    {
       callSrcref <- attr(calls[[i]], "srcref", exact = TRUE)
       callfun <- sys.function(i)
@@ -1175,6 +1278,7 @@
 
    resultContext <- NULL
    resultSrcContext <- NULL
+   updatedLastDebugLine <- NULL
 
    for (i in rev(seq_len(nframe)))
    {
@@ -1261,8 +1365,9 @@
          info <- "_rs_sourceinfo"
          attr(info, "_rs_callfun") <- origFun
 
-         if (!is.null(browserCloenv) && !browserUsed &&
-             identical(cloenv, browserCloenv))
+         isBrowserFrame <- !is.null(browserCloenv) && !browserUsed &&
+             identical(cloenv, browserCloenv)
+         if (isBrowserFrame)
          {
             browserUsed <- TRUE
             if (!is.null(lineDebugState))
@@ -1290,11 +1395,10 @@
             error = function(e) c(0L, 0L, 0L, 0L, 0L, 0L)
          )
 
-         if (!is.null(lineDebugState) && !browserUsed &&
-             !is.null(browserCloenv) && identical(cloenv, browserCloenv) &&
-             .rs.isValidSrcref(simSrcref))
+         # Update lastDebugLine for the browser frame (propagated back to C++)
+         if (isBrowserFrame && .rs.isValidSrcref(simSrcref))
          {
-            lineDebugState$lastDebugLine <- simSrcref[1L] - 1L
+            updatedLastDebugLine <- simSrcref[1L] - 1L
          }
 
          srcrefInfo <- .rs.srcrefData(simSrcref)
@@ -1351,6 +1455,7 @@
    list(
       frames             = frames,
       context            = resultContext,
-      src_context        = resultSrcContext
+      src_context        = resultSrcContext,
+      lastDebugLine      = updatedLastDebugLine
    )
 })

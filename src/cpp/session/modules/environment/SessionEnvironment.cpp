@@ -29,8 +29,6 @@
 #include <core/system/LibraryLoader.hpp>
 
 #include <r/RContext.hpp>
-#include <r/RCntxt.hpp>
-#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RHelpers.hpp>
 #include <r/RInterface.hpp>
@@ -493,6 +491,17 @@ CallFrameResult callFramesFromR(int depth, LineDebugState* pLineDebugState)
       r::sexp::getNamedListSEXP(srcContextSEXP, "call", &result.srcContextCall);
    }
 
+   // Propagate lastDebugLine update back to C++ (for simulated srcref state)
+   if (pLineDebugState != nullptr)
+   {
+      int updatedLine = -1;
+      error = r::sexp::getNamedListElement(resultSEXP, "lastDebugLine", &updatedLine);
+      if (!error && updatedLine >= 0)
+      {
+         pLineDebugState->lastDebugLine = updatedLine;
+      }
+   }
+
    return result;
 }
 
@@ -532,7 +541,7 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
 // Sets an environment by name. Used when the environment can be reliably
 // identified by its name (e.g. package environments).
 Error setEnvironmentName(int contextDepth,
-                         const r::context::RCntxt &context,
+                         SEXP contextEnv,
                          std::string environmentName)
 {
    SEXP environment = R_GlobalEnv;
@@ -556,8 +565,8 @@ Error setEnvironmentName(int contextDepth,
       // This would be better wrapped in an R function, but this code may
       // run during session init when tools:rstudio isn't yet attached to the
       // search path.
-      SEXP env = contextDepth > 0 && context ?
-                        context.cloenv() :
+      SEXP env = contextDepth > 0 && contextEnv != R_NilValue ?
+                        contextEnv :
                         R_GlobalEnv;
       std::string candidateEnv;
       Error error;
@@ -586,7 +595,7 @@ Error setEnvironmentName(int contextDepth,
 }
 
 Error setEnvironment(boost::shared_ptr<int> pContextDepth,
-                     boost::shared_ptr<r::context::RCntxt> pCurrentContext,
+                     boost::shared_ptr<SEXP> pCurrentEnv,
                      const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -600,7 +609,7 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
    if (s_environmentLanguage == kEnvironmentLanguageR)
    {
       error = setEnvironmentName(*pContextDepth,
-                                 *pCurrentContext,
+                                 *pCurrentEnv,
                                  environmentName);
    }
    else if (s_environmentLanguage == kEnvironmentLanguagePython)
@@ -900,10 +909,18 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    if (error)
       return error;
 
-   // set state for the new depth
+   // set state for the new depth -- use R helper to find the environment
    *pContextDepth = requestedDepth;
-   SEXP env = nullptr;
-   r::context::getFunctionContext(requestedDepth, nullptr, &env);
+   SEXP env = R_GlobalEnv;
+   {
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      Error fcError = r::exec::RFunction(".rs.getFunctionContext")
+            .addParam(requestedDepth)
+            .call(&resultSEXP, &protect);
+      if (!fcError)
+         r::sexp::getNamedListSEXP(resultSEXP, "env", &env);
+   }
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1029,15 +1046,14 @@ SEXP inferDebugSrcrefs(
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<LineDebugState> pLineDebugState,
                      boost::shared_ptr<bool> pCapturingDebugOutput,
-                     boost::shared_ptr<r::context::RCntxt> pCurrentContext)
+                     boost::shared_ptr<SEXP> pCurrentEnv)
 {
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
    std::lock_guard<std::recursive_mutex> guard(s_consoleMutex);
    
    int depth = 0;
-   SEXP environmentTop = nullptr;
-   r::context::RCntxt context;
+   SEXP environmentTop = R_GlobalEnv;
 
    // End debug output capture every time a console prompt occurs
    *pCapturingDebugOutput = false;
@@ -1051,22 +1067,26 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    s_browserActive = r::context::inActiveBrowseContext();
    if (*pContextDepth > 0 && !s_browserActive)
    {
-      context = r::context::globalContext();
       environmentTop = R_GlobalEnv;
       s_browserEnv = R_NilValue;
    }
    else
    {
-      // If we're not currently debugging, look for user code (we prefer to
-      // show the user their own code on entering debug), but once debugging,
-      // allow the user to explore other code.
-      context = r::context::getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
+      // Use R helper to find the browser function context
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.getFunctionContext").call(&resultSEXP, &protect);
+      if (!error)
+      {
+         r::sexp::getNamedListElement(resultSEXP, "depth", &depth);
+         r::sexp::getNamedListSEXP(resultSEXP, "env", &environmentTop);
+      }
       s_browserEnv = environmentTop;
    }
    
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
-       context != *pCurrentContext)
+       environmentTop != *pCurrentEnv)
    {
       // if we appear to be switching into debug mode, make sure there's a
       // browser call somewhere on the stack. if there isn't, then we're
@@ -1087,15 +1107,21 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // start monitoring the environment at the new depth
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
-      *pCurrentContext = context;
+      *pCurrentEnv = environmentTop;
       enqueContextDepthChangedEvent(true, depth, pLineDebugState.get());
    }
 
    // if we're debugging and stayed in the same frame, update the line number
-   else if (depth > 0 && !r::context::inDebugHiddenContext())
+   else if (depth > 0)
    {
-      SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
-      enqueBrowserLineChangedEvent(srcref);
+      // Check if the top of the stack is a debugger-internal function
+      bool debugHidden = false;
+      r::exec::RFunction(".rs.inDebugHiddenContext").call(&debugHidden);
+      if (!debugHidden)
+      {
+         SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
+         enqueBrowserLineChangedEvent(srcref);
+      }
    }
    
 }
@@ -1127,7 +1153,7 @@ void onBeforeExecute()
 }
 
 Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
-                          boost::shared_ptr<r::context::RCntxt> pCurrentContext,
+                          boost::shared_ptr<SEXP> pCurrentEnv,
                           const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -1170,7 +1196,7 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
       // If looking at a non-toplevel context, start from there; otherwise, start
       // from the global environment.
       SEXP env = *pContextDepth > 0 ?
-               pCurrentContext->cloenv() :
+               *pCurrentEnv :
                R_GlobalEnv;
       pResponse->setResult(environmentNames(env));
    }
@@ -1189,9 +1215,9 @@ void initEnvironmentMonitoring()
 
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
-   int contextDepth = 0;
-   r::context::RCntxt context = r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
-   if (contextDepth == 0 || !r::context::inActiveBrowseContext())
+   // Note: inActiveBrowseContext() uses only the lightweight RContext.hpp and
+   // is safe to call before R tools are sourced.
+   if (!r::context::inActiveBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
@@ -1201,7 +1227,7 @@ void initEnvironmentMonitoring()
          // It's possible for this to fail if the environment we were
          // monitoring doesn't exist any more. If this is the case, reset
          // the monitor to the global environment.
-         Error error = setEnvironmentName(contextDepth, context, envName);
+         Error error = setEnvironmentName(0, R_GlobalEnv, envName);
          if (error)
          {
             persistentState().setActiveEnvironmentName("R_GlobalEnv");
@@ -1302,7 +1328,7 @@ Error getObjectContents(const json::JsonRpcRequest& request,
 // context depth and environment.
 Error requeryContext(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<LineDebugState> pLineDebugState,
-                     boost::shared_ptr<r::context::RCntxt> pCurrentContext,
+                     boost::shared_ptr<SEXP> pCurrentEnv,
                      const json::JsonRpcRequest&,
                      json::JsonRpcResponse*)
 {
@@ -1310,7 +1336,7 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
             pContextDepth,
             pLineDebugState,
             boost::make_shared<bool>(false),
-            pCurrentContext);
+            pCurrentEnv);
    
    return Success();
 }
@@ -1425,8 +1451,14 @@ json::Value environmentStateAsJson()
       return pythonEnvironmentStateData(s_monitoredPythonModule);
    
    int contextDepth = 0;
-   r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
-   
+   {
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.getFunctionContext").call(&resultSEXP, &protect);
+      if (!error)
+         r::sexp::getNamedListElement(resultSEXP, "depth", &contextDepth);
+   }
+
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inActiveBrowseContext())
@@ -1806,8 +1838,8 @@ Error initialize()
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
    
-   boost::shared_ptr<r::context::RCntxt> pCurrentContext =
-         boost::make_shared<r::context::RCntxt>(r::context::globalContext());
+   boost::shared_ptr<SEXP> pCurrentEnv =
+         boost::make_shared<SEXP>(R_GlobalEnv);
    
    // get reference to INTEGER_OR_NULL if provided by this version of R
    {
@@ -1845,7 +1877,7 @@ Error initialize()
                                          pContextDepth,
                                          pLineDebugState,
                                          pCapturingDebugOutput,
-                                         pCurrentContext));
+                                         pCurrentEnv));
    events().onBeforeExecute.connect(onBeforeExecute);
    events().onConsoleOutput.connect(bind(onConsoleOutput,
                                          pLineDebugState,
@@ -1860,14 +1892,14 @@ Error initialize()
          boost::bind(getEnvironmentState, pContextDepth, pLineDebugState,
                      _1, _2);
    json::JsonRpcFunction getEnvNames =
-         boost::bind(getEnvironmentNames, pContextDepth, pCurrentContext,
+         boost::bind(getEnvironmentNames, pContextDepth, pCurrentEnv,
                      _1, _2);
    json::JsonRpcFunction setEnvName =
-         boost::bind(setEnvironment, pContextDepth, pCurrentContext,
+         boost::bind(setEnvironment, pContextDepth, pCurrentEnv,
                      _1, _2);
    json::JsonRpcFunction requeryCtx =
          boost::bind(requeryContext, pContextDepth, pLineDebugState,
-                     pCurrentContext, _1, _2);
+                     pCurrentEnv, _1, _2);
 
    initEnvironmentMonitoring();
 
