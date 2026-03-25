@@ -1,7 +1,7 @@
 /*
  * RContext.hpp
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2026 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -52,6 +52,8 @@ enum RContextType
 };
 
 // Get the global context as a minimal RContext pointer.
+// R_GlobalContext is initialized early in R startup, before any RStudio
+// code runs, so the return value is never null.
 RContext* contextStack();
 
 

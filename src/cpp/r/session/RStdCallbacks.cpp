@@ -335,7 +335,11 @@ int RReadConsole(const char *pmt,
          // handle EOF. note that we only want to return 0 here if we
          // know that the session is waiting for input; otherwise we'll
          // end up quitting R altogether! this effectively implies that
-         // EOF is a no-op at the top level, which seems to be fine
+         // EOF is a no-op at the top level, which seems to be fine.
+         //
+         // note: the old check was 'evaldepth() != 0', which is equivalent
+         // here -- any time RReadConsole is called from a nested eval,
+         // the context stack will be non-toplevel.
          else if (consoleInput.isEof() &&
                   !r::context::isTopLevelContext())
          {
