@@ -297,6 +297,9 @@ Error initLog()
    if (error)
       return error;
 
+   // Set proxy trace logging based on logging.conf option
+   log::setProxyTraceEnabled(s_logOptions->traceProxyEnabled());
+
    initializeLogWriters();
 
    return Success();

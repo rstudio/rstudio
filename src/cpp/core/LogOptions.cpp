@@ -43,6 +43,7 @@ namespace log {
 #define kMaxRotations      "max-rotations"
 #define kDeleteDays        "delete-days"
 #define kWarnSyslog        "warn-syslog"
+#define kTraceProxyEnabled "trace-proxy-enabled"
 #define kLogConfFile       "logging.conf"
 
 #define kLogLevelEnvVar    "RS_LOG_LEVEL"
@@ -280,6 +281,9 @@ struct LogDirVisitor : boost::static_visitor<FilePath>
 
 } // anonymous namespace
 
+// Global flag for proxy trace logging
+static bool s_proxyTraceEnabled = false;
+
 
 LogOptions::LogOptions(const std::string& executableName) :
    executableName_(executableName),
@@ -326,7 +330,8 @@ void LogOptions::initProfile()
    profile_.addParams(
       kLogLevel, defaultLogLevel_,
       kLoggerType, defaultLoggerType_,
-      kLogMessageFormat, defaultMessageFormatType_);
+      kLogMessageFormat, defaultMessageFormatType_,
+      kTraceProxyEnabled, false);
 
    // add logger-specific params
    LoggerOptionsVisitor visitor(profile_);
@@ -426,6 +431,15 @@ LogLevel LogOptions::logLevel(const std::string& loggerName) const
 LogLevel LogOptions::lowestLogLevel() const
 {
    return lowestLogLevel_;
+}
+
+bool LogOptions::traceProxyEnabled() const
+{
+   std::vector<ConfigProfile::Level> levels = {{ kBaseLevel,   std::string() },
+                                               { kBinaryLevel, executableName_ }};
+   bool enabled = false;
+   profile_.getParam(kTraceProxyEnabled, &enabled, levels);
+   return enabled;
 }
 
 LoggerType LogOptions::loggerType(const std::string& loggerName) const
@@ -536,6 +550,16 @@ void forwardLogOptionsEnvVars(core::system::Options* pEnvironment)
                                  kLogFormatEnvVar,   kLogDirEnvVar,
                                  kLogConfEnvVar},
                                 pEnvironment);
+}
+
+bool isProxyTraceEnabled()
+{
+   return s_proxyTraceEnabled;
+}
+
+void setProxyTraceEnabled(bool enabled)
+{
+   s_proxyTraceEnabled = enabled;
 }
 
 } // namespace log
