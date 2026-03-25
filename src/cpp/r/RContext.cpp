@@ -16,6 +16,8 @@
 #include <r/RContext.hpp>
 #include <r/RInterface.hpp>
 
+#include <setjmp.h>
+
 #define R_NO_REMAP
 #include <Rinternals.h>
 
@@ -24,6 +26,42 @@ namespace r {
 namespace context {
 
 namespace {
+
+// View of an R context covering the stable prefix of the RCNTXT struct.
+// The jmp_buf field is platform-dependent in size but fixed for a given build.
+struct RContext
+{
+   RContext* nextcontext;
+   int callflag;
+#ifdef _WIN32
+   struct { jmp_buf buf; int sigmask; int savedmask; } cjmpbuf;
+#else
+   sigjmp_buf cjmpbuf;
+#endif
+   int cstacktop;
+   int evaldepth;
+   SEXP promargs;
+   SEXP callfun;
+   SEXP sysparent;
+   SEXP call;
+   SEXP cloenv;
+};
+
+// Context type flags (mirrored from Defn.h)
+enum RContextType
+{
+   CTXT_TOPLEVEL = 0,
+   CTXT_NEXT     = 1,
+   CTXT_BREAK    = 2,
+   CTXT_LOOP     = 3,
+   CTXT_FUNCTION = 4,
+   CTXT_CCODE    = 8,
+   CTXT_RETURN   = 12,
+   CTXT_BROWSER  = 16,
+   CTXT_GENERIC  = 20,
+   CTXT_RESTART  = 32,
+   CTXT_BUILTIN  = 64
+};
 
 RContext* globalContext()
 {
