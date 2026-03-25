@@ -70,6 +70,9 @@ public:
    // gets the lowest log level defined
    LogLevel lowestLogLevel() const;
 
+   // gets whether proxy trace logging is enabled
+   bool traceProxyEnabled() const;
+
    // gets the current logger type
    LoggerType loggerType(const std::string& loggerName = std::string()) const;
 
@@ -102,6 +105,13 @@ private:
 };
 
 void forwardLogOptionsEnvVars(core::system::Options* pEnvironment);
+
+// Global proxy trace logging control
+// These are set based on the trace-proxy-enabled option in logging.conf
+// When enabled, bind address resolution details are logged at TRACE level
+// Set should only be called during logging setup before any threads are spawned
+bool isProxyTraceEnabled();
+void setProxyTraceEnabled(bool enabled);
 
 } // namespace log
 } // namespace core
