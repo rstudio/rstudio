@@ -28,6 +28,90 @@ RContext* globalContext()
    return reinterpret_cast<RContext*>(R_GlobalContext);
 }
 
+bool isTopLevelContext()
+{
+   return globalContext()->callflag == CTXT_TOPLEVEL;
+}
+
+bool hasFunctionContext()
+{
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+      if (ctx->callflag & CTXT_FUNCTION)
+         return true;
+   return false;
+}
+
+bool hasBrowserContext()
+{
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+      if (ctx->callflag & CTXT_BROWSER)
+         return true;
+   return false;
+}
+
+bool inActiveBrowseContext()
+{
+   bool foundBrowser = false;
+   bool foundFunction = false;
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+   {
+      if ((ctx->callflag & CTXT_BROWSER) && !(ctx->callflag & CTXT_FUNCTION))
+         foundBrowser = true;
+      else if (ctx->callflag & CTXT_FUNCTION)
+         foundFunction = true;
+      if (foundBrowser && foundFunction)
+         return true;
+   }
+   return false;
+}
+
+bool getFunctionContext(int depth, int* pDepth, SEXP* pEnv)
+{
+   int currentDepth = 0;
+   int foundDepth = 0;
+   SEXP foundEnv = nullptr;
+
+   // Find the browser context's cloenv (for depth == 0 mode)
+   SEXP browseEnv = nullptr;
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+   {
+      if ((ctx->callflag & CTXT_BROWSER) && browseEnv == nullptr)
+      {
+         browseEnv = ctx->cloenv;
+         break;
+      }
+   }
+
+   // Walk the context stack looking for function contexts
+   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
+   {
+      if (ctx->callflag & CTXT_FUNCTION)
+      {
+         currentDepth++;
+
+         if (depth == 0 && browseEnv != nullptr && ctx->cloenv == browseEnv)
+         {
+            foundDepth = currentDepth;
+            foundEnv = ctx->cloenv;
+            // continue -- we want the outermost match
+         }
+         else if (depth > 0 && currentDepth >= depth)
+         {
+            foundDepth = currentDepth;
+            foundEnv = ctx->cloenv;
+            break;
+         }
+      }
+   }
+
+   if (pDepth)
+      *pDepth = foundDepth;
+   if (pEnv)
+      *pEnv = foundEnv ? foundEnv : R_NilValue;
+
+   return foundDepth > 0;
+}
+
 bool inDebugHiddenContext()
 {
    for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)

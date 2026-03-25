@@ -19,14 +19,11 @@
 #include <setjmp.h>
 
 typedef struct SEXPREC* SEXP;
-extern "C" SEXP R_NilValue;
 
 // Lightweight context introspection utilities that depend only on the stable
 // prefix of the RCNTXT struct (nextcontext through cloenv). These fields have
 // been at the same offset in every supported version of R, and are safe to
 // access by casting R_GlobalContext to the struct below.
-//
-// Functions using only {nextcontext, callflag} are async-signal safe.
 
 namespace rstudio {
 namespace r {
@@ -69,56 +66,25 @@ enum RContextType
    CTXT_BUILTIN  = 64
 };
 
-// Get the global context as a minimal RContext pointer.
-// R_GlobalContext is initialized early in R startup, before any RStudio
-// code runs, so the return value is never null.
+// Get the global context as an RContext pointer.
 RContext* globalContext();
-
 
 // Returns true when R is at the top-level prompt with no evaluation contexts
 // on the stack (i.e. the context stack is empty).
-inline bool isTopLevelContext()
-{
-   return globalContext()->callflag == CTXT_TOPLEVEL;
-}
+bool isTopLevelContext();
 
 // Returns true when R has one or more function-call contexts on the stack.
 // This indicates R is actively executing code (including internal RStudio code).
-inline bool hasFunctionContext()
-{
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-      if (ctx->callflag & CTXT_FUNCTION)
-         return true;
-   return false;
-}
+// NOTE: async-signal safe (only uses nextcontext + callflag).
+bool hasFunctionContext();
 
 // Returns true when a browser context exists anywhere on the stack.
-inline bool hasBrowserContext()
-{
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-      if (ctx->callflag & CTXT_BROWSER)
-         return true;
-   return false;
-}
+bool hasBrowserContext();
 
 // Returns true when we are in a "browse" debugging state: a browser context
 // AND at least one function context exist on the stack. This distinguishes
 // interactive debugging from browsing at the top level.
-inline bool inActiveBrowseContext()
-{
-   bool foundBrowser = false;
-   bool foundFunction = false;
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if ((ctx->callflag & CTXT_BROWSER) && !(ctx->callflag & CTXT_FUNCTION))
-         foundBrowser = true;
-      else if (ctx->callflag & CTXT_FUNCTION)
-         foundFunction = true;
-      if (foundBrowser && foundFunction)
-         return true;
-   }
-   return false;
-}
+bool inActiveBrowseContext();
 
 // Find the function context associated with the browser, or at a given depth.
 //
@@ -130,52 +96,7 @@ inline bool inActiveBrowseContext()
 // depth. Sets *pEnv to its closure environment.
 //
 // Returns false if no matching context was found.
-inline bool getFunctionContext(int depth, int* pDepth, SEXP* pEnv)
-{
-   int currentDepth = 0;
-   int foundDepth = 0;
-   SEXP foundEnv = nullptr;
-
-   // Find the browser context's cloenv (for depth == 0 mode)
-   SEXP browseEnv = nullptr;
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if ((ctx->callflag & CTXT_BROWSER) && browseEnv == nullptr)
-      {
-         browseEnv = ctx->cloenv;
-         break;
-      }
-   }
-
-   // Walk the context stack looking for function contexts
-   for (auto* ctx = globalContext(); ctx != nullptr; ctx = ctx->nextcontext)
-   {
-      if (ctx->callflag & CTXT_FUNCTION)
-      {
-         currentDepth++;
-
-         if (depth == 0 && browseEnv != nullptr && ctx->cloenv == browseEnv)
-         {
-            foundDepth = currentDepth;
-            foundEnv = ctx->cloenv;
-            // continue -- we want the outermost match
-         }
-         else if (depth > 0 && currentDepth >= depth)
-         {
-            foundDepth = currentDepth;
-            foundEnv = ctx->cloenv;
-            break;
-         }
-      }
-   }
-
-   if (pDepth)
-      *pDepth = foundDepth;
-   if (pEnv)
-      *pEnv = foundEnv ? foundEnv : R_NilValue;
-
-   return foundDepth > 0;
-}
+bool getFunctionContext(int depth, int* pDepth, SEXP* pEnv);
 
 // Check if the topmost function on the stack is a debugger-internal
 // function (has the "hideFromDebugger" attribute).
