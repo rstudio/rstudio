@@ -2107,7 +2107,7 @@ std::string resolveBindAddressForAddresses(
 {
    const bool traceProxy = log::isProxyTraceEnabled();
    std::string threadId;
-   if (traceProxy)
+   if (traceProxy && log::isLogLevel(log::LogLevel::TRACE))
    {
       threadId = safe_convert::numberToString(boost::this_thread::get_id());
       std::vector<std::string> addrStrings;

@@ -559,6 +559,8 @@ bool isProxyTraceEnabled()
 
 void setProxyTraceEnabled(bool enabled)
 {
+   // No mutex needed since this will only be called in the 
+   // setup phase of logging before any threads are spawned
    s_proxyTraceEnabled = enabled;
 }
 
