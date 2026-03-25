@@ -54,6 +54,7 @@ enum RContextType
 // Get the global context as a minimal RContext pointer.
 RContext* contextStack();
 
+
 // Returns true when R is at the top-level prompt with no evaluation contexts
 // on the stack (i.e. the context stack is empty).
 inline bool isTopLevelContext()

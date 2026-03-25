@@ -1037,3 +1037,309 @@
 
    .rs.objectSize(x)
 })
+
+# Helper: get the "original" function, unwrapping S4 trace wrappers
+.rs.addFunction("originalFunction", function(fn)
+{
+   if (isS4(fn))
+   {
+      orig <- attr(fn, "original")
+      if (!is.null(orig)) return(orig)
+   }
+   fn
+})
+
+# Helper: check if a srcref is valid (not NULL, not a symbol like <in-bc-interp>)
+.rs.addFunction("isValidSrcref", function(srcref)
+{
+   !is.null(srcref) && is.integer(srcref)
+})
+
+# Helper: resolve source references, handling byte-code compiled contexts.
+# For byte-compiled code, the srcref on the call may be the symbol
+# <in-bc-interp> rather than a real srcref. In that case, we try to find
+# the real srcref by matching the function against the call stack.
+.rs.addFunction("resolveCallSrcref", function(callSrcref, callfun)
+{
+   if (.rs.isValidSrcref(callSrcref))
+      return(callSrcref)
+
+   # check for byte-code srcref (a symbol rather than integer vector)
+   if (!is.symbol(callSrcref))
+      return(NULL)
+
+   # try to resolve via .rs.resolveContextSourceRefs
+   tryCatch(
+      .rs.resolveContextSourceRefs(callfun),
+      error = function(e) NULL
+   )
+})
+
+# Helper: extract source reference fields as a named list
+.rs.addFunction("srcrefData", function(srcref)
+{
+   if (.rs.isValidSrcref(srcref))
+   {
+      list(
+         line_number          = srcref[1L],
+         end_line_number      = srcref[3L],
+         character_number     = srcref[5L],
+         end_character_number = srcref[6L]
+      )
+   }
+   else
+   {
+      list(
+         line_number          = 0L,
+         end_line_number      = 0L,
+         character_number     = 0L,
+         end_character_number = 0L
+      )
+   }
+})
+
+# Build call frame information for the debugger using sys.*() functions.
+#
+# This replaces the C++ callFramesAsJson() which walked the RCNTXT linked list.
+#
+# @param targetDepth The function-context depth of interest (1-based).
+#   The function/source context at this depth are returned separately for
+#   further introspection by the caller.
+# @param lineDebugState A list with 'lastDebugText' and 'lastDebugLine',
+#   or NULL if not available.
+#
+# @return A list with components:
+#   - frames: a list of frame descriptor lists (one per function context)
+#   - context_callfun: the callfun at targetDepth (or NULL)
+#   - context_cloenv: the cloenv at targetDepth (or NULL)
+#   - src_context_callfun: the source context's callfun at targetDepth (or NULL)
+#   - src_context_call: the source context's call at targetDepth (or NULL)
+.rs.addFunction("callFrames", function(targetDepth = 0L,
+                                       lineDebugState = NULL)
+{
+   # Exclude our own frame(s) from the stack. When called from C++ via
+   # r::exec::RFunction, our frame is at sys.nframe(). We want only the
+   # frames that existed before this call.
+   ownFrame <- sys.nframe()
+   nframe <- ownFrame - 1L
+
+   if (nframe < 1L)
+   {
+      return(list(frames = list(), context = NULL, src_context = NULL))
+   }
+
+   # sys.parents() and sys.calls() include our own frame; we subset below.
+   parents <- sys.parents()[seq_len(nframe)]
+   calls   <- sys.calls()[seq_len(nframe)]
+
+   # -- Phase 1: collect srcref-to-environment mapping --
+   # For each frame i with a valid srcref, map it to the parent frame's
+   # environment. This tells us "where in the parent's code was frame i called?"
+   envSrcrefMap <- new.env(parent = emptyenv())
+
+   for (i in seq_len(nframe))
+   {
+      callSrcref <- attr(calls[[i]], "srcref", exact = TRUE)
+      callfun <- sys.function(i)
+      srcref <- .rs.resolveCallSrcref(callSrcref, callfun)
+      if (is.null(srcref))
+         next
+
+      p <- parents[i]
+      if (p == 0L)
+         next
+
+      parentEnv <- sys.frame(p)
+      key <- format(parentEnv)
+      if (is.null(envSrcrefMap[[key]]))
+      {
+         envSrcrefMap[[key]] <- list(srcref = srcref, callfun = callfun, call = calls[[i]])
+      }
+   }
+
+   # -- Phase 2: detect browser context --
+   # The browser environment is tracked by C++ (set from onConsolePrompt
+   # via getFunctionContext). We read it via .Call because during promise
+   # forcing, the browser's environment may not correspond to any
+   # sys.frame() visible from R.
+   browserCloenv <- .Call("rs_getBrowserEnv", PACKAGE = "(embedding)")
+   browserUsed <- FALSE
+
+   # -- Phase 3: build frame descriptors --
+   # Iterate from innermost to outermost frame to match the C++ convention
+   # where the RCNTXT walk starts at R_GlobalContext (innermost) and goes
+   # outward. This means depth 1 = innermost function context.
+   frames <- vector("list", nframe)
+   contextDepth <- 0L
+
+   resultContext <- NULL
+   resultSrcContext <- NULL
+
+   for (i in rev(seq_len(nframe)))
+   {
+      callfun <- sys.function(i)
+      cloenv  <- sys.frame(i)
+      call    <- calls[[i]]
+
+      contextDepth <- contextDepth + 1L
+      origFun <- .rs.originalFunction(callfun)
+
+      # Function name
+      functionName <- tryCatch(
+         .rs.functionNameFromCall(call),
+         error = function(e) ""
+      )
+
+      # Error handler / debug hidden checks (attribute-based)
+      isErrorHandler <- !is.null(attr(origFun, "errorHandlerType", exact = TRUE))
+      isHidden <- isTRUE(attr(origFun, "hideFromDebugger", exact = TRUE))
+
+      # Shiny function label
+      shinyLabel <- attr(origFun, "_rs_shinyDebugLabel", exact = TRUE)
+      if (is.null(shinyLabel)) shinyLabel <- ""
+
+      # Source reference resolution:
+      # First check if there's a mapped srcref from the envSrcrefMap (i.e.,
+      # where this function was called from in its caller's source).
+      envKey <- format(cloenv)
+      mapped <- envSrcrefMap[[envKey]]
+      if (!is.null(mapped))
+      {
+         srcContext <- mapped
+      }
+      else
+      {
+         # Fall back to the srcref on this context's own call
+         callSrcref <- attr(call, "srcref", exact = TRUE)
+         resolved <- .rs.resolveCallSrcref(callSrcref, callfun)
+         srcContext <- list(srcref = resolved, callfun = callfun, call = call)
+      }
+
+      srcref <- srcContext$srcref
+      isRealSrcref <- .rs.isValidSrcref(srcref)
+      isSourceEquiv <- identical(cloenv, globalenv()) && isRealSrcref
+
+      # File name from srcref
+      fileName <- ""
+      if (isRealSrcref)
+      {
+         fileName <- tryCatch(
+            .rs.sourceFileFromRef(srcref),
+            error = function(e) ""
+         )
+      }
+
+      aliasedFileName <- .rs.createAliasedPath(fileName)
+
+      # Source ref data (line/character numbers)
+      srcrefInfo <- .rs.srcrefData(srcref)
+
+      # Lines from source (for real srcrefs)
+      linesText <- ""
+      if (isRealSrcref)
+      {
+         linesText <- tryCatch(
+            .rs.readSrcrefLines(srcref, TRUE),
+            error = function(e) ""
+         )
+      }
+
+      # Simulated source refs (for code without real srcrefs)
+      if (!isRealSrcref)
+      {
+         info <- "_rs_sourceinfo"
+         attr(info, "_rs_callfun") <- origFun
+
+         if (!is.null(browserCloenv) && !browserUsed &&
+             identical(cloenv, browserCloenv))
+         {
+            browserUsed <- TRUE
+            if (!is.null(lineDebugState))
+            {
+               attr(info, "_rs_calltext") <- lineDebugState$lastDebugText
+               attr(info, "_rs_lastline") <- lineDebugState$lastDebugLine
+            }
+         }
+         else
+         {
+            # Use the call from the next innermost frame (if any) to locate
+            # our position within this function's deparsed body. This matches
+            # the old C++ code which iterated inner-to-outer and used
+            # prevContext.call() -- the inner frame's call tells us where
+            # in the outer function's code execution currently is.
+            innerIdx <- i + 1L
+            if (innerIdx <= nframe)
+            {
+               attr(info, "_rs_callobj") <- calls[[innerIdx]]
+            }
+         }
+
+         simSrcref <- tryCatch(
+            .rs.simulateSourceRefs(info),
+            error = function(e) c(0L, 0L, 0L, 0L, 0L, 0L)
+         )
+
+         if (!is.null(lineDebugState) && !browserUsed &&
+             !is.null(browserCloenv) && identical(cloenv, browserCloenv) &&
+             .rs.isValidSrcref(simSrcref))
+         {
+            lineDebugState$lastDebugLine <- simSrcref[1L] - 1L
+         }
+
+         srcrefInfo <- .rs.srcrefData(simSrcref)
+      }
+
+      # Call summary
+      callSummary <- tryCatch(
+         .rs.callSummary(call),
+         error = function(e) ""
+      )
+
+      frame <- c(
+         list(
+            context_depth          = contextDepth,
+            function_name          = functionName,
+            is_error_handler       = isErrorHandler,
+            is_hidden              = isHidden,
+            is_source_equiv        = isSourceEquiv,
+            file_name              = fileName,
+            aliased_file_name      = aliasedFileName,
+            real_sourceref         = isRealSrcref
+         ),
+         srcrefInfo,
+         list(
+            lines                  = linesText,
+            function_line_number   = 1L,
+            call_summary           = callSummary,
+            shiny_function_label   = shinyLabel
+         )
+      )
+
+      frames[[contextDepth]] <- .rs.scalarListFromList(frame)
+
+      # Track the context at the target depth
+      if (contextDepth == targetDepth)
+      {
+         resultContext <- list(
+            callfun        = callfun,
+            cloenv         = cloenv,
+            call           = call,
+            functionName   = functionName,
+            originalCallfun = origFun,
+            hasSourceRefs  = !is.null(attr(origFun, "srcref", exact = TRUE)),
+            callFunSourceRefs = attr(origFun, "srcref", exact = TRUE)
+         )
+         resultSrcContext <- srcContext
+      }
+
+   }
+
+   # Trim to actual depth (in case nframe included our own frames)
+   frames <- frames[seq_len(contextDepth)]
+
+   list(
+      frames             = frames,
+      context            = resultContext,
+      src_context        = resultSrcContext
+   )
+})
