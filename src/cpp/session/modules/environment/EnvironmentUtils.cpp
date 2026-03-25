@@ -15,8 +15,6 @@
 
 #include "EnvironmentUtils.hpp"
 
-#include <r/RCntxt.hpp>
-#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RVersionInfo.hpp>

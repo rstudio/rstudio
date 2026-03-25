@@ -28,6 +28,7 @@
 #include <core/RecursionGuard.hpp>
 #include <core/system/LibraryLoader.hpp>
 
+#include <r/RContext.hpp>
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
@@ -1151,7 +1152,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
-   s_browserActive = r::context::inBrowseContext();
+   s_browserActive = r::context::inActiveBrowseContext();
    if (*pContextDepth > 0 && !s_browserActive)
    {
       context = r::context::globalContext();
@@ -1219,7 +1220,7 @@ void onBeforeExecute()
    // however if R continues running then the client will properly restore
    // the state of the interruptR command
 
-   s_browserActive = r::context::inBrowseContext();
+   s_browserActive = r::context::inActiveBrowseContext();
    if (s_browserActive)
    {
       ClientEvent event(client_events::kBusy, true);
@@ -1292,7 +1293,7 @@ void initEnvironmentMonitoring()
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
    r::context::RCntxt context = r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
-   if (contextDepth == 0 || !r::context::inBrowseContext())
+   if (contextDepth == 0 || !r::context::inActiveBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
@@ -1530,7 +1531,7 @@ json::Value environmentStateAsJson()
    
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
-   if (!r::context::inBrowseContext())
+   if (!r::context::inActiveBrowseContext())
       contextDepth = 0;
    
    return commonEnvironmentStateData(
@@ -1548,7 +1549,10 @@ SEXP rs_isBrowserActive()
 
 SEXP rs_dumpContexts()
 {
-   return r::context::dumpContexts();
+   SEXP result = R_NilValue;
+   r::sexp::Protect protect;
+   r::exec::RFunction("sys.status").call(&result, &protect);
+   return result;
 }
 
 bool isSuspendable()

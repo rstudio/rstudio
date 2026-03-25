@@ -1,5 +1,5 @@
 /*
- * RBusy.cpp
+ * RContext.cpp
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -14,17 +14,17 @@
  */
 
 #include <r/RContext.hpp>
+#include <r/RInterface.hpp>
 
 namespace rstudio {
 namespace r {
-namespace session {
+namespace context {
 
-// NOTE: Invoked in handleUSR2, so this needs to be async-signal safe.
-bool isBusy()
+RContext* contextStack()
 {
-   return r::context::hasFunctionContext();
+   return reinterpret_cast<RContext*>(R_GlobalContext);
 }
 
-} // namespace session
+} // namespace context
 } // namespace r
 } // namespace rstudio

@@ -291,7 +291,7 @@
 #' @return `TRUE` if a trusted caller is on the call stack.
 .rs.addFunction("chat.hasTrustedCaller", function()
 {
-   fns <- .Call("rs_chatCallStackFunctions", PACKAGE = "(embedding)")
+   fns <- lapply(seq_len(sys.nframe()), sys.function)
    .rs.chat.hasTrustedCallerImpl(fns)
 })
 

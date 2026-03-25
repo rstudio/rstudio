@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef R_CONTEXT_HPP
-#define R_CONTEXT_HPP
+#ifndef R_CNTXT_HPP
+#define R_CNTXT_HPP
 
 #include "RSexp.hpp"
 #include "RCntxtInterface.hpp"

@@ -1034,6 +1034,6 @@
       attr(result, "estimate") <- TRUE
       return(result)
    }
-   
+
    .rs.objectSize(x)
 })

@@ -40,8 +40,6 @@ RCntxtVersion contextVersion();
 
 RCntxt globalContext();
    
-bool inBrowseContext();
-
 bool inDebugHiddenContext();
 
 RCntxt getFunctionContext(const int depth, 

@@ -52,8 +52,6 @@
 #include <core/system/Xdg.hpp>
 #include <core/Version.hpp>
 
-#include <r/RCntxt.hpp>
-#include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
@@ -277,31 +275,6 @@ using chat_staticfiles::handleAIChatRequest;
 // R interface
 // ============================================================================
 
-SEXP rs_chatCallStackFunctions()
-{
-   r::sexp::Protect protect;
-   std::vector<SEXP> functions;
-
-   for (auto ctxt = r::context::RCntxt::begin();
-        ctxt != r::context::RCntxt::end();
-        ctxt++)
-   {
-      if (ctxt->callflag() & CTXT_FUNCTION)
-      {
-         SEXP fn = ctxt->callfun();
-         if (fn != R_NilValue)
-            functions.push_back(fn);
-      }
-   }
-
-   SEXP resultSEXP = Rf_allocVector(VECSXP, functions.size());
-   protect.add(resultSEXP);
-
-   for (std::size_t i = 0; i < functions.size(); i++)
-      SET_VECTOR_ELT(resultSEXP, i, functions[i]);
-
-   return resultSEXP;
-}
 
 SEXP rs_chatNormalizePath(SEXP pathSEXP)
 {
@@ -5561,7 +5534,6 @@ Error initialize()
    }
 
    RS_REGISTER_CALL_METHOD(rs_chatSetLogLevel);
-   RS_REGISTER_CALL_METHOD(rs_chatCallStackFunctions);
    RS_REGISTER_CALL_METHOD(rs_chatNormalizePath);
 
    // Register JSON-RPC notification handlers

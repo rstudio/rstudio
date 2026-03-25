@@ -30,7 +30,7 @@
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RUtil.hpp>
-#include <r/RCntxtUtils.hpp>
+#include <r/RContext.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
 #include <r/session/RConsoleHistory.hpp>
@@ -337,7 +337,7 @@ int RReadConsole(const char *pmt,
          // end up quitting R altogether! this effectively implies that
          // EOF is a no-op at the top level, which seems to be fine
          else if (consoleInput.isEof() &&
-                  r::context::globalContext().evaldepth() != 0)
+                  !r::context::isTopLevelContext())
          {
             return 0;
          }

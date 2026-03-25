@@ -30,7 +30,7 @@
 #include "NotebookAlternateEngines.hpp"
 #include "NotebookChunkOptions.hpp"
 
-#include <r/RCntxtUtils.hpp>
+#include <r/RContext.hpp>
 #include <r/RInterface.hpp>
 #include <r/ROptions.hpp>
 #include <r/RExec.hpp>
@@ -111,7 +111,7 @@ public:
 
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
-      if (!module_context::isPythonReplActive() && r::context::globalContext().nextcontext())
+      if (!module_context::isPythonReplActive() && !r::context::isTopLevelContext())
          return Success();
 
       // if we have a currently executing unit, execute it; otherwise, pop the
@@ -776,7 +776,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 void onConsolePrompt(const std::string& prompt)
 {
    // Ignore debug prompts
-   if (r::context::inBrowseContext())
+   if (r::context::inActiveBrowseContext())
       return;
 
    if (s_queue)

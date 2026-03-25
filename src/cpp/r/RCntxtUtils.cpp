@@ -108,32 +108,6 @@ RCntxt getFunctionContext(const int depth,
    return foundContext;
 }
 
-// Return whether we're in browse context--meaning that there's a browser on
-// the context stack and at least one function (i.e. we're not browsing at the
-// top level).
-bool inBrowseContext()
-{
-   bool foundBrowser = false;
-   bool foundFunction = false;
-   for (RCntxt::iterator ctxt = RCntxt::begin(); ctxt != RCntxt::end(); ctxt++)
-   {
-      if ((ctxt->callflag() & CTXT_BROWSER) &&
-          !(ctxt->callflag() & CTXT_FUNCTION))
-      {
-         foundBrowser = true;
-      }
-      else if (ctxt->callflag() & CTXT_FUNCTION)
-      {
-         foundFunction = true;
-      }
-      if (foundBrowser && foundFunction)
-      {
-         return true;
-      }
-   }
-   return false;
-}
-
 // Return whether the current context is being evaluated inside a hidden
 // (debugger internal) function at the top level.
 bool inDebugHiddenContext()
