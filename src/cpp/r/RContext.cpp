@@ -51,20 +51,23 @@ struct RContext
    SEXP cloenv;
 };
 
-// Context type flags (mirrored from Defn.h)
+// Context type flags (mirrored from Defn.h).
+// These are bitmasks; some types combine flags from simpler types.
+// In particular, any type with the CTXT_FUNCTION bit set (bit 2) is
+// treated as a function context by sys.frame() and related APIs.
 enum RContextType
 {
-   CTXT_TOPLEVEL = 0,
-   CTXT_NEXT     = 1,
-   CTXT_BREAK    = 2,
-   CTXT_LOOP     = 3,
-   CTXT_FUNCTION = 4,
-   CTXT_CCODE    = 8,
-   CTXT_RETURN   = 12,
-   CTXT_BROWSER  = 16,
-   CTXT_GENERIC  = 20,
-   CTXT_RESTART  = 32,
-   CTXT_BUILTIN  = 64
+   CTXT_TOPLEVEL = 0b0000000,
+   CTXT_NEXT     = 0b0000001,
+   CTXT_BREAK    = 0b0000010,
+   CTXT_LOOP     = 0b0000011,  // CTXT_NEXT | CTXT_BREAK
+   CTXT_FUNCTION = 0b0000100,
+   CTXT_CCODE    = 0b0001000,
+   CTXT_RETURN   = 0b0001100,  // CTXT_CCODE | CTXT_FUNCTION
+   CTXT_BROWSER  = 0b0010000,
+   CTXT_GENERIC  = 0b0010100,  // CTXT_BROWSER | CTXT_FUNCTION
+   CTXT_RESTART  = 0b0100000,
+   CTXT_BUILTIN  = 0b1000000,
 };
 
 RContext* globalContext()
