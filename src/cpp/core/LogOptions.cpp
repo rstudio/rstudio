@@ -15,6 +15,7 @@
 
 #include <core/LogOptions.hpp>
 
+#include <atomic>
 #include <vector>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -282,7 +283,7 @@ struct LogDirVisitor : boost::static_visitor<FilePath>
 } // anonymous namespace
 
 // Global flag for proxy trace logging
-static bool s_proxyTraceEnabled = false;
+static std::atomic<bool> s_proxyTraceEnabled(false);
 
 
 LogOptions::LogOptions(const std::string& executableName) :
