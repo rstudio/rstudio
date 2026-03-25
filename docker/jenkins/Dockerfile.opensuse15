@@ -39,6 +39,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libtool \
     libwebp-devel \
     libuuid-devel \
+    libuv-devel \
     libxml2-devel \
     lsof \
     make \
