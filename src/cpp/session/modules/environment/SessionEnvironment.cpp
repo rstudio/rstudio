@@ -1107,7 +1107,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // start monitoring the environment at the new depth
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
+      R_ReleaseObject(*pCurrentEnv);
       *pCurrentEnv = environmentTop;
+      R_PreserveObject(*pCurrentEnv);
       enqueContextDepthChangedEvent(true, depth, pLineDebugState.get());
    }
 
@@ -1840,6 +1842,7 @@ Error initialize()
    
    boost::shared_ptr<SEXP> pCurrentEnv =
          boost::make_shared<SEXP>(R_GlobalEnv);
+   R_PreserveObject(*pCurrentEnv);
    
    // get reference to INTEGER_OR_NULL if provided by this version of R
    {

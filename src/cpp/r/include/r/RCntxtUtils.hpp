@@ -23,8 +23,6 @@ namespace rstudio {
 namespace r {
 namespace context {
 
-#define BROWSER_FUNCTION 0
-
 // represents the version of the memory layout of the RCNTXT structure
 enum RCntxtVersion
 {
@@ -33,18 +31,12 @@ enum RCntxtVersion
    RVersion34, // R (>= 3.4.0
    RVersion33, // R (== 3.3.0)
    RVersion32, // R (3.2.x and older)
-   RVersionUnknown 
+   RVersionUnknown
 };
 
 RCntxtVersion contextVersion();
 
 RCntxt globalContext();
-   
-bool inDebugHiddenContext();
-
-RCntxt getFunctionContext(const int depth, 
-                          int* pFoundDepth = nullptr,
-                          SEXP* pEnvironment = nullptr);
 
 bool isByteCodeContext(const RCntxt& cntxt);
 bool isByteCodeSrcRef(SEXP srcref);
