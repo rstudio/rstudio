@@ -21,25 +21,19 @@ Find the `### Dependencies` section and update the Electron version line:
 - Electron <NEW_VERSION>
 ```
 
-### 2. Update `src/node/desktop/package.json`
-
-In `devDependencies`, set the `electron` package to the exact new version:
-
-```json
-"electron": "<NEW_VERSION>"
-```
-
-### 3. Install dependencies
+### 2. Update `src/node/desktop/package.json` and lockfile
 
 Run from `src/node/desktop`:
 
 ```bash
-cd src/node/desktop && npm i
+cd src/node/desktop && npm install electron@<NEW_VERSION> --save-dev
 ```
 
-Confirm the command exits successfully (exit code 0). If it fails, report the error and stop.
+This updates both `package.json` and `package-lock.json` in one step. Confirm the command exits successfully (exit code 0). If it fails, report the error and stop.
 
-### 4. Run tests
+After the install, verify that `package-lock.json` contains the new Electron version. The lockfile must be included in the commit — if it drifts from the manifest, `npm ci` in CI will fail.
+
+### 3. Run tests
 
 Run from `src/node/desktop`:
 
@@ -49,6 +43,6 @@ cd src/node/desktop && npm test
 
 Confirm the command exits successfully. If tests fail, report the failures and stop.
 
-### 5. Done
+### 4. Done
 
 Report that the Electron version has been updated and both `npm i` and `npm test` passed.
