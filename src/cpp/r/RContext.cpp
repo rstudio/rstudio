@@ -31,17 +31,20 @@ namespace context {
 
 namespace {
 
+// Platform-dependent jump buffer type, matching R's RCNTXT definition.
+#ifdef _WIN32
+typedef struct { jmp_buf buf; int sigmask; int savedmask; } JMP_BUF;
+#else
+typedef sigjmp_buf JMP_BUF;
+#endif
+
 // View of an R context covering the stable prefix of the RCNTXT struct.
-// The jmp_buf field is platform-dependent in size but fixed for a given build.
+// The JMP_BUF field is platform-dependent in size but fixed for a given build.
 struct RContext
 {
    RContext* nextcontext;
    int callflag;
-#ifdef _WIN32
-   struct { jmp_buf buf; int sigmask; int savedmask; } cjmpbuf;
-#else
-   sigjmp_buf cjmpbuf;
-#endif
+   JMP_BUF cjmpbuf;
    int cstacktop;
    int evaldepth;
    SEXP promargs;
