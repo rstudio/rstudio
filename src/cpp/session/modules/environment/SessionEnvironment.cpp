@@ -909,18 +909,10 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    if (error)
       return error;
 
-   // set state for the new depth -- use R helper to find the environment
+   // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = R_GlobalEnv;
-   {
-      r::sexp::Protect protect;
-      SEXP resultSEXP = R_NilValue;
-      Error fcError = r::exec::RFunction(".rs.getFunctionContext")
-            .addParam(requestedDepth)
-            .call(&resultSEXP, &protect);
-      if (!fcError)
-         r::sexp::getNamedListSEXP(resultSEXP, "env", &env);
-   }
+   r::context::getFunctionContext(requestedDepth, nullptr, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -1072,15 +1064,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
    else
    {
-      // Use R helper to find the browser function context
-      r::sexp::Protect protect;
-      SEXP resultSEXP = R_NilValue;
-      Error error = r::exec::RFunction(".rs.getFunctionContext").call(&resultSEXP, &protect);
-      if (!error)
-      {
-         r::sexp::getNamedListElement(resultSEXP, "depth", &depth);
-         r::sexp::getNamedListSEXP(resultSEXP, "env", &environmentTop);
-      }
+      // Find the function context associated with the browser
+      r::context::getFunctionContext(0, &depth, &environmentTop);
       s_browserEnv = environmentTop;
    }
    
@@ -1114,16 +1099,10 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 
    // if we're debugging and stayed in the same frame, update the line number
-   else if (depth > 0)
+   else if (depth > 0 && !r::context::inDebugHiddenContext())
    {
-      // Check if the top of the stack is a debugger-internal function
-      bool debugHidden = false;
-      r::exec::RFunction(".rs.inDebugHiddenContext").call(&debugHidden);
-      if (!debugHidden)
-      {
-         SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
-         enqueBrowserLineChangedEvent(srcref);
-      }
+      SEXP srcref = inferDebugSrcrefs(depth, pLineDebugState);
+      enqueBrowserLineChangedEvent(srcref);
    }
    
 }
@@ -1453,13 +1432,7 @@ json::Value environmentStateAsJson()
       return pythonEnvironmentStateData(s_monitoredPythonModule);
    
    int contextDepth = 0;
-   {
-      r::sexp::Protect protect;
-      SEXP resultSEXP = R_NilValue;
-      Error error = r::exec::RFunction(".rs.getFunctionContext").call(&resultSEXP, &protect);
-      if (!error)
-         r::sexp::getNamedListElement(resultSEXP, "depth", &contextDepth);
-   }
+   r::context::getFunctionContext(0, &contextDepth, nullptr);
 
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.

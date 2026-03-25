@@ -1069,6 +1069,7 @@
 
       if (isBrowsing)
       {
+         # First try isdebugged() (works for debug(), not debugonce())
          for (j in rev(seq_len(nframe)))
          {
             if (isdebugged(sys.function(j)))
@@ -1076,6 +1077,13 @@
                browserEnv <- sys.frame(j)
                break
             }
+         }
+
+         # If isdebugged() didn't match (e.g. debugonce() clears the flag),
+         # use the innermost frame's environment as the browser target
+         if (is.null(browserEnv) || identical(browserEnv, globalenv()))
+         {
+            browserEnv <- sys.frame(nframe)
          }
       }
    }

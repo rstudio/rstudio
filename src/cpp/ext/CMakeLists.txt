@@ -362,6 +362,18 @@ endif()
 # deps/zlib, resulting in duplicate zlib symbols in the final binary.
 fetch(zlib ZLIB)
 
+# libgit2's src/libgit2/CMakeLists.txt uses FILE(WRITE) to produce git2.h in
+# the build tree.  Unlike configure_file(), FILE(WRITE) unconditionally updates
+# the timestamp even when the content is unchanged, which forces a full rebuild
+# of every libgit2 source file on every configure.  Work around this by saving
+# the old file (with its original timestamp) before the fetch and restoring it
+# afterward when the content hasn't changed.
+set(_LIBGIT2_GIT2_H "${CMAKE_BINARY_DIR}/_deps/libgit2-build/include/git2.h")
+if(EXISTS "${_LIBGIT2_GIT2_H}")
+   file(MD5 "${_LIBGIT2_GIT2_H}" _LIBGIT2_GIT2_H_MD5)
+   file(RENAME "${_LIBGIT2_GIT2_H}" "${_LIBGIT2_GIT2_H}.prev")
+endif()
+
 fetch(
    dtl          DTL
    fmt          FMT
@@ -374,6 +386,20 @@ fetch(
    utfcpp       UTFCPP
    websocketpp  WEBSOCKETPP
    yaml-cpp     YAML_CPP)
+
+if(EXISTS "${_LIBGIT2_GIT2_H}.prev")
+   if(EXISTS "${_LIBGIT2_GIT2_H}")
+      file(MD5 "${_LIBGIT2_GIT2_H}" _LIBGIT2_GIT2_H_MD5_NEW)
+      if(_LIBGIT2_GIT2_H_MD5 STREQUAL _LIBGIT2_GIT2_H_MD5_NEW)
+         file(REMOVE "${_LIBGIT2_GIT2_H}")
+         file(RENAME "${_LIBGIT2_GIT2_H}.prev" "${_LIBGIT2_GIT2_H}")
+      else()
+         file(REMOVE "${_LIBGIT2_GIT2_H}.prev")
+      endif()
+   else()
+      file(RENAME "${_LIBGIT2_GIT2_H}.prev" "${_LIBGIT2_GIT2_H}")
+   endif()
+endif()
 
 restore_global_settings()
 
