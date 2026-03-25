@@ -23,10 +23,14 @@ namespace rstudio {
 namespace r {
 namespace context {
 
+namespace {
+
 RContext* globalContext()
 {
    return reinterpret_cast<RContext*>(R_GlobalContext);
 }
+
+} // anonymous namespace
 
 bool isTopLevelContext()
 {

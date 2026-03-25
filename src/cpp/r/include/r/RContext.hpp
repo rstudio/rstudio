@@ -66,9 +66,6 @@ enum RContextType
    CTXT_BUILTIN  = 64
 };
 
-// Get the global context as an RContext pointer.
-RContext* globalContext();
-
 // Returns true when R is at the top-level prompt with no evaluation contexts
 // on the stack (i.e. the context stack is empty).
 bool isTopLevelContext();
