@@ -953,6 +953,10 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_set_shiny_dialog_url', event.processId, event.frameId).setShinyDialogUrl(url);
     });
 
+    ipcMain.on('desktop_inject_shiny_dialog_css', (event, css) => {
+      this.getSender('desktop_inject_shiny_dialog_css', event.processId, event.frameId).injectShinyDialogCss(css);
+    });
+
     ipcMain.handle('desktop_allow_navigation', (event, url) => {
       return this.getSender('desktop_allow_navigation', event.processId, event.frameId).allowNavigation(url);
     });

@@ -102,6 +102,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   tutorialUrl: string | undefined;
   presentationUrl: string | undefined;
   shinyDialogUrl: string | undefined;
+  shinyDialogFullUrl: string | undefined;
   mainWindow?: MainWindow;
 
   // debouncing due to https://github.com/rstudio/rstudio/issues/13027
@@ -523,6 +524,43 @@ export class DesktopBrowserWindow extends EventEmitter {
     }
 
     this.shinyDialogUrl = getAuthority(shinyDialogUrl);
+    this.shinyDialogFullUrl = makeAbsoluteUrl(shinyDialogUrl).toString();
+  }
+
+  injectShinyDialogCss(css: string): void {
+    if (!this.shinyDialogFullUrl) return;
+
+    let shinyOriginPath: string;
+    try {
+      const parsed = new URL(this.shinyDialogFullUrl);
+      shinyOriginPath = (parsed.origin + parsed.pathname).replace(/\/+$/, '');
+    } catch {
+      return;
+    }
+
+    for (const frame of this.window.webContents.mainFrame.framesInSubtree) {
+      let frameOriginPath: string;
+      try {
+        const parsed = new URL(frame.url);
+        frameOriginPath = (parsed.origin + parsed.pathname).replace(/\/+$/, '');
+      } catch {
+        continue;
+      }
+      if (frameOriginPath === shinyOriginPath) {
+        frame
+          .executeJavaScript(
+            `(function() {
+              var s = document.createElement('style');
+              s.textContent = ${JSON.stringify(css)};
+              document.head.appendChild(s);
+            })();`,
+          )
+          .catch(() => {
+            // frame may have navigated away
+          });
+        break;
+      }
+    }
   }
 
   getBaseUrl(): string {
