@@ -35,6 +35,8 @@ import org.rstudio.studio.client.server.VoidResponse;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.core.client.theme.ThemeColors;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -43,7 +45,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.StyleElement;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -64,13 +66,15 @@ public class NewConnectionShinyHost extends Composite
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
                            ShinyServerOperations shinyServer,
-                           DependencyManager dependencyManager)
+                           DependencyManager dependencyManager,
+                           UserPrefs userPrefs)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       shinyServer_ = shinyServer;
       dependencyManager_ = dependencyManager;
+      userPrefs_ = userPrefs;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -209,26 +213,87 @@ public class NewConnectionShinyHost extends Composite
       });
    }
 
+   private boolean isDialogDarkTheme()
+   {
+      boolean useDark = userPrefs_ != null &&
+         userPrefs_.useDarkThemeModalDialogs().getValue();
+      Element container = Document.get().getElementById("rstudio_container");
+      return useDark && container != null &&
+         container.hasClassName("rstudio-themes-dark");
+   }
+
+   private String buildCustomCss()
+   {
+      String css =
+         "body {\n" +
+         "  background: none;\n" +
+         "  font-family : \"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif;\n" +
+         "  font-size : 12px;\n" +
+         "  -ms-user-select : none;\n" +
+         "  -moz-user-select : none;\n" +
+         "  -webkit-user-select : none;\n" +
+         "  user-select : none;\n" +
+         "  margin: 0;\n" +
+         "  margin-top: 7px;\n" +
+         "}\n";
+
+      if (isDialogDarkTheme())
+      {
+         String bg = ThemeColors.darkDialogControlBackground;
+         String border = ThemeColors.darkGreyBorder;
+         String bgDeep = ThemeColors.darkGreyMostInactiveBackground;
+
+         css +=
+            "body, label, .control-label { color: #eee !important; }\n" +
+            "select, input[type=\"text\"], input[type=\"password\"], " +
+            "input[type=\"number\"], textarea, .form-control {\n" +
+            "  background-color: " + bg + " !important;\n" +
+            "  border-color: " + border + " !important;\n" +
+            "  color: #eee !important;\n" +
+            "}\n" +
+            "select option {\n" +
+            "  background-color: " + bg + ";\n" +
+            "  color: #eee;\n" +
+            "}\n" +
+            "select option:checked {\n" +
+            "  background-color: " + bgDeep + ";\n" +
+            "  color: #eee;\n" +
+            "}\n";
+      }
+
+      return css;
+   }
+
+   private native void injectCssIntoIFrame(Element iframe, String css) /*-{
+      try {
+         var doc = iframe.contentDocument || iframe.contentWindow.document;
+         var style = doc.createElement('style');
+         style.textContent = css;
+         (doc.head || doc.documentElement).appendChild(style);
+      } catch (e) {
+         // cross-origin iframe; styling is best-effort
+         $wnd.console.log('injectCssIntoIFrame: ' + e);
+      }
+   }-*/;
+
    private void appendStyle(RStudioFrame frame)
    {
-      Document document = frame.getWindow().getDocument();
-      
-      String customStyle = "\n" +
-      "body {\n" +
-      "  background: none;\n" +
-      "  font-family : \"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif;\n" +
-      "  font-size : 12px;\n" +
-      "  -ms-user-select : none;\n" +
-      "  -moz-user-select : none;\n" +
-      "  -webkit-user-select : none;\n" +
-      "  user-select : none;\n" +
-      "  margin: 0;\n" +
-      "  margin-top: 7px;\n" +
-      "}\n";
-      
-      StyleElement style = document.createStyleElement();
-      style.setInnerHTML(customStyle);
-      document.getHead().appendChild(style);
+      String css = buildCustomCss();
+
+      if (Desktop.hasDesktopFrame())
+      {
+         // In Desktop, the Shiny iframe is cross-origin (different port)
+         // so we cannot access its document directly. Use the Electron
+         // bridge to inject CSS via WebFrameMain.executeJavaScript().
+         Desktop.getFrame().injectShinyDialogCss(css);
+      }
+      else
+      {
+         // In Server, the iframe is same-origin (proxied). Use native
+         // JS to inject into the iframe's document context directly,
+         // ensuring the style element is created in the correct document.
+         injectCssIntoIFrame(frame.getIFrame(), css);
+      }
    }
 
    public ConnectionOptions collectInput()
@@ -293,5 +358,6 @@ public class NewConnectionShinyHost extends Composite
    private ConnectionsServerOperations server_;
    private ShinyServerOperations shinyServer_;
    private DependencyManager dependencyManager_;
+   private UserPrefs userPrefs_;
    private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }
