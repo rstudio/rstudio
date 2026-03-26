@@ -734,6 +734,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          @Override
          protected Widget createMainWidget()
          {
+            setThemeAware(true);
             setText(constants_.publishFailed());
             addOkButton(new ThemedButton(constants_.okCapitalized(), new ClickHandler()
             {

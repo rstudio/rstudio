@@ -34,6 +34,8 @@ import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -93,7 +95,8 @@ public class RPubsUploadDialog extends ModalDialogBase
   
       HorizontalPanel headerPanel = new HorizontalPanel();
       headerPanel.addStyleName(styles.headerPanel());
-      headerPanel.add(new DecorativeImage(new ImageResource2x(RESOURCES.publishLarge2x())));
+      headerPanel.add(new DecorativeImage(new ImageResource2x(
+            useDarkDialogTheme() ? RESOURCES.publishLargeDark2x() : RESOURCES.publishLarge2x())));
       
       Label headerLabel = new Label(constants_.publishToRPubs());
       headerLabel.addStyleName(styles.headerLabel());
@@ -241,6 +244,15 @@ public class RPubsUploadDialog extends ModalDialogBase
       addLeftWidget(progressPanel);
    }
    
+   private boolean useDarkDialogTheme()
+   {
+      Element container = Document.get().getElementById("rstudio_container");
+      return RStudioGinjector.INSTANCE.getUserPrefs()
+                  .useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
+   }
+
    interface Styles extends CssResource
    {
       String mainWidget();
@@ -258,6 +270,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       @Source("publishLarge_2x.png")
       ImageResource publishLarge2x();
+
+      @Source("publishLargeDark_2x.png")
+      ImageResource publishLargeDark2x();
    }
 
    private final boolean isPublished_;
