@@ -15,23 +15,31 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class PublishRPubsPage 
+public class PublishRPubsPage
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishRPubsPage(String title, String subTitle)
    {
       super(title, subTitle, constants_.publishToRpubs(),
-            new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublish2x()), 
-            new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublishLarge2x()));
+            new ImageResource2x(useDarkDialogTheme() ?
+                  RSConnectResources.INSTANCE.rpubsPublishDark2x() :
+                  RSConnectResources.INSTANCE.rpubsPublish2x()),
+            new ImageResource2x(useDarkDialogTheme() ?
+                  RSConnectResources.INSTANCE.rpubsPublishLargeDark2x() :
+                  RSConnectResources.INSTANCE.rpubsPublishLarge2x()));
    }
 
    @Override
@@ -73,6 +81,16 @@ public class PublishRPubsPage
    protected boolean validate(RSConnectPublishResult input)
    {
       return true;
+   }
+
+   private static boolean useDarkDialogTheme()
+   {
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      Element container = Document.get().getElementById("rstudio_container");
+      return prefs != null &&
+             prefs.useDarkThemeModalDialogs().getValue() &&
+             container != null &&
+             container.hasClassName("rstudio-themes-dark");
    }
 
    private RSConnectPublishInput initialData_;

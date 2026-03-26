@@ -33,6 +33,7 @@ public class RSConnectPublishWizard
          ProgressOperationWithInput<RSConnectPublishResult> operation)
    {
       super(constants_.publish(), constants_.publish(), Roles.getDialogRole(), input, createFirstPage(input), operation);
+      setThemeAware(true);
    }
    
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>
@@ -63,9 +64,15 @@ public class RSConnectPublishWizard
    }
    
    @Override
+   protected String getMainWidgetStyle()
+   {
+      return RSConnectDeploy.RESOURCES.style().wizardMainWidget();
+   }
+
+   @Override
    protected ArrayList<String> getWizardBodyStyles()
    {
-      ArrayList<String> styles = super.getWizardBodyStyles();
+      ArrayList<String> styles = new ArrayList<>();
       styles.add(RSConnectDeploy.RESOURCES.style().wizardDeployPage());
       return styles;
    }
