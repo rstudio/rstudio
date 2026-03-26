@@ -1357,7 +1357,7 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
 
    error = r::exec::RFunction(".rs.removeAllObjects")
          .addParam(includeHidden)
-         .addParam( s_pEnvironmentMonitor->getMonitoredEnvironment())
+         .addParam(s_pEnvironmentMonitor->getMonitoredEnvironment())
          .call();
    
    if (error)
@@ -1383,7 +1383,7 @@ Error getObjectContents(const json::JsonRpcRequest& request,
    error = r::exec::RFunction(".rs.getObjectContents")
          .addParam(objectName)
          .addParam(s_pEnvironmentMonitor->getMonitoredEnvironment())
-          .call(&objContents, &protect);
+         .call(&objContents, &protect);
    
    if (error)
       return error;
