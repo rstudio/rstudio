@@ -372,14 +372,40 @@ Error createProject(const json::JsonRpcRequest& request,
 
       FilePath projectDir = projectFilePath.getParent();
       overlay::onCreateProject(projectDir);
-
-      return Success();
    }
    else
    {
       pResponse->setResult(existingProjectFilePath);
-      return Success();
    }
+
+   // register first-run docs for the template now that the .Rproj file exists
+   if (!projectTemplateOptions.isNull() &&
+       json::isType<json::Object>(projectTemplateOptions))
+   {
+      json::Object descriptionJson;
+      json::Object inputsJson;
+      error = json::readObject(projectTemplateOptions.getObject(),
+                               "description", descriptionJson,
+                               "inputs", inputsJson);
+
+      if (!error)
+      {
+         json::Array openFiles = descriptionJson["open_files"].getArray();
+         if (!openFiles.isEmpty())
+         {
+            error = r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+                  .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+                  .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+                  .addParam(openFiles)
+                  .call();
+         }
+      }
+
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return Success();
 }
 
 Error createProjectFile(const json::JsonRpcRequest& request,
