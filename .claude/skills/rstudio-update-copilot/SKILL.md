@@ -89,16 +89,11 @@ The default tools root (`/opt/rstudio-tools/...`) requires elevated privileges, 
 
 ```bash
 VERIFY_DIR="$(mktemp -d)"
+trap 'rm -rf "$VERIFY_DIR"' EXIT
 RSTUDIO_TOOLS_ROOT="$VERIFY_DIR" bash dependencies/common/install-copilot-language-server
 ```
 
-Confirm exit code 0, then clean up:
-
-```bash
-rm -rf "$VERIFY_DIR"
-```
-
-If the install fails, report the error and stop.
+Confirm exit code 0. The `trap` ensures the temp directory is cleaned up whether the install succeeds or fails. If the install fails, report the error and stop.
 
 After verification, tell the user they will need to re-run `dependencies/common/install-copilot-language-server` themselves (with appropriate privileges) to install the new copilot-language-server into their dev environment.
 
