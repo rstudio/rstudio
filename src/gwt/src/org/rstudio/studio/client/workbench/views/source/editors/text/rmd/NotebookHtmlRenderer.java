@@ -68,6 +68,16 @@ public class NotebookHtmlRenderer
       );
    }
 
+   public boolean isRendering()
+   {
+      return isRunning_;
+   }
+
+   public void addRenderCompleteHandler(Command callback)
+   {
+      renderCompleteHandler_ = callback;
+   }
+
    public void onDismiss()
    {
       registrations_.detach();
@@ -146,6 +156,14 @@ public class NotebookHtmlRenderer
          {
             clearStatus();
          }
+      }
+
+      // invoke and clear any pending completion callback
+      if (renderCompleteHandler_ != null)
+      {
+         Command callback = renderCompleteHandler_;
+         renderCompleteHandler_ = null;
+         callback.execute();
       }
    }
 
@@ -338,6 +356,7 @@ public class NotebookHtmlRenderer
    private Timer renderTimer_;
    private Timer statusTimer_;
    private Command renderCommand_;
+   private Command renderCompleteHandler_;
 
    private final HandlerRegistrations registrations_;
    private final DocDisplay display_;

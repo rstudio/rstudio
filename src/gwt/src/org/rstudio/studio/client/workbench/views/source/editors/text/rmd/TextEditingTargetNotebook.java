@@ -1433,6 +1433,17 @@ public class TextEditingTargetNotebook
          htmlRenderer_.onDismiss();
    }
 
+   public boolean isRendering()
+   {
+      return htmlRenderer_ != null && htmlRenderer_.isRendering();
+   }
+
+   public void addRenderCompleteHandler(Command callback)
+   {
+      if (htmlRenderer_ != null)
+         htmlRenderer_.addRenderCompleteHandler(callback);
+   }
+
    // set the output mode based on the global pref (or our local
    // override of it, if any)
    public void syncOutputMode()
