@@ -283,17 +283,22 @@ Error addFirstRunDocsForTemplate(const FilePath& projectFilePath,
       return Success();
 
    json::Object descriptionJson;
-   json::Object inputsJson;
    Error error = json::readObject(projectTemplateOptions.getObject(),
-                                  "description", descriptionJson,
-                                  "inputs", inputsJson);
+                                  "description", descriptionJson);
    if (error)
       return error;
 
-   if (!descriptionJson["open_files"].isArray())
+   json::Value openFilesJson = descriptionJson["open_files"];
+   if (openFilesJson.isNull())
       return Success();
 
-   json::Array openFiles = descriptionJson["open_files"].getArray();
+   if (!openFilesJson.isArray())
+   {
+      LOG_WARNING_MESSAGE("Template 'open_files' field is not an array");
+      return Success();
+   }
+
+   json::Array openFiles = openFilesJson.getArray();
    if (openFiles.isEmpty())
       return Success();
 
@@ -411,7 +416,10 @@ Error createProject(const json::JsonRpcRequest& request,
    // register first-run docs for the template now that the .Rproj file exists
    error = addFirstRunDocsForTemplate(resolvedProjectFilePath, projectTemplateOptions);
    if (error)
+   {
+      error.addProperty("project", resolvedProjectFilePath.getAbsolutePath());
       LOG_ERROR(error);
+   }
 
    return Success();
 }
