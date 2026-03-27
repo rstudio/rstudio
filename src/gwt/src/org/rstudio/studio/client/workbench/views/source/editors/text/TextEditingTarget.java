@@ -8598,6 +8598,7 @@ public class TextEditingTarget implements
                   previewFromR();
                }
                else if (extendedType_ == SourceDocument.XT_RMARKDOWN_DOCUMENT ||
+                        extendedType_ == SourceDocument.XT_RMARKDOWN_NOTEBOOK ||
                         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
                {
                   renderRmd();
