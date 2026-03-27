@@ -19,6 +19,7 @@
 #include "NotebookPaths.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
+#include "NotebookCacheRenderer.hpp"
 
 #include <boost/bind/bind.hpp>
 
@@ -547,7 +548,7 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
-   
+
    // if the .nb.html output already exists and is at least as new as both
    // the chunk definitions cache and the .Rmd source, there is nothing to
    // do -- skip the expensive rmarkdown::render / pandoc invocation.
@@ -561,38 +562,52 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
        outputFile.getLastWriteTime() >= rmdFile.getLastWriteTime())
    {
       json::Object result;
+      result["started"] = false;
       result["succeeded"] = true;
       pResponse->setResult(result);
       return Success();
    }
 
-   SEXP resultSEXP = R_NilValue;
-   r::sexp::Protect protect;
-   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
-   createNotebook.addParam(string_utils::utf8ToSystem(rmdPath));
-   createNotebook.addParam(string_utils::utf8ToSystem(outputPath));
-   error = createNotebook.call(&resultSEXP, &protect);
-   if (error)
+   // don't start a new render if one is already running
+   if (NotebookCacheRenderer::isRunning())
    {
-      LOG_ERROR(error);
-      return error;
+      json::Object result;
+      result["started"] = false;
+      result["succeeded"] = true;
+      pResponse->setResult(result);
+      return Success();
    }
 
-   // bump the write time on our local chunk definition file so that it matches
-   // the notebook file; this prevents us from thinking that the .nb.html file
-   // we just wrote is ahead of the local cache.
-   if (chunkDefsFile.exists() && 
-       chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())
-      chunkDefsFile.setLastWriteTime(outputFile.getLastWriteTime());
+   // resolve the cache path from C++ (avoids .Call in child process)
+   FilePath cacheFolder = chunkCacheFolder(rmdFile, "", kSavedCtx);
+   std::string cachePath = cacheFolder.getAbsolutePath();
 
-   // convert the result into JSON for the client
-   json::Value result;
-   error = r::json::jsonValueFromList(resultSEXP, &result);
-   if (error)
-      LOG_ERROR(error);
-   else
-      pResponse->setResult(result);
-   
+   // look up the document encoding from the source database
+   std::string encoding = "UTF-8";
+   std::string docId;
+   Error dbError = source_database::getId(rmdPath, &docId);
+   if (!dbError && !docId.empty())
+   {
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+         new source_database::SourceDocument());
+      Error getError = source_database::get(docId, pDoc);
+      if (!getError && !pDoc->encoding().empty())
+         encoding = pDoc->encoding();
+   }
+
+   // spawn the async renderer
+   NotebookCacheRenderer::render(
+      rmdFile.getAbsolutePath(),
+      cachePath,
+      outputFile.getAbsolutePath(),
+      docId,
+      rmdPath,
+      encoding);
+
+   json::Object result;
+   result["started"] = true;
+   result["succeeded"] = true;
+   pResponse->setResult(result);
    return Success();
 }
 

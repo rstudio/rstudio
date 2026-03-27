@@ -220,6 +220,7 @@ extern const int kConsoleWritePendingError;
 extern const int kConsoleWritePendingWarning;
 extern const int kAssistantStatusChanged;
 extern const int kChatBackendExit;
+extern const int kNotebookRenderCompleted;
 
 }
    

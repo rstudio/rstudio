@@ -29,4 +29,16 @@ public class NotebookCreateResult extends JavaScriptObject
    public final native String getErrorMessage() /*-{
       return this.error_message;
    }-*/;
+
+   public final native String getDocId() /*-{
+      return this.doc_id;
+   }-*/;
+
+   public final native String getDocPath() /*-{
+      return this.doc_path;
+   }-*/;
+
+   public final native boolean started() /*-{
+      return this.started === true;
+   }-*/;
 }
