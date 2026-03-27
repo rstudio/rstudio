@@ -26,12 +26,18 @@ Find the `### Dependencies` section and update the Electron version line:
 Run from `src/node/desktop`:
 
 ```bash
-cd src/node/desktop && npm install electron@<NEW_VERSION> --save-dev
+cd src/node/desktop && npm install --save-dev --save-exact electron@<NEW_VERSION>
 ```
+
+The `--save-exact` flag is **required** — Electron must be pinned to an exact version (e.g. `"electron": "39.8.5"`, not `"^39.8.5"`). This prevents uncontrolled upgrades across major/minor versions.
 
 This updates both `package.json` and `package-lock.json` in one step. Confirm the command exits successfully (exit code 0). If it fails, report the error and stop.
 
-After the install, verify that `package-lock.json` contains the new Electron version. The lockfile must be included in the commit — if it drifts from the manifest, `npm ci` in CI will fail.
+After the install, verify that:
+1. `package.json` has the exact version with **no `^` or `~` prefix**.
+2. `package-lock.json` contains the new Electron version.
+
+The lockfile must be included in the commit — if it drifts from the manifest, `npm ci` in CI will fail.
 
 ### 3. Run tests
 
