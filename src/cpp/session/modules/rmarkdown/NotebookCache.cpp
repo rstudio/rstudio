@@ -548,6 +548,24 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       return error;
    }
    
+   // if the .nb.html output already exists and is at least as new as both
+   // the chunk definitions cache and the .Rmd source, there is nothing to
+   // do -- skip the expensive rmarkdown::render / pandoc invocation.
+   // we must check the .Rmd timestamp too because prose or YAML changes
+   // update the source file but not the chunk definitions.
+   FilePath rmdFile = module_context::resolveAliasedPath(rmdPath);
+   FilePath outputFile = module_context::resolveAliasedPath(outputPath);
+   FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
+   if (rmdFile.exists() && outputFile.exists() && chunkDefsFile.exists() &&
+       outputFile.getLastWriteTime() >= chunkDefsFile.getLastWriteTime() &&
+       outputFile.getLastWriteTime() >= rmdFile.getLastWriteTime())
+   {
+      json::Object result;
+      result["succeeded"] = true;
+      pResponse->setResult(result);
+      return Success();
+   }
+
    SEXP resultSEXP = R_NilValue;
    r::sexp::Protect protect;
    r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
@@ -563,9 +581,6 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    // bump the write time on our local chunk definition file so that it matches
    // the notebook file; this prevents us from thinking that the .nb.html file
    // we just wrote is ahead of the local cache.
-   FilePath outputFile = module_context::resolveAliasedPath(outputPath);
-   FilePath chunkDefsFile = chunkDefinitionsPath(
-         module_context::resolveAliasedPath(rmdPath), kSavedCtx);
    if (chunkDefsFile.exists() && 
        chunkDefsFile.getLastWriteTime() < outputFile.getLastWriteTime())
       chunkDefsFile.setLastWriteTime(outputFile.getLastWriteTime());
