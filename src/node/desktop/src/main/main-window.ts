@@ -255,8 +255,9 @@ export class MainWindow extends GwtWindow {
       var wnd;
       try {
         wnd = window.$RStudio.last_focused_window;
+        if (wnd && wnd.closed) wnd = null;
       } catch (e) {
-        wnd = window;
+        wnd = null;
       }
       (wnd || window).desktopHooks.invokeCommand('${cmdId}');`;
     this.executeJavaScript(cmd).catch((error) => {
