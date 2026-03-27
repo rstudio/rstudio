@@ -276,6 +276,39 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
 }
 
+Error addFirstRunDocsForTemplate(const FilePath& projectFilePath,
+                                 const json::Value& projectTemplateOptions)
+{
+   if (projectTemplateOptions.isNull() || !json::isType<json::Object>(projectTemplateOptions))
+      return Success();
+
+   json::Object descriptionJson;
+   Error error = json::readObject(projectTemplateOptions.getObject(),
+                                  "description", descriptionJson);
+   if (error)
+      return error;
+
+   json::Value openFilesJson = descriptionJson["open_files"];
+   if (openFilesJson.isNull())
+      return Success();
+
+   if (!openFilesJson.isArray())
+   {
+      LOG_WARNING_MESSAGE("Template 'open_files' field is not an array");
+      return Success();
+   }
+
+   json::Array openFiles = openFilesJson.getArray();
+   if (openFiles.isEmpty())
+      return Success();
+
+   return r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+         .addParam(openFiles)
+         .call();
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -381,30 +414,11 @@ Error createProject(const json::JsonRpcRequest& request,
    }
 
    // register first-run docs for the template now that the .Rproj file exists
-   if (!projectTemplateOptions.isNull() &&
-       json::isType<json::Object>(projectTemplateOptions))
+   error = addFirstRunDocsForTemplate(resolvedProjectFilePath, projectTemplateOptions);
+   if (error)
    {
-      json::Object descriptionJson;
-      json::Object inputsJson;
-      error = json::readObject(projectTemplateOptions.getObject(),
-                               "description", descriptionJson,
-                               "inputs", inputsJson);
-
-      if (!error)
-      {
-         json::Array openFiles = descriptionJson["open_files"].getArray();
-         if (!openFiles.isEmpty())
-         {
-            error = r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
-                  .addParam(string_utils::utf8ToSystem(resolvedProjectFilePath.getAbsolutePath()))
-                  .addParam(string_utils::utf8ToSystem(resolvedProjectFilePath.getParent().getAbsolutePath()))
-                  .addParam(openFiles)
-                  .call();
-         }
-      }
-
-      if (error)
-         LOG_ERROR(error);
+      error.addProperty("project", resolvedProjectFilePath.getAbsolutePath());
+      LOG_ERROR(error);
    }
 
    return Success();
