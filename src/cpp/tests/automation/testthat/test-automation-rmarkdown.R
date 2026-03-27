@@ -692,8 +692,9 @@ withr::defer(.rs.automation.deleteRemote())
    remote$editor.executeWithContents(".Rmd", contents, function(editor) {
 
       # enable "Preview on Save"
-      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = TRUE)
-
+      sourceOnSaveEl <- remote$js.querySelector("#rstudio_cb_source_on_save")
+      remote$dom.clickElement(objectId = sourceOnSaveEl)
+      
       # clear the console, then save the document
       remote$console.clear()
       remote$commands.execute("saveSourceDoc")
