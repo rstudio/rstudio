@@ -361,6 +361,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
 
    std::string existingProjectFilePath;
+   FilePath resolvedProjectFilePath = projectFilePath;
    if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
    {
       // create the project file
@@ -375,6 +376,7 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    else
    {
+      resolvedProjectFilePath = FilePath(existingProjectFilePath);
       pResponse->setResult(existingProjectFilePath);
    }
 
@@ -394,8 +396,8 @@ Error createProject(const json::JsonRpcRequest& request,
          if (!openFiles.isEmpty())
          {
             error = r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
-                  .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
-                  .addParam(string_utils::utf8ToSystem(projectFilePath.getParent().getAbsolutePath()))
+                  .addParam(string_utils::utf8ToSystem(resolvedProjectFilePath.getAbsolutePath()))
+                  .addParam(string_utils::utf8ToSystem(resolvedProjectFilePath.getParent().getAbsolutePath()))
                   .addParam(openFiles)
                   .call();
          }
