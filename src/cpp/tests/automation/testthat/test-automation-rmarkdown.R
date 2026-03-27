@@ -703,6 +703,15 @@ withr::defer(.rs.automation.deleteRemote())
       output <- remote$console.getOutput()
       expect_false(any(grepl("unexpected symbol", output, fixed = TRUE)))
       expect_false(any(grepl("Error in source", output, fixed = TRUE)))
+
+      # verify the .nb.html was actually produced
+      remote$console.executeExpr({
+         ctx <- rstudioapi::getSourceEditorContext()
+         nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
+         writeLines(paste("nb_exists:", file.exists(nbPath)))
+      })
+      output <- remote$console.getOutput()
+      expect_true("nb_exists: TRUE" %in% output)
    })
 
 })

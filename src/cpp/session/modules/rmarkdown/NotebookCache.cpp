@@ -548,14 +548,17 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // if the .nb.html output already exists and is at least as new as the
-   // chunk definitions cache, there is nothing to do -- skip the expensive
-   // rmarkdown::render / pandoc invocation
+   // if the .nb.html output already exists and is at least as new as both
+   // the chunk definitions cache and the .Rmd source, there is nothing to
+   // do -- skip the expensive rmarkdown::render / pandoc invocation.
+   // we must check the .Rmd timestamp too because prose or YAML changes
+   // update the source file but not the chunk definitions.
    FilePath rmdFile = module_context::resolveAliasedPath(rmdPath);
    FilePath outputFile = module_context::resolveAliasedPath(outputPath);
    FilePath chunkDefsFile = chunkDefinitionsPath(rmdFile, kSavedCtx);
    if (outputFile.exists() && chunkDefsFile.exists() &&
-       outputFile.getLastWriteTime() >= chunkDefsFile.getLastWriteTime())
+       outputFile.getLastWriteTime() >= chunkDefsFile.getLastWriteTime() &&
+       outputFile.getLastWriteTime() >= rmdFile.getLastWriteTime())
    {
       json::Object result;
       result["succeeded"] = true;
