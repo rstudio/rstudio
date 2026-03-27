@@ -129,6 +129,10 @@ public class NotebookHtmlRenderer
       if (!target_.hasRmdNotebook())
          return;
 
+      // bail if "Preview on Save" is not checked
+      if (!sentinel_.sourceOnSave())
+         return;
+
       final String rmdPath = sentinel_.getPath();
 
       // bail if unsaved doc (no point in generating notebooks for those)

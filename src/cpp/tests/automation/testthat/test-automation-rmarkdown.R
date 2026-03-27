@@ -670,5 +670,39 @@ withr::defer(.rs.automation.deleteRemote())
       Sys.sleep(1)
       expect_error(remote$dom.querySelector(".pagedtable"))
    })
-   
+
+})
+
+# https://github.com/rstudio/rstudio/issues/15925
+.rs.test("saving a notebook with preview on save does not call source()", {
+
+   contents <- .rs.heredoc('
+      ---
+      title: Notebook Save Test
+      output: html_notebook
+      ---
+
+      This is prose that would cause a source() error.
+
+      ```{r}
+      1 + 1
+      ```
+   ')
+
+   remote$editor.executeWithContents(".Rmd", contents, function(editor) {
+
+      # enable "Preview on Save"
+      remote$dom.setChecked("#rstudio_cb_source_on_save", checked = TRUE)
+
+      # clear the console, then save the document
+      remote$console.clear()
+      remote$commands.execute("saveSourceDoc")
+      Sys.sleep(2)
+
+      # verify no source() error appeared in the console
+      output <- remote$console.getOutput()
+      expect_false(any(grepl("unexpected symbol", output, fixed = TRUE)))
+      expect_false(any(grepl("Error in source", output, fixed = TRUE)))
+   })
+
 })
