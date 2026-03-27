@@ -568,16 +568,6 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // don't start a new render if one is already running
-   if (NotebookCacheRenderer::isRunning())
-   {
-      json::Object result;
-      result["started"] = false;
-      result["succeeded"] = true;
-      pResponse->setResult(result);
-      return Success();
-   }
-
    // resolve the cache path from C++ (avoids .Call in child process)
    FilePath cacheFolder = chunkCacheFolder(rmdFile, "", kSavedCtx);
    std::string cachePath = cacheFolder.getAbsolutePath();

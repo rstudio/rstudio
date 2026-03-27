@@ -68,9 +68,8 @@ void NotebookCacheRenderer::render(const std::string& rmdPath,
                                    const std::string& docPath,
                                    const std::string& encoding)
 {
-   // only one render at a time
-   if (isRunning())
-      return;
+   // cancel any in-progress render so we always render the latest save
+   terminateRunning();
 
    // create the renderer
    boost::shared_ptr<NotebookCacheRenderer> pRenderer(

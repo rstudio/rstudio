@@ -152,11 +152,6 @@ public class NotebookHtmlRenderer
    @Override
    public void onSaveFile(SaveFileEvent event)
    {
-      // bail if save handler already running (avoid accumulating
-      // multiple notebook creation requests)
-      if (isRunning_)
-         return;
-
       // bail if this was an autosave
       if (event.isAutosave())
          return;
