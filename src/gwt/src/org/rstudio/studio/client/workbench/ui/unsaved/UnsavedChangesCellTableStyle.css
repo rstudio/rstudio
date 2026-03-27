@@ -76,3 +76,63 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
    margin: 30px;
 }
 
+@external rstudio-themes-dark;
+@external rstudio-theme-aware-dialog;
+
+@eval THEME_DARKGREY_INACTIVE org.rstudio.core.client.theme.ThemeColors.darkGreyInactiveBackground;
+@eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
+@eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
+@eval THEME_DARK_ROW_HOVERED org.rstudio.core.client.theme.ThemeColors.darkRowHovered;
+
+/* Base cell table widget */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableWidget {
+   background-color: THEME_DARKGREY_INACTIVE;
+   color: #eee;
+}
+
+/* Even rows */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRow {
+   background: THEME_DARKGREY_INACTIVE;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableEvenRowCell {
+   border-color: THEME_DARKGREY_INACTIVE;
+}
+
+/* Odd rows */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRow {
+   background-color: rgb(52, 62, 70);
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableOddRowCell {
+   border-color: rgb(52, 62, 70);
+}
+
+/* Hovered rows */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableHoveredRow {
+   background: THEME_DARK_ROW_HOVERED;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableHoveredRowCell {
+   border-color: transparent;
+}
+
+/* Selected rows (checked checkboxes) */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableSelectedRow {
+   background: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableSelectedRowCell {
+   border-color: transparent;
+}
+
+/* Keyboard-selected rows */
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedRow {
+   background: THEME_DARK_ROW_SELECTED;
+}
+
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedRowCell,
+.rstudio-themes-dark.rstudio-theme-aware-dialog .cellTableKeyboardSelectedCell {
+   border-color: transparent;
+}
+
