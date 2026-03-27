@@ -8601,11 +8601,7 @@ public class TextEditingTarget implements
                         extendedType_ == SourceDocument.XT_RMARKDOWN_NOTEBOOK ||
                         extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT)
                {
-                  // notebooks handle on-save rendering separately via
-                  // NotebookHtmlRenderer (which assembles the .nb.html from
-                  // the chunk cache rather than doing a full knit)
-                  if (!isRmdNotebook())
-                     renderRmd();
+                  renderRmd();
                }
                else
                {

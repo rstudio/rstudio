@@ -718,7 +718,7 @@ withr::defer(.rs.automation.deleteRemote())
 })
 
 # https://github.com/rstudio/rstudio/issues/15925
-.rs.test("disabling preview on save prevents notebook rendering", {
+.rs.test("saving a notebook with preview on save disabled still updates .nb.html", {
 
    contents <- .rs.heredoc('
       ---
@@ -755,7 +755,8 @@ withr::defer(.rs.automation.deleteRemote())
       remote$commands.execute("saveSourceDoc")
       Sys.sleep(2)
 
-      # verify the .nb.html was NOT updated
+      # verify the .nb.html was still updated (Preview on Save only
+      # controls whether the viewer opens, not .nb.html generation)
       remote$console.executeExpr({
          ctx <- rstudioapi::getSourceEditorContext()
          nbPath <- sub("\\.Rmd$", ".nb.html", ctx$path)
@@ -763,7 +764,7 @@ withr::defer(.rs.automation.deleteRemote())
       })
       mtimeAfter <- tail(remote$console.getOutput(), n = 1L)
 
-      expect_equal(mtimeBefore, mtimeAfter)
+      expect_false(identical(mtimeBefore, mtimeAfter))
    })
 
 })
