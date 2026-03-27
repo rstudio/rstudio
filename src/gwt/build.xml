@@ -87,8 +87,18 @@
    <!-- For automatically re-generating acesupport on change -->
    <property name="acesupport.watcher.dir" value="${tools.dir}/acesupport-watcher"/>
 
+   <!-- Detect git worktree and resolve main repo root for shared dependencies -->
+   <exec executable="git" outputproperty="git.common.dir"
+         failonerror="false" errorproperty="git.common.dir.error">
+      <arg value="rev-parse"/>
+      <arg value="--path-format=absolute"/>
+      <arg value="--git-common-dir"/>
+   </exec>
+   <dirname property="git.main.worktree" file="${git.common.dir}"/>
+
    <!-- Path to GWT libraries -->
    <set-if-exists property="lib.dir" value="../../dependencies/common/gwtproject"/>
+   <set-if-exists property="lib.dir" value="${git.main.worktree}/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="/opt/rstudio-tools/dependencies/common/gwtproject"/>
    <set-if-exists property="lib.dir" value="C:/rstudio-tools/dependencies/common/gwtproject"/>
 
@@ -222,7 +232,10 @@
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="22.13.1"/>
-   <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="../../dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="${git.main.worktree}/dependencies/common/node/${node.version}"/>
+   <set-if-exists property="node.dir" value="/opt/rstudio-tools/dependencies/common/node/${node.version}"/>
+   <set-if-unset  property="node.dir" value="../../dependencies/common/node/${node.version}"/>
 
 
    <!-- use yarn from system but will prefer yarn from dependencies if available -->
@@ -490,7 +503,7 @@
       <delete dir="${extras.dir}" failonerror="false" />
    </target>
 
-   <target name="build-unittests" description="Builds JUnit unit tests">
+   <target name="build-unittests" depends="acesupport,javac" description="Builds JUnit unit tests">
       <java-compile srcdir="test" includes="org/rstudio/**/client/**">
          <classpath refid="unittest.class.path"/>
          <classpath refid="project.class.path"/>
